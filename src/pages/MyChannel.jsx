@@ -166,7 +166,7 @@ export default function MyChannel() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-3 gap-4 mt-6 items-start">
           <div className="bg-secondary rounded-xl p-3 text-center">
             <Video className="w-5 h-5 mx-auto text-primary mb-1" />
             <p className="text-lg font-bold">{videos.length}</p>
