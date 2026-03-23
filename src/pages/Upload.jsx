@@ -233,7 +233,7 @@ export default function Upload() {
 
         <Button
           type="submit"
-          disabled={uploading || !form.title}
+          disabled={uploading || !form.title || freeVideoBlocked}
           className="w-full h-12 bg-primary hover:bg-primary/90 text-base gap-2"
         >
           {uploading ? (
