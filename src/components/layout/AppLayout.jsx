@@ -10,6 +10,7 @@ export default function AppLayout() {
       <main className="pt-16">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 }

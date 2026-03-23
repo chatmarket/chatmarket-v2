@@ -165,6 +165,9 @@ export default function Home() {
         </section>
       )}
 
+      {/* Plans */}
+      <PlanSection />
+
       {videos.length === 0 && liveStreams.length === 0 && (
         <div className="text-center py-24 text-muted-foreground">
           <Radio className="w-12 h-12 mx-auto mb-4 opacity-30" />
