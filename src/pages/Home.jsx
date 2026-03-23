@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
@@ -13,7 +13,7 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [messageTarget, setMessageTarget] = useState(null); // { channel, video }
 
-  React.useEffect(() => {
+  useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
