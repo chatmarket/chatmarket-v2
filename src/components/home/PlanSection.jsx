@@ -75,6 +75,34 @@ const plans = [
 ];
 
 export default function PlanSection() {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (isAuth) {
+        base44.auth.me().then(setUser).catch(() => {});
+      }
+    });
+  }, []);
+
+  const handlePlanClick = (planName) => {
+    if (!user) {
+      base44.auth.redirectToLogin();
+      return;
+    }
+    // Create a payment page with plan info
+    const planMap = {
+      "BASICプラン": "basic",
+      "VODプラン": "vod",
+      "PPVプラン": "ppv",
+    };
+    const planId = planMap[planName];
+    if (planId) {
+      navigate(`/payment?plan=${planId}`);
+    }
+  };
+
   return (
     <section className="py-4">
       <div className="text-center mb-10">
