@@ -60,19 +60,19 @@ export default function MyChannel() {
     enabled: streams.length > 0,
   });
 
-  // Calculate monthly revenue for progressive incentive
-  const calculateProgressiveRate = (monthlyRevenue) => {
+  // プログレッシブインセンティブ率を計算
+  const getProgressiveRate = (monthlyRevenue) => {
     if (monthlyRevenue > 20000000) return 0.95;
     if (monthlyRevenue > 19500000) return 0.94;
     if (monthlyRevenue > 18000000) return 0.93;
-    if (monthlyRevenue > 19500000) return 0.92;
+    if (monthlyRevenue > 16500000) return 0.92;
     if (monthlyRevenue > 15000000) return 0.91;
     if (monthlyRevenue > 12000000) return 0.90;
     if (monthlyRevenue > 9000000) return 0.89;
     if (monthlyRevenue > 6000000) return 0.88;
     if (monthlyRevenue > 3000000) return 0.87;
     if (monthlyRevenue > 2000000) return 0.86;
-    return 0.85; // Default BASIC plan
+    return 0.85;
   };
 
   const totalSuperChatRevenue = superChats.reduce((sum, sc) => sum + (sc.amount || 0), 0);
