@@ -177,10 +177,29 @@ export default function MyChannel() {
             <p className="text-lg font-bold">{streams.length}</p>
             <p className="text-xs text-muted-foreground">配信</p>
           </div>
-          <div className="bg-secondary rounded-xl p-3 text-center">
+          <div className="bg-secondary rounded-xl p-3 text-center col-span-3 sm:col-span-1">
             <DollarSign className="w-5 h-5 mx-auto text-yellow-400 mb-1" />
             <p className="text-lg font-bold">¥{totalRevenue.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">収益</p>
+            <p className="text-xs text-muted-foreground">純収益（手数料控除後）</p>
+          </div>
+        </div>
+
+        {/* Fee breakdown */}
+        <div className="mt-4 bg-secondary/50 rounded-xl p-4 border border-border/50 space-y-2 text-xs">
+          <p className="font-semibold text-sm flex items-center gap-1.5">
+            <Info className="w-4 h-4 text-primary" /> 手数料内訳
+          </p>
+          <div className="flex justify-between text-muted-foreground">
+            <span>動画・ライブ売上（プラットフォーム手数料 15%）</span>
+            <span className="text-destructive">-¥{platformFee.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>エールコイン受取（手数料 10%）</span>
+            <span className="text-destructive">-¥{yellCoinFee.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between font-bold border-t border-border pt-2">
+            <span>振込予定額</span>
+            <span className="text-primary">¥{totalRevenue.toLocaleString()}</span>
           </div>
         </div>
       </div>
