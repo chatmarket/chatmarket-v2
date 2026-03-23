@@ -31,11 +31,11 @@ export default function PageNotFound({}) {
                     
                     {/* Main Message */}
                     <div className="space-y-3">
-                        <h2 className="text-2xl font-medium text-slate-800">
-                            Page Not Found
+                        <h2 className="text-2xl font-medium text-foreground">
+                            ページが見つかりません
                         </h2>
-                        <p className="text-slate-600 leading-relaxed">
-                            The page <span className="font-medium text-slate-700">"{pageName}"</span> could not be found in this application.
+                        <p className="text-muted-foreground leading-relaxed">
+                            <span className="font-medium text-foreground">"{pageName}"</span> は存在しないページです
                         </p>
                     </div>
                     
