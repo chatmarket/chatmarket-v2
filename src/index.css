@@ -78,6 +78,13 @@
   }
 }
 
+@keyframes scan {
+  0%, 100% { top: 20%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  50% { top: 80%; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
