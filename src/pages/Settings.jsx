@@ -46,6 +46,7 @@ export default function Settings() {
             bio: u.bio || "",
             address: u.address || "",
             phone: u.phone || "",
+            avatar_url: u.avatar_url || "",
           });
           setSubscription({
             auto_subscribe_price: u.auto_subscribe_price || 3000,
