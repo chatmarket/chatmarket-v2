@@ -215,9 +215,23 @@ export default function MyChannel() {
           <p className="font-semibold text-sm flex items-center gap-1.5">
             <Info className="w-4 h-4 text-primary" /> プログレッシブインセンティブ（自動適用）
           </p>
-          <div className="flex justify-between text-muted-foreground">
-            <span>月間総売上</span>
-            <span className="text-foreground font-semibold">¥{monthlyGrossRevenue.toLocaleString()}</span>
+          <div className="space-y-1 pb-2 border-b border-border/50">
+            <div className="flex justify-between text-muted-foreground">
+              <span>エールコイン</span>
+              <span>¥{yellCoinNet.toLocaleString()} (手数料: ¥{yellCoinFee.toLocaleString()})</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>ビデオ販売</span>
+              <span>¥{videoPurchaseNet.toLocaleString()} (手数料: ¥{videoFee.toLocaleString()})</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>ライブチケット</span>
+              <span>¥{liveStreamNet.toLocaleString()} (手数料: ¥{liveStreamFee.toLocaleString()})</span>
+            </div>
+          </div>
+          <div className="flex justify-between text-muted-foreground font-semibold">
+            <span>月間総売上（手数料控除後）</span>
+            <span className="text-foreground">¥{monthlyGrossRevenue.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>適用還元率</span>
