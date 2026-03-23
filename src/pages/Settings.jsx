@@ -20,6 +20,7 @@ export default function Settings() {
     bio: "",
     address: "",
     phone: "",
+    avatar_url: "",
   });
 
   const [bank, setBank] = useState({
