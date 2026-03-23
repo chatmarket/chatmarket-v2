@@ -1,10 +1,40 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
-import {
-  calculateVideoPurchasePayment,
-  calculateLiveTicketPayment,
-  calculateYellCoinPayment,
-  calculateMonthlyGrossRevenue,
-} from '../lib/pricing.js';
+
+/**
+ * プログレッシブインセンティブ率を計算
+ */
+function getProgressiveRate(monthlyGrossRevenue) {
+  if (monthlyGrossRevenue > 20000000) return 0.95;
+  if (monthlyGrossRevenue > 19500000) return 0.94;
+  if (monthlyGrossRevenue > 18000000) return 0.93;
+  if (monthlyGrossRevenue > 16500000) return 0.92;
+  if (monthlyGrossRevenue > 15000000) return 0.91;
+  if (monthlyGrossRevenue > 12000000) return 0.90;
+  if (monthlyGrossRevenue > 9000000) return 0.89;
+  if (monthlyGrossRevenue > 6000000) return 0.88;
+  if (monthlyGrossRevenue > 3000000) return 0.87;
+  if (monthlyGrossRevenue > 2000000) return 0.86;
+  return 0.85;
+}
+
+/**
+ * 支払い金額を計算
+ */
+function calculatePayment(amount, platformFeeRate, monthlyGrossRevenue = 0) {
+  const grossAmount = Math.floor(amount);
+  const platformFee = Math.floor(grossAmount * platformFeeRate);
+  const afterPlatformFee = grossAmount - platformFee;
+  const progressiveRate = getProgressiveRate(monthlyGrossRevenue);
+  const finalPayment = Math.floor(afterPlatformFee * progressiveRate);
+
+  return {
+    grossAmount,
+    platformFee,
+    afterPlatformFee,
+    progressiveRate,
+    finalPayment,
+  };
+}
 
 /**
  * 購入処理を実行し、支払い情報を記録
@@ -25,35 +55,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 月間総売上を計算（プログレッシブインセンティブ適用用）
+    // 月間総売上を計算
     const recentPurchases = await base44.asServiceRole.entities.Purchase.filter(
       { created_by: user.email },
       '-created_date',
       1000
     );
 
-    // 当月の売上を抽出
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const thisMonthPurchases = recentPurchases.filter((p) => p.created_date >= monthStart);
 
-    const monthlyGrossRevenue = calculateMonthlyGrossRevenue(thisMonthPurchases);
+    let monthlyGrossRevenue = 0;
+    for (const p of thisMonthPurchases) {
+      const rate = p.item_type === 'yellcoin' ? 0.10 : 0.15;
+      const fee = Math.floor(p.amount * rate);
+      monthlyGrossRevenue += p.amount - fee;
+    }
 
     // 支払い種別に応じた計算
     let paymentDetails;
-    switch (item_type) {
-      case 'video':
-        paymentDetails = calculateVideoPurchasePayment(amount, monthlyGrossRevenue);
-        break;
-      case 'livestream':
-        paymentDetails = calculateLiveTicketPayment(amount, monthlyGrossRevenue);
-        break;
-      case 'yellcoin':
-        paymentDetails = calculateYellCoinPayment(amount, monthlyGrossRevenue);
-        break;
-      default:
-        return Response.json({ error: 'Invalid item_type' }, { status: 400 });
-    }
+    const platformFeeRate = item_type === 'yellcoin' ? 0.10 : 0.15;
+    paymentDetails = calculatePayment(amount, platformFeeRate, monthlyGrossRevenue);
 
     // 購入レコード作成
     const purchase = await base44.asServiceRole.entities.Purchase.create({
@@ -61,25 +84,12 @@ Deno.serve(async (req) => {
       item_id,
       amount: paymentDetails.grossAmount,
       buyer_email: user.email,
-      status: 'pending', // Stripeで確認後にcompleted
+      status: 'pending',
     });
-
-    // 決済情報を別途保存（内部参照用）
-    // 本来はStripeイベントハンドラーで更新される想定
-    const paymentRecord = {
-      purchase_id: purchase.id,
-      gross_amount: paymentDetails.grossAmount,
-      platform_fee: paymentDetails.platformFee,
-      after_platform_fee: paymentDetails.afterPlatformFee,
-      progressive_rate: paymentDetails.progressiveRate,
-      final_payment: paymentDetails.finalPayment,
-      created_at: new Date().toISOString(),
-    };
 
     return Response.json({
       purchase_id: purchase.id,
       payment_details: paymentDetails,
-      payment_record: paymentRecord,
     });
   } catch (error) {
     console.error('Purchase processing error:', error);
