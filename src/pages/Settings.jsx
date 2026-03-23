@@ -116,6 +116,27 @@ export default function Settings() {
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-5">
           <div className="space-y-2">
+            <Label>プロフィール画像</Label>
+            <label className="cursor-pointer block">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files && handleAvatarUpload(e.target.files[0])}
+                disabled={saving}
+              />
+              <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-dashed border-border hover:border-primary/50 transition-colors">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera className="w-6 h-6 text-muted-foreground" />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">クリックして画像を選択</p>
+            </label>
+          </div>
+
+          <div className="space-y-2">
             <Label>ニックネーム（アカウント名）</Label>
             <Input
               value={profile.nickname}
