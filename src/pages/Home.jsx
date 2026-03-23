@@ -1,16 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Zap } from "lucide-react";
+import { Radio, Play, Zap, MessageCircle } from "lucide-react";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
+import MessageModal from "../components/chat/MessageModal";
+import { t } from "@/lib/i18n";
 
 export default function Home() {
+  const [user, setUser] = useState(null);
+  const [messageTarget, setMessageTarget] = useState(null); // { channel, video }
+
+  React.useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+    });
+  }, []);
+
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
-    queryFn: () => base44.entities.Video.list("-created_date", 12),
+    queryFn: () => base44.entities.Video.list("-created_date", 20),
+  });
+
+  const { data: channels = [] } = useQuery({
+    queryKey: ["channels-all"],
+    queryFn: () => base44.entities.Channel.list(),
   });
 
   const { data: liveStreams = [] } = useQuery({
@@ -18,8 +34,23 @@ export default function Home() {
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 8),
   });
 
-  const featuredVideos = videos.filter((v) => v.is_featured);
-  const recentVideos = videos.filter((v) => !v.is_featured);
+  const featuredVideos = videos.filter((v) => !v.is_free && v.price > 0).slice(0, 4);
+  // 4 least-viewed paid videos
+  const lowViewPaidVideos = videos
+    .filter((v) => !v.is_free && v.price > 0)
+    .sort((a, b) => (a.view_count || 0) - (b.view_count || 0))
+    .slice(0, 4);
+  const recentVideos = videos.slice(0, 8);
+
+  const getChannelForVideo = (video) => {
+    return channels.find((c) => c.id === video.channel_id);
+  };
+
+  const handleVideoMessage = (video) => {
+    if (!user) { base44.auth.redirectToLogin(); return; }
+    const channel = getChannelForVideo(video);
+    if (channel) setMessageTarget({ channel, video });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
@@ -31,28 +62,26 @@ export default function Home() {
             <span className="text-primary text-sm font-semibold tracking-widest uppercase">ChatMarket</span>
           </div>
           <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-4">
-            プレミアム<br />
-            <span className="text-primary">ライブ配信</span>プラットフォーム
+            {t("hero_title")}
           </h1>
           <p className="text-muted-foreground mb-6 text-sm md:text-base">
-            有料ライブ配信・動画販売・1対1ビデオ通話をこの一つのプラットフォームで。
+            {t("hero_sub")}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link to="/go-live">
               <Button className="bg-primary hover:bg-primary/90 gap-2">
                 <Radio className="w-4 h-4" />
-                有料ライブ配信を開始
+                {t("startLive")}
               </Button>
             </Link>
             <Link to="/upload">
               <Button variant="secondary" className="gap-2">
                 <Play className="w-4 h-4" />
-                動画をアップロード
+                {t("uploadVideo")}
               </Button>
             </Link>
           </div>
         </div>
-        {/* decorative bg glow */}
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       </div>
 
@@ -61,7 +90,7 @@ export default function Home() {
         <section>
           <div className="flex items-center gap-3 mb-5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <h2 className="text-xl font-bold">ライブ配信中</h2>
+            <h2 className="text-xl font-bold">{t("liveNow")}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {liveStreams.map((stream) => (
@@ -71,13 +100,44 @@ export default function Home() {
         </section>
       )}
 
-      {/* Featured Videos */}
+      {/* Recommended paid videos */}
       {featuredVideos.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-5">おすすめ動画</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <h2 className="text-xl font-bold mb-5">{t("recommended")}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {featuredVideos.map((v) => (
-              <VideoCard key={v.id} video={v} size="large" />
+              <div key={v.id} className="relative group">
+                <VideoCard video={v} />
+                <button
+                  onClick={() => handleVideoMessage(v)}
+                  className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  {t("sendMessage")}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Low-view paid videos */}
+      {lowViewPaidVideos.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold mb-2">注目の有料動画（再生数が少ない穴場）</h2>
+          <p className="text-sm text-muted-foreground mb-5">まだあまり見られていない希少コンテンツ</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {lowViewPaidVideos.map((v) => (
+              <div key={v.id} className="relative group">
+                <VideoCard video={v} />
+                <button
+                  onClick={() => handleVideoMessage(v)}
+                  className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  {t("sendMessage")}
+                </button>
+              </div>
             ))}
           </div>
         </section>
@@ -86,10 +146,19 @@ export default function Home() {
       {/* Recent Videos */}
       {recentVideos.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-5">最新動画</h2>
+          <h2 className="text-xl font-bold mb-5">{t("newest")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {recentVideos.map((v) => (
-              <VideoCard key={v.id} video={v} />
+              <div key={v.id} className="relative group">
+                <VideoCard video={v} />
+                <button
+                  onClick={() => handleVideoMessage(v)}
+                  className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  {t("sendMessage")}
+                </button>
+              </div>
             ))}
           </div>
         </section>
@@ -98,9 +167,19 @@ export default function Home() {
       {videos.length === 0 && liveStreams.length === 0 && (
         <div className="text-center py-24 text-muted-foreground">
           <Radio className="w-12 h-12 mx-auto mb-4 opacity-30" />
-          <p className="text-lg">まだコンテンツがありません</p>
-          <p className="text-sm mt-1">最初のライブ配信または動画をアップロードしましょう</p>
+          <p className="text-lg">{t("noContent")}</p>
+          <p className="text-sm mt-1">{t("noContentSub")}</p>
         </div>
+      )}
+
+      {/* Message Modal */}
+      {messageTarget && (
+        <MessageModal
+          channel={messageTarget.channel}
+          video={messageTarget.video}
+          user={user}
+          onClose={() => setMessageTarget(null)}
+        />
       )}
     </div>
   );

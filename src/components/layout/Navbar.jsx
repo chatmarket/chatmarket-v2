@@ -9,8 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings, Phone } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import LangSwitcher from "./LangSwitcher";
+import { t } from "@/lib/i18n";
+
+const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
@@ -38,9 +42,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Radio className="w-4 h-4 text-primary-foreground" />
-          </div>
+          <img src={LOGO_URL} alt="ChatMarket" className="w-9 h-9 object-contain" />
           <span className="text-lg font-bold tracking-tight hidden sm:block">
             Chat<span className="text-primary">Market</span>
           </span>
@@ -53,7 +55,7 @@ export default function Navbar() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="動画を検索..."
+              placeholder={t("search")}
               className="pl-10 bg-secondary border-0 focus-visible:ring-primary/50"
             />
           </div>
@@ -61,18 +63,20 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <LangSwitcher />
+
           {user ? (
             <>
               <Link to="/upload">
                 <Button size="sm" variant="ghost" className="hidden sm:flex gap-2">
                   <Video className="w-4 h-4" />
-                  アップロード
+                  {t("upload")}
                 </Button>
               </Link>
               <Link to="/go-live">
                 <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
                   <Radio className="w-4 h-4" />
-                  <span className="hidden sm:inline">有料ライブ配信</span>
+                  <span className="hidden sm:inline">{t("goLive")}</span>
                 </Button>
               </Link>
               <DropdownMenu>
@@ -86,28 +90,37 @@ export default function Navbar() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => navigate("/my-channel")}>
                     <Radio className="w-4 h-4 mr-2" />
-                    マイチャンネル
+                    {t("myChannel")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="w-4 h-4 mr-2" />
-                    設定
+                    {t("settings")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => base44.auth.logout()}>
                     <LogOut className="w-4 h-4 mr-2" />
-                    ログアウト
+                    {t("logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
           ) : (
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => base44.auth.redirectToLogin()}
-            >
-              ログイン
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => base44.auth.redirectToLogin()}
+              >
+                {t("login")}
+              </Button>
+              <Button
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => base44.auth.redirectToLogin()}
+              >
+                {t("register")}
+              </Button>
+            </div>
           )}
 
           {/* Mobile menu toggle */}
@@ -131,23 +144,32 @@ export default function Navbar() {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="動画を検索..."
+                placeholder={t("search")}
                 className="pl-10 bg-secondary border-0"
               />
             </div>
           </form>
-          {user && (
+          {user ? (
             <div className="flex gap-2">
               <Link to="/upload" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="secondary" className="w-full gap-2">
-                  <Video className="w-4 h-4" /> アップロード
+                  <Video className="w-4 h-4" /> {t("upload")}
                 </Button>
               </Link>
               <Link to="/go-live" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                 <Button className="w-full gap-2 bg-primary">
-                  <Radio className="w-4 h-4" /> 配信する
+                  <Radio className="w-4 h-4" /> {t("goLive")}
                 </Button>
               </Link>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="secondary" className="flex-1" onClick={() => base44.auth.redirectToLogin()}>
+                {t("login")}
+              </Button>
+              <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={() => base44.auth.redirectToLogin()}>
+                {t("register")}
+              </Button>
             </div>
           )}
         </div>
