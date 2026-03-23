@@ -25,8 +25,8 @@ export default function PageNotFound({}) {
                 <div className="text-center space-y-6">
                     {/* 404 Error Code */}
                     <div className="space-y-2">
-                        <h1 className="text-7xl font-light text-slate-300">404</h1>
-                        <div className="h-0.5 w-16 bg-slate-200 mx-auto"></div>
+                        <h1 className="text-7xl font-light text-muted-foreground">404</h1>
+                        <div className="h-0.5 w-16 bg-border mx-auto"></div>
                     </div>
                     
                     {/* Main Message */}
