@@ -75,15 +75,23 @@ export default function MyChannel() {
     return 0.85;
   };
 
+  // エールコイン：プラットフォーム手数料10%
   const totalSuperChatRevenue = superChats.reduce((sum, sc) => sum + (sc.amount || 0), 0);
   const yellCoinFee = Math.floor(totalSuperChatRevenue * 0.10);
   const yellCoinNet = totalSuperChatRevenue - yellCoinFee;
 
-  const videoPurchaseRevenue = videos.reduce((sum, v) => sum + (v.price || 0) * (v.view_count || 0), 0);
-  const liveStreamRevenue = streams.reduce((sum, s) => sum + (s.price || 0) * (s.viewer_count || 0), 0);
-  
-  const monthlyGrossRevenue = yellCoinNet + videoPurchaseRevenue + liveStreamRevenue;
-  const currentRate = calculateProgressiveRate(monthlyGrossRevenue);
+  // ビデオ購入・ライブチケット：プラットフォーム手数料15%
+  const videoPurchaseGross = videos.reduce((sum, v) => sum + (v.price || 0) * (v.view_count || 0), 0);
+  const videoFee = Math.floor(videoPurchaseGross * 0.15);
+  const videoPurchaseNet = videoPurchaseGross - videoFee;
+
+  const liveStreamGross = streams.reduce((sum, s) => sum + (s.price || 0) * (s.viewer_count || 0), 0);
+  const liveStreamFee = Math.floor(liveStreamGross * 0.15);
+  const liveStreamNet = liveStreamGross - liveStreamFee;
+
+  // 月間総売上（手数料控除後）
+  const monthlyGrossRevenue = yellCoinNet + videoPurchaseNet + liveStreamNet;
+  const currentRate = getProgressiveRate(monthlyGrossRevenue);
   const netAfterRate = Math.floor(monthlyGrossRevenue * currentRate);
   
   const totalRevenue = netAfterRate;
