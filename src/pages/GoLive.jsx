@@ -19,8 +19,10 @@ export default function GoLive() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    scheduled_at: "",
+    availableTime: "",
     duration: 15,
-    price: 0,
+    price: 150,
     isPaid: false,
   });
 
@@ -64,7 +66,9 @@ export default function GoLive() {
       channel_name: channel.name,
       channel_avatar: channel.avatar_url,
       thumbnail_url,
-      status: "live",
+      status: form.scheduled_at ? "scheduled" : "live",
+      scheduled_at: form.scheduled_at || null,
+      available_time: form.availableTime || "",
       price: form.isPaid ? form.price : 0,
       viewer_count: 0,
     });
@@ -131,6 +135,29 @@ export default function GoLive() {
           />
         </div>
 
+        {/* Schedule */}
+        <div className="space-y-2">
+          <Label>配信予定日時</Label>
+          <Input
+            type="datetime-local"
+            value={form.scheduled_at}
+            onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
+            className="bg-secondary border-0"
+          />
+        </div>
+
+        {/* Available Time */}
+        <div className="space-y-2">
+          <Label>対応可能時間</Label>
+          <Input
+            type="text"
+            value={form.availableTime}
+            onChange={(e) => setForm({ ...form, availableTime: e.target.value })}
+            placeholder="例: 14:00〜18:00"
+            className="bg-secondary border-0"
+          />
+        </div>
+
         {/* Pricing */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
           <div className="flex items-center justify-between">
@@ -176,14 +203,18 @@ export default function GoLive() {
                 <Input
                   type="number"
                   min={150}
+                  max={1000000}
                   step={1}
                   value={form.price}
-                  onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 150;
+                    setForm({ ...form, price: Math.min(val, 1000000) });
+                  }}
                   className="bg-secondary border-0"
                   placeholder="150"
                 />
                 <p className="text-xs text-muted-foreground">
-                  最低価格: 15分 ¥150 以上で自由設定 | 現在: ¥{form.price || 150}/{form.duration}分
+                  最低価格: ¥150 〜 最高: ¥1,000,000 | 現在: ¥{form.price?.toLocaleString() || 150}/{form.duration}分
                 </p>
               </TabsContent>
             </Tabs>
