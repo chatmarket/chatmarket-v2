@@ -6,6 +6,7 @@ import ChatPanel from "../components/chat/ChatPanel";
 import PaywallModal from "../components/video/PaywallModal";
 import { Eye, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
+import VideoComments from "../components/video/VideoComments";
 
 const FREE_PREVIEW_SECONDS = 30;
 
@@ -153,6 +154,11 @@ export default function WatchVideo() {
         <div className="lg:col-span-1 h-[500px] lg:h-[calc(100vh-8rem)]">
           <ChatPanel targetType="video" targetId={id} />
         </div>
+      </div>
+
+      {/* Comments section */}
+      <div className="max-w-3xl mt-4">
+        <VideoComments videoId={id} user={user} />
       </div>
 
       {/* Paywall Modal */}
