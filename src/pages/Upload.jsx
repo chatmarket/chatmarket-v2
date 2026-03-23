@@ -37,6 +37,21 @@ export default function Upload() {
     enabled: !!user,
   });
 
+  // Check free videos uploaded in the last 7 days
+  const { data: recentFreeVideos = [] } = useQuery({
+    queryKey: ["recent-free-videos", user?.email],
+    queryFn: async () => {
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const all = await base44.entities.Video.filter({ is_free: true });
+      return all.filter(
+        (v) => v.created_by === user.email && v.created_date >= oneWeekAgo
+      );
+    },
+    enabled: !!user,
+  });
+
+  const freeVideoBlocked = form.is_free && recentFreeVideos.length >= 1;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title) return;
