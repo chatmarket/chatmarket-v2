@@ -121,7 +121,7 @@ export default function Footer() {
           <div className="mb-8">
             <p className="font-bold text-lg mb-1">Chat<span className="text-primary">Market</span></p>
             <p className="text-xs text-muted-foreground">{COMPANY.name}　{COMPANY.zip} {COMPANY.address}</p>
-            <p className="text-xs text-muted-foreground">TEL {COMPANY.tel}　{COMPANY.ceo}</p>
+            <p className="text-xs text-muted-foreground">TEL {COMPANY.tel}</p>
           </div>
 
           {/* Links */}
