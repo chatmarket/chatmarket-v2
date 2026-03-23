@@ -202,18 +202,29 @@ export default function MyChannel() {
           </div>
         </div>
 
-        {/* Fee breakdown */}
+        {/* Progressive Incentive Info */}
         <div className="mt-4 bg-secondary/50 rounded-xl p-4 border border-border/50 space-y-2 text-xs">
           <p className="font-semibold text-sm flex items-center gap-1.5">
-            <Info className="w-4 h-4 text-primary" /> 手数料内訳
+            <Info className="w-4 h-4 text-primary" /> プログレッシブインセンティブ（自動適用）
           </p>
           <div className="flex justify-between text-muted-foreground">
-            <span>動画・ライブ売上（プラットフォーム手数料 15%）</span>
-            <span className="text-destructive">-¥{platformFee.toLocaleString()}</span>
+            <span>月間総売上</span>
+            <span className="text-foreground font-semibold">¥{monthlyGrossRevenue.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>エールコイン受取（手数料 10%）</span>
-            <span className="text-destructive">-¥{yellCoinFee.toLocaleString()}</span>
+            <span>適用還元率</span>
+            <span className="text-primary font-semibold">{(currentRate * 100).toFixed(0)}%</span>
+          </div>
+          <div className="bg-secondary rounded-lg p-2.5 space-y-1 mt-2 border border-border/50">
+            <p className="text-muted-foreground font-medium">次のレベル達成条件:</p>
+            {currentRate < 0.95 && (
+              <>
+                {currentRate === 0.85 && <p>200万円超 → 86% | 300万円超 → 87% | 600万円超 → 88%</p>}
+                {currentRate === 0.86 && <p>300万円超 → 87% | 600万円超 → 88% | 900万円超 → 89%</p>}
+                {currentRate >= 0.87 && <p>次レベルまで: ¥{(Math.ceil(monthlyGrossRevenue / 300000) * 300000 - monthlyGrossRevenue).toLocaleString()}</p>}
+              </>
+            )}
+            {currentRate === 0.95 && <p className="text-primary">最高レベル達成！</p>}
           </div>
           <div className="flex justify-between font-bold border-t border-border pt-2">
             <span>振込予定額</span>
