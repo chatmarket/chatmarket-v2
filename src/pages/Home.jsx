@@ -8,6 +8,7 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
+import PlanSection from "../components/home/PlanSection";
 
 export default function Home() {
   const [user, setUser] = useState(null);
