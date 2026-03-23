@@ -10,6 +10,7 @@ const plans = [
     name: "FREEプラン",
     price: "¥0",
     period: "/月",
+    revenueShare: "70%",
     color: "from-gray-500/20 to-gray-600/10 border-gray-500/30",
     iconColor: "text-gray-300",
     badge: "無料スタート",
@@ -17,7 +18,6 @@ const plans = [
     features: [
       "無料で今すぐ始められる",
       "1対1の有料ビデオ通話機能",
-      "収益還元率 70%",
       "視聴者からエールコイン受取",
       "チャンネルページ作成",
     ],
@@ -27,6 +27,7 @@ const plans = [
     name: "BASICプラン",
     price: "¥3,300",
     period: "/月",
+    revenueShare: "85%",
     color: "from-blue-500/20 to-blue-600/10 border-blue-500/30",
     iconColor: "text-blue-400",
     badge: "1対1ビデオ通話",
@@ -34,7 +35,6 @@ const plans = [
     features: [
       "1対1の有料ビデオ通話機能",
       "通話料金：15分 ¥150〜（自由設定）",
-      "収益還元率 85%",
       "プログレッシブ・インセンティブに自動参加",
       "視聴者からエールコイン受取",
       "チャンネルページ作成",
@@ -45,6 +45,7 @@ const plans = [
     name: "VODプラン",
     price: "¥9,000",
     period: "/月",
+    revenueShare: "90%",
     color: "from-primary/20 to-primary/10 border-primary/40",
     iconColor: "text-primary",
     badge: "動画販売",
@@ -63,6 +64,7 @@ const plans = [
     name: "PPVプラン",
     price: "¥9,000",
     period: "/月",
+    revenueShare: "90%",
     color: "from-red-500/20 to-red-600/10 border-red-500/30",
     iconColor: "text-red-400",
     badge: "有料ライブ配信",
@@ -138,6 +140,9 @@ export default function PlanSection() {
                     {plan.badge}
                   </span>
                   <h3 className="font-bold text-lg mt-0.5">{plan.name}</h3>
+                  {plan.revenueShare && (
+                    <p className="text-xs text-primary font-semibold mt-0.5">収益還元率 {plan.revenueShare}</p>
+                  )}
                 </div>
               </div>
 
