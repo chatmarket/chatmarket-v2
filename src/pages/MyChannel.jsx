@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Radio, DollarSign, Users, Edit, Save, Image, Loader2 } from "lucide-react";
+import { Video, Radio, DollarSign, Users, Edit, Save, Image, Loader2, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function MyChannel() {
@@ -60,7 +60,15 @@ export default function MyChannel() {
     enabled: streams.length > 0,
   });
 
-  const totalRevenue = superChats.reduce((sum, sc) => sum + (sc.amount || 0), 0);
+  const totalSuperChatRevenue = superChats.reduce((sum, sc) => sum + (sc.amount || 0), 0);
+  const yellCoinFee = Math.floor(totalSuperChatRevenue * 0.10);
+  const yellCoinNet = totalSuperChatRevenue - yellCoinFee;
+
+  const videoPurchaseRevenue = videos.reduce((sum, v) => sum + (v.price || 0) * (v.view_count || 0), 0);
+  const platformFee = Math.floor(videoPurchaseRevenue * 0.15);
+  const platformNet = videoPurchaseRevenue - platformFee;
+
+  const totalRevenue = yellCoinNet + platformNet;
 
   useEffect(() => {
     if (channel) {
