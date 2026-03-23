@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, Phone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 export default function Navbar() {
@@ -72,7 +72,7 @@ export default function Navbar() {
               <Link to="/go-live">
                 <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
                   <Radio className="w-4 h-4" />
-                  <span className="hidden sm:inline">配信する</span>
+                  <span className="hidden sm:inline">有料ライブ配信</span>
                 </Button>
               </Link>
               <DropdownMenu>

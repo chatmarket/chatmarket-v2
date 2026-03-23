@@ -52,7 +52,7 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            スーパーチャット
+            エールコインを送る
           </DialogTitle>
         </DialogHeader>
 
@@ -86,7 +86,7 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
             disabled={!selectedAmount || sending}
             className="w-full bg-primary hover:bg-primary/90"
           >
-            {sending ? "送信中..." : `¥${selectedAmount?.toLocaleString() || 0} を送る`}
+            {sending ? "送信中..." : `エールコイン ¥${selectedAmount?.toLocaleString() || 0} を送る`}
           </Button>
         </div>
       </DialogContent>

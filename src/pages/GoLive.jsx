@@ -79,7 +79,7 @@ export default function GoLive() {
         <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
           <Radio className="w-5 h-5 text-red-400 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold">ライブ配信を開始</h1>
+        <h1 className="text-2xl font-bold">有料ライブ配信を開始</h1>
       </div>
 
       <form onSubmit={handleGoLive} className="space-y-6">

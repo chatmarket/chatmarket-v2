@@ -110,7 +110,8 @@ export default function ChatPanel({ targetType, targetId }) {
                 size="icon"
                 variant="ghost"
                 onClick={() => setShowSuperChat(true)}
-                className="shrink-0 text-yellow-400 hover:text-yellow-300"
+                title="エールコインを送る"
+              className="shrink-0 text-yellow-400 hover:text-yellow-300"
               >
                 <DollarSign className="w-4 h-4" />
               </Button>
