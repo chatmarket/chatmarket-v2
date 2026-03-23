@@ -143,26 +143,17 @@ export default function GoLive() {
 
           {form.isPaid && (
             <div className="space-y-2">
-              <Label>チケット価格（配信時間と料金）</Label>
-              <Select
-                value={String(form.price)}
-                onValueChange={(v) => setForm({ ...form, price: parseInt(v) })}
-              >
-                <SelectTrigger className="bg-secondary border-0">
-                  <SelectValue placeholder="時間と価格を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="150">15分 ¥150</SelectItem>
-                  <SelectItem value="300">30分 ¥300</SelectItem>
-                  <SelectItem value="450">45分 ¥450</SelectItem>
-                  <SelectItem value="600">60分 ¥600</SelectItem>
-                  <SelectItem value="750">75分 ¥750</SelectItem>
-                  <SelectItem value="900">90分 ¥900</SelectItem>
-                  <SelectItem value="1050">105分 ¥1,050</SelectItem>
-                  <SelectItem value="1200">120分 ¥1,200</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">15分 ¥150〜最大2時間 ¥1,200</p>
+              <Label>チケット価格（円）</Label>
+              <Input
+                type="number"
+                min={150}
+                step={1}
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                className="bg-secondary border-0"
+                placeholder="150"
+              />
+              <p className="text-xs text-muted-foreground">最低価格: 15分 ¥150 以上で自由設定</p>
             </div>
           )}
         </div>
