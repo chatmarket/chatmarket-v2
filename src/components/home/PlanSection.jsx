@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play } from "lucide-react";
 
 const plans = [
   {
@@ -83,7 +83,7 @@ export default function PlanSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((plan) => {
           const Icon = plan.icon;
           return (
