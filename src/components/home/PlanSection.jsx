@@ -159,10 +159,10 @@ export default function PlanSection() {
               </ul>
 
               <Button
-                onClick={() => plan.name === "FREEプラン" ? navigate("/go-live") : handlePlanClick(plan.name)}
+                onClick={() => plan.name === "FREEプラン" ? navigate("/call-setup") : handlePlanClick(plan.name)}
                 className={`w-full mt-2 ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
               >
-                このプランで始める
+                {plan.name === "FREEプラン" ? "1対1のビデオ通話を開始" : "このプランで始める"}
               </Button>
             </div>
           );
