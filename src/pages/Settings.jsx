@@ -68,8 +68,19 @@ export default function Settings() {
       bio: profile.bio.slice(0, 200),
       address: profile.address,
       phone: profile.phone,
+      avatar_url: profile.avatar_url,
     });
     toast.success("プロフィールを保存しました");
+    setSaving(false);
+  };
+
+  const handleAvatarUpload = async (file) => {
+    if (!file) return;
+    setSaving(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setProfile({ ...profile, avatar_url: file_url });
+    await base44.auth.updateMe({ avatar_url: file_url });
+    toast.success("プロフィール画像を更新しました");
     setSaving(false);
   };
 
