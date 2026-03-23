@@ -16,6 +16,7 @@ import MyChannel from './pages/MyChannel';
 import Settings from './pages/Settings';
 import ChannelPage from './pages/ChannelPage';
 import Search from './pages/Search';
+import VideoCallPage from './pages/VideoCallPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +50,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/channel/:id" element={<ChannelPage />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/call/:callId" element={<VideoCallPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
