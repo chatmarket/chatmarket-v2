@@ -60,15 +60,33 @@ export default function MyChannel() {
     enabled: streams.length > 0,
   });
 
+  // Calculate monthly revenue for progressive incentive
+  const calculateProgressiveRate = (monthlyRevenue) => {
+    if (monthlyRevenue > 20000000) return 0.95;
+    if (monthlyRevenue > 19500000) return 0.94;
+    if (monthlyRevenue > 18000000) return 0.93;
+    if (monthlyRevenue > 19500000) return 0.92;
+    if (monthlyRevenue > 15000000) return 0.91;
+    if (monthlyRevenue > 12000000) return 0.90;
+    if (monthlyRevenue > 9000000) return 0.89;
+    if (monthlyRevenue > 6000000) return 0.88;
+    if (monthlyRevenue > 3000000) return 0.87;
+    if (monthlyRevenue > 2000000) return 0.86;
+    return 0.85; // Default BASIC plan
+  };
+
   const totalSuperChatRevenue = superChats.reduce((sum, sc) => sum + (sc.amount || 0), 0);
   const yellCoinFee = Math.floor(totalSuperChatRevenue * 0.10);
   const yellCoinNet = totalSuperChatRevenue - yellCoinFee;
 
   const videoPurchaseRevenue = videos.reduce((sum, v) => sum + (v.price || 0) * (v.view_count || 0), 0);
-  const platformFee = Math.floor(videoPurchaseRevenue * 0.15);
-  const platformNet = videoPurchaseRevenue - platformFee;
-
-  const totalRevenue = yellCoinNet + platformNet;
+  const liveStreamRevenue = streams.reduce((sum, s) => sum + (s.price || 0) * (s.viewer_count || 0), 0);
+  
+  const monthlyGrossRevenue = yellCoinNet + videoPurchaseRevenue + liveStreamRevenue;
+  const currentRate = calculateProgressiveRate(monthlyGrossRevenue);
+  const netAfterRate = Math.floor(monthlyGrossRevenue * currentRate);
+  
+  const totalRevenue = netAfterRate;
 
   useEffect(() => {
     if (channel) {
