@@ -5,6 +5,22 @@ import { Check, Video, Radio, PhoneCall } from "lucide-react";
 
 const plans = [
   {
+    icon: Play,
+    name: "FREEプラン",
+    price: "¥0",
+    period: "/月",
+    color: "from-gray-500/20 to-gray-600/10 border-gray-500/30",
+    iconColor: "text-gray-300",
+    badge: "無料スタート",
+    badgeColor: "bg-gray-500/20 text-gray-300",
+    features: [
+      "無料で今すぐ始められる",
+      "収益還元率 70%",
+      "視聴者からエールコイン受取",
+      "チャンネルページ作成",
+    ],
+  },
+  {
     icon: PhoneCall,
     name: "BASICプラン",
     price: "¥3,300",
