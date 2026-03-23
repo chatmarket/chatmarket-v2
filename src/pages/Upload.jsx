@@ -206,13 +206,19 @@ export default function Upload() {
             />
           </div>
 
+          {form.is_free && recentFreeVideos.length >= 1 && (
+            <p className="text-destructive text-xs font-semibold mt-2">
+              ⚠️ 無料動画は1週間に1本までです。次の無料投稿可能日までお待ちください。
+            </p>
+          )}
+
           {!form.is_free && (
             <div className="space-y-2">
               <Label>価格（円）</Label>
               <Input
                 type="number"
-                min={100}
-                step={100}
+                min={1}
+                step={1}
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
                 className="bg-secondary border-0"
