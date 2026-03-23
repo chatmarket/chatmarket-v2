@@ -152,13 +152,12 @@ export default function PlanSection() {
                 ))}
               </ul>
 
-              <Link to="/go-live">
-                <Button
-                  className={`w-full mt-2 ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
-                >
-                  このプランで始める
-                </Button>
-              </Link>
+              <Button
+                onClick={() => plan.name === "FREEプラン" ? navigate("/go-live") : handlePlanClick(plan.name)}
+                className={`w-full mt-2 ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
+              >
+                このプランで始める
+              </Button>
             </div>
           );
         })}
