@@ -144,19 +144,48 @@ export default function GoLive() {
           </div>
 
           {form.isPaid && (
-            <div className="space-y-2">
-              <Label>チケット価格（円）</Label>
-              <Input
-                type="number"
-                min={150}
-                step={1}
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-                className="bg-secondary border-0"
-                placeholder="150"
-              />
-              <p className="text-xs text-muted-foreground">最低価格: 15分 ¥150 以上で自由設定</p>
-            </div>
+            <Tabs defaultValue="duration" className="space-y-3">
+              <TabsList className="bg-secondary">
+                <TabsTrigger value="duration">配信時間</TabsTrigger>
+                <TabsTrigger value="price">チケット料金</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="duration" className="space-y-2">
+                <Label>配信時間（15分単位）</Label>
+                <Select
+                  value={String(form.duration)}
+                  onValueChange={(v) => setForm({ ...form, duration: parseInt(v) })}
+                >
+                  <SelectTrigger className="bg-secondary border-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
+                      <SelectItem key={min} value={String(min)}>
+                        {Math.floor(min / 60)}時間{min % 60 > 0 ? `${min % 60}分` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">推奨: {Math.floor(form.duration / 60)}時間{form.duration % 60 > 0 ? `${form.duration % 60}分` : ""}</p>
+              </TabsContent>
+              
+              <TabsContent value="price" className="space-y-2">
+                <Label>チケット料金（円）</Label>
+                <Input
+                  type="number"
+                  min={150}
+                  step={1}
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                  className="bg-secondary border-0"
+                  placeholder="150"
+                />
+                <p className="text-xs text-muted-foreground">
+                  最低価格: 15分 ¥150 以上で自由設定 | 現在: ¥{form.price || 150}/{form.duration}分
+                </p>
+              </TabsContent>
+            </Tabs>
           )}
         </div>
 
