@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
+import YellCoinEffect from "../yell/YellCoinEffect";
 
 const AMOUNTS = [
   { value: 200, color: "green", label: "¥200" },
@@ -27,6 +28,8 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [showEffect, setShowEffect] = useState(false);
+  const [sentAmount, setSentAmount] = useState(0);
   const queryClient = useQueryClient();
 
   const handleSend = async () => {
@@ -42,12 +45,15 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
       color: chosen?.color || "green",
     });
     queryClient.invalidateQueries({ queryKey: ["superchats", livestreamId] });
+    setSentAmount(selectedAmount);
+    setShowEffect(true);
     setSending(false);
-    onClose();
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <>
+    {showEffect && <YellCoinEffect amount={sentAmount} onDone={onClose} />}
+    <Dialog open={!showEffect} onOpenChange={onClose}>
       <DialogContent className="bg-card border-border max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -91,5 +97,6 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
