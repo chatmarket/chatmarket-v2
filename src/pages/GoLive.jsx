@@ -200,22 +200,29 @@ export default function GoLive() {
               
               <TabsContent value="price" className="space-y-2">
                 <Label>チケット料金（円）</Label>
-                <Input
-                  type="number"
-                  min={150}
-                  max={1000000}
-                  step={1}
-                  value={form.price}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 150;
-                    setForm({ ...form, price: Math.min(val, 1000000) });
-                  }}
-                  className="bg-secondary border-0"
-                  placeholder="150"
-                />
-                <p className="text-xs text-muted-foreground">
-                  最低価格: ¥150 〜 最高: ¥1,000,000 | 現在: ¥{form.price?.toLocaleString() || 150}/{form.duration}分
-                </p>
+                {(() => {
+                  const minPrice = (form.duration / 15) * 150;
+                  return (
+                    <>
+                      <Input
+                        type="number"
+                        min={minPrice}
+                        max={1000000}
+                        step={1}
+                        value={form.price}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || minPrice;
+                          setForm({ ...form, price: Math.max(Math.min(val, 1000000), minPrice) });
+                        }}
+                        className="bg-secondary border-0"
+                        placeholder={String(minPrice)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        最低価格: ¥{minPrice.toLocaleString()} 〜 最高: ¥1,000,000 | 現在: ¥{form.price?.toLocaleString() || minPrice}/{form.duration}分
+                      </p>
+                    </>
+                  );
+                })()}
               </TabsContent>
             </Tabs>
           )}
