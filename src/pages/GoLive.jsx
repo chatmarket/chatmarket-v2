@@ -18,6 +18,7 @@ export default function GoLive() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    duration: 15,
     price: 0,
     isPaid: false,
   });
