@@ -78,7 +78,15 @@ export default function Upload() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-8">動画アップロード</h1>
+      <h1 className="text-2xl font-bold mb-6">動画アップロード</h1>
+
+      {/* Warning notice */}
+      <div className="bg-destructive/10 border border-destructive/50 rounded-xl p-4 mb-8">
+        <p className="text-destructive text-sm font-semibold leading-relaxed">
+          ⚠️ 注意事項<br />
+          他のWEBサイトにアップロードされた動画は掲載できません。著作権・肖像権侵害などに関して弊社は一切の責任を負いません。
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Video File */}
