@@ -130,6 +130,9 @@ export default function Settings() {
           <TabsTrigger value="bank" className="flex-1 gap-2">
             <Building className="w-4 h-4" /> 銀行口座
           </TabsTrigger>
+          <TabsTrigger value="category" className="flex-1 gap-2">
+            <Tag className="w-4 h-4" /> 業種タグ
+          </TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -320,6 +323,30 @@ export default function Settings() {
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             保存する
+          </Button>
+        </TabsContent>
+        {/* Category/Tags Tab */}
+        <TabsContent value="category" className="space-y-5">
+          <div className="bg-card rounded-xl p-5 border border-border/50 space-y-4">
+            <div>
+              <h3 className="font-bold mb-1">業種・タグ設定</h3>
+              <p className="text-xs text-muted-foreground">PDFのマインドマップに基づく業種カテゴリからタグを選択してください。検索で見つけてもらいやすくなります。</p>
+            </div>
+            <CategoryTagSelector value={channelTags} onChange={setChannelTags} />
+          </div>
+          <Button
+            onClick={async () => {
+              if (!channelId) { toast.error("チャンネルが見つかりません"); return; }
+              setSaving(true);
+              await base44.entities.Channel.update(channelId, { tags: channelTags });
+              toast.success("業種タグを保存しました");
+              setSaving(false);
+            }}
+            disabled={saving}
+            className="w-full gap-2 bg-primary hover:bg-primary/90"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            タグを保存する
           </Button>
         </TabsContent>
       </Tabs>
