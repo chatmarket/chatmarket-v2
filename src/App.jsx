@@ -20,6 +20,7 @@ import VideoCallPage from './pages/VideoCallPage';
 import CrowdfundingList from './pages/CrowdfundingList';
 import CrowdfundingDetail from './pages/CrowdfundingDetail';
 import CrowdfundingNew from './pages/CrowdfundingNew';
+import PlanDetail from './pages/PlanDetail';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
