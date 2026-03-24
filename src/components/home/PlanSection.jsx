@@ -129,7 +129,7 @@ export default function PlanSection() {
   };
 
   return (
-    <section className="py-4">
+    <section id="plans" className="py-4">
       <div className="text-center mb-10">
         <h2 className="text-2xl md:text-3xl font-bold mb-3">料金プラン</h2>
         <p className="text-muted-foreground text-sm md:text-base">
