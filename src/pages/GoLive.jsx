@@ -229,7 +229,51 @@ export default function GoLive() {
             />
           </div>
 
-          {form.isPaid && (
+          {form.isPaid && mode === MODE_LIVE && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>配信時間（最大120分）</Label>
+                <Select
+                  value={String(form.duration)}
+                  onValueChange={(v) => setForm({ ...form, duration: parseInt(v) })}
+                >
+                  <SelectTrigger className="bg-secondary border-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
+                      <SelectItem key={min} value={String(min)}>
+                        {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>チケット料金（円）</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={1000000}
+                  step={1}
+                  value={form.price}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setForm({ ...form, price: Math.max(Math.min(val, 1000000), 1) });
+                  }}
+                  className="bg-secondary border-0"
+                  placeholder="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  ¥1から自由に設定できます。
+                </p>
+              </div>
+            </div>
+          )}
+
+          {form.isPaid && mode === MODE_CALL && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>時間（15分単位）</Label>
