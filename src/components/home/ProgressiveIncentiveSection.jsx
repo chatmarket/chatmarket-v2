@@ -54,7 +54,7 @@ export default function ProgressiveIncentiveSection() {
         <div className="border border-t-0 border-border/50 rounded-b-2xl bg-card/50 p-6 space-y-8">
 
           {/* Hero explanation */}
-          <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-secondary border border-primary/20 p-6 text-center space-y-3">
+          <div className="rounded-2xl bg-gradient-to-br from-primary/25 via-primary/10 to-secondary border border-primary/40 p-6 text-center space-y-3">
             <div className="flex justify-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
                 <TrendingUp className="w-8 h-8 text-primary" />
