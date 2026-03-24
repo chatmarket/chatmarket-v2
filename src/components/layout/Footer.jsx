@@ -156,7 +156,8 @@ const COMPANY_CONTENT = `企業情報
 設立：2025年4月
 資本金：990万円
 主要取引銀行：武蔵野銀行 南浦和支店
-主な業務：ITプラットフォーム開発・運営、写真撮影`;
+主な業務：ITプラットフォーム開発・運営、写真撮影
+公式サイト：https://onestepinc.jp/`;
 
 const modals = {
   terms: { title: "利用規約", content: TERMS_CONTENT },
