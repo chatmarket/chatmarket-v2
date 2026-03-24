@@ -45,7 +45,6 @@ const plans = [
     name: "CALL＆ANSERプラン",
     price: "¥6,600",
     period: "/月",
-    revenueShare: "85%",
     color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30",
     iconColor: "text-cyan-400",
     badge: "双方向有料通話",
