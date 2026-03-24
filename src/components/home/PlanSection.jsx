@@ -203,16 +203,10 @@ export default function PlanSection() {
                     ))}
                   </ul>
                   <Button
-                    onClick={() => {
-                      if (plan.name === "FREEプラン") navigate("/go-live");
-                      else if (plan.name === "BASIC＋クラウドファンディングプラン") navigate("/crowdfunding/new");
-                      else handlePlanClick(plan.name);
-                    }}
+                    onClick={() => navigate(`/plan/${planSlugMap[plan.name]}`)}
                     className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
                   >
-                    {plan.name === "FREEプラン" ? "1対1のビデオ通話を開始"
-                      : plan.name === "BASIC＋クラウドファンディングプラン" ? "申請・登録する"
-                      : "このプランで始める"}
+                    機能一覧・登録はこちら
                   </Button>
                 </div>
               )}
