@@ -17,6 +17,9 @@ import Settings from './pages/Settings.jsx';
 import ChannelPage from './pages/ChannelPage';
 import Search from './pages/Search';
 import VideoCallPage from './pages/VideoCallPage';
+import CrowdfundingList from './pages/CrowdfundingList';
+import CrowdfundingDetail from './pages/CrowdfundingDetail';
+import CrowdfundingNew from './pages/CrowdfundingNew';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
