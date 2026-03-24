@@ -71,8 +71,8 @@ const browsers = [
                 <span className="text-xs text-blue-400 font-bold">追加</span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center text-2xl shadow-lg">
-                  📺
+                <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center overflow-hidden shadow-lg">
+                  <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png" alt="ChatMarket" className="w-10 h-10 object-contain" />
                 </div>
                 <span className="text-xs text-gray-300 font-medium">ChatMarket</span>
               </div>
