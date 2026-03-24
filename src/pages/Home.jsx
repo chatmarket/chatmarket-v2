@@ -101,7 +101,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
           <span className="text-primary font-black text-lg leading-tight">無料登録でも70％の収益還元</span>
           <span className="text-muted-foreground hidden sm:block">|</span>
-          <span className="text-foreground font-semibold text-sm">1プランを組み合わせ最大<span className="text-primary font-black text-xl mx-1">95％</span>の収益還元率を実現！</span>
+          <span className="text-foreground font-semibold text-sm">プランを組み合わせ最大<span className="text-primary font-black text-xl mx-1">95％</span>の収益還元率を実現！</span>
         </div>
         <p className="text-muted-foreground text-xs">必要なプランを組み合わせてご利用ください</p>
       </div>
