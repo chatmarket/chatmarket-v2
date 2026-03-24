@@ -228,7 +228,7 @@ export default function PlanDetail() {
 
       {/* Bank note */}
       <div className="bg-secondary/60 border border-border/50 rounded-xl px-4 py-3 text-xs text-muted-foreground">
-        ※ 銀行振込でのお支払いの場合、振込手数料は実費でご負担いただきます。
+        ※ 収益の銀行振込手数料は実費でご負担いただきます。
       </div>
 
       {/* CTA */}
