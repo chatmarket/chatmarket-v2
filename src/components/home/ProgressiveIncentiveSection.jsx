@@ -108,35 +108,23 @@ export default function ProgressiveIncentiveSection() {
 
           {/* Tier table */}
           <div className="space-y-3">
-            <h4 className="font-bold text-sm flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-primary" />還元率テーブル（月間売上別）</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {tiers.map((tier, i) => (
-                    <div
-                      key={i}
-                      className={`rounded-xl bg-gradient-to-br ${tier.color} p-3 text-center relative ${tier.top ? "ring-2 ring-yellow-400" : ""}`}
-                    >
-                      {tier.top && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-black bg-yellow-400 text-black px-2 py-0.5 rounded-full whitespace-nowrap">MAX</span>
-                      )}
-                      <p className="text-xs text-white/70 mt-1">{tier.revenue}</p>
-                      <p className="text-2xl font-black text-white">{tier.rate}</p>
-                    </div>
-                  ))}
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-sm flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-primary" />還元率テーブル（月間売上別）</h4>
+              <p className="text-xs text-primary font-semibold">プログレッシブインセンティブにより、売り上げ毎に収益還元率がUP！</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {tiers.map((tier, i) => (
+                <div
+                  key={i}
+                  className={`rounded-xl bg-gradient-to-br ${tier.color} p-3 text-center relative ${tier.top ? "ring-2 ring-yellow-400" : ""}`}
+                >
+                  {tier.top && (
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-black bg-yellow-400 text-black px-2 py-0.5 rounded-full whitespace-nowrap">MAX</span>
+                  )}
+                  <p className="text-xs text-white/70 mt-1">{tier.revenue}</p>
+                  <p className="text-2xl font-black text-white">{tier.rate}</p>
                 </div>
-              </div>
-              <div className="md:col-span-1 flex items-center">
-                <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-2">
-                  <p className="text-sm font-bold text-primary flex items-center gap-1.5">
-                    <Zap className="w-4 h-4" />
-                    プログレッシブインセンティブ
-                  </p>
-                  <p className="text-xs text-foreground/80 leading-relaxed">
-                    売り上げ毎に収益還元率がUP！月間売上が増えるほど、受け取れる還元率も自動で上昇します。
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
