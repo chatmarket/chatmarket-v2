@@ -61,6 +61,22 @@ export default function Navbar() {
           </div>
         </form>
 
+        {/* Nav links */}
+        <div className="hidden md:flex items-center gap-1 shrink-0">
+          <Link to="/#plans">
+            <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
+              <CreditCard className="w-3.5 h-3.5" />
+              料金プラン
+            </Button>
+          </Link>
+          <a href="https://blog.chatmarket.app" target="_blank" rel="noopener noreferrer">
+            <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
+              <BookOpen className="w-3.5 h-3.5" />
+              運営ブログ
+            </Button>
+          </a>
+        </div>
+
         {/* Actions */}
         <div className="flex items-center gap-2">
           <LangSwitcher />
