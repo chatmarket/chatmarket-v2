@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const plans = [
