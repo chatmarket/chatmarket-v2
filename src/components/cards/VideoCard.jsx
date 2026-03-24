@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Clock } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 function formatDuration(seconds) {
   if (!seconds) return "";
