@@ -43,7 +43,7 @@ const plans = [
   {
     icon: Phone,
     name: "CALL＆ANSERプラン",
-    price: "¥3,300",
+    price: "¥6,600",
     period: "/月",
     revenueShare: "85%",
     color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30",
