@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const plans = [
@@ -41,9 +41,27 @@ const plans = [
     ],
   },
   {
+    icon: Phone,
+    name: "CALL＆ANSERプラン",
+    price: "¥3,300",
+    period: "/月",
+    revenueShare: "85%",
+    color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30",
+    iconColor: "text-cyan-400",
+    badge: "双方向有料通話",
+    badgeColor: "bg-cyan-500/20 text-cyan-300",
+    features: [
+      "1対1の双方向有料通話（15分毎に¥150〜）",
+      "30分×4回/日 無料通話",
+      "エールコイン受け取り機能",
+      "使用例：有料でインタビューさせてください、推し活、求人面接など",
+      "使い方はあなた次第！",
+    ],
+  },
+  {
     icon: Video,
     name: "VODプラン",
-    price: "¥9,000",
+    price: "¥9,900",
     period: "/月",
     color: "from-primary/20 to-primary/10 border-primary/40",
     iconColor: "text-primary",
@@ -64,6 +82,8 @@ const plans = [
     price: "¥12,000",
     period: "/月",
     revenueShare: "90%",
+    specialBadge: true,
+    comingSoon: true,
     color: "from-red-500/20 to-pink-600/10 border-red-400/40",
     iconColor: "text-red-400",
     badge: "クラウドファンディング",
@@ -97,33 +117,21 @@ const plans = [
 ];
 
 export default function PlanSection() {
-  const [user, setUser] = useState(null);
+  const [openIndex, setOpenIndex] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) {
-        base44.auth.me().then(setUser).catch(() => {});
-      }
-    });
-  }, []);
-
-  const handlePlanClick = (planName) => {
-    if (!user) {
-      base44.auth.redirectToLogin();
-      return;
-    }
-    // Create a payment page with plan info
+  const handlePlanClick = async (planName) => {
+    const isAuth = await base44.auth.isAuthenticated();
+    if (!isAuth) { base44.auth.redirectToLogin(); return; }
     const planMap = {
       "BASICプラン": "basic",
+      "CALL＆ANSERプラン": "call-anser",
       "VODプラン": "vod",
       "PPVプラン": "ppv",
       "BASIC＋クラウドファンディングプラン": "crowdfunding",
     };
     const planId = planMap[planName];
-    if (planId) {
-      navigate(`/payment?plan=${planId}`);
-    }
+    if (planId) navigate(`/payment?plan=${planId}`);
   };
 
   return (
@@ -135,69 +143,84 @@ export default function PlanSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {plans.map((plan) => {
+      <div className="space-y-3">
+        {plans.map((plan, i) => {
           const Icon = plan.icon;
+          const isOpen = openIndex === i;
           return (
             <div
               key={plan.name}
-              className={`relative rounded-2xl bg-gradient-to-br border p-6 flex flex-col gap-4 ${plan.color} ${plan.popular ? "ring-2 ring-primary" : ""}`}
+              className={`rounded-2xl bg-gradient-to-br border overflow-hidden ${plan.color} ${plan.popular ? "ring-2 ring-primary" : ""}`}
             >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full">
-                  人気
-                </div>
-              )}
-              {plan.name === "BASIC＋クラウドファンディングプラン" && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
-                  🚧 現在準備中
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center`}>
+              {/* Header row — always visible */}
+              <button
+                className="w-full flex items-center gap-4 px-5 py-4 text-left"
+                onClick={() => setOpenIndex(isOpen ? null : i)}
+              >
+                <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center shrink-0">
                   <Icon className={`w-5 h-5 ${plan.iconColor}`} />
                 </div>
-                <div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.badgeColor}`}>
-                    {plan.badge}
-                  </span>
-                  <h3 className="font-bold text-lg mt-0.5">{plan.name}</h3>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.badgeColor}`}>
+                      {plan.badge}
+                    </span>
+                    {plan.popular && (
+                      <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">人気</span>
+                    )}
+                    {plan.comingSoon && (
+                      <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">🚧 現在準備中</span>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-base mt-0.5">{plan.name}</h3>
                   {plan.revenueShare && (
-                    <p className="text-xs text-primary font-semibold mt-0.5 flex items-center gap-1.5 flex-wrap">
+                    <p className="text-xs text-primary font-semibold flex items-center gap-1.5 flex-wrap">
                       収益還元率 {plan.revenueShare}
-                      {plan.name === "BASIC＋クラウドファンディングプラン" && (
+                      {plan.specialBadge && (
                         <span className="text-[10px] font-bold bg-orange-500 text-white px-1.5 py-0.5 rounded-full">特別還元枠（変更有）</span>
                       )}
                     </p>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-end gap-1">
-                <span className="text-3xl font-black">{plan.price}</span>
-                <span className="text-muted-foreground text-sm mb-1">{plan.period}（税込）</span>
-              </div>
+                <div className="text-right shrink-0">
+                  <span className="text-xl font-black">{plan.price}</span>
+                  <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>
+                </div>
 
-              <ul className="space-y-2 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-foreground/80">{f}</span>
-                  </li>
-                ))}
-              </ul>
+                {isOpen ? (
+                  <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+                )}
+              </button>
 
-              <Button
-                onClick={() => {
-                  if (plan.name === "FREEプラン") navigate("/go-live");
-                  else if (plan.name === "BASIC＋クラウドファンディングプラン") navigate("/crowdfunding/new");
-                  else handlePlanClick(plan.name);
-                }}
-                className={`w-full mt-2 ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
-              >
-                {plan.name === "FREEプラン" ? "1対1のビデオ通話を開始" : plan.name === "BASIC＋クラウドファンディングプラン" ? "申請・登録する" : "このプランで始める"}
-              </Button>
+              {/* Expandable content */}
+              {isOpen && (
+                <div className="px-5 pb-5 border-t border-white/10 pt-4 space-y-4">
+                  <ul className="space-y-2">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm">
+                        <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                        <span className="text-foreground/80">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    onClick={() => {
+                      if (plan.name === "FREEプラン") navigate("/go-live");
+                      else if (plan.name === "BASIC＋クラウドファンディングプラン") navigate("/crowdfunding/new");
+                      else handlePlanClick(plan.name);
+                    }}
+                    className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
+                  >
+                    {plan.name === "FREEプラン" ? "1対1のビデオ通話を開始"
+                      : plan.name === "BASIC＋クラウドファンディングプラン" ? "申請・登録する"
+                      : "このプランで始める"}
+                  </Button>
+                </div>
+              )}
             </div>
           );
         })}
