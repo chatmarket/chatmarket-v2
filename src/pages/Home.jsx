@@ -9,6 +9,7 @@ import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
 import PlanSection from "../components/home/PlanSection";
+import PwaInstallGuide from "../components/home/PwaInstallGuide";
 
 export default function Home() {
   const [user, setUser] = useState(null);
