@@ -25,7 +25,7 @@ export default function Home() {
 
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
-    queryFn: () => base44.entities.Video.list("-created_date", 20),
+    queryFn: () => base44.entities.Video.list("-created_date", 30),
   });
 
   const { data: channels = [] } = useQuery({
@@ -35,16 +35,15 @@ export default function Home() {
 
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["livestreams-home"],
-    queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 8),
+    queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6),
   });
 
-  const featuredVideos = videos.filter((v) => !v.is_free && v.price > 0).slice(0, 4);
-  // 4 least-viewed paid videos
+  const featuredVideos = videos.filter((v) => !v.is_free && v.price > 0).slice(0, 6);
   const lowViewPaidVideos = videos
     .filter((v) => !v.is_free && v.price > 0)
     .sort((a, b) => (a.view_count || 0) - (b.view_count || 0))
-    .slice(0, 4);
-  const recentVideos = videos.slice(0, 8);
+    .slice(0, 6);
+  const recentVideos = videos.slice(0, 6);
 
   const getChannelForVideo = (video) => {
     return channels.find((c) => c.id === video.channel_id);
