@@ -118,6 +118,7 @@ export default function PlanSection() {
       "BASICプラン": "basic",
       "VODプラン": "vod",
       "PPVプラン": "ppv",
+      "BASIC＋クラウドファンディングプラン": "crowdfunding",
     };
     const planId = planMap[planName];
     if (planId) {
