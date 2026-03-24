@@ -35,6 +35,13 @@ export default function VideoCard({ video, size = "default" }) {
           </div>
         )}
 
+        {/* SAMPLE watermark */}
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <span className="text-white/30 text-3xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
+            SAMPLE
+          </span>
+        </div>
+
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
