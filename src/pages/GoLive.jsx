@@ -26,8 +26,8 @@ export default function GoLive() {
     description: "",
     scheduled_at: "",
     availableTime: "",
-    duration: 15,
-    price: 150,
+    duration: mode === MODE_LIVE ? 60 : 15,
+    price: mode === MODE_LIVE ? 1 : 150,
     isPaid: false,
     // Archive settings
     saveArchive: false,
