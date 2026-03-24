@@ -16,6 +16,8 @@ export default function Upload() {
   const [uploading, setUploading] = useState(false);
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoError, setVideoError] = useState("");
   const [form, setForm] = useState({
     title: "",
     description: "",
