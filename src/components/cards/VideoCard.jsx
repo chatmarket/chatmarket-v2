@@ -63,7 +63,20 @@ export default function VideoCard({ video, size = "default" }) {
         <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${isLarge ? "text-base" : "text-sm"}`}>
           {video.title}
         </h3>
-        <p className="text-xs text-muted-foreground">{video.channel_name}</p>
+        <Link
+          to={`/channel/${video.channel_id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1.5 group/ch"
+        >
+          {video.channel_avatar ? (
+            <img src={video.channel_avatar} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-bold text-primary">{video.channel_name?.[0]}</span>
+            </div>
+          )}
+          <span className="text-xs text-muted-foreground group-hover/ch:text-primary transition-colors truncate">{video.channel_name}</span>
+        </Link>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Eye className="w-3 h-3" />
