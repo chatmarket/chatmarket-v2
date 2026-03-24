@@ -174,20 +174,43 @@ export default function Upload() {
               type="file"
               accept="video/*"
               className="hidden"
-              onChange={(e) => setVideoFile(e.target.files[0])}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const video = document.createElement("video");
+                  video.onloadedmetadata = () => {
+                    const durationSeconds = Math.ceil(video.duration);
+                    if (durationSeconds > remainingDuration) {
+                      setVideoError(`この動画は${Math.ceil(durationSeconds / 60)}分です。本日のアップロード可能時間は残り${Math.ceil(remainingDuration / 60)}分です。`);
+                      setVideoFile(null);
+                      setVideoDuration(0);
+                    } else {
+                      setVideoDuration(durationSeconds);
+                      setVideoError("");
+                      setVideoFile(file);
+                    }
+                  };
+                  video.src = URL.createObjectURL(file);
+                }
+              }}
             />
             {videoFile ? (
-              <div className="flex items-center gap-2 text-primary">
+              <div className="flex flex-col items-center gap-2 text-primary">
                 <Film className="w-5 h-5" />
                 <span className="text-sm font-medium">{videoFile.name}</span>
+                <span className="text-xs text-muted-foreground">{Math.ceil(videoDuration / 60)}分</span>
               </div>
             ) : (
               <div className="text-center">
                 <UploadIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">クリックして動画を選択</p>
+                <p className="text-xs text-muted-foreground mt-1">本日の使用可能時間: {Math.ceil(remainingDuration / 60)}分 / 120分</p>
               </div>
             )}
           </label>
+          {videoError && (
+            <p className="text-destructive text-xs font-semibold">⚠️ {videoError}</p>
+          )}
         </div>
 
         {/* Thumbnail */}
