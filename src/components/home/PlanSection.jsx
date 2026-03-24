@@ -215,9 +215,10 @@ export default function PlanSection() {
         })}
       </div>
 
-      <p className="text-center text-xs text-muted-foreground mt-6">
-        ※ プラットフォーム手数料：動画・ライブ売上の15%、エールコインの10%
-      </p>
+      <div className="text-center text-xs text-muted-foreground mt-6 space-y-1">
+        <p>※ プラットフォーム手数料：動画・ライブ売上の15%、エールコインの10%</p>
+        <p>※ 銀行振込でのお支払いの場合、振込手数料は実費でご負担いただきます。</p>
+      </div>
     </section>
   );
 }
