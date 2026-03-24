@@ -21,6 +21,8 @@ import CrowdfundingList from './pages/CrowdfundingList';
 import CrowdfundingDetail from './pages/CrowdfundingDetail';
 import CrowdfundingNew from './pages/CrowdfundingNew';
 import PlanDetail from './pages/PlanDetail';
+import PlanSelect from './pages/PlanSelect';
+import PlanConfirm from './pages/PlanConfirm';
 import Blog from './pages/Blog';
 import BlogDetail from './pages/BlogDetail';
 import BlogEdit from './pages/BlogEdit';
@@ -62,6 +64,8 @@ const AuthenticatedApp = () => {
         <Route path="/crowdfunding/new" element={<CrowdfundingNew />} />
         <Route path="/crowdfunding/:id" element={<CrowdfundingDetail />} />
         <Route path="/plan/:planId" element={<PlanDetail />} />
+        <Route path="/plan-select" element={<PlanSelect />} />
+        <Route path="/plan-confirm" element={<PlanConfirm />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/new" element={<BlogEdit />} />
         <Route path="/blog/edit/:id" element={<BlogEdit />} />
