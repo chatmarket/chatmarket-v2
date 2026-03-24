@@ -84,6 +84,7 @@ export default function Upload() {
       thumbnail_url,
       channel_id: channel.id,
       channel_name: channel.name,
+      channel_avatar: channel.avatar_url || "",
       price: form.is_free ? 0 : form.price,
     });
 
