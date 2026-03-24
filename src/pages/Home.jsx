@@ -185,6 +185,9 @@ export default function Home() {
       {/* PWA Install Guide */}
       <PwaInstallGuide />
 
+      {/* Progressive Incentive */}
+      <ProgressiveIncentiveSection />
+
       {videos.length === 0 && liveStreams.length === 0 && (
         <div className="text-center py-24 text-muted-foreground">
           <Radio className="w-12 h-12 mx-auto mb-4 opacity-30" />
