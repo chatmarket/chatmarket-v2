@@ -9,6 +9,7 @@ import { Users, Video, Radio, MessageCircle } from "lucide-react";
 
 export default function ChannelPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const { data: channel, isLoading } = useQuery({
     queryKey: ["channel", id],

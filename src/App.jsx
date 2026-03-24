@@ -65,6 +65,7 @@ const AuthenticatedApp = () => {
         <Route path="/crowdfunding/new" element={<CrowdfundingNew />} />
         <Route path="/crowdfunding/:id" element={<CrowdfundingDetail />} />
         <Route path="/plan/:planId" element={<PlanDetail />} />
+        <Route path="/chat/:channelId" element={<DirectChat />} />
         <Route path="/plan-select" element={<PlanSelect />} />
         <Route path="/plan-confirm" element={<PlanConfirm />} />
         <Route path="/blog" element={<Blog />} />
