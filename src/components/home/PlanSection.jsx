@@ -148,6 +148,11 @@ export default function PlanSection() {
                   人気
                 </div>
               )}
+              {plan.name === "BASIC＋クラウドファンディングプラン" && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                  🚧 現在準備中
+                </div>
+              )}
 
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center`}>
