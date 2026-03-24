@@ -165,6 +165,18 @@ export default function Navbar() {
               />
             </div>
           </form>
+          <div className="flex gap-2">
+            <Link to="/#plans" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+              <Button variant="secondary" className="w-full gap-2 text-xs">
+                <CreditCard className="w-4 h-4" /> 料金プラン
+              </Button>
+            </Link>
+            <a href="https://blog.chatmarket.app" target="_blank" rel="noopener noreferrer" className="flex-1">
+              <Button variant="secondary" className="w-full gap-2 text-xs">
+                <BookOpen className="w-4 h-4" /> 運営ブログ
+              </Button>
+            </a>
+          </div>
           {user ? (
             <div className="flex gap-2">
               <Link to="/upload" className="flex-1" onClick={() => setIsMenuOpen(false)}>
