@@ -96,12 +96,53 @@ export default function Upload() {
     <div className="max-w-2xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-6">動画アップロード</h1>
 
-      {/* Warning notice */}
-      <div className="bg-destructive/10 border border-destructive/50 rounded-xl p-4 mb-8">
-        <p className="text-destructive text-sm font-semibold leading-relaxed">
-          ⚠️ 注意事項<br />
-          他のWEBサイトにアップロードされた動画は掲載できません。著作権・肖像権侵害などに関して弊社は一切の責任を負いません。
-        </p>
+      {/* Terms of Use */}
+      <div className="bg-secondary/60 border border-border/60 rounded-xl p-5 mb-8 space-y-4 text-sm">
+        <p className="font-bold text-base flex items-center gap-2">📋 動画投稿における利用規約</p>
+        <p className="text-muted-foreground text-xs">動画をアップロードする前に、以下の利用規約をよくお読みください。アップロードを行うことで、本規約に同意したものとみなします。</p>
+
+        <div className="space-y-3">
+          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+            <p className="font-semibold text-destructive text-xs mb-1">⚠️ 著作権について</p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>投稿する動画は、ご自身が著作権を有するオリジナルコンテンツに限ります。</li>
+              <li>第三者が著作権を有する音楽・映像・画像・テキスト等を無断で使用することは禁止します。</li>
+              <li>他のウェブサイト・サービスからダウンロードした動画の再アップロードは一切禁止です。</li>
+              <li>著作権侵害が確認された場合、予告なく動画の削除およびアカウントの停止を行います。</li>
+              <li>著作権侵害による第三者からの申立てや損害について、当社は一切の責任を負いません。</li>
+            </ul>
+          </div>
+
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+            <p className="font-semibold text-orange-400 text-xs mb-1">👤 肖像権について</p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>動画に第三者が映り込む場合は、必ず本人の同意を得てください。</li>
+              <li>無断で他人の顔・姿を撮影・公開する行為は肖像権の侵害となります。</li>
+              <li>公共の場での撮影であっても、特定個人が識別できる場合は同意が必要です。</li>
+              <li>未成年者が映り込む場合は、保護者の同意が必要です。</li>
+              <li>肖像権侵害に関して、当社は一切の責任を負いません。投稿者が全責任を負うものとします。</li>
+            </ul>
+          </div>
+
+          <div className="bg-secondary rounded-lg p-3">
+            <p className="font-semibold text-xs mb-1">🚫 禁止コンテンツ</p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>わいせつ・暴力・差別的表現を含むコンテンツ</li>
+              <li>個人情報（住所・電話番号・金融情報等）を含むコンテンツ</li>
+              <li>詐欺・フィッシング・スパム行為を目的としたコンテンツ</li>
+              <li>法令に違反するコンテンツ全般</li>
+            </ul>
+          </div>
+
+          <div className="bg-secondary rounded-lg p-3">
+            <p className="font-semibold text-xs mb-1">📌 その他の注意事項</p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>無料動画の投稿は１週間に１本までです。</li>
+              <li>当社は、規約違反コンテンツを予告なく削除する権利を有します。</li>
+              <li>投稿コンテンツに関するトラブルは投稿者の責任において解決するものとします。</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -200,6 +241,7 @@ export default function Upload() {
             <div>
               <Label>無料で公開</Label>
               <p className="text-xs text-muted-foreground mt-0.5">オフにすると有料動画になります</p>
+              <p className="text-xs text-yellow-400/80 mt-1">※ 無料動画投稿は１週間に１回となります</p>
             </div>
             <Switch
               checked={form.is_free}
