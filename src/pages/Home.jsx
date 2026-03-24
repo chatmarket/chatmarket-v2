@@ -72,8 +72,10 @@ export default function Home() {
           <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-4">
             {t("hero_title")}
           </h1>
-          <p className="text-muted-foreground mb-6 text-sm md:text-base">
-            {t("hero_sub")}
+          <p className="text-muted-foreground mb-6 text-sm md:text-base leading-relaxed">
+            有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />
+            このプラットフォーム一つで！<br />
+            使い方は貴方次第で無限大！
           </p>
           <div className="flex flex-wrap gap-3">
             <Link to="/go-live">

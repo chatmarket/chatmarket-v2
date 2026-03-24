@@ -61,6 +61,7 @@ export default function ProgressiveIncentiveSection() {
               </div>
             </div>
             <h3 className="text-xl font-black">売上が増えるほど<br />あなたへの還元率が上がる！</h3>
+            <p className="text-sm font-semibold text-primary">BASICプランのサブスクに加入して収益最大化の鍵を手に入れてください！</p>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
               ChatMarketでは、月間の売上金額に応じて自動的に収益還元率が引き上げられます。
               頑張れば頑張るほど、受け取れる金額が増える仕組みです。

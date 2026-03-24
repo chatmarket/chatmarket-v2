@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
