@@ -170,6 +170,7 @@ export default function PlanDetail() {
 
   const handleRegister = () => {
     if (planId === "free") { navigate("/go-live"); return; }
+    if (planId === "basic") { navigate("/go-live"); return; }
     if (planId === "crowdfunding") { navigate("/crowdfunding/new"); return; }
     if (paymentUrl) { window.open(paymentUrl, "_blank"); return; }
   };
