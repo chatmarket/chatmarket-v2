@@ -69,12 +69,12 @@ export default function Navbar() {
               料金プラン
             </Button>
           </a>
-          <a href="https://blog.chatmarket.app" target="_blank" rel="noopener noreferrer">
+          <Link to="/blog">
             <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
               <BookOpen className="w-3.5 h-3.5" />
               運営ブログ
             </Button>
-          </a>
+          </Link>
         </div>
 
         {/* Actions */}
@@ -171,11 +171,11 @@ export default function Navbar() {
                 <CreditCard className="w-4 h-4" /> 料金プラン
               </Button>
             </a>
-            <a href="https://blog.chatmarket.app" target="_blank" rel="noopener noreferrer" className="flex-1">
+            <Link to="/blog" className="flex-1" onClick={() => setIsMenuOpen(false)}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <BookOpen className="w-4 h-4" /> 運営ブログ
               </Button>
-            </a>
+            </Link>
           </div>
           {user ? (
             <div className="flex gap-2">
