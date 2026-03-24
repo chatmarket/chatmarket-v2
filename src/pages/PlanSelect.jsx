@@ -146,6 +146,7 @@ export default function PlanSelect() {
       <div>
         <h1 className="text-2xl font-black">プランを選択する</h1>
         <p className="text-muted-foreground text-sm mt-1">複数のプランを組み合わせてお申し込みいただけます。</p>
+        <p className="text-sm text-foreground/80 mt-2">ChatMarketのプランは必要なプランをお選び頂き組み合わせてお申し込みが出来ます。</p>
       </div>
 
       {/* おすすめコンボ */}
