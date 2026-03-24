@@ -103,7 +103,7 @@ const plans = {
   ppv: {
     icon: Radio,
     name: "PPVプラン",
-    price: "¥9,000",
+    price: "¥9,900",
     period: "/月",
     revenueShare: "85%",
     color: "from-red-500/20 to-red-600/10 border-red-500/30",

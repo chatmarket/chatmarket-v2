@@ -204,6 +204,9 @@ export default function PlanSection() {
                       </li>
                     ))}
                   </ul>
+                  {plan.note && (
+                    <p className="text-xs text-muted-foreground bg-white/5 rounded-lg px-3 py-2">{plan.note}</p>
+                  )}
                   <Button
                     onClick={() => navigate(`/plan/${planSlugMap[plan.name]}`)}
                     className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : "bg-white/10 hover:bg-white/20 text-foreground"}`}
