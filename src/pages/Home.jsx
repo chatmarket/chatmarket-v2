@@ -96,16 +96,7 @@ export default function Home() {
       </div>
 
       {/* Revenue Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/30 px-6 py-4 flex flex-col items-center justify-center gap-2 text-center">
-        <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">A platform for unbounded free speech</p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-          <span className="text-primary font-black text-lg leading-tight">無料登録でも70％の収益還元</span>
-          <span className="text-muted-foreground hidden sm:block">|</span>
-          <span className="text-foreground font-semibold text-sm">プランを組み合わせ最大<span className="text-primary font-black text-xl mx-1">95％</span>の収益還元率を実現！</span>
-        </div>
-        <p className="text-muted-foreground text-xs">必要なプランを組み合わせてご利用ください</p>
-        <p className="text-muted-foreground text-xs">＊プログレッシブ・インセンティブに自動参加出来るBASICプラン以上へのお申し込みが必要です</p>
-      </div>
+      <RevenueBanner />
 
       {/* Live Streams */}
       {liveStreams.length > 0 && (
