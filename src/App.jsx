@@ -54,6 +54,9 @@ const AuthenticatedApp = () => {
         <Route path="/channel/:id" element={<ChannelPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/call/:callId" element={<VideoCallPage />} />
+        <Route path="/crowdfunding" element={<CrowdfundingList />} />
+        <Route path="/crowdfunding/new" element={<CrowdfundingNew />} />
+        <Route path="/crowdfunding/:id" element={<CrowdfundingDetail />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
