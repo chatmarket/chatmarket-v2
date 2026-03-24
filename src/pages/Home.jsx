@@ -104,6 +104,7 @@ export default function Home() {
           <span className="text-foreground font-semibold text-sm">プランを組み合わせ最大<span className="text-primary font-black text-xl mx-1">95％</span>の収益還元率を実現！</span>
         </div>
         <p className="text-muted-foreground text-xs">必要なプランを組み合わせてご利用ください</p>
+        <p className="text-muted-foreground text-xs">＊プログレッシブ・インセンティブに自動参加出来るBASICプラン以上へのお申し込みが必要です</p>
       </div>
 
       {/* Live Streams */}
