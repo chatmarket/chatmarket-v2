@@ -240,7 +240,7 @@ export default function PwaInstallGuide() {
               <Smartphone className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-base font-bold">スマートフォンでアプリとして使う</h2>
+              <h2 className="text-base font-bold flex items-center gap-2">スマートフォンでアプリとして使う <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">推奨</span></h2>
               <p className="text-xs text-muted-foreground mt-0.5">ホーム画面に追加してアプリのように起動</p>
             </div>
           </div>
