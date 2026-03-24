@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import CategoryTagSelector from "../components/channel/CategoryTagSelector";
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -35,6 +36,9 @@ export default function Settings() {
     auto_subscribe_price: 3000,
     auto_subscribe_enabled: false,
   });
+  const [channelTags, setChannelTags] = useState([]);
+  const [channelCategoryId, setChannelCategoryId] = useState("");
+  const [channelId, setChannelId] = useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -58,7 +62,22 @@ export default function Settings() {
       }
     });
 
-    // Load channel bank info
+    // Load channel info (bank + tags)
+    base44.auth.me().then(async (u) => {
+      const channels = await base44.entities.Channel.filter({ owner_email: u.email });
+      if (channels[0]) {
+        setBank({
+          bank_account_name: channels[0].bank_account_name || "",
+          bank_name: channels[0].bank_name || "",
+          bank_branch: channels[0].bank_branch || "",
+          bank_account_number: channels[0].bank_account_number || "",
+          bank_account_type: channels[0].bank_account_type || "普通",
+        });
+        setChannelTags(channels[0].tags || []);
+        setChannelCategoryId(channels[0].category_id || "");
+        setChannelId(channels[0].id);
+      }
+    }).catch(() => {});
   }, []);
 
   const handleSaveProfile = async () => {
