@@ -108,11 +108,11 @@ export default function Home() {
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
             <h2 className="text-xl font-bold">{t("liveNow")}</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <ScrollRow cardWidth={280}>
             {liveStreams.map((stream) => (
               <LiveStreamCard key={stream.id} stream={stream} />
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
 
@@ -120,7 +120,7 @@ export default function Home() {
       {featuredVideos.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-5">{t("recommended")}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <ScrollRow cardWidth={280}>
             {featuredVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
@@ -133,7 +133,7 @@ export default function Home() {
                 </button>
               </div>
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
 
@@ -142,7 +142,7 @@ export default function Home() {
         <section>
           <h2 className="text-xl font-bold mb-2">注目の有料動画（再生数が少ない穴場）</h2>
           <p className="text-sm text-muted-foreground mb-5">まだあまり見られていない希少コンテンツ</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <ScrollRow cardWidth={280}>
             {lowViewPaidVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
@@ -155,7 +155,7 @@ export default function Home() {
                 </button>
               </div>
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
 
@@ -163,7 +163,7 @@ export default function Home() {
       {recentVideos.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-5">{t("newest")}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <ScrollRow cardWidth={280}>
             {recentVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
@@ -176,7 +176,7 @@ export default function Home() {
                 </button>
               </div>
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
 
