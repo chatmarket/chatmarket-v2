@@ -9,6 +9,7 @@ import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
 import PlanSection from "../components/home/PlanSection";
+import ScrollRow from "../components/home/ScrollRow";
 import PwaInstallGuide from "../components/home/PwaInstallGuide";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
 
