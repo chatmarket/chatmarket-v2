@@ -159,7 +159,12 @@ export default function PlanSection() {
                   </span>
                   <h3 className="font-bold text-lg mt-0.5">{plan.name}</h3>
                   {plan.revenueShare && (
-                    <p className="text-xs text-primary font-semibold mt-0.5">収益還元率 {plan.revenueShare}</p>
+                    <p className="text-xs text-primary font-semibold mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      収益還元率 {plan.revenueShare}
+                      {plan.name === "BASIC＋クラウドファンディングプラン" && (
+                        <span className="text-[10px] font-bold bg-orange-500 text-white px-1.5 py-0.5 rounded-full">特別還元枠（変更有）</span>
+                      )}
+                    </p>
                   )}
                 </div>
               </div>
