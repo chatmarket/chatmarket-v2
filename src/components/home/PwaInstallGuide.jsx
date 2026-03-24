@@ -135,8 +135,8 @@ const browsers = [
           <div className="flex items-center justify-center bg-gray-900 rounded-xl border border-gray-700 p-3 mt-2">
             <div className="w-full max-w-[200px]">
               <div className="bg-gray-800 rounded-xl p-4 text-center space-y-3">
-                <div className="w-12 h-12 bg-primary rounded-2xl mx-auto flex items-center justify-center text-xl">
-                  📺
+                <div className="w-12 h-12 bg-primary rounded-2xl mx-auto flex items-center justify-center overflow-hidden">
+                  <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png" alt="ChatMarket" className="w-9 h-9 object-contain" />
                 </div>
                 <p className="text-xs text-gray-300">「ChatMarket」をホーム画面に追加しますか？</p>
                 <div className="flex gap-2">
