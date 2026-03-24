@@ -56,6 +56,11 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
+      {/* 準備中バナー */}
+      <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/40 px-6 py-5 text-center space-y-1">
+        <p className="text-yellow-300 font-black text-xl">🚧 現在準備中です 🚧</p>
+        <p className="text-yellow-200/70 text-sm">サービスは現在準備中です。近日公開予定ですので、今しばらくお待ちください。</p>
+      </div>
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-card to-secondary border border-border/50 p-8 md:p-12">
         <div className="relative z-10 max-w-lg">
