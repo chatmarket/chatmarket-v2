@@ -21,7 +21,6 @@ import CrowdfundingList from './pages/CrowdfundingList';
 import CrowdfundingDetail from './pages/CrowdfundingDetail';
 import CrowdfundingNew from './pages/CrowdfundingNew';
 import PlanDetail from './pages/PlanDetail';
-import DirectChat from './pages/DirectChat';
 import PlanSelect from './pages/PlanSelect';
 import PlanConfirm from './pages/PlanConfirm';
 import Blog from './pages/Blog';
