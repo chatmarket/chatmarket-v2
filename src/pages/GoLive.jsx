@@ -101,7 +101,7 @@ export default function GoLive() {
     }
   };
 
-  const minPrice = (form.duration / 15) * 150;
+  const minPrice = mode === MODE_LIVE ? 1 : (form.duration / 15) * 150;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
