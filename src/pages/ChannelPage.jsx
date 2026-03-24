@@ -78,6 +78,14 @@ export default function ChannelPage() {
               )}
             </div>
           </div>
+          <Button
+            onClick={() => navigate(`/chat/${id}`)}
+            className="gap-2 bg-primary hover:bg-primary/90 shrink-0"
+            size="sm"
+          >
+            <MessageCircle className="w-4 h-4" />
+            チャットで問い合わせ
+          </Button>
         </div>
       </div>
 
