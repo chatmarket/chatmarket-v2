@@ -52,7 +52,25 @@ export default function Upload() {
     enabled: !!user,
   });
 
+  // Check today's upload duration for VOD plan
+  const { data: todayVideos = [] } = useQuery({
+    queryKey: ["today-videos", user?.email],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStart = today.toISOString();
+      const all = await base44.entities.Video.filter({ });
+      return all.filter(
+        (v) => v.created_by === user.email && v.created_date >= todayStart
+      );
+    },
+    enabled: !!user,
+  });
+
+  const todayUploadDuration = todayVideos.reduce((sum, v) => sum + (v.duration || 0), 0);
+  const remainingDuration = 7200 - todayUploadDuration; // 120分 = 7200秒
   const freeVideoBlocked = form.is_free && recentFreeVideos.length >= 1;
+  const uploadDurationExceeded = videoDuration > remainingDuration * 1000; // Convert to ms
 
   const handleSubmit = async (e) => {
     e.preventDefault();
