@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Phone, PhoneOff, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff, AlertTriangle } from "lucide-react";
+import {
+  Phone, PhoneOff, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
+  AlertTriangle, Smile, Settings, Image, Sparkles, ChevronUp, ChevronDown, X
+} from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
+// ---- Constants ----
 const YELL_AMOUNTS = [
   { value: 200, color: "green", label: "¥200" },
   { value: 500, color: "green", label: "¥500" },
@@ -28,21 +29,104 @@ const colorStyles = {
   red: "bg-red-500/20 border-red-500/50 text-red-400",
 };
 
+const EMOJIS = ["😊","😂","🥺","❤️","🔥","👏","💪","🎉","😎","🙏","👍","✨","😍","🤩","💯","🫶","😆","🥳","😘","💫"];
+
+const THROW_MARKS = [
+  { emoji: "🌹", label: "バラ" },
+  { emoji: "⭐", label: "スター" },
+  { emoji: "🎁", label: "プレゼント" },
+  { emoji: "🪄", label: "魔法" },
+  { emoji: "🦋", label: "蝶々" },
+  { emoji: "💎", label: "ダイヤ" },
+  { emoji: "🍀", label: "四葉" },
+  { emoji: "🎵", label: "音符" },
+];
+
+const FILTERS = [
+  { id: "none", label: "なし", style: "" },
+  { id: "beauty", label: "美肌", style: "brightness(1.1) contrast(0.9) saturate(1.1)" },
+  { id: "vivid", label: "ビビッド", style: "saturate(1.5) contrast(1.1)" },
+  { id: "cool", label: "クール", style: "hue-rotate(30deg) saturate(0.9)" },
+  { id: "warm", label: "温かみ", style: "sepia(0.3) saturate(1.2)" },
+  { id: "mono", label: "モノクロ", style: "grayscale(1)" },
+  { id: "blur-bg", label: "ぼかし", style: "blur(0px)" }, // simulated
+];
+
+const BACKGROUNDS = [
+  { id: "none", label: "なし", preview: null },
+  { id: "blur", label: "ぼかし", preview: "blur" },
+  { id: "office", label: "オフィス", preview: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80" },
+  { id: "cafe", label: "カフェ", preview: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&q=80" },
+  { id: "nature", label: "自然", preview: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80" },
+  { id: "studio", label: "スタジオ", preview: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80" },
+];
+
+const AUDIO_QUALITY = [
+  { id: "low", label: "低品質（省データ）" },
+  { id: "medium", label: "標準" },
+  { id: "high", label: "高品質" },
+];
+
+const VIDEO_QUALITY = [
+  { id: "360p", label: "360p（省データ）" },
+  { id: "480p", label: "480p（標準）" },
+  { id: "720p", label: "720p（HD）" },
+  { id: "1080p", label: "1080p（フルHD）" },
+];
+
+// ---- Floating emoji animation component ----
+function FloatingItem({ item, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <motion.div
+      className="pointer-events-none fixed text-4xl z-50 select-none"
+      initial={{ opacity: 1, y: 0, x: Math.random() * 80 + 20 + "%" }}
+      animate={{ opacity: 0, y: -200 }}
+      transition={{ duration: 2, ease: "easeOut" }}
+      style={{ bottom: "200px" }}
+    >
+      {item}
+    </motion.div>
+  );
+}
+
+// ---- Main Component ----
 export default function VideoCallPage() {
   const { callId } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const localVideoRef = useRef(null);
+  const canvasRef = useRef(null);
+
   const [user, setUser] = useState(null);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
+  const [localStream, setLocalStream] = useState(null);
+
+  // Panels
+  const [activePanel, setActivePanel] = useState(null); // "emoji" | "throw" | "filter" | "bg" | "settings" | null
+
+  // Filters & BG
+  const [selectedFilter, setSelectedFilter] = useState("none");
+  const [selectedBg, setSelectedBg] = useState("none");
+
+  // Quality
+  const [audioQuality, setAudioQuality] = useState("medium");
+  const [videoQuality, setVideoQuality] = useState("720p");
+
+  // Floating items
+  const [floatingItems, setFloatingItems] = useState([]);
+
+  // Modals
   const [showYellModal, setShowYellModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedYell, setSelectedYell] = useState(null);
   const [yellSending, setYellSending] = useState(false);
   const [reportReason, setReportReason] = useState("");
-  const [localStream, setLocalStream] = useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -60,16 +144,15 @@ export default function VideoCallPage() {
     refetchInterval: 3000,
   });
 
-  // Start local camera
+  // Start camera
   useEffect(() => {
     navigator.mediaDevices?.getUserMedia({ video: true, audio: true }).then((stream) => {
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
     }).catch(() => {});
-    return () => localStream?.getTracks().forEach((t) => t.stop());
+    return () => {};
   }, []);
 
-  // Toggle camera/mic
   useEffect(() => {
     if (!localStream) return;
     localStream.getVideoTracks().forEach((t) => (t.enabled = camOn));
@@ -104,16 +187,13 @@ export default function VideoCallPage() {
     setShowYellModal(false);
     setSelectedYell(null);
     toast.success(`¥${selectedYell.toLocaleString()} のエールコインを送りました！`);
+    addFloating("💰");
   };
 
   const handleBlock = async () => {
     if (!user || !call) return;
     const targetEmail = call.caller_email === user.email ? call.callee_email : call.caller_email;
-    await base44.entities.BlockReport.create({
-      type: "block",
-      from_email: user.email,
-      target_email: targetEmail,
-    });
+    await base44.entities.BlockReport.create({ type: "block", from_email: user.email, target_email: targetEmail });
     setShowBlockModal(false);
     toast.success("ブロックしました");
     handleEndCall();
@@ -122,121 +202,328 @@ export default function VideoCallPage() {
   const handleReport = async () => {
     if (!user || !call || !reportReason) return;
     const targetEmail = call.caller_email === user.email ? call.callee_email : call.caller_email;
-    await base44.entities.BlockReport.create({
-      type: "report",
-      from_email: user.email,
-      target_email: targetEmail,
-      reason: reportReason,
-    });
+    await base44.entities.BlockReport.create({ type: "report", from_email: user.email, target_email: targetEmail, reason: reportReason });
     setShowReportModal(false);
     setReportReason("");
     toast.success("通報しました。確認いたします。");
   };
+
+  const addFloating = useCallback((emoji) => {
+    const id = Date.now() + Math.random();
+    setFloatingItems((prev) => [...prev, { id, emoji }]);
+  }, []);
+
+  const removeFloating = useCallback((id) => {
+    setFloatingItems((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const togglePanel = (name) => setActivePanel(activePanel === name ? null : name);
+
+  const currentFilter = FILTERS.find((f) => f.id === selectedFilter);
 
   const otherName = call
     ? user?.email === call.caller_email ? call.callee_name : call.caller_name
     : "相手";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* Floating items */}
+      {floatingItems.map((f) => (
+        <FloatingItem key={f.id} item={f.emoji} onDone={() => removeFloating(f.id)} />
+      ))}
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-black/60 backdrop-blur z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+            <span className="text-sm font-bold text-primary">{otherName?.[0] || "?"}</span>
+          </div>
           <div>
-            <h2 className="text-lg font-bold">{otherName} との通話</h2>
+            <p className="text-white font-bold text-sm">{otherName} との通話</p>
             {call?.status === "active" && (
               <p className="text-xs text-primary flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" />
                 通話中
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setShowReportModal(true)} className="text-muted-foreground hover:text-red-400 gap-1 text-xs">
-              <Flag className="w-3.5 h-3.5" /> 通報
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowBlockModal(true)} className="text-muted-foreground hover:text-orange-400 gap-1 text-xs">
-              <Shield className="w-3.5 h-3.5" /> ブロック
-            </Button>
-          </div>
         </div>
-
-        {/* Video area */}
-        <div className="relative aspect-video bg-card rounded-2xl overflow-hidden border border-border/50 mb-4">
-          {/* Remote video placeholder */}
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-background">
-            <div className="w-20 h-20 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mb-3">
-              <span className="text-3xl font-bold text-primary">{otherName?.[0] || "?"}</span>
-            </div>
-            <p className="text-muted-foreground text-sm">{otherName}</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">P2P接続中...</p>
-          </div>
-
-          {/* Local video (PiP) */}
-          <div className="absolute bottom-4 right-4 w-36 h-24 rounded-xl overflow-hidden border-2 border-border bg-black">
-            <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-            {!camOn && (
-              <div className="absolute inset-0 flex items-center justify-center bg-secondary/80">
-                <CameraOff className="w-6 h-6 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-
-          {/* Yell coin notification area */}
-          {call?.yell_coin_amount > 0 && (
-            <div className="absolute top-4 left-4 bg-yellow-500/20 border border-yellow-500/40 rounded-full px-3 py-1 flex items-center gap-1.5 text-yellow-400 text-xs font-bold">
-              <Coins className="w-3.5 h-3.5" />
-              ¥{call.yell_coin_amount?.toLocaleString()} エールコイン
-            </div>
-          )}
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            size="icon"
-            variant={micOn ? "secondary" : "destructive"}
-            onClick={() => setMicOn(!micOn)}
-            className="w-12 h-12 rounded-full"
-          >
-            {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+        <div className="flex items-center gap-1">
+          <Button size="sm" variant="ghost" onClick={() => setShowReportModal(true)} className="text-white/60 hover:text-red-400 gap-1 text-xs h-8">
+            <Flag className="w-3.5 h-3.5" /> 通報
           </Button>
-
-          <Button
-            size="icon"
-            variant={camOn ? "secondary" : "destructive"}
-            onClick={() => setCamOn(!camOn)}
-            className="w-12 h-12 rounded-full"
-          >
-            {camOn ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
-          </Button>
-
-          <Button
-            onClick={() => setShowYellModal(true)}
-            className="gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-12 px-5 rounded-full"
-            variant="ghost"
-          >
-            <Coins className="w-5 h-5" />
-            エールコイン
-          </Button>
-
-          <Button
-            size="icon"
-            onClick={handleEndCall}
-            className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white"
-          >
-            <PhoneOff className="w-5 h-5" />
+          <Button size="sm" variant="ghost" onClick={() => setShowBlockModal(true)} className="text-white/60 hover:text-orange-400 gap-1 text-xs h-8">
+            <Shield className="w-3.5 h-3.5" /> ブロック
           </Button>
         </div>
       </div>
 
-      {/* Yell Coin Modal */}
+      {/* Main video area */}
+      <div className="flex-1 relative">
+        {/* Remote video (full screen) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+          {selectedBg !== "none" && selectedBg !== "blur" && (
+            <img
+              src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
+              alt=""
+            />
+          )}
+          <div className="flex flex-col items-center gap-3 relative z-10">
+            <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
+              <span className="text-4xl font-black text-primary">{otherName?.[0] || "?"}</span>
+            </div>
+            <p className="text-white/80 font-semibold">{otherName}</p>
+            <p className="text-white/40 text-xs animate-pulse">接続中...</p>
+          </div>
+        </div>
+
+        {/* Local video (PiP) */}
+        <div className="absolute bottom-4 right-4 w-32 h-44 md:w-40 md:h-56 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-black z-10">
+          <video
+            ref={localVideoRef}
+            autoPlay muted playsInline
+            className="w-full h-full object-cover"
+            style={{ filter: currentFilter?.style || "" }}
+          />
+          {!camOn && (
+            <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
+              <CameraOff className="w-6 h-6 text-muted-foreground" />
+            </div>
+          )}
+          {selectedBg === "blur" && (
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
+          )}
+          <div className="absolute bottom-1 left-1 right-1 text-center">
+            <span className="text-[10px] text-white/70 bg-black/50 px-2 py-0.5 rounded-full">あなた</span>
+          </div>
+        </div>
+
+        {/* Yell coin badge */}
+        {call?.yell_coin_amount > 0 && (
+          <div className="absolute top-4 left-4 z-10 bg-yellow-500/20 border border-yellow-500/40 rounded-full px-3 py-1 flex items-center gap-1.5 text-yellow-400 text-xs font-bold backdrop-blur">
+            <Coins className="w-3.5 h-3.5" />
+            ¥{call.yell_coin_amount?.toLocaleString()} エール済み
+          </div>
+        )}
+
+        {/* Active panel overlay */}
+        <AnimatePresence>
+          {activePanel && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-20 left-0 right-0 mx-4 z-20"
+            >
+              <div className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-white font-bold text-sm">
+                    {activePanel === "emoji" && "😊 絵文字を送る"}
+                    {activePanel === "throw" && "🎁 投げマーク"}
+                    {activePanel === "filter" && "✨ 加工フィルター"}
+                    {activePanel === "bg" && "🖼️ 背景"}
+                    {activePanel === "settings" && "⚙️ 音声・画質設定"}
+                  </p>
+                  <button onClick={() => setActivePanel(null)}>
+                    <X className="w-4 h-4 text-white/60" />
+                  </button>
+                </div>
+
+                {activePanel === "emoji" && (
+                  <div className="flex flex-wrap gap-2">
+                    {EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => { addFloating(emoji); }}
+                        className="text-2xl hover:scale-125 transition-transform"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {activePanel === "throw" && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {THROW_MARKS.map((mark) => (
+                      <button
+                        key={mark.emoji}
+                        onClick={() => { addFloating(mark.emoji); toast.success(`${mark.label}を投げました！`); }}
+                        className="flex flex-col items-center gap-1 bg-white/5 hover:bg-white/10 rounded-xl p-2 transition-all"
+                      >
+                        <span className="text-2xl">{mark.emoji}</span>
+                        <span className="text-[10px] text-white/60">{mark.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {activePanel === "filter" && (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {FILTERS.map((f) => (
+                      <button
+                        key={f.id}
+                        onClick={() => setSelectedFilter(f.id)}
+                        className={`shrink-0 flex flex-col items-center gap-1 rounded-xl p-2 transition-all ${selectedFilter === f.id ? "bg-primary/30 border border-primary" : "bg-white/5 hover:bg-white/10"}`}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/30 to-secondary overflow-hidden"
+                          style={{ filter: f.style }}
+                        >
+                          <div className="w-full h-full bg-gradient-to-br from-green-400/40 to-blue-400/40" />
+                        </div>
+                        <span className="text-[10px] text-white/70 whitespace-nowrap">{f.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {activePanel === "bg" && (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {BACKGROUNDS.map((bg) => (
+                      <button
+                        key={bg.id}
+                        onClick={() => setSelectedBg(bg.id)}
+                        className={`shrink-0 flex flex-col items-center gap-1 rounded-xl p-2 transition-all ${selectedBg === bg.id ? "bg-primary/30 border border-primary" : "bg-white/5 hover:bg-white/10"}`}
+                      >
+                        <div className="w-14 h-10 rounded-lg overflow-hidden bg-gray-800">
+                          {bg.preview === "blur" ? (
+                            <div className="w-full h-full bg-blue-400/20 backdrop-blur-xl" />
+                          ) : bg.preview ? (
+                            <img src={bg.preview} alt={bg.label} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                              <X className="w-3 h-3 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-white/70">{bg.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {activePanel === "settings" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-white/60 mb-1 block">🎙️ 音声品質</label>
+                      <div className="flex flex-wrap gap-2">
+                        {AUDIO_QUALITY.map((q) => (
+                          <button
+                            key={q.id}
+                            onClick={() => { setAudioQuality(q.id); toast.success(`音声品質を「${q.label}」に変更しました`); }}
+                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${audioQuality === q.id ? "bg-primary text-primary-foreground border-primary" : "bg-white/5 text-white/70 border-white/10 hover:border-primary/40"}`}
+                          >
+                            {q.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-white/60 mb-1 block">📹 映像品質</label>
+                      <div className="flex flex-wrap gap-2">
+                        {VIDEO_QUALITY.map((q) => (
+                          <button
+                            key={q.id}
+                            onClick={() => { setVideoQuality(q.id); toast.success(`映像品質を「${q.label}」に変更しました`); }}
+                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${videoQuality === q.id ? "bg-primary text-primary-foreground border-primary" : "bg-white/5 text-white/70 border-white/10 hover:border-primary/40"}`}
+                          >
+                            {q.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom controls */}
+      <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20">
+        {/* Feature row */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          {[
+            { key: "emoji", icon: Smile, label: "絵文字" },
+            { key: "throw", icon: Sparkles, label: "投げ" },
+            { key: "filter", icon: Camera, label: "フィルター" },
+            { key: "bg", icon: Image, label: "背景" },
+            { key: "settings", icon: Settings, label: "設定" },
+          ].map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              onClick={() => togglePanel(key)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
+                activePanel === key ? "bg-primary/20 border border-primary/40" : "bg-white/5 hover:bg-white/10"
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${activePanel === key ? "text-primary" : "text-white/70"}`} />
+              <span className={`text-[10px] ${activePanel === key ? "text-primary" : "text-white/50"}`}>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Main control row */}
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => setMicOn(!micOn)}
+            className={`w-13 h-13 w-12 h-12 rounded-full flex items-center justify-center transition-all ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
+          >
+            {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+          </button>
+
+          <button
+            onClick={() => setCamOn(!camOn)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
+          >
+            {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
+          </button>
+
+          <button
+            onClick={() => setShowYellModal(true)}
+            className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+          >
+            <Coins className="w-5 h-5" />
+            エール
+          </button>
+
+          <button
+            onClick={handleEndCall}
+            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-all"
+          >
+            <PhoneOff className="w-6 h-6 text-white" />
+          </button>
+        </div>
+
+        {/* Quality indicator */}
+        <div className="flex items-center justify-center gap-3 mt-3">
+          <span className="text-[10px] text-white/30">🎙️ {AUDIO_QUALITY.find(q => q.id === audioQuality)?.label}</span>
+          <span className="text-white/20">·</span>
+          <span className="text-[10px] text-white/30">📹 {videoQuality}</span>
+          {selectedFilter !== "none" && (
+            <>
+              <span className="text-white/20">·</span>
+              <span className="text-[10px] text-primary/60">✨ {FILTERS.find(f => f.id === selectedFilter)?.label}</span>
+            </>
+          )}
+          {selectedBg !== "none" && (
+            <>
+              <span className="text-white/20">·</span>
+              <span className="text-[10px] text-primary/60">🖼️ {BACKGROUNDS.find(b => b.id === selectedBg)?.label}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Yell Modal */}
       <Dialog open={showYellModal} onOpenChange={setShowYellModal}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-yellow-400" />
-              エールコインを送る
+              <Coins className="w-5 h-5 text-yellow-400" /> エールコインを送る
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -245,19 +532,13 @@ export default function VideoCallPage() {
                 <button
                   key={amt.value}
                   onClick={() => setSelectedYell(amt.value)}
-                  className={`p-3 rounded-lg border-2 transition-all font-bold text-sm ${
-                    selectedYell === amt.value ? colorStyles[amt.color] : "border-border bg-secondary hover:border-primary/30"
-                  }`}
+                  className={`p-3 rounded-lg border-2 transition-all font-bold text-sm ${selectedYell === amt.value ? colorStyles[amt.color] : "border-border bg-secondary hover:border-primary/30"}`}
                 >
                   {amt.label}
                 </button>
               ))}
             </div>
-            <Button
-              onClick={handleSendYell}
-              disabled={!selectedYell || yellSending}
-              className="w-full bg-yellow-500/80 hover:bg-yellow-500 text-black font-bold"
-            >
+            <Button onClick={handleSendYell} disabled={!selectedYell || yellSending} className="w-full bg-yellow-500/80 hover:bg-yellow-500 text-black font-bold">
               {yellSending ? "送信中..." : `¥${selectedYell?.toLocaleString() || 0} を送る`}
             </Button>
           </div>
@@ -269,13 +550,10 @@ export default function VideoCallPage() {
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-orange-400">
-              <Shield className="w-5 h-5" />
-              ブロックしますか？
+              <Shield className="w-5 h-5" /> ブロックしますか？
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            このユーザーをブロックすると、相手からのコンタクトを受け取れなくなります。通話も終了します。
-          </p>
+          <p className="text-sm text-muted-foreground">このユーザーをブロックすると、相手からのコンタクトを受け取れなくなります。通話も終了します。</p>
           <div className="flex gap-2 pt-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowBlockModal(false)}>キャンセル</Button>
             <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white" onClick={handleBlock}>ブロック</Button>
@@ -288,15 +566,13 @@ export default function VideoCallPage() {
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-400">
-              <AlertTriangle className="w-5 h-5" />
-              通報する
+              <AlertTriangle className="w-5 h-5" /> 通報する
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">通報理由を選択してください</p>
             <Select value={reportReason} onValueChange={setReportReason}>
               <SelectTrigger className="bg-secondary border-0">
-                <SelectValue placeholder="理由を選択" />
+                <SelectValue placeholder="通報理由を選択" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="スパム・迷惑行為">スパム・迷惑行為</SelectItem>
