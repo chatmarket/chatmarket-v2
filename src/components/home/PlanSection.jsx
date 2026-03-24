@@ -120,18 +120,13 @@ export default function PlanSection() {
   const [openIndex, setOpenIndex] = useState(null);
   const navigate = useNavigate();
 
-  const handlePlanClick = async (planName) => {
-    const isAuth = await base44.auth.isAuthenticated();
-    if (!isAuth) { base44.auth.redirectToLogin(); return; }
-    const planMap = {
-      "BASICプラン": "basic",
-      "CALL＆ANSERプラン": "call-anser",
-      "VODプラン": "vod",
-      "PPVプラン": "ppv",
-      "BASIC＋クラウドファンディングプラン": "crowdfunding",
-    };
-    const planId = planMap[planName];
-    if (planId) navigate(`/payment?plan=${planId}`);
+  const planSlugMap = {
+    "FREEプラン": "free",
+    "BASICプラン": "basic",
+    "CALL＆ANSERプラン": "call-anser",
+    "VODプラン": "vod",
+    "PPVプラン": "ppv",
+    "BASIC＋クラウドファンディングプラン": "crowdfunding",
   };
 
   return (
