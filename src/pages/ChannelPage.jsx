@@ -1,10 +1,11 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
-import { Users, Video, Radio } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Video, Radio, MessageCircle } from "lucide-react";
 
 export default function ChannelPage() {
   const { id } = useParams();
