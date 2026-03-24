@@ -88,7 +88,7 @@ const plans = {
     badge: "動画販売",
     badgeColor: "bg-primary/20 text-primary",
     popular: true,
-    description: "制作した動画を販売して収益化。アーカイブ販売も可能なVODプラン。",
+    description: "制作した動画を販売して収益化。アーカイブ販売も可能なVODプラン。BASICプランとの組み合わせでご利用いただけます。",
     features: [
       { title: "制作動画の販売機能", desc: "作成した動画を1本単位で販売できます。" },
       { title: "動画1本 ¥1〜（自由設定）", desc: "価格は¥1から自由に設定可能。" },
@@ -110,7 +110,7 @@ const plans = {
     iconColor: "text-red-400",
     badge: "有料ライブ配信",
     badgeColor: "bg-red-500/20 text-red-300",
-    description: "1対多数の有料ライブ配信でファンから直接収益化。PPV（ペイパービュー）形式で配信できます。",
+    description: "1対多数の有料ライブ配信でファンから直接収益化。PPV（ペイパービュー）形式で配信できます。BASICプランとの組み合わせでご利用いただけます。",
     features: [
       { title: "1対多数の有料ライブ配信", desc: "大勢のファンに向けたPPVライブ配信が可能。" },
       { title: "配信料金：15分 ¥150〜（自由設定）", desc: "チケット料金は自由に設定できます。" },
