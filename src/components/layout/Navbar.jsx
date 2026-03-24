@@ -63,12 +63,12 @@ export default function Navbar() {
 
         {/* Nav links */}
         <div className="hidden md:flex items-center gap-1 shrink-0">
-          <Link to="/#plans">
+          <a href="/#plans" onClick={(e) => { e.preventDefault(); const el = document.getElementById('plans'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else { window.location.href = '/#plans'; } }}>
             <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
               <CreditCard className="w-3.5 h-3.5" />
               料金プラン
             </Button>
-          </Link>
+          </a>
           <a href="https://blog.chatmarket.app" target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
               <BookOpen className="w-3.5 h-3.5" />
@@ -166,11 +166,11 @@ export default function Navbar() {
             </div>
           </form>
           <div className="flex gap-2">
-            <Link to="/#plans" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+            <a href="/#plans" className="flex-1" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); const el = document.getElementById('plans'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else { window.location.href = '/#plans'; } }}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <CreditCard className="w-4 h-4" /> 料金プラン
               </Button>
-            </Link>
+            </a>
             <a href="https://blog.chatmarket.app" target="_blank" rel="noopener noreferrer" className="flex-1">
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <BookOpen className="w-4 h-4" /> 運営ブログ
