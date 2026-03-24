@@ -21,6 +21,9 @@ import CrowdfundingList from './pages/CrowdfundingList';
 import CrowdfundingDetail from './pages/CrowdfundingDetail';
 import CrowdfundingNew from './pages/CrowdfundingNew';
 import PlanDetail from './pages/PlanDetail';
+import Blog from './pages/Blog';
+import BlogDetail from './pages/BlogDetail';
+import BlogEdit from './pages/BlogEdit';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
