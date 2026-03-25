@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Radio, Edit, Save, Upload } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [channelForm, setChannelForm] = useState({});
+  const [archiveModalStream, setArchiveModalStream] = useState(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -90,6 +92,13 @@ export default function MyChannel() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {archiveModalStream && (
+        <ArchivePriceModal
+          stream={archiveModalStream}
+          onClose={() => setArchiveModalStream(null)}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-streams", channel?.id] })}
+        />
+      )}
       {/* Channel Header */}
       <div className="bg-card rounded-2xl border border-border/50 p-6 mb-8">
         <div className="flex items-start gap-4">
@@ -198,9 +207,9 @@ export default function MyChannel() {
           {streams.length > 0 ? (
             <div className="space-y-3">
               {streams.map((s) => (
-                <Link key={s.id} to={`/live/${s.id}`}>
-                  <div className="bg-card rounded-xl p-4 border border-border/50 flex items-center gap-4 hover:border-primary/30 transition-colors">
-                    <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center">
+                <div key={s.id} className="bg-card rounded-xl p-4 border border-border/50 flex items-center gap-4 hover:border-primary/30 transition-colors">
+                  <Link to={`/live/${s.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                       <Radio className={`w-5 h-5 ${s.status === "live" ? "text-red-400 animate-pulse" : "text-muted-foreground"}`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -210,8 +219,18 @@ export default function MyChannel() {
                         {s.price > 0 && ` • ¥${s.price.toLocaleString()}`}
                       </p>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                  {s.status === "ended" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 gap-1 text-xs"
+                      onClick={() => setArchiveModalStream(s)}
+                    >
+                      <Settings className="w-3.5 h-3.5" /> アーカイブ設定
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
