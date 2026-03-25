@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminDashboard() {
@@ -76,6 +76,18 @@ export default function AdminDashboard() {
   const { data: allYellCoinWallets = [] } = useQuery({
     queryKey: ["admin-all-yell-wallets"],
     queryFn: () => base44.entities.YellCoinWallet.list(),
+    enabled: !!user && user.email === "unei@chatmarket.info",
+  });
+
+  const { data: allSubscriptions = [] } = useQuery({
+    queryKey: ["admin-all-subscriptions"],
+    queryFn: () => base44.entities.PlanSubscription.list(),
+    enabled: !!user && user.email === "unei@chatmarket.info",
+  });
+
+  const { data: allCancellationReasons = [] } = useQuery({
+    queryKey: ["admin-all-cancellation-reasons"],
+    queryFn: () => base44.entities.CancellationReason.list(),
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
@@ -229,6 +241,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="revenue" className="gap-2">
             <DollarSign className="w-4 h-4" /> 収益管理
           </TabsTrigger>
+          <TabsTrigger value="subscription" className="gap-2">
+            <Coins className="w-4 h-4" /> サブスク管理
+          </TabsTrigger>
           <TabsTrigger value="stripe" className="gap-2">
             <CreditCard className="w-4 h-4" /> Stripe連携
           </TabsTrigger>
@@ -236,6 +251,127 @@ export default function AdminDashboard() {
             <Users className="w-4 h-4" /> ユーザー管理
           </TabsTrigger>
         </TabsList>
+
+        {/* サブスク管理タブ */}
+        <TabsContent value="subscription" className="space-y-6">
+          {(() => {
+            // プラン毎の統計
+            const PLANS = ["basic", "vod", "ppv", "call-anser"];
+            const PLAN_NAMES = {
+              basic: "BASICプラン",
+              vod: "VODプラン",
+              ppv: "PPVプラン",
+              "call-anser": "CALL&ANSERプラン"
+            };
+            const PLAN_PRICES = {
+              basic: 3300,
+              vod: 9900,
+              ppv: 9900,
+              "call-anser": 6600
+            };
+
+            const subscriptionStats = PLANS.map((planId) => {
+              const active = allSubscriptions.filter((s) => s.plan_id === planId && s.status === "active").length;
+              const cancelled = allSubscriptions.filter((s) => s.plan_id === planId && s.status === "cancelled").length;
+              const total = active + cancelled;
+              const churnRate = total > 0 ? ((cancelled / total) * 100).toFixed(1) : 0;
+              const monthlyRevenue = active * PLAN_PRICES[planId];
+
+              return {
+                planId,
+                planName: PLAN_NAMES[planId],
+                active,
+                cancelled,
+                total,
+                churnRate,
+                monthlyRevenue
+              };
+            });
+
+            // 解約理由の集計
+            const reasonCounts = {};
+            allCancellationReasons.forEach((r) => {
+              const key = r.reason_ja || r.reason;
+              reasonCounts[key] = (reasonCounts[key] || 0) + 1;
+            });
+
+            return (
+              <div className="space-y-6">
+                {/* プラン毎の統計 */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {subscriptionStats.map((stat) => (
+                    <div key={stat.planId} className="bg-card rounded-xl border border-border/50 p-5 space-y-4">
+                      <h3 className="font-bold flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-primary" />
+                        {stat.planName}
+                      </h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">現在加入者</span>
+                          <span className="font-semibold text-green-400">{stat.active}件</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">累計加入者</span>
+                          <span className="font-semibold">{stat.total}件</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">解約数</span>
+                          <span className="font-semibold text-red-400">{stat.cancelled}件</span>
+                        </div>
+                        <div className="flex justify-between text-sm border-t border-border/50 pt-2">
+                          <span className="text-muted-foreground">解約率</span>
+                          <span className={`font-semibold ${stat.churnRate > 30 ? "text-red-400" : "text-yellow-400"}`}>
+                            {stat.churnRate}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm border-t border-border/50 pt-2">
+                          <span className="text-muted-foreground">月間想定売上</span>
+                          <span className="font-bold text-primary">¥{stat.monthlyRevenue.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 解約理由の集計 */}
+                <div className="bg-card rounded-xl border border-border/50 p-5 space-y-4">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400" />
+                    解約理由の集計
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/50">
+                          <th className="text-left py-3 px-3 font-bold">解約理由</th>
+                          <th className="text-right py-3 px-3 font-bold">件数</th>
+                          <th className="text-right py-3 px-3 font-bold">割合</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(reasonCounts)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([reason, count]) => {
+                            const percentage = ((count / allCancellationReasons.length) * 100).toFixed(1);
+                            return (
+                              <tr key={reason} className="border-b border-border/30 hover:bg-secondary/50">
+                                <td className="py-3 px-3">{reason}</td>
+                                <td className="text-right py-3 px-3 font-semibold">{count}件</td>
+                                <td className="text-right py-3 px-3 text-muted-foreground">{percentage}%</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {allCancellationReasons.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">まだ解約がありません</p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </TabsContent>
 
         {/* 収益管理タブ */}
         <TabsContent value="revenue" className="space-y-6">
