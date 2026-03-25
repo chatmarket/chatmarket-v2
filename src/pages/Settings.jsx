@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CategoryTagSelector from "../components/channel/CategoryTagSelector";
@@ -67,6 +67,12 @@ export default function Settings() {
   const [addressChanged, setAddressChanged] = useState(false);
   const [isKycVerified, setIsKycVerified] = useState(false);
 
+  // アカウント復旧設定
+  const [recoverySettings, setRecoverySettings] = useState({
+    backup_email: "",
+    recovery_phone: "",
+  });
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
@@ -94,12 +100,17 @@ export default function Settings() {
           setIsKycVerified(!!(u.full_name && u.address));
           // 身分証情報を設定
           if (u.identity_document_url || u.identity_document_status) {
-            setIdentityDocument({
-              url: u.identity_document_url || "",
-              status: u.identity_document_status || "pending",
-            });
+           setIdentityDocument({
+             url: u.identity_document_url || "",
+             status: u.identity_document_status || "pending",
+           });
           }
-        });
+          // アカウント復旧設定を初期化
+          setRecoverySettings({
+           backup_email: u.backup_email || "",
+           recovery_phone: u.recovery_phone || "",
+          });
+          });
       } else {
         base44.auth.redirectToLogin();
       }
@@ -223,6 +234,9 @@ export default function Settings() {
           </TabsTrigger>
           <TabsTrigger value="call" className="flex-1 gap-2">
             <PhoneCall className="w-4 h-4" /> 通話設定
+          </TabsTrigger>
+          <TabsTrigger value="recovery" className="flex-1 gap-2">
+            <Key className="w-4 h-4" /> 復旧設定
           </TabsTrigger>
         </TabsList>
 
@@ -736,8 +750,63 @@ export default function Settings() {
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             保存する
           </Button>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+          </TabsContent>
+
+          {/* Account Recovery Tab */}
+          <TabsContent value="recovery" className="space-y-5">
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-300">メールアドレスやパスワード変更時に、登録した電話番号または予備メールで本人確認を行います。</p>
+          </div>
+
+          <div className="space-y-4 bg-card rounded-xl border border-border/50 p-5">
+            <div className="space-y-2">
+              <Label>予備メールアドレス</Label>
+              <Input
+                type="email"
+                value={recoverySettings.backup_email}
+                onChange={(e) => setRecoverySettings({ ...recoverySettings, backup_email: e.target.value })}
+                placeholder="backup@example.com"
+                className="bg-secondary border-0"
+              />
+              <p className="text-xs text-muted-foreground">メールアドレス変更時の本人確認に使用します。主メールとは異なるアドレスを推奨します。</p>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <Label>復旧用電話番号</Label>
+              <Input
+                type="tel"
+                value={recoverySettings.recovery_phone}
+                onChange={(e) => setRecoverySettings({ ...recoverySettings, recovery_phone: e.target.value })}
+                placeholder="090-1234-5678"
+                className="bg-secondary border-0"
+              />
+              <p className="text-xs text-muted-foreground">パスワード変更時のSMS確認に使用します。</p>
+            </div>
+
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-xs text-amber-300">
+              ⚠️ 登録した連絡先は暗号化して保管されます。安全な環境で登録してください。
+            </div>
+          </div>
+
+          <Button
+            onClick={async () => {
+              setSaving(true);
+              await base44.auth.updateMe({
+                backup_email: recoverySettings.backup_email,
+                recovery_phone: recoverySettings.recovery_phone,
+              });
+              toast.success("アカウント復旧設定を保存しました");
+              setSaving(false);
+            }}
+            disabled={saving}
+            className="w-full gap-2 bg-primary hover:bg-primary/90"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            保存する
+          </Button>
+          </TabsContent>
+          </Tabs>
+          </div>
+          );
+          }
