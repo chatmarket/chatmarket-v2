@@ -59,6 +59,10 @@ export default function Settings() {
     full_name_doc: null,
     address_doc: null,
   });
+  const [identityDocument, setIdentityDocument] = useState({
+    url: "",
+    status: "pending", // pending, approved, rejected
+  });
   const [fullNameChanged, setFullNameChanged] = useState(false);
   const [addressChanged, setAddressChanged] = useState(false);
   const [isKycVerified, setIsKycVerified] = useState(false);
@@ -88,6 +92,13 @@ export default function Settings() {
           });
           // KYC確認: 氏名と住所の両方が設定されている場合
           setIsKycVerified(!!(u.full_name && u.address));
+          // 身分証情報を設定
+          if (u.identity_document_url || u.identity_document_status) {
+            setIdentityDocument({
+              url: u.identity_document_url || "",
+              status: u.identity_document_status || "pending",
+            });
+          }
         });
       } else {
         base44.auth.redirectToLogin();
@@ -152,6 +163,19 @@ export default function Settings() {
   };
 
   if (!user) return null;
+
+  const handleIdentityDocumentUpload = async (file) => {
+    if (!file) return;
+    setSaving(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setIdentityDocument({ url: file_url, status: "pending" });
+    await base44.auth.updateMe({
+      identity_document_url: file_url,
+      identity_document_status: "pending",
+    });
+    toast.success("身分証をアップロードしました。審査をお待ちください。");
+    setSaving(false);
+  };
 
   const handleSaveBasicInfo = async () => {
     if ((fullNameChanged || addressChanged) && (!verificationDocs.full_name_doc || !verificationDocs.address_doc)) {
@@ -246,6 +270,38 @@ export default function Settings() {
                   placeholder="user@example.com"
                   className="bg-secondary border-0"
                 />
+              </div>
+
+              <div className="space-y-3 bg-secondary rounded-xl p-4 border border-border/50">
+                <div>
+                  <h3 className="font-bold mb-3">身分証による本人確認</h3>
+                  <p className="text-xs text-muted-foreground mb-3">運転免許証・パスポート・マイナンバーカードのいずれかをアップロードしてください</p>
+                  <label className="flex items-center justify-center h-24 border-2 border-dashed border-primary/30 rounded-lg cursor-pointer hover:border-primary/60 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      disabled={saving}
+                      onChange={(e) => e.target.files?.[0] && handleIdentityDocumentUpload(e.target.files[0])}
+                    />
+                    <div className="text-center">
+                      {identityDocument.url ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <Check className="w-5 h-5 text-green-400" />
+                          <span className="text-xs font-semibold text-green-400">アップロード済み</span>
+                          <span className={`text-xs mt-1 ${identityDocument.status === "approved" ? "text-green-400" : identityDocument.status === "rejected" ? "text-red-400" : "text-yellow-400"}`}>
+                            {identityDocument.status === "approved" ? "✓ 承認済み" : identityDocument.status === "rejected" ? "✗ 却下" : "⏳ 審査中"}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <Upload className="w-5 h-5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">クリックしてファイルを選択</span>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-2">
