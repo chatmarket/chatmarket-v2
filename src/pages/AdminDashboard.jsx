@@ -28,11 +28,13 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
+  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
         base44.auth.me().then((u) => {
-          if (u.email !== "unei@chatmarket.info") {
+          if (!ADMIN_EMAILS.includes(u.email)) {
             window.location.href = "/";
             return;
           }
@@ -105,7 +107,7 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
-  if (!user || user.email !== "unei@chatmarket.info") {
+  if (!user || !ADMIN_EMAILS.includes(user.email)) {
     return null;
   }
 

@@ -21,8 +21,13 @@ export default function MyChannel() {
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
-      else base44.auth.redirectToLogin();
+      if (isAuth) {
+        base44.auth.me().then((u) => {
+          setUser(u);
+        }).catch(() => {});
+      } else {
+        base44.auth.redirectToLogin();
+      }
     });
   }, []);
 
