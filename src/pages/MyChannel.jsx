@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Radio, DollarSign, Users, Edit, Save, Image, Loader2, Info, Coins, Phone } from "lucide-react";
+import { Video, Radio, DollarSign, Edit, Save, Image, Loader2, Info, Coins, Phone, Banknote, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import YellCoinWalletPanel from "../components/yell/YellCoinWalletPanel";
 
@@ -102,12 +102,13 @@ export default function MyChannel() {
   const videoCallFee = Math.floor(videoCallGross * 0.10);
   const videoCallNet = videoCallGross - videoCallFee;
 
-  // 月間総売上（手数料控除後）
-  const monthlyGrossRevenue = yellCoinNet + videoPurchaseNet + liveStreamNet + videoCallNet;
+  // 出金可能収益（円建て：ビデオ販売・ライブチケットのみ）
+  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet;
   const currentRate = getProgressiveRate(monthlyGrossRevenue);
-  const netAfterRate = Math.floor(monthlyGrossRevenue * currentRate);
-  
-  const totalRevenue = netAfterRate;
+  const totalRevenue = Math.floor(monthlyGrossRevenue * currentRate);
+
+  // エールコイン系収益（出金不可・別管理）
+  const totalYellCoinsEarned = yellCoinNet + videoCallNet; // コイン単位
 
   useEffect(() => {
     if (channel) {
@@ -219,20 +220,16 @@ export default function MyChannel() {
           <div className="bg-secondary rounded-xl p-3 text-center col-span-3 sm:col-span-1">
             <DollarSign className="w-5 h-5 mx-auto text-yellow-400 mb-1" />
             <p className="text-lg font-bold">¥{totalRevenue.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">純収益（手数料控除後）</p>
+            <p className="text-xs text-muted-foreground">出金可能収益</p>
           </div>
         </div>
 
-        {/* Progressive Incentive Info */}
+        {/* 出金可能収益 */}
         <div className="mt-4 bg-secondary/50 rounded-xl p-4 border border-border/50 space-y-2 text-xs">
           <p className="font-semibold text-sm flex items-center gap-1.5">
-            <Info className="w-4 h-4 text-primary" /> プログレッシブインセンティブ（自動適用）
+            <Info className="w-4 h-4 text-primary" /> 出金可能収益（プログレッシブインセンティブ適用）
           </p>
           <div className="space-y-1 pb-2 border-b border-border/50">
-            <div className="flex justify-between text-muted-foreground">
-              <span>エールコイン</span>
-              <span>¥{yellCoinNet.toLocaleString()} (手数料: ¥{yellCoinFee.toLocaleString()})</span>
-            </div>
             <div className="flex justify-between text-muted-foreground">
               <span>ビデオ販売</span>
               <span>¥{videoPurchaseNet.toLocaleString()} (手数料: ¥{videoFee.toLocaleString()})</span>
@@ -241,33 +238,54 @@ export default function MyChannel() {
               <span>ライブチケット</span>
               <span>¥{liveStreamNet.toLocaleString()} (手数料: ¥{liveStreamFee.toLocaleString()})</span>
             </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>ビデオ通話エールコイン</span>
-              <span>{videoCallNet.toLocaleString()} コイン (手数料: {videoCallFee.toLocaleString()})</span>
-            </div>
           </div>
           <div className="flex justify-between text-muted-foreground font-semibold">
-            <span>月間総売上（手数料控除後）</span>
+            <span>小計（手数料控除後）</span>
             <span className="text-foreground">¥{monthlyGrossRevenue.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>適用還元率</span>
             <span className="text-primary font-semibold">{(currentRate * 100).toFixed(0)}%</span>
           </div>
-          <div className="bg-secondary rounded-lg p-2.5 space-y-1 mt-2 border border-border/50">
-            <p className="text-muted-foreground font-medium">次のレベル達成条件:</p>
-            {currentRate < 0.95 && (
-              <>
-                {currentRate === 0.85 && <p>200万円超 → 86% | 300万円超 → 87% | 600万円超 → 88%</p>}
-                {currentRate === 0.86 && <p>300万円超 → 87% | 600万円超 → 88% | 900万円超 → 89%</p>}
-                {currentRate >= 0.87 && <p>次レベルまで: ¥{(Math.ceil(monthlyGrossRevenue / 300000) * 300000 - monthlyGrossRevenue).toLocaleString()}</p>}
-              </>
-            )}
-            {currentRate === 0.95 && <p className="text-primary">最高レベル達成！</p>}
-          </div>
           <div className="flex justify-between font-bold border-t border-border pt-2">
             <span>振込予定額</span>
-            <span className="text-primary">¥{totalRevenue.toLocaleString()}</span>
+            <span className="text-primary text-sm">¥{totalRevenue.toLocaleString()}</span>
+          </div>
+
+          {/* 出金申請ボタン */}
+          <div className="pt-2 space-y-2">
+            <Button className="w-full gap-2 bg-primary hover:bg-primary/90" size="sm">
+              <Banknote className="w-4 h-4" /> 出金申請する（月2回まで）
+            </Button>
+            <div className="flex items-start gap-1.5 text-muted-foreground bg-secondary rounded-lg p-2.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-yellow-400" />
+              <p>出金申請後、口座への振り込みには数日かかる場合があります。</p>
+            </div>
+          </div>
+        </div>
+
+        {/* エールコイン収益（別管理・出金不可） */}
+        <div className="mt-3 bg-yellow-500/5 rounded-xl p-4 border border-yellow-500/20 space-y-2 text-xs">
+          <p className="font-semibold text-sm flex items-center gap-1.5">
+            <Coins className="w-4 h-4 text-yellow-400" /> エールコイン収益（出金不可・別管理）
+          </p>
+          <div className="space-y-1 pb-2 border-b border-yellow-500/20">
+            <div className="flex justify-between text-muted-foreground">
+              <span>スーパーチャット・エールコイン</span>
+              <span>{yellCoinNet.toLocaleString()} コイン (手数料: {yellCoinFee.toLocaleString()})</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>ビデオ通話エールコイン</span>
+              <span>{videoCallNet.toLocaleString()} コイン (手数料: {videoCallFee.toLocaleString()})</span>
+            </div>
+          </div>
+          <div className="flex justify-between font-bold">
+            <span>合計保有コイン（手数料控除後）</span>
+            <span className="text-yellow-400">{totalYellCoinsEarned.toLocaleString()} コイン</span>
+          </div>
+          <div className="flex items-start gap-1.5 text-muted-foreground bg-secondary/50 rounded-lg p-2.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-yellow-400" />
+            <p>エールコインは出金できません。アプリ内でのチャージ・送付にのみ使用できます。詳細は「エールコイン」タブをご確認ください。</p>
           </div>
         </div>
       </div>
