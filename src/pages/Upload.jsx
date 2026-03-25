@@ -99,7 +99,7 @@ export default function Upload() {
       thumbnail_url = res.file_url;
     }
 
-    await base44.entities.Video.create({
+    const newVideo = await base44.entities.Video.create({
       ...form,
       video_url,
       thumbnail_url,
@@ -108,6 +108,15 @@ export default function Upload() {
       channel_avatar: channel.avatar_url || "",
       price: form.is_free ? 0 : form.price,
     });
+
+    // Notify followers
+    base44.functions.invoke("notifyFollowers", {
+      video_id: newVideo.id,
+      channel_id: channel.id,
+      channel_name: channel.name,
+      video_title: form.title,
+      thumbnail_url: thumbnail_url || "",
+    }).catch(() => {});
 
     setUploading(false);
     navigate("/my-channel");

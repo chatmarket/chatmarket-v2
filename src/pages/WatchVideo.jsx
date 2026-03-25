@@ -146,6 +146,21 @@ export default function WatchVideo() {
           {/* Video info */}
           <div className="space-y-3">
             <h1 className="text-xl md:text-2xl font-bold">{video.title}</h1>
+
+            {/* Channel info */}
+            <Link to={`/channel/${video.channel_id}`} className="flex items-center gap-3 group w-fit">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center overflow-hidden ring-2 ring-border group-hover:ring-primary transition-all">
+                {video.channel_avatar ? (
+                  <img src={video.channel_avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-muted-foreground">{video.channel_name?.[0]}</span>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-sm group-hover:text-primary transition-colors">{video.channel_name}</p>
+                <p className="text-xs text-muted-foreground">チャンネルを見る →</p>
+              </div>
+            </Link>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="w-4 h-4" />
@@ -155,10 +170,6 @@ export default function WatchVideo() {
                 <Calendar className="w-4 h-4" />
                 {video.created_date && format(new Date(video.created_date), "yyyy/MM/dd")}
               </span>
-              <Link to={`/channel/${video.channel_id}`} className="flex items-center gap-1 hover:text-primary transition-colors">
-                <User className="w-4 h-4" />
-                {video.channel_name}
-              </Link>
             </div>
             {video.description && (
               <div className="bg-card rounded-xl p-4 border border-border/50">

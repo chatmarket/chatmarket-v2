@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff } from "lucide-react";
 import CategoryBadge from "../components/channel/CategoryBadge";
 
 export default function ChannelPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -37,6 +38,37 @@ export default function ChannelPage() {
     queryKey: ["channel-streams", id],
     queryFn: () => base44.entities.LiveStream.filter({ channel_id: id, status: "live" }),
     enabled: !!id,
+  });
+
+  const { data: followData = [] } = useQuery({
+    queryKey: ["channel-follow", id, currentUser?.email],
+    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: id, follower_email: currentUser.email }),
+    enabled: !!currentUser,
+  });
+
+  const { data: followerCount = [] } = useQuery({
+    queryKey: ["channel-follower-count", id],
+    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: id }),
+  });
+
+  const isFollowing = followData.length > 0;
+
+  const toggleFollow = useMutation({
+    mutationFn: async () => {
+      if (isFollowing) {
+        await base44.entities.ChannelFollow.delete(followData[0].id);
+      } else {
+        await base44.entities.ChannelFollow.create({
+          channel_id: id,
+          channel_name: channel?.name || "",
+          follower_email: currentUser.email,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["channel-follow", id, currentUser?.email] });
+      queryClient.invalidateQueries({ queryKey: ["channel-follower-count", id] });
+    },
   });
 
   if (isLoading) {
@@ -98,7 +130,7 @@ export default function ChannelPage() {
                 <Video className="w-3.5 h-3.5" /> {videos.length} 動画
               </span>
               <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" /> {channel.subscriber_count || 0} 登録者
+                <Users className="w-3.5 h-3.5" /> {followerCount.length} フォロワー
               </span>
               {channel.is_live && (
                 <span className="flex items-center gap-1 text-red-400 font-semibold">
@@ -117,14 +149,28 @@ export default function ChannelPage() {
                 </Button>
               </Link>
             ) : (
-              <Button
-                size="sm"
-                className="gap-2 bg-primary hover:bg-primary/90"
-                onClick={() => navigate(`/chat/${id}`)}
-              >
-                <MessageCircle className="w-4 h-4" />
-                チャットで問い合わせ
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!currentUser) { base44.auth.redirectToLogin(); return; }
+                    toggleFollow.mutate();
+                  }}
+                  className={`gap-2 w-full ${isFollowing ? "bg-secondary hover:bg-destructive/20 text-foreground" : "bg-primary hover:bg-primary/90"}`}
+                >
+                  {isFollowing ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                  {isFollowing ? "フォロー中" : "フォローする"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-2 w-full"
+                  onClick={() => navigate(`/chat/${id}`)}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  チャットで問い合わせ
+                </Button>
+              </>
             )}
           </div>
         </div>

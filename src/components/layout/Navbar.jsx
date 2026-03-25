@@ -13,6 +13,7 @@ import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, Book
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
+import NotificationBell from "./NotificationBell";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -83,6 +84,7 @@ export default function Navbar() {
 
           {user ? (
             <>
+              <NotificationBell user={user} />
               <Link to="/upload">
                 <Button size="sm" variant="ghost" className="hidden sm:flex gap-2">
                   <Video className="w-4 h-4" />
