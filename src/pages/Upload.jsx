@@ -18,6 +18,7 @@ export default function Upload() {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [videoDuration, setVideoDuration] = useState(0);
   const [videoError, setVideoError] = useState("");
+  const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -317,9 +318,23 @@ export default function Upload() {
           )}
         </div>
 
+        {/* Copyright confirmation */}
+        <label className="flex items-start gap-3 cursor-pointer bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+          <input
+            type="checkbox"
+            checked={copyrightConfirmed}
+            onChange={(e) => setCopyrightConfirmed(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-primary shrink-0"
+          />
+          <span className="text-xs text-foreground/80 leading-relaxed">
+            <span className="font-bold text-destructive block mb-1">⚠️ 著作権に関する確認</span>
+            この動画はオリジナルコンテンツであり、第三者の著作権・肖像権を侵害していないことを確認しました。他者が権利を有する音楽・映像・画像等を無断で使用していません。
+          </span>
+        </label>
+
         <Button
           type="submit"
-          disabled={uploading || !form.title || freeVideoBlocked || uploadDurationExceeded || !videoFile}
+          disabled={uploading || !form.title || freeVideoBlocked || uploadDurationExceeded || !videoFile || !copyrightConfirmed}
           className="w-full h-12 bg-primary hover:bg-primary/90 text-base gap-2"
         >
           {uploading ? (
