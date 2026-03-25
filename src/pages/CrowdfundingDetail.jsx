@@ -5,9 +5,11 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, Users, ExternalLink, MessageCircle, Send, AlertTriangle } from "lucide-react";
+import { Heart, Users, ExternalLink, MessageCircle, Send, AlertTriangle, Bell, Target } from "lucide-react";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
 import DonationModal from "../components/crowdfunding/DonationModal";
+import ActivityReportForm from "../components/crowdfunding/ActivityReportForm";
 
 export default function CrowdfundingDetail() {
   const { id } = useParams();
@@ -40,6 +42,12 @@ export default function CrowdfundingDetail() {
   const { data: donations = [] } = useQuery({
     queryKey: ["crowdfunding-donations", id],
     queryFn: () => base44.entities.CrowdfundingDonation.filter({ project_id: id, status: "completed" }, "-created_date", 10),
+  });
+
+  const { data: activityReports = [] } = useQuery({
+    queryKey: ["activity-reports", id],
+    queryFn: () => base44.entities.CrowdfundingActivityReport.filter({ project_id: id }, "-created_date", 20),
+    refetchInterval: 15000,
   });
 
   const images = [project?.image_url_1, project?.image_url_2, project?.image_url_3].filter(Boolean);
@@ -96,7 +104,20 @@ export default function CrowdfundingDetail() {
       )}
 
       {/* Stats + CTA */}
-      <div className="bg-card border border-border/50 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6">
+      <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+        {/* Goal progress */}
+        {project.goal_amount > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1 text-muted-foreground"><Target className="w-3.5 h-3.5" /> 目標 ¥{project.goal_amount.toLocaleString()}</span>
+              <span className="font-bold text-primary">
+                {Math.min(100, Math.round((project.total_raised / project.goal_amount) * 100))}% 達成
+              </span>
+            </div>
+            <Progress value={Math.min(100, (project.total_raised / project.goal_amount) * 100)} className="h-3" />
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row items-center gap-6">
         <div className="flex gap-8 flex-1">
           <div className="text-center">
             <p className="text-2xl font-black text-primary">¥{(project.total_raised || 0).toLocaleString()}</p>
@@ -118,6 +139,7 @@ export default function CrowdfundingDetail() {
               </Button>
             </a>
           )}
+        </div>
         </div>
       </div>
 
@@ -152,6 +174,39 @@ export default function CrowdfundingDetail() {
           </div>
         </div>
       )}
+
+      {/* Activity Reports */}
+      <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+        <h2 className="font-bold text-lg flex items-center gap-2"><Bell className="w-5 h-5 text-primary" />活動報告</h2>
+
+        {/* Post form — owner only */}
+        {user?.email === project.owner_email && (
+          <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
+            <p className="text-xs font-semibold text-primary">支援者への活動報告を投稿</p>
+            <ActivityReportForm project={project} user={user} />
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {activityReports.map((report) => (
+            <div key={report.id} className="border border-border/40 rounded-xl p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-sm">{report.title}</p>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {new Date(report.created_date).toLocaleDateString("ja-JP")}
+                </span>
+              </div>
+              {report.image_url && (
+                <img src={report.image_url} alt="" className="w-full max-h-60 object-cover rounded-lg" />
+              )}
+              <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">{report.content}</p>
+            </div>
+          ))}
+          {activityReports.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">活動報告はまだありません</p>
+          )}
+        </div>
+      </div>
 
       {/* Comments */}
       <div className="bg-card border border-border/50 rounded-2xl p-6">

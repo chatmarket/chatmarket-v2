@@ -25,6 +25,7 @@ import DirectChat from './pages/DirectChat';
 import PlanSelect from './pages/PlanSelect';
 import PlanConfirm from './pages/PlanConfirm';
 import Blog from './pages/Blog';
+import DonorDashboard from './pages/DonorDashboard';
 import BlogDetail from './pages/BlogDetail';
 import BlogEdit from './pages/BlogEdit';
 
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
         <Route path="/plan-select" element={<PlanSelect />} />
         <Route path="/plan-confirm" element={<PlanConfirm />} />
         <Route path="/blog" element={<Blog />} />
+        <Route path="/donor-dashboard" element={<DonorDashboard />} />
         <Route path="/blog/new" element={<BlogEdit />} />
         <Route path="/blog/edit/:id" element={<BlogEdit />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
