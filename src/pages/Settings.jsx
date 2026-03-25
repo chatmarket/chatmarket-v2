@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CategoryTagSelector from "../components/channel/CategoryTagSelector";
@@ -61,6 +61,7 @@ export default function Settings() {
   });
   const [fullNameChanged, setFullNameChanged] = useState(false);
   const [addressChanged, setAddressChanged] = useState(false);
+  const [isKycVerified, setIsKycVerified] = useState(false);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -85,6 +86,8 @@ export default function Settings() {
             phone: u.phone || "",
             region: u.region || "",
           });
+          // KYC確認: 氏名と住所の両方が設定されている場合
+          setIsKycVerified(!!(u.full_name && u.address));
         });
       } else {
         base44.auth.redirectToLogin();
@@ -169,6 +172,8 @@ export default function Settings() {
     setFullNameChanged(false);
     setAddressChanged(false);
     setVerificationDocs({ full_name_doc: null, address_doc: null });
+    // KYC更新
+    setIsKycVerified(!!(basicInfo.full_name && basicInfo.address));
   };
 
   return (
@@ -370,6 +375,16 @@ export default function Settings() {
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-5">
+          {isKycVerified && (
+            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-green-400 shrink-0" />
+              <div>
+                <p className="font-bold text-sm text-green-300">本人確認済み</p>
+                <p className="text-xs text-green-300/70 mt-0.5">氏名・住所の確認が完了しています</p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>プロフィール画像</Label>
             <label className="cursor-pointer block">
