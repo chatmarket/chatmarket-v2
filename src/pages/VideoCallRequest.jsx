@@ -157,9 +157,9 @@ export default function VideoCallRequest() {
             </p>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
               <li>双方向有料通話（発信・受信どちらも課金設定可）</li>
+              <li>30分×4回/日 無料通話枠あり（架電時）</li>
+              <li>相手の希望額を支払って発信することも可能</li>
               <li>有料インタビュー・推し活・求人面接などに活用</li>
-              <li>配信者設定価格で申し込み、申込者が課金</li>
-              <li>無料通話枠なし・有料のみ</li>
             </ul>
           </div>
         </div>
@@ -251,10 +251,10 @@ export default function VideoCallRequest() {
           </>
         )}
         {userPlan === "call-anser" && (
-          <>
-            <p className="font-semibold text-cyan-400">CALL＆ANSERプランの通話ルール</p>
-            <p className="text-muted-foreground">双方向有料通話プランです。配信者設定価格で申し込み、申込者（あなた）が料金を支払います。有料インタビュー・推し活・ビジネス活用に最適です。</p>
-          </>
+        <>
+          <p className="font-semibold text-cyan-400">CALL＆ANSERプランの通話ルール</p>
+          <p className="text-muted-foreground">双方向有料通話プランです。自分から架電する場合は<span className="text-cyan-400 font-semibold">30分×4回/日の無料枠</span>があります。また、相手が設定した希望額を支払いこちらから発信することも可能です。</p>
+        </>
         )}
       </div>
 
