@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import AnnualFinancialStatement from "../components/admin/AnnualFinancialStatement";
+import ReportManagement from "../components/admin/ReportManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -309,6 +310,9 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="financial" className="gap-2">
             <FileText className="w-4 h-4" /> 決算書
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="gap-2">
+            <AlertCircle className="w-4 h-4" /> 通報管理
           </TabsTrigger>
         </TabsList>
 
@@ -622,6 +626,11 @@ export default function AdminDashboard() {
             yellCoinTransactions={allYellCoinTransactions}
             subscriptions={allSubscriptions}
           />
+        </TabsContent>
+
+        {/* 通報管理タブ */}
+        <TabsContent value="reports" className="space-y-6">
+          <ReportManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
