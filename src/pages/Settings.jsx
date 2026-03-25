@@ -588,7 +588,7 @@ export default function Settings() {
             <p className="font-semibold flex items-center gap-1.5 mb-1">
               <PhoneCall className="w-4 h-4 text-primary" /> 1対1ビデオ通話設定
             </p>
-            <p className="text-xs text-muted-foreground">BASICプラン加入者のみが申し込みできます。料金はあなた（配信者）が設定し、申込者が支払います。</p>
+            <p className="text-xs text-muted-foreground">料金はあなた（配信者）が設定し、申込者が支払います。</p>
           </div>
 
           <div className="bg-card rounded-xl p-5 border border-border/50 space-y-4">
@@ -615,7 +615,7 @@ export default function Settings() {
                     onChange={(e) => setCallSettings({ ...callSettings, call_price_30min: parseInt(e.target.value) || 0 })}
                     className="bg-secondary border-0"
                   />
-                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_30min || 0) * 0.9).toLocaleString()}（手数料10%差引後）</p>
+                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_30min || 0) * 0.7).toLocaleString()}（手数料30%差引後）</p>
                 </div>
 
                 <div className="space-y-2">
@@ -628,7 +628,7 @@ export default function Settings() {
                     onChange={(e) => setCallSettings({ ...callSettings, call_price_60min: parseInt(e.target.value) || 0 })}
                     className="bg-secondary border-0"
                   />
-                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_60min || 0) * 0.9).toLocaleString()}（手数料10%差引後）</p>
+                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_60min || 0) * 0.7).toLocaleString()}（手数料30%差引後）</p>
                 </div>
 
                 <div className="space-y-2">

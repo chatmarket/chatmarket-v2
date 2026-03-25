@@ -89,11 +89,11 @@ export default function RevenueManagement() {
 
   // ビデオ通話 = 通話料金 (price) + エールコイン (yell_coin_amount) を分離
   const videoCallPriceGross = videoCalls.reduce((sum, c) => sum + (c.price || 0), 0);
-  const videoCallPriceFee = Math.floor(videoCallPriceGross * 0.10);
+  const videoCallPriceFee = Math.floor(videoCallPriceGross * 0.30);
   const videoCallPriceNet = videoCallPriceGross - videoCallPriceFee;
 
   const videoCallYellGross = videoCalls.reduce((sum, c) => sum + (c.yell_coin_amount || 0), 0);
-  const videoCallYellFee = Math.floor(videoCallYellGross * 0.10);
+  const videoCallYellFee = Math.floor(videoCallYellGross * 0.30);
   const videoCallYellNet = videoCallYellGross - videoCallYellFee;
 
   const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet + archiveNet + yellCoinNet + videoCallPriceNet + videoCallYellNet;
@@ -132,7 +132,7 @@ export default function RevenueManagement() {
             <span>¥{yellCoinNet.toLocaleString()} <span className="text-xs">(手数料 ¥{yellCoinFee.toLocaleString()})</span></span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>ビデオ通話</span>
+            <span>ビデオ通話（30%手数料）</span>
             <span>¥{videoCallPriceNet.toLocaleString()} <span className="text-xs">(手数料 ¥{videoCallPriceFee.toLocaleString()})</span></span>
           </div>
           <div className="flex justify-between text-muted-foreground">
@@ -204,11 +204,11 @@ export default function RevenueManagement() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
                 <p className="text-xl font-black text-blue-400">¥{videoCallPriceNet.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">通話料金（手数料控除後）</p>
+                <p className="text-xs text-muted-foreground mt-1">通話料金（30%手数料控除後）</p>
               </div>
               <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
                 <p className="text-xl font-black text-yellow-400">¥{videoCallYellNet.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">エールコイン（手数料控除後）</p>
+                <p className="text-xs text-muted-foreground mt-1">エールコイン（30%手数料控除後）</p>
               </div>
             </div>
 
