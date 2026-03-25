@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CategoryTagSelector from "../components/channel/CategoryTagSelector";
@@ -39,6 +39,12 @@ export default function Settings() {
   const [channelTags, setChannelTags] = useState([]);
   const [channelCategoryId, setChannelCategoryId] = useState("");
   const [channelId, setChannelId] = useState(null);
+  const [callSettings, setCallSettings] = useState({
+    call_enabled: false,
+    call_price_30min: 3000,
+    call_price_60min: 5000,
+    call_available_dates: "",
+  });
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -76,6 +82,12 @@ export default function Settings() {
         setChannelTags(channels[0].tags || []);
         setChannelCategoryId(channels[0].category_id || "");
         setChannelId(channels[0].id);
+        setCallSettings({
+          call_enabled: channels[0].call_enabled || false,
+          call_price_30min: channels[0].call_price_30min || 3000,
+          call_price_60min: channels[0].call_price_60min || 5000,
+          call_available_dates: channels[0].call_available_dates || "",
+        });
       }
     }).catch(() => {});
   }, []);
@@ -132,6 +144,9 @@ export default function Settings() {
           </TabsTrigger>
           <TabsTrigger value="category" className="flex-1 gap-2">
             <Tag className="w-4 h-4" /> 業種タグ
+          </TabsTrigger>
+          <TabsTrigger value="call" className="flex-1 gap-2">
+            <PhoneCall className="w-4 h-4" /> 通話設定
           </TabsTrigger>
         </TabsList>
 
@@ -347,6 +362,90 @@ export default function Settings() {
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             タグを保存する
+          </Button>
+        </TabsContent>
+        {/* Call Settings Tab */}
+        <TabsContent value="call" className="space-y-5">
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm">
+            <p className="font-semibold flex items-center gap-1.5 mb-1">
+              <PhoneCall className="w-4 h-4 text-primary" /> 1対1ビデオ通話設定
+            </p>
+            <p className="text-xs text-muted-foreground">BASICプラン加入者のみが申し込みできます。料金はあなた（配信者）が設定し、申込者が支払います。</p>
+          </div>
+
+          <div className="bg-card rounded-xl p-5 border border-border/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>通話受付を有効にする</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">ONにすると申し込みを受け付けます</p>
+              </div>
+              <Switch
+                checked={callSettings.call_enabled}
+                onCheckedChange={(v) => setCallSettings({ ...callSettings, call_enabled: v })}
+              />
+            </div>
+
+            {callSettings.call_enabled && (
+              <>
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <Label>30分の通話料金（円）</Label>
+                  <Input
+                    type="number"
+                    min={100}
+                    step={100}
+                    value={callSettings.call_price_30min}
+                    onChange={(e) => setCallSettings({ ...callSettings, call_price_30min: parseInt(e.target.value) || 0 })}
+                    className="bg-secondary border-0"
+                  />
+                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_30min || 0) * 0.9).toLocaleString()}（手数料10%差引後）</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>60分の通話料金（円）</Label>
+                  <Input
+                    type="number"
+                    min={100}
+                    step={100}
+                    value={callSettings.call_price_60min}
+                    onChange={(e) => setCallSettings({ ...callSettings, call_price_60min: parseInt(e.target.value) || 0 })}
+                    className="bg-secondary border-0"
+                  />
+                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_60min || 0) * 0.9).toLocaleString()}（手数料10%差引後）</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>通話可能スケジュール</Label>
+                  <Textarea
+                    value={callSettings.call_available_dates}
+                    onChange={(e) => setCallSettings({ ...callSettings, call_available_dates: e.target.value })}
+                    placeholder={"例:\n毎週火・木 19:00〜22:00\n土日 10:00〜18:00\n※2日前までにチャットでご予約ください"}
+                    className="bg-secondary border-0 resize-none"
+                    rows={4}
+                  />
+                  <p className="text-xs text-muted-foreground">申込ページに表示されます。申込者への案内として記入してください。</p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <Button
+            onClick={async () => {
+              if (!channelId) { toast.error("チャンネルが見つかりません"); return; }
+              setSaving(true);
+              await base44.entities.Channel.update(channelId, {
+                call_enabled: callSettings.call_enabled,
+                call_price_30min: callSettings.call_price_30min,
+                call_price_60min: callSettings.call_price_60min,
+                call_available_dates: callSettings.call_available_dates,
+              });
+              toast.success("通話設定を保存しました");
+              setSaving(false);
+            }}
+            disabled={saving}
+            className="w-full gap-2 bg-primary hover:bg-primary/90"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            保存する
           </Button>
         </TabsContent>
       </Tabs>
