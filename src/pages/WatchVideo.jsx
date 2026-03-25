@@ -7,6 +7,7 @@ import PaywallModal from "../components/video/PaywallModal";
 import { Eye, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import VideoComments from "../components/video/VideoComments";
+import VideoReactions from "../components/video/VideoReactions";
 
 const FREE_PREVIEW_SECONDS = 30;
 
@@ -154,6 +155,7 @@ export default function WatchVideo() {
                 <p className="text-sm text-foreground/80 whitespace-pre-wrap">{video.description}</p>
               </div>
             )}
+            <VideoReactions videoId={id} user={user} />
           </div>
         </div>
 
