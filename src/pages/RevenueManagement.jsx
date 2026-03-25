@@ -77,9 +77,15 @@ export default function RevenueManagement() {
   const videoFee = Math.floor(videoPurchaseGross * 0.15);
   const videoPurchaseNet = videoPurchaseGross - videoFee;
 
-  const liveStreamGross = streams.reduce((sum, s) => sum + (s.price || 0) * (s.viewer_count || 0), 0);
+  // 生配信 = liveまたはscheduled（終了前のチケット収益）
+  const liveStreamGross = streams.filter(s => s.status !== "ended").reduce((sum, s) => sum + (s.price || 0) * (s.viewer_count || 0), 0);
   const liveStreamFee = Math.floor(liveStreamGross * 0.15);
   const liveStreamNet = liveStreamGross - liveStreamFee;
+
+  // アーカイブ販売 = 終了済み配信（ended）の有料販売分
+  const archiveGross = streams.filter(s => s.status === "ended" && (s.price || 0) > 0).reduce((sum, s) => sum + (s.price || 0) * (s.viewer_count || 0), 0);
+  const archiveFee = Math.floor(archiveGross * 0.15);
+  const archiveNet = archiveGross - archiveFee;
 
   // ビデオ通話 = 通話料金 (price) + エールコイン (yell_coin_amount) を分離
   const videoCallPriceGross = videoCalls.reduce((sum, c) => sum + (c.price || 0), 0);
@@ -90,7 +96,7 @@ export default function RevenueManagement() {
   const videoCallYellFee = Math.floor(videoCallYellGross * 0.10);
   const videoCallYellNet = videoCallYellGross - videoCallYellFee;
 
-  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet + yellCoinNet + videoCallPriceNet + videoCallYellNet;
+  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet + archiveNet + yellCoinNet + videoCallPriceNet + videoCallYellNet;
   const currentRate = getProgressiveRate(monthlyGrossRevenue);
   const totalRevenue = Math.floor(monthlyGrossRevenue * currentRate);
 
@@ -110,12 +116,16 @@ export default function RevenueManagement() {
 
         <div className="space-y-1.5 text-sm border-b border-border pb-3">
           <div className="flex justify-between text-muted-foreground">
-            <span>ビデオ販売</span>
+            <span>投稿動画</span>
             <span>¥{videoPurchaseNet.toLocaleString()} <span className="text-xs">(手数料 ¥{videoFee.toLocaleString()})</span></span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>ライブチケット</span>
+            <span>１対多数生配信</span>
             <span>¥{liveStreamNet.toLocaleString()} <span className="text-xs">(手数料 ¥{liveStreamFee.toLocaleString()})</span></span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>アーカイブ販売</span>
+            <span>¥{archiveNet.toLocaleString()} <span className="text-xs">(手数料 ¥{archiveFee.toLocaleString()})</span></span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>エールコイン</span>
