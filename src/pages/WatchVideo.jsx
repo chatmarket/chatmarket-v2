@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel";
 import PaywallModal from "../components/video/PaywallModal";
 import { Eye, Calendar, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import VideoComments from "../components/video/VideoComments";
 import VideoReactions from "../components/video/VideoReactions";
@@ -154,10 +155,10 @@ export default function WatchVideo() {
                 <Calendar className="w-4 h-4" />
                 {video.created_date && format(new Date(video.created_date), "yyyy/MM/dd")}
               </span>
-              <span className="flex items-center gap-1">
+              <Link to={`/channel/${video.channel_id}`} className="flex items-center gap-1 hover:text-primary transition-colors">
                 <User className="w-4 h-4" />
                 {video.channel_name}
-              </span>
+              </Link>
             </div>
             {video.description && (
               <div className="bg-card rounded-xl p-4 border border-border/50">
