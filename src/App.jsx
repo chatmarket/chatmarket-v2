@@ -28,6 +28,7 @@ import Blog from './pages/Blog';
 import DonorDashboard from './pages/DonorDashboard';
 import BlogDetail from './pages/BlogDetail';
 import BlogEdit from './pages/BlogEdit';
+import MyLibrary from './pages/MyLibrary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -74,6 +75,7 @@ const AuthenticatedApp = () => {
         <Route path="/blog/new" element={<BlogEdit />} />
         <Route path="/blog/edit/:id" element={<BlogEdit />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
+        <Route path="/my-library" element={<MyLibrary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

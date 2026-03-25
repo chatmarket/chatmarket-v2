@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel";
 import PaywallModal from "../components/video/PaywallModal";
-import { Eye, Calendar, User } from "lucide-react";
+import { Eye, Calendar, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import VideoComments from "../components/video/VideoComments";
 import VideoReactions from "../components/video/VideoReactions";
 import VideoControls from "../components/video/VideoControls";
@@ -22,6 +23,8 @@ export default function WatchVideo() {
   const [hasPurchased, setHasPurchased] = useState(false);
   const [previewEnded, setPreviewEnded] = useState(false);
   const queryClient = useQueryClient();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteId, setFavoriteId] = useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -54,14 +57,34 @@ export default function WatchVideo() {
     });
   }, [user, video, id]);
 
-  // Increment view count
+  // Increment view count & record watch history
   useEffect(() => {
-    if (video) {
-      base44.entities.Video.update(video.id, {
-        view_count: (video.view_count || 0) + 1,
-      });
-    }
-  }, [video?.id]);
+    if (!video || !user) return;
+    base44.entities.Video.update(video.id, {
+      view_count: (video.view_count || 0) + 1,
+    });
+    // Upsert watch history
+    base44.entities.WatchHistory.filter({ video_id: video.id, user_email: user.email }).then((existing) => {
+      if (existing.length > 0) {
+        base44.entities.WatchHistory.update(existing[0].id, { updated_date: new Date().toISOString() });
+      } else {
+        base44.entities.WatchHistory.create({
+          user_email: user.email,
+          video_id: video.id,
+          video_title: video.title,
+          video_thumbnail: video.thumbnail_url || "",
+          channel_id: video.channel_id,
+          channel_name: video.channel_name || "",
+          is_free: video.is_free,
+          price: video.price || 0,
+        });
+      }
+    });
+    // Check favorite status
+    base44.entities.Favorite.filter({ video_id: video.id, user_email: user.email }).then((favs) => {
+      if (favs.length > 0) { setIsFavorited(true); setFavoriteId(favs[0].id); }
+    });
+  }, [video?.id, user?.email]);
 
   // Monitor video time for paywall
   useEffect(() => {
@@ -100,6 +123,30 @@ export default function WatchVideo() {
   }
 
   const isPaid = !video.is_free && video.price > 0;
+
+  const toggleFavorite = async () => {
+    if (!user) { toast.error("ログインが必要です"); return; }
+    if (isFavorited && favoriteId) {
+      await base44.entities.Favorite.delete(favoriteId);
+      setIsFavorited(false);
+      setFavoriteId(null);
+      toast.success("お気に入りを解除しました");
+    } else {
+      const fav = await base44.entities.Favorite.create({
+        user_email: user.email,
+        video_id: video.id,
+        video_title: video.title,
+        video_thumbnail: video.thumbnail_url || "",
+        channel_id: video.channel_id,
+        channel_name: video.channel_name || "",
+        is_free: video.is_free,
+        price: video.price || 0,
+      });
+      setIsFavorited(true);
+      setFavoriteId(fav.id);
+      toast.success("お気に入りに追加しました ♥");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -145,7 +192,24 @@ export default function WatchVideo() {
 
           {/* Video info */}
           <div className="space-y-3">
-            <h1 className="text-xl md:text-2xl font-bold">{video.title}</h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-xl md:text-2xl font-bold flex-1">
+                {video.is_free && (
+                  <span className="inline-block bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded mr-2 align-middle">FREE</span>
+                )}
+                {!video.is_free && video.price > 0 && (
+                  <span className="inline-block bg-yellow-400/20 text-yellow-400 text-sm font-bold px-2 py-0.5 rounded mr-2 align-middle">¥{video.price?.toLocaleString()}</span>
+                )}
+                {video.title}
+              </h1>
+              <button
+                onClick={toggleFavorite}
+                className={`shrink-0 mt-1 w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFavorited ? "bg-red-500 text-white" : "bg-secondary text-muted-foreground hover:text-red-400"}`}
+                title={isFavorited ? "お気に入り解除" : "お気に入りに追加"}
+              >
+                <Heart className={`w-5 h-5 ${isFavorited ? "fill-white" : ""}`} />
+              </button>
+            </div>
 
             {/* Channel info */}
             <Link to={`/channel/${video.channel_id}`} className="flex items-center gap-3 group w-fit">

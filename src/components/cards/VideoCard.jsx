@@ -54,20 +54,21 @@ export default function VideoCard({ video, size = "default" }) {
         )}
 
         {/* Price badge */}
-        {!video.is_free && video.price > 0 && (
-          <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground border-0">
+        {video.is_free ? (
+          <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground border-0 font-bold">
+            FREE
+          </Badge>
+        ) : video.price > 0 ? (
+          <Badge className="absolute top-2 left-2 bg-black/80 text-white border-0">
             ¥{video.price?.toLocaleString()}
           </Badge>
-        )}
-        {video.is_free && (
-          <Badge className="absolute top-2 left-2 bg-secondary text-secondary-foreground border-0">
-            無料
-          </Badge>
-        )}
+        ) : null}
       </div>
 
       <div className="mt-3 space-y-1">
         <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${isLarge ? "text-base" : "text-sm"}`}>
+          {video.is_free && <span className="text-primary font-bold mr-1">[FREE]</span>}
+          {!video.is_free && video.price > 0 && <span className="text-yellow-400 font-bold mr-1">¥{video.price?.toLocaleString()}</span>}
           {video.title}
         </h3>
         <Link
