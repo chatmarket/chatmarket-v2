@@ -165,6 +165,7 @@ export default function WatchVideo() {
               </div>
             )}
             <VideoReactions videoId={id} user={user} />
+            <VideoComments videoId={id} user={user} />
           </div>
         </div>
 
@@ -177,11 +178,6 @@ export default function WatchVideo() {
       {/* Recommended Videos */}
       <div className="mt-6">
         <RecommendedVideos currentVideoId={id} category={video.category} />
-      </div>
-
-      {/* Comments section */}
-      <div className="max-w-3xl mt-4">
-        <VideoComments videoId={id} user={user} />
       </div>
 
       {/* Paywall Modal */}
