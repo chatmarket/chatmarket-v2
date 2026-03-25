@@ -129,11 +129,11 @@ export default function DirectChat() {
           <p className="font-bold text-sm">{channel.name}</p>
           <p className="text-xs text-muted-foreground">1対1ビデオ通話前のお問い合わせチャット</p>
         </div>
-        {/* ビデオ通話ボタン */}
-        <Link to={`/channel/${channelId}`}>
+        {/* ビデオ通話申し込みボタン */}
+        <Link to={`/call-request/${channelId}`}>
           <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-xs">
             <PhoneCall className="w-3.5 h-3.5" />
-            通話へ
+            通話申し込み
           </Button>
         </Link>
       </div>
@@ -213,7 +213,7 @@ export default function DirectChat() {
           </div>
         </div>
         <p className="text-[10px] text-muted-foreground text-center">
-          ビデオ通話をご希望の場合は上部の「通話へ」ボタンからお進みください
+          ビデオ通話をご希望の場合は上部の「通話申し込み」ボタンからお進みください
         </p>
       </div>
 
