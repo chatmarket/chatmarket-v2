@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Radio, DollarSign, Users, Edit, Save, Image, Loader2, Info } from "lucide-react";
+import { Video, Radio, DollarSign, Users, Edit, Save, Image, Loader2, Info, Coins, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import YellCoinWalletPanel from "../components/yell/YellCoinWalletPanel";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
@@ -60,6 +61,13 @@ export default function MyChannel() {
     enabled: streams.length > 0,
   });
 
+  // ビデオ通話収益（着信者として受け取ったエールコイン）
+  const { data: videoCalls = [] } = useQuery({
+    queryKey: ["my-video-calls", user?.email],
+    queryFn: () => base44.entities.VideoCall.filter({ callee_email: user.email, status: "ended" }),
+    enabled: !!user,
+  });
+
   // プログレッシブインセンティブ率を計算
   const getProgressiveRate = (monthlyRevenue) => {
     if (monthlyRevenue > 20000000) return 0.95;
@@ -89,8 +97,13 @@ export default function MyChannel() {
   const liveStreamFee = Math.floor(liveStreamGross * 0.15);
   const liveStreamNet = liveStreamGross - liveStreamFee;
 
+  // ビデオ通話収益
+  const videoCallGross = videoCalls.reduce((sum, c) => sum + (c.yell_coin_amount || 0), 0);
+  const videoCallFee = Math.floor(videoCallGross * 0.10);
+  const videoCallNet = videoCallGross - videoCallFee;
+
   // 月間総売上（手数料控除後）
-  const monthlyGrossRevenue = yellCoinNet + videoPurchaseNet + liveStreamNet;
+  const monthlyGrossRevenue = yellCoinNet + videoPurchaseNet + liveStreamNet + videoCallNet;
   const currentRate = getProgressiveRate(monthlyGrossRevenue);
   const netAfterRate = Math.floor(monthlyGrossRevenue * currentRate);
   
@@ -228,6 +241,10 @@ export default function MyChannel() {
               <span>ライブチケット</span>
               <span>¥{liveStreamNet.toLocaleString()} (手数料: ¥{liveStreamFee.toLocaleString()})</span>
             </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>ビデオ通話エールコイン</span>
+              <span>{videoCallNet.toLocaleString()} コイン (手数料: {videoCallFee.toLocaleString()})</span>
+            </div>
           </div>
           <div className="flex justify-between text-muted-foreground font-semibold">
             <span>月間総売上（手数料控除後）</span>
@@ -257,9 +274,15 @@ export default function MyChannel() {
 
       {/* Content Tabs */}
       <Tabs defaultValue="videos">
-        <TabsList className="bg-secondary mb-6">
+        <TabsList className="bg-secondary mb-6 flex-wrap h-auto gap-1">
           <TabsTrigger value="videos">動画</TabsTrigger>
           <TabsTrigger value="streams">配信履歴</TabsTrigger>
+          <TabsTrigger value="calls" className="flex items-center gap-1">
+            <Phone className="w-3.5 h-3.5" /> 通話収益
+          </TabsTrigger>
+          <TabsTrigger value="wallet" className="flex items-center gap-1">
+            <Coins className="w-3.5 h-3.5 text-yellow-400" /> エールコイン
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="videos">
@@ -311,6 +334,54 @@ export default function MyChannel() {
               </Link>
             </div>
           )}
+        </TabsContent>
+
+        {/* ビデオ通話収益 */}
+        <TabsContent value="calls">
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-yellow-400">{videoCalls.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">通話回数</p>
+              </div>
+              <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-yellow-400">{videoCallGross.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">受取コイン（合計）</p>
+              </div>
+              <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-primary">{videoCallNet.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">手数料控除後</p>
+              </div>
+            </div>
+
+            {videoCalls.length > 0 ? (
+              <div className="space-y-2">
+                {videoCalls.map((call) => (
+                  <div key={call.id} className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4 text-yellow-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{call.caller_name || call.caller_email}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(call.created_date).toLocaleDateString("ja-JP")}</p>
+                    </div>
+                    <p className="text-yellow-400 font-bold text-sm shrink-0">
+                      +{(call.yell_coin_amount || 0).toLocaleString()} コイン
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground">まだビデオ通話の収益はありません</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* エールコインウォレット */}
+        <TabsContent value="wallet">
+          <YellCoinWalletPanel user={user} />
         </TabsContent>
       </Tabs>
     </div>
