@@ -4,10 +4,11 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
+import AnnualFinancialStatement from "../components/admin/AnnualFinancialStatement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -305,6 +306,9 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <Users className="w-4 h-4" /> ユーザー管理
+          </TabsTrigger>
+          <TabsTrigger value="financial" className="gap-2">
+            <FileText className="w-4 h-4" /> 決算書
           </TabsTrigger>
         </TabsList>
 
@@ -608,6 +612,16 @@ export default function AdminDashboard() {
               <p>• 本番環境のみ対応（test_keyは使用不可）</p>
             </div>
           </div>
+        </TabsContent>
+
+        {/* 決算書タブ */}
+        <TabsContent value="financial" className="space-y-6">
+          <AnnualFinancialStatement
+            purchases={allPurchases}
+            calls={allCalls}
+            yellCoinTransactions={allYellCoinTransactions}
+            subscriptions={allSubscriptions}
+          />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
