@@ -48,6 +48,7 @@ export default function Settings() {
 
   // 基本情報
   const [basicInfo, setBasicInfo] = useState({
+    email: "",
     full_name: "",
     address: "",
     phone: "",
@@ -78,6 +79,7 @@ export default function Settings() {
             auto_subscribe_enabled: u.auto_subscribe_enabled || false,
           });
           setBasicInfo({
+            email: u.email || "",
             full_name: u.full_name || "",
             address: u.address || "",
             phone: u.phone || "",
@@ -155,6 +157,7 @@ export default function Settings() {
     }
     setSaving(true);
     await base44.auth.updateMe({
+      email: basicInfo.email,
       full_name: basicInfo.full_name,
       address: basicInfo.address,
       phone: basicInfo.phone,
@@ -198,14 +201,14 @@ export default function Settings() {
         <TabsContent value="basic" className="space-y-5">
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-300">メールアドレスは登録後は変更できません。氏名・住所の変更には本人確認書類の提出が必須です。</p>
+            <p className="text-xs text-blue-300">氏名・住所の変更には本人確認書類の提出が必須です。</p>
           </div>
 
           {!editingBasicInfo ? (
             <div className="space-y-4 bg-card rounded-xl border border-border/50 p-5">
               <div>
-                <Label className="text-xs text-muted-foreground">メールアドレス（変更不可）</Label>
-                <p className="text-sm font-semibold mt-1">{user.email}</p>
+                <Label className="text-xs text-muted-foreground">メールアドレス</Label>
+                <p className="text-sm font-semibold mt-1">{basicInfo.email}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">本名（非公開）</Label>
@@ -230,10 +233,14 @@ export default function Settings() {
           ) : (
             <div className="space-y-4 bg-card rounded-xl border border-border/50 p-5">
               <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-muted-foreground" /> メールアドレス（変更不可）
-                </Label>
-                <Input value={user.email} disabled className="bg-secondary border-0" />
+                <Label>メールアドレス</Label>
+                <Input
+                  type="email"
+                  value={basicInfo.email}
+                  onChange={(e) => setBasicInfo({ ...basicInfo, email: e.target.value })}
+                  placeholder="user@example.com"
+                  className="bg-secondary border-0"
+                />
               </div>
 
               <div className="space-y-2">
