@@ -4,8 +4,9 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -13,6 +14,17 @@ export default function AdminDashboard() {
   const [stripeApiKey, setStripeApiKey] = useState("");
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
   const [savingStripe, setSavingStripe] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
+    queryKey: ["admin-stripe-balance"],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('getStripeBalance', {});
+      return response.data;
+    },
+    refetchInterval: 60000, // Refetch every 60 seconds
+    enabled: !!user && user.email === "unei@chatmarket.info",
+  });
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -154,6 +166,8 @@ export default function AdminDashboard() {
       stripe_webhook_secret: stripeWebhookSecret,
     });
     toast.success("Stripe連携を保存しました");
+    // Refetch balance after saving
+    setTimeout(() => refetchStripe(), 1000);
     setSavingStripe(false);
   };
 
@@ -202,6 +216,44 @@ export default function AdminDashboard() {
           <p className="text-3xl font-black text-yellow-400">
             ¥{totalPlatformFee.toLocaleString()}
           </p>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/40 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <DollarSign className="w-4 h-4" />
+              <span className="text-sm font-semibold">Stripe 残高</span>
+            </div>
+            <button
+              onClick={() => refetchStripe()}
+              disabled={loadingStripe}
+              className="text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingStripe ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+          {loadingStripe ? (
+            <div className="space-y-2">
+              <div className="h-6 bg-blue-400/20 rounded animate-pulse" />
+              <div className="h-4 bg-blue-400/20 rounded animate-pulse w-2/3" />
+            </div>
+          ) : stripeBalance ? (
+            <div className="space-y-2">
+              <p className="text-3xl font-black text-blue-400">
+                ¥{stripeBalance.available.toLocaleString()}
+              </p>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>利用可能: ¥{stripeBalance.available.toLocaleString()}</p>
+                <p>保留中: ¥{stripeBalance.pending.toLocaleString()}</p>
+                <p className="text-blue-400">合計: ¥{stripeBalance.total.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  更新: {new Date(stripeBalance.lastUpdated).toLocaleString("ja-JP")}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Stripe API Key を設定してください</p>
+          )}
         </div>
 
         <div className="bg-card rounded-xl border border-border/50 p-5 space-y-2">
