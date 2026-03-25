@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Heart, TrendingUp, Users, FileText, Bell, ChevronRight, Target } from "lucide-react";
+import { Heart, TrendingUp, Users, FileText, Bell, ChevronRight, Target, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { jsPDF } from "jspdf";
 
 const ORG_TYPE_LABELS = {
   npo: { label: "NPO法人", color: "bg-blue-500/20 text-blue-300" },
@@ -18,6 +20,7 @@ const ORG_TYPE_LABELS = {
 
 export default function DonorDashboard() {
   const [user, setUser] = useState(null);
+  const [receiptMonth, setReceiptMonth] = useState(() => format(new Date(), "yyyy-MM"));
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -61,6 +64,73 @@ export default function DonorDashboard() {
   });
 
   const totalDonated = myDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
+
+  // 月別に絞り込んだ寄付
+  const filteredByMonth = myDonations.filter((d) => {
+    return format(new Date(d.created_date), "yyyy-MM") === receiptMonth;
+  });
+  const monthlyTotal = filteredByMonth.reduce((sum, d) => sum + (d.amount || 0), 0);
+
+  const generateReceipt = () => {
+    const doc = new jsPDF();
+    const [year, month] = receiptMonth.split("-");
+    const issueDate = format(new Date(), "yyyy年MM月dd日");
+
+    // タイトル
+    doc.setFontSize(20);
+    doc.text("寄付領収書", 105, 25, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.text(`発行日: ${issueDate}`, 160, 35);
+
+    // 宛名
+    doc.setFontSize(13);
+    doc.text(`${user.full_name || user.email} 様`, 20, 50);
+
+    doc.setFontSize(10);
+    doc.text(`対象期間: ${year}年${month}月`, 20, 60);
+    doc.text(`メールアドレス: ${user.email}`, 20, 68);
+
+    // 合計金額
+    doc.setFontSize(14);
+    doc.text(`合計寄付金額: ¥${monthlyTotal.toLocaleString()}`, 20, 82);
+
+    // 明細テーブルヘッダー
+    doc.setFontSize(10);
+    doc.text("寄付日", 20, 98);
+    doc.text("プロジェクト名", 50, 98);
+    doc.text("金額", 165, 98, { align: "right" });
+    doc.line(20, 101, 190, 101);
+
+    let y = 109;
+    filteredByMonth.forEach((d) => {
+      const proj = projects.find((p) => p.id === d.project_id);
+      const title = proj?.title || d.project_id;
+      const dateStr = format(new Date(d.created_date), "yyyy/MM/dd");
+      const truncated = title.length > 28 ? title.slice(0, 28) + "…" : title;
+
+      doc.text(dateStr, 20, y);
+      doc.text(truncated, 50, y);
+      doc.text(`¥${d.amount.toLocaleString()}`, 165, y, { align: "right" });
+      y += 9;
+      if (y > 265) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    doc.line(20, y + 1, 190, y + 1);
+    doc.setFontSize(12);
+    doc.text(`合計: ¥${monthlyTotal.toLocaleString()}`, 165, y + 10, { align: "right" });
+
+    // フッター注記
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text("※ 本領収書はChatMarketプラットフォーム上での寄付記録に基づき発行されます。", 20, 280);
+    doc.text("※ 確定申告の際は所轄税務署または税理士にご確認ください。", 20, 286);
+
+    doc.save(`receipt_${receiptMonth}_${user.email}.pdf`);
+  };
 
   // プロジェクトごとの自分の支援額
   const donationByProject = myDonations.reduce((acc, d) => {
@@ -225,6 +295,39 @@ export default function DonorDashboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* 領収書発行 */}
+      {myDonations.length > 0 && (
+        <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">
+          <h2 className="font-bold text-base flex items-center gap-2">
+            <FileText className="w-4 h-4 text-primary" /> 月次領収書（PDF）
+          </h2>
+          <p className="text-xs text-muted-foreground">確定申告や寄付控除の証明にご利用いただけます。</p>
+          <div className="flex items-center gap-3">
+            <input
+              type="month"
+              value={receiptMonth}
+              onChange={(e) => setReceiptMonth(e.target.value)}
+              className="h-9 rounded-md bg-secondary border-0 px-3 text-sm text-foreground"
+            />
+            <span className="text-sm text-muted-foreground">
+              合計: <span className="text-primary font-bold">¥{monthlyTotal.toLocaleString()}</span>
+              <span className="text-xs ml-1">({filteredByMonth.length}件)</span>
+            </span>
+          </div>
+          <Button
+            onClick={generateReceipt}
+            disabled={filteredByMonth.length === 0}
+            className="gap-2 bg-primary hover:bg-primary/90"
+          >
+            <Download className="w-4 h-4" />
+            {receiptMonth.replace("-", "年")}月の領収書をダウンロード
+          </Button>
+          {filteredByMonth.length === 0 && (
+            <p className="text-xs text-muted-foreground">選択した月の寄付履歴がありません。</p>
+          )}
         </div>
       )}
 
