@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X } from "lucide-react";
@@ -106,9 +107,30 @@ const COMBOS = [
 
 export default function PlanSelect() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  // unei@chatmarket.infoの場合は全プラン加入
   const [selected, setSelected] = useState(new Set());
 
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (isAuth) {
+        base44.auth.me().then((u) => {
+          setUser(u);
+          if (u.email === "unei@chatmarket.info") {
+            setSelected(new Set(["basic", "vod", "ppv", "call-anser"]));
+          }
+        });
+      }
+    });
+  }, []);
+
   const togglePlan = (id) => {
+    // unei@chatmarket.info は選択不可
+    if (user?.email === "unei@chatmarket.info") {
+      return;
+    }
+
     const plan = PLANS.find((p) => p.id === id);
     setSelected((prev) => {
       const next = new Set(prev);
@@ -143,6 +165,13 @@ export default function PlanSelect() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
+      {user?.email === "unei@chatmarket.info" && (
+        <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
+          <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>
+          <p className="text-xs text-primary/80">全プラン（BASIC・VOD・PPV・CALL&ANSER）が自動的に加入状態になります。</p>
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-black">プランを選択する</h1>
         <p className="text-muted-foreground text-sm mt-1">複数のプランを組み合わせてお申し込みいただけます。</p>
@@ -157,7 +186,8 @@ export default function PlanSelect() {
             <button
               key={combo.label}
               onClick={() => applyCombo(combo.ids)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              disabled={user?.email === "unei@chatmarket.info"}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {combo.label}
             </button>
@@ -174,9 +204,10 @@ export default function PlanSelect() {
             <button
               key={plan.id}
               onClick={() => togglePlan(plan.id)}
+              disabled={user?.email === "unei@chatmarket.info"}
               className={`w-full text-left rounded-2xl bg-gradient-to-br border transition-all duration-200 overflow-hidden ${plan.color} ${
                 isSelected ? "ring-2 ring-primary shadow-lg shadow-primary/10" : "opacity-80 hover:opacity-100"
-              } ${plan.popular && isSelected ? "ring-primary" : ""}`}
+              } ${plan.popular && isSelected ? "ring-primary" : ""} ${user?.email === "unei@chatmarket.info" ? "cursor-not-allowed" : ""}`}
             >
               <div className="flex items-center gap-4 px-5 py-4">
                 {/* Checkbox */}
