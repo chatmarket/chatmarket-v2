@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Zap, MessageCircle } from "lucide-react";
+import { Radio, Play, Zap, MessageCircle, Heart, ChevronDown, ChevronUp, ExternalLink, Target } from "lucide-react";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
@@ -17,6 +17,7 @@ import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentive
 export default function Home() {
   const [user, setUser] = useState(null);
   const [messageTarget, setMessageTarget] = useState(null); // { channel, video }
+  const [cfExpanded, setCfExpanded] = useState(false);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -37,6 +38,11 @@ export default function Home() {
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["livestreams-home"],
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6),
+  });
+
+  const { data: crowdfundings = [] } = useQuery({
+    queryKey: ["crowdfunding-active"],
+    queryFn: () => base44.entities.CrowdfundingProject.filter({ status: "active" }, "-created_date", 10),
   });
 
   const featuredVideos = videos.filter((v) => !v.is_free && v.price > 0).slice(0, 6);
@@ -183,6 +189,73 @@ export default function Home() {
 
       {/* PWA Install Guide */}
       <PwaInstallGuide />
+
+      {/* Crowdfunding Accordion */}
+      {crowdfundings.length > 0 && (
+        <section>
+          <div
+            className="bg-gradient-to-br from-red-900/40 to-red-800/20 border border-red-500/40 rounded-2xl overflow-hidden cursor-pointer"
+            onClick={() => setCfExpanded((v) => !v)}
+          >
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+                  <Heart className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold flex items-center gap-2">
+                    現在開催中のクラウドファンディング
+                    <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">{crowdfundings.length}件</span>
+                  </h2>
+                  <p className="text-xs text-red-300/70 mt-0.5">NPO・政治政党など社会課題に取り組むプロジェクトを支援</p>
+                </div>
+              </div>
+              {cfExpanded
+                ? <ChevronUp className="w-5 h-5 text-red-400 shrink-0" />
+                : <ChevronDown className="w-5 h-5 text-red-400 shrink-0" />}
+            </div>
+          </div>
+
+          {cfExpanded && (
+            <div className="border border-t-0 border-red-500/30 rounded-b-2xl bg-red-950/20 divide-y divide-red-500/10">
+              {crowdfundings.map((cf) => {
+                const goalPct = cf.goal_amount > 0
+                  ? Math.min(100, Math.round((cf.total_raised / cf.goal_amount) * 100))
+                  : null;
+                return (
+                  <div key={cf.id} className="px-5 py-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="font-bold text-sm line-clamp-1">{cf.title}</p>
+                      <p className="text-xs text-muted-foreground">{cf.organization_name}</p>
+                      <div className="flex items-center gap-3 text-xs text-red-300">
+                        <span className="flex items-center gap-1">
+                          <Heart className="w-3 h-3" /> {cf.supporter_count || 0}人支援
+                        </span>
+                        <span>¥{(cf.total_raised || 0).toLocaleString()} 累計</span>
+                        {goalPct !== null && (
+                          <span className="flex items-center gap-1">
+                            <Target className="w-3 h-3" /> {goalPct}%達成
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Link to={`/crowdfunding/${cf.id}`} onClick={(e) => e.stopPropagation()}>
+                      <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-1 shrink-0">
+                        支援する <ExternalLink className="w-3 h-3" />
+                      </Button>
+                    </Link>
+                  </div>
+                );
+              })}
+              <div className="px-5 py-3 text-center">
+                <Link to="/crowdfunding" onClick={(e) => e.stopPropagation()}>
+                  <button className="text-xs text-red-400 hover:text-red-300 underline">すべてのプロジェクトを見る →</button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Progressive Incentive */}
       <ProgressiveIncentiveSection />
