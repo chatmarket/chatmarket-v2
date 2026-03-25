@@ -2,15 +2,18 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, DollarSign } from "lucide-react";
+import { Send, DollarSign, Smile } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SuperChatModal from "./SuperChatModal";
+import EmojiPicker from "./EmojiPicker";
+import MotionMessage from "./MotionMessage";
 
 export default function ChatPanel({ targetType, targetId }) {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [showSuperChat, setShowSuperChat] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const scrollRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -54,6 +57,10 @@ export default function ChatPanel({ targetType, targetId }) {
     sendComment.mutate(message.trim());
   };
 
+  const handleEmojiSelect = (emoji) => {
+    setMessage((prev) => prev + emoji);
+  };
+
   const allMessages = [
     ...comments.map((c) => ({ ...c, type: "comment" })),
     ...superChats.map((s) => ({ ...s, type: "superchat" })),
@@ -82,7 +89,7 @@ export default function ChatPanel({ targetType, targetId }) {
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-primary">{msg.user_name}</span>
-                  <span className="text-xs font-bold text-yellow-400">¥{msg.amount?.toLocaleString()}</span>
+                  <span className="text-xs font-bold text-yellow-400">💰 ¥{msg.amount?.toLocaleString()}</span>
                 </div>
                 {msg.message && <p className="text-sm">{msg.message}</p>}
               </div>
@@ -93,7 +100,7 @@ export default function ChatPanel({ targetType, targetId }) {
                 </div>
                 <div>
                   <span className="text-xs font-medium text-primary">{msg.user_name} </span>
-                  <span className="text-sm text-foreground/80">{msg.content}</span>
+                  <MotionMessage content={msg.content} />
                 </div>
               </div>
             )
@@ -102,30 +109,52 @@ export default function ChatPanel({ targetType, targetId }) {
       </ScrollArea>
 
       {user ? (
-        <div className="p-3 border-t border-border/50">
-          <form onSubmit={handleSend} className="flex gap-2">
-            {targetType === "livestream" && (
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={() => setShowSuperChat(true)}
-                title="エールコインを送る"
-              className="shrink-0 text-yellow-400 hover:text-yellow-300"
-              >
-                <DollarSign className="w-4 h-4" />
-              </Button>
-            )}
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="コメントを入力..."
-              className="bg-secondary border-0 text-sm"
-            />
-            <Button type="submit" size="icon" className="shrink-0 bg-primary hover:bg-primary/90">
-              <Send className="w-4 h-4" />
+        <div className="p-3 border-t border-border/50 space-y-2">
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {/* エールコイン */}
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowSuperChat(true)}
+              className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 text-xs gap-1 px-2"
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              エールコイン
             </Button>
-          </form>
+          </div>
+
+          {/* Input row */}
+          <div className="relative flex gap-2">
+            {showEmojiPicker && (
+              <EmojiPicker
+                onSelect={handleEmojiSelect}
+                onClose={() => setShowEmojiPicker(false)}
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker((v) => !v)}
+              className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-colors text-xl ${
+                showEmojiPicker ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              }`}
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+            <form onSubmit={handleSend} className="flex flex-1 gap-2">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="コメントを入力..."
+                className="bg-secondary border-0 text-sm flex-1"
+                onFocus={() => setShowEmojiPicker(false)}
+              />
+              <Button type="submit" size="icon" className="shrink-0 bg-primary hover:bg-primary/90">
+                <Send className="w-4 h-4" />
+              </Button>
+            </form>
+          </div>
         </div>
       ) : (
         <div className="p-3 border-t border-border/50 text-center">
