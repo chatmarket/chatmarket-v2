@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
@@ -126,6 +126,15 @@ export default function Navbar() {
                     <Settings className="w-4 h-4 mr-2" />
                     {t("settings")}
                   </DropdownMenuItem>
+                  {user?.role === "admin" && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate("/admin/dashboard")}>
+                        <BarChart3 className="w-4 h-4 mr-2 text-purple-400" />
+                        管理者ダッシュボード
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => base44.auth.logout()}>
                     <LogOut className="w-4 h-4 mr-2" />
