@@ -81,11 +81,16 @@ export default function RevenueManagement() {
   const liveStreamFee = Math.floor(liveStreamGross * 0.15);
   const liveStreamNet = liveStreamGross - liveStreamFee;
 
-  const videoCallGross = videoCalls.reduce((sum, c) => sum + (c.yell_coin_amount || 0), 0);
-  const videoCallFee = Math.floor(videoCallGross * 0.10);
-  const videoCallNet = videoCallGross - videoCallFee;
+  // ビデオ通話 = 通話料金 (price) + エールコイン (yell_coin_amount) を分離
+  const videoCallPriceGross = videoCalls.reduce((sum, c) => sum + (c.price || 0), 0);
+  const videoCallPriceFee = Math.floor(videoCallPriceGross * 0.10);
+  const videoCallPriceNet = videoCallPriceGross - videoCallPriceFee;
 
-  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet + yellCoinNet + videoCallNet;
+  const videoCallYellGross = videoCalls.reduce((sum, c) => sum + (c.yell_coin_amount || 0), 0);
+  const videoCallYellFee = Math.floor(videoCallYellGross * 0.10);
+  const videoCallYellNet = videoCallYellGross - videoCallYellFee;
+
+  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet + yellCoinNet + videoCallPriceNet + videoCallYellNet;
   const currentRate = getProgressiveRate(monthlyGrossRevenue);
   const totalRevenue = Math.floor(monthlyGrossRevenue * currentRate);
 
@@ -113,12 +118,16 @@ export default function RevenueManagement() {
             <span>¥{liveStreamNet.toLocaleString()} <span className="text-xs">(手数料 ¥{liveStreamFee.toLocaleString()})</span></span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>スーパーチャット・エールコイン</span>
+            <span>エールコイン</span>
             <span>¥{yellCoinNet.toLocaleString()} <span className="text-xs">(手数料 ¥{yellCoinFee.toLocaleString()})</span></span>
           </div>
           <div className="flex justify-between text-muted-foreground">
+            <span>ビデオ通話</span>
+            <span>¥{videoCallPriceNet.toLocaleString()} <span className="text-xs">(手数料 ¥{videoCallPriceFee.toLocaleString()})</span></span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
             <span>ビデオ通話エールコイン</span>
-            <span>¥{videoCallNet.toLocaleString()} <span className="text-xs">(手数料 ¥{videoCallFee.toLocaleString()})</span></span>
+            <span>¥{videoCallYellNet.toLocaleString()} <span className="text-xs">(手数料 ¥{videoCallYellFee.toLocaleString()})</span></span>
           </div>
         </div>
 
@@ -172,18 +181,24 @@ export default function RevenueManagement() {
 
         <TabsContent value="calls">
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 mb-1">
               <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
                 <p className="text-2xl font-black text-yellow-400">{videoCalls.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">通話回数</p>
               </div>
               <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-yellow-400">{videoCallGross.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">受取コイン（合計）</p>
+                <p className="text-2xl font-black text-primary">¥{(videoCallPriceNet + videoCallYellNet).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">手数料控除後（合計）</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
+                <p className="text-xl font-black text-blue-400">¥{videoCallPriceNet.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">通話料金（手数料控除後）</p>
               </div>
               <div className="bg-card border border-border/50 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-primary">{videoCallNet.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">手数料控除後</p>
+                <p className="text-xl font-black text-yellow-400">¥{videoCallYellNet.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">エールコイン（手数料控除後）</p>
               </div>
             </div>
 
@@ -198,9 +213,14 @@ export default function RevenueManagement() {
                       <p className="text-sm font-medium truncate">{call.caller_name || call.caller_email}</p>
                       <p className="text-xs text-muted-foreground">{new Date(call.created_date).toLocaleDateString("ja-JP")}</p>
                     </div>
-                    <p className="text-yellow-400 font-bold text-sm shrink-0">
-                      +{(call.yell_coin_amount || 0).toLocaleString()} コイン
-                    </p>
+                    <div className="text-right shrink-0 space-y-0.5">
+                      {(call.price || 0) > 0 && (
+                        <p className="text-blue-400 font-bold text-sm">通話 ¥{(call.price || 0).toLocaleString()}</p>
+                      )}
+                      {(call.yell_coin_amount || 0) > 0 && (
+                        <p className="text-yellow-400 font-bold text-sm">エール ¥{(call.yell_coin_amount || 0).toLocaleString()}</p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
