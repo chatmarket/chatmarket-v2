@@ -74,17 +74,27 @@ export default function EmojiPicker({ onSelect, onClose }) {
       <div className="p-2 h-44 overflow-y-auto">
         <p className="text-xs text-muted-foreground mb-2 px-1">{EMOJI_CATEGORIES[activeCategory].label}</p>
         <div className="grid grid-cols-6 gap-0.5">
-          {EMOJI_CATEGORIES[activeCategory].emojis.map((emoji, i) => (
-            <button
-              key={i}
-              onClick={() => { onSelect(emoji); onClose(); }}
-              className={`rounded-lg hover:bg-secondary transition-colors text-center p-1 ${
-                EMOJI_CATEGORIES[activeCategory].isMotion ? "col-span-2 text-xs font-bold text-primary" : "text-xl"
-              }`}
-            >
-              {emoji}
-            </button>
-          ))}
+          {EMOJI_CATEGORIES[activeCategory].emojis.map((emoji, i) => {
+            const isMotion = EMOJI_CATEGORIES[activeCategory].isMotion;
+            const displayValue = isMotion ? (MOTION_DISPLAY[emoji] || emoji) : emoji;
+            return (
+              <button
+                key={i}
+                onClick={() => { onSelect(displayValue); onClose(); }}
+                className={`rounded-lg hover:bg-secondary transition-colors text-center p-1 ${
+                  isMotion ? "col-span-3 text-base" : "text-xl"
+                }`}
+                title={isMotion ? emoji : undefined}
+              >
+                {isMotion ? (
+                  <span className="flex flex-col items-center gap-0.5">
+                    <span className="text-lg">{displayValue}</span>
+                    <span className="text-[9px] text-muted-foreground">{emoji}</span>
+                  </span>
+                ) : emoji}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

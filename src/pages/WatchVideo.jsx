@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import VideoComments from "../components/video/VideoComments";
 import VideoReactions from "../components/video/VideoReactions";
 import VideoControls from "../components/video/VideoControls";
+import RecommendedVideos from "../components/video/RecommendedVideos";
 
 const FREE_PREVIEW_SECONDS = 30;
 
@@ -171,6 +172,11 @@ export default function WatchVideo() {
         <div className="lg:col-span-1 h-[500px] lg:h-[calc(100vh-8rem)]">
           <ChatPanel targetType="video" targetId={id} />
         </div>
+      </div>
+
+      {/* Recommended Videos */}
+      <div className="mt-6">
+        <RecommendedVideos currentVideoId={id} category={video.category} />
       </div>
 
       {/* Comments section */}

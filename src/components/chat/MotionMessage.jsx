@@ -1,39 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { MOTION_DISPLAY } from "./EmojiPicker";
+
+// Detect if a string is purely emoji characters (for animation)
+const EMOJI_REGEX = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\u200D)+$/u;
+
+function isEmojiOnly(str) {
+  return EMOJI_REGEX.test(str.trim());
+}
 
 export default function MotionMessage({ content }) {
   const [frame, setFrame] = useState(0);
-  const motionKey = Object.keys(MOTION_DISPLAY).find((k) => content.includes(k));
+  const chars = [...content]; // emoji-safe split
+  const shouldAnimate = chars.length >= 2 && chars.length <= 6 && isEmojiOnly(content);
 
   useEffect(() => {
-    if (!motionKey) return;
+    if (!shouldAnimate) return;
     const interval = setInterval(() => {
-      setFrame((f) => (f + 1) % 3);
-    }, 400);
+      setFrame((f) => (f + 1) % chars.length);
+    }, 350);
     return () => clearInterval(interval);
-  }, [motionKey]);
+  }, [shouldAnimate, content]);
 
-  if (!motionKey) return <span className="text-sm text-foreground/80">{content}</span>;
-
-  const frames = MOTION_DISPLAY[motionKey].split("");
-  // Animate: show a subset of emojis per frame for wave effect
-  const emojis = MOTION_DISPLAY[motionKey];
-  const scales = [1, 1.3, 1];
+  if (!shouldAnimate) {
+    return <span className="text-sm text-foreground/80">{content}</span>;
+  }
 
   return (
     <span className="inline-flex items-center gap-0.5">
-      {emojis.split("").map((char, i) => (
+      {chars.map((char, i) => (
         <span
           key={i}
-          className="inline-block transition-transform duration-300 text-lg"
+          className="inline-block transition-transform duration-300 text-xl"
           style={{
-            transform: `scale(${frame === i % 3 ? 1.4 : 1})`,
+            transform: `scale(${frame === i ? 1.5 : 1})`,
           }}
         >
           {char}
         </span>
       ))}
-      <span className="text-xs text-muted-foreground ml-1">{motionKey}</span>
     </span>
   );
 }
