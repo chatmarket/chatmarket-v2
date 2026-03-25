@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import UserDetailModal from "../components/admin/UserDetailModal";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -14,6 +15,7 @@ export default function AdminDashboard() {
   const [stripeApiKey, setStripeApiKey] = useState("");
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
   const [savingStripe, setSavingStripe] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
@@ -625,7 +627,14 @@ export default function AdminDashboard() {
                   {allUsers.slice(0, 20).map((u) => (
                     <tr key={u.id} className="border-b border-border/30 hover:bg-secondary/50">
                       <td className="py-2 px-3 font-mono text-xs">{u.email}</td>
-                      <td className="py-2 px-3">{u.full_name || "未設定"}</td>
+                      <td className="py-2 px-3">
+                        <button
+                          onClick={() => setSelectedUser(u)}
+                          className="text-primary hover:text-primary/80 hover:underline transition-colors text-left font-medium"
+                        >
+                          {u.full_name || "未設定"}
+                        </button>
+                      </td>
                       <td className="py-2 px-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${u.role === "admin" ? "bg-red-500/20 text-red-300" : "bg-secondary text-foreground"}`}>
                           {u.role}
@@ -651,6 +660,10 @@ export default function AdminDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {selectedUser && (
+        <UserDetailModal user={selectedUser} onClose={() => setSelectedUser(null)} />
+      )}
     </div>
   );
 }
