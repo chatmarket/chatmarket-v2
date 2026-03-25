@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CategoryTagSelector from "../components/channel/CategoryTagSelector";
@@ -46,6 +46,21 @@ export default function Settings() {
     call_available_dates: "",
   });
 
+  // 基本情報
+  const [basicInfo, setBasicInfo] = useState({
+    full_name: "",
+    address: "",
+    phone: "",
+    region: "",
+  });
+  const [editingBasicInfo, setEditingBasicInfo] = useState(false);
+  const [verificationDocs, setVerificationDocs] = useState({
+    full_name_doc: null,
+    address_doc: null,
+  });
+  const [fullNameChanged, setFullNameChanged] = useState(false);
+  const [addressChanged, setAddressChanged] = useState(false);
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
@@ -61,6 +76,12 @@ export default function Settings() {
           setSubscription({
             auto_subscribe_price: u.auto_subscribe_price || 3000,
             auto_subscribe_enabled: u.auto_subscribe_enabled || false,
+          });
+          setBasicInfo({
+            full_name: u.full_name || "",
+            address: u.address || "",
+            phone: u.phone || "",
+            region: u.region || "",
           });
         });
       } else {
@@ -127,12 +148,35 @@ export default function Settings() {
 
   if (!user) return null;
 
+  const handleSaveBasicInfo = async () => {
+    if ((fullNameChanged || addressChanged) && (!verificationDocs.full_name_doc || !verificationDocs.address_doc)) {
+      toast.error("氏名または住所を変更する場合は、証明書類の提出が必須です。");
+      return;
+    }
+    setSaving(true);
+    await base44.auth.updateMe({
+      full_name: basicInfo.full_name,
+      address: basicInfo.address,
+      phone: basicInfo.phone,
+      region: basicInfo.region,
+    });
+    toast.success("基本情報を保存しました");
+    setSaving(false);
+    setEditingBasicInfo(false);
+    setFullNameChanged(false);
+    setAddressChanged(false);
+    setVerificationDocs({ full_name_doc: null, address_doc: null });
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-8">設定</h1>
 
-      <Tabs defaultValue="profile">
+      <Tabs defaultValue="basic">
         <TabsList className="bg-secondary mb-8 w-full">
+          <TabsTrigger value="basic" className="flex-1 gap-2">
+            <Lock className="w-4 h-4" /> 基本情報
+          </TabsTrigger>
           <TabsTrigger value="profile" className="flex-1 gap-2">
             <User className="w-4 h-4" /> プロフィール
           </TabsTrigger>
@@ -149,6 +193,173 @@ export default function Settings() {
             <PhoneCall className="w-4 h-4" /> 通話設定
           </TabsTrigger>
         </TabsList>
+
+        {/* Basic Info Tab */}
+        <TabsContent value="basic" className="space-y-5">
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-300">メールアドレスは登録後は変更できません。氏名・住所の変更には本人確認書類の提出が必須です。</p>
+          </div>
+
+          {!editingBasicInfo ? (
+            <div className="space-y-4 bg-card rounded-xl border border-border/50 p-5">
+              <div>
+                <Label className="text-xs text-muted-foreground">メールアドレス（変更不可）</Label>
+                <p className="text-sm font-semibold mt-1">{user.email}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">本名（非公開）</Label>
+                <p className="text-sm font-semibold mt-1">{basicInfo.full_name || "未設定"}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">住所（非公開）</Label>
+                <p className="text-sm font-semibold mt-1">{basicInfo.address || "未設定"}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">電話番号（非公開）</Label>
+                <p className="text-sm font-semibold mt-1">{basicInfo.phone || "未設定"}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">地域（公開）</Label>
+                <p className="text-sm font-semibold mt-1">{basicInfo.region || "未設定"}</p>
+              </div>
+              <Button onClick={() => setEditingBasicInfo(true)} className="w-full gap-2 bg-primary hover:bg-primary/90">
+                変更する
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 bg-card rounded-xl border border-border/50 p-5">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground" /> メールアドレス（変更不可）
+                </Label>
+                <Input value={user.email} disabled className="bg-secondary border-0" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  本名（非公開）
+                  {basicInfo.full_name !== user.full_name && <span className="text-xs text-orange-400">※変更</span>}
+                </Label>
+                <Input
+                  value={basicInfo.full_name}
+                  onChange={(e) => { setBasicInfo({ ...basicInfo, full_name: e.target.value }); setFullNameChanged(e.target.value !== user.full_name); }}
+                  placeholder="山田太郎"
+                  className="bg-secondary border-0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  住所（非公開）
+                  {basicInfo.address !== user.address && <span className="text-xs text-orange-400">※変更</span>}
+                </Label>
+                <Input
+                  value={basicInfo.address}
+                  onChange={(e) => { setBasicInfo({ ...basicInfo, address: e.target.value }); setAddressChanged(e.target.value !== user.address); }}
+                  placeholder="東京都渋谷区"
+                  className="bg-secondary border-0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>電話番号（非公開）</Label>
+                <Input
+                  type="tel"
+                  value={basicInfo.phone}
+                  onChange={(e) => setBasicInfo({ ...basicInfo, phone: e.target.value })}
+                  placeholder="090-1234-5678"
+                  className="bg-secondary border-0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>地域（公開）</Label>
+                <Input
+                  value={basicInfo.region}
+                  onChange={(e) => setBasicInfo({ ...basicInfo, region: e.target.value })}
+                  placeholder="例: 東京、大阪、全国対応"
+                  className="bg-secondary border-0"
+                />
+              </div>
+
+              {(fullNameChanged || addressChanged) && (
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 space-y-3">
+                  <p className="text-xs font-bold text-orange-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4" /> 本人確認書類が必要です
+                  </p>
+                  {fullNameChanged && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">本名確認書類（運転免許証・パスポート等）</Label>
+                      <label className="flex items-center justify-center h-20 border-2 border-dashed border-orange-500/30 rounded-lg cursor-pointer hover:border-orange-500/60 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => setVerificationDocs({ ...verificationDocs, full_name_doc: e.target.files?.[0] || null })}
+                        />
+                        <div className="text-center">
+                          {verificationDocs.full_name_doc ? (
+                            <div className="flex items-center justify-center gap-1 text-orange-400">
+                              <Check className="w-4 h-4" />
+                              <span className="text-xs font-semibold">{verificationDocs.full_name_doc.name}</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <Upload className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">ファイルを選択</span>
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                  {addressChanged && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">住所確認書類（住民票・公共料金領収書等）</Label>
+                      <label className="flex items-center justify-center h-20 border-2 border-dashed border-orange-500/30 rounded-lg cursor-pointer hover:border-orange-500/60 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => setVerificationDocs({ ...verificationDocs, address_doc: e.target.files?.[0] || null })}
+                        />
+                        <div className="text-center">
+                          {verificationDocs.address_doc ? (
+                            <div className="flex items-center justify-center gap-1 text-orange-400">
+                              <Check className="w-4 h-4" />
+                              <span className="text-xs font-semibold">{verificationDocs.address_doc.name}</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <Upload className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">ファイルを選択</span>
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">書類は1営業日以内に確認されます。承認後に変更が反映されます。</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => { setEditingBasicInfo(false); setFullNameChanged(false); setAddressChanged(false); }} className="flex-1">
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleSaveBasicInfo}
+                  disabled={saving || (fullNameChanged && !verificationDocs.full_name_doc) || (addressChanged && !verificationDocs.address_doc)}
+                  className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  保存する
+                </Button>
+              </div>
+            </div>
+          )}
+        </TabsContent>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-5">
