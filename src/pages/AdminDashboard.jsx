@@ -67,6 +67,18 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
+  const { data: allYellCoinTransactions = [] } = useQuery({
+    queryKey: ["admin-all-yell-transactions"],
+    queryFn: () => base44.entities.YellCoinTransaction.list(),
+    enabled: !!user && user.email === "unei@chatmarket.info",
+  });
+
+  const { data: allYellCoinWallets = [] } = useQuery({
+    queryKey: ["admin-all-yell-wallets"],
+    queryFn: () => base44.entities.YellCoinWallet.list(),
+    enabled: !!user && user.email === "unei@chatmarket.info",
+  });
+
   if (!user || user.email !== "unei@chatmarket.info") {
     return null;
   }
@@ -88,6 +100,30 @@ export default function AdminDashboard() {
     Math.floor(totalVideoRevenue * 0.15) +
     Math.floor(totalStreamRevenue * 0.15) +
     Math.floor(totalCallRevenue * 0.30);
+
+  // エールコイン統計
+  const totalYellCoinCharged = allYellCoinTransactions
+    .filter((t) => t.type === "charge")
+    .reduce((sum, t) => sum + (t.yen_amount || 0), 0);
+
+  const totalYellCoinSent = allYellCoinTransactions
+    .filter((t) => t.type === "send")
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const totalYellCoinBalance = allYellCoinWallets.reduce((sum, w) => sum + (w.balance || 0), 0);
+
+  // 日別・月別のエールコインチャージ
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const todayYellCoinCharged = allYellCoinTransactions
+    .filter((t) => t.type === "charge" && new Date(t.created_date) >= todayStart)
+    .reduce((sum, t) => sum + (t.yen_amount || 0), 0);
+
+  const monthYellCoinCharged = allYellCoinTransactions
+    .filter((t) => t.type === "charge" && new Date(t.created_date) >= monthStart)
+    .reduce((sum, t) => sum + (t.yen_amount || 0), 0);
 
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -153,6 +189,36 @@ export default function AdminDashboard() {
           </div>
           <p className="text-3xl font-black text-yellow-400">
             ¥{totalPlatformFee.toLocaleString()}
+          </p>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border/50 p-5 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <DollarSign className="w-4 h-4" />
+            <span className="text-sm font-semibold">エールコイン本日チャージ</span>
+          </div>
+          <p className="text-3xl font-black text-yellow-500">
+            ¥{todayYellCoinCharged.toLocaleString()}
+          </p>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border/50 p-5 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <DollarSign className="w-4 h-4" />
+            <span className="text-sm font-semibold">エールコイン今月チャージ</span>
+          </div>
+          <p className="text-3xl font-black text-yellow-500">
+            ¥{monthYellCoinCharged.toLocaleString()}
+          </p>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border/50 p-5 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <DollarSign className="w-4 h-4" />
+            <span className="text-sm font-semibold">エールコイン全残高</span>
+          </div>
+          <p className="text-3xl font-black text-yellow-400">
+            {totalYellCoinBalance.toLocaleString()} 枚
           </p>
         </div>
       </div>
