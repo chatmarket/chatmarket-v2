@@ -8,6 +8,7 @@ import { Eye, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import VideoComments from "../components/video/VideoComments";
 import VideoReactions from "../components/video/VideoReactions";
+import VideoControls from "../components/video/VideoControls";
 
 const FREE_PREVIEW_SECONDS = 30;
 
@@ -129,6 +130,13 @@ export default function WatchVideo() {
             {isPaid && !hasPurchased && !previewEnded && (
               <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium">
                 30秒プレビュー中
+              </div>
+            )}
+
+            {/* Video controls overlay */}
+            {video.video_url && (
+              <div className="absolute bottom-12 right-3">
+                <VideoControls videoRef={videoRef} showQuality={true} />
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ import PaywallModal from "../components/video/PaywallModal";
 import { Users, Radio, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import VideoControls from "../components/video/VideoControls";
 
 export default function LiveView() {
   const { id } = useParams();
@@ -132,6 +133,13 @@ export default function LiveView() {
                   <Users className="w-3 h-3" />
                   {stream.viewer_count || 0}
                 </Badge>
+              </div>
+            )}
+
+            {/* Video controls */}
+            {stream.status === "live" && !needsPayment && (
+              <div className="absolute bottom-4 right-3">
+                <VideoControls videoRef={null} showQuality={true} />
               </div>
             )}
           </div>
