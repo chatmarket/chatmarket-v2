@@ -102,13 +102,10 @@ export default function MyChannel() {
   const videoCallFee = Math.floor(videoCallGross * 0.10);
   const videoCallNet = videoCallGross - videoCallFee;
 
-  // 出金可能収益（円建て：ビデオ販売・ライブチケットのみ）
-  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet;
+  // 出金可能収益（ビデオ販売・ライブチケット・スーパーチャット・ビデオ通話エールコイン）
+  const monthlyGrossRevenue = videoPurchaseNet + liveStreamNet + yellCoinNet + videoCallNet;
   const currentRate = getProgressiveRate(monthlyGrossRevenue);
   const totalRevenue = Math.floor(monthlyGrossRevenue * currentRate);
-
-  // エールコイン系収益（出金不可・別管理）
-  const totalYellCoinsEarned = yellCoinNet + videoCallNet; // コイン単位
 
   useEffect(() => {
     if (channel) {
@@ -238,6 +235,14 @@ export default function MyChannel() {
               <span>ライブチケット</span>
               <span>¥{liveStreamNet.toLocaleString()} (手数料: ¥{liveStreamFee.toLocaleString()})</span>
             </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>スーパーチャット・エールコイン</span>
+              <span>¥{yellCoinNet.toLocaleString()} (手数料: ¥{yellCoinFee.toLocaleString()})</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>ビデオ通話エールコイン</span>
+              <span>¥{videoCallNet.toLocaleString()} (手数料: ¥{videoCallFee.toLocaleString()})</span>
+            </div>
           </div>
           <div className="flex justify-between text-muted-foreground font-semibold">
             <span>小計（手数料控除後）</span>
@@ -264,28 +269,14 @@ export default function MyChannel() {
           </div>
         </div>
 
-        {/* エールコイン収益（別管理・出金不可） */}
+        {/* チャージコイン（出金不可） */}
         <div className="mt-3 bg-yellow-500/5 rounded-xl p-4 border border-yellow-500/20 space-y-2 text-xs">
           <p className="font-semibold text-sm flex items-center gap-1.5">
-            <Coins className="w-4 h-4 text-yellow-400" /> エールコイン収益（出金不可・別管理）
+            <Coins className="w-4 h-4 text-yellow-400" /> チャージしたエールコイン（出金不可）
           </p>
-          <div className="space-y-1 pb-2 border-b border-yellow-500/20">
-            <div className="flex justify-between text-muted-foreground">
-              <span>スーパーチャット・エールコイン</span>
-              <span>{yellCoinNet.toLocaleString()} コイン (手数料: {yellCoinFee.toLocaleString()})</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>ビデオ通話エールコイン</span>
-              <span>{videoCallNet.toLocaleString()} コイン (手数料: {videoCallFee.toLocaleString()})</span>
-            </div>
-          </div>
-          <div className="flex justify-between font-bold">
-            <span>合計保有コイン（手数料控除後）</span>
-            <span className="text-yellow-400">{totalYellCoinsEarned.toLocaleString()} コイン</span>
-          </div>
           <div className="flex items-start gap-1.5 text-muted-foreground bg-secondary/50 rounded-lg p-2.5">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-yellow-400" />
-            <p>エールコインは出金できません。アプリ内でのチャージ・送付にのみ使用できます。詳細は「エールコイン」タブをご確認ください。</p>
+            <p>ご自身でチャージしたエールコインは出金できません。アプリ内での送付にのみ使用できます。詳細は「エールコイン」タブをご確認ください。</p>
           </div>
         </div>
       </div>
