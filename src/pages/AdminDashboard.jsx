@@ -111,6 +111,12 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
+  const { data: allCrowdfundingProjects = [] } = useQuery({
+    queryKey: ["admin-all-crowdfunding-projects"],
+    queryFn: () => base44.entities.CrowdfundingProject.list(),
+    enabled: !!user && user.email === "unei@chatmarket.info",
+  });
+
   if (!user || !ADMIN_EMAILS.includes(user.email)) {
     return null;
   }
@@ -328,6 +334,9 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="kyc" className="gap-2">
             <Users className="w-4 h-4" /> KYC審査
+          </TabsTrigger>
+          <TabsTrigger value="crowdfunding" className="gap-2">
+            <DollarSign className="w-4 h-4" /> クラウドファンディング
           </TabsTrigger>
         </TabsList>
 
@@ -656,6 +665,76 @@ export default function AdminDashboard() {
         {/* KYC審査タブ */}
         <TabsContent value="kyc" className="space-y-6">
           <KycManagement />
+        </TabsContent>
+
+        {/* クラウドファンディングタブ */}
+        <TabsContent value="crowdfunding" className="space-y-6">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-lg">クラウドファンディングプロジェクト一覧</h3>
+              <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5">
+                {allCrowdfundingProjects.length}件
+              </span>
+            </div>
+
+            {allCrowdfundingProjects.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">プロジェクトはありません</p>
+              </div>
+            ) : (
+              <div className="bg-card rounded-xl border border-border/50 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50 bg-secondary">
+                      <th className="text-left py-3 px-3 font-bold">プロジェクト名</th>
+                      <th className="text-left py-3 px-3 font-bold">オーナー</th>
+                      <th className="text-center py-3 px-3 font-bold">ステータス</th>
+                      <th className="text-right py-3 px-3 font-bold">目標額</th>
+                      <th className="text-right py-3 px-3 font-bold">集計額</th>
+                      <th className="text-right py-3 px-3 font-bold">支援者数</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allCrowdfundingProjects.map((project) => (
+                      <tr key={project.id} className="border-b border-border/30 hover:bg-secondary/50">
+                        <td className="py-3 px-3 font-semibold line-clamp-2">{project.title}</td>
+                        <td className="py-3 px-3 text-muted-foreground">{project.owner_email}</td>
+                        <td className="py-3 px-3 text-center">
+                          <span
+                            className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                              project.status === "active"
+                                ? "bg-green-500/20 text-green-300"
+                                : project.status === "pending"
+                                ? "bg-yellow-500/20 text-yellow-300"
+                                : project.status === "approved"
+                                ? "bg-blue-500/20 text-blue-300"
+                                : "bg-red-500/20 text-red-300"
+                            }`}
+                          >
+                            {project.status === "active"
+                              ? "✓ アクティブ"
+                              : project.status === "pending"
+                              ? "⏳ 審査待ち"
+                              : project.status === "approved"
+                              ? "✓ 承認"
+                              : "✗ 却下"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {project.goal_amount > 0 ? `¥${project.goal_amount.toLocaleString()}` : "無制限"}
+                        </td>
+                        <td className="py-3 px-3 text-right font-semibold text-primary">
+                          ¥{(project.total_raised || 0).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-3 text-right">{project.supporter_count || 0}人</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* ユーザー管理タブ */}
