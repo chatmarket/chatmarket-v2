@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -181,11 +181,18 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between gap-3 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <Settings className="w-5 h-5 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold">運営管理ダッシュボード</h1>
         </div>
-        <h1 className="text-3xl font-bold">運営管理ダッシュボード</h1>
+        <a href="/">
+          <Button variant="outline" className="gap-2">
+            <Home className="w-4 h-4" /> TOPに戻る
+          </Button>
+        </a>
       </div>
 
       {/* KPI */}
