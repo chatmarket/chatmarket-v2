@@ -242,6 +242,7 @@ export default function Upload() {
               </div>
             )}
           </label>
+          <p className="text-xs text-muted-foreground">推奨サイズ: 1280 × 720px (16:9)</p>
         </div>
 
         {/* Title */}

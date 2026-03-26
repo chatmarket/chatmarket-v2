@@ -210,6 +210,7 @@ export default function BlogEdit() {
               </div>
             )}
           </label>
+          <p className="text-xs text-muted-foreground">推奨サイズ: 1200 × 800px</p>
         </div>
 
         {/* Title */}
