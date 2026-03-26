@@ -203,7 +203,7 @@ export default function Footer() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            © 2025 {COMPANY.name}. All rights reserved.
+            © 2026 ONE STEP Co., Ltd. All Rights Reserved.（※Chat Marketのロゴマークは商標/著作権申請中です）
           </p>
         </div>
       </footer>
