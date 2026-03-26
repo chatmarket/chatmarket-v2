@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel";
 import PaywallModal from "../components/video/PaywallModal";
+import CommentSection from "../components/video/CommentSection";
+import ReactionBar from "../components/video/ReactionBar";
+import RatingSection from "../components/video/RatingSection";
 import { Users, Radio, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +154,13 @@ export default function LiveView() {
             {stream.description && (
               <div className="bg-card rounded-xl p-4 border border-border/50 mt-4">
                 <p className="text-sm text-foreground/80 whitespace-pre-wrap">{stream.description}</p>
+              </div>
+            )}
+            {hasPurchased && (
+              <div className="space-y-3">
+                <RatingSection targetId={id} user={user} />
+                <ReactionBar targetType="livestream" targetId={id} user={user} />
+                <CommentSection targetType="livestream" targetId={id} user={user} />
               </div>
             )}
           </div>

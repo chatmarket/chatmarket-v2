@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel";
 import PaywallModal from "../components/video/PaywallModal";
+import CommentSection from "../components/video/CommentSection";
+import ReactionBar from "../components/video/ReactionBar";
 import { Eye, Calendar, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -242,8 +244,10 @@ export default function WatchVideo() {
                 <p className="text-sm text-foreground/80 whitespace-pre-wrap">{video.description}</p>
               </div>
             )}
-            <VideoReactions videoId={id} user={user} />
-            <VideoComments videoId={id} user={user} />
+            <div className="space-y-3">
+              <ReactionBar targetType="video" targetId={id} user={user} />
+              <CommentSection targetType="video" targetId={id} user={user} />
+            </div>
           </div>
         </div>
 
