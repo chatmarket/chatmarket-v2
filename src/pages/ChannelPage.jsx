@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home } from "lucide-react";
 import CategoryBadge from "../components/channel/CategoryBadge";
 
 export default function ChannelPage() {
@@ -142,6 +142,11 @@ export default function ChannelPage() {
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+            <Link to="/">
+              <Button size="sm" variant="outline" className="gap-2 w-full">
+                <Home className="w-4 h-4" /> TOPに戻る
+              </Button>
+            </Link>
             {isOwner ? (
               <Link to="/my-channel">
                 <Button size="sm" variant="secondary" className="gap-2 w-full">
