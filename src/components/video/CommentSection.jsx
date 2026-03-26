@@ -4,12 +4,19 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, User as UserIcon } from "lucide-react";
+import { Send, User as UserIcon, Smile } from "lucide-react";
 import { toast } from "sonner";
+
+const EMOJIS = [
+  "👍", "❤️", "😂", "😮", "🔥", "💯", "👏", "🎉", 
+  "😍", "🤔", "😎", "🌟", "💪", "🚀", "✨", "🎯",
+  "💖", "😊", "🙌", "⭐", "🎊", "💝", "😌", "🤗"
+];
 
 export default function CommentSection({ targetType, targetId, user }) {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: comments = [] } = useQuery({
@@ -36,6 +43,7 @@ export default function CommentSection({ targetType, targetId, user }) {
         user_email: user.email,
       });
       setCommentText("");
+      setShowEmojiPicker(false);
       queryClient.invalidateQueries({ queryKey: [`comments-${targetType}`, targetId] });
       toast.success("コメントを投稿しました");
     } catch (error) {
@@ -44,11 +52,16 @@ export default function CommentSection({ targetType, targetId, user }) {
     setSubmitting(false);
   };
 
+  const handleEmojiClick = (emoji) => {
+    setCommentText(commentText + emoji);
+    setShowEmojiPicker(false);
+  };
+
   return (
     <div className="space-y-4 h-full flex flex-col">
       <div className="space-y-2">
         <h3 className="font-bold text-sm">コメント（{comments.length}）</h3>
-        <form onSubmit={submitComment} className="flex gap-2">
+        <form onSubmit={submitComment} className="flex gap-2 relative">
           <Input
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -58,6 +71,15 @@ export default function CommentSection({ targetType, targetId, user }) {
             disabled={submitting}
           />
           <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          >
+            <Smile className="w-4 h-4" />
+          </Button>
+          <Button
             type="submit"
             size="icon"
             className="bg-primary hover:bg-primary/90 shrink-0"
@@ -65,6 +87,21 @@ export default function CommentSection({ targetType, targetId, user }) {
           >
             <Send className="w-4 h-4" />
           </Button>
+          
+          {showEmojiPicker && (
+            <div className="absolute bottom-12 left-0 bg-card border border-border/50 rounded-lg p-2 grid grid-cols-6 gap-1 z-50 shadow-lg">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleEmojiClick(emoji)}
+                  className="text-xl hover:scale-125 transition-transform p-1"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
         </form>
       </div>
 
