@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Eye, Image, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Eye, Image, Loader2, Film, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
-const ADMIN_EMAIL = "ono@onestep-corp.com";
+const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
 
 export default function BlogEdit() {
   const { id } = useParams(); // undefined = new post
@@ -19,6 +19,9 @@ export default function BlogEdit() {
   const [user, setUser] = useState(null);
   const [saving, setSaving] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [mediaFiles, setMediaFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(null);
   const [form, setForm] = useState({
     title: "",
     content: "",
@@ -35,7 +38,7 @@ export default function BlogEdit() {
       if (isAuth) {
         base44.auth.me().then((u) => {
           setUser(u);
-          if (u.email !== ADMIN_EMAIL) navigate("/blog");
+          if (!ADMIN_EMAILS.includes(u.email)) navigate("/blog");
         }).catch(() => navigate("/blog"));
       } else {
         base44.auth.redirectToLogin();
@@ -103,6 +106,27 @@ export default function BlogEdit() {
     queryClient.invalidateQueries({ queryKey: ["blog-post", id] });
     setSaving(false);
     navigate(`/blog/${id}`);
+  };
+
+  const handleMediaUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    setUploading(true);
+    for (const file of files) {
+      const res = await base44.integrations.Core.UploadFile({ file });
+      setMediaFiles((prev) => [
+        ...prev,
+        { name: file.name, url: res.file_url, type: file.type.startsWith("video") ? "video" : "image" }
+      ]);
+    }
+    setUploading(false);
+  };
+
+  const copyToClipboard = (url) => {
+    navigator.clipboard.writeText(url);
+    setCopiedUrl(url);
+    setTimeout(() => setCopiedUrl(null), 2000);
   };
 
   if (!user) return null;
@@ -184,13 +208,61 @@ export default function BlogEdit() {
           <Input type="datetime-local" value={form.published_at} onChange={(e) => setForm({ ...form, published_at: e.target.value })} className="bg-secondary border-0" />
         </div>
 
+        {/* Media Upload */}
+        <div className="space-y-3 bg-card rounded-xl border border-border/50 p-5">
+          <Label className="flex items-center gap-2">
+            <Film className="w-4 h-4" /> メディア添付（画像・動画）
+          </Label>
+          <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
+            <input 
+              type="file" 
+              accept="image/*,video/*" 
+              multiple 
+              className="hidden" 
+              onChange={handleMediaUpload}
+              disabled={uploading}
+            />
+            <div className="text-center">
+              <Film className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
+              <p className="text-xs text-muted-foreground">{uploading ? "アップロード中..." : "画像・動画をドラッグ&ドロップ"}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">複数ファイル選択可</p>
+            </div>
+          </label>
+          
+          {mediaFiles.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">アップロード済みメディア</p>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {mediaFiles.map((media, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-secondary rounded-lg p-2 text-xs">
+                    <span className="truncate flex-1">
+                      {media.type === "video" ? "🎬" : "🖼️"} {media.name}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(media.url)}
+                      className="ml-2 px-2 py-0.5 rounded bg-primary/20 hover:bg-primary/30 transition-colors flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      title="URLをコピー"
+                    >
+                      {copiedUrl === media.url ? (
+                        <Check className="w-3 h-3 text-green-400" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Content */}
         <div className="space-y-2">
           <Label>本文（Markdown対応）*</Label>
           <Textarea
             value={form.content}
             onChange={(e) => setForm({ ...form, content: e.target.value })}
-            placeholder="# 見出し&#10;&#10;本文を入力してください...&#10;&#10;**太字** や *斜体* も使えます。"
+            placeholder="# 見出し&#10;&#10;本文を入力してください...&#10;&#10;**太字** や *斜体* も使えます。&#10;&#10;アップロードしたメディアのURLを貼り付けてください。&#10;画像: ![alt](URL)&#10;動画: ![](URL)"
             className="bg-secondary border-0 resize-none font-mono text-sm"
             rows={20}
           />
