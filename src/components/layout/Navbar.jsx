@@ -38,6 +38,14 @@ export default function Navbar() {
     enabled: !!user?.email,
   });
 
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ["navbar-blog-posts"],
+    queryFn: () => base44.entities.BlogPost.filter({ status: "published" }, "-published_at", 5),
+  });
+
+  const hasNewBlog = blogPosts.length > 0 && blogPosts[0].published_at ? 
+    new Date(blogPosts[0].published_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : false;
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -77,11 +85,14 @@ export default function Navbar() {
               料金プラン
             </Button>
           </a>
-          <Link to="/blog">
+          <Link to="/blog" className="relative">
             <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
               <BookOpen className="w-3.5 h-3.5" />
               運営ブログ
             </Button>
+            {hasNewBlog && (
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            )}
           </Link>
         </div>
 
@@ -217,10 +228,13 @@ export default function Navbar() {
                 <CreditCard className="w-4 h-4" /> 料金プラン
               </Button>
             </a>
-            <Link to="/blog" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/blog" className="flex-1 relative" onClick={() => setIsMenuOpen(false)}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <BookOpen className="w-4 h-4" /> 運営ブログ
               </Button>
+              {hasNewBlog && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              )}
             </Link>
           </div>
           {user ? (
