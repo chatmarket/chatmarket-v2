@@ -168,12 +168,14 @@ export default function WatchVideo() {
               </div>
             )}
 
-            {/* SAMPLE watermark */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
-                SAMPLE
-              </span>
-            </div>
+            {/* SAMPLE watermark - 未購入の有料動画のみ表示 */}
+            {isPaid && !hasPurchased && (
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
+                  SAMPLE
+                </span>
+              </div>
+            )}
 
             {/* Preview indicator */}
             {isPaid && !hasPurchased && !previewEnded && (

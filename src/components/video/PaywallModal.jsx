@@ -21,6 +21,25 @@ export default function PaywallModal({ video, user, onPurchased, onClose }) {
       buyer_email: user.email,
       status: "completed",
     });
+
+    // 購入済み動画をライブラリ（Favorite）に自動保存
+    const existingFavs = await base44.entities.Favorite.filter({
+      video_id: video.id,
+      user_email: user.email,
+    });
+    if (existingFavs.length === 0) {
+      await base44.entities.Favorite.create({
+        user_email: user.email,
+        video_id: video.id,
+        video_title: video.title,
+        video_thumbnail: video.thumbnail_url || "",
+        channel_id: video.channel_id,
+        channel_name: video.channel_name || "",
+        is_free: false,
+        price: video.price || 0,
+      });
+    }
+
     setPurchased(true);
     setPurchasing(false);
     setTimeout(() => {
