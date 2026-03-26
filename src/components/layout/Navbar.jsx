@@ -112,6 +112,16 @@ export default function Navbar() {
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="hidden sm:flex items-center gap-2 rounded-full px-3">
+                    <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                      <User className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground/80 truncate max-w-[80px]">
+                      {user.nickname || user.full_name || "ユーザー"}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild className="sm:hidden">
                   <Button variant="ghost" size="icon" className="rounded-full">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                       <User className="w-4 h-4 text-primary" />
