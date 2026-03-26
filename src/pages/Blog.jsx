@@ -91,17 +91,26 @@ export default function Blog() {
                             下書き
                           </span>
                         )}
+                        {post.status === "published" && post.published_at && new Date(post.published_at) > new Date() && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
+                            予約投稿
+                          </span>
+                        )}
                       </div>
                       <h2 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-2">{post.title}</h2>
                       {post.excerpt && (
                         <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
                       {post.published_at && (
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {format(new Date(post.published_at), "yyyy年M月d日", { locale: ja })}
+                          {new Date(post.published_at) > new Date() ? (
+                            <span className="text-blue-300">投稿予定: {format(new Date(post.published_at), "yyyy年M月d日 HH:mm", { locale: ja })}</span>
+                          ) : (
+                            format(new Date(post.published_at), "yyyy年M月d日", { locale: ja })
+                          )}
                         </span>
                       )}
                       {post.author_name && <span>{post.author_name}</span>}
