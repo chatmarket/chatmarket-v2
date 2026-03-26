@@ -45,12 +45,14 @@ export default function Home() {
     queryFn: () => base44.entities.CrowdfundingProject.filter({ status: "active" }, "-created_date", 10),
   });
 
-  const featuredVideos = videos.filter((v) => !v.is_free && v.price > 0).slice(0, 6);
-  const lowViewPaidVideos = videos
+  // 審査済みのみ表示
+  const approvedVideos = videos.filter((v) => !v.moderation_status || v.moderation_status === "approved");
+  const featuredVideos = approvedVideos.filter((v) => !v.is_free && v.price > 0).slice(0, 6);
+  const lowViewPaidVideos = approvedVideos
     .filter((v) => !v.is_free && v.price > 0)
     .sort((a, b) => (a.view_count || 0) - (b.view_count || 0))
     .slice(0, 6);
-  const recentVideos = videos.slice(0, 6);
+  const recentVideos = approvedVideos.slice(0, 6);
 
   const getChannelForVideo = (video) => {
     return channels.find((c) => c.id === video.channel_id);

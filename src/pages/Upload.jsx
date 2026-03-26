@@ -112,16 +112,8 @@ export default function Upload() {
       channel_name: channel.name,
       channel_avatar: channel.avatar_url || "",
       price: form.is_free ? 0 : form.price,
+      moderation_status: "pending", // 管理者審査待ち
     });
-
-    // Notify followers
-    base44.functions.invoke("notifyFollowers", {
-      video_id: newVideo.id,
-      channel_id: channel.id,
-      channel_name: channel.name,
-      video_title: form.title,
-      thumbnail_url: thumbnail_url || "",
-    }).catch(() => {});
 
     setUploading(false);
     navigate("/my-channel");

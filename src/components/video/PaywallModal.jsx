@@ -1,20 +1,35 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, CreditCard, CheckCircle } from "lucide-react";
+import { Lock, CreditCard, CheckCircle, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+import AgeVerificationModal from "./AgeVerificationModal";
 
 export default function PaywallModal({ video, user, onPurchased, onClose }) {
   const [purchasing, setPurchasing] = useState(false);
   const [purchased, setPurchased] = useState(false);
+  const [showAgeVerify, setShowAgeVerify] = useState(false);
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [error, setError] = useState("");
 
-  const handlePurchase = async () => {
-    if (!user) {
-      base44.auth.redirectToLogin();
-      return;
-    }
+  const handlePurchaseClick = () => {
+    if (!user) { base44.auth.redirectToLogin(); return; }
+    if (!ageVerified) { setShowAgeVerify(true); return; }
+    executePurchase();
+  };
+
+  const handleAgeConfirm = () => {
+    setAgeVerified(true);
+    setShowAgeVerify(false);
+    executePurchase();
+  };
+
+  const executePurchase = async () => {
+    setError("");
     setPurchasing(true);
-    await base44.entities.Purchase.create({
+    try {
+      await base44.entities.Purchase.create({
       item_type: "video",
       item_id: video.id,
       amount: video.price,
@@ -22,33 +37,54 @@ export default function PaywallModal({ video, user, onPurchased, onClose }) {
       status: "completed",
     });
 
-    // 購入済み動画をライブラリ（Favorite）に自動保存
-    const existingFavs = await base44.entities.Favorite.filter({
-      video_id: video.id,
-      user_email: user.email,
-    });
-    if (existingFavs.length === 0) {
-      await base44.entities.Favorite.create({
-        user_email: user.email,
+      // 購入済み動画をライブラリ（Favorite）に自動保存
+      const existingFavs = await base44.entities.Favorite.filter({
         video_id: video.id,
-        video_title: video.title,
-        video_thumbnail: video.thumbnail_url || "",
-        channel_id: video.channel_id,
-        channel_name: video.channel_name || "",
-        is_free: false,
-        price: video.price || 0,
+        user_email: user.email,
       });
-    }
+      if (existingFavs.length === 0) {
+        await base44.entities.Favorite.create({
+          user_email: user.email,
+          video_id: video.id,
+          video_title: video.title,
+          video_thumbnail: video.thumbnail_url || "",
+          channel_id: video.channel_id,
+          channel_name: video.channel_name || "",
+          is_free: false,
+          price: video.price || 0,
+        });
+      }
 
-    setPurchased(true);
-    setPurchasing(false);
-    setTimeout(() => {
-      onPurchased();
-      onClose();
-    }, 1500);
+      // 購入完了メール送信
+      base44.functions.invoke("sendPurchaseEmail", {
+        type: "video_purchase",
+        buyer_email: user.email,
+        buyer_name: user.full_name || user.nickname || "",
+        item_title: video.title,
+        amount: video.price,
+      }).catch(() => {});
+
+      setPurchased(true);
+      setPurchasing(false);
+      setTimeout(() => {
+        onPurchased();
+        onClose();
+      }, 1500);
+    } catch (err) {
+      setError("購入処理中にエラーが発生しました。もう一度お試しください。");
+      setPurchasing(false);
+      toast.error("購入に失敗しました");
+    }
   };
 
   return (
+    <>
+      {showAgeVerify && (
+        <AgeVerificationModal
+          onConfirm={handleAgeConfirm}
+          onClose={() => setShowAgeVerify(false)}
+        />
+      )}
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="bg-card border-border max-w-sm text-center">
         {purchased ? (
@@ -81,8 +117,15 @@ export default function PaywallModal({ video, user, onPurchased, onClose }) {
                 </div>
               </div>
 
+              {error && (
+                <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-left">
+                  <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+                  <p className="text-xs text-destructive">{error}</p>
+                </div>
+              )}
+
               <Button
-                onClick={handlePurchase}
+                onClick={handlePurchaseClick}
                 disabled={purchasing}
                 className="w-full bg-primary hover:bg-primary/90 gap-2 h-12 text-base"
               >
@@ -91,12 +134,13 @@ export default function PaywallModal({ video, user, onPurchased, onClose }) {
               </Button>
 
               <p className="text-[11px] text-muted-foreground">
-                ※ 購入後はいつでも視聴可能です
+                ※ 購入後はいつでも視聴可能です。18歳以上の方のみご購入いただけます。
               </p>
             </div>
           </>
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }

@@ -10,6 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import AnnualFinancialStatement from "../components/admin/AnnualFinancialStatement";
 import ReportManagement from "../components/admin/ReportManagement";
+import ContentModeration from "../components/admin/ContentModeration.jsx";
+import KycManagement from "../components/admin/KycManagement.jsx";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -313,6 +315,12 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="reports" className="gap-2">
             <AlertCircle className="w-4 h-4" /> 通報管理
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="gap-2">
+            <AlertCircle className="w-4 h-4" /> コンテンツ審査
+          </TabsTrigger>
+          <TabsTrigger value="kyc" className="gap-2">
+            <Users className="w-4 h-4" /> KYC審査
           </TabsTrigger>
         </TabsList>
 
@@ -631,6 +639,16 @@ export default function AdminDashboard() {
         {/* 通報管理タブ */}
         <TabsContent value="reports" className="space-y-6">
           <ReportManagement />
+        </TabsContent>
+
+        {/* コンテンツ審査タブ */}
+        <TabsContent value="moderation" className="space-y-6">
+          <ContentModeration />
+        </TabsContent>
+
+        {/* KYC審査タブ */}
+        <TabsContent value="kyc" className="space-y-6">
+          <KycManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
