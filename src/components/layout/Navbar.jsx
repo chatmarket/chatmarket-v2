@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3 } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
@@ -30,6 +31,12 @@ export default function Navbar() {
       }
     });
   }, []);
+
+  const { data: wallet } = useQuery({
+    queryKey: ["yell-coin-wallet", user?.email],
+    queryFn: () => base44.entities.YellCoinWallet.filter({ user_email: user.email }, "-updated_date", 1).then(data => data[0]),
+    enabled: !!user?.email,
+  });
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -85,6 +92,12 @@ export default function Navbar() {
           {user ? (
             <>
               <NotificationBell user={user} />
+              {wallet && (
+                <Button size="sm" variant="ghost" className="hidden sm:flex gap-1.5 text-yellow-400">
+                  <Coins className="w-4 h-4" />
+                  <span className="text-xs">{wallet.balance || 0}</span>
+                </Button>
+              )}
               <Link to="/upload">
                 <Button size="sm" variant="ghost" className="hidden sm:flex gap-2">
                   <Video className="w-4 h-4" />
@@ -201,17 +214,25 @@ export default function Navbar() {
             </Link>
           </div>
           {user ? (
-            <div className="flex gap-2">
-              <Link to="/upload" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="secondary" className="w-full gap-2">
-                  <Video className="w-4 h-4" /> {t("upload")}
-                </Button>
-              </Link>
-              <Link to="/go-live" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full gap-2 bg-primary">
-                  <Radio className="w-4 h-4" /> {t("goLive")}
-                </Button>
-              </Link>
+            <div className="space-y-2">
+              {wallet && (
+                <div className="flex items-center justify-center gap-1.5 text-yellow-400 text-sm font-semibold py-2">
+                  <Coins className="w-4 h-4" />
+                  エールコイン: {wallet.balance || 0}枚
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Link to="/upload" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="secondary" className="w-full gap-2">
+                    <Video className="w-4 h-4" /> {t("upload")}
+                  </Button>
+                </Link>
+                <Link to="/go-live" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full gap-2 bg-primary">
+                    <Radio className="w-4 h-4" /> {t("goLive")}
+                  </Button>
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="flex gap-2">
