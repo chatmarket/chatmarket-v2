@@ -24,7 +24,14 @@ export default function Blog() {
     queryFn: () => base44.entities.BlogPost.filter({ status: "published" }, "-published_at"),
   });
 
+  const { data: allPosts = [] } = useQuery({
+    queryKey: ["blog-posts-all"],
+    queryFn: () => base44.entities.BlogPost.list("-published_at"),
+    enabled: !!user && ADMIN_EMAILS.includes(user.email),
+  });
+
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
+  const displayPosts = isAdmin ? allPosts : posts;
 
   const categoryColors = {
     "お知らせ": "bg-blue-500/20 text-blue-300",
@@ -53,49 +60,65 @@ export default function Blog() {
       </div>
 
       {/* Posts */}
-      {posts.length === 0 ? (
+      {displayPosts.length === 0 ? (
         <div className="text-center py-24 text-muted-foreground">
           <PenSquare className="w-12 h-12 mx-auto mb-4 opacity-30" />
           <p>まだ記事がありません</p>
         </div>
       ) : (
         <div className="grid gap-6">
-          {posts.map((post) => (
-            <Link key={post.id} to={`/blog/${post.id}`} className="group block">
-              <div className="bg-card border border-border/50 rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 flex flex-col sm:flex-row">
-                {post.thumbnail_url && (
-                  <div className="sm:w-48 sm:shrink-0 h-40 sm:h-auto overflow-hidden">
-                    <img
-                      src={post.thumbnail_url}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                )}
-                <div className="p-5 flex flex-col justify-between flex-1">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${categoryColors[post.category] || categoryColors["その他"]}`}>
-                        {post.category}
-                      </span>
+          {displayPosts.map((post) => (
+            <div key={post.id} className="group">
+              <Link to={`/blog/${post.id}`} className="block">
+                <div className="bg-card border border-border/50 rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 flex flex-col sm:flex-row">
+                  {post.thumbnail_url && (
+                    <div className="sm:w-48 sm:shrink-0 h-40 sm:h-auto overflow-hidden">
+                      <img
+                        src={post.thumbnail_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     </div>
-                    <h2 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-2">{post.title}</h2>
-                    {post.excerpt && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                    {post.published_at && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {format(new Date(post.published_at), "yyyy年M月d日", { locale: ja })}
-                      </span>
-                    )}
-                    {post.author_name && <span>{post.author_name}</span>}
+                  )}
+                  <div className="p-5 flex flex-col justify-between flex-1">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${categoryColors[post.category] || categoryColors["その他"]}`}>
+                          {post.category}
+                        </span>
+                        {post.status === "draft" && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            下書き
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-2">{post.title}</h2>
+                      {post.excerpt && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                      {post.published_at && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(post.published_at), "yyyy年M月d日", { locale: ja })}
+                        </span>
+                      )}
+                      {post.author_name && <span>{post.author_name}</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+              {isAdmin && (
+                <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Link to={`/blog/edit/${post.id}`} className="ml-auto">
+                    <Button size="sm" variant="outline" className="gap-1 text-xs">
+                      <PenSquare className="w-3 h-3" /> 編集
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

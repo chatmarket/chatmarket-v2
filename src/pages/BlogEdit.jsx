@@ -77,7 +77,9 @@ export default function BlogEdit() {
 
     let thumbnail_url = form.thumbnail_url;
     if (thumbnailFile) {
-      const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
+      const isImage = thumbnailFile.type.startsWith("image");
+      const fileToUpload = isImage ? await optimizeImage(thumbnailFile) : thumbnailFile;
+      const res = await base44.integrations.Core.UploadFile({ file: fileToUpload });
       thumbnail_url = res.file_url;
     }
 
@@ -108,13 +110,54 @@ export default function BlogEdit() {
     navigate(`/blog/${id}`);
   };
 
+  const optimizeImage = async (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxWidth = 1200;
+          const maxHeight = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: "image/jpeg" }));
+          }, "image/jpeg", 0.85);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleMediaUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     
     setUploading(true);
     for (const file of files) {
-      const res = await base44.integrations.Core.UploadFile({ file });
+      const isImage = file.type.startsWith("image");
+      const fileToUpload = isImage ? await optimizeImage(file) : file;
+      const res = await base44.integrations.Core.UploadFile({ file: fileToUpload });
       setMediaFiles((prev) => [
         ...prev,
         { name: file.name, url: res.file_url, type: file.type.startsWith("video") ? "video" : "image" }
@@ -155,7 +198,7 @@ export default function BlogEdit() {
         <div className="space-y-2">
           <Label>サムネイル画像</Label>
           <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => setThumbnailFile(e.target.files[0])} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => setThumbnailFile(e.target.files[0])} disabled={uploading} />
             {thumbnailFile ? (
               <span className="text-sm text-primary font-medium">{thumbnailFile.name}</span>
             ) : form.thumbnail_url ? (
