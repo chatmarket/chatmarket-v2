@@ -40,7 +40,30 @@ export default function YellCoinEffect({ amount, onDone }) {
 
   return (
     <div className="fixed inset-0 z-[200] pointer-events-none flex items-center justify-center">
-      <div className="bg-gradient-to-br from-yellow-400 to-orange-500 text-black font-black text-2xl md:text-4xl px-8 py-4 rounded-2xl shadow-2xl animate-bounce">
+      <style>{`
+        @keyframes coin-popup {
+          0% {
+            opacity: 0;
+            transform: scale(0.3) translateY(30px);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.3) translateY(-20px);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0.8) translateY(-60px);
+          }
+        }
+        @keyframes coin-shine {
+          0%, 100% { filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5)); }
+          50% { filter: drop-shadow(0 0 30px rgba(255, 165, 0, 1)); }
+        }
+        .coin-effect {
+          animation: coin-popup 2.5s ease-out forwards, coin-shine 0.8s ease-in-out infinite;
+        }
+      `}</style>
+      <div className="coin-effect bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-500 text-black font-black text-5xl md:text-7xl px-12 py-8 rounded-3xl shadow-2xl">
         🪙 ¥{amount.toLocaleString()} エールコイン！
       </div>
     </div>

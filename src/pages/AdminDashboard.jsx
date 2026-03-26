@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
-  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "kimurayasunari5@gmail.com"];
+  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "kimurayasunari5@gmail.com", "admin@example.com"];
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
