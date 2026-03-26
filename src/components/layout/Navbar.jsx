@@ -152,6 +152,10 @@ export default function Navbar() {
                     <Library className="w-4 h-4 mr-2 text-primary" />
                     マイライブラリ
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/analytics")}>
+                    <BarChart3 className="w-4 h-4 mr-2 text-blue-400" />
+                    分析
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/donor-dashboard")}>
                     <Heart className="w-4 h-4 mr-2 text-red-400" />
                     寄付者マイページ
