@@ -343,10 +343,10 @@ export default function AdminDashboard() {
               "call-anser": "CALL&ANSERプラン"
             };
             const PLAN_PRICES = {
-              basic: 3300,
-              vod: 9900,
-              ppv: 9900,
-              "call-anser": 6600
+              basic: 0,
+              vod: 0,
+              ppv: 0,
+              "call-anser": 0
             };
 
             const subscriptionStats = PLANS.map((planId) => {
