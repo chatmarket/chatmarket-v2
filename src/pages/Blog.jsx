@@ -8,7 +8,7 @@ import { PenSquare, Calendar, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
-const ADMIN_EMAIL = "ono@onestep-corp.com";
+const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
 
 export default function Blog() {
   const [user, setUser] = useState(null);
@@ -24,7 +24,7 @@ export default function Blog() {
     queryFn: () => base44.entities.BlogPost.filter({ status: "published" }, "-published_at"),
   });
 
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   const categoryColors = {
     "お知らせ": "bg-blue-500/20 text-blue-300",
