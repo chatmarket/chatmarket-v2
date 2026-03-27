@@ -31,19 +31,7 @@ export default function Home() {
     });
   }, []);
 
-  // 未ログイン時はLPを表示（認証チェック完了後）
-  if (authChecked && !user) {
-    return <LandingPage />;
-  }
 
-  // 認証確認中はスピナー
-  if (!authChecked) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
