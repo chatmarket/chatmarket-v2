@@ -74,6 +74,8 @@ export default function Settings() {
     recovery_phone: "",
   });
 
+  const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
@@ -131,13 +133,23 @@ export default function Settings() {
         setChannelTags(channels[0].tags || []);
         setChannelCategoryId(channels[0].category_id || "");
         setChannelId(channels[0].id);
+
+        // フリートライアルメール向け：自動的に通話受付有効化
+        const isTrialUser = FREE_TRIAL_EMAILS.includes(u.email);
+        const callEnabled = isTrialUser || channels[0].call_enabled;
+
         setCallSettings({
-          call_enabled: channels[0].call_enabled || false,
+          call_enabled: callEnabled,
           call_price_30min: channels[0].call_price_30min || 3000,
           call_price_60min: channels[0].call_price_60min || 5000,
           call_available_dates: channels[0].call_available_dates || "",
           call_theme: channels[0].call_theme || "",
         });
+
+        // 自動保存
+        if (isTrialUser && !channels[0].call_enabled) {
+          await base44.entities.Channel.update(channels[0].id, { call_enabled: true });
+        }
       }
     }).catch(() => {});
   }, []);
