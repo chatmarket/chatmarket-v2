@@ -7,7 +7,6 @@ import PaywallModal from "../components/video/PaywallModal";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
-import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Users, Radio, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -159,7 +158,6 @@ export default function LiveView() {
             )}
             {hasPurchased && (
               <div className="space-y-3">
-                <RevenueRankingWidget channelId={id} targetEmail={stream.owner_email} />
                 <RatingSection targetId={id} user={user} />
                 <ReactionBar targetType="livestream" targetId={id} user={user} />
                 <CommentSection targetType="livestream" targetId={id} user={user} />

@@ -8,12 +8,9 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
-import PlanSection from "../components/home/PlanSection";
 import RevenueBanner from "../components/home/RevenueBanner";
 import ScrollRow from "../components/home/ScrollRow";
-import PwaInstallGuide from "../components/home/PwaInstallGuide";
-import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
-import CallWaitingRow from "../components/home/CallWaitingRow";
+
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -114,8 +111,6 @@ export default function Home() {
       {/* Revenue Banner */}
       <RevenueBanner />
 
-      {/* 1対1ビデオ通話待機中 */}
-      <CallWaitingRow user={user} />
 
       {/* Live Streams */}
       {liveStreams.length > 0 && (
@@ -196,12 +191,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Plans */}
-      <PlanSection />
-
-      {/* PWA Install Guide */}
-      <PwaInstallGuide />
-
       {/* Crowdfunding Accordion */}
       {crowdfundings.length > 0 && (
         <section>
@@ -269,8 +258,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Progressive Incentive */}
-      <ProgressiveIncentiveSection />
+
 
       {videos.length === 0 && liveStreams.length === 0 && (
         <div className="text-center py-24 text-muted-foreground">
