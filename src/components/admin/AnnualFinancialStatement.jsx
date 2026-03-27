@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, FileText } from "lucide-react";
 
+const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+
 export default function AnnualFinancialStatement({
   purchases = [],
   calls = [],
@@ -35,11 +37,11 @@ export default function AnnualFinancialStatement({
     const startDate = new Date(selectedYear, 0, 1);
     const endDate = new Date(selectedYear + 1, 0, 1);
 
-    // 動画販売・ライブ配信
+    // 動画販売・ライブ配信（管理者除外）
     purchases
       .filter((p) => {
         const d = new Date(p.created_date);
-        return d >= startDate && d < endDate && d.getFullYear() === selectedYear;
+        return d >= startDate && d < endDate && d.getFullYear() === selectedYear && !ADMIN_EMAILS.includes(p.created_by);
       })
       .forEach((p) => {
         const month = new Date(p.created_date).getMonth();
@@ -53,7 +55,7 @@ export default function AnnualFinancialStatement({
         }
       });
 
-    // ビデオ通話
+    // ビデオ通話（管理者除外）
     calls
       .filter((c) => {
         const d = new Date(c.created_date);
@@ -61,7 +63,9 @@ export default function AnnualFinancialStatement({
           d >= startDate &&
           d < endDate &&
           d.getFullYear() === selectedYear &&
-          c.status === "ended"
+          c.status === "ended" &&
+          !ADMIN_EMAILS.includes(c.caller_email) &&
+          !ADMIN_EMAILS.includes(c.callee_email)
         );
       })
       .forEach((c) => {
@@ -71,7 +75,7 @@ export default function AnnualFinancialStatement({
         monthlyData[month].callFee += Math.floor(amount * 0.3);
       });
 
-    // エールコイン
+    // エールコイン（管理者除外）
     yellCoinTransactions
       .filter((t) => {
         const d = new Date(t.created_date);
@@ -79,7 +83,8 @@ export default function AnnualFinancialStatement({
           d >= startDate &&
           d < endDate &&
           d.getFullYear() === selectedYear &&
-          t.type === "charge"
+          t.type === "charge" &&
+          !ADMIN_EMAILS.includes(t.user_email)
         );
       })
       .forEach((t) => {
@@ -89,9 +94,9 @@ export default function AnnualFinancialStatement({
         monthlyData[month].yellCoinFee += Math.floor(amount * 0.1);
       });
 
-    // サブスクリプション（月単位で按分）
+    // サブスクリプション（月単位で按分、管理者除外）
     subscriptions
-      .filter((s) => s.status === "active")
+      .filter((s) => s.status === "active" && !ADMIN_EMAILS.includes(s.user_email))
       .forEach((s) => {
         const startMonth = new Date(s.start_date).getMonth();
         const endMonth = s.end_date ? new Date(s.end_date).getMonth() : 11;
