@@ -59,12 +59,30 @@ export default function WatchVideo() {
     });
   }, [user, video, id]);
 
-  // Increment view count & record watch history
+  // Increment view count with session-based deduplication (prevents reload abuse)
   useEffect(() => {
     if (!video || !user) return;
-    base44.entities.Video.update(video.id, {
-      view_count: (video.view_count || 0) + 1,
-    });
+
+    const sessionKey = `viewed_${video.id}`;
+    const alreadyViewed = sessionStorage.getItem(sessionKey);
+
+    if (!alreadyViewed) {
+      // Mark as viewed in session to prevent duplicate counts on reload
+      sessionStorage.setItem(sessionKey, '1');
+      // Debounce: wait 5 seconds before counting (user must actually watch)
+      const timer = setTimeout(() => {
+        base44.entities.Video.update(video.id, {
+          view_count: (video.view_count || 0) + 1,
+        });
+      }, 5000);
+      // Cleanup if user navigates away before 5s
+      return () => clearTimeout(timer);
+    }
+  }, [video?.id, user?.email]);
+
+  // Record watch history & check favorites
+  useEffect(() => {
+    if (!video || !user) return;
     // Upsert watch history
     base44.entities.WatchHistory.filter({ video_id: video.id, user_email: user.email }).then((existing) => {
       if (existing.length > 0) {

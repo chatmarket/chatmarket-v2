@@ -45,42 +45,37 @@ export default function Upload() {
     enabled: !!user,
   });
 
-  // Check free videos uploaded in the last 7 days
-  const { data: recentFreeVideos = [] } = useQuery({
-    queryKey: ["recent-free-videos", user?.email],
+  // Server-side eligibility check (replaces all-records frontend fetch)
+  const { data: eligibility } = useQuery({
+    queryKey: ["upload-eligibility", user?.email],
     queryFn: async () => {
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const all = await base44.entities.Video.filter({ is_free: true });
-      return all.filter(
-        (v) => v.created_by === user.email && v.created_date >= oneWeekAgo
-      );
+      const res = await base44.functions.invoke('checkUploadEligibility', {
+        is_free: form.is_free,
+        duration_seconds: videoDuration,
+      });
+      return res.data;
     },
     enabled: !!user,
+    refetchOnWindowFocus: false,
   });
 
-  // Check today's upload duration for VOD plan
-  const { data: todayVideos = [] } = useQuery({
-    queryKey: ["today-videos", user?.email],
-    queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStart = today.toISOString();
-      const all = await base44.entities.Video.filter({ });
-      return all.filter(
-        (v) => v.created_by === user.email && v.created_date >= todayStart
-      );
-    },
-    enabled: !!user,
-  });
-
-  const todayUploadDuration = todayVideos.reduce((sum, v) => sum + (v.duration || 0), 0);
-  const remainingDuration = 7200 - todayUploadDuration; // 120分 = 7200秒
-  const freeVideoBlocked = form.is_free && recentFreeVideos.length >= 1;
-  const uploadDurationExceeded = videoDuration > remainingDuration * 1000; // Convert to ms
+  const remainingDuration = eligibility?.remaining_seconds ?? 7200; // 120分 = 7200秒
+  const freeVideoBlocked = form.is_free && eligibility?.allowed === false && eligibility?.reason === 'free_limit';
+  const uploadDurationExceeded = videoDuration > 0 && eligibility?.allowed === false && eligibility?.reason === 'duration_limit';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title) return;
+
+    // Final server-side eligibility re-check before upload
+    const check = await base44.functions.invoke('checkUploadEligibility', {
+      is_free: form.is_free,
+      duration_seconds: videoDuration,
+    });
+    if (!check.data?.allowed) {
+      alert(check.data?.message || 'アップロード条件を満たしていません');
+      return;
+    }
 
     setUploading(true);
 
@@ -183,22 +178,31 @@ export default function Upload() {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files[0];
-                if (file) {
-                  const video = document.createElement("video");
-                  video.onloadedmetadata = () => {
-                    const durationSeconds = Math.ceil(video.duration);
-                    if (durationSeconds > remainingDuration) {
-                      setVideoError(`この動画は${Math.ceil(durationSeconds / 60)}分です。本日のアップロード可能時間は残り${Math.ceil(remainingDuration / 60)}分です。`);
-                      setVideoFile(null);
-                      setVideoDuration(0);
-                    } else {
-                      setVideoDuration(durationSeconds);
-                      setVideoError("");
-                      setVideoFile(file);
-                    }
-                  };
-                  video.src = URL.createObjectURL(file);
+                if (!file) return;
+
+                // File size limit: 2GB
+                const MAX_SIZE_BYTES = 2 * 1024 * 1024 * 1024;
+                if (file.size > MAX_SIZE_BYTES) {
+                  setVideoError(`ファイルサイズが大きすぎます（最大2GB）。現在: ${(file.size / 1024 / 1024 / 1024).toFixed(2)}GB`);
+                  setVideoFile(null);
+                  setVideoDuration(0);
+                  return;
                 }
+
+                const video = document.createElement("video");
+                video.onloadedmetadata = () => {
+                  const durationSeconds = Math.ceil(video.duration);
+                  if (durationSeconds > remainingDuration) {
+                    setVideoError(`この動画は${Math.ceil(durationSeconds / 60)}分です。本日のアップロード可能時間は残り${Math.ceil(remainingDuration / 60)}分です。`);
+                    setVideoFile(null);
+                    setVideoDuration(0);
+                  } else {
+                    setVideoDuration(durationSeconds);
+                    setVideoError("");
+                    setVideoFile(file);
+                  }
+                };
+                video.src = URL.createObjectURL(file);
               }}
             />
             {videoFile ? (
@@ -211,7 +215,7 @@ export default function Upload() {
               <div className="text-center">
                 <UploadIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">クリックして動画を選択</p>
-                <p className="text-xs text-muted-foreground mt-1">本日の使用可能時間: {Math.ceil(remainingDuration / 60)}分 / 120分</p>
+                <p className="text-xs text-muted-foreground mt-1">本日の使用可能時間: {Math.ceil(remainingDuration / 60)}分 / 120分　最大2GB</p>
               </div>
             )}
           </label>
@@ -228,7 +232,16 @@ export default function Upload() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => setThumbnailFile(e.target.files[0])}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                // Image size limit: 10MB
+                if (file.size > 10 * 1024 * 1024) {
+                  alert('サムネイル画像は10MB以下にしてください');
+                  return;
+                }
+                setThumbnailFile(file);
+              }}
             />
             {thumbnailFile ? (
               <div className="flex items-center gap-2 text-primary">
