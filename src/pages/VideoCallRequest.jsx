@@ -46,6 +46,12 @@ function getAvailableDurations(channel) {
   return options;
 }
 
+// フリートライアル判定
+function isTrialChannel(channel) {
+  const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
+  return FREE_TRIAL_EMAILS.includes(channel?.owner_email);
+}
+
 export default function VideoCallRequest() {
   const { channelId } = useParams();
   const navigate = useNavigate();
@@ -154,8 +160,8 @@ export default function VideoCallRequest() {
   // 未ログインガード（FREEプランは全員アクセス可のため削除、認証チェックのみ）
 
 
-  // 通話受付オフガード
-  if (!channel.call_enabled) {
+  // 通話受付オフガード（フリートライアルは受付中扱い）
+  if (!channel.call_enabled && !isTrialChannel(channel)) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
         <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto">
