@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Trash2, History, Heart, Eye, Clock, Play } from "lucide-react";
+import { Trash2, History, Heart, Eye, Clock, Play, Users, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function formatDuration(seconds) {
@@ -84,8 +84,15 @@ export default function MyLibrary() {
     enabled: !!user,
   });
 
+  const { data: allChannels = [] } = useQuery({
+    queryKey: ["all-channels"],
+    queryFn: () => base44.entities.Channel.list(),
+    enabled: !!user,
+  });
+
   const followedVideoIds = followedChannels.map((cf) => cf.channel_id);
   const followedChannelsVideos = allVideos.filter((v) => followedVideoIds.includes(v.channel_id) && v.moderation_status === "approved");
+  const followedChannelsData = allChannels.filter((ch) => followedVideoIds.includes(ch.id));
 
   const removeHistory = useMutation({
     mutationFn: (id) => base44.entities.WatchHistory.delete(id),
@@ -95,6 +102,11 @@ export default function MyLibrary() {
   const removeFavorite = useMutation({
     mutationFn: (id) => base44.entities.Favorite.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites", user?.email] }),
+  });
+
+  const unfollowChannel = useMutation({
+    mutationFn: (followId) => base44.entities.ChannelFollow.delete(followId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-channels", user?.email] }),
   });
 
   const clearHistory = useMutation({
@@ -128,11 +140,11 @@ export default function MyLibrary() {
           お気に入り {favorites.length > 0 && <span className="bg-primary/20 text-primary text-xs rounded-full px-1.5">{favorites.length}</span>}
         </button>
         <button
-          onClick={() => setTab("followed")}
-          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${tab === "followed" ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+          onClick={() => setTab("followed-channels")}
+          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${tab === "followed-channels" ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
         >
-          <Play className="w-4 h-4" />
-          フォロー中の新着 {followedChannelsVideos.length > 0 && <span className="bg-primary/20 text-primary text-xs rounded-full px-1.5">{followedChannelsVideos.length}</span>}
+          <Users className="w-4 h-4" />
+          フォロー中のチャンネル {followedChannelsData.length > 0 && <span className="bg-primary/20 text-primary text-xs rounded-full px-1.5">{followedChannelsData.length}</span>}
         </button>
       </div>
 
@@ -153,42 +165,55 @@ export default function MyLibrary() {
       )}
 
       {/* List */}
-      {tab === "followed" ? (
-        followedChannelsVideos.length === 0 ? (
+      {tab === "followed-channels" ? (
+        followedChannelsData.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
-            <Play className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>フォロー中のチャンネルの新着動画はありません</p>
-            <p className="text-xs mt-1">チャンネルをフォローして最新動画をチェック</p>
+            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>フォロー中のチャンネルはありません</p>
+            <p className="text-xs mt-1">ホームからチャンネルをフォロー</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {followedChannelsVideos.map((video) => (
-              <div key={video.id} className="flex gap-3 items-start bg-card rounded-xl p-3 border border-border/50 group">
-                <Link to={`/watch/${video.id}`} className="shrink-0 relative w-36 aspect-video rounded-lg overflow-hidden bg-secondary">
-                  {video.thumbnail_url ? (
-                    <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl opacity-30">🎬</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {followedChannelsData.map((channel) => {
+              const follow = followedChannels.find((cf) => cf.channel_id === channel.id);
+              return (
+                <div key={channel.id} className="bg-card rounded-xl border border-border/50 p-4 group">
+                  <div className="flex gap-3 items-start mb-3">
+                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center overflow-hidden shrink-0 ring-2 ring-border">
+                      {channel.avatar_url ? (
+                        <img src={channel.avatar_url} alt={channel.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm font-bold text-muted-foreground">{channel.name?.[0]}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Link to={`/channel/${channel.id}`} className="font-bold text-sm hover:text-primary transition-colors block truncate">
+                        {channel.name}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">{channel.subscriber_count || 0} フォロワー</p>
+                    </div>
+                  </div>
+                  {channel.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{channel.description}</p>
                   )}
-                  {video.is_free ? (
-                    <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">FREE</span>
-                  ) : video.price > 0 ? (
-                    <span className="absolute top-1 left-1 bg-secondary text-foreground text-[10px] font-bold px-1.5 py-0.5 rounded border border-border">¥{video.price?.toLocaleString()}</span>
-                  ) : null}
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <Link to={`/watch/${video.id}`} className="font-semibold text-sm line-clamp-2 hover:text-primary transition-colors">
-                    {video.title}
-                  </Link>
-                  <Link to={`/channel/${video.channel_id}`} className="text-xs text-muted-foreground hover:text-primary transition-colors mt-1 block">
-                    {video.channel_name}
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(video.created_date).toLocaleDateString("ja-JP")}
-                  </p>
+                  <div className="flex gap-2">
+                    <Link to={`/channel/${channel.id}`} className="flex-1">
+                      <Button size="sm" variant="outline" className="w-full">
+                        <Play className="w-3 h-3 mr-1" /> チャンネル
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => follow && unfollowChannel.mutate(follow.id)}
+                    >
+                      <BellOff className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )
       ) : items.length === 0 ? (
