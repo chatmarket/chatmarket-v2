@@ -14,7 +14,7 @@ export default function CallWaitingRow({ user }) {
   // call_enabled=true のチャンネル一覧取得
   const { data: callChannels = [] } = useQuery({
     queryKey: ["call-waiting-channels"],
-    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 20),
+    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 12),
   });
 
   if (callChannels.length === 0) return null;
