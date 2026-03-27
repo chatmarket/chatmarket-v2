@@ -139,7 +139,7 @@ export default function Navbar() {
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" side="bottom" className="w-48">
                   <DropdownMenuItem onClick={() => navigate("/my-channel")}>
                     <Radio className="w-4 h-4 mr-2" />
                     {t("myChannel")}
