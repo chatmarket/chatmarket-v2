@@ -30,10 +30,10 @@ export default function CallWaitingRow({ user }) {
     navigate(`/call-request/${channelId}`);
   };
 
-  // 6列でグループ化
+  // 5列でグループ化（2段で10個表示）
   const rows = [];
-  for (let i = 0; i < callChannels.length; i += 6) {
-    rows.push(callChannels.slice(i, i + 6));
+  for (let i = 0; i < callChannels.length; i += 5) {
+    rows.push(callChannels.slice(i, i + 5));
   }
 
   return (
