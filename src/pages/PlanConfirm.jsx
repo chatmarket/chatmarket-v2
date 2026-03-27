@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Check, ArrowLeft, ExternalLink, Video, Radio, PhoneCall, Play, Heart, Phone, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-const ADMIN_EMAILS = ["unei@chatmarket.info", "admin@chatmarket.info"];
+const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
 
 const PLAN_INFO = {
   free:          { name: "FREEプラン",                     price: 0,     badge: "無料スタート",       badgeColor: "bg-gray-500/20 text-gray-300" },

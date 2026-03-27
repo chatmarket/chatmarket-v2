@@ -151,7 +151,7 @@ const COMBOS = [
   { ids: ["basic", "vod", "ppv", "call-anser"], label: "全部入り", discount: 0 },
 ];
 
-const ADMIN_EMAILS = ["unei@chatmarket.info", "admin@chatmarket.info"];
+const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
 
 export default function PlanSelect() {
   const navigate = useNavigate();
