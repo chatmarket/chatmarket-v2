@@ -10,6 +10,7 @@ import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
 import RevenueBanner from "../components/home/RevenueBanner";
 import ScrollRow from "../components/home/ScrollRow";
+import CallWaitingRow from "../components/home/CallWaitingRow";
 
 
 export default function Home() {
@@ -111,6 +112,8 @@ export default function Home() {
       {/* Revenue Banner */}
       <RevenueBanner />
 
+      {/* Call Waiting Row */}
+      <CallWaitingRow user={user} />
 
       {/* Live Streams */}
       {liveStreams.length > 0 && (
