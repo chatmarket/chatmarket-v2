@@ -152,6 +152,7 @@ const COMBOS = [
 ];
 
 const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
 
 export default function PlanSelect() {
   const navigate = useNavigate();
@@ -167,6 +168,8 @@ export default function PlanSelect() {
           setUser(u);
           if (ADMIN_EMAILS.includes(u.email)) {
             setSelected(new Set(["basic", "vod", "ppv", "call-anser", "mini-school", "enterprise", "crowdfunding"]));
+          } else if (FREE_TRIAL_EMAILS.includes(u.email)) {
+            setSelected(new Set(["basic", "vod", "ppv", "call-anser"]));
           }
         });
       }
@@ -174,8 +177,8 @@ export default function PlanSelect() {
   }, []);
 
   const togglePlan = (id) => {
-    // 管理者メールは選択不可
-    if (ADMIN_EMAILS.includes(user?.email)) {
+    // 管理者メール・フリートライアルメールは選択不可
+    if (ADMIN_EMAILS.includes(user?.email) || FREE_TRIAL_EMAILS.includes(user?.email)) {
       return;
     }
 
@@ -203,7 +206,9 @@ export default function PlanSelect() {
   };
 
   const selectedPlans = PLANS.filter((p) => selected.has(p.id));
-  const totalPrice = selectedPlans.reduce((sum, p) => sum + p.price, 0);
+  const totalPrice = FREE_TRIAL_EMAILS.includes(user?.email) 
+    ? 0 
+    : selectedPlans.reduce((sum, p) => sum + p.price, 0);
 
   const handleApply = async () => {
     const ids = [...selected].join(",");
@@ -222,6 +227,12 @@ export default function PlanSelect() {
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
           <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>
           <p className="text-xs text-primary/80">全プラン（BASIC・VOD・PPV・CALL&ANSER・ミニスクール・エンタープライズ・クラウドファンディング）が自動的に加入状態になり、全プランの詳細を確認できます。</p>
+        </div>
+      )}
+      {FREE_TRIAL_EMAILS.includes(user?.email) && (
+        <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4">
+          <p className="text-sm font-bold text-blue-400 mb-1">フリートライアル</p>
+          <p className="text-xs text-blue-300">BASIC・VOD・PPV・CALL&ANSERプランが無料で利用できます。</p>
         </div>
       )}
 
