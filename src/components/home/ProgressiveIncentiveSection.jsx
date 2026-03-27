@@ -15,7 +15,7 @@ export default function ProgressiveIncentiveSection() {
             <AccordionContent className="text-sm text-foreground space-y-4 pt-2">
               <div>
                 <p className="font-bold text-base mb-2">📈 プログレッシブ・インセンティブとは</p>
-                <p className="text-sm leading-relaxed mb-3">売り上げ毎に収益還元率が最大95%までUPするプログラムです。</p>
+                <p className="text-sm leading-relaxed mb-3">売り上げ毎に翌月の収益還元率が最大95%までUPするプログラムです。</p>
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-3">
                   <p className="text-sm font-semibold text-blue-300">💡 BASICプランに加入で自動参加</p>
                   <p className="text-xs text-blue-200/80 mt-1">手続き不要。加入した月から自動的に適用されます。</p>
