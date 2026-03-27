@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins, Phone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
@@ -148,6 +148,10 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => navigate("/analytics")}>
                     <BarChart3 className="w-4 h-4 mr-2 text-blue-400" />
                     分析
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/call-history")}>
+                    <Phone className="w-4 h-4 mr-2 text-green-400" />
+                    通話履歴
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/donor-dashboard")}>
                     <Heart className="w-4 h-4 mr-2 text-red-400" />

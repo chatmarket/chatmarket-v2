@@ -33,6 +33,7 @@ import RevenueManagement from './pages/RevenueManagement';
 import VideoCallRequest from './pages/VideoCallRequest';
 import AdminDashboard from './pages/AdminDashboard';
 import ContentAnalytics from './pages/ContentAnalytics';
+import CallHistory from './pages/CallHistory';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -84,6 +85,7 @@ const AuthenticatedApp = () => {
         <Route path="/call-request/:channelId" element={<VideoCallRequest />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/analytics" element={<ContentAnalytics />} />
+        <Route path="/call-history" element={<CallHistory />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
