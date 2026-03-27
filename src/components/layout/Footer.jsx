@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { TrendingUp } from "lucide-react";
 
 const COMPANY = {
   name: "株式会社 ONE STEP",
@@ -179,6 +181,36 @@ export default function Footer() {
     <>
       <footer className="border-t border-border/50 bg-card mt-16">
         <div className="max-w-7xl mx-auto px-4 py-10">
+          {/* Progressive Incentive Accordion */}
+          <div className="mb-8 bg-primary/5 border border-primary/20 rounded-xl p-4">
+            <Accordion type="single" collapsible>
+              <AccordionItem value="progressive-incentive" className="border-0">
+                <AccordionTrigger className="hover:no-underline flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  プログレッシブ・インセンティブって何？
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-foreground/80 space-y-3 pt-2">
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">📈 プログレッシブ・インセンティブとは</p>
+                    <p>月間の売上が増えると、手数料が下がる仕組みです。つまり、稼げば稼ぐほど取り分が増える制度です。</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">💰 具体例</p>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>月売上 ¥0〜50万円：手数料15% → <span className="text-primary font-semibold">収益率85%</span></li>
+                      <li>月売上 ¥50万円〜100万円：手数料12% → <span className="text-primary font-semibold">収益率88%</span></li>
+                      <li>月売上 ¥100万円〜：手数料10% → <span className="text-primary font-semibold">収益率90%</span></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">🎯 メリット</p>
+                    <p>毎月の売上に応じて自動的に計算されるため、手続き不要。売上が増えれば増えるほど、あなたの取り分が増えていきます。</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
           {/* Company brief */}
           <div className="mb-8">
             <p className="font-bold text-lg mb-1">Chat<span className="text-primary">Market</span></p>
