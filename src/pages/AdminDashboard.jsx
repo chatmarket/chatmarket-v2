@@ -22,6 +22,9 @@ export default function AdminDashboard() {
   const [savingStripe, setSavingStripe] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
+  
+  const isViewerOnly = user?.email === "kimurayasunari5@gmail.com";
+  const displayUserRole = isViewerOnly ? "viewer" : user?.role;
 
   const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
     queryKey: ["admin-stripe-balance"],
@@ -33,7 +36,8 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
-  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "kimurayasunari5@gmail.com", "admin@example.com"];
+  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "admin@example.com"];
+  const VIEWER_EMAILS = ["kimurayasunari5@gmail.com"];
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -106,8 +110,8 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
-  // 管理者以外のサブスク加入者のみカウント
-  const filteredSubscriptions = allSubscriptions.filter((s) => !ADMIN_EMAILS.includes(s.user_email));
+  // 管理者・ビューアー以外のサブスク加入者のみカウント
+  const filteredSubscriptions = allSubscriptions.filter((s) => !ADMIN_EMAILS.includes(s.user_email) && !VIEWER_EMAILS.includes(s.user_email));
 
   const { data: allCancellationReasons = [] } = useQuery({
     queryKey: ["admin-all-cancellation-reasons"],
@@ -125,20 +129,22 @@ export default function AdminDashboard() {
     return null;
   }
 
-  // 管理者ユーザーの取得
+  // 管理者・ビューアーユーザーの取得
   const adminUserEmails = ADMIN_EMAILS;
+  const viewerUserEmails = VIEWER_EMAILS;
 
-  // 収益計算（管理者分除外）
+  // 収益計算（管理者・ビューアー分除外）
+  const excludedEmails = [...adminUserEmails, ...VIEWER_EMAILS];
   const totalVideoRevenue = allPurchases
-    .filter((p) => p.item_type === "video" && !adminUserEmails.includes(p.created_by))
+    .filter((p) => p.item_type === "video" && !excludedEmails.includes(p.created_by))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const totalStreamRevenue = allPurchases
-    .filter((p) => p.item_type === "livestream" && !adminUserEmails.includes(p.created_by))
+    .filter((p) => p.item_type === "livestream" && !excludedEmails.includes(p.created_by))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const totalCallRevenue = allCalls
-    .filter((c) => c.status === "ended" && (c.price || 0) > 0 && !adminUserEmails.includes(c.caller_email) && !adminUserEmails.includes(c.callee_email))
+    .filter((c) => c.status === "ended" && (c.price || 0) > 0 && !excludedEmails.includes(c.caller_email) && !excludedEmails.includes(c.callee_email))
     .reduce((sum, c) => sum + (c.price || 0), 0);
 
   const totalPlatformFee = 

@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { TrendingUp } from "lucide-react";
 
 const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+const VIEWER_EMAILS = ["kimurayasunari5@gmail.com"];
 
 // プログレッシブインセンティブの利率テーブル
 const INCENTIVE_RATES = [
@@ -37,10 +38,11 @@ export default function ProgressiveIncentiveList({
       .filter((s) => s.plan_id === "basic" && s.status === "active")
       .map((s) => s.user_email);
 
-    // 管理者以外なら管理者メール除外
+    // 管理者以外なら除外
+    const excludedEmails = [...ADMIN_EMAILS, ...VIEWER_EMAILS];
     const filteredSubscribers = userRole === "admin" 
       ? basicSubscribers 
-      : basicSubscribers.filter((email) => !ADMIN_EMAILS.includes(email));
+      : basicSubscribers.filter((email) => !excludedEmails.includes(email));
 
     // 各ユーザーの月間売上を計算
     const userRevenue = {};
