@@ -31,6 +31,20 @@ export default function Home() {
     });
   }, []);
 
+  // 未ログイン時はLPを表示（認証チェック完了後）
+  if (authChecked && !user) {
+    return <LandingPage />;
+  }
+
+  // 認証確認中はスピナー
+  if (!authChecked) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
     queryFn: () => base44.entities.Video.list("-created_date", 30),
@@ -69,20 +83,6 @@ export default function Home() {
     const channel = getChannelForVideo(video);
     if (channel) setMessageTarget({ channel, video });
   };
-
-  // 未ログイン時はLP表示
-  if (authChecked && !user) {
-    return <LandingPage />;
-  }
-
-  // 認証確認中
-  if (!authChecked) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
