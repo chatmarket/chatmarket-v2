@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock, Coins, CheckCircle2, XCircle, Phone } from "lucide-react";
+import { CalendarDays, Clock, ArrowLeft, MessageCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 
 const STATUS_MAP = {
-  pending_payment: { label: "支払い待ち", color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30" },
-  confirmed: { label: "予約確定", color: "text-green-400 bg-green-500/10 border-green-500/30" },
-  completed: { label: "完了", color: "text-muted-foreground bg-secondary border-border" },
-  cancelled: { label: "キャンセル", color: "text-red-400 bg-red-500/10 border-red-500/30" },
+  pending_payment: { label: "支払い待ち", color: "text-yellow-400 bg-yellow-500/10" },
+  confirmed: { label: "確定", color: "text-green-400 bg-green-500/10" },
+  completed: { label: "完了", color: "text-muted-foreground bg-secondary" },
+  cancelled: { label: "キャンセル", color: "text-red-400 bg-red-500/10" },
 };
 
 export default function MyReservations() {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -22,22 +23,23 @@ export default function MyReservations() {
     });
   }, []);
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const { data: myReservations = [] } = useQuery({
     queryKey: ["my-reservations", user?.email],
-    queryFn: () => base44.entities.CallReservation.filter({ user_email: user.email }, "-date", 30),
+    queryFn: () => base44.entities.CallReservation.filter({ user_email: user.email }, "-created_date", 50),
     enabled: !!user,
   });
 
   const { data: incomingReservations = [] } = useQuery({
     queryKey: ["incoming-reservations", user?.email],
-    queryFn: () => base44.entities.CallReservation.filter({ owner_email: user.email }, "-date", 30),
+    queryFn: () => base44.entities.CallReservation.filter({ owner_email: user.email }, "-created_date", 50),
     enabled: !!user,
   });
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const upcoming = myReservations.filter((r) => r.date >= today && r.status === "confirmed");
-  const past = myReservations.filter((r) => r.date < today || r.status === "completed");
-  const incomingUpcoming = incomingReservations.filter((r) => r.date >= today && r.status === "confirmed");
+  const upcoming = myReservations.filter((r) => r.date >= today && r.status !== "cancelled" && r.status !== "completed");
+  const past = myReservations.filter((r) => r.date < today || r.status === "completed" || r.status === "cancelled");
+  const incomingPending = incomingReservations.filter((r) => r.status === "pending_payment" || r.status === "confirmed");
 
   if (!user) return null;
 
@@ -48,76 +50,68 @@ export default function MyReservations() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="text-xl font-bold flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" /> 予約管理
+          <CalendarDays className="w-5 h-5 text-primary" /> 予約管理
         </h1>
       </div>
 
-      {/* 受信予約（配信者向け） */}
-      {incomingUpcoming.length > 0 && (
-        <section className="mb-6">
-          <p className="text-sm font-bold text-primary mb-3">📬 受付中の予約（あなたへの予約）</p>
-          <div className="space-y-2">
-            {incomingUpcoming.map((r) => (
-              <ReservationCard key={r.id} reservation={r} isIncoming />
-            ))}
-          </div>
-        </section>
+      {/* Incoming */}
+      {incomingPending.length > 0 && (
+        <div className="mb-6 space-y-2">
+          <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-wider">受信した予約リクエスト ({incomingPending.length})</h2>
+          {incomingPending.map((r) => (
+            <ReservationCard key={r.id} reservation={r} isOwner onChat={() => {
+              const threadId = [r.user_email, r.owner_email].sort().join("__");
+              navigate(`/chat/${r.channel_id}`);
+            }} />
+          ))}
+        </div>
       )}
 
-      {/* 自分の予約 */}
-      <section className="mb-6">
-        <p className="text-sm font-bold mb-3 flex items-center gap-1.5">
-          <CheckCircle2 className="w-4 h-4 text-primary" /> 予約済みの通話
-        </p>
+      {/* Upcoming */}
+      <div className="mb-6 space-y-2">
+        <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-wider">今後の予約 ({upcoming.length})</h2>
         {upcoming.length === 0 ? (
-          <div className="bg-secondary rounded-xl p-6 text-center text-muted-foreground text-sm">
-            <Calendar className="w-6 h-6 mx-auto mb-2 opacity-30" />
-            予約はありません
-          </div>
+          <p className="text-sm text-muted-foreground text-center py-8">予約はありません</p>
         ) : (
-          <div className="space-y-2">
-            {upcoming.map((r) => <ReservationCard key={r.id} reservation={r} />)}
-          </div>
+          upcoming.map((r) => (
+            <ReservationCard key={r.id} reservation={r} onChat={() => navigate(`/chat/${r.channel_id}`)} />
+          ))
         )}
-      </section>
+      </div>
 
+      {/* Past */}
       {past.length > 0 && (
-        <section>
-          <p className="text-sm font-bold text-muted-foreground mb-3">過去の予約</p>
-          <div className="space-y-2">
-            {past.map((r) => <ReservationCard key={r.id} reservation={r} />)}
-          </div>
-        </section>
+        <div className="space-y-2">
+          <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-wider">過去の予約</h2>
+          {past.slice(0, 20).map((r) => (
+            <ReservationCard key={r.id} reservation={r} past />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function ReservationCard({ reservation: r, isIncoming }) {
-  const st = STATUS_MAP[r.status] || STATUS_MAP.confirmed;
+function ReservationCard({ reservation: r, isOwner, onChat, past }) {
+  const s = STATUS_MAP[r.status] || STATUS_MAP.pending_payment;
   return (
-    <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
-      <div className="w-12 h-12 rounded-xl bg-secondary flex flex-col items-center justify-center shrink-0">
-        <span className="text-xs font-bold">{r.start_time}</span>
-        <span className="text-[10px] text-muted-foreground">{r.date?.slice(5)}</span>
-      </div>
+    <div className={`bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3 ${past ? "opacity-60" : ""}`}>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate">
-          {isIncoming ? (r.user_name || r.user_email) : (r.channel_name || r.owner_email)}
-        </p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
-          <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{r.duration_minutes}分</span>
-          <span className="flex items-center gap-0.5"><Coins className="w-3 h-3 text-yellow-400" />¥{(r.price || 0).toLocaleString()}</span>
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${st.color}`}>{st.label}</span>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span className="font-bold text-sm">{isOwner ? r.user_name || r.user_email : r.channel_name}</span>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.color}`}>{s.label}</span>
         </div>
-        {r.message && <p className="text-xs text-muted-foreground mt-1 truncate">💬 {r.message}</p>}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+          <span className="flex items-center gap-0.5"><CalendarDays className="w-3 h-3" /> {r.date}</span>
+          <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {r.start_time} ({r.duration_minutes}分)</span>
+          <span className="text-primary font-bold">¥{(r.price || 0).toLocaleString()}</span>
+        </div>
+        {r.message && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">💬 {r.message}</p>}
       </div>
-      {r.status === "confirmed" && !isIncoming && (
-        <Link to={`/chat/${r.channel_id}`}>
-          <button className="shrink-0 w-9 h-9 rounded-xl bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors">
-            <Phone className="w-4 h-4 text-primary" />
-          </button>
-        </Link>
+      {onChat && (
+        <button onClick={onChat} className="shrink-0 p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+          <MessageCircle className="w-4 h-4" />
+        </button>
       )}
     </div>
   );

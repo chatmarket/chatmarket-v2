@@ -14,15 +14,20 @@ import ScrollRow from "../components/home/ScrollRow";
 import PwaInstallGuide from "../components/home/PwaInstallGuide";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
 import CallWaitingRow from "../components/home/CallWaitingRow";
+import LandingPage from "./LandingPage";
 
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [messageTarget, setMessageTarget] = useState(null); // { channel, video }
   const [cfExpanded, setCfExpanded] = useState(false);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) {
+        base44.auth.me().then(setUser).catch(() => {});
+      }
+      setAuthChecked(true);
     });
   }, []);
 
@@ -64,6 +69,20 @@ export default function Home() {
     const channel = getChannelForVideo(video);
     if (channel) setMessageTarget({ channel, video });
   };
+
+  // 未ログイン時はLP表示
+  if (authChecked && !user) {
+    return <LandingPage />;
+  }
+
+  // 認証確認中
+  if (!authChecked) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">

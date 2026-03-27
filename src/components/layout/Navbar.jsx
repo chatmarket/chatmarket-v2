@@ -195,12 +195,21 @@ export default function Navbar() {
               >
                 {t("login")}
               </Button>
+              <a href="/#plans" onClick={(e) => { e.preventDefault(); const el = document.getElementById('plans'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else { window.location.href = '/#plans'; } }}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10"
+                >
+                  料金プラン
+                </Button>
+              </a>
               <Button
                 size="sm"
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => base44.auth.redirectToLogin()}
               >
-                {t("register")}
+                新規登録
               </Button>
             </div>
           )}
