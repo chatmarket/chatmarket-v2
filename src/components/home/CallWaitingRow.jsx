@@ -43,7 +43,7 @@ export default function CallWaitingRow({ user }) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
-          <span className="text-green-400 font-semibold">FREE</span>：💬メッセージ＋📞通話申し込み可 ／ 
+          <span className="text-green-400 font-semibold">FREE</span>：💬メッセージ＋📞通話申し込み可（収益率70%） ／ 
           <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
         </p>
         <ScrollRow cardWidth={220}>
