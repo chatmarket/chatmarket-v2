@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import {
   Phone, PhoneOff, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
-  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio
+  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio, MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import MessageModal from "../components/chat/MessageModal";
 
 // ---- Constants ----
 const YELL_AMOUNTS = [
@@ -137,6 +138,9 @@ export default function VideoCallPage() {
 
   // Standby state
   const [isWaiting, setIsWaiting] = useState(false);
+
+  // Message modal
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   // Modals
   const [showYellModal, setShowYellModal] = useState(false);
@@ -373,6 +377,9 @@ export default function VideoCallPage() {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button size="sm" variant="ghost" onClick={() => setShowMessageModal(true)} className="text-white/60 hover:text-blue-400 gap-1 text-xs h-8">
+            <MessageCircle className="w-3.5 h-3.5" /> メッセージ
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => setShowReportModal(true)} className="text-white/60 hover:text-red-400 gap-1 text-xs h-8">
             <Flag className="w-3.5 h-3.5" /> 通報
           </Button>
@@ -865,6 +872,16 @@ export default function VideoCallPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Message Modal */}
+      {showMessageModal && call && user && (
+        <MessageModal
+          channel={{ id: call.callee_channel_id, name: call.callee_name, owner_email: call.callee_email }}
+          video={null}
+          user={user}
+          onClose={() => setShowMessageModal(false)}
+        />
+      )}
 
       {/* Report Modal */}
       <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
