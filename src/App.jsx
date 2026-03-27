@@ -40,6 +40,7 @@ import CallCalendar from './pages/CallCalendar.jsx';
 import MyReservations from './pages/MyReservations.jsx';
 import MiniSchool from './pages/MiniSchool.jsx';
 import SchoolTickets from './pages/SchoolTickets.jsx';
+import EnterpriseDashboard from './pages/EnterpriseDashboard.jsx';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -98,6 +99,7 @@ const AuthenticatedApp = () => {
         <Route path="/creator-dashboard" element={<CreatorDashboard />} />
         <Route path="/mini-school" element={<MiniSchool />} />
         <Route path="/school-tickets" element={<SchoolTickets />} />
+        <Route path="/enterprise" element={<EnterpriseDashboard />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

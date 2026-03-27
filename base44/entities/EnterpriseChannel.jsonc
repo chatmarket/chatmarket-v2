@@ -1,0 +1,67 @@
+{
+  "name": "EnterpriseChannel",
+  "type": "object",
+  "properties": {
+    "owner_email": {
+      "type": "string",
+      "description": "\u89aa\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u306e\u30e1\u30fc\u30eb"
+    },
+    "parent_channel_id": {
+      "type": "string",
+      "description": "\u89aa\u30c1\u30e3\u30f3\u30cd\u30ebID\uff08Channel\u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\uff09"
+    },
+    "parent_channel_name": {
+      "type": "string",
+      "description": "\u89aa\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "sub_channel_id": {
+      "type": "string",
+      "description": "\u5b50\u30c1\u30e3\u30f3\u30cd\u30ebID\uff08Channel\u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\uff09"
+    },
+    "sub_channel_name": {
+      "type": "string",
+      "description": "\u5b50\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "sub_channel_login_id": {
+      "type": "string",
+      "description": "\u5b50\u30c1\u30e3\u30f3\u30cd\u30eb\u5c02\u7528\u30ed\u30b0\u30a4\u30f3ID\uff08\u30e1\u30fc\u30eb\uff09"
+    },
+    "sub_channel_password_hash": {
+      "type": "string",
+      "description": "\u5b50\u30c1\u30e3\u30f3\u30cd\u30eb\u5c02\u7528\u30d1\u30b9\u30ef\u30fc\u30c9\uff08\u8868\u793a\u7528\u30de\u30b9\u30af\uff09"
+    },
+    "slot_number": {
+      "type": "number",
+      "description": "\u30b9\u30ed\u30c3\u30c8\u756a\u53f7\uff081\u301c100\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending_invite"
+      ],
+      "default": "pending_invite",
+      "description": "\u5b50\u30c1\u30e3\u30f3\u30cd\u30eb\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "invited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u62db\u5f85\u65e5\u6642"
+    },
+    "activated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6709\u52b9\u5316\u65e5\u6642"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u5099\u8003\u30fb\u30e1\u30e2"
+    }
+  },
+  "required": [
+    "owner_email",
+    "parent_channel_id",
+    "slot_number"
+  ]
+}

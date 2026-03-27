@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone, GraduationCap } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone, GraduationCap, Building2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const plans = [
@@ -118,6 +118,25 @@ const plans = [
     ],
   },
   {
+    icon: Building2,
+    name: "エンタープライズプラン",
+    price: "¥59,800",
+    period: "/月",
+    revenueShare: "90%",
+    color: "from-violet-600/20 to-indigo-600/10 border-violet-500/40",
+    iconColor: "text-violet-400",
+    badge: "法人・大規模運用",
+    badgeColor: "bg-violet-500/20 text-violet-300",
+    features: [
+      "親チャンネル1つ＋サブチャンネル最大100個",
+      "各サブチャンネルに個別ログインID・パスワードを発行",
+      "サブチャンネルの有効化・無効化を親が一括管理",
+      "BASICプランの全機能込み",
+      "収益還元率90%",
+      "法人・スクール・フランチャイズ・代理店向け",
+    ],
+  },
+  {
     icon: Heart,
     name: "BASIC＋クラウドファンディングプラン",
     price: "¥12,000",
@@ -150,6 +169,7 @@ export default function PlanSection() {
     "CALL＆ANSERプラン": "call-anser",
     "VODプラン": "vod",
     "PPVプラン": "ppv",
+    "エンタープライズプラン": "enterprise",
     "BASIC＋クラウドファンディングプラン": "crowdfunding",
   };
 

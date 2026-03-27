@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2 } from "lucide-react";
 
 // 単体プランの定義
 const PLANS = [
@@ -96,6 +96,28 @@ const PLANS = [
       "生徒側は無料プランでもアクセス可能",
       "収益還元率90%",
       "月の授業回数・時間・料金は配信者が自由設定",
+    ],
+    exclusive: true,
+  },
+  {
+    id: "enterprise",
+    icon: Building2,
+    name: "エンタープライズプラン",
+    price: 59800,
+    period: "/月",
+    revenueShare: "90%",
+    color: "from-violet-600/20 to-indigo-600/10 border-violet-500/40",
+    iconColor: "text-violet-400",
+    badge: "法人・大規模運用",
+    badgeColor: "bg-violet-500/20 text-violet-300",
+    description: "親チャンネル1つ＋最大100サブチャンネル。各アカウントに個別ID/パスを発行。法人・スクール・代理店向け。",
+    features: [
+      "親チャンネル1つ＋サブチャンネル最大100個",
+      "各サブチャンネルに個別ログインID・パスワードを発行",
+      "サブチャンネルの有効化・無効化を親が一括管理",
+      "BASICプランの全機能込み（1対1通話・エールコイン等）",
+      "収益還元率90%",
+      "法人・スクール・フランチャイズ・代理店向け",
     ],
     exclusive: true,
   },
