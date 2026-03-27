@@ -30,10 +30,13 @@ export default function CallWaitingRow({ user }) {
     navigate(`/call-request/${channelId}`);
   };
 
+  const row1 = callChannels.slice(0, Math.ceil(callChannels.length / 2));
+  const row2 = callChannels.slice(Math.ceil(callChannels.length / 2));
+
   return (
     <>
-      <section>
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <section className="space-y-6">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shrink-0" />
           <h2 className="text-xl font-bold">1対1ビデオ通話　待機中</h2>
           <div className="flex gap-1.5 flex-wrap">
@@ -42,12 +45,14 @@ export default function CallWaitingRow({ user }) {
             <span className="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold">CALL&ANSER 📞</span>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-xs text-muted-foreground">
           <span className="text-green-400 font-semibold">FREE</span>：💬メッセージ＋📞通話申し込み可（収益率70%） ／ 
           <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
         </p>
+
+        {/* 1段目 */}
         <ScrollRow cardWidth={220}>
-          {callChannels.map((channel) => (
+          {row1.map((channel) => (
             <CallWaitingCard
               key={channel.id}
               channel={channel}
@@ -56,6 +61,20 @@ export default function CallWaitingRow({ user }) {
             />
           ))}
         </ScrollRow>
+
+        {/* 2段目 */}
+        {row2.length > 0 && (
+          <ScrollRow cardWidth={220}>
+            {row2.map((channel) => (
+              <CallWaitingCard
+                key={channel.id}
+                channel={channel}
+                onMessage={() => handleMessage(channel)}
+                onCallRequest={() => handleCallRequest(channel.id)}
+              />
+            ))}
+          </ScrollRow>
+        )}
       </section>
 
       {messageTarget && (
