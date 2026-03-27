@@ -137,6 +137,10 @@ export default function Navbar() {
                     <Radio className="w-4 h-4 mr-2" />
                     {t("myChannel")}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/creator-dashboard")}>
+                    <BarChart3 className="w-4 h-4 mr-2 text-primary" />
+                    配信者ダッシュボード
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/revenue")}>
                     <DollarSign className="w-4 h-4 mr-2 text-yellow-400" />
                     収益管理
