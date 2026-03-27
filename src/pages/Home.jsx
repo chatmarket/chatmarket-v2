@@ -14,7 +14,6 @@ import ScrollRow from "../components/home/ScrollRow";
 import PwaInstallGuide from "../components/home/PwaInstallGuide";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
 import CallWaitingRow from "../components/home/CallWaitingRow";
-import LandingPage from "./LandingPage";
 
 export default function Home() {
   const [user, setUser] = useState(null);

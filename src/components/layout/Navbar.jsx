@@ -209,7 +209,7 @@ export default function Navbar() {
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => base44.auth.redirectToLogin()}
               >
-                新規登録
+                {navigator.language.startsWith("ja") ? "新規登録" : "Sign Up"}
               </Button>
             </div>
           )}
