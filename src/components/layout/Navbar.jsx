@@ -78,13 +78,13 @@ export default function Navbar() {
         </form>
 
         {/* Nav links */}
-        <div className="hidden md:flex items-center gap-1 shrink-0">
-          <a href="/#plans" onClick={(e) => { e.preventDefault(); const el = document.getElementById('plans'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else { window.location.href = '/#plans'; } }}>
-            <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
-              <CreditCard className="w-3.5 h-3.5" />
-              料金プラン
-            </Button>
-          </a>
+         <div className="hidden md:flex items-center gap-1 shrink-0">
+           <Link to="/plan-select">
+             <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
+               <CreditCard className="w-3.5 h-3.5" />
+               料金プラン
+             </Button>
+           </Link>
           <Link to="/blog" className="relative">
             <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
               <BookOpen className="w-3.5 h-3.5" />
@@ -200,22 +200,22 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => base44.auth.redirectToLogin()}
-              >
-                {t("login")}
-              </Button>
-              <a href="/#plans" onClick={(e) => { e.preventDefault(); const el = document.getElementById('plans'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else { window.location.href = '/#plans'; } }}>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary/10"
+                  variant="ghost"
+                  onClick={() => base44.auth.redirectToLogin()}
                 >
-                  料金プラン
+                  {t("login")}
                 </Button>
-              </a>
+                <Link to="/plan-select">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/50 text-primary hover:bg-primary/10"
+                  >
+                    料金プラン
+                  </Button>
+                </Link>
               <Button
                 size="sm"
                 className="bg-primary hover:bg-primary/90"
@@ -253,11 +253,11 @@ export default function Navbar() {
             </div>
           </form>
           <div className="flex gap-2">
-            <a href="/#plans" className="flex-1" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); const el = document.getElementById('plans'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else { window.location.href = '/#plans'; } }}>
+            <Link to="/plan-select" className="flex-1" onClick={() => setIsMenuOpen(false)}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <CreditCard className="w-4 h-4" /> 料金プラン
               </Button>
-            </a>
+            </Link>
             <Link to="/blog" className="flex-1 relative" onClick={() => setIsMenuOpen(false)}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <BookOpen className="w-4 h-4" /> 運営ブログ
