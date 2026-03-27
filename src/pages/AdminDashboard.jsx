@@ -105,6 +105,9 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
+  // 管理者以外のサブスク加入者のみカウント
+  const filteredSubscriptions = allSubscriptions.filter((s) => !ADMIN_EMAILS.includes(s.user_email));
+
   const { data: allCancellationReasons = [] } = useQuery({
     queryKey: ["admin-all-cancellation-reasons"],
     queryFn: () => base44.entities.CancellationReason.list(),
@@ -121,17 +124,20 @@ export default function AdminDashboard() {
     return null;
   }
 
-  // 収益計算
+  // 管理者ユーザーの取得
+  const adminUserEmails = ADMIN_EMAILS;
+
+  // 収益計算（管理者分除外）
   const totalVideoRevenue = allPurchases
-    .filter((p) => p.item_type === "video")
+    .filter((p) => p.item_type === "video" && !adminUserEmails.includes(p.created_by))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const totalStreamRevenue = allPurchases
-    .filter((p) => p.item_type === "livestream")
+    .filter((p) => p.item_type === "livestream" && !adminUserEmails.includes(p.created_by))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const totalCallRevenue = allCalls
-    .filter((c) => c.status === "ended" && (c.price || 0) > 0)
+    .filter((c) => c.status === "ended" && (c.price || 0) > 0 && !adminUserEmails.includes(c.caller_email) && !adminUserEmails.includes(c.callee_email))
     .reduce((sum, c) => sum + (c.price || 0), 0);
 
   const totalPlatformFee = 
@@ -359,8 +365,8 @@ export default function AdminDashboard() {
             };
 
             const subscriptionStats = PLANS.map((planId) => {
-              const active = allSubscriptions.filter((s) => s.plan_id === planId && s.status === "active").length;
-              const cancelled = allSubscriptions.filter((s) => s.plan_id === planId && s.status === "cancelled").length;
+              const active = filteredSubscriptions.filter((s) => s.plan_id === planId && s.status === "active").length;
+              const cancelled = filteredSubscriptions.filter((s) => s.plan_id === planId && s.status === "cancelled").length;
               const total = active + cancelled;
               const churnRate = total > 0 ? ((cancelled / total) * 100).toFixed(1) : 0;
               const monthlyRevenue = active * PLAN_PRICES[planId];
@@ -376,12 +382,16 @@ export default function AdminDashboard() {
               };
             });
 
-            // 解約理由の集計
+            // 解約理由の集計（管理者除外）
             const reasonCounts = {};
-            allCancellationReasons.forEach((r) => {
-              const key = r.reason_ja || r.reason;
-              reasonCounts[key] = (reasonCounts[key] || 0) + 1;
-            });
+            allCancellationReasons
+              .filter((r) => !ADMIN_EMAILS.includes(r.user_email))
+              .forEach((r) => {
+                const key = r.reason_ja || r.reason;
+                reasonCounts[key] = (reasonCounts[key] || 0) + 1;
+              });
+            
+            const filteredCancellationReasons = allCancellationReasons.filter((r) => !ADMIN_EMAILS.includes(r.user_email));
 
             return (
               <div className="space-y-6">
@@ -438,23 +448,23 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                         {Object.entries(reasonCounts)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([reason, count]) => {
-                            const percentage = ((count / allCancellationReasons.length) * 100).toFixed(1);
-                            return (
-                              <tr key={reason} className="border-b border-border/30 hover:bg-secondary/50">
-                                <td className="py-3 px-3">{reason}</td>
-                                <td className="text-right py-3 px-3 font-semibold">{count}件</td>
-                                <td className="text-right py-3 px-3 text-muted-foreground">{percentage}%</td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                  {allCancellationReasons.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">まだ解約がありません</p>
-                  )}
+                           .sort(([, a], [, b]) => b - a)
+                           .map(([reason, count]) => {
+                             const percentage = filteredCancellationReasons.length > 0 ? ((count / filteredCancellationReasons.length) * 100).toFixed(1) : 0;
+                             return (
+                               <tr key={reason} className="border-b border-border/30 hover:bg-secondary/50">
+                                 <td className="py-3 px-3">{reason}</td>
+                                 <td className="text-right py-3 px-3 font-semibold">{count}件</td>
+                                 <td className="text-right py-3 px-3 text-muted-foreground">{percentage}%</td>
+                               </tr>
+                             );
+                           })}
+                        </tbody>
+                        </table>
+                        </div>
+                        {filteredCancellationReasons.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-4">まだ解約がありません</p>
+                        )}
                 </div>
               </div>
             );
@@ -484,8 +494,8 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalVideoRevenue * 0.85).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                  販売件数: {allPurchases.filter((p) => p.item_type === "video").length}件
-                </div>
+                   販売件数: {allPurchases.filter((p) => p.item_type === "video" && !ADMIN_EMAILS.includes(p.created_by)).length}件
+                 </div>
               </div>
             </div>
 
@@ -509,8 +519,8 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalStreamRevenue * 0.85).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                  販売件数: {allPurchases.filter((p) => p.item_type === "livestream").length}件
-                </div>
+                   販売件数: {allPurchases.filter((p) => p.item_type === "livestream" && !ADMIN_EMAILS.includes(p.created_by)).length}件
+                 </div>
               </div>
             </div>
 
@@ -534,8 +544,8 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalCallRevenue * 0.70).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                  終了通話: {allCalls.filter((c) => c.status === "ended").length}件
-                </div>
+                   終了通話: {allCalls.filter((c) => c.status === "ended" && !ADMIN_EMAILS.includes(c.caller_email) && !ADMIN_EMAILS.includes(c.callee_email)).length}件
+                 </div>
               </div>
             </div>
 
