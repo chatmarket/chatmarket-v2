@@ -144,13 +144,13 @@ export default function ProgressiveIncentiveSection() {
                 <span className="text-muted-foreground">手数料控除後</span>
                 <span className="font-semibold">¥850,000</span>
               </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground ml-2">→ 売上85万円なので還元率 <span className="text-primary font-bold">85%</span></span>
-                <span></span>
+              <div className="flex justify-between items-center border-t border-border/50 pt-2 text-xs">
+                <span className="text-muted-foreground ml-2">→ 銀行振込手数料（実費）差し引き</span>
+                <span className="text-destructive">- 数百円程度</span>
               </div>
               <div className="flex justify-between items-center border-t border-border/50 pt-2 font-black text-base">
                 <span>振込金額</span>
-                <span className="text-primary">¥722,500</span>
+                <span className="text-primary">¥850,000 - 振込手数料</span>
               </div>
             </div>
           </div>
