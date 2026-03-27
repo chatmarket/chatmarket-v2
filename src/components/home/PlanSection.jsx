@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone, GraduationCap } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const plans = [
@@ -95,6 +95,26 @@ const plans = [
       "生配信アーカイブ販売機能",
       "視聴者からエールコイン受取",
       "チャンネルページ作成",
+    ],
+  },
+  {
+    icon: GraduationCap,
+    name: "ミニスクールプラン",
+    price: "¥8,900",
+    period: "/月",
+    revenueShare: "90%",
+    comingSoon: true,
+    color: "from-violet-500/20 to-violet-600/10 border-violet-500/30",
+    iconColor: "text-violet-400",
+    badge: "1対最大9人スクール",
+    badgeColor: "bg-violet-500/20 text-violet-300",
+    features: [
+      "1対最大9人の少人数ミニスクール開催",
+      "生徒の氏名がリアルタイム表示される専用授業室",
+      "チケット制（1回単位で自由設定）",
+      "生徒側は無料プランでもアクセス可能",
+      "収益還元率90%（プラットフォーム手数料10%）",
+      "月に何回・何時間・いくらも配信者が自由設定",
     ],
   },
   {

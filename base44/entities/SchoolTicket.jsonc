@@ -1,0 +1,69 @@
+{
+  "name": "SchoolTicket",
+  "type": "object",
+  "properties": {
+    "student_email": {
+      "type": "string",
+      "description": "\u751f\u5f92\u30e1\u30fc\u30eb"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "\u751f\u5f92\u6c0f\u540d"
+    },
+    "teacher_email": {
+      "type": "string",
+      "description": "\u8b1b\u5e2b\u30e1\u30fc\u30eb"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "\u6388\u696dID"
+    },
+    "session_title": {
+      "type": "string",
+      "description": "\u6388\u696d\u30bf\u30a4\u30c8\u30eb"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6388\u696d\u4e88\u5b9a\u65e5\u6642"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "\u6388\u696d\u6642\u9593\uff08\u5206\uff09"
+    },
+    "price": {
+      "type": "number",
+      "description": "\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u5186\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_payment",
+        "active",
+        "used",
+        "cancelled"
+      ],
+      "default": "pending_payment",
+      "description": "\u30c1\u30b1\u30c3\u30c8\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u4f7f\u7528\u65e5\u6642"
+    }
+  },
+  "required": [
+    "student_email",
+    "teacher_email",
+    "session_id",
+    "price"
+  ]
+}

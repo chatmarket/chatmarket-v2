@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap } from "lucide-react";
 
 // 単体プランの定義
 const PLANS = [
@@ -76,6 +76,28 @@ const PLANS = [
     badgeColor: "bg-red-500/20 text-red-300",
     description: "1対多数の有料ライブ配信でファンから直接収益化。BASICプランとの組み合わせでご利用いただけます。",
     features: ["1対多数の有料ライブ配信", "配信料金：15分 ¥150〜（自由設定）", "視聴者からエールコイン受取", "ライブ配信アーカイブ"],
+  },
+  {
+    id: "mini-school",
+    icon: GraduationCap,
+    name: "ミニスクールプラン",
+    price: 8900,
+    period: "/月",
+    revenueShare: "90%",
+    comingSoon: true,
+    color: "from-violet-500/20 to-violet-600/10 border-violet-500/30",
+    iconColor: "text-violet-400",
+    badge: "1対最大9人スクール",
+    badgeColor: "bg-violet-500/20 text-violet-300",
+    description: "最大9名の少人数ミニスクールを開設。チケット制で1回単位の収益化。生徒は無料プランでもアクセス可能。",
+    features: [
+      "1対最大9人の少人数授業（生徒氏名がリアルタイム表示）",
+      "チケット制（1回単位・自由料金設定）",
+      "生徒側は無料プランでもアクセス可能",
+      "収益還元率90%",
+      "月の授業回数・時間・料金は配信者が自由設定",
+    ],
+    exclusive: true,
   },
   {
     id: "crowdfunding",

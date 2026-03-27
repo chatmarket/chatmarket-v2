@@ -1,0 +1,74 @@
+{
+  "name": "SchoolSession",
+  "type": "object",
+  "properties": {
+    "teacher_email": {
+      "type": "string",
+      "description": "\u8b1b\u5e2b\u30e1\u30fc\u30eb"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "title": {
+      "type": "string",
+      "description": "\u6388\u696d\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u6388\u696d\u306e\u8aac\u660e"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u958b\u59cb\u4e88\u5b9a\u65e5\u6642"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "\u6388\u696d\u6642\u9593\uff08\u5206\uff09"
+    },
+    "max_students": {
+      "type": "number",
+      "default": 9,
+      "description": "\u6700\u5927\u751f\u5f92\u6570\uff08\u6700\u59279\u4eba\uff09"
+    },
+    "ticket_price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u5186\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "live",
+        "ended",
+        "cancelled"
+      ],
+      "default": "scheduled",
+      "description": "\u6388\u696d\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "enrolled_students": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\u53c2\u52a0\u751f\u5f92\u30ea\u30b9\u30c8 [{email, name, ticket_id}]"
+    },
+    "stream_url": {
+      "type": "string",
+      "description": "\u914d\u4fe1URL\uff08\u5916\u90e8\u307e\u305f\u306f\u5185\u90e8\uff09"
+    }
+  },
+  "required": [
+    "teacher_email",
+    "title",
+    "scheduled_at",
+    "ticket_price"
+  ]
+}
