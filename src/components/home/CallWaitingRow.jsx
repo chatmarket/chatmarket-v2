@@ -30,10 +30,10 @@ export default function CallWaitingRow({ user }) {
     navigate(`/call-request/${channelId}`);
   };
 
-  // 5列でグループ化（2段で10個表示）
+  // 6列でグループ化（2段で12個表示）
   const rows = [];
-  for (let i = 0; i < callChannels.length; i += 5) {
-    rows.push(callChannels.slice(i, i + 5));
+  for (let i = 0; i < callChannels.length; i += 6) {
+    rows.push(callChannels.slice(i, i + 6));
   }
 
   return (
@@ -52,9 +52,9 @@ export default function CallWaitingRow({ user }) {
         <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
       </p>
 
-      {/* 複数段の横スクロール */}
+      {/* 複数段の横スクロール（6列×2段） */}
       {rows.map((row, idx) => (
-        <ScrollRow key={idx} cardWidth={220}>
+        <ScrollRow key={idx} cardWidth={200}>
           {row.map((channel) => (
             <CallWaitingCard
               key={channel.id}
@@ -80,29 +80,37 @@ export default function CallWaitingRow({ user }) {
 
 function CallWaitingCard({ channel, onMessage, onCallRequest }) {
   return (
-    <div className="w-[220px] shrink-0 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/40 transition-all">
+    <div className="w-[200px] shrink-0 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/40 transition-all">
       {/* Avatar */}
-      <div className="relative h-28 bg-gradient-to-br from-primary/10 to-secondary flex items-center justify-center">
+      <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary flex items-center justify-center">
         {channel.avatar_url ? (
           <img src={channel.avatar_url} alt={channel.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
-            <span className="text-2xl font-bold text-muted-foreground">{channel.name?.[0]}</span>
+          <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+            <span className="text-xl font-bold text-muted-foreground">{channel.name?.[0]}</span>
           </div>
         )}
         {/* 待機中バッジ */}
-        <div className="absolute top-2 left-2 flex items-center gap-1 bg-green-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+        <div className="absolute top-2 left-2 flex items-center gap-1 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
           待機中
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-2">
+      <div className="p-2.5 space-y-2">
         <Link to={`/channel/${channel.id}`}>
-          <p className="font-bold text-sm truncate hover:text-primary transition-colors">{channel.name}</p>
+          <p className="font-bold text-xs truncate hover:text-primary transition-colors">{channel.name}</p>
         </Link>
-        <div className="text-xs text-muted-foreground space-y-0.5">
+
+        {/* Theme */}
+        {channel.call_theme && (
+          <p className="text-[11px] text-primary bg-primary/10 px-2 py-1 rounded line-clamp-2">
+            {channel.call_theme}
+          </p>
+        )}
+
+        <div className="text-[11px] text-muted-foreground space-y-0.5">
           {channel.call_price_30min > 0 && (
             <p>30分 ¥{channel.call_price_30min.toLocaleString()}</p>
           )}
@@ -112,23 +120,23 @@ function CallWaitingCard({ channel, onMessage, onCallRequest }) {
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-1.5 pt-1">
+        <div className="flex gap-1 pt-1">
           <Button
             size="sm"
-            className="flex-1 h-7 text-xs bg-primary hover:bg-primary/90 gap-1"
+            className="flex-1 h-6 text-[11px] bg-primary hover:bg-primary/90 gap-0.5 px-2"
             onClick={onCallRequest}
           >
-            <PhoneCall className="w-3 h-3" />
+            <PhoneCall className="w-2.5 h-2.5" />
             申し込む
           </Button>
           <Button
             size="sm"
             variant="outline"
-            className="h-7 w-7 p-0"
+            className="h-6 w-6 p-0"
             onClick={onMessage}
             title="メッセージを送る"
           >
-            <MessageCircle className="w-3.5 h-3.5" />
+            <MessageCircle className="w-3 h-3" />
           </Button>
         </div>
       </div>

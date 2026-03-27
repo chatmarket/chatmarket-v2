@@ -44,6 +44,7 @@ export default function Settings() {
     call_price_30min: 3000,
     call_price_60min: 5000,
     call_available_dates: "",
+    call_theme: "",
   });
 
   // 基本情報
@@ -135,6 +136,7 @@ export default function Settings() {
           call_price_30min: channels[0].call_price_30min || 3000,
           call_price_60min: channels[0].call_price_60min || 5000,
           call_available_dates: channels[0].call_available_dates || "",
+          call_theme: channels[0].call_theme || "",
         });
       }
     }).catch(() => {});
@@ -747,16 +749,27 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2 border-t border-border/50 pt-3">
-                  <Label>通話可能スケジュール</Label>
-                  <Textarea
-                    value={callSettings.call_available_dates}
-                    onChange={(e) => setCallSettings({ ...callSettings, call_available_dates: e.target.value })}
-                    placeholder={"例:\n毎週火・木 19:00〜22:00\n土日 10:00〜18:00\n※2日前までにチャットでご予約ください"}
-                    className="bg-secondary border-0 resize-none"
-                    rows={4}
-                  />
-                  <p className="text-xs text-muted-foreground">申込ページに表示されます。</p>
-                </div>
+                   <Label>通話テーマ（何の話をするのか）</Label>
+                   <Input
+                     value={callSettings.call_theme}
+                     onChange={(e) => setCallSettings({ ...callSettings, call_theme: e.target.value })}
+                     placeholder="例：キャリア相談、ビジネスコーチング、雑談など"
+                     className="bg-secondary border-0"
+                   />
+                   <p className="text-xs text-muted-foreground">ホームページで表示されます。通話で何を相談・話題にするかを簡潔に入力してください。</p>
+                 </div>
+
+                <div className="space-y-2 border-t border-border/50 pt-3">
+                   <Label>通話可能スケジュール</Label>
+                   <Textarea
+                     value={callSettings.call_available_dates}
+                     onChange={(e) => setCallSettings({ ...callSettings, call_available_dates: e.target.value })}
+                     placeholder={"例:\n毎週火・木 19:00〜22:00\n土日 10:00〜18:00\n※2日前までにチャットでご予約ください"}
+                     className="bg-secondary border-0 resize-none"
+                     rows={4}
+                   />
+                   <p className="text-xs text-muted-foreground">申込ページに表示されます。</p>
+                 </div>
               </>
             )}
           </div>
@@ -786,6 +799,7 @@ export default function Settings() {
                 call_price_105min: callSettings.call_price_105min || 0,
                 call_price_120min: callSettings.call_price_120min || 0,
                 call_available_dates: callSettings.call_available_dates,
+                call_theme: callSettings.call_theme,
               });
               toast.success("通話設定を保存しました");
               setSaving(false);
