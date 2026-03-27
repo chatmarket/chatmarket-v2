@@ -189,29 +189,79 @@ export default function Footer() {
                   <TrendingUp className="w-5 h-5 text-primary" />
                   プログレッシブ・インセンティブって何？
                 </AccordionTrigger>
-                <AccordionContent className="text-xs text-foreground/80 space-y-3 pt-2">
+                <AccordionContent className="text-sm text-foreground space-y-4 pt-2">
                   <div>
-                    <p className="font-semibold text-foreground mb-1">📈 プログレッシブ・インセンティブとは</p>
-                    <p>月間の売上が増えると、手数料が下がる仕組みです。つまり、稼げば稼ぐほど取り分が増える制度です。</p>
+                    <p className="font-bold text-base mb-2">📈 プログレッシブ・インセンティブとは</p>
+                    <p className="text-sm leading-relaxed">月間の売上が増えると、手数料が下がる仕組みです。つまり、稼げば稼ぐほど取り分が増える制度です。</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground mb-1">💰 階層別 収益率（翌月適用）</p>
-                    <ul className="space-y-1 ml-4 list-disc text-xs">
-                      <li>月売上 100万円超：<span className="text-primary font-semibold">86%</span></li>
-                      <li>月売上 300万円超：<span className="text-primary font-semibold">87%</span></li>
-                      <li>月売上 600万円超：<span className="text-primary font-semibold">88%</span></li>
-                      <li>月売上 900万円超：<span className="text-primary font-semibold">89%</span></li>
-                      <li>月売上 1,200万円超：<span className="text-primary font-semibold">90%</span></li>
-                      <li>月売上 1,500万円超：<span className="text-primary font-semibold">91%</span></li>
-                      <li>月売上 1,650万円超：<span className="text-primary font-semibold">92%</span></li>
-                      <li>月売上 1,800万円超：<span className="text-primary font-semibold">93%</span></li>
-                      <li>月売上 1,950万円超：<span className="text-primary font-semibold">94%</span></li>
-                      <li>月売上 2,000万円以上：<span className="text-primary font-semibold">95%（最大）</span></li>
-                    </ul>
+                    <p className="font-bold text-base mb-3">💰 階層別 収益率（翌月適用）</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">100万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/20 to-primary/40 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">86%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">300万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/25 to-primary/45 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">87%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">600万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/30 to-primary/50 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">88%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">900万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/35 to-primary/55 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">89%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,200万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/40 to-primary/60 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">90%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,500万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/45 to-primary/65 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">91%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,650万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/50 to-primary/70 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">92%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,800万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/55 to-primary/75 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">93%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,950万円超</span>
+                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/60 to-primary/80 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary">94%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-primary rounded-lg p-2.5 border border-primary/40">
+                        <span className="text-xs font-semibold text-primary-foreground min-w-32">2,000万円以上</span>
+                        <div className="flex-1 h-8 bg-primary/30 rounded flex items-center justify-end pr-3">
+                          <span className="font-bold text-sm text-primary-foreground">95%（最大）</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">🎯 メリット</p>
-                    <p>毎月の売上に応じて自動的に計算されるため、手続き不要。売上が増えれば増えるほど、あなたの取り分が増えていきます。</p>
+                  <div className="bg-secondary rounded-lg p-3 border border-border/50">
+                    <p className="font-bold text-base mb-2">🎯 メリット</p>
+                    <p className="text-sm leading-relaxed">毎月の売上に応じて自動的に計算されるため、手続き不要。売上が増えれば増えるほど、あなたの取り分が増えていきます。</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
