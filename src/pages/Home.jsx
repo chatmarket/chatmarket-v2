@@ -13,6 +13,7 @@ import RevenueBanner from "../components/home/RevenueBanner";
 import ScrollRow from "../components/home/ScrollRow";
 import PwaInstallGuide from "../components/home/PwaInstallGuide";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
+import CallWaitingRow from "../components/home/CallWaitingRow";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -106,6 +107,9 @@ export default function Home() {
 
       {/* Revenue Banner */}
       <RevenueBanner />
+
+      {/* 1対1ビデオ通話待機中 */}
+      <CallWaitingRow user={user} />
 
       {/* Live Streams */}
       {liveStreams.length > 0 && (
