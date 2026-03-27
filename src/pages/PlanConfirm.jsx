@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, ArrowLeft, ExternalLink, Video, Radio, PhoneCall, Play, Heart, Phone } from "lucide-react";
+import { Check, ArrowLeft, ExternalLink, Video, Radio, PhoneCall, Play, Heart, Phone, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+
+const ADMIN_EMAILS = ["unei@chatmarket.info", "admin@chatmarket.info"];
 
 const PLAN_INFO = {
   free:          { name: "FREEプラン",                     price: 0,     badge: "無料スタート",       badgeColor: "bg-gray-500/20 text-gray-300" },
@@ -25,12 +28,22 @@ const PAYMENT_LINKS = {
 
 export default function PlanConfirm() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const params = new URLSearchParams(window.location.search);
   const planIds = (params.get("plans") || "").split(",").filter(Boolean);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (isAuth) {
+        base44.auth.me().then(setUser);
+      }
+    });
+  }, []);
 
   const selectedPlans = planIds.map((id) => ({ id, ...PLAN_INFO[id] })).filter((p) => p.name);
   const totalPrice = selectedPlans.reduce((sum, p) => sum + p.price, 0);
 
+  const isAdmin = ADMIN_EMAILS.includes(user?.email);
   const hasFreeOnly = planIds.includes("free") && planIds.length === 1;
   const hasCrowdfunding = planIds.includes("crowdfunding");
   const paidPlans = selectedPlans.filter((p) => p.price > 0 && p.id !== "crowdfunding");
@@ -90,31 +103,48 @@ export default function PlanConfirm() {
         </div>
       </div>
 
+      {/* 管理者権限通知 */}
+      {isAdmin && (
+        <div className="bg-primary/10 border border-primary/40 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-primary">運営管理者アカウント</p>
+            <p className="text-xs text-primary/80">このアカウントでの加入は収益に反映されません。プラン確認用です。</p>
+          </div>
+        </div>
+      )}
+
       {/* 申し込みアクション */}
-      <div className="space-y-3">
-        {hasFreeOnly && (
-          <Button onClick={handleFreeStart} className="w-full h-12 text-base font-bold">
-            無料で始める
-          </Button>
-        )}
+      {!isAdmin ? (
+        <div className="space-y-3">
+          {hasFreeOnly && (
+            <Button onClick={handleFreeStart} className="w-full h-12 text-base font-bold">
+              無料で始める
+            </Button>
+          )}
 
-        {paidPlans.map((plan) => (
-          <Button
-            key={plan.id}
-            onClick={() => handlePaidPlan(plan.id)}
-            className="w-full h-12 text-base font-bold gap-2 bg-primary hover:bg-primary/90"
-          >
-            <ExternalLink className="w-4 h-4" />
-            {plan.name}を申し込む
-          </Button>
-        ))}
+          {paidPlans.map((plan) => (
+            <Button
+              key={plan.id}
+              onClick={() => handlePaidPlan(plan.id)}
+              className="w-full h-12 text-base font-bold gap-2 bg-primary hover:bg-primary/90"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {plan.name}を申し込む
+            </Button>
+          ))}
 
-        {hasCrowdfunding && (
-          <Button onClick={handleCrowdfunding} className="w-full h-12 text-base font-bold gap-2 bg-red-500 hover:bg-red-600 text-white">
-            クラウドファンディングプランを申請する
-          </Button>
-        )}
-      </div>
+          {hasCrowdfunding && (
+            <Button onClick={handleCrowdfunding} className="w-full h-12 text-base font-bold gap-2 bg-red-500 hover:bg-red-600 text-white">
+              クラウドファンディングプランを申請する
+            </Button>
+          )}
+        </div>
+      ) : (
+        <Button onClick={() => navigate("/plan-select")} className="w-full h-12 text-base font-bold">
+          プラン選択に戻る
+        </Button>
+      )}
 
       <div className="bg-secondary/60 border border-border/50 rounded-xl px-4 py-3 text-xs text-muted-foreground space-y-1">
         <p>※ 各プランは個別の決済リンクでお申し込みいただきます。</p>
