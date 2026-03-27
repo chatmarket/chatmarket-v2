@@ -54,8 +54,8 @@ export default function CallWaitingRow({ user }) {
         </p>
 
         {/* 複数段の横スクロール */}
-        {rows.map((row, rowIdx) => (
-          <ScrollRow key={rowIdx} cardWidth={220}>
+        {rows.length > 0 && rows.map((row, rowIdx) => (
+          <ScrollRow key={`row-${rowIdx}`} cardWidth={220}>
             {row.map((channel) => (
               <CallWaitingCard
                 key={channel.id}
