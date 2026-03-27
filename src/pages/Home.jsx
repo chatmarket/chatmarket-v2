@@ -10,6 +10,7 @@ import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
 import ScrollRow from "../components/home/ScrollRow";
 import CallWaitingRow from "../components/home/CallWaitingRow";
+import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -262,6 +263,8 @@ export default function Home() {
           onClose={() => setMessageTarget(null)}
         />
       )}
+
+      <PwaInstallGuideSection />
     </div>
   );
 }
