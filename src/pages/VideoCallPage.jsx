@@ -705,11 +705,18 @@ export default function VideoCallPage() {
                 <p className="text-white/60 text-xs">相手からの接続を待っています</p>
               </div>
               <button
-                onClick={handleEndWaiting}
-                className="flex items-center gap-2 bg-orange-500/20 border border-orange-500/40 text-orange-400 hover:bg-orange-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+                onClick={async () => {
+                  const isAuth = await base44.auth.isAuthenticated();
+                  if (!isAuth) {
+                    base44.auth.redirectToLogin();
+                    return;
+                  }
+                  navigate('/plan-select');
+                }}
+                className="flex items-center gap-2 bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
               >
-                <X className="w-5 h-5" />
-                待機終了
+                <PhoneCall className="w-5 h-5" />
+                申し込む
               </button>
               <button
                 onClick={handleEndCall}
