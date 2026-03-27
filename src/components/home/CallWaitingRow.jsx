@@ -30,8 +30,11 @@ export default function CallWaitingRow({ user }) {
     navigate(`/call-request/${channelId}`);
   };
 
-  const row1 = callChannels.slice(0, Math.ceil(callChannels.length / 2));
-  const row2 = callChannels.slice(Math.ceil(callChannels.length / 2));
+  const itemsPerRow = 6;
+  const rows = [];
+  for (let i = 0; i < callChannels.length; i += itemsPerRow) {
+    rows.push(callChannels.slice(i, i + itemsPerRow));
+  }
 
   return (
     <>
@@ -50,22 +53,10 @@ export default function CallWaitingRow({ user }) {
           <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
         </p>
 
-        {/* 1段目 */}
-        <ScrollRow cardWidth={220}>
-          {row1.map((channel) => (
-            <CallWaitingCard
-              key={channel.id}
-              channel={channel}
-              onMessage={() => handleMessage(channel)}
-              onCallRequest={() => handleCallRequest(channel.id)}
-            />
-          ))}
-        </ScrollRow>
-
-        {/* 2段目 */}
-        {row2.length > 0 && (
-          <ScrollRow cardWidth={220}>
-            {row2.map((channel) => (
+        {/* 複数段の横スクロール */}
+        {rows.map((row, rowIdx) => (
+          <ScrollRow key={rowIdx} cardWidth={220}>
+            {row.map((channel) => (
               <CallWaitingCard
                 key={channel.id}
                 channel={channel}
@@ -74,7 +65,7 @@ export default function CallWaitingRow({ user }) {
               />
             ))}
           </ScrollRow>
-        )}
+        ))}
       </section>
 
       {messageTarget && (
