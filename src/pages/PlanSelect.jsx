@@ -157,9 +157,14 @@ export default function PlanSelect() {
   const selectedPlans = PLANS.filter((p) => selected.has(p.id));
   const totalPrice = selectedPlans.reduce((sum, p) => sum + p.price, 0);
 
-  const handleApply = () => {
-    // 選択プランをクエリパラメータで申し込みページへ
+  const handleApply = async () => {
     const ids = [...selected].join(",");
+    const isAuth = await base44.auth.isAuthenticated();
+    if (!isAuth) {
+      // ログイン後にプラン確認ページへ戻る
+      base44.auth.redirectToLogin(`/plan-confirm?plans=${ids}`);
+      return;
+    }
     navigate(`/plan-confirm?plans=${ids}`);
   };
 
