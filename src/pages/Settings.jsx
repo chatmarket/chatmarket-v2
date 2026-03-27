@@ -669,12 +669,29 @@ export default function Settings() {
         </TabsContent>
         {/* Call Settings Tab */}
         <TabsContent value="call" className="space-y-5">
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm">
-            <p className="font-semibold flex items-center gap-1.5 mb-1">
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm space-y-2">
+            <p className="font-semibold flex items-center gap-1.5">
               <PhoneCall className="w-4 h-4 text-primary" /> 1対1ビデオ通話設定
             </p>
             <p className="text-xs text-muted-foreground">料金はあなた（配信者）が設定し、申込者が支払います。</p>
+            <div className="text-xs space-y-0.5 text-muted-foreground">
+              <p>• 料金は <span className="text-primary font-semibold">15分刻み・最大2時間（120分）</span> で設定</p>
+              <p>• 最低料金：<span className="text-primary font-semibold">15分 ¥150以上</span>（例：30分=¥300以上、60分=¥600以上）</p>
+              <p>• <span className="text-green-400 font-semibold">FREEプラン</span>：収益率 <span className="font-bold">70%</span>（手数料30%）</p>
+              <p>• <span className="text-blue-400 font-semibold">BASICプラン</span>：収益率 <span className="font-bold">85%</span>（手数料15%）← <span className="text-yellow-400">推奨</span></p>
+            </div>
           </div>
+
+          {/* BASICプラン推奨バナー */}
+          {user?.plan !== "basic" && user?.plan !== "call-anser" && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-2">
+              <PhoneCall className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-blue-400">BASICプランへのアップグレードを推奨</p>
+                <p className="text-xs text-muted-foreground mt-0.5">FREEプランでは収益率70%ですが、BASICプラン（¥3,300/月）では<span className="text-blue-300 font-semibold">収益率85%</span>になります。月収が上がるほどお得です。</p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-card rounded-xl p-5 border border-border/50 space-y-4">
             <div className="flex items-center justify-between">
@@ -690,33 +707,46 @@ export default function Settings() {
 
             {callSettings.call_enabled && (
               <>
-                <div className="space-y-2 pt-2 border-t border-border/50">
-                  <Label>30分の通話料金（円）</Label>
-                  <Input
-                    type="number"
-                    min={100}
-                    step={100}
-                    value={callSettings.call_price_30min}
-                    onChange={(e) => setCallSettings({ ...callSettings, call_price_30min: parseInt(e.target.value) || 0 })}
-                    className="bg-secondary border-0"
-                  />
-                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_30min || 0) * 0.7).toLocaleString()}（手数料30%差引後）</p>
+                {/* 15分刻み料金テーブル */}
+                <div className="space-y-3 pt-2 border-t border-border/50">
+                  <Label className="text-sm font-semibold">通話時間別料金設定（15分刻み・最大2時間）</Label>
+                  <p className="text-xs text-muted-foreground">各時間の料金を入力してください。最低 ¥{150 * 1}（15分）、¥{150 * 2}（30分）... の倍数以上が必要です。</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[15, 30, 45, 60, 75, 90, 105, 120].map((min) => {
+                      const minPrice = (min / 15) * 150;
+                      const fieldKey = `call_price_${min}min`;
+                      const currentVal = callSettings[fieldKey] || 0;
+                      const revenueShare = (user?.plan === "basic" || user?.plan === "call-anser") ? 0.85 : 0.70;
+                      const isValid = currentVal === 0 || currentVal >= minPrice;
+                      return (
+                        <div key={min} className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">{min}分（最低¥{minPrice.toLocaleString()}）</Label>
+                          <Input
+                            type="number"
+                            min={minPrice}
+                            step={50}
+                            value={currentVal || ""}
+                            onChange={(e) => setCallSettings({ ...callSettings, [fieldKey]: parseInt(e.target.value) || 0 })}
+                            placeholder={`¥${minPrice}〜`}
+                            className={`bg-secondary border-0 text-sm ${!isValid ? "ring-1 ring-destructive" : ""}`}
+                          />
+                          {currentVal > 0 && (
+                            <p className={`text-[10px] ${isValid ? "text-muted-foreground" : "text-destructive font-bold"}`}>
+                              {isValid
+                                ? `受取: ¥${Math.floor(currentVal * revenueShare).toLocaleString()}`
+                                : `⚠️ ¥${minPrice}以上が必要`}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground bg-secondary rounded-lg p-2">
+                    ※ 空欄の時間帯は申込者が選択できません。よく使う時間だけ設定でOKです。
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>60分の通話料金（円）</Label>
-                  <Input
-                    type="number"
-                    min={100}
-                    step={100}
-                    value={callSettings.call_price_60min}
-                    onChange={(e) => setCallSettings({ ...callSettings, call_price_60min: parseInt(e.target.value) || 0 })}
-                    className="bg-secondary border-0"
-                  />
-                  <p className="text-xs text-muted-foreground">あなたの受取額: ¥{Math.floor((callSettings.call_price_60min || 0) * 0.7).toLocaleString()}（手数料30%差引後）</p>
-                </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 border-t border-border/50 pt-3">
                   <Label>通話可能スケジュール</Label>
                   <Textarea
                     value={callSettings.call_available_dates}
@@ -725,7 +755,7 @@ export default function Settings() {
                     className="bg-secondary border-0 resize-none"
                     rows={4}
                   />
-                  <p className="text-xs text-muted-foreground">申込ページに表示されます。申込者への案内として記入してください。</p>
+                  <p className="text-xs text-muted-foreground">申込ページに表示されます。</p>
                 </div>
               </>
             )}
@@ -734,11 +764,27 @@ export default function Settings() {
           <Button
             onClick={async () => {
               if (!channelId) { toast.error("チャンネルが見つかりません"); return; }
+              // バリデーション
+              const invalidFields = [15,30,45,60,75,90,105,120].filter((min) => {
+                const val = callSettings[`call_price_${min}min`] || 0;
+                const minPrice = (min / 15) * 150;
+                return val > 0 && val < minPrice;
+              });
+              if (invalidFields.length > 0) {
+                toast.error(`${invalidFields.join("分・")}分の料金が最低額を下回っています`);
+                return;
+              }
               setSaving(true);
               await base44.entities.Channel.update(channelId, {
                 call_enabled: callSettings.call_enabled,
-                call_price_30min: callSettings.call_price_30min,
-                call_price_60min: callSettings.call_price_60min,
+                call_price_30min: callSettings.call_price_30min || 0,
+                call_price_60min: callSettings.call_price_60min || 0,
+                call_price_15min: callSettings.call_price_15min || 0,
+                call_price_45min: callSettings.call_price_45min || 0,
+                call_price_75min: callSettings.call_price_75min || 0,
+                call_price_90min: callSettings.call_price_90min || 0,
+                call_price_105min: callSettings.call_price_105min || 0,
+                call_price_120min: callSettings.call_price_120min || 0,
                 call_available_dates: callSettings.call_available_dates,
               });
               toast.success("通話設定を保存しました");

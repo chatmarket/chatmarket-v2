@@ -15,13 +15,34 @@ function makeThreadId(emailA, emailB) {
   return [emailA, emailB].sort().join("__");
 }
 
-// プランチェック
+// プランチェック（FREEも通話可能）
 function getUserPlan(user) {
   if (!user) return null;
   if (user.plan === "call-anser") return "call-anser";
   if (user.plan === "basic") return "basic";
   if (user.role === "admin") return "basic"; // adminは開発確認用
-  return null;
+  return "free"; // FREEプランも通話可能
+}
+
+// 収益率
+function getRevenueShare(plan) {
+  if (plan === "basic" || plan === "call-anser") return 0.85;
+  return 0.70;
+}
+
+// 15分刻み選択肢を取得（price設定済みのもの）
+function getAvailableDurations(channel) {
+  const options = [];
+  [15,30,45,60,75,90,105,120].forEach((min) => {
+    const price = channel[`call_price_${min}min`] || 0;
+    if (price > 0) options.push({ minutes: min, price });
+  });
+  // 旧形式（30min/60minのみ）の後方互換
+  if (options.length === 0) {
+    if (channel.call_price_30min > 0) options.push({ minutes: 30, price: channel.call_price_30min });
+    if (channel.call_price_60min > 0) options.push({ minutes: 60, price: channel.call_price_60min });
+  }
+  return options;
 }
 
 export default function VideoCallRequest() {
@@ -63,11 +84,12 @@ export default function VideoCallRequest() {
 
   const threadId = user && channel ? makeThreadId(user.email, channel.owner_email) : null;
   const userPlan = getUserPlan(user);
+  const revenueShare = getRevenueShare(userPlan);
+  const availableDurations = channel ? getAvailableDurations(channel) : [];
 
-  // 料金: BASICは配信者設定価格、CALL&ANSERも配信者設定価格（双方向なので同じフィールドを使用）
-  const callPrice = durationMinutes === 30
-    ? (channel?.call_price_30min || 0)
-    : (channel?.call_price_60min || 0);
+  // 選択中の料金
+  const selectedDuration = availableDurations.find((d) => d.minutes === durationMinutes) || availableDurations[0];
+  const callPrice = selectedDuration?.price || 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,7 +123,7 @@ export default function VideoCallRequest() {
     });
 
     if (threadId) {
-      const planLabel = userPlan === "call-anser" ? "CALL＆ANSERプラン" : "BASICプラン";
+      const planLabel = userPlan === "call-anser" ? "CALL＆ANSERプラン" : userPlan === "basic" ? "BASICプラン" : "FREEプラン";
       await base44.entities.DirectChat.create({
         from_email: user.email,
         from_name: user.full_name || user.email,
@@ -127,53 +149,8 @@ export default function VideoCallRequest() {
     );
   }
 
-  // プラン未加入ガード
-  if (!userPlan) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto">
-          <Lock className="w-8 h-8 text-muted-foreground" />
-        </div>
-        <h2 className="text-xl font-bold">プラン加入が必要です</h2>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          1対1ビデオ通話は<span className="text-primary font-semibold">BASICプラン</span>または<span className="text-cyan-400 font-semibold">CALL＆ANSERプラン</span>の加入者のみご利用いただけます。
-        </p>
-        {/* プラン別条件の違い */}
-        <div className="text-left space-y-3 max-w-sm mx-auto mt-4">
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 space-y-1.5">
-            <p className="font-bold text-sm text-blue-400 flex items-center gap-1.5">
-              <PhoneCall className="w-4 h-4" /> BASICプラン（¥3,300/月）
-            </p>
-            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-              <li>配信者が通話料金を設定（30分・60分）</li>
-              <li>申込者（視聴者側）が料金を支払う</li>
-              <li>スケジュール制で事前に日時を決めて申し込み</li>
-              <li>無料通話枠なし・有料のみ</li>
-            </ul>
-          </div>
-          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 space-y-1.5">
-            <p className="font-bold text-sm text-cyan-400 flex items-center gap-1.5">
-              <Phone className="w-4 h-4" /> CALL＆ANSERプラン（¥6,600/月）
-            </p>
-            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-              <li>双方向有料通話（発信・受信どちらも課金設定可）</li>
-              <li>30分×4回/日 無料通話枠あり（架電時）</li>
-              <li>相手の希望額を支払って発信することも可能</li>
-              <li>有料インタビュー・推し活・求人面接などに活用</li>
-            </ul>
-          </div>
-        </div>
-        <Link to="/plan-select">
-          <Button className="bg-primary hover:bg-primary/90 gap-2 mt-2">
-            プランを選ぶ
-          </Button>
-        </Link>
-        <button onClick={() => navigate(-1)} className="block mx-auto text-xs text-muted-foreground hover:text-foreground">
-          戻る
-        </button>
-      </div>
-    );
-  }
+  // 未ログインガード（FREEプランは全員アクセス可のため削除、認証チェックのみ）
+
 
   // 通話受付オフガード
   if (!channel.call_enabled) {
@@ -192,7 +169,9 @@ export default function VideoCallRequest() {
   // プランバッジ表示用
   const planBadge = userPlan === "call-anser"
     ? { label: "CALL＆ANSERプラン", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30", icon: Phone }
-    : { label: "BASICプラン", color: "text-blue-400 bg-blue-500/10 border-blue-500/30", icon: PhoneCall };
+    : userPlan === "basic"
+    ? { label: "BASICプラン", color: "text-blue-400 bg-blue-500/10 border-blue-500/30", icon: PhoneCall }
+    : { label: "FREEプラン", color: "text-gray-300 bg-gray-500/10 border-gray-500/30", icon: PhoneCall };
   const PlanIcon = planBadge.icon;
 
   return (
@@ -236,18 +215,36 @@ export default function VideoCallRequest() {
       )}
 
       {/* プランバッジ */}
-      <div className={`border rounded-xl p-3 mb-5 flex items-center gap-2 text-xs ${planBadge.color}`}>
+      <div className={`border rounded-xl p-3 mb-4 flex items-center gap-2 text-xs ${planBadge.color}`}>
         <PlanIcon className="w-4 h-4 shrink-0" />
-        <span className="font-semibold">{planBadge.label}加入済み</span>
-        <span className="text-muted-foreground">— 1対1ビデオ通話（有料のみ）</span>
+        <span className="font-semibold">{planBadge.label}</span>
+        <span className="text-muted-foreground">— 収益率 {userPlan === "free" ? "70%" : "85%"}</span>
       </div>
 
+      {/* FREEプランならBASIC推奨バナー */}
+      {userPlan === "free" && (
+        <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4 mb-4 flex items-start gap-2">
+          <PhoneCall className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-blue-400">BASICプラン（¥3,300/月）へのアップグレードで収益率 70%→85%</p>
+            <p className="text-xs text-muted-foreground mt-0.5">FREEプランでも通話は可能ですが、配信者への収益還元が30%差引されます。</p>
+            <Link to="/plan-select" className="text-xs text-blue-400 underline mt-1 inline-block">プランを比較する →</Link>
+          </div>
+        </div>
+      )}
+
       {/* プラン別注意書き */}
-      <div className={`rounded-xl p-3 mb-5 border text-xs space-y-1 ${userPlan === "call-anser" ? "bg-cyan-500/5 border-cyan-500/20" : "bg-blue-500/5 border-blue-500/20"}`}>
+      <div className={`rounded-xl p-3 mb-5 border text-xs space-y-1 ${userPlan === "call-anser" ? "bg-cyan-500/5 border-cyan-500/20" : userPlan === "basic" ? "bg-blue-500/5 border-blue-500/20" : "bg-gray-500/5 border-gray-500/20"}`}>
+        {userPlan === "free" && (
+          <>
+            <p className="font-semibold text-gray-400">FREEプランの通話ルール</p>
+            <p className="text-muted-foreground">15分刻み（最大2時間）で申し込めます。配信者設定料金を支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
+          </>
+        )}
         {userPlan === "basic" && (
           <>
             <p className="font-semibold text-blue-400">BASICプランの通話ルール</p>
-            <p className="text-muted-foreground">配信者が設定した料金を申込者（あなた）が支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
+            <p className="text-muted-foreground">15分刻み（最大2時間）で申し込めます。配信者が設定した料金を申込者（あなた）が支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
           </>
         )}
         {userPlan === "call-anser" && (
@@ -272,51 +269,54 @@ export default function VideoCallRequest() {
         {/* 通話時間 & 料金 */}
         <div className="bg-card rounded-xl border border-border/50 p-4 space-y-4">
           <Label className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-muted-foreground" /> 通話時間を選択
+            <Clock className="w-4 h-4 text-muted-foreground" /> 通話時間を選択（15分刻み・最大2時間）
           </Label>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { minutes: 30, price: channel.call_price_30min || 0 },
-              { minutes: 60, price: channel.call_price_60min || 0 },
-            ].map(({ minutes, price }) => (
-              <button
-                key={minutes}
-                type="button"
-                onClick={() => setDurationMinutes(minutes)}
-                className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 transition-all ${
-                  durationMinutes === minutes
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-secondary hover:border-primary/40"
-                }`}
-              >
-                <span className={`font-bold ${durationMinutes === minutes ? "text-primary" : "text-foreground"}`}>{minutes}分</span>
-                <span className={`text-sm font-black ${durationMinutes === minutes ? "text-primary" : "text-muted-foreground"}`}>
-                  ¥{price.toLocaleString()}
-                </span>
-                <span className="text-[10px] text-muted-foreground">配信者設定価格</span>
-              </button>
-            ))}
-          </div>
+          {availableDurations.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">配信者がまだ通話料金を設定していません</p>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {availableDurations.map(({ minutes, price }) => (
+                <button
+                  key={minutes}
+                  type="button"
+                  onClick={() => setDurationMinutes(minutes)}
+                  className={`flex flex-col items-center gap-0.5 p-3 rounded-xl border-2 transition-all ${
+                    durationMinutes === minutes
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-secondary hover:border-primary/40"
+                  }`}
+                >
+                  <span className={`font-bold text-sm ${durationMinutes === minutes ? "text-primary" : "text-foreground"}`}>{minutes}分</span>
+                  <span className={`text-xs font-black ${durationMinutes === minutes ? "text-primary" : "text-muted-foreground"}`}>
+                    ¥{price.toLocaleString()}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* 料金内訳 */}
-          <div className="bg-secondary rounded-lg p-3 text-xs space-y-1.5">
-            <p className="font-semibold text-muted-foreground flex items-center gap-1 mb-1.5">
-              <Coins className="w-3.5 h-3.5 text-yellow-400" /> 料金内訳
-            </p>
-            <div className="flex justify-between text-muted-foreground">
-              <span>通話料金 ({durationMinutes}分)</span><span>¥{callPrice.toLocaleString()}</span>
+          {callPrice > 0 && (
+            <div className="bg-secondary rounded-lg p-3 text-xs space-y-1.5">
+              <p className="font-semibold text-muted-foreground flex items-center gap-1 mb-1.5">
+                <Coins className="w-3.5 h-3.5 text-yellow-400" /> 料金内訳
+              </p>
+              <div className="flex justify-between text-muted-foreground">
+                <span>通話料金 ({durationMinutes}分)</span><span>¥{callPrice.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>プラットフォーム手数料 ({userPlan === "free" ? "30" : "15"}%)</span>
+                <span>-¥{Math.floor(callPrice * (userPlan === "free" ? 0.30 : 0.15)).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between font-bold border-t border-border pt-1.5 text-sm">
+                <span>配信者受取額</span>
+                <span className="text-primary">¥{Math.floor(callPrice * revenueShare).toLocaleString()}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
+                ※ あなた（申込者）が¥{callPrice.toLocaleString()}を支払います。通話開始時に課金されます。
+              </p>
             </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>プラットフォーム手数料 (10%)</span><span>-¥{Math.floor(callPrice * 0.10).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between font-bold border-t border-border pt-1.5 text-sm">
-              <span>配信者受取額</span>
-              <span className="text-primary">¥{Math.floor(callPrice * 0.90).toLocaleString()}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
-              ※ あなた（申込者）が¥{callPrice.toLocaleString()}を支払います。通話開始時に課金されます。
-            </p>
-          </div>
+          )}
         </div>
 
         {/* 希望日時 */}
@@ -357,18 +357,18 @@ export default function VideoCallRequest() {
 
         <Button
           type="submit"
-          disabled={submitting || existingRequests.length > 0 || callPrice === 0}
+          disabled={submitting || existingRequests.length > 0 || !callPrice}
           className="w-full h-12 bg-primary hover:bg-primary/90 gap-2 text-base font-bold"
         >
           {submitting ? "送信中..." : (
             <>
               <PhoneCall className="w-5 h-5" />
-              ¥{callPrice.toLocaleString()} で通話リクエストを送る
+              {callPrice > 0 ? `¥${callPrice.toLocaleString()} で通話リクエストを送る` : "通話リクエストを送る"}
             </>
           )}
         </Button>
 
-        {callPrice === 0 && (
+        {availableDurations.length === 0 && (
           <p className="text-xs text-center text-muted-foreground">配信者がまだ通話料金を設定していません</p>
         )}
       </form>

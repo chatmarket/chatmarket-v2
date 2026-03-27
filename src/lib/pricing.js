@@ -2,6 +2,26 @@
  * プログレッシブインセンティブ対応の決済ロジック（フロントエンド用）
  */
 
+// 1対1ビデオ通話ルール
+export const CALL_RULES = {
+  MIN_PRICE_PER_15MIN: 150,   // 15分あたり最低料金（円）
+  STEP_MINUTES: 15,            // 時間の刻み（分）
+  MAX_MINUTES: 120,            // 最大通話時間（分）
+  FREE_REVENUE_SHARE: 0.70,    // FREEプラン収益率
+  BASIC_REVENUE_SHARE: 0.85,   // BASICプラン収益率
+};
+
+// 通話時間の選択肢（15分刻み、最大120分）
+export const CALL_DURATION_OPTIONS = Array.from(
+  { length: CALL_RULES.MAX_MINUTES / CALL_RULES.STEP_MINUTES },
+  (_, i) => (i + 1) * CALL_RULES.STEP_MINUTES
+);
+
+// 指定分数の最低料金を返す
+export function minCallPrice(minutes) {
+  return (minutes / CALL_RULES.STEP_MINUTES) * CALL_RULES.MIN_PRICE_PER_15MIN;
+}
+
 export const PLANS = {
   FREE: {
     id: 'free',
@@ -9,6 +29,7 @@ export const PLANS = {
     price: 0,
     monthlyFee: 0,
     revenueShare: 0.70,
+    callRevenueShare: 0.70,
   },
   BASIC: {
     id: 'basic',
@@ -16,6 +37,7 @@ export const PLANS = {
     price: 3300,
     monthlyFee: 3300,
     revenueShare: 0.85,
+    callRevenueShare: 0.85,
   },
   VOD: {
     id: 'vod',

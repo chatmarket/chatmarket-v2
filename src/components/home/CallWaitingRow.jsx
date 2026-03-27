@@ -26,11 +26,7 @@ export default function CallWaitingRow({ user }) {
 
   const handleCallRequest = (channelId) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
-    const plan = user.plan;
-    if (!plan || (plan !== "basic" && plan !== "call-anser")) {
-      navigate(`/plan-select`);
-      return;
-    }
+    // FREE含む全プランで通話申し込み可能
     navigate(`/call-request/${channelId}`);
   };
 
