@@ -1,0 +1,114 @@
+{
+  "name": "Channel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u8aac\u660e"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30a2\u30d0\u30bf\u30fc\u753b\u50cfURL"
+    },
+    "banner_url": {
+      "type": "string",
+      "description": "\u30d0\u30ca\u30fc\u753b\u50cfURL"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u306e\u30e1\u30fc\u30eb"
+    },
+    "subscriber_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u767b\u9332\u8005\u6570"
+    },
+    "is_live": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30e9\u30a4\u30d6\u914d\u4fe1\u4e2d\u304b\u3069\u3046\u304b"
+    },
+    "bank_account_name": {
+      "type": "string",
+      "description": "\u53e3\u5ea7\u540d\u7fa9"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "\u9280\u884c\u540d"
+    },
+    "bank_branch": {
+      "type": "string",
+      "description": "\u652f\u5e97\u540d"
+    },
+    "bank_account_number": {
+      "type": "string",
+      "description": "\u53e3\u5ea7\u756a\u53f7"
+    },
+    "bank_account_type": {
+      "type": "string",
+      "enum": [
+        "\u666e\u901a",
+        "\u5f53\u5ea7"
+      ],
+      "default": "\u666e\u901a",
+      "description": "\u53e3\u5ea7\u7a2e\u5225"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "\u696d\u7a2e\u30ab\u30c6\u30b4\u30eaID"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u696d\u7a2e\u30bf\u30b0\uff08\u6700\u592710\u500b\uff09"
+    },
+    "call_price_30min": {
+      "type": "number",
+      "default": 0,
+      "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0830\u5206\uff09"
+    },
+    "call_price_60min": {
+      "type": "number",
+      "default": 0,
+      "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0860\u5206\uff09"
+    },
+    "call_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30d3\u30c7\u30aa\u901a\u8a71\u53d7\u4ed8\u4e2d\u304b\u3069\u3046\u304b"
+    },
+    "call_available_dates": {
+      "type": "string",
+      "description": "\u901a\u8a71\u53ef\u80fd\u306a\u65e5\u6642\u30fb\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb\uff08\u30d5\u30ea\u30fc\u30c6\u30ad\u30b9\u30c8\uff09"
+    },
+    "ng_words": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u30c1\u30e3\u30c3\u30c8NG\u30ef\u30fc\u30c9\u30ea\u30b9\u30c8"
+    },
+    "pinned_comment_id": {
+      "type": "string",
+      "description": "\u56fa\u5b9a\u30b3\u30e1\u30f3\u30c8ID"
+    },
+    "pinned_comment_text": {
+      "type": "string",
+      "description": "\u56fa\u5b9a\u30b3\u30e1\u30f3\u30c8\u306e\u30c6\u30ad\u30b9\u30c8\uff08\u30ad\u30e3\u30c3\u30b7\u30e5\uff09"
+    },
+    "pinned_comment_user": {
+      "type": "string",
+      "description": "\u56fa\u5b9a\u30b3\u30e1\u30f3\u30c8\u306e\u6295\u7a3f\u8005\u540d"
+    }
+  },
+  "required": [
+    "name",
+    "owner_email"
+  ]
+}
