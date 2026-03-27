@@ -11,10 +11,26 @@ export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
   const [messageTarget, setMessageTarget] = useState(null);
 
+  // フリートライアルメール
+  const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
+
   // call_enabled=true のチャンネル一覧取得
   const { data: callChannels = [] } = useQuery({
     queryKey: ["call-waiting-channels"],
     queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 12),
+  });
+
+  // フリートライアルメールのチャンネル取得
+  const { data: trialChannels = [] } = useQuery({
+    queryKey: ["trial-channels"],
+    queryFn: async () => {
+      const channels = await Promise.all(
+        FREE_TRIAL_EMAILS.map((email) =>
+          base44.entities.Channel.filter({ owner_email: email }).then((r) => r[0])
+        )
+      );
+      return channels.filter(Boolean);
+    },
   });
 
   // 待機中のVideoCall取得（status="waiting"）
@@ -40,8 +56,8 @@ export default function CallWaitingRow({ user }) {
     enabled: waitingCalls.length > 0,
   });
 
-  // 待機中のチャンネルと通常のチャンネルをマージ（重複排除）
-  const allChannels = [...waitingChannels, ...callChannels];
+  // 待機中のチャンネルと通常のチャンネルとフリートライアルをマージ（重複排除）
+  const allChannels = [...waitingChannels, ...trialChannels, ...callChannels];
   const uniqueChannels = Array.from(
     new Map(allChannels.map((c) => [c.id, c])).values()
   );
