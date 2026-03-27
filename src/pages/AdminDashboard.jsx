@@ -12,6 +12,7 @@ import AnnualFinancialStatement from "../components/admin/AnnualFinancialStateme
 import ReportManagement from "../components/admin/ReportManagement";
 import ContentModeration from "../components/admin/ContentModeration.jsx";
 import KycManagement from "../components/admin/KycManagement.jsx";
+import ProgressiveIncentiveList from "../components/admin/ProgressiveIncentiveList";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -344,6 +345,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="crowdfunding" className="gap-2">
             <DollarSign className="w-4 h-4" /> クラウドファンディング
           </TabsTrigger>
+          <TabsTrigger value="incentive" className="gap-2">
+            <TrendingUp className="w-4 h-4" /> プログレッシブ
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -675,6 +679,18 @@ export default function AdminDashboard() {
         {/* KYC審査タブ */}
         <TabsContent value="kyc" className="space-y-6">
           <KycManagement />
+        </TabsContent>
+
+        {/* プログレッシブインセンティブタブ */}
+        <TabsContent value="incentive" className="space-y-6">
+          <ProgressiveIncentiveList
+            users={allUsers}
+            subscriptions={allSubscriptions}
+            purchases={allPurchases}
+            calls={allCalls}
+            yellCoinTransactions={allYellCoinTransactions}
+            userRole={user?.role}
+          />
         </TabsContent>
 
         {/* クラウドファンディングタブ */}
