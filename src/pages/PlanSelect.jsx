@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2 } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // 単体プランの定義
 const PLANS = [
@@ -247,63 +248,84 @@ export default function PlanSelect() {
 
       {/* プラン一覧 */}
       <div className="space-y-3">
-        {PLANS.map((plan) => {
-          const Icon = plan.icon;
-          const isSelected = selected.has(plan.id);
-          return (
-            <button
-              key={plan.id}
-              onClick={() => togglePlan(plan.id)}
-              disabled={user?.email === "unei@chatmarket.info"}
-              className={`w-full text-left rounded-2xl bg-gradient-to-br border transition-all duration-200 overflow-hidden ${plan.color} ${
-                isSelected ? "ring-2 ring-primary shadow-lg shadow-primary/10" : "opacity-80 hover:opacity-100"
-              } ${plan.popular && isSelected ? "ring-primary" : ""} ${user?.email === "unei@chatmarket.info" ? "cursor-not-allowed" : ""}`}
-            >
-              <div className="flex items-center gap-4 px-5 py-4">
-                {/* Checkbox */}
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? "bg-primary border-primary" : "border-muted-foreground"}`}>
-                  {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                </div>
+        <Accordion type="single" collapsible className="space-y-2">
+          {PLANS.map((plan) => {
+            const Icon = plan.icon;
+            const isSelected = selected.has(plan.id);
+            return (
+              <AccordionItem key={plan.id} value={plan.id} className="border border-border/50 rounded-lg px-4">
+                <AccordionTrigger 
+                  onClick={(e) => {
+                    if (!plan.comingSoon) {
+                      togglePlan(plan.id);
+                    }
+                    e.preventDefault();
+                  }}
+                  className={`hover:no-underline py-4 ${user?.email === "unei@chatmarket.info" ? "cursor-not-allowed" : ""}`}
+                  disabled={user?.email === "unei@chatmarket.info"}
+                >
+                  <div className="flex items-center gap-4 text-left flex-1">
+                    {/* Checkbox */}
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? "bg-primary border-primary" : "border-muted-foreground"}`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
 
-                <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center shrink-0">
-                  <Icon className={`w-5 h-5 ${plan.iconColor}`} />
-                </div>
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center shrink-0">
+                      <Icon className={`w-5 h-5 ${plan.iconColor}`} />
+                    </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.badgeColor}`}>{plan.badge}</span>
-                    {plan.popular && <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">人気</span>}
-                    {plan.comingSoon && <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">🚧 準備中</span>}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.badgeColor}`}>{plan.badge}</span>
+                        {plan.popular && <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">人気</span>}
+                        {plan.comingSoon && <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">🚧 準備中</span>}
+                      </div>
+                      <p className="font-bold text-sm">{plan.name}</p>
+                      {plan.revenueShare && (
+                        <p className="text-xs text-primary font-semibold">収益還元率 {plan.revenueShare}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{plan.description}</p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-lg font-black">¥{plan.price.toLocaleString()}</span>
+                      <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>
+                    </div>
                   </div>
-                  <p className="font-bold text-sm">{plan.name}</p>
-                  {plan.revenueShare && (
-                    <p className="text-xs text-primary font-semibold">収益還元率 {plan.revenueShare}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{plan.description}</p>
-                </div>
+                </AccordionTrigger>
 
-                <div className="text-right shrink-0">
-                  <span className="text-lg font-black">¥{plan.price.toLocaleString()}</span>
-                  <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>
-                </div>
-              </div>
-
-              {/* 展開された機能リスト */}
-              {isSelected && (
-                <div className="px-5 pb-4 border-t border-white/10 pt-3">
-                  <ul className="space-y-1.5">
+                {/* アコーディオンコンテンツ：機能リストと申し込みボタン */}
+                <AccordionContent className="pt-4 pb-4 space-y-4">
+                  <ul className="space-y-2">
                     {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-foreground/70">
-                        <Check className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                        <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                         {f}
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-            </button>
-          );
-        })}
+                  <Button 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const ids = plan.id;
+                      const isAuth = await base44.auth.isAuthenticated();
+                      if (!isAuth) {
+                        base44.auth.redirectToLogin(`/plan-confirm?plans=${ids}`);
+                        return;
+                      }
+                      navigate(`/plan-confirm?plans=${ids}`);
+                    }}
+                    disabled={plan.comingSoon}
+                    className="w-full gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    {plan.comingSoon ? "準備中" : "このプランで申し込む"}
+                  </Button>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
       </div>
 
       {/* 合計・申し込みバー */}
