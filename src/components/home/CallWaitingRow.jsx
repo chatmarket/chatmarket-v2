@@ -17,7 +17,36 @@ export default function CallWaitingRow({ user }) {
     queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 12),
   });
 
-  if (callChannels.length === 0) return null;
+  // 待機中のVideoCall取得（status="waiting"）
+  const { data: waitingCalls = [] } = useQuery({
+    queryKey: ["waiting-video-calls"],
+    queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 50),
+    refetchInterval: 3000, // 3秒ごとに更新
+  });
+
+  // 待機中のチャンネルを取得（VideoCallのcallee_emailから）
+  const { data: waitingChannels = [] } = useQuery({
+    queryKey: ["waiting-channels", waitingCalls],
+    queryFn: async () => {
+      if (waitingCalls.length === 0) return [];
+      const uniqueEmails = [...new Set(waitingCalls.map((c) => c.callee_email))];
+      const channels = await Promise.all(
+        uniqueEmails.map((email) =>
+          base44.entities.Channel.filter({ owner_email: email }).then((r) => r[0])
+        )
+      );
+      return channels.filter(Boolean);
+    },
+    enabled: waitingCalls.length > 0,
+  });
+
+  // 待機中のチャンネルと通常のチャンネルをマージ（重複排除）
+  const allChannels = [...waitingChannels, ...callChannels];
+  const uniqueChannels = Array.from(
+    new Map(allChannels.map((c) => [c.id, c])).values()
+  );
+
+  if (uniqueChannels.length === 0) return null;
 
   const handleMessage = (channel) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
@@ -30,10 +59,13 @@ export default function CallWaitingRow({ user }) {
     navigate(`/call-request/${channelId}`);
   };
 
+  // 待機中のVideoCallマップを作成（channel_idで検索可能に）
+  const waitingCallMap = new Map(waitingCalls.map((c) => [c.callee_channel_id, c]));
+
   // 6列でグループ化（2段で12個表示）
   const rows = [];
-  for (let i = 0; i < callChannels.length; i += 6) {
-    rows.push(callChannels.slice(i, i + 6));
+  for (let i = 0; i < uniqueChannels.length; i += 6) {
+    rows.push(uniqueChannels.slice(i, i + 6));
   }
 
   return (
@@ -55,14 +87,18 @@ export default function CallWaitingRow({ user }) {
       {/* 複数段の横スクロール（6列×2段） */}
       {rows.map((row, idx) => (
         <ScrollRow key={idx} cardWidth={200}>
-          {row.map((channel) => (
-            <CallWaitingCard
-              key={channel.id}
-              channel={channel}
-              onMessage={() => handleMessage(channel)}
-              onCallRequest={() => handleCallRequest(channel.id)}
-            />
-          ))}
+          {row.map((channel) => {
+            const isWaiting = waitingCallMap.has(channel.id);
+            return (
+              <CallWaitingCard
+                key={channel.id}
+                channel={channel}
+                onMessage={() => handleMessage(channel)}
+                onCallRequest={() => handleCallRequest(channel.id)}
+                isWaiting={isWaiting}
+              />
+            );
+          })}
         </ScrollRow>
       ))}
 
@@ -78,9 +114,9 @@ export default function CallWaitingRow({ user }) {
   );
 }
 
-function CallWaitingCard({ channel, onMessage, onCallRequest }) {
+function CallWaitingCard({ channel, onMessage, onCallRequest, isWaiting = false }) {
   return (
-    <div className="w-[200px] shrink-0 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/40 transition-all">
+    <div className={`w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border ${isWaiting ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
       {/* Avatar */}
       <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary flex items-center justify-center">
         {channel.avatar_url ? (
@@ -90,10 +126,10 @@ function CallWaitingCard({ channel, onMessage, onCallRequest }) {
             <span className="text-xl font-bold text-muted-foreground">{channel.name?.[0]}</span>
           </div>
         )}
-        {/* 待機中バッジ */}
-        <div className="absolute top-2 left-2 flex items-center gap-1 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+        {/* バッジ */}
+        <div className={`absolute top-2 left-2 flex items-center gap-1 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isWaiting ? "bg-green-600/90" : "bg-green-500/90"}`}>
           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-          待機中
+          {isWaiting ? "📹 配信待機中" : "待機中"}
         </div>
       </div>
 
