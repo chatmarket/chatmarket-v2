@@ -37,14 +37,14 @@ export default function CallWaitingRow({ user }) {
           <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shrink-0" />
           <h2 className="text-xl font-bold">1対1ビデオ通話　待機中</h2>
           <div className="flex gap-1.5 flex-wrap">
-            <span className="text-xs bg-green-500/20 text-green-300 border border-green-500/30 px-2 py-0.5 rounded-full font-semibold">FREE ✉️</span>
+            <span className="text-xs bg-green-500/20 text-green-300 border border-green-500/30 px-2 py-0.5 rounded-full font-semibold">FREE 💬📞</span>
             <span className="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">BASIC 📞</span>
             <span className="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold">CALL&ANSER 📞</span>
           </div>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
-          <span className="text-green-400 font-semibold">FREE</span>：💬メッセージのみ送信可 ／ 
-          <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：通話申し込み可
+          <span className="text-green-400 font-semibold">FREE</span>：💬メッセージ＋📞通話申し込み可 ／ 
+          <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
         </p>
         <ScrollRow cardWidth={220}>
           {callChannels.map((channel) => (
