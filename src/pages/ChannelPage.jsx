@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
+import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Button } from "@/components/ui/button";
 import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays } from "lucide-react";
 import CategoryBadge from "../components/channel/CategoryBadge";
@@ -191,8 +192,8 @@ export default function ChannelPage() {
 
       {/* Live streams */}
       {liveStreams.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+        <section className="mb-8 space-y-4">
+          <h2 className="text-lg font-bold flex items-center gap-2">
             <Radio className="w-5 h-5 text-red-400" /> ライブ配信中
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -200,6 +201,7 @@ export default function ChannelPage() {
               <LiveStreamCard key={s.id} stream={s} />
             ))}
           </div>
+          <RevenueRankingWidget channelId={id} targetEmail={channel.owner_email} />
         </section>
       )}
 
