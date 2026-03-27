@@ -207,7 +207,7 @@ export default function Navbar() {
               <Button
                 size="sm"
                 className="bg-primary hover:bg-primary/90"
-                onClick={() => base44.auth.redirectToLogin()}
+                onClick={() => navigate("/plan-select")}
               >
                 {navigator.language.startsWith("ja") ? "新規登録" : "Sign Up"}
               </Button>
