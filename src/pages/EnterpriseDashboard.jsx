@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import {
   Building2, Users, Plus, Settings, ArrowLeft, CheckCircle2,
-  Clock, XCircle, Copy, RefreshCw, Trash2, Eye, EyeOff
+  Clock, XCircle, Copy, RefreshCw, Trash2, Eye, EyeOff, Radio, Video, Phone
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -150,6 +150,31 @@ export default function EnterpriseDashboard() {
             エンタープライズプラン
           </span>
           <span className="text-xs text-muted-foreground">¥59,800/月</span>
+        </div>
+      </div>
+
+      {/* Parent Channel Actions */}
+      <div className="bg-gradient-to-br from-primary/5 to-card border border-primary/20 rounded-xl p-6 space-y-4">
+        <h2 className="font-bold flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-primary" /> 親チャンネル機能
+        </h2>
+        <p className="text-sm text-muted-foreground">BASICプランと同様に、生配信・動画投稿・1対1通話が利用できます</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Link to="/go-live">
+            <Button variant="secondary" className="w-full gap-2">
+              <Radio className="w-4 h-4" /> ライブ配信
+            </Button>
+          </Link>
+          <Link to="/upload">
+            <Button variant="secondary" className="w-full gap-2">
+              <Video className="w-4 h-4" /> 動画投稿
+            </Button>
+          </Link>
+          <Link to="/call-slots">
+            <Button variant="secondary" className="w-full gap-2">
+              <Phone className="w-4 h-4" /> 通話枠管理
+            </Button>
+          </Link>
         </div>
       </div>
 
