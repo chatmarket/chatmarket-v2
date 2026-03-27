@@ -192,76 +192,61 @@ export default function Footer() {
                 <AccordionContent className="text-sm text-foreground space-y-4 pt-2">
                   <div>
                     <p className="font-bold text-base mb-2">📈 プログレッシブ・インセンティブとは</p>
-                    <p className="text-sm leading-relaxed">月間の売上が増えると、手数料が下がる仕組みです。つまり、稼げば稼ぐほど取り分が増える制度です。</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-base mb-3">💰 階層別 収益率（翌月適用）</p>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">100万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/20 to-primary/40 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">86%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">300万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/25 to-primary/45 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">87%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">600万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/30 to-primary/50 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">88%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">900万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/35 to-primary/55 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">89%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,200万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/40 to-primary/60 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">90%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,500万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/45 to-primary/65 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">91%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,650万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/50 to-primary/70 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">92%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,800万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/55 to-primary/75 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">93%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
-                        <span className="text-xs font-semibold text-muted-foreground min-w-32">1,950万円超</span>
-                        <div className="flex-1 h-8 bg-gradient-to-r from-primary/60 to-primary/80 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary">94%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-primary rounded-lg p-2.5 border border-primary/40">
-                        <span className="text-xs font-semibold text-primary-foreground min-w-32">2,000万円以上</span>
-                        <div className="flex-1 h-8 bg-primary/30 rounded flex items-center justify-end pr-3">
-                          <span className="font-bold text-sm text-primary-foreground">95%（最大）</span>
-                        </div>
-                      </div>
+                    <p className="text-sm leading-relaxed mb-3">売上が増えると、取り分が増える制度です。</p>
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-3">
+                      <p className="text-sm font-semibold text-blue-300">💡 BASICプランに加入で自動参加</p>
+                      <p className="text-xs text-blue-200/80 mt-1">手続き不要。加入した月から自動的に適用されます。</p>
                     </div>
                   </div>
-                  <div className="bg-secondary rounded-lg p-3 border border-border/50">
-                    <p className="font-bold text-base mb-2">🎯 メリット</p>
-                    <p className="text-sm leading-relaxed">毎月の売上に応じて自動的に計算されるため、手続き不要。売上が増えれば増えるほど、あなたの取り分が増えていきます。</p>
+                  <div>
+                    <p className="font-bold text-base mb-3">📊 月間売上の階層別 収益率</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <tbody className="divide-y divide-border/50">
+                          <tr className="bg-primary/5">
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">100万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">86%</td>
+                          </tr>
+                          <tr>
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">300万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">87%</td>
+                          </tr>
+                          <tr className="bg-primary/5">
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">600万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">88%</td>
+                          </tr>
+                          <tr>
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">900万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">89%</td>
+                          </tr>
+                          <tr className="bg-primary/5">
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">1,200万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">90%</td>
+                          </tr>
+                          <tr>
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">1,500万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">91%</td>
+                          </tr>
+                          <tr className="bg-primary/5">
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">1,650万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">92%</td>
+                          </tr>
+                          <tr>
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">1,800万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">93%</td>
+                          </tr>
+                          <tr className="bg-primary/5">
+                            <td className="px-3 py-2 font-semibold text-muted-foreground">1,950万円超</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">94%</td>
+                          </tr>
+                          <tr className="bg-primary/20">
+                            <td className="px-3 py-2 font-bold text-primary">2,000万円以上</td>
+                            <td className="px-3 py-2 text-right font-bold text-primary text-sm">95%</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">※ 翌月に反映されます</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
