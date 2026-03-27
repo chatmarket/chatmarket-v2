@@ -8,15 +8,13 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import { t } from "@/lib/i18n";
-import RevenueBanner from "../components/home/RevenueBanner";
 import ScrollRow from "../components/home/ScrollRow";
 import CallWaitingRow from "../components/home/CallWaitingRow";
-
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [messageTarget, setMessageTarget] = useState(null); // { channel, video }
+  const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
 
   useEffect(() => {
@@ -27,8 +25,6 @@ export default function Home() {
       setAuthChecked(true);
     });
   }, []);
-
-
 
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
@@ -50,7 +46,6 @@ export default function Home() {
     queryFn: () => base44.entities.CrowdfundingProject.filter({ status: "active" }, "-created_date", 10),
   });
 
-  // 審査済みのみ表示
   const approvedVideos = videos.filter((v) => !v.moderation_status || v.moderation_status === "approved");
   const featuredVideos = approvedVideos.filter((v) => !v.is_free && v.price > 0).slice(0, 6);
   const lowViewPaidVideos = approvedVideos
@@ -71,12 +66,11 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
-      {/* 準備中バナー */}
       <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/40 px-6 py-5 text-center space-y-1">
         <p className="text-yellow-300 font-black text-xl">🚧 現在準備中です 🚧</p>
         <p className="text-yellow-200/70 text-sm">サービスは現在準備中です。近日公開予定ですので、今しばらくお待ちください。</p>
       </div>
-      {/* Hero */}
+
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-card to-secondary border border-border/50 p-8 md:p-12">
         <div className="relative z-10 max-w-lg">
           <div className="flex items-center gap-2 mb-4">
@@ -109,13 +103,8 @@ export default function Home() {
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Revenue Banner */}
-      <RevenueBanner />
-
-      {/* Call Waiting Row */}
       <CallWaitingRow user={user} />
 
-      {/* Live Streams */}
       {liveStreams.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-5">
@@ -130,7 +119,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Recommended paid videos */}
       {featuredVideos.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-5">{t("recommended")}</h2>
@@ -151,7 +139,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Low-view paid videos */}
       {lowViewPaidVideos.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-2">注目の有料動画（再生数が少ない穴場）</h2>
@@ -173,7 +160,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Recent Videos */}
       {recentVideos.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-5">{t("newest")}</h2>
@@ -194,7 +180,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Crowdfunding Accordion */}
       {crowdfundings.length > 0 && (
         <section>
           <div
@@ -261,8 +246,6 @@ export default function Home() {
         </section>
       )}
 
-
-
       {videos.length === 0 && liveStreams.length === 0 && (
         <div className="text-center py-24 text-muted-foreground">
           <Radio className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -271,7 +254,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Message Modal */}
       {messageTarget && (
         <MessageModal
           channel={messageTarget.channel}
