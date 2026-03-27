@@ -7,7 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AppLayout from './components/layout/AppLayout';
-import Home from './pages/Home.js';
+import Home from './pages/Home';
 import WatchVideo from './pages/WatchVideo';
 import LiveView from './pages/LiveView';
 import Upload from './pages/Upload';
