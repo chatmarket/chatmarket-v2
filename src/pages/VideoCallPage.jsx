@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import {
   Phone, PhoneOff, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
-  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2
+  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -135,6 +135,9 @@ export default function VideoCallPage() {
   // Floating items
   const [floatingItems, setFloatingItems] = useState([]);
 
+  // Standby state
+  const [isWaiting, setIsWaiting] = useState(false);
+
   // Modals
   const [showYellModal, setShowYellModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -243,6 +246,21 @@ export default function VideoCallPage() {
     localStream.getAudioTracks().forEach((t) => (t.enabled = micOn));
   }, [micOn, localStream]);
 
+  const handleStartWaiting = async () => {
+    setIsWaiting(true);
+    if (call) {
+      await base44.entities.VideoCall.update(call.id, { status: "waiting" });
+    }
+    toast.success("待機状態になりました");
+  };
+
+  const handleEndWaiting = async () => {
+    setIsWaiting(false);
+    if (call) {
+      await base44.entities.VideoCall.update(call.id, { status: "pending_payment" });
+    }
+  };
+
   const handleEndCall = async () => {
     if (call) await base44.entities.VideoCall.update(call.id, { status: "ended" });
     localStream?.getTracks().forEach((t) => t.stop());
@@ -340,6 +358,12 @@ export default function VideoCallPage() {
           </div>
           <div>
             <p className="text-white font-bold text-sm">{otherName} との通話</p>
+            {isWaiting && (
+              <p className="text-xs text-green-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                待機中
+              </p>
+            )}
             {call?.status === "active" && (
               <p className="text-xs text-primary flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" />
@@ -628,34 +652,66 @@ export default function VideoCallPage() {
 
         {/* Main control row */}
         <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={() => setMicOn(!micOn)}
-            className={`w-13 h-13 w-12 h-12 rounded-full flex items-center justify-center transition-all ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
-          >
-            {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
-          </button>
+          {!isWaiting ? (
+            <>
+              <button
+                onClick={() => setMicOn(!micOn)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
+              >
+                {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+              </button>
 
-          <button
-            onClick={() => setCamOn(!camOn)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
-          >
-            {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
-          </button>
+              <button
+                onClick={() => setCamOn(!camOn)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
+              >
+                {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
+              </button>
 
-          <button
-            onClick={() => setShowYellModal(true)}
-            className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
-          >
-            <Coins className="w-5 h-5" />
-            エール
-          </button>
+              <button
+                onClick={() => setShowYellModal(true)}
+                className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+              >
+                <Coins className="w-5 h-5" />
+                エール
+              </button>
 
-          <button
-            onClick={handleEndCall}
-            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-all"
-          >
-            <PhoneOff className="w-6 h-6 text-white" />
-          </button>
+              <button
+                onClick={handleStartWaiting}
+                className="flex items-center gap-2 bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+              >
+                <Radio className="w-5 h-5" />
+                待機開始
+              </button>
+
+              <button
+                onClick={handleEndCall}
+                className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-all"
+              >
+                <PhoneOff className="w-6 h-6 text-white" />
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex-1 text-center">
+                <p className="text-white font-bold text-lg">待機中...</p>
+                <p className="text-white/60 text-xs">相手からの接続を待っています</p>
+              </div>
+              <button
+                onClick={handleEndWaiting}
+                className="flex items-center gap-2 bg-orange-500/20 border border-orange-500/40 text-orange-400 hover:bg-orange-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+              >
+                <X className="w-5 h-5" />
+                待機終了
+              </button>
+              <button
+                onClick={handleEndCall}
+                className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-all"
+              >
+                <PhoneOff className="w-6 h-6 text-white" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Quality indicator */}
