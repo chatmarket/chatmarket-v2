@@ -34,6 +34,9 @@ import VideoCallRequest from './pages/VideoCallRequest';
 import AdminDashboard from './pages/AdminDashboard';
 import ContentAnalytics from './pages/ContentAnalytics';
 import CallHistory from './pages/CallHistory';
+import CallSlotManage from './pages/CallSlotManage.jsx';
+import CallCalendar from './pages/CallCalendar.jsx';
+import MyReservations from './pages/MyReservations.jsx';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -86,6 +89,9 @@ const AuthenticatedApp = () => {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/analytics" element={<ContentAnalytics />} />
         <Route path="/call-history" element={<CallHistory />} />
+        <Route path="/call-slots" element={<CallSlotManage />} />
+        <Route path="/call-calendar/:channelId" element={<CallCalendar />} />
+        <Route path="/my-reservations" element={<MyReservations />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

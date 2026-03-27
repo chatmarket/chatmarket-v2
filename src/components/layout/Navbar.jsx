@@ -153,6 +153,14 @@ export default function Navbar() {
                     <Phone className="w-4 h-4 mr-2 text-green-400" />
                     通話履歴
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/call-slots")}>
+                    <Phone className="w-4 h-4 mr-2 text-primary" />
+                    通話予約枠管理
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/my-reservations")}>
+                    <Phone className="w-4 h-4 mr-2 text-blue-400" />
+                    予約管理
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/donor-dashboard")}>
                     <Heart className="w-4 h-4 mr-2 text-red-400" />
                     寄付者マイページ

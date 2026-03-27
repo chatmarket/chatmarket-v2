@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays } from "lucide-react";
 import CategoryBadge from "../components/channel/CategoryBadge";
 
 export default function ChannelPage() {
@@ -175,6 +175,14 @@ export default function ChannelPage() {
                   <MessageCircle className="w-4 h-4" />
                   チャットで問い合わせ
                 </Button>
+                {channel.call_enabled && (
+                  <Link to={`/call-calendar/${id}`}>
+                    <Button size="sm" className="gap-2 w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30">
+                      <CalendarDays className="w-4 h-4" />
+                      通話を予約する
+                    </Button>
+                  </Link>
+                )}
               </>
             )}
           </div>
