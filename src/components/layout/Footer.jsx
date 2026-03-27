@@ -195,11 +195,18 @@ export default function Footer() {
                     <p>月間の売上が増えると、手数料が下がる仕組みです。つまり、稼げば稼ぐほど取り分が増える制度です。</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground mb-1">💰 具体例</p>
-                    <ul className="space-y-1 ml-4 list-disc">
-                      <li>月売上 ¥0〜50万円：手数料15% → <span className="text-primary font-semibold">収益率85%</span></li>
-                      <li>月売上 ¥50万円〜100万円：手数料12% → <span className="text-primary font-semibold">収益率88%</span></li>
-                      <li>月売上 ¥100万円〜：手数料10% → <span className="text-primary font-semibold">収益率90%</span></li>
+                    <p className="font-semibold text-foreground mb-1">💰 階層別 収益率（翌月適用）</p>
+                    <ul className="space-y-1 ml-4 list-disc text-xs">
+                      <li>月売上 100万円超：<span className="text-primary font-semibold">86%</span></li>
+                      <li>月売上 300万円超：<span className="text-primary font-semibold">87%</span></li>
+                      <li>月売上 600万円超：<span className="text-primary font-semibold">88%</span></li>
+                      <li>月売上 900万円超：<span className="text-primary font-semibold">89%</span></li>
+                      <li>月売上 1,200万円超：<span className="text-primary font-semibold">90%</span></li>
+                      <li>月売上 1,500万円超：<span className="text-primary font-semibold">91%</span></li>
+                      <li>月売上 1,650万円超：<span className="text-primary font-semibold">92%</span></li>
+                      <li>月売上 1,800万円超：<span className="text-primary font-semibold">93%</span></li>
+                      <li>月売上 1,950万円超：<span className="text-primary font-semibold">94%</span></li>
+                      <li>月売上 2,000万円以上：<span className="text-primary font-semibold">95%（最大）</span></li>
                     </ul>
                   </div>
                   <div>
