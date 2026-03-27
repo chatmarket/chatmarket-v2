@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone, GraduationCap, Building2 } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, ChevronDown, ChevronUp, Phone, GraduationCap, Building2, Rocket } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { base44 } from "@/api/base44Client";
 
-const plans = [
+const mainPlans = [
   {
     icon: Play,
     name: "FREEプラン",
@@ -97,13 +98,15 @@ const plans = [
       "チャンネルページ作成",
     ],
   },
+];
+
+const roadmapPlans = [
   {
     icon: GraduationCap,
     name: "ミニスクールプラン",
     price: "¥8,900",
     period: "/月",
     revenueShare: "90%",
-    comingSoon: true,
     color: "from-violet-500/20 to-violet-600/10 border-violet-500/30",
     iconColor: "text-violet-400",
     badge: "1対最大9人スクール",
@@ -123,7 +126,6 @@ const plans = [
     price: "¥59,800",
     period: "/月",
     revenueShare: "90%",
-    comingSoon: true,
     color: "from-violet-600/20 to-indigo-600/10 border-violet-500/40",
     iconColor: "text-violet-400",
     badge: "法人・大規模運用",
@@ -143,8 +145,6 @@ const plans = [
     price: "¥12,000",
     period: "/月",
     revenueShare: "90%",
-    specialBadge: true,
-    comingSoon: true,
     color: "from-red-500/20 to-pink-600/10 border-red-400/40",
     iconColor: "text-red-400",
     badge: "クラウドファンディング",
@@ -184,7 +184,7 @@ export default function PlanSection() {
       </div>
 
       <div className="space-y-3">
-        {plans.map((plan, i) => {
+        {mainPlans.map((plan, i) => {
           const Icon = plan.icon;
           const isOpen = openIndex === i;
           return (
@@ -271,6 +271,52 @@ export default function PlanSection() {
           );
         })}
       </div>
+
+      {/* ロードマップセクション */}
+      <Accordion type="single" collapsible className="mt-10">
+        <AccordionItem value="roadmap" className="border border-border/50 rounded-2xl bg-gradient-to-br from-blue-500/5 to-purple-500/5">
+          <AccordionTrigger className="hover:no-underline px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Rocket className="w-5 h-5 text-primary" />
+              <span className="font-bold">ロードマップ　今後の展開予定</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6 space-y-3 border-t border-border/30 pt-6">
+            {roadmapPlans.map((plan) => {
+              const Icon = plan.icon;
+              return (
+                <div
+                  key={plan.name}
+                  className={`rounded-2xl bg-gradient-to-br border overflow-hidden ${plan.color} opacity-75`}
+                >
+                  <button className="w-full flex items-center gap-4 px-5 py-4 text-left">
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center shrink-0">
+                      <Icon className={`w-5 h-5 ${plan.iconColor}`} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.badgeColor}`}>
+                          {plan.badge}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-base mt-0.5">{plan.name}</h3>
+                      {plan.revenueShare && (
+                        <p className="text-xs text-primary font-semibold">収益還元率 {plan.revenueShare}</p>
+                      )}
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-xl font-black">{plan.price}</span>
+                      <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <div className="text-center text-xs text-muted-foreground mt-6 space-y-1">
         <p>※ プラットフォーム手数料：動画・ライブ売上の15%、エールコインの10%</p>
