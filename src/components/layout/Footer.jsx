@@ -185,8 +185,8 @@ export default function Footer() {
           <div className="mb-8 bg-primary/5 border border-primary/20 rounded-xl p-4">
             <Accordion type="single" collapsible>
               <AccordionItem value="progressive-incentive" className="border-0">
-                <AccordionTrigger className="hover:no-underline flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <TrendingUp className="w-4 h-4 text-primary" />
+                <AccordionTrigger className="hover:no-underline flex items-center gap-2 text-base font-semibold text-foreground">
+                  <TrendingUp className="w-5 h-5 text-primary" />
                   プログレッシブ・インセンティブって何？
                 </AccordionTrigger>
                 <AccordionContent className="text-xs text-foreground/80 space-y-3 pt-2">
