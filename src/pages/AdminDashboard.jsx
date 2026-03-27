@@ -364,9 +364,12 @@ export default function AdminDashboard() {
               "call-anser": 0
             };
 
+            // 管理者ユーザーならフィルターしない、それ以外は管理者メール除外
+            const displaySubscriptions = user?.role === "admin" ? allSubscriptions : allSubscriptions.filter((s) => !ADMIN_EMAILS.includes(s.user_email));
+
             const subscriptionStats = PLANS.map((planId) => {
-              const active = filteredSubscriptions.filter((s) => s.plan_id === planId && s.status === "active").length;
-              const cancelled = filteredSubscriptions.filter((s) => s.plan_id === planId && s.status === "cancelled").length;
+              const active = displaySubscriptions.filter((s) => s.plan_id === planId && s.status === "active").length;
+              const cancelled = displaySubscriptions.filter((s) => s.plan_id === planId && s.status === "cancelled").length;
               const total = active + cancelled;
               const churnRate = total > 0 ? ((cancelled / total) * 100).toFixed(1) : 0;
               const monthlyRevenue = active * PLAN_PRICES[planId];
@@ -382,16 +385,13 @@ export default function AdminDashboard() {
               };
             });
 
-            // 解約理由の集計（管理者除外）
+            // 解約理由の集計（管理者以外は管理者メール除外）
+            const displayCancellationReasons = user?.role === "admin" ? allCancellationReasons : allCancellationReasons.filter((r) => !ADMIN_EMAILS.includes(r.user_email));
             const reasonCounts = {};
-            allCancellationReasons
-              .filter((r) => !ADMIN_EMAILS.includes(r.user_email))
-              .forEach((r) => {
-                const key = r.reason_ja || r.reason;
-                reasonCounts[key] = (reasonCounts[key] || 0) + 1;
-              });
-            
-            const filteredCancellationReasons = allCancellationReasons.filter((r) => !ADMIN_EMAILS.includes(r.user_email));
+            displayCancellationReasons.forEach((r) => {
+              const key = r.reason_ja || r.reason;
+              reasonCounts[key] = (reasonCounts[key] || 0) + 1;
+            });
 
             return (
               <div className="space-y-6">
@@ -450,7 +450,7 @@ export default function AdminDashboard() {
                         {Object.entries(reasonCounts)
                            .sort(([, a], [, b]) => b - a)
                            .map(([reason, count]) => {
-                             const percentage = filteredCancellationReasons.length > 0 ? ((count / filteredCancellationReasons.length) * 100).toFixed(1) : 0;
+                             const percentage = displayCancellationReasons.length > 0 ? ((count / displayCancellationReasons.length) * 100).toFixed(1) : 0;
                              return (
                                <tr key={reason} className="border-b border-border/30 hover:bg-secondary/50">
                                  <td className="py-3 px-3">{reason}</td>
@@ -462,7 +462,7 @@ export default function AdminDashboard() {
                         </tbody>
                         </table>
                         </div>
-                        {filteredCancellationReasons.length === 0 && (
+                        {displayCancellationReasons.length === 0 && (
                         <p className="text-sm text-muted-foreground text-center py-4">まだ解約がありません</p>
                         )}
                 </div>
@@ -494,7 +494,7 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalVideoRevenue * 0.85).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                   販売件数: {allPurchases.filter((p) => p.item_type === "video" && !ADMIN_EMAILS.includes(p.created_by)).length}件
+                   販売件数: {allPurchases.filter((p) => p.item_type === "video" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(p.created_by))).length}件
                  </div>
               </div>
             </div>
@@ -519,7 +519,7 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalStreamRevenue * 0.85).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                   販売件数: {allPurchases.filter((p) => p.item_type === "livestream" && !ADMIN_EMAILS.includes(p.created_by)).length}件
+                   販売件数: {allPurchases.filter((p) => p.item_type === "livestream" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(p.created_by))).length}件
                  </div>
               </div>
             </div>
@@ -544,7 +544,7 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalCallRevenue * 0.70).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                   終了通話: {allCalls.filter((c) => c.status === "ended" && !ADMIN_EMAILS.includes(c.caller_email) && !ADMIN_EMAILS.includes(c.callee_email)).length}件
+                   終了通話: {allCalls.filter((c) => c.status === "ended" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(c.caller_email) && !ADMIN_EMAILS.includes(c.callee_email))).length}件
                  </div>
               </div>
             </div>

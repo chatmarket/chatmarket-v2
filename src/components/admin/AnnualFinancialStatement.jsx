@@ -10,6 +10,7 @@ export default function AnnualFinancialStatement({
   calls = [],
   yellCoinTransactions = [],
   subscriptions = [],
+  userRole = "user",
 }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -37,11 +38,12 @@ export default function AnnualFinancialStatement({
     const startDate = new Date(selectedYear, 0, 1);
     const endDate = new Date(selectedYear + 1, 0, 1);
 
-    // 動画販売・ライブ配信（管理者除外）
+    // 動画販売・ライブ配信（管理者以外は管理者メール除外）
     purchases
       .filter((p) => {
         const d = new Date(p.created_date);
-        return d >= startDate && d < endDate && d.getFullYear() === selectedYear && !ADMIN_EMAILS.includes(p.created_by);
+        const isAdmin = userRole === "admin";
+        return d >= startDate && d < endDate && d.getFullYear() === selectedYear && (isAdmin ? true : !ADMIN_EMAILS.includes(p.created_by));
       })
       .forEach((p) => {
         const month = new Date(p.created_date).getMonth();
@@ -55,17 +57,17 @@ export default function AnnualFinancialStatement({
         }
       });
 
-    // ビデオ通話（管理者除外）
+    // ビデオ通話（管理者以外は管理者メール除外）
     calls
       .filter((c) => {
         const d = new Date(c.created_date);
+        const isAdmin = userRole === "admin";
         return (
           d >= startDate &&
           d < endDate &&
           d.getFullYear() === selectedYear &&
           c.status === "ended" &&
-          !ADMIN_EMAILS.includes(c.caller_email) &&
-          !ADMIN_EMAILS.includes(c.callee_email)
+          (isAdmin ? true : !ADMIN_EMAILS.includes(c.caller_email) && !ADMIN_EMAILS.includes(c.callee_email))
         );
       })
       .forEach((c) => {
@@ -75,16 +77,17 @@ export default function AnnualFinancialStatement({
         monthlyData[month].callFee += Math.floor(amount * 0.3);
       });
 
-    // エールコイン（管理者除外）
+    // エールコイン（管理者以外は管理者メール除外）
     yellCoinTransactions
       .filter((t) => {
         const d = new Date(t.created_date);
+        const isAdmin = userRole === "admin";
         return (
           d >= startDate &&
           d < endDate &&
           d.getFullYear() === selectedYear &&
           t.type === "charge" &&
-          !ADMIN_EMAILS.includes(t.user_email)
+          (isAdmin ? true : !ADMIN_EMAILS.includes(t.user_email))
         );
       })
       .forEach((t) => {
@@ -94,9 +97,12 @@ export default function AnnualFinancialStatement({
         monthlyData[month].yellCoinFee += Math.floor(amount * 0.1);
       });
 
-    // サブスクリプション（月単位で按分、管理者除外）
+    // サブスクリプション（月単位で按分、管理者以外は管理者メール除外）
     subscriptions
-      .filter((s) => s.status === "active" && !ADMIN_EMAILS.includes(s.user_email))
+      .filter((s) => {
+        const isAdmin = userRole === "admin";
+        return s.status === "active" && (isAdmin ? true : !ADMIN_EMAILS.includes(s.user_email));
+      })
       .forEach((s) => {
         const startMonth = new Date(s.start_date).getMonth();
         const endMonth = s.end_date ? new Date(s.end_date).getMonth() : 11;
