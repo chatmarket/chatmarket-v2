@@ -151,11 +151,13 @@ const COMBOS = [
   { ids: ["basic", "vod", "ppv", "call-anser"], label: "全部入り", discount: 0 },
 ];
 
+const ADMIN_EMAILS = ["unei@chatmarket.info", "admin@chatmarket.info"];
+
 export default function PlanSelect() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  // unei@chatmarket.infoの場合は全プラン加入
+  // 管理者メールの場合は全プラン加入
   const [selected, setSelected] = useState(new Set());
 
   useEffect(() => {
@@ -163,8 +165,8 @@ export default function PlanSelect() {
       if (isAuth) {
         base44.auth.me().then((u) => {
           setUser(u);
-          if (u.email === "unei@chatmarket.info") {
-            setSelected(new Set(["basic", "vod", "ppv", "call-anser"]));
+          if (ADMIN_EMAILS.includes(u.email)) {
+            setSelected(new Set(["basic", "vod", "ppv", "call-anser", "mini-school", "enterprise", "crowdfunding"]));
           }
         });
       }
@@ -172,8 +174,8 @@ export default function PlanSelect() {
   }, []);
 
   const togglePlan = (id) => {
-    // unei@chatmarket.info は選択不可
-    if (user?.email === "unei@chatmarket.info") {
+    // 管理者メールは選択不可
+    if (ADMIN_EMAILS.includes(user?.email)) {
       return;
     }
 
@@ -216,10 +218,10 @@ export default function PlanSelect() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-      {user?.email === "unei@chatmarket.info" && (
+      {ADMIN_EMAILS.includes(user?.email) && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
           <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>
-          <p className="text-xs text-primary/80">全プラン（BASIC・VOD・PPV・CALL&ANSER）が自動的に加入状態になります。</p>
+          <p className="text-xs text-primary/80">全プラン（BASIC・VOD・PPV・CALL&ANSER・ミニスクール・エンタープライズ・クラウドファンディング）が自動的に加入状態になり、全プランの詳細を確認できます。</p>
         </div>
       )}
 
@@ -237,7 +239,7 @@ export default function PlanSelect() {
             <button
               key={combo.label}
               onClick={() => applyCombo(combo.ids)}
-              disabled={user?.email === "unei@chatmarket.info"}
+              disabled={ADMIN_EMAILS.includes(user?.email)}
               className="text-xs font-semibold px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {combo.label}
@@ -261,8 +263,8 @@ export default function PlanSelect() {
                     }
                     e.preventDefault();
                   }}
-                  className={`hover:no-underline py-4 ${user?.email === "unei@chatmarket.info" ? "cursor-not-allowed" : ""}`}
-                  disabled={user?.email === "unei@chatmarket.info"}
+                  className={`hover:no-underline py-4 ${ADMIN_EMAILS.includes(user?.email) ? "cursor-not-allowed" : ""}`}
+                  disabled={ADMIN_EMAILS.includes(user?.email)}
                 >
                   <div className="flex items-center gap-4 text-left flex-1">
                     {/* Checkbox */}
