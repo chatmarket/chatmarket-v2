@@ -5,9 +5,10 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Phone, PhoneOff, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
-  AlertTriangle, Smile, Settings, Image, Sparkles, ChevronUp, ChevronDown, X
+  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -94,6 +95,20 @@ function FloatingItem({ item, onDone }) {
   );
 }
 
+// ---- Helper: available durations ----
+function getAvailableDurations(channel) {
+  const options = [];
+  [15,30,45,60,75,90,105,120].forEach((min) => {
+    const price = channel?.[`call_price_${min}min`] || 0;
+    if (price > 0) options.push({ minutes: min, price });
+  });
+  if (options.length === 0) {
+    if ((channel?.call_price_30min || 0) > 0) options.push({ minutes: 30, price: channel.call_price_30min });
+    if ((channel?.call_price_60min || 0) > 0) options.push({ minutes: 60, price: channel.call_price_60min });
+  }
+  return options;
+}
+
 // ---- Main Component ----
 export default function VideoCallPage() {
   const { callId } = useParams();
@@ -107,7 +122,7 @@ export default function VideoCallPage() {
   const [localStream, setLocalStream] = useState(null);
 
   // Panels
-  const [activePanel, setActivePanel] = useState(null); // "emoji" | "throw" | "filter" | "bg" | "settings" | null
+  const [activePanel, setActivePanel] = useState(null);
 
   // Filters & BG
   const [selectedFilter, setSelectedFilter] = useState("none");
@@ -128,6 +143,19 @@ export default function VideoCallPage() {
   const [yellSending, setYellSending] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
+  // ---- Countdown & Extension ----
+  const [callStartTime, setCallStartTime] = useState(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
+  const [showExtendBanner, setShowExtendBanner] = useState(false);
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [extendMinutes, setExtendMinutes] = useState(null);
+  const [extendPrice, setExtendPrice] = useState(0);
+  const [extendPaid, setExtendPaid] = useState(false);
+  const [extendPaying, setExtendPaying] = useState(false);
+  const [extendDurations, setExtendDurations] = useState([]);
+  const countdownAlertedRef = useRef(false);
+  const extendBannerShownRef = useRef(false);
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
@@ -143,6 +171,58 @@ export default function VideoCallPage() {
     },
     refetchInterval: 3000,
   });
+
+  // calleeのchannelを取得（延長料金設定用）
+  const { data: calleeChannel } = useQuery({
+    queryKey: ["callee-channel", call?.callee_email],
+    queryFn: () => base44.entities.Channel.filter({ owner_email: call.callee_email }).then((r) => r[0]),
+    enabled: !!call?.callee_email,
+  });
+
+  // 通話開始時刻をセット
+  useEffect(() => {
+    if (call?.status === "active" && !callStartTime) {
+      setCallStartTime(Date.now());
+    }
+  }, [call?.status]);
+
+  // 延長用の選択肢セット
+  useEffect(() => {
+    if (calleeChannel) {
+      const durations = getAvailableDurations(calleeChannel);
+      setExtendDurations(durations);
+      if (durations.length > 0 && !extendMinutes) {
+        setExtendMinutes(durations[0].minutes);
+        setExtendPrice(durations[0].price);
+      }
+    }
+  }, [calleeChannel]);
+
+  // カウントダウンタイマー
+  useEffect(() => {
+    if (!callStartTime || !call?.duration_minutes) return;
+    const totalMs = call.duration_minutes * 60 * 1000;
+
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - callStartTime;
+      const remaining = Math.max(0, Math.ceil((totalMs - elapsed) / 1000));
+      setRemainingSeconds(remaining);
+
+      // 30秒前にバナー表示
+      if (remaining <= 30 && !extendBannerShownRef.current) {
+        extendBannerShownRef.current = true;
+        setShowExtendBanner(true);
+      }
+
+      // 時間切れ
+      if (remaining === 0 && !extendPaid) {
+        clearInterval(timer);
+        handleEndCall();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [callStartTime, call?.duration_minutes, extendPaid]);
 
   // Start camera
   useEffect(() => {
@@ -206,6 +286,26 @@ export default function VideoCallPage() {
     setShowReportModal(false);
     setReportReason("");
     toast.success("通報しました。確認いたします。");
+  };
+
+  // 延長決済
+  const handleExtendPayment = async () => {
+    if (!extendMinutes || !call) return;
+    setExtendPaying(true);
+    // 延長分のVideoCallレコードを更新（duration_minutesを追加）
+    await base44.entities.VideoCall.update(call.id, {
+      duration_minutes: (call.duration_minutes || 0) + extendMinutes,
+      price: (call.price || 0) + extendPrice,
+    });
+    setExtendPaid(true);
+    setExtendPaying(false);
+    setShowExtendModal(false);
+    setShowExtendBanner(false);
+    extendBannerShownRef.current = false;
+    // 延長分のカウントダウンをリセット
+    setCallStartTime(Date.now() - (call.duration_minutes * 60 * 1000 - 30 * 1000));
+    setTimeout(() => setExtendPaid(false), 1000);
+    toast.success(`${extendMinutes}分延長しました！`);
   };
 
   const addFloating = useCallback((emoji) => {
@@ -306,6 +406,66 @@ export default function VideoCallPage() {
             ¥{call.yell_coin_amount?.toLocaleString()} エール済み
           </div>
         )}
+
+        {/* ---- Countdown (30秒前から表示) ---- */}
+        <AnimatePresence>
+          {remainingSeconds !== null && remainingSeconds <= 30 && remainingSeconds > 0 && (
+            <motion.div
+              key="countdown"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+            >
+              <div className={`text-center ${remainingSeconds <= 10 ? "text-red-400" : "text-yellow-300"}`}>
+                <p className="font-black leading-none drop-shadow-2xl"
+                  style={{ fontSize: "120px", textShadow: "0 0 40px rgba(0,0,0,0.8)" }}>
+                  {remainingSeconds}
+                </p>
+                <p className="text-lg font-bold opacity-80 -mt-4 drop-shadow-lg">
+                  {remainingSeconds <= 10 ? "⚠️ まもなく終了" : "秒"}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ---- Extension Banner (30秒前から) ---- */}
+        <AnimatePresence>
+          {showExtendBanner && !showExtendModal && (
+            <motion.div
+              key="extend-banner"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-16 left-4 right-4 z-40"
+            >
+              <div className="bg-black/90 backdrop-blur-xl border border-primary/40 rounded-2xl p-4 flex items-center gap-3 shadow-2xl">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-sm">この通話を延長しますか？</p>
+                  <p className="text-white/50 text-xs">あと {remainingSeconds}秒 で終了します</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => setShowExtendBanner(false)}
+                    className="text-xs text-white/40 hover:text-white/70 px-2 py-1"
+                  >
+                    終了
+                  </button>
+                  <button
+                    onClick={() => setShowExtendModal(true)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-4 py-2 rounded-xl"
+                  >
+                    延長する
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Active panel overlay */}
         <AnimatePresence>
@@ -517,6 +677,95 @@ export default function VideoCallPage() {
           )}
         </div>
       </div>
+
+      {/* ---- Extension Modal ---- */}
+      <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" /> 通話を延長する
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-secondary rounded-xl p-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
+              決済完了後に延長分の通話が継続されます。決済が完了するまでお待ちください。
+            </div>
+
+            <div>
+              <Label className="text-sm mb-2 block">延長時間を選択（15分刻み）</Label>
+              {extendDurations.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {extendDurations.map(({ minutes, price }) => (
+                    <button
+                      key={minutes}
+                      onClick={() => { setExtendMinutes(minutes); setExtendPrice(price); }}
+                      className={`flex flex-col items-center gap-0.5 p-3 rounded-xl border-2 transition-all ${
+                        extendMinutes === minutes
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-secondary hover:border-primary/40"
+                      }`}
+                    >
+                      <span className={`font-bold text-sm ${extendMinutes === minutes ? "text-primary" : ""}`}>{minutes}分</span>
+                      <span className={`text-xs font-black ${extendMinutes === minutes ? "text-primary" : "text-muted-foreground"}`}>¥{price.toLocaleString()}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-3">配信者が料金設定していません</p>
+              )}
+            </div>
+
+            {extendPrice > 0 && (
+              <div className="bg-secondary rounded-lg p-3 text-sm space-y-1.5">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>延長料金 ({extendMinutes}分)</span>
+                  <span>¥{extendPrice.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold border-t border-border pt-1.5">
+                  <span>お支払い合計</span>
+                  <span className="text-primary">¥{extendPrice.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowExtendModal(false)}>
+                キャンセル
+              </Button>
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90 gap-2"
+                onClick={handleExtendPayment}
+                disabled={!extendMinutes || extendPaying || extendDurations.length === 0}
+              >
+                {extendPaying ? (
+                  <>決済中...</>
+                ) : (
+                  <><CreditCard className="w-4 h-4" /> ¥{extendPrice.toLocaleString()} 決済して延長</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extend paid success overlay */}
+      <AnimatePresence>
+        {extendPaid && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 pointer-events-none"
+          >
+            <div className="bg-card border border-primary/40 rounded-2xl p-8 flex flex-col items-center gap-3">
+              <CheckCircle2 className="w-12 h-12 text-primary" />
+              <p className="text-white font-bold text-lg">延長決済完了！</p>
+              <p className="text-muted-foreground text-sm">{extendMinutes}分延長されました</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Yell Modal */}
       <Dialog open={showYellModal} onOpenChange={setShowYellModal}>
