@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PhoneCall, MessageCircle, Phone } from "lucide-react";
+import { PhoneCall, MessageCircle, Phone, Radio } from "lucide-react";
 import ScrollRow from "./ScrollRow";
 import MessageModal from "../chat/MessageModal";
 
@@ -71,8 +71,11 @@ export default function CallWaitingRow({ user }) {
 
   const handleCallRequest = (channelId) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
-    // FREE含む全プランで通話申し込み可能
     navigate(`/call-request/${channelId}`);
+  };
+
+  const handleGoLive = () => {
+    navigate("/go-live");
   };
 
   // 待機中のVideoCallマップを作成（channel_idで検索可能に）
@@ -82,9 +85,11 @@ export default function CallWaitingRow({ user }) {
   const rows = [];
   for (let i = 0; i < uniqueChannels.length; i += 6) {
     rows.push(uniqueChannels.slice(i, i + 6));
-  }
+    }
 
-  return (
+    const isOwnChannel = (channel) => user && channel.owner_email === user.email;
+
+    return (
     <section className="space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shrink-0" />
@@ -111,6 +116,7 @@ export default function CallWaitingRow({ user }) {
                 channel={channel}
                 onMessage={() => handleMessage(channel)}
                 onCallRequest={() => handleCallRequest(channel.id)}
+                onGoLive={isOwnChannel(channel) ? handleGoLive : null}
                 isWaiting={isWaiting}
               />
             );
@@ -130,7 +136,7 @@ export default function CallWaitingRow({ user }) {
   );
 }
 
-function CallWaitingCard({ channel, onMessage, onCallRequest, isWaiting = false }) {
+function CallWaitingCard({ channel, onMessage, onCallRequest, onGoLive, isWaiting = false }) {
   return (
     <div className={`w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border ${isWaiting ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
       {/* Avatar */}
@@ -173,14 +179,25 @@ function CallWaitingCard({ channel, onMessage, onCallRequest, isWaiting = false 
 
         {/* Buttons */}
         <div className="flex gap-1 pt-1">
-          <Button
-            size="sm"
-            className="flex-1 h-6 text-[11px] bg-primary hover:bg-primary/90 gap-0.5 px-2"
-            onClick={onCallRequest}
-          >
-            <PhoneCall className="w-2.5 h-2.5" />
-            申し込む
-          </Button>
+          {onGoLive ? (
+            <Button
+              size="sm"
+              className="flex-1 h-6 text-[11px] bg-red-500 hover:bg-red-600 gap-0.5 px-2"
+              onClick={onGoLive}
+            >
+              <Radio className="w-2.5 h-2.5" />
+              配信開始
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="flex-1 h-6 text-[11px] bg-primary hover:bg-primary/90 gap-0.5 px-2"
+              onClick={onCallRequest}
+            >
+              <PhoneCall className="w-2.5 h-2.5" />
+              申し込む
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
