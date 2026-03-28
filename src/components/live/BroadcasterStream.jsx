@@ -115,11 +115,13 @@ export default function BroadcasterStream({ streamId, onEnd }) {
   };
 
   const handleEnd = async () => {
+    if (!window.confirm("配信を終了しますか？")) return;
     clearInterval(pollRef.current);
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();
     await base44.entities.LiveStream.update(streamId, { status: "ended" });
     setStatus("ended");
+    toast.success("配信を終了しました");
     if (onEnd) onEnd();
     else navigate(-1);
   };

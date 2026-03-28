@@ -266,8 +266,10 @@ export default function VideoCallPage() {
   };
 
   const handleEndCall = async () => {
+    if (!window.confirm("通話を終了しますか？")) return;
     if (call) await base44.entities.VideoCall.update(call.id, { status: "ended" });
     localStream?.getTracks().forEach((t) => t.stop());
+    toast.success("通話を終了しました");
     navigate(-1);
   };
 
