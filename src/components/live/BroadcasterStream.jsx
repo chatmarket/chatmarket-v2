@@ -75,6 +75,7 @@ export default function BroadcasterStream({ streamId, onEnd }) {
         const s = streams[0];
         if (s?.webrtc_answer && pc.signalingState === "have-local-offer") {
           clearInterval(pollRef.current);
+
           const answer = JSON.parse(s.webrtc_answer);
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
@@ -87,7 +88,7 @@ export default function BroadcasterStream({ streamId, onEnd }) {
           }
           toast.success("視聴者が接続しました！");
         }
-      }, 2000);
+      }, 5000);
 
     } catch (err) {
       toast.error("カメラ/マイクにアクセスできません: " + err.message);

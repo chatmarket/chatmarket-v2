@@ -22,7 +22,7 @@ export default function ViewerStream({ streamId, stream }) {
       const streams = await base44.entities.LiveStream.filter({ id: streamId });
       const s = streams[0];
       if (!s?.webrtc_offer) {
-        pollRef.current = setTimeout(waitForOffer, 2000);
+        pollRef.current = setTimeout(waitForOffer, 5000);
         return;
       }
 
