@@ -16,6 +16,7 @@ const MODE_LIVE = "live";
 const MODE_CALL = "call";
 const STREAM_TYPE_WEBRTC = "webrtc";
 const STREAM_TYPE_VIMEO = "vimeo";
+const STREAM_TYPE_YOUTUBE = "youtube";
 
 export default function GoLive() {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ export default function GoLive() {
     isPaid: false,
     streamType: STREAM_TYPE_WEBRTC,
     vimeoUrl: "",
+    youtubeUrl: "",
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
@@ -100,6 +102,7 @@ export default function GoLive() {
       viewer_count: 0,
       stream_type: form.streamType,
       vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? form.vimeoUrl : "",
+      youtube_url: form.streamType === STREAM_TYPE_YOUTUBE ? form.youtubeUrl : "",
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -203,6 +206,17 @@ export default function GoLive() {
                 <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_VIMEO ? "text-blue-400" : "text-muted-foreground"}`}>Vimeo Live埋め込み</span>
                 <span className="text-[10px] text-muted-foreground">VimeoのURLを貼り付け</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_YOUTUBE })}
+                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_YOUTUBE ? "border-red-600 bg-red-600/10" : "border-border bg-card hover:border-border/70"}`}
+              >
+                <svg className={`w-5 h-5 ${form.streamType === STREAM_TYPE_YOUTUBE ? "text-red-500" : "text-muted-foreground"}`} viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_YOUTUBE ? "text-red-500" : "text-muted-foreground"}`}>YouTube Live埋め込み</span>
+                <span className="text-[10px] text-muted-foreground">YouTube LiveのURLを貼り付け</span>
+              </button>
             </div>
             {form.streamType === STREAM_TYPE_VIMEO && (
               <div className="space-y-2">
@@ -216,6 +230,21 @@ export default function GoLive() {
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <ExternalLink className="w-3 h-3" />
                   Vimeo LiveイベントのEmbedリンクを貼り付けてください（例: https://vimeo.com/event/1234567/embed）
+                </p>
+              </div>
+            )}
+            {form.streamType === STREAM_TYPE_YOUTUBE && (
+              <div className="space-y-2">
+                <Label>YouTube Live URL</Label>
+                <Input
+                  value={form.youtubeUrl}
+                  onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
+                  placeholder="https://www.youtube.com/embed/xxxxxxxxxx"
+                  className="bg-secondary border-0"
+                />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <ExternalLink className="w-3 h-3" />
+                  YouTube LiveのEmbedリンクを貼り付けてください（例: https://www.youtube.com/embed/VIDEO_ID）
                 </p>
               </div>
             )}

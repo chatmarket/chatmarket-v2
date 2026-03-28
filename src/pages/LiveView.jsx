@@ -112,6 +112,15 @@ export default function LiveView() {
                 allowFullScreen
                 title={stream.title}
               />
+            ) : stream.status === "live" && stream.stream_type === "youtube" && stream.youtube_url ? (
+              <iframe
+                src={stream.youtube_url}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={stream.title}
+              />
             ) : stream.status === "live" ? (
               <ViewerStream streamId={id} stream={stream} />
             ) : (

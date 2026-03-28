@@ -63,7 +63,8 @@
       "type": "string",
       "enum": [
         "webrtc",
-        "vimeo"
+        "vimeo",
+        "youtube"
       ],
       "default": "webrtc",
       "description": "\u914d\u4fe1\u65b9\u5f0f"
@@ -71,6 +72,10 @@
     "vimeo_url": {
       "type": "string",
       "description": "Vimeo Live\u30b9\u30c8\u30ea\u30fc\u30e0URL\uff08\u4f8b: https://vimeo.com/event/XXXXX/embed\uff09"
+    },
+    "youtube_url": {
+      "type": "string",
+      "description": "YouTube Live Embed URL\uff08\u4f8b: https://www.youtube.com/embed/VIDEO_ID\uff09"
     },
     "webrtc_offer": {
       "type": "string",
