@@ -1,0 +1,83 @@
+{
+  "name": "LiveStream",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u8aac\u660e"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "channel_avatar": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30a2\u30d0\u30bf\u30fc"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\u30b5\u30e0\u30cd\u30a4\u30eb\u753b\u50cfURL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "live",
+        "ended"
+      ],
+      "default": "scheduled",
+      "description": "\u914d\u4fe1\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u5186\uff09"
+    },
+    "viewer_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u73fe\u5728\u306e\u8996\u8074\u8005\u6570"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u914d\u4fe1\u4e88\u5b9a\u65e5\u6642"
+    },
+    "available_time": {
+      "type": "string",
+      "description": "\u5bfe\u5fdc\u53ef\u80fd\u6642\u9593"
+    },
+    "duration": {
+      "type": "number",
+      "description": "\u914d\u4fe1\u6642\u9593\uff08\u5206\uff09"
+    },
+    "webrtc_offer": {
+      "type": "string",
+      "description": "WebRTC SDP Offer (JSON\u6587\u5b57\u5217)"
+    },
+    "webrtc_answer": {
+      "type": "string",
+      "description": "WebRTC SDP Answer (JSON\u6587\u5b57\u5217)"
+    },
+    "webrtc_ice_candidates_broadcaster": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u8005\u306eICE candidates (JSON\u914d\u5217\u6587\u5b57\u5217)"
+    },
+    "webrtc_ice_candidates_viewer": {
+      "type": "string",
+      "description": "\u8996\u8074\u8005\u306eICE candidates (JSON\u914d\u5217\u6587\u5b57\u5217)"
+    }
+  },
+  "required": [
+    "title",
+    "channel_id"
+  ]
+}

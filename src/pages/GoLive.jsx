@@ -10,6 +10,7 @@ import { Radio, Loader2, Image, PhoneCall, Video, AlertTriangle } from "lucide-r
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import BroadcasterStream from "../components/live/BroadcasterStream";
 
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
@@ -20,6 +21,7 @@ export default function GoLive() {
   const [creating, setCreating] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [mode, setMode] = useState(MODE_LIVE); // "live" | "call"
+  const [liveStreamId, setLiveStreamId] = useState(null); // 配信中のstream ID
 
   const [form, setForm] = useState({
     title: "",
@@ -102,11 +104,30 @@ export default function GoLive() {
       // Video call mode — navigate to call page
       navigate(`/call/${stream.id}`);
     } else {
-      navigate(`/live/${stream.id}`);
+      // Live mode — show broadcaster stream inline
+      setLiveStreamId(stream.id);
     }
   };
 
   const minPrice = mode === MODE_LIVE ? 1 : (form.duration / 15) * 150;
+
+  // 配信中の場合はBroadcasterStreamを表示
+  if (liveStreamId) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+            <Radio className="w-5 h-5 text-red-400 animate-pulse" />
+          </div>
+          <h1 className="text-2xl font-bold">配信中</h1>
+        </div>
+        <BroadcasterStream
+          streamId={liveStreamId}
+          onEnd={() => navigate("/")}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">

@@ -11,6 +11,7 @@ import { Users, Radio, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import VideoControls from "../components/video/VideoControls";
+import ViewerStream from "../components/live/ViewerStream";
 
 export default function LiveView() {
   const { id } = useParams();
@@ -103,13 +104,7 @@ export default function LiveView() {
                 </Button>
               </div>
             ) : stream.status === "live" ? (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card">
-                <div className="text-center space-y-4">
-                  <Radio className="w-16 h-16 text-red-400 mx-auto animate-pulse" />
-                  <p className="text-lg font-semibold">ライブ配信中</p>
-                  <p className="text-sm text-muted-foreground">配信映像はここに表示されます</p>
-                </div>
-              </div>
+              <ViewerStream streamId={id} stream={stream} />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-secondary">
                 <p className="text-muted-foreground">
