@@ -103,6 +103,15 @@ export default function LiveView() {
                   チケット購入
                 </Button>
               </div>
+            ) : stream.status === "live" && stream.stream_type === "vimeo" && stream.vimeo_url ? (
+              <iframe
+                src={stream.vimeo_url}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={stream.title}
+              />
             ) : stream.status === "live" ? (
               <ViewerStream streamId={id} stream={stream} />
             ) : (

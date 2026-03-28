@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Radio, Loader2, Image, PhoneCall, Video, AlertTriangle } from "lucide-react";
+import { Radio, Loader2, Image, PhoneCall, Video, AlertTriangle, ExternalLink } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ import BroadcasterStream from "../components/live/BroadcasterStream";
 
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
+const STREAM_TYPE_WEBRTC = "webrtc";
+const STREAM_TYPE_VIMEO = "vimeo";
 
 export default function GoLive() {
   const navigate = useNavigate();
@@ -31,6 +33,8 @@ export default function GoLive() {
     duration: mode === MODE_LIVE ? 60 : 15,
     price: mode === MODE_LIVE ? 1 : 150,
     isPaid: false,
+    streamType: STREAM_TYPE_WEBRTC,
+    vimeoUrl: "",
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
@@ -94,6 +98,8 @@ export default function GoLive() {
       available_time: form.availableTime || "",
       price: form.isPaid ? form.price : 0,
       viewer_count: 0,
+      stream_type: form.streamType,
+      vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? form.vimeoUrl : "",
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -174,6 +180,48 @@ export default function GoLive() {
       </div>
 
       <form onSubmit={handleStart} className="space-y-6">
+        {/* Stream type selector (liveモードのみ) */}
+        {mode === MODE_LIVE && (
+          <div className="space-y-3">
+            <Label>配信方式</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_WEBRTC })}
+                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_WEBRTC ? "border-red-500 bg-red-500/10" : "border-border bg-card hover:border-border/70"}`}
+              >
+                <Radio className={`w-5 h-5 ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`} />
+                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`}>ブラウザ配信 (WebRTC)</span>
+                <span className="text-[10px] text-muted-foreground">カメラから直接配信</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_VIMEO })}
+                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_VIMEO ? "border-blue-500 bg-blue-500/10" : "border-border bg-card hover:border-border/70"}`}
+              >
+                <Video className={`w-5 h-5 ${form.streamType === STREAM_TYPE_VIMEO ? "text-blue-400" : "text-muted-foreground"}`} />
+                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_VIMEO ? "text-blue-400" : "text-muted-foreground"}`}>Vimeo Live埋め込み</span>
+                <span className="text-[10px] text-muted-foreground">VimeoのURLを貼り付け</span>
+              </button>
+            </div>
+            {form.streamType === STREAM_TYPE_VIMEO && (
+              <div className="space-y-2">
+                <Label>Vimeo Live URL</Label>
+                <Input
+                  value={form.vimeoUrl}
+                  onChange={(e) => setForm({ ...form, vimeoUrl: e.target.value })}
+                  placeholder="https://vimeo.com/event/XXXXXXX/embed"
+                  className="bg-secondary border-0"
+                />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <ExternalLink className="w-3 h-3" />
+                  Vimeo LiveイベントのEmbedリンクを貼り付けてください（例: https://vimeo.com/event/1234567/embed）
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Thumbnail */}
         <div className="space-y-2">
           <Label>サムネイル画像</Label>
