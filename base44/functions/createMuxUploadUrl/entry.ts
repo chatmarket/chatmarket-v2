@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, description } = await req.json();
+    const { title, description, channel_id, channel_name, channel_avatar, price, is_free, category } = await req.json();
 
     const tokenId = Deno.env.get('MUX_TOKEN_ID');
     const tokenSecret = Deno.env.get('MUX_TOKEN_SECRET');
@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
     const uploadId = muxData.data.id;
     const uploadUrl = muxData.data.url;
 
-    // DBにレコードを作成（Playback IDはWebhookで後から更新）
-    const record = await base44.entities.MuxVideo.create({
+    // MuxVideoレコードを作成
+    const muxRecord = await base44.entities.MuxVideo.create({
       title,
       description: description || '',
       mux_upload_id: uploadId,
@@ -47,7 +47,22 @@ Deno.serve(async (req) => {
       uploaded_by: user.email,
     });
 
-    return Response.json({ uploadUrl, uploadId, recordId: record.id });
+    // Videoエンティティも同時作成（mux_playback_idはWebhookで後から更新）
+    const videoRecord = await base44.entities.Video.create({
+      title,
+      description: description || '',
+      channel_id: channel_id || '',
+      channel_name: channel_name || '',
+      channel_avatar: channel_avatar || '',
+      price: is_free ? 0 : (price || 0),
+      is_free: is_free || false,
+      category: category || 'その他',
+      moderation_status: 'pending',
+      view_count: 0,
+      is_featured: false,
+    });
+
+    return Response.json({ uploadUrl, uploadId, muxRecordId: muxRecord.id, videoRecordId: videoRecord.id });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

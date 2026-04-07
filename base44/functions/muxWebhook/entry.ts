@@ -20,18 +20,36 @@ Deno.serve(async (req) => {
         return Response.json({ ok: true, message: 'no playback_id yet' });
       }
 
-      // upload_idからレコードを探す
-      // asset.upload_id が含まれる場合
       const uploadId = data.upload_id;
       if (uploadId) {
-        const records = await base44.asServiceRole.entities.MuxVideo.filter({ mux_upload_id: uploadId });
-        if (records.length > 0) {
-          await base44.asServiceRole.entities.MuxVideo.update(records[0].id, {
+        // MuxVideoレコードを更新
+        const muxRecords = await base44.asServiceRole.entities.MuxVideo.filter({ mux_upload_id: uploadId });
+        if (muxRecords.length > 0) {
+          await base44.asServiceRole.entities.MuxVideo.update(muxRecords[0].id, {
             mux_asset_id: assetId,
             mux_playback_id: playbackId,
             status: 'ready',
             duration: duration || null,
           });
+        }
+
+        // Videoエンティティも検索してmux_playback_idを更新
+        // MuxVideoのtitleとuploaded_byで対応するVideoを探す
+        if (muxRecords.length > 0) {
+          const muxRecord = muxRecords[0];
+          // mux_upload_idをVideoエンティティのdescriptionに埋め込んだIDで探す
+          // uploaded_byとtitleで絞り込む
+          const videoRecords = await base44.asServiceRole.entities.Video.filter({
+            title: muxRecord.title,
+          });
+          // uploaded_byが一致するものを選ぶ
+          const matchedVideo = videoRecords.find(v => v.created_by === muxRecord.uploaded_by && !v.mux_playback_id);
+          if (matchedVideo) {
+            await base44.asServiceRole.entities.Video.update(matchedVideo.id, {
+              mux_playback_id: playbackId,
+              duration: duration ? Math.round(duration) : null,
+            });
+          }
         }
       }
     }
