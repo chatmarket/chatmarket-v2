@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
-  Phone, PhoneOff, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
+  Phone, PhoneOff, PhoneCall, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
   AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio, MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";

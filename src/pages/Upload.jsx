@@ -313,7 +313,7 @@ export default function Upload() {
             />
           </div>
 
-          {form.is_free && recentFreeVideos.length >= 1 && (
+          {freeVideoBlocked && (
             <p className="text-destructive text-xs font-semibold mt-2">
               ⚠️ 無料動画は1週間に1本までです。次の無料投稿可能日までお待ちください。
             </p>

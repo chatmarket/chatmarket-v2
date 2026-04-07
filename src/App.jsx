@@ -41,6 +41,7 @@ import MyReservations from './pages/MyReservations.jsx';
 import MiniSchool from './pages/MiniSchool.jsx';
 import SchoolTickets from './pages/SchoolTickets.jsx';
 import EnterpriseDashboard from './pages/EnterpriseDashboard.jsx';
+import MuxVideoPage from './pages/MuxVideoPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -100,6 +101,7 @@ const AuthenticatedApp = () => {
         <Route path="/mini-school" element={<MiniSchool />} />
         <Route path="/school-tickets" element={<SchoolTickets />} />
         <Route path="/enterprise" element={<EnterpriseDashboard />} />
+        <Route path="/mux-videos" element={<MuxVideoPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

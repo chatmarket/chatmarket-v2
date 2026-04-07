@@ -1,0 +1,48 @@
+{
+  "name": "MuxVideo",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u52d5\u753b\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u8aac\u660e\u6587"
+    },
+    "mux_upload_id": {
+      "type": "string",
+      "description": "Mux Upload ID"
+    },
+    "mux_asset_id": {
+      "type": "string",
+      "description": "Mux Asset ID"
+    },
+    "mux_playback_id": {
+      "type": "string",
+      "description": "Mux Playback ID\uff08HLS\u518d\u751f\u7528\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "waiting",
+        "preparing",
+        "ready",
+        "errored"
+      ],
+      "default": "waiting",
+      "description": "\u52d5\u753b\u306e\u51e6\u7406\u72b6\u614b"
+    },
+    "duration": {
+      "type": "number",
+      "description": "\u52d5\u753b\u306e\u9577\u3055\uff08\u79d2\uff09"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9\u3057\u305f\u30e6\u30fc\u30b6\u30fc\u306e\u30e1\u30fc\u30eb"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
