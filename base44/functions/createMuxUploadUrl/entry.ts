@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       price: is_free ? 0 : (price || 0),
       is_free: is_free || false,
       category: category || 'その他',
-      moderation_status: 'pending',
+      moderation_status: 'approved',
       view_count: 0,
       is_featured: false,
     });
