@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel.jsx";
 import PaywallModal from "../components/video/PaywallModal";
+import PaywallOverlay from "../components/video/PaywallOverlay";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import { Eye, Calendar, Heart } from "lucide-react";
@@ -24,9 +25,10 @@ export default function WatchVideo() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [previewEnded, setPreviewEnded] = useState(false);
-  const queryClient = useQueryClient();
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -106,7 +108,7 @@ export default function WatchVideo() {
     });
   }, [video?.id, user?.email]);
 
-  // Monitor video time for paywall
+  // Monitor video time for paywall & prevent seeking past preview
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !video || video.is_free || hasPurchased) return;
@@ -119,8 +121,21 @@ export default function WatchVideo() {
       }
     };
 
+    const handleSeeking = () => {
+      if (v.currentTime >= FREE_PREVIEW_SECONDS && !hasPurchased) {
+        v.currentTime = FREE_PREVIEW_SECONDS - 0.1;
+        v.pause();
+        setPreviewEnded(true);
+        setShowPaywall(true);
+      }
+    };
+
     v.addEventListener("timeupdate", handleTimeUpdate);
-    return () => v.removeEventListener("timeupdate", handleTimeUpdate);
+    v.addEventListener("seeking", handleSeeking);
+    return () => {
+      v.removeEventListener("timeupdate", handleTimeUpdate);
+      v.removeEventListener("seeking", handleSeeking);
+    };
   }, [video, hasPurchased]);
 
   if (isLoading) {
@@ -143,6 +158,34 @@ export default function WatchVideo() {
   }
 
   const isPaid = !video.is_free && video.price > 0;
+
+  const handlePurchaseClick = async () => {
+    if (!user) {
+      toast.error("ログインが必要です");
+      base44.auth.redirectToLogin();
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const response = await base44.functions.invoke('createCheckoutSession', {
+        videoId: video.id,
+        videoTitle: video.title,
+        price: video.price,
+        successUrl: window.location.href,
+      });
+
+      if (response.data?.checkoutUrl) {
+        window.location.href = response.data.checkoutUrl;
+      } else {
+        toast.error('チェックアウトページの作成に失敗しました');
+      }
+    } catch (error) {
+      toast.error('エラーが発生しました');
+      console.error(error);
+    }
+    setCheckoutLoading(false);
+  };
 
   const toggleFavorite = async () => {
     if (!user) { toast.error("ログインが必要です"); return; }
@@ -202,16 +245,26 @@ export default function WatchVideo() {
 
             {/* SAMPLE watermark - 未購入の有料動画のみ表示 */}
             {isPaid && !hasPurchased && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
                 <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
                   SAMPLE
                 </span>
               </div>
             )}
 
+            {/* Paywall Overlay - 30秒で表示 */}
+            {isPaid && !hasPurchased && previewEnded && (
+              <PaywallOverlay
+                price={video.price}
+                videoTitle={video.title}
+                loading={checkoutLoading}
+                onPurchaseClick={handlePurchaseClick}
+              />
+            )}
+
             {/* Preview indicator */}
             {isPaid && !hasPurchased && !previewEnded && (
-              <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium">
+              <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
                 30秒プレビュー中
               </div>
             )}
