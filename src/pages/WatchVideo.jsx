@@ -309,7 +309,15 @@ export default function WatchVideo() {
         <RecommendedVideos currentVideoId={id} category={video.category} />
       </div>
 
-
+      {/* Paywall Modal */}
+      {showPaywall && !hasPurchased && video && (
+        <PaywallModal
+          video={video}
+          user={user}
+          onPurchased={() => setHasPurchased(true)}
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
     </div>
   );
 }
