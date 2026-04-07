@@ -27,7 +27,6 @@ export default function WatchVideo() {
   const [previewEnded, setPreviewEnded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -159,34 +158,6 @@ export default function WatchVideo() {
 
   const isPaid = !video.is_free && video.price > 0;
 
-  const handlePurchaseClick = async () => {
-    if (!user) {
-      toast.error("ログインが必要です");
-      base44.auth.redirectToLogin();
-      return;
-    }
-
-    setCheckoutLoading(true);
-    try {
-      const response = await base44.functions.invoke('createCheckoutSession', {
-        videoId: video.id,
-        videoTitle: video.title,
-        price: video.price,
-        successUrl: window.location.href,
-      });
-
-      if (response.data?.checkoutUrl) {
-        window.location.href = response.data.checkoutUrl;
-      } else {
-        toast.error('チェックアウトページの作成に失敗しました');
-      }
-    } catch (error) {
-      toast.error('エラーが発生しました');
-      console.error(error);
-    }
-    setCheckoutLoading(false);
-  };
-
   const toggleFavorite = async () => {
     if (!user) { toast.error("ログインが必要です"); return; }
     if (isFavorited && favoriteId) {
@@ -252,15 +223,7 @@ export default function WatchVideo() {
               </div>
             )}
 
-            {/* Paywall Overlay - 30秒で表示 */}
-            {isPaid && !hasPurchased && previewEnded && (
-              <PaywallOverlay
-                price={video.price}
-                videoTitle={video.title}
-                loading={checkoutLoading}
-                onPurchaseClick={handlePurchaseClick}
-              />
-            )}
+
 
             {/* Preview indicator */}
             {isPaid && !hasPurchased && !previewEnded && (
@@ -345,20 +308,7 @@ export default function WatchVideo() {
         <RecommendedVideos currentVideoId={id} category={video.category} />
       </div>
 
-      {/* Paywall Modal */}
-      {showPaywall && (
-        <PaywallModal
-          video={video}
-          user={user}
-          onPurchased={() => {
-            setHasPurchased(true);
-            setPreviewEnded(false);
-            setShowPaywall(false);
-            if (videoRef.current) videoRef.current.play();
-          }}
-          onClose={() => setShowPaywall(false)}
-        />
-      )}
+
     </div>
   );
 }
