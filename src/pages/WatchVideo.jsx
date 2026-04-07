@@ -50,13 +50,14 @@ export default function WatchVideo() {
       setHasPurchased(true);
       return;
     }
+    // Always check purchases, even if list is empty
     base44.entities.Purchase.filter({
       item_type: "video",
       item_id: id,
       buyer_email: user.email,
       status: "completed",
     }).then((purchases) => {
-      if (purchases.length > 0) setHasPurchased(true);
+      setHasPurchased(purchases.length > 0);
     });
   }, [user, video, id]);
 
