@@ -1,0 +1,96 @@
+{
+  "name": "Video",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u52d5\u753b\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u52d5\u753b\u8aac\u660e"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "\u52d5\u753b\u30d5\u30a1\u30a4\u30ebURL"
+    },
+    "mux_playback_id": {
+      "type": "string",
+      "description": "Mux Playback ID\uff08HLS\u518d\u751f\u7528\uff09"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\u30b5\u30e0\u30cd\u30a4\u30eb\u753b\u50cfURL"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "channel_avatar": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30a2\u30d0\u30bf\u30fcURL"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u4fa1\u683c\uff08\u5186\uff09"
+    },
+    "is_free": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u7121\u6599\u52d5\u753b\u304b\u3069\u3046\u304b"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u518d\u751f\u56de\u6570"
+    },
+    "duration": {
+      "type": "number",
+      "description": "\u52d5\u753b\u306e\u9577\u3055\uff08\u79d2\uff09"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "\u30a8\u30f3\u30bf\u30e1",
+        "\u97f3\u697d",
+        "\u30b2\u30fc\u30e0",
+        "\u6559\u80b2",
+        "\u30b9\u30dd\u30fc\u30c4",
+        "\u30c6\u30af\u30ce\u30ed\u30b8\u30fc",
+        "\u30cb\u30e5\u30fc\u30b9",
+        "\u305d\u306e\u4ed6"
+      ],
+      "default": "\u305d\u306e\u4ed6",
+      "description": "\u30ab\u30c6\u30b4\u30ea\u30fc"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u304a\u3059\u3059\u3081\u52d5\u753b"
+    },
+    "moderation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "\u5be9\u67fb\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "moderation_note": {
+      "type": "string",
+      "description": "\u5be9\u67fb\u30e1\u30e2\uff08\u5374\u4e0b\u7406\u7531\u7b49\uff09"
+    }
+  },
+  "required": [
+    "title",
+    "channel_id"
+  ],
+  "rls": {}
+}

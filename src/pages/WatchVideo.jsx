@@ -174,7 +174,19 @@ export default function WatchVideo() {
         {/* Video Player */}
         <div className="lg:col-span-2 space-y-4">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-            {video.video_url ? (
+            {video.mux_playback_id ? (
+              <video
+                ref={videoRef}
+                src={`https://stream.mux.com/${video.mux_playback_id}.m3u8`}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                poster={`https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg`}
+                crossOrigin="anonymous"
+              >
+                <source src={`https://stream.mux.com/${video.mux_playback_id}.m3u8`} type="application/x-mpegURL" />
+              </video>
+            ) : video.video_url ? (
               <video
                 ref={videoRef}
                 src={video.video_url}
@@ -205,7 +217,7 @@ export default function WatchVideo() {
             )}
 
             {/* Video controls overlay */}
-            {video.video_url && (
+            {(video.mux_playback_id || video.video_url) && (
               <div className="absolute bottom-12 right-3">
                 <VideoControls videoRef={videoRef} showQuality={true} />
               </div>
