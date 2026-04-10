@@ -73,21 +73,84 @@ export default function Home() {
         <p className="text-yellow-200/70 text-sm">サービスは現在準備中です。近日公開予定ですので、今しばらくお待ちください。</p>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-card to-secondary border border-border/50 p-8 md:p-12">
-        <div className="relative z-10 max-w-lg">
-          <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-5 h-5 text-primary" />
-            <span className="text-primary text-sm font-semibold tracking-widest uppercase">ChatMarket</span>
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 p-8 md:p-12" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #12050a 50%, #050a12 100%)'}}>        
+        {/* Diner grid floor effect */}
+        <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'linear-gradient(#ff3366 1px, transparent 1px), linear-gradient(90deg, #ff3366 1px, transparent 1px)', backgroundSize: '40px 40px'}} />
+        
+        <div className="relative z-10 text-center mb-8">
+          {/* Neon CHAT MARKET sign */}
+          <style>{`
+            @keyframes neonFlicker {
+              0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow:
+                  0 0 5px #fff,
+                  0 0 10px #fff,
+                  0 0 20px #ff3366,
+                  0 0 40px #ff3366,
+                  0 0 80px #ff3366,
+                  0 0 90px #ff3366,
+                  0 0 100px #ff3366,
+                  0 0 150px #ff3366;
+                color: #fff;
+              }
+              20%, 24%, 55% {
+                text-shadow: none;
+                color: #ff3366;
+              }
+            }
+            @keyframes neonFlickerBlue {
+              0%, 29%, 31%, 100% {
+                text-shadow:
+                  0 0 5px #fff,
+                  0 0 10px #fff,
+                  0 0 20px #00cfff,
+                  0 0 40px #00cfff,
+                  0 0 80px #00cfff;
+                color: #fff;
+              }
+              30% {
+                text-shadow: none;
+                color: #00cfff;
+              }
+            }
+            .neon-chat {
+              animation: neonFlicker 3s infinite alternate;
+              font-family: 'Georgia', serif;
+              letter-spacing: 0.15em;
+            }
+            .neon-market {
+              animation: neonFlickerBlue 2.5s infinite alternate;
+              font-family: 'Georgia', serif;
+              letter-spacing: 0.15em;
+            }
+            .neon-border {
+              box-shadow: 0 0 15px #ff3366, 0 0 30px #ff3366, inset 0 0 15px rgba(255,51,102,0.1);
+              border: 2px solid #ff3366;
+              animation: borderGlow 2s infinite alternate;
+            }
+            @keyframes borderGlow {
+              from { box-shadow: 0 0 15px #ff3366, 0 0 30px #ff3366, inset 0 0 15px rgba(255,51,102,0.1); }
+              to { box-shadow: 0 0 25px #ff3366, 0 0 50px #ff3366, inset 0 0 25px rgba(255,51,102,0.15); }
+            }
+          `}</style>
+          
+          <div className="neon-border inline-block rounded-xl px-8 py-6 mb-2" style={{background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)'}}>
+            <div className="text-5xl md:text-7xl font-black">
+              <span className="neon-chat" style={{color: '#fff'}}>CHAT</span>
+              <span className="mx-3 text-white/30" style={{fontSize: '0.6em'}}>✦</span>
+              <span className="neon-market" style={{color: '#fff'}}>MARKET</span>
+            </div>
+            <div className="mt-2 text-xs tracking-[0.5em] uppercase" style={{color: '#ff3366', textShadow: '0 0 10px #ff3366'}}>Est. 2024 · The Creator Hub</div>
           </div>
-          <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-4">
-            {t("hero_title")}
-          </h1>
+        </div>
+
+        <div className="relative z-10 max-w-lg mx-auto text-center">
           <p className="text-muted-foreground mb-6 text-sm md:text-base leading-relaxed">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />
             このプラットフォーム一つで！<br />
             使い方は貴方次第で無限大！
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/go-live">
               <Button className="bg-primary hover:bg-primary/90 gap-2">
                 <Radio className="w-4 h-4" />
@@ -102,7 +165,8 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-72 h-72 rounded-full blur-3xl pointer-events-none" style={{background: 'radial-gradient(circle, rgba(255,51,102,0.15) 0%, transparent 70%)'}} />
+        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{background: 'radial-gradient(circle, rgba(0,207,255,0.1) 0%, transparent 70%)'}} />
       </div>
 
       <CallWaitingRow user={user} />
