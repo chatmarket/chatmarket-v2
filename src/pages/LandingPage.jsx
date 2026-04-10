@@ -58,25 +58,178 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 価格 */}
-      <section className="py-16 sm:py-24 px-4 bg-secondary/30">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">プラン</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[
-              { name: "FREE", price: "無料", features: ["基本配信機能", "動画販売", "通話受付（70%還元）"] },
-              { name: "BASIC", price: "¥3,300/月", features: ["全機能利用", "通話還元85%", "優先サポート"] },
-              { name: "VOD", price: "準備中", features: ["動画最適化", "高度な分析", "（近日提供予定）"] },
-              { name: "Enterprise", price: "準備中", features: ["複数チャンネル", "カスタム機能", "（お問い合わせ）"] },
-            ].map((plan, i) => (
-              <div key={i} className={`rounded-xl border p-6 space-y-4 ${plan.price === "準備中" ? "bg-card border-border/30 opacity-60" : "bg-card border-primary/40"}`}>
-                <h3 className="font-bold text-lg">{plan.name}</h3>
-                <p className="text-2xl font-black text-primary">{plan.price}</p>
-                <ul className="text-xs space-y-2">
-                  {plan.features.map((f, j) => <li key={j} className="text-muted-foreground">• {f}</li>)}
+      {/* 詳細プラン紹介 */}
+      <section className="py-16 sm:py-24 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14 space-y-4">
+            <h2 className="text-4xl sm:text-5xl font-black">柔軟なプランで、あなたに最適な選択</h2>
+            <p className="text-lg text-muted-foreground">始める時は無料から。成長に合わせてアップグレード。</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* FREE Plan */}
+            <div className="relative rounded-2xl border-2 border-cyan-500/40 bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 p-8 space-y-6 hover:border-cyan-500/60 transition-all group">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded-full">人気</span>
+                </div>
+                <h3 className="text-2xl font-black text-cyan-400">FREE</h3>
+                <p className="text-4xl font-black">¥0</p>
+                <p className="text-sm text-muted-foreground">月額料金なし</p>
+              </div>
+              <div className="space-y-3 border-t border-cyan-500/20 pt-6">
+                <p className="font-semibold text-sm">✨ 利用可能な機能：</p>
+                <ul className="space-y-3">
+                  {[
+                    "📹 ライブ配信（PPV対応）",
+                    "🎬 動画販売",
+                    "📞 1対1ビデオ通話（70%還元）",
+                    "📊 基本分析ツール",
+                    "👥 ファンクラブ機能",
+                    "💬 チャット・メッセージング"
+                  ].map((f, i) => (
+                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="mt-0.5">{f}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
-            ))}
+              <div className="bg-cyan-500/20 border border-cyan-500/30 rounded-lg p-4 text-sm">
+                <p className="text-cyan-300 font-semibold">💡 まずはここから始めよう</p>
+              </div>
+            </div>
+
+            {/* BASIC Plan */}
+            <div className="relative rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/20 to-primary/5 p-8 space-y-6 hover:border-primary/80 transition-all shadow-lg shadow-primary/20 ring-1 ring-primary/30">
+              <div className="absolute -top-4 left-6 bg-gradient-to-r from-primary to-primary/80 text-white px-4 py-1 rounded-full text-xs font-black">🌟 おすすめ</div>
+              <div className="space-y-2 pt-2">
+                <h3 className="text-2xl font-black text-primary">BASIC</h3>
+                <p className="text-4xl font-black">¥3,300</p>
+                <p className="text-sm text-muted-foreground">月額料金（税込み）</p>
+              </div>
+              <div className="space-y-3 border-t border-primary/20 pt-6">
+                <p className="font-semibold text-sm">✨ FREEプラン全機能 + ：</p>
+                <ul className="space-y-3">
+                  {[
+                    "📞 ビデオ通話還元率 85%（15%手数料）",
+                    "📈 高度な収益分析ツール",
+                    "⭐ プロフィール優先表示",
+                    "🎯 カテゴリーランキング上位",
+                    "💌 優先カスタマーサポート",
+                    "🔄 無制限配信・動画投稿"
+                  ].map((f, i) => (
+                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-primary font-bold">✓</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-primary/20 border border-primary/40 rounded-lg p-4 text-sm">
+                <p className="text-primary font-semibold">🚀 売上が増えるほどお得！</p>
+                <p className="text-xs text-muted-foreground mt-1">月額¥3,300で通話還元が15%アップ</p>
+              </div>
+            </div>
+
+            {/* VOD Plan */}
+            <div className="relative rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-8 space-y-6 opacity-75">
+              <div className="space-y-2">
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full">準備中</span>
+                <h3 className="text-2xl font-black text-amber-400">VOD</h3>
+                <p className="text-4xl font-black">¥4,980</p>
+                <p className="text-sm text-muted-foreground">月額料金（近日提供予定）</p>
+              </div>
+              <div className="space-y-3 border-t border-amber-500/20 pt-6">
+                <p className="font-semibold text-sm">✨ BASIC機能 + ：</p>
+                <ul className="space-y-3">
+                  {[
+                    "🎥 4K動画最適化",
+                    "🎞️ 動画エンコーディング",
+                    "📊 詳細な視聴者分析",
+                    "🤖 AI字幕生成",
+                    "📦 バッチアップロード",
+                    "🌍 多言語対応サポート"
+                  ].map((f, i) => (
+                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-sm text-amber-300/60">
+                詳細は後日アナウンスいたします
+              </div>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="relative rounded-2xl border-2 border-purple-500/40 bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-8 space-y-6 opacity-75">
+              <div className="space-y-2">
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs font-bold rounded-full">カスタム相談</span>
+                <h3 className="text-2xl font-black text-purple-400">Enterprise</h3>
+                <p className="text-3xl font-black">カスタム</p>
+                <p className="text-sm text-muted-foreground">大規模利用向けプラン</p>
+              </div>
+              <div className="space-y-3 border-t border-purple-500/20 pt-6">
+                <p className="font-semibold text-sm">✨ 企業・大規模利用向け：</p>
+                <ul className="space-y-3">
+                  {[
+                    "🏢 複数チャンネル管理",
+                    "⚙️ カスタマイズ機能",
+                    "🔐 エンタープライズセキュリティ",
+                    "👥 専任サポート",
+                    "📡 専用インフラ",
+                    "💼 プライベート契約"
+                  ].map((f, i) => (
+                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 text-sm">
+                <p className="text-purple-300 font-semibold mb-2">お気軽にお問い合わせください</p>
+                <p className="text-xs text-muted-foreground">営業チームが最適なプランをご提案します</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 比較表 */}
+          <div className="mt-16 bg-card border border-border/50 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-secondary border-b border-border/50">
+                    <th className="text-left p-4 font-bold">機能</th>
+                    <th className="text-center p-4 font-bold">FREE</th>
+                    <th className="text-center p-4 font-bold text-primary">BASIC</th>
+                    <th className="text-center p-4 font-bold text-amber-400">VOD</th>
+                    <th className="text-center p-4 font-bold text-purple-400">Enterprise</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { feature: "ライブ配信", free: "✓", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "動画販売", free: "✓", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "ビデオ通話", free: "✓ 70%", basic: "✓ 85%", vod: "✓ 85%", ent: "カスタム" },
+                    { feature: "ファンクラブ", free: "✓", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "基本分析", free: "✓", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "詳細分析", free: "-", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "プロフィール優先表示", free: "-", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "優先サポート", free: "-", basic: "✓", vod: "✓", ent: "✓" },
+                    { feature: "4K対応", free: "-", basic: "-", vod: "✓", ent: "✓" },
+                    { feature: "複数チャンネル", free: "-", basic: "-", vod: "-", ent: "✓" },
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b border-border/30 hover:bg-secondary/50">
+                      <td className="p-4 font-semibold text-muted-foreground">{row.feature}</td>
+                      <td className="text-center p-4 text-cyan-400 font-semibold">{row.free}</td>
+                      <td className="text-center p-4 text-primary font-semibold">{row.basic}</td>
+                      <td className="text-center p-4 text-amber-400 font-semibold">{row.vod}</td>
+                      <td className="text-center p-4 text-purple-400 font-semibold">{row.ent}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
