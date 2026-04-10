@@ -343,7 +343,7 @@ export default function LandingPage() {
                     { min: "¥1,650万", max: "¥1,800万未満", rate: "92%", fee: "8%" },
                     { min: "¥1,800万", max: "¥1,950万未満", rate: "93%", fee: "7%" },
                     { min: "¥1,950万", max: "¥2,000万未満", rate: "94%", fee: "6%" },
-                    { min: "¥2,000万", max: "以上", rate: "95%", fee: "5%" },
+                    { min: "¥2,000万以上", max: "", rate: "95%", fee: "5%" },
                   ].map((row, i) => {
                     const isHighlight = i >= 8;
                     return (
@@ -354,13 +354,11 @@ export default function LandingPage() {
                       }`}>
                         <td className="p-4 text-sm font-semibold">
                           <span className="text-muted-foreground">{row.min}</span>
-                          {row.max !== "以上" && (
-                            <span className="text-muted-foreground/60 mx-2">〜</span>
-                          )}
-                          {row.max !== "以上" ? (
-                            <span className="text-muted-foreground">{row.max}</span>
-                          ) : (
-                            <span className="text-muted-foreground">¥{row.max}</span>
+                          {row.max && (
+                            <>
+                              <span className="text-muted-foreground/60 mx-2">〜</span>
+                              <span className="text-muted-foreground">{row.max}</span>
+                            </>
                           )}
                         </td>
                         <td className={`text-center p-4 font-black text-lg ${
