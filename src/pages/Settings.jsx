@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CategoryTagSelector from "../components/channel/CategoryTagSelector";
@@ -39,6 +39,11 @@ export default function Settings() {
   const [channelTags, setChannelTags] = useState([]);
   const [channelCategoryId, setChannelCategoryId] = useState("");
   const [channelId, setChannelId] = useState(null);
+  const [fanclubSettings, setFanclubSettings] = useState({
+    fanclub_enabled: false,
+    fanclub_monthly_price: 500,
+    fanclub_description: "",
+  });
   const [callSettings, setCallSettings] = useState({
     call_enabled: false,
     call_price_30min: 3000,
@@ -133,6 +138,11 @@ export default function Settings() {
         setChannelTags(channels[0].tags || []);
         setChannelCategoryId(channels[0].category_id || "");
         setChannelId(channels[0].id);
+        setFanclubSettings({
+          fanclub_enabled: channels[0].fanclub_enabled || false,
+          fanclub_monthly_price: channels[0].fanclub_monthly_price || 500,
+          fanclub_description: channels[0].fanclub_description || "",
+        });
 
         // フリートライアルメール向け：自動的に通話受付有効化
         const isTrialUser = FREE_TRIAL_EMAILS.includes(u.email);
@@ -248,6 +258,9 @@ export default function Settings() {
           </TabsTrigger>
           <TabsTrigger value="call" className="flex-1 gap-2">
             <PhoneCall className="w-4 h-4" /> 通話設定
+          </TabsTrigger>
+          <TabsTrigger value="fanclub" className="flex-1 gap-2">
+            <Crown className="w-4 h-4" /> ファンクラブ
           </TabsTrigger>
           <TabsTrigger value="recovery" className="flex-1 gap-2">
             <Key className="w-4 h-4" /> 復旧設定
@@ -814,6 +827,81 @@ export default function Settings() {
                 call_theme: callSettings.call_theme,
               });
               toast.success("通話設定を保存しました");
+              setSaving(false);
+            }}
+            disabled={saving}
+            className="w-full gap-2 bg-primary hover:bg-primary/90"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            保存する
+          </Button>
+          </TabsContent>
+
+          {/* Fanclub Tab */}
+          <TabsContent value="fanclub" className="space-y-5">
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-2">
+            <Crown className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-yellow-300">ファンクラブ機能</p>
+              <p className="text-xs text-yellow-200/70 mt-0.5">配信者の収益率は<strong>85%</strong>です。ChatMarketが15%を得ます。</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 bg-card rounded-xl border border-border/50 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>ファンクラブを有効にする</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">ファンに月額メンバーシップを提供</p>
+              </div>
+              <Switch
+                checked={fanclubSettings.fanclub_enabled}
+                onCheckedChange={(v) => setFanclubSettings({ ...fanclubSettings, fanclub_enabled: v })}
+              />
+            </div>
+
+            {fanclubSettings.fanclub_enabled && (
+              <>
+                <div className="space-y-2">
+                  <Label>月額料金（円・税込）</Label>
+                  <Input
+                    type="number"
+                    min={100}
+                    step={100}
+                    value={fanclubSettings.fanclub_monthly_price}
+                    onChange={(e) => setFanclubSettings({ ...fanclubSettings, fanclub_monthly_price: parseInt(e.target.value) || 500 })}
+                    className="bg-secondary border-0"
+                  />
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
+                      <p className="text-muted-foreground">配信者収益 (85%)</p>
+                      <p className="font-black text-primary">¥{Math.floor((fanclubSettings.fanclub_monthly_price || 0) * 0.85).toLocaleString()}</p>
+                    </div>
+                    <div className="bg-secondary rounded-lg px-3 py-2">
+                      <p className="text-muted-foreground">ChatMarket (15%)</p>
+                      <p className="font-black text-muted-foreground">¥{Math.floor((fanclubSettings.fanclub_monthly_price || 0) * 0.15).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>ファンクラブの説明・特典</Label>
+                  <Textarea
+                    value={fanclubSettings.fanclub_description}
+                    onChange={(e) => setFanclubSettings({ ...fanclubSettings, fanclub_description: e.target.value })}
+                    placeholder="会員限定生配信、アーカイブ動画見放題、専用チャットなど..."
+                    className="bg-secondary border-0 resize-none"
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <Button
+            onClick={async () => {
+              if (!channelId) { toast.error("チャンネルが見つかりません"); return; }
+              setSaving(true);
+              await base44.entities.Channel.update(channelId, fanclubSettings);
+              toast.success("ファンクラブ設定を保存しました");
               setSaving(false);
             }}
             disabled={saving}

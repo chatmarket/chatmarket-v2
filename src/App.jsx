@@ -107,6 +107,7 @@ const AuthenticatedApp = () => {
         <Route path="/mux-videos" element={<MuxVideoPage />} />
         <Route path="/admin/video-moderation" element={<VideoModeration />} />
         <Route path="/fanclub" element={<FanClub />} />
+        <Route path="/fanclub/:channelId" element={<FanClub />} />
         <Route path="/admin/ng-word-analytics" element={<NgWordAnalytics />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
