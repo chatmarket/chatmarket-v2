@@ -1,0 +1,60 @@
+{
+  "name": "ChannelReport",
+  "type": "object",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u901a\u5831\u5bfe\u8c61\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "reporter_email": {
+      "type": "string",
+      "description": "\u901a\u5831\u8005\u30e1\u30fc\u30eb"
+    },
+    "reporter_name": {
+      "type": "string",
+      "description": "\u901a\u5831\u8005\u540d"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "harassment",
+        "spam",
+        "inappropriate",
+        "misconduct",
+        "ng_word",
+        "other"
+      ],
+      "description": "\u901a\u5831\u7406\u7531"
+    },
+    "detail": {
+      "type": "string",
+      "description": "\u8a73\u7d30\u8aac\u660e"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "reviewed",
+        "actioned",
+        "dismissed"
+      ],
+      "default": "pending",
+      "description": "\u51e6\u7406\u72b6\u614b"
+    }
+  },
+  "required": [
+    "channel_id",
+    "channel_name",
+    "owner_email",
+    "reporter_email",
+    "reason"
+  ]
+}

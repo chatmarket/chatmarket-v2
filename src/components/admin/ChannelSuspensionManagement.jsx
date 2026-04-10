@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Ban, ShieldOff, ShieldCheck, AlertTriangle, MessageSquare, Clock, CheckCircle2, XCircle, Search } from "lucide-react";
+import { Ban, ShieldOff, ShieldCheck, AlertTriangle, MessageSquare, Clock, CheckCircle2, XCircle, Search, Flag, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 
 const REASON_LABELS = {
@@ -30,14 +30,39 @@ const STATUS_CONFIG = {
   lifted: { label: "解除済", cls: "bg-blue-500/20 text-blue-300", icon: ShieldCheck },
 };
 
+const REPORT_REASON_LABELS = {
+  harassment: "ハラスメント・嫌がらせ",
+  spam: "スパム・迷惑行為",
+  inappropriate: "不適切なコンテンツ",
+  misconduct: "悪質な言動",
+  ng_word: "NGワード・規約違反",
+  other: "その他",
+};
+
 export default function ChannelSuspensionManagement({ channels = [], adminEmail }) {
   const queryClient = useQueryClient();
+  const [showReports, setShowReports] = useState(true);
+  const [adminResponse, setAdminResponse] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [channelSearch, setChannelSearch] = useState("");
   const [showSuspendModal, setShowSuspendModal] = useState(false);
-  const [showAppealModal, setShowAppealModal] = useState(null); // suspension record
+  const [showAppealModal, setShowAppealModal] = useState(null);
   const [suspendForm, setSuspendForm] = useState({ channel_id: "", reason: "report", reason_detail: "" });
-  const [adminResponse, setAdminResponse] = useState("");
+
+  const { data: reports = [] } = useQuery({
+    queryKey: ["channel-reports"],
+    queryFn: () => base44.entities.ChannelReport.list("-created_date", 100),
+  });
+
+  const pendingReports = reports.filter((r) => r.status === "pending");
+
+  const markReportReviewed = useMutation({
+    mutationFn: ({ reportId, action }) =>
+      base44.entities.ChannelReport.update(reportId, {
+        status: action === "dismiss" ? "dismissed" : "actioned",
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["channel-reports"] }),
+  });
 
   const { data: suspensions = [] } = useQuery({
     queryKey: ["channel-suspensions"],
@@ -114,6 +139,77 @@ export default function ChannelSuspensionManagement({ channels = [], adminEmail 
 
   return (
     <div className="space-y-6">
+      {/* 通報一覧セクション */}
+      <div className="bg-red-500/5 border border-red-500/20 rounded-xl overflow-hidden">
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-red-500/10 transition-colors"
+          onClick={() => setShowReports((v) => !v)}
+        >
+          <div className="flex items-center gap-2">
+            <Flag className="w-4 h-4 text-red-400" />
+            <span className="font-bold text-sm">ユーザーからの通報</span>
+            {pendingReports.length > 0 && (
+              <span className="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full">
+                {pendingReports.length}件 未対応
+              </span>
+            )}
+          </div>
+          {showReports ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </button>
+
+        {showReports && (
+          <div className="divide-y divide-border/30">
+            {pendingReports.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">未対応の通報はありません</p>
+            ) : (
+              pendingReports.map((report) => (
+                <div key={report.id} className="px-4 py-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-sm">{report.channel_name}</p>
+                      <p className="text-xs text-muted-foreground">{report.owner_email}</p>
+                      <span className="inline-block text-xs bg-red-500/15 text-red-300 px-2 py-0.5 rounded-full">
+                        {REPORT_REASON_LABELS[report.reason] || report.reason}
+                      </span>
+                      {report.detail && (
+                        <p className="text-xs text-muted-foreground mt-1">{report.detail}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">通報者: {report.reporter_email}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5 shrink-0">
+                      <Button
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700 gap-1 text-xs h-7 px-2"
+                        onClick={() => {
+                          setSuspendForm({
+                            channel_id: report.channel_id,
+                            reason: report.reason === "ng_word" ? "ng_word_violation" : report.reason === "misconduct" ? "misconduct" : "report",
+                            reason_detail: report.detail || "",
+                          });
+                          setChannelSearch(report.channel_name);
+                          markReportReviewed.mutate({ reportId: report.id, action: "action" });
+                          setShowSuspendModal(true);
+                        }}
+                      >
+                        <Ban className="w-3 h-3" /> 閉鎖へ
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => markReportReviewed.mutate({ reportId: report.id, action: "dismiss" })}
+                      >
+                        却下
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Ban className="w-5 h-5 text-red-400" />

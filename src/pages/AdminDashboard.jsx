@@ -130,6 +130,13 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
+  const { data: pendingReports = [] } = useQuery({
+    queryKey: ["admin-pending-reports"],
+    queryFn: () => base44.entities.ChannelReport.filter({ status: "pending" }),
+    enabled: !!user && ADMIN_EMAILS.includes(user?.email),
+    refetchInterval: 30000,
+  });
+
   if (!user || !ADMIN_EMAILS.includes(user.email)) {
     return null;
   }
@@ -363,8 +370,13 @@ export default function AdminDashboard() {
           <TabsTrigger value="crowdfunding" className="gap-2">
             <DollarSign className="w-4 h-4" /> クラウドファンディング
           </TabsTrigger>
-          <TabsTrigger value="suspension" className="gap-2">
+          <TabsTrigger value="suspension" className="gap-2 relative">
             <Ban className="w-4 h-4" /> チャンネル閉鎖
+            {pendingReports.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                {pendingReports.length > 9 ? "9+" : pendingReports.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="incentive" className="gap-2">
             <TrendingUp className="w-4 h-4" /> プログレッシブ

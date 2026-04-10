@@ -6,13 +6,15 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag } from "lucide-react";
+import ReportChannelDialog from "../components/channel/ReportChannelDialog";
 import CategoryBadge from "../components/channel/CategoryBadge";
 
 export default function ChannelPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
+  const [showReport, setShowReport] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -184,11 +186,26 @@ export default function ChannelPage() {
                     </Button>
                   </Link>
                 )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-2 w-full text-muted-foreground hover:text-red-400 text-xs"
+                  onClick={() => setShowReport(true)}
+                >
+                  <Flag className="w-3.5 h-3.5" /> このチャンネルを通報
+                </Button>
               </>
             )}
           </div>
         </div>
       </div>
+
+      <ReportChannelDialog
+        channel={channel}
+        user={currentUser}
+        open={showReport}
+        onClose={() => setShowReport(false)}
+      />
 
       {/* Live streams */}
       {liveStreams.length > 0 && (
