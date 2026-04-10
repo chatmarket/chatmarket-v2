@@ -11,6 +11,7 @@ import EmojiPicker from "./EmojiPicker";
 import MotionMessage from "./MotionMessage";
 import YellCoinBurst from "./YellCoinBurst";
 import NgWordSettings from "./NgWordSettings";
+import { useAiModeration } from "../../hooks/useAiModeration";
 
 const superChatColors = {
   green: "from-emerald-500/20 to-emerald-600/10 border-emerald-500/40",
@@ -33,7 +34,9 @@ export default function ChatPanel({ targetType, targetId }) {
   const [burst, setBurst] = useState(null);
   const [latestSuperChatId, setLatestSuperChatId] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
+  const [aiBlocked, setAiBlocked] = useState(false);
   const queryClient = useQueryClient();
+  const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -107,11 +110,19 @@ export default function ChatPanel({ targetType, targetId }) {
     },
   });
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     const trimmed = message.trim();
     if (!trimmed || !user) return;
     if (!filterNg(trimmed)) { setMessage(""); return; }
+    // AI moderation check before posting
+    const safe = await checkMessage(trimmed);
+    if (!safe) {
+      setMessage("");
+      setAiBlocked(true);
+      setTimeout(() => setAiBlocked(false), 3000);
+      return;
+    }
     sendComment.mutate(trimmed);
   };
 
@@ -132,8 +143,13 @@ export default function ChatPanel({ targetType, targetId }) {
     setMenuOpenId(null);
   };
 
+  // Scan incoming comments with AI moderation
+  useEffect(() => {
+    if (comments.length > 0) scanMessages(comments);
+  }, [comments]);
+
   const allMessages = [
-    ...comments.filter((c) => filterNg(c.content || "")).map((c) => ({ ...c, type: "comment" })),
+    ...filterMessages(comments.filter((c) => filterNg(c.content || ""))).map((c) => ({ ...c, type: "comment" })),
     ...superChats.map((s) => ({ ...s, type: "superchat" })),
   ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
@@ -141,7 +157,10 @@ export default function ChatPanel({ targetType, targetId }) {
     <div className="flex flex-col h-full bg-card rounded-xl border border-border/50 relative">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
-        <h3 className="font-semibold text-sm">チャット</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-sm">チャット</h3>
+          <span className="text-[10px] text-green-400/70 flex items-center gap-1"><Shield className="w-3 h-3" />AIモデレーション中</span>
+        </div>
         {isOwner && (
           <button
             onClick={() => setShowNgSettings(true)}
@@ -238,6 +257,11 @@ export default function ChatPanel({ targetType, targetId }) {
       </AnimatePresence>
 
       {/* 入力エリア */}
+      {aiBlocked && (
+        <div className="mx-3 mb-1 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+          <Shield className="w-3 h-3" /> このメッセージはAIモデレーションにより送信できませんでした
+        </div>
+      )}
       {user ? (
         <div className="p-3 border-t border-border/50 space-y-2">
           <div className="flex gap-2">
