@@ -12,6 +12,7 @@ import ScrollRow from "../components/home/ScrollRow";
 import CallWaitingRow from "../components/home/CallWaitingRow";
 import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
+import CreatorRanking from "../components/home/CreatorRanking";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -328,6 +329,8 @@ export default function Home() {
           onClose={() => setMessageTarget(null)}
         />
       )}
+
+      <CreatorRanking />
 
       <ProgressiveIncentiveSection />
 
