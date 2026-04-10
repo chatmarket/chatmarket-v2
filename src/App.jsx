@@ -43,6 +43,7 @@ import SchoolTickets from './pages/SchoolTickets.jsx';
 import EnterpriseDashboard from './pages/EnterpriseDashboard.jsx';
 import MuxVideoPage from './pages/MuxVideoPage';
 import VideoModeration from './pages/VideoModeration';
+import FanClub from './pages/FanClub';
 import NgWordAnalytics from './pages/NgWordAnalytics';
 
 const AuthenticatedApp = () => {
@@ -105,6 +106,7 @@ const AuthenticatedApp = () => {
         <Route path="/enterprise" element={<EnterpriseDashboard />} />
         <Route path="/mux-videos" element={<MuxVideoPage />} />
         <Route path="/admin/video-moderation" element={<VideoModeration />} />
+        <Route path="/fanclub" element={<FanClub />} />
         <Route path="/admin/ng-word-analytics" element={<NgWordAnalytics />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
