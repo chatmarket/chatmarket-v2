@@ -163,25 +163,20 @@ export default function Navbar() {
                     <Phone className="w-4 h-4 mr-2 text-green-400" />
                     通話履歴
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/mini-school")}>
+                  <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
                     <GraduationCap className="w-4 h-4 mr-2 text-violet-400" />
                     ミニスクール管理
+                    <span className="ml-auto text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">準備中</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/enterprise")}>
+                  <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
                     <Building2 className="w-4 h-4 mr-2 text-violet-400" />
                     エンタープライズ管理
+                    <span className="ml-auto text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">準備中</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/call-slots")}>
-                    <Phone className="w-4 h-4 mr-2 text-primary" />
-                    通話予約枠管理
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/my-reservations")}>
-                    <Phone className="w-4 h-4 mr-2 text-blue-400" />
-                    予約管理
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/donor-dashboard")}>
+                  <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
                     <Heart className="w-4 h-4 mr-2 text-red-400" />
                     寄付者マイページ
+                    <span className="ml-auto text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">準備中</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="w-4 h-4 mr-2" />
