@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function ScrollRow({ children, cardWidth = 280 }) {
+export default function ScrollRow({ children, cardWidth = 280, mobileCardWidth }) {
   const ref = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -42,12 +42,12 @@ export default function ScrollRow({ children, cardWidth = 280 }) {
       {/* Scroll container */}
       <div
         ref={ref}
-        className="flex gap-4 overflow-x-auto pb-2 scroll-smooth"
+        className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scroll-smooth"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        <style>{`.scroll-hide::-webkit-scrollbar{display:none}`}</style>
+        <style>{`div::-webkit-scrollbar{display:none}`}</style>
         {React.Children.map(children, (child) => (
-          <div className="shrink-0" style={{ width: cardWidth }}>
+          <div className="shrink-0" style={{ width: mobileCardWidth ? `min(${cardWidth}px, ${mobileCardWidth})` : cardWidth }}>
             {child}
           </div>
         ))}

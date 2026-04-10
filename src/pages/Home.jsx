@@ -59,10 +59,10 @@ export default function Home() {
   const isEmpty = approvedVideos.length === 0 && liveStreams.length === 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-8 space-y-14">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 space-y-10 sm:space-y-14">
 
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/40 p-8 md:p-14 text-center"
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/40 p-5 sm:p-8 md:p-14 text-center"
         style={{ background: "linear-gradient(135deg,#0a0a0f 0%,#12050a 50%,#050a12 100%)" }}>
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: "linear-gradient(#ff3366 1px,transparent 1px),linear-gradient(90deg,#ff3366 1px,transparent 1px)",
@@ -76,29 +76,29 @@ export default function Home() {
             .n-market{animation:neonBlue 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
             .n-box{box-shadow:0 0 15px #ff3366,0 0 30px #ff3366,inset 0 0 15px rgba(255,51,102,.1);border:2px solid #ff3366}
           `}</style>
-          <div className="n-box inline-block rounded-2xl px-8 py-5 mb-6"
+          <div className="n-box inline-block rounded-xl sm:rounded-2xl px-4 sm:px-8 py-4 sm:py-5 mb-5 max-w-full"
             style={{ background: "rgba(0,0,0,.7)", backdropFilter: "blur(10px)" }}>
-            <div className="text-4xl md:text-6xl font-black">
+            <div className="text-3xl sm:text-4xl md:text-6xl font-black">
               <span className="n-chat">CHAT</span>
-              <span className="mx-3 text-white/30 text-2xl">✦</span>
+              <span className="mx-2 sm:mx-3 text-white/30 text-xl sm:text-2xl">✦</span>
               <span className="n-market">MARKET</span>
             </div>
-            <div className="mt-1.5 text-[11px] tracking-[.5em] uppercase" style={{ color: "#ff3366", textShadow: "0 0 10px #ff3366" }}>
+            <div className="mt-1.5 text-[10px] sm:text-[11px] tracking-[.3em] sm:tracking-[.5em] uppercase" style={{ color: "#ff3366", textShadow: "0 0 10px #ff3366" }}>
               Est. 2024 · The Creator Hub
             </div>
           </div>
-          <p className="text-muted-foreground mb-8 text-sm md:text-base leading-relaxed">
+          <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />
             このプラットフォーム一つで。使い方は無限大！
           </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Link to="/go-live">
-              <Button className="bg-primary hover:bg-primary/90 gap-2 h-11 px-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center">
+            <Link to="/go-live" className="w-full sm:w-auto">
+              <Button className="bg-primary hover:bg-primary/90 gap-2 h-11 px-6 w-full sm:w-auto">
                 <Radio className="w-4 h-4" />ライブ配信を始める
               </Button>
             </Link>
-            <Link to="/upload">
-              <Button variant="secondary" className="gap-2 h-11 px-6">
+            <Link to="/upload" className="w-full sm:w-auto">
+              <Button variant="secondary" className="gap-2 h-11 px-6 w-full sm:w-auto">
                 <Play className="w-4 h-4" />動画をアップロード
               </Button>
             </Link>
@@ -115,12 +115,12 @@ export default function Home() {
 
       {/* ライブ配信中 */}
       {liveStreams.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-3 sm:space-y-4">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
             <h2 className="text-xl font-bold">ライブ配信中</h2>
           </div>
-          <ScrollRow cardWidth={280}>
+          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
           </ScrollRow>
         </section>
@@ -128,9 +128,9 @@ export default function Home() {
 
       {/* おすすめ有料動画 */}
       {featuredVideos.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-3 sm:space-y-4">
           <h2 className="text-xl font-bold">おすすめ有料動画</h2>
-          <ScrollRow cardWidth={280}>
+          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {featuredVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
@@ -148,9 +148,9 @@ export default function Home() {
 
       {/* 無料動画 */}
       {freeVideos.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-3 sm:space-y-4">
           <h2 className="text-xl font-bold">無料で見られる動画</h2>
-          <ScrollRow cardWidth={280}>
+          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {freeVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
@@ -162,9 +162,9 @@ export default function Home() {
 
       {/* 新着動画 */}
       {recentVideos.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-3 sm:space-y-4">
           <h2 className="text-xl font-bold">新着動画</h2>
-          <ScrollRow cardWidth={280}>
+          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {recentVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
@@ -187,20 +187,20 @@ export default function Home() {
             className="bg-gradient-to-br from-red-900/30 to-red-800/10 border border-red-500/30 rounded-2xl overflow-hidden cursor-pointer"
             onClick={() => setCfExpanded((v) => !v)}
           >
-            <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-                  <Heart className="w-5 h-5 text-red-400" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
                 </div>
                 <div>
-                  <h2 className="font-bold flex items-center gap-2">
+                  <h2 className="font-bold text-sm sm:text-base flex items-center gap-2">
                     クラウドファンディング
                     <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">{crowdfundings.length}件</span>
                   </h2>
-                  <p className="text-xs text-red-300/70">NPO・社会課題プロジェクトを支援</p>
+                  <p className="text-xs text-red-300/70 hidden sm:block">NPO・社会課題プロジェクトを支援</p>
                 </div>
               </div>
-              {cfExpanded ? <ChevronUp className="w-5 h-5 text-red-400" /> : <ChevronDown className="w-5 h-5 text-red-400" />}
+              {cfExpanded ? <ChevronUp className="w-5 h-5 text-red-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-red-400 shrink-0" />}
             </div>
           </div>
           {cfExpanded && (
@@ -208,18 +208,18 @@ export default function Home() {
               {crowdfundings.map((cf) => {
                 const goalPct = cf.goal_amount > 0 ? Math.min(100, Math.round((cf.total_raised / cf.goal_amount) * 100)) : null;
                 return (
-                  <div key={cf.id} className="px-5 py-4 flex items-center gap-4">
+                  <div key={cf.id} className="px-4 sm:px-5 py-3 sm:py-4 flex items-center gap-3">
                     <div className="flex-1 min-w-0 space-y-1">
                       <p className="font-bold text-sm line-clamp-1">{cf.title}</p>
                       <p className="text-xs text-muted-foreground">{cf.organization_name}</p>
-                      <div className="flex items-center gap-3 text-xs text-red-300">
-                        <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {cf.supporter_count || 0}人支援</span>
-                        <span>¥{(cf.total_raised || 0).toLocaleString()} 累計</span>
-                        {goalPct !== null && <span className="flex items-center gap-1"><Target className="w-3 h-3" /> {goalPct}%</span>}
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-red-300">
+                        <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {cf.supporter_count || 0}人</span>
+                        <span>¥{(cf.total_raised || 0).toLocaleString()}</span>
+                        {goalPct !== null && <span>{goalPct}%達成</span>}
                       </div>
                     </div>
                     <Link to={`/crowdfunding/${cf.id}`} onClick={(e) => e.stopPropagation()}>
-                      <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-1 shrink-0">
+                      <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-1 shrink-0 text-xs px-3">
                         支援 <ExternalLink className="w-3 h-3" />
                       </Button>
                     </Link>
