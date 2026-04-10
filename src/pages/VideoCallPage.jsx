@@ -142,6 +142,11 @@ export default function VideoCallPage() {
   // Message modal
   const [showMessageModal, setShowMessageModal] = useState(false);
 
+  // NG Word Detection
+  const recognitionRef = useRef(null);
+  const [ngDetected, setNgDetected] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+
   // Modals
   const [showYellModal, setShowYellModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -343,6 +348,50 @@ export default function VideoCallPage() {
 
   const togglePanel = (name) => setActivePanel(activePanel === name ? null : name);
 
+  // Web Speech API NGワード検出
+  useEffect(() => {
+    const ngWords = calleeChannel?.ng_words || [];
+    if (!micOn || !call || call.status !== "active" || ngWords.length === 0) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "ja-JP";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => {
+      setIsListening(false);
+      // 自動再起動（通話中は常時検出）
+      if (micOn && call?.status === "active") {
+        try { recognition.start(); setIsListening(true); } catch (e) {}
+      }
+    };
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript.toLowerCase();
+        const hit = ngWords.find((w) => w && transcript.includes(w.toLowerCase()));
+        if (hit) {
+          setNgDetected(hit);
+          toast.error(`⚠️ NGワード検出: "${hit}"`, { duration: 4000 });
+          setTimeout(() => setNgDetected(null), 4000);
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
+    try { recognition.start(); } catch (e) {}
+
+    return () => { recognition.stop(); };
+  }, [micOn, call?.status, calleeChannel]);
+
   const currentFilter = FILTERS.find((f) => f.id === selectedFilter);
 
   const otherName = call
@@ -431,6 +480,20 @@ export default function VideoCallPage() {
             <span className="text-[10px] text-white/70 bg-black/50 px-2 py-0.5 rounded-full">あなた</span>
           </div>
         </div>
+
+        {/* NG Word Detection indicator */}
+        {isListening && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 border border-green-500/40 rounded-full px-3 py-1 flex items-center gap-1.5 text-green-400 text-xs backdrop-blur">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+            NGワード監視中
+          </div>
+        )}
+        {ngDetected && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 bg-red-900/90 border border-red-500/60 rounded-xl px-4 py-2 flex items-center gap-2 text-red-300 text-sm font-bold backdrop-blur shadow-lg">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            NGワード検出: "{ngDetected}"
+          </div>
+        )}
 
         {/* Yell coin badge */}
         {call?.yell_coin_amount > 0 && (
