@@ -184,10 +184,10 @@ export default function WatchVideo() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Video Player */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {video.mux_playback_id ? (
               <video
@@ -243,7 +243,7 @@ export default function WatchVideo() {
 
           {/* Video info */}
           <div className="space-y-3">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
               <h1 className="text-xl md:text-2xl font-bold flex-1">
                 {video.is_free && (
                   <span className="inline-block bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded mr-2 align-middle">FREE</span>
@@ -276,7 +276,7 @@ export default function WatchVideo() {
                 <p className="text-xs text-muted-foreground">チャンネルを見る →</p>
               </div>
             </Link>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="w-4 h-4" />
                 {video.view_count || 0} 回視聴
@@ -287,8 +287,8 @@ export default function WatchVideo() {
               </span>
             </div>
             {video.description && (
-              <div className="bg-card rounded-xl p-4 border border-border/50">
-                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{video.description}</p>
+              <div className="bg-card rounded-xl p-3 sm:p-4 border border-border/50">
+                <p className="text-xs sm:text-sm text-foreground/80 whitespace-pre-wrap">{video.description}</p>
               </div>
             )}
             <div className="space-y-3">
@@ -299,13 +299,13 @@ export default function WatchVideo() {
         </div>
 
         {/* Chat */}
-        <div className="lg:col-span-1 h-[500px] lg:h-[calc(100vh-8rem)]">
+        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)]">
           <ChatPanel targetType="video" targetId={id} />
         </div>
       </div>
 
       {/* Recommended Videos */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <RecommendedVideos currentVideoId={id} category={video.category} />
       </div>
 
