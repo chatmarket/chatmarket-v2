@@ -47,7 +47,7 @@ import FanClub from './pages/FanClub';
 import NgWordAnalytics from './pages/NgWordAnalytics';
 import CreatorRevenueDashboard from './pages/CreatorRevenueDashboard';
 import WithdrawalRequest from './pages/WithdrawalRequest';
-import LandingPage from './pages/LandingPage.jsx';
+import LandingPage from './pages/LandingPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
