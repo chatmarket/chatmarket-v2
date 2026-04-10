@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Heart, Target, ExternalLink, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";

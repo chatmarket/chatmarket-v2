@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Clock } from "lucide-react";
@@ -19,6 +20,7 @@ function formatViews(count) {
 
 export default function VideoCard({ video, size = "default" }) {
   const isLarge = size === "large";
+  const navigate = useNavigate();
 
   return (
     <Link to={`/watch/${video.id}`} className="group block">
@@ -72,7 +74,7 @@ export default function VideoCard({ video, size = "default" }) {
           {video.title}
         </h3>
         <div
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/channel/${video.channel_id}`; }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/channel/${video.channel_id}`); }}
           className="flex items-center gap-1.5 group/ch cursor-pointer"
         >
           {video.channel_avatar ? (
