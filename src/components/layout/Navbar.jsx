@@ -32,6 +32,12 @@ export default function Navbar() {
     });
   }, []);
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["navbar-user-profile", user?.email],
+    queryFn: () => base44.entities.User.filter({ email: user.email }, "-created_date", 1).then(data => data[0] || null),
+    enabled: !!user?.email,
+  });
+
   const { data: wallet } = useQuery({
     queryKey: ["yell-coin-wallet", user?.email],
     queryFn: () => base44.entities.YellCoinWallet.filter({ user_email: user.email }, "-updated_date", 1).then(data => data[0] || null),
@@ -128,7 +134,7 @@ export default function Navbar() {
                       <User className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <span className="hidden sm:inline text-xs font-medium text-foreground/80 truncate max-w-[80px]">
-                      {user.nickname || user.full_name || "ユーザー"}
+                      {userProfile?.nickname || user.nickname || user.full_name || "ユーザー"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
