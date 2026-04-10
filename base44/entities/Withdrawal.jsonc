@@ -1,0 +1,73 @@
+{
+  "name": "Withdrawal",
+  "type": "object",
+  "properties": {
+    "applicant_email": {
+      "type": "string",
+      "description": "\u7533\u8acb\u8005\u30e1\u30fc\u30eb"
+    },
+    "applicant_name": {
+      "type": "string",
+      "description": "\u7533\u8acb\u8005\u540d"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u7533\u8acb\u984d\uff08\u5186\uff09"
+    },
+    "bank_account_name": {
+      "type": "string",
+      "description": "\u53e3\u5ea7\u540d\u7fa9"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "\u9280\u884c\u540d"
+    },
+    "bank_branch": {
+      "type": "string",
+      "description": "\u652f\u5e97\u540d"
+    },
+    "bank_account_number": {
+      "type": "string",
+      "description": "\u53e3\u5ea7\u756a\u53f7"
+    },
+    "bank_account_type": {
+      "type": "string",
+      "enum": [
+        "\u666e\u901a",
+        "\u5f53\u5ea7"
+      ],
+      "description": "\u53e3\u5ea7\u7a2e\u5225"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "transferred"
+      ],
+      "default": "pending",
+      "description": "\u7533\u8acb\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "admin_note": {
+      "type": "string",
+      "description": "\u7ba1\u7406\u8005\u30e1\u30e2\uff08\u5374\u4e0b\u7406\u7531\u306a\u3069\uff09"
+    },
+    "transfer_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u632f\u8fbc\u65e5"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u7533\u8acb\u6642\u306e\u5099\u8003"
+    }
+  },
+  "required": [
+    "applicant_email",
+    "amount",
+    "bank_account_name",
+    "bank_name",
+    "bank_account_number"
+  ]
+}

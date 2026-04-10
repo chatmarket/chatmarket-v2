@@ -16,6 +16,7 @@ import KycManagement from "../components/admin/KycManagement.jsx";
 import ProgressiveIncentiveList from "../components/admin/ProgressiveIncentiveList";
 import CrowdfundingManagement from "../components/admin/CrowdfundingManagement";
 import ChannelSuspensionManagement from "../components/admin/ChannelSuspensionManagement";
+import WithdrawalManagement from "../components/admin/WithdrawalManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -382,6 +383,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="incentive" className="gap-2">
             <TrendingUp className="w-4 h-4" /> プログレッシブ
           </TabsTrigger>
+          <TabsTrigger value="withdrawal" className="gap-2">
+            <DollarSign className="w-4 h-4" /> 払い出し管理
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -738,6 +742,11 @@ export default function AdminDashboard() {
         {/* クラウドファンディングタブ */}
         <TabsContent value="crowdfunding" className="space-y-6">
           <CrowdfundingManagement projects={allCrowdfundingProjects} queryClient={queryClient} />
+        </TabsContent>
+
+        {/* 払い出し管理タブ */}
+        <TabsContent value="withdrawal" className="space-y-6">
+          <WithdrawalManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}

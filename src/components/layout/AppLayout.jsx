@@ -26,6 +26,7 @@ const CREATOR_ITEMS = [
   { path: "/upload", icon: Upload, label: "動画アップ" },
   { path: "/creator-dashboard", icon: BarChart3, label: "ダッシュボード" },
   { path: "/revenue", icon: Wallet, label: "収益管理" },
+  { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
   { path: "/call-slots", icon: Phone, label: "通話枠設定" },
 ];
 

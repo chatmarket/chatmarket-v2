@@ -46,6 +46,7 @@ import VideoModeration from './pages/VideoModeration';
 import FanClub from './pages/FanClub';
 import NgWordAnalytics from './pages/NgWordAnalytics';
 import CreatorRevenueDashboard from './pages/CreatorRevenueDashboard';
+import WithdrawalRequest from './pages/WithdrawalRequest';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -111,6 +112,7 @@ const AuthenticatedApp = () => {
         <Route path="/fanclub/:channelId" element={<FanClub />} />
         <Route path="/admin/ng-word-analytics" element={<NgWordAnalytics />} />
         <Route path="/revenue-dashboard" element={<CreatorRevenueDashboard />} />
+        <Route path="/withdrawal-request" element={<WithdrawalRequest />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
