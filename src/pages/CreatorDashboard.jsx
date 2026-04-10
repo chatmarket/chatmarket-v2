@@ -2,11 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, Wallet, Radio, Video, Phone, ArrowRight, RefreshCw } from "lucide-react";
+import { BarChart3, TrendingUp, Wallet, Radio, Video, Phone, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EarningsSummaryCard from "../components/dashboard/EarningsSummaryCard";
 import UnpaidBalanceCard from "../components/dashboard/UnpaidBalanceCard";
 import RecentActivityList from "../components/dashboard/RecentActivityList";
+import RevenueChart from "../components/dashboard/RevenueChart";
+import ViewerChart from "../components/dashboard/ViewerChart";
+import FanClubStatus from "../components/dashboard/FanClubStatus";
+import NotificationSidebar from "../components/dashboard/NotificationSidebar";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -60,6 +64,18 @@ export default function CreatorDashboard() {
     enabled: !!channel,
   });
 
+  const { data: followers = [] } = useQuery({
+    queryKey: ["dashboard-followers", channel?.id],
+    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: channel.id }),
+    enabled: !!channel,
+  });
+
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ["dashboard-subscriptions", user?.email],
+    queryFn: () => base44.entities.PlanSubscription.filter({ plan_id: "fanclub" }),
+    enabled: !!user,
+  });
+
   // 当月フィルタ
   const thisMonthFilter = (item) => {
     const d = item.created_date;
@@ -94,9 +110,9 @@ export default function CreatorDashboard() {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-primary" />
@@ -120,39 +136,74 @@ export default function CreatorDashboard() {
         </div>
       </div>
 
-      {/* 当月売上サマリー */}
-      <EarningsSummaryCard
-        totalRevenue={totalRevenue}
-        superChatRevenue={superChatRevenue}
-        videoCallRevenue={videoCallRevenue}
-        purchaseRevenue={purchaseRevenue}
-        monthSuperChats={monthSuperChats.length}
-        monthVideoCalls={monthVideoCalls.length}
-        monthPurchases={monthPurchases.length}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* メインコンテンツ（左2/3） */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* 当月売上サマリー */}
+          <EarningsSummaryCard
+            totalRevenue={totalRevenue}
+            superChatRevenue={superChatRevenue}
+            videoCallRevenue={videoCallRevenue}
+            purchaseRevenue={purchaseRevenue}
+            monthSuperChats={monthSuperChats.length}
+            monthVideoCalls={monthVideoCalls.length}
+            monthPurchases={monthPurchases.length}
+          />
 
-      {/* 未払い残高 */}
-      <UnpaidBalanceCard unpaidBalance={unpaidBalance} />
+          {/* 過去30日間の収益グラフ */}
+          <div className="bg-card border border-border/50 rounded-xl p-5 space-y-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              過去30日間の収益推移
+            </h3>
+            <RevenueChart purchases={purchases} superChats={superChats} videoCalls={videoCalls} />
+          </div>
 
-      {/* クイックアクション */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "ライブ配信", icon: Radio, to: "/go-live", color: "text-red-400", bg: "bg-red-500/10 border-red-500/30" },
-          { label: "動画アップ", icon: Video, to: "/upload", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
-          { label: "通話枠設定", icon: Phone, to: "/call-slots", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/30" },
-          { label: "チャンネル管理", icon: RefreshCw, to: "/my-channel", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30" },
-        ].map(({ label, icon: Icon, to, color, bg }) => (
-          <Link key={to} to={to}>
-            <div className={`border rounded-xl p-4 flex flex-col items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer ${bg}`}>
-              <Icon className={`w-6 h-6 ${color}`} />
-              <span className="text-xs font-semibold">{label}</span>
-            </div>
-          </Link>
-        ))}
+          {/* 視聴者数推移グラフ */}
+          <div className="bg-card border border-border/50 rounded-xl p-5 space-y-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              過去30日間の視聴者数推移
+            </h3>
+            <ViewerChart liveStreams={liveStreams} videos={videos} />
+          </div>
+
+          {/* ファンクラブ状況 */}
+          <div className="bg-card border border-border/50 rounded-xl p-5">
+            <FanClubStatus followers={followers} subscriptions={subscriptions} />
+          </div>
+
+          {/* 未払い残高 */}
+          <UnpaidBalanceCard unpaidBalance={unpaidBalance} />
+
+          {/* クイックアクション */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "ライブ配信", icon: Radio, to: "/go-live", color: "text-red-400", bg: "bg-red-500/10 border-red-500/30" },
+              { label: "動画アップ", icon: Video, to: "/upload", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
+              { label: "通話枠設定", icon: Phone, to: "/call-slots", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/30" },
+              { label: "チャンネル管理", icon: RefreshCw, to: "/my-channel", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30" },
+            ].map(({ label, icon: Icon, to, color, bg }) => (
+              <Link key={to} to={to}>
+                <div className={`border rounded-xl p-4 flex flex-col items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer ${bg}`}>
+                  <Icon className={`w-6 h-6 ${color}`} />
+                  <span className="text-xs font-semibold">{label}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* 直近アクティビティ */}
+          <RecentActivityList activities={recentActivities} />
+        </div>
+
+        {/* サイドバー（右1/3）通知 */}
+        <div className="lg:col-span-1">
+          <div className="bg-card border border-border/50 rounded-xl p-4 sticky top-20">
+            <NotificationSidebar activities={recentActivities} />
+          </div>
+        </div>
       </div>
-
-      {/* 直近アクティビティ */}
-      <RecentActivityList activities={recentActivities} />
     </div>
   );
 }
