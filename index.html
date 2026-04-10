@@ -61,8 +61,21 @@
 
     <link rel="manifest" href="/manifest.json" />
     <style>
-      #edit-with-base44 { display: none !important; }
+      #edit-with-base44,
+      [id*="base44"],
+      [class*="base44"],
+      [data-base44],
+      iframe[src*="base44"] { display: none !important; }
     </style>
+    <script>
+      const observer = new MutationObserver(() => {
+        const el = document.getElementById('edit-with-base44') ||
+          document.querySelector('[id*="base44"]') ||
+          document.querySelector('[class*="edit-with"]');
+        if (el) el.remove();
+      });
+      observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+    </script>
   </head>
   <body>
     <div id="root"></div>
