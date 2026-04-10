@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -208,11 +208,18 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-3xl font-bold">運営管理ダッシュボード</h1>
         </div>
-        <a href="/">
-          <Button variant="outline" className="gap-2">
-            <Home className="w-4 h-4" /> TOPに戻る
-          </Button>
-        </a>
+        <div className="flex gap-2">
+          <a href="/admin/ng-word-analytics">
+            <Button variant="outline" className="gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10">
+              <ShieldAlert className="w-4 h-4" /> NGワード分析
+            </Button>
+          </a>
+          <a href="/">
+            <Button variant="outline" className="gap-2">
+              <Home className="w-4 h-4" /> TOPに戻る
+            </Button>
+          </a>
+        </div>
       </div>
 
       {/* KPI */}
