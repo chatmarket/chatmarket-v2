@@ -45,6 +45,7 @@ import MuxVideoPage from './pages/MuxVideoPage';
 import VideoModeration from './pages/VideoModeration';
 import FanClub from './pages/FanClub';
 import NgWordAnalytics from './pages/NgWordAnalytics';
+import CreatorRevenueDashboard from './pages/CreatorRevenueDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -109,6 +110,7 @@ const AuthenticatedApp = () => {
         <Route path="/fanclub" element={<FanClub />} />
         <Route path="/fanclub/:channelId" element={<FanClub />} />
         <Route path="/admin/ng-word-analytics" element={<NgWordAnalytics />} />
+        <Route path="/revenue-dashboard" element={<CreatorRevenueDashboard />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
