@@ -1,7 +1,20 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Radio, Video, PhoneCall, Users, TrendingUp, Download, Smartphone } from "lucide-react";
+
+const SignUpButton = ({ variant = "default" }) => {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    navigate("/");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+  };
+  return (
+    <Button onClick={handleClick} className="bg-primary hover:bg-primary/90">
+      新規登録して始める
+    </Button>
+  );
+};
 
 export default function LandingPage() {
   return (
@@ -26,11 +39,7 @@ export default function LandingPage() {
           <p className="text-lg sm:text-xl text-muted-foreground">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />このプラットフォーム一つで。
           </p>
-          <Link to="/">
-            <Button className="bg-primary hover:bg-primary/90 h-12 px-8 text-lg gap-2">
-              新規登録して始める
-            </Button>
-          </Link>
+          <SignUpButton />
         </div>
       </section>
 
@@ -101,7 +110,7 @@ export default function LandingPage() {
 
             {/* BASIC Plan */}
             <div className="relative rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/20 to-primary/5 p-8 space-y-6 hover:border-primary/80 transition-all shadow-lg shadow-primary/20 ring-1 ring-primary/30">
-              <div className="absolute -top-4 left-6 bg-gradient-to-r from-primary to-primary/80 text-white px-4 py-1 rounded-full text-xs font-black">🌟 おすすめ</div>
+              <div className="absolute -top-4 left-6 bg-gradient-to-r from-primary to-primary/80 text-white px-4 py-1 rounded-full text-xs font-black">⭐ おすすめ</div>
               <div className="space-y-2 pt-2">
                 <h3 className="text-2xl font-black text-primary">BASIC</h3>
                 <p className="text-4xl font-black">¥3,300</p>
@@ -114,8 +123,8 @@ export default function LandingPage() {
                     "📞 ビデオ通話還元率 85%（15%手数料）",
                     "📈 高度な収益分析ツール",
                     "⭐ プロフィール優先表示",
-                    "🎯 カテゴリーランキング上位",
-                    "💌 優先カスタマーサポート",
+                    "🏆 カテゴリーランキング上位",
+                    "🎯 優先カスタマーサポート",
                     "🔄 無制限配信・動画投稿"
                   ].map((f, i) => (
                     <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
@@ -148,7 +157,7 @@ export default function LandingPage() {
                     "📊 詳細な視聴者分析",
                     "🤖 AI字幕生成",
                     "📦 バッチアップロード",
-                    "🌍 多言語対応サポート"
+                    "🌐 多言語対応サポート"
                   ].map((f, i) => (
                     <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                       <span>{f}</span>
@@ -177,8 +186,8 @@ export default function LandingPage() {
                     "⚙️ カスタマイズ機能",
                     "🔐 エンタープライズセキュリティ",
                     "👥 専任サポート",
-                    "📡 専用インフラ",
-                    "💼 プライベート契約"
+                    "💼 プライベート契約",
+                    "📱 デジタルコンテンツ販売"
                   ].map((f, i) => (
                     <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                       <span>{f}</span>
@@ -234,21 +243,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 収益還元率 */}
-      <section className="py-16 sm:py-24 px-4 max-w-6xl mx-auto">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">クリエイター収益還元率</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { title: "動画販売", rate: "85%", detail: "クリエイターへの配分（手数料15%）" },
-            { title: "ライブ配信", rate: "85%", detail: "チケット売上（手数料15%）" },
-            { title: "ビデオ通話", rate: "70%", detail: "通話料金（手数料30%）" },
-          ].map((item, i) => (
-            <div key={i} className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/40 rounded-xl p-8 text-center space-y-3">
-              <h3 className="font-bold text-xl">{item.title}</h3>
-              <p className="text-4xl font-black text-primary">{item.rate}</p>
-              <p className="text-sm text-muted-foreground">{item.detail}</p>
-            </div>
-          ))}
+      {/* 価格 */}
+      <section className="py-16 sm:py-24 px-4 bg-secondary/30">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">クリエイター収益還元率</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { title: "動画販売", rate: "85%", detail: "クリエイターへの配分（手数料15%）" },
+              { title: "ライブ配信", rate: "85%", detail: "チケット売上（手数料15%）" },
+              { title: "ビデオ通話", rate: "70%", detail: "通話料金（手数料30%）" },
+            ].map((item, i) => (
+              <div key={i} className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/40 rounded-xl p-8 text-center space-y-3">
+                <h3 className="font-bold text-xl">{item.title}</h3>
+                <p className="text-4xl font-black text-primary">{item.rate}</p>
+                <p className="text-sm text-muted-foreground">{item.detail}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -276,7 +287,7 @@ export default function LandingPage() {
                 <span className="text-2xl">📅</span>
                 <div>
                   <h3 className="font-bold text-blue-300 text-lg">翌月に反映</h3>
-                  <p className="text-sm text-muted-foreground mt-1">当月の売上実績に基づいて、翌月の還元率が自動的に決定・適用されます。成長に応じた報酬を実感。</p>
+                  <p className="text-sm text-muted-foreground mt-1">当月の売上実績に基づいて、翌月の還元率が自動的に決定・適用されます。成長に応じた報償を実感。</p>
                 </div>
               </div>
             </div>
@@ -454,11 +465,7 @@ export default function LandingPage() {
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-bold">今すぐ始めよう</h2>
           <p className="text-lg text-muted-foreground">配信、販売、通話で収益を上げる。Chat Marketであなたの活動をマネタイズ。</p>
-          <Link to="/">
-            <Button className="bg-primary hover:bg-primary/90 h-12 px-8 text-lg gap-2">
-              新規登録する
-            </Button>
-          </Link>
+          <SignUpButton />
         </div>
       </section>
 
