@@ -1,0 +1,77 @@
+{
+  "name": "ChannelSuspension",
+  "type": "object",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u5bfe\u8c61\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "report",
+        "misconduct",
+        "ng_word_violation",
+        "other"
+      ],
+      "description": "\u9589\u9396\u7406\u7531"
+    },
+    "reason_detail": {
+      "type": "string",
+      "description": "\u8a73\u7d30\u7406\u7531"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "suspended",
+        "appeal_pending",
+        "appeal_approved",
+        "appeal_rejected",
+        "lifted"
+      ],
+      "default": "suspended",
+      "description": "\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "suspended_by": {
+      "type": "string",
+      "description": "\u5b9f\u65bd\u3057\u305f\u7ba1\u7406\u8005\u30e1\u30fc\u30eb"
+    },
+    "suspended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u9589\u9396\u65e5\u6642"
+    },
+    "appeal_text": {
+      "type": "string",
+      "description": "\u7570\u8b70\u7533\u3057\u7acb\u3066\u5185\u5bb9"
+    },
+    "appeal_submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u7570\u8b70\u7533\u7acb\u65e5\u6642"
+    },
+    "admin_response": {
+      "type": "string",
+      "description": "\u7ba1\u7406\u8005\u306e\u5bfe\u5fdc\u30b3\u30e1\u30f3\u30c8"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u89e3\u6c7a\u65e5\u6642"
+    }
+  },
+  "required": [
+    "channel_id",
+    "channel_name",
+    "owner_email",
+    "reason"
+  ]
+}

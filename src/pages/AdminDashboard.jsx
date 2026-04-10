@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -14,6 +14,7 @@ import ContentModeration from "../components/admin/ContentModeration.jsx";
 import KycManagement from "../components/admin/KycManagement.jsx";
 import ProgressiveIncentiveList from "../components/admin/ProgressiveIncentiveList";
 import CrowdfundingManagement from "../components/admin/CrowdfundingManagement";
+import ChannelSuspensionManagement from "../components/admin/ChannelSuspensionManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -24,6 +25,8 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
   
+  const SUPER_ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+  const isSuperAdmin = user && SUPER_ADMIN_EMAILS.includes(user.email);
   const isViewerOnly = user?.email === "kimurayasunari5@gmail.com";
   const displayUserRole = isViewerOnly ? "viewer" : user?.role;
 
@@ -38,6 +41,7 @@ export default function AdminDashboard() {
   });
 
   const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "admin@example.com"];
+  const SUPER_ADMIN_EMAILS_CHECK = ["unei@chatmarket.info", "ono@onestep-corp.com"];
   const VIEWER_EMAILS = ["kimurayasunari5@gmail.com"];
 
   useEffect(() => {
@@ -358,6 +362,9 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="crowdfunding" className="gap-2">
             <DollarSign className="w-4 h-4" /> クラウドファンディング
+          </TabsTrigger>
+          <TabsTrigger value="suspension" className="gap-2">
+            <Ban className="w-4 h-4" /> チャンネル閉鎖
           </TabsTrigger>
           <TabsTrigger value="incentive" className="gap-2">
             <TrendingUp className="w-4 h-4" /> プログレッシブ
@@ -704,6 +711,14 @@ export default function AdminDashboard() {
             calls={allCalls}
             yellCoinTransactions={allYellCoinTransactions}
             userRole={user?.role}
+          />
+        </TabsContent>
+
+        {/* チャンネル閉鎖タブ */}
+        <TabsContent value="suspension" className="space-y-6">
+          <ChannelSuspensionManagement
+            channels={allChannels}
+            adminEmail={user?.email}
           />
         </TabsContent>
 
