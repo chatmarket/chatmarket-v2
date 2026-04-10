@@ -39,7 +39,31 @@ export default function LandingPage() {
           <p className="text-lg sm:text-xl text-muted-foreground">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />このプラットフォーム一つで。
           </p>
-          <SignUpButton />
+          
+          {/* 言論の自由メッセージ */}
+          <div className="mt-8 sm:mt-10 max-w-2xl mx-auto space-y-3 border-t border-muted/30 pt-6 sm:pt-8">
+            <div className="space-y-2">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                言論の自由を体感してください、法的な問題発言以外は当サイトにおいて規制はかけません
+              </p>
+              <p className="text-xs text-muted-foreground/70 leading-relaxed">
+                ＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます
+              </p>
+            </div>
+            
+            <div className="space-y-2 pt-3 border-t border-muted/20">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Experience free speech. No restrictions apply here, except for illegal remarks.
+              </p>
+              <p className="text-xs text-muted-foreground/70 leading-relaxed">
+                *Streamers can filter out specific words, so they can stream safely and focus on their content.
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-8 sm:mt-10">
+            <SignUpButton />
+          </div>
         </div>
       </section>
 
