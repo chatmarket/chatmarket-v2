@@ -119,8 +119,6 @@ export default function Settings() {
            recovery_phone: u.recovery_phone || "",
           });
           });
-      } else {
-        base44.auth.redirectToLogin();
       }
     });
 
