@@ -8,9 +8,9 @@ export default function ProgressiveIncentiveSection() {
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
         <Accordion type="single" collapsible>
           <AccordionItem value="progressive-incentive" className="border-0">
-            <AccordionTrigger className="hover:no-underline flex items-center gap-2 text-base font-semibold text-foreground">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              プログレッシブ・インセンティブって何？
+            <AccordionTrigger className="hover:no-underline flex items-center gap-2 text-xl font-bold text-foreground">
+              <TrendingUp className="w-6 h-6 text-primary" />
+              <span style={{textShadow: '0 0 8px hsl(var(--primary)/0.6)'}}>プログレッシブ・インセンティブって何？</span>
             </AccordionTrigger>
             <AccordionContent className="text-sm text-foreground space-y-4 pt-2">
               <div>
