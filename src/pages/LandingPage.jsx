@@ -253,23 +253,141 @@ export default function LandingPage() {
       </section>
 
       {/* プログレッシブインセンティブ */}
-      <section className="py-16 sm:py-24 px-4 bg-secondary/30">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-8">プログレッシブインセンティブ</h2>
-          <div className="bg-card border border-border/50 rounded-xl p-6 sm:p-8 space-y-4">
-            <p className="text-muted-foreground">月間売上に応じて手数料が段階的に減少。売上が増えるほど、配分率もアップ。</p>
-            <div className="space-y-3">
-              {[
-                { threshold: "月間売上 ¥0〜", rate: "標準還元率" },
-                { threshold: "月間売上 ¥100万〜", rate: "手数料-1%" },
-                { threshold: "月間売上 ¥500万〜", rate: "手数料-3%" },
-                { threshold: "月間売上 ¥1,000万〜", rate: "特別プラン（相談）" },
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between text-sm border-b border-border/50 pb-3">
-                  <span className="text-muted-foreground">{item.threshold}</span>
-                  <span className="font-semibold text-primary">{item.rate}</span>
+      <section className="py-16 sm:py-24 px-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-y border-green-500/20">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="text-center space-y-3">
+            <h2 className="text-4xl sm:text-5xl font-black text-green-400">📈 プログレッシブ・インセンティブ</h2>
+            <p className="text-xl text-muted-foreground">売上が増えるほど収益還元率がUP。最大95%まで段階的に上昇。</p>
+          </div>
+
+          {/* 説明カード */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-green-500/20 border border-green-500/40 rounded-xl p-6 space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">💡</span>
+                <div>
+                  <h3 className="font-bold text-green-300 text-lg">BASICプランで自動参加</h3>
+                  <p className="text-sm text-muted-foreground mt-1">手続き不要。加入した月から自動的に適用されます。プログレッシブの恩恵をすぐに受けられます。</p>
                 </div>
-              ))}
+              </div>
+            </div>
+            <div className="bg-blue-500/20 border border-blue-500/40 rounded-xl p-6 space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">📅</span>
+                <div>
+                  <h3 className="font-bold text-blue-300 text-lg">翌月に反映</h3>
+                  <p className="text-sm text-muted-foreground mt-1">当月の売上実績に基づいて、翌月の還元率が自動的に決定・適用されます。成長に応じた報酬を実感。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 階層別収益率表 */}
+          <div className="bg-card border border-green-500/30 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500/20 to-green-600/10 p-6 border-b border-green-500/20">
+              <h3 className="font-bold text-lg text-green-300">📊 月間売上の階層別 収益還元率</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-secondary border-b border-border/50">
+                    <th className="text-left p-4 font-bold text-sm">月間売上</th>
+                    <th className="text-center p-4 font-bold text-sm">収益還元率</th>
+                    <th className="text-right p-4 font-bold text-sm">手数料</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { min: "¥0", max: "¥100万未満", rate: "85%", fee: "15%" },
+                    { min: "¥100万", max: "¥300万未満", rate: "86%", fee: "14%" },
+                    { min: "¥300万", max: "¥600万未満", rate: "87%", fee: "13%" },
+                    { min: "¥600万", max: "¥900万未満", rate: "88%", fee: "12%" },
+                    { min: "¥900万", max: "¥1,200万未満", rate: "89%", fee: "11%" },
+                    { min: "¥1,200万", max: "¥1,500万未満", rate: "90%", fee: "10%" },
+                    { min: "¥1,500万", max: "¥1,650万未満", rate: "91%", fee: "9%" },
+                    { min: "¥1,650万", max: "¥1,800万未満", rate: "92%", fee: "8%" },
+                    { min: "¥1,800万", max: "¥1,950万未満", rate: "93%", fee: "7%" },
+                    { min: "¥1,950万", max: "¥2,000万未満", rate: "94%", fee: "6%" },
+                    { min: "¥2,000万", max: "以上", rate: "95%", fee: "5%" },
+                  ].map((row, i) => {
+                    const isHighlight = i >= 8;
+                    return (
+                      <tr key={i} className={`border-b border-border/30 ${
+                        isHighlight
+                          ? "bg-green-500/10 hover:bg-green-500/20"
+                          : "hover:bg-secondary/50"
+                      }`}>
+                        <td className="p-4 text-sm font-semibold">
+                          <span className="text-muted-foreground">{row.min}</span>
+                          {row.max !== "以上" && (
+                            <span className="text-muted-foreground/60 mx-2">〜</span>
+                          )}
+                          {row.max !== "以上" ? (
+                            <span className="text-muted-foreground">{row.max}</span>
+                          ) : (
+                            <span className="text-muted-foreground">¥{row.max}</span>
+                          )}
+                        </td>
+                        <td className={`text-center p-4 font-black text-lg ${
+                          isHighlight ? "text-green-400" : "text-primary"
+                        }`}>
+                          {row.rate}
+                        </td>
+                        <td className="text-right p-4 text-sm text-muted-foreground">{row.fee}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="bg-green-500/10 border-t border-green-500/20 p-4 text-center">
+              <p className="text-xs text-green-300">✨ 翌月に反映されます。月ごとに最適な還元率が自動適用されます。</p>
+            </div>
+          </div>
+
+          {/* 例示セクション */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-card border border-border/50 rounded-xl p-6 space-y-4">
+              <h4 className="font-bold text-lg">📌 例：月間売上¥1,000万の場合</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">月間売上</span>
+                  <span className="font-bold">¥10,000,000</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">還元率</span>
+                  <span className="font-bold text-green-400">89%</span>
+                </div>
+                <div className="border-t border-border/50 pt-3 flex justify-between text-base">
+                  <span className="font-semibold">クリエイター取分</span>
+                  <span className="font-black text-green-400">¥8,900,000</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>手数料（11%）</span>
+                  <span>¥1,100,000</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-card border border-border/50 rounded-xl p-6 space-y-4">
+              <h4 className="font-bold text-lg">📌 例：月間売上¥2,500万の場合</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">月間売上</span>
+                  <span className="font-bold">¥25,000,000</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">還元率</span>
+                  <span className="font-bold text-green-400">95%</span>
+                </div>
+                <div className="border-t border-border/50 pt-3 flex justify-between text-base">
+                  <span className="font-semibold">クリエイター取分</span>
+                  <span className="font-black text-green-400">¥23,750,000</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>手数料（5%）</span>
+                  <span>¥1,250,000</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
