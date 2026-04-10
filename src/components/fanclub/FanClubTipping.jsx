@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Gift, Coins } from "lucide-react";
 import { toast } from "sonner";
+import { AnimatePresence } from "framer-motion";
+import TippingAnimation from "./TippingAnimation";
 
 const PRESET_AMOUNTS = [100, 300, 500, 1000, 3000, 5000];
 
@@ -11,6 +13,7 @@ export default function FanClubTipping({ channel, user, wallet, onWalletUpdate }
   const [amount, setAmount] = useState(500);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
 
   // 送る側は10%手数料を上乗せして支払う
   const platformFee = Math.ceil(amount * 0.1);
@@ -56,6 +59,7 @@ export default function FanClubTipping({ channel, user, wallet, onWalletUpdate }
     });
 
     toast.success(`¥${amount.toLocaleString()}の投げ銭を送りました！（手数料¥${platformFee}含む合計¥${totalCost}消費）`);
+    setShowAnimation(true);
     setMessage("");
     onWalletUpdate?.();
     setSending(false);
@@ -63,6 +67,15 @@ export default function FanClubTipping({ channel, user, wallet, onWalletUpdate }
 
   return (
     <div className="space-y-4">
+      <AnimatePresence>
+        {showAnimation && (
+          <TippingAnimation
+            amount={amount}
+            userName={user?.nickname || user?.full_name || "あなた"}
+            onDone={() => setShowAnimation(false)}
+          />
+        )}
+      </AnimatePresence>
       <div className="flex items-center gap-2">
         <Gift className="w-4 h-4 text-yellow-400" />
         <h3 className="font-bold text-sm">投げ銭（会員限定）</h3>

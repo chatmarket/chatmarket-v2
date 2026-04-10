@@ -8,6 +8,7 @@ import MembershipCard from "../components/fanclub/MembershipCard";
 import ExclusiveContent from "../components/fanclub/ExclusiveContent";
 import EventBooking from "../components/fanclub/EventBooking";
 import FanClubTipping from "../components/fanclub/FanClubTipping";
+import TipBroadcasterAlert from "../components/fanclub/TipBroadcasterAlert";
 
 export default function FanClub() {
   const { channelId } = useParams();
@@ -48,6 +49,11 @@ export default function FanClub() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-10">
+      <TipBroadcasterAlert
+        channelId={channelId}
+        ownerEmail={effectiveChannel?.owner_email}
+        currentUserEmail={user?.email}
+      />
       {/* ヘッダー */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
