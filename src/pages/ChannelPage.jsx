@@ -96,10 +96,10 @@ export default function ChannelPage() {
   const isOwner = currentUser?.email === channel.owner_email;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
       {/* Channel header card */}
-      <div className="bg-card rounded-2xl border border-border/50 p-6 mb-8">
-        <div className="flex flex-col sm:flex-row items-start gap-5">
+      <div className="bg-card rounded-xl sm:rounded-2xl border border-border/50 p-4 sm:p-6 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-5">
           {/* Avatar */}
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden shrink-0 ring-2 ring-border">
             {channel.avatar_url ? (
@@ -128,7 +128,7 @@ export default function ChannelPage() {
             )}
 
             {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Video className="w-3.5 h-3.5" /> {videos.length} 動画
               </span>
@@ -209,11 +209,11 @@ export default function ChannelPage() {
 
       {/* Live streams */}
       {liveStreams.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+        <section className="mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
             <Radio className="w-5 h-5 text-red-400" /> ライブ配信中
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {liveStreams.map((s) => (
               <LiveStreamCard key={s.id} stream={s} />
             ))}
@@ -223,12 +223,12 @@ export default function ChannelPage() {
 
       {/* Videos */}
       <section>
-        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+        <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
           <Video className="w-5 h-5 text-primary" /> 投稿動画
           <span className="text-sm font-normal text-muted-foreground">（{videos.length}本）</span>
         </h2>
         {videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
             {videos.map((v) => (
               <VideoCard key={v.id} video={v} />
             ))}

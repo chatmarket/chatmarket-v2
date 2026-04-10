@@ -123,12 +123,12 @@ export default function GoLive() {
   // 配信中の場合はBroadcasterStreamを表示
   if (liveStreamId) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-            <Radio className="w-5 h-5 text-red-400 animate-pulse" />
-          </div>
-          <h1 className="text-2xl font-bold">配信中</h1>
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+              <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
+            </div>
+            <h1 className="text-lg sm:text-2xl font-bold">配信中</h1>
         </div>
         <BroadcasterStream
           streamId={liveStreamId}
@@ -139,16 +139,16 @@ export default function GoLive() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-          <Radio className="w-5 h-5 text-red-400 animate-pulse" />
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+      <div className="flex items-center gap-3 mb-6 sm:mb-8">
+        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+          <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold">配信・通話を開始</h1>
+        <h1 className="text-lg sm:text-2xl font-bold">配信・通話を開始</h1>
       </div>
 
       {/* Mode selector */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 sm:mb-8">
         <button
           type="button"
           onClick={() => setMode(MODE_LIVE)}
@@ -182,12 +182,12 @@ export default function GoLive() {
         </button>
       </div>
 
-      <form onSubmit={handleStart} className="space-y-6">
+      <form onSubmit={handleStart} className="space-y-4 sm:space-y-6">
         {/* Stream type selector (liveモードのみ) */}
         {mode === MODE_LIVE && (
           <div className="space-y-3">
             <Label>配信方式</Label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setForm({ ...form, streamType: STREAM_TYPE_WEBRTC })}
@@ -254,7 +254,7 @@ export default function GoLive() {
         {/* Thumbnail */}
         <div className="space-y-2">
           <Label>サムネイル画像</Label>
-          <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
+          <label className="flex flex-col items-center justify-center h-24 sm:h-28 border-2 border-dashed border-border rounded-lg sm:rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
             <input
               type="file"
               accept="image/*"
@@ -507,7 +507,7 @@ export default function GoLive() {
         <Button
           type="submit"
           disabled={creating || !form.title || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
-          className={`w-full h-12 text-white text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+          className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
         >
           {creating ? (
             <>

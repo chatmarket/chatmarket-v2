@@ -85,15 +85,15 @@ export default function LiveView() {
   const needsPayment = isPaid && !hasPurchased;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {/* Stream Player */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {needsPayment ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-4">
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-3 sm:gap-4 p-4">
                 <Lock className="w-12 h-12 text-muted-foreground" />
-                <h2 className="text-xl font-bold">有料ライブ配信</h2>
+                <h2 className="text-lg sm:text-xl font-bold">有料ライブ配信</h2>
                 <p className="text-muted-foreground text-sm">チケットを購入して視聴</p>
                 <div className="text-2xl font-bold text-primary">
                   ¥{stream.price?.toLocaleString()}
@@ -161,12 +161,12 @@ export default function LiveView() {
           </div>
 
           {/* Stream info */}
-          <div className="space-y-2">
-            <h1 className="text-xl md:text-2xl font-bold">{stream.title}</h1>
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{stream.title}</h1>
             <p className="text-sm text-muted-foreground">{stream.channel_name}</p>
             {stream.description && (
-              <div className="bg-card rounded-xl p-4 border border-border/50 mt-4">
-                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{stream.description}</p>
+              <div className="bg-card rounded-lg sm:rounded-xl p-3 sm:p-4 border border-border/50 mt-3 sm:mt-4">
+                <p className="text-xs sm:text-sm text-foreground/80 whitespace-pre-wrap">{stream.description}</p>
               </div>
             )}
             {hasPurchased && (
@@ -180,7 +180,7 @@ export default function LiveView() {
         </div>
 
         {/* Chat */}
-        <div className="lg:col-span-1 h-[500px] lg:h-[calc(100vh-8rem)]">
+        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)]">
           <ChatPanel targetType="livestream" targetId={id} />
         </div>
       </div>

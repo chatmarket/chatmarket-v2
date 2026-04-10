@@ -115,12 +115,12 @@ export default function Upload() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-6">動画アップロード</h1>
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">動画アップロード</h1>
 
       {/* Terms of Use */}
-      <div className="bg-secondary/60 border border-border/60 rounded-xl p-5 mb-8 space-y-4 text-sm">
-        <p className="font-bold text-base flex items-center gap-2">📋 動画投稿における利用規約</p>
+      <div className="bg-secondary/60 border border-border/60 rounded-lg sm:rounded-xl p-3 sm:p-5 mb-4 sm:mb-8 space-y-3 sm:space-y-4 text-xs sm:text-sm">
+        <p className="font-bold text-sm sm:text-base flex items-center gap-2">📋 動画投稿における利用規約</p>
         <p className="text-muted-foreground text-xs">動画をアップロードする前に、以下の利用規約をよくお読みください。アップロードを行うことで、本規約に同意したものとみなします。</p>
 
         <div className="space-y-3">
@@ -167,11 +167,11 @@ export default function Upload() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Video File */}
         <div className="space-y-2">
           <Label>動画ファイル</Label>
-          <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
+          <label className="flex flex-col items-center justify-center h-32 sm:h-40 border-2 border-dashed border-border rounded-lg sm:rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
             <input
               type="file"
               accept="video/*"
@@ -227,7 +227,7 @@ export default function Upload() {
         {/* Thumbnail */}
         <div className="space-y-2">
           <Label>サムネイル画像</Label>
-          <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
+          <label className="flex flex-col items-center justify-center h-24 sm:h-28 border-2 border-dashed border-border rounded-lg sm:rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
             <input
               type="file"
               accept="image/*"

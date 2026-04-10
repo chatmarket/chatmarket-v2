@@ -234,33 +234,33 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-8">設定</h1>
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-8">設定</h1>
 
       <Tabs defaultValue="basic">
-        <TabsList className="bg-secondary mb-8 w-full">
-          <TabsTrigger value="basic" className="flex-1 gap-2">
+        <TabsList className="bg-secondary mb-4 sm:mb-8 w-full flex flex-wrap gap-2 h-auto p-2 sm:h-10 sm:p-1">
+          <TabsTrigger value="basic" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Lock className="w-4 h-4" /> 基本情報
           </TabsTrigger>
-          <TabsTrigger value="profile" className="flex-1 gap-2">
+          <TabsTrigger value="profile" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <User className="w-4 h-4" /> プロフィール
           </TabsTrigger>
-          <TabsTrigger value="subscription" className="flex-1 gap-2">
+          <TabsTrigger value="subscription" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <CreditCard className="w-4 h-4" /> サブスク
           </TabsTrigger>
-          <TabsTrigger value="bank" className="flex-1 gap-2">
+          <TabsTrigger value="bank" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Building className="w-4 h-4" /> 銀行口座
           </TabsTrigger>
-          <TabsTrigger value="category" className="flex-1 gap-2">
+          <TabsTrigger value="category" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Tag className="w-4 h-4" /> 業種タグ
           </TabsTrigger>
-          <TabsTrigger value="call" className="flex-1 gap-2">
+          <TabsTrigger value="call" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <PhoneCall className="w-4 h-4" /> 通話設定
           </TabsTrigger>
-          <TabsTrigger value="fanclub" className="flex-1 gap-2">
+          <TabsTrigger value="fanclub" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Crown className="w-4 h-4" /> ファンクラブ
           </TabsTrigger>
-          <TabsTrigger value="recovery" className="flex-1 gap-2">
+          <TabsTrigger value="recovery" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Key className="w-4 h-4" /> 復旧設定
           </TabsTrigger>
         </TabsList>
@@ -620,7 +620,7 @@ export default function Settings() {
                 className="bg-secondary border-0"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label>口座種別</Label>
                 <select
@@ -869,7 +869,7 @@ export default function Settings() {
                     onChange={(e) => setFanclubSettings({ ...fanclubSettings, fanclub_monthly_price: parseInt(e.target.value) || 500 })}
                     className="bg-secondary border-0"
                   />
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                       <p className="text-muted-foreground">配信者収益 (85%)</p>
                       <p className="font-black text-primary">¥{Math.floor((fanclubSettings.fanclub_monthly_price || 0) * 0.85).toLocaleString()}</p>
