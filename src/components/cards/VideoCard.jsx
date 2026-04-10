@@ -71,10 +71,9 @@ export default function VideoCard({ video, size = "default" }) {
           {!video.is_free && video.price > 0 && <span className="text-yellow-400 font-bold mr-1">¥{video.price?.toLocaleString()}</span>}
           {video.title}
         </h3>
-        <Link
-          to={`/channel/${video.channel_id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1.5 group/ch"
+        <div
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/channel/${video.channel_id}`; }}
+          className="flex items-center gap-1.5 group/ch cursor-pointer"
         >
           {video.channel_avatar ? (
             <img src={video.channel_avatar} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
@@ -84,7 +83,7 @@ export default function VideoCard({ video, size = "default" }) {
             </div>
           )}
           <span className="text-xs text-muted-foreground group-hover/ch:text-primary transition-colors truncate">{video.channel_name}</span>
-        </Link>
+        </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Eye className="w-3 h-3" />

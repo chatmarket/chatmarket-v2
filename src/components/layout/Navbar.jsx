@@ -34,7 +34,7 @@ export default function Navbar() {
 
   const { data: wallet } = useQuery({
     queryKey: ["yell-coin-wallet", user?.email],
-    queryFn: () => base44.entities.YellCoinWallet.filter({ user_email: user.email }, "-updated_date", 1).then(data => data[0]),
+    queryFn: () => base44.entities.YellCoinWallet.filter({ user_email: user.email }, "-updated_date", 1).then(data => data[0] || null),
     enabled: !!user?.email,
   });
 
