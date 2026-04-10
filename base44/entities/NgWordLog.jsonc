@@ -1,0 +1,41 @@
+{
+  "name": "NgWordLog",
+  "type": "object",
+  "properties": {
+    "word": {
+      "type": "string",
+      "description": "\u691c\u51fa\u3055\u308c\u305fNG\u30ef\u30fc\u30c9"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u691c\u51fa\u65e5\u6642"
+    },
+    "context": {
+      "type": "string",
+      "enum": [
+        "livestream",
+        "videocall",
+        "chat"
+      ],
+      "description": "\u691c\u51fa\u30b3\u30f3\u30c6\u30ad\u30b9\u30c8"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u767a\u8a00\u8005\u30e1\u30fc\u30eb\uff08\u4efb\u610f\uff09"
+    }
+  },
+  "required": [
+    "word",
+    "channel_id",
+    "detected_at"
+  ]
+}
