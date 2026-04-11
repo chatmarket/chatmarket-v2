@@ -47,7 +47,7 @@ export default function ProgressiveIncentiveSection() {
                   <div className="bg-blue-900/30 rounded-lg px-3 py-2 font-mono text-xs text-blue-300">
                     例: 1,000円分 → カード請求 <span className="font-black text-white">1,036円</span>
                   </div>
-                  <p className="text-xs text-blue-300/70">目的: 運営側の決済手数料負担ゼロにし、還元原資を最大化するため。</p>
+                  <p className="text-xs text-blue-300/70">プラットホーム手数料を頂く理由としまして、配信者への還元率を最大化する為になります、予めご理解ご了承の程よろしくお願いいたします。</p>
                 </div>
               </div>
 
