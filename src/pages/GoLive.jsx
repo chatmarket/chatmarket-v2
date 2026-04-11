@@ -31,7 +31,7 @@ export default function GoLive() {
   const [showStreamStyleModal, setShowStreamStyleModal] = useState(false); // 待機モード中
   const queryClient = useQueryClient();
   const [liveStreamId, setLiveStreamId] = useState(null); // 配信中のstream ID
-  const [muxStream, setMuxStream] = useState(null); // { streamId, streamKey, playbackId }
+  const [ivsStream, setIvsStream] = useState(null); // { streamId, streamKey, ingestEndpoint, playbackUrl }
   const [obsMode, setObsMode] = useState(false); // OBSダッシュボード表示
 
   const [form, setForm] = useState({
@@ -120,16 +120,16 @@ export default function GoLive() {
     setCreating(true);
 
     // MUX ライブ枠を作成（OBSまたはWebRTC配信の場合）
-    let muxData = null;
+    let ivsData = null;
     if (mode === MODE_LIVE && (form.streamType === STREAM_TYPE_WEBRTC || form.streamType === STREAM_TYPE_OBS)) {
-      const muxRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: form.saveArchive });
-      if (!muxRes?.data?.streamId) {
+      const ivsRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: form.saveArchive });
+      if (!ivsRes?.data?.streamId) {
         toast.error('配信枠の作成に失敗しました。もう一度お試しください。');
         setCreating(false);
         return;
       }
-      muxData = muxRes.data;
-      setMuxStream(muxData);
+      ivsData = ivsRes.data;
+      setIvsStream(ivsData);
     }
 
     let channel = channels[0];
@@ -159,7 +159,8 @@ export default function GoLive() {
       price: form.isPaid ? form.price : 0,
       viewer_count: 0,
       stream_type: form.streamType,
-      vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? (muxData ? `https://global-live.mux.com/SFU/${muxData.playbackId}` : form.vimeoUrl) : "",
+      vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? form.vimeoUrl : "",
+      ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
       youtube_url: form.streamType === STREAM_TYPE_YOUTUBE ? form.youtubeUrl : "",
     });
 
@@ -181,8 +182,9 @@ export default function GoLive() {
   const minPrice = mode === MODE_LIVE ? 1 : (form.duration / 15) * 150;
 
   // OBSダッシュボード
-  if (obsMode && muxStream) {
-    const RTMP_URL = 'rtmps://global-live.mux.com:443/app';
+  if (obsMode && ivsStream) {
+    const RTMP_URL = `rtmps://${ivsStream.ingestEndpoint}:443/app/`;
+    const streamKey = ivsStream.streamKey;
     return (
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
@@ -190,7 +192,7 @@ export default function GoLive() {
             <Radio className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">OBS配信ダッシュボード</h1>
+            <h1 className="text-xl font-bold">OBS配信ダッシュボード (AWS IVS)</h1>
             <p className="text-xs text-muted-foreground">以下の情報をOBSに設定して配信を開始してください</p>
           </div>
         </div>
@@ -209,9 +211,9 @@ export default function GoLive() {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ストリームキー</label>
               <div className="flex items-center gap-2">
-                <input readOnly value={muxStream.streamKey} className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-foreground border-0 focus:outline-none" />
+                <input readOnly value={streamKey} className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-foreground border-0 focus:outline-none" />
                 <button
-                  onClick={() => { navigator.clipboard.writeText(muxStream.streamKey); toast.success('コピーしました'); }}
+                  onClick={() => { navigator.clipboard.writeText(streamKey); toast.success('コピーしました'); }}
                   className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-3 py-2 rounded-lg transition-colors"
                 >コピー</button>
               </div>
@@ -240,16 +242,16 @@ export default function GoLive() {
   if (liveStreamId) {
     return (
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-          <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-              <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
-            </div>
-            <h1 className="text-lg sm:text-2xl font-bold">配信中</h1>
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+            <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
+          </div>
+          <h1 className="text-lg sm:text-2xl font-bold">配信中</h1>
         </div>
         <BroadcasterStream
           streamId={liveStreamId}
-          muxStreamKey={muxStream?.streamKey}
-          muxPlaybackId={muxStream?.playbackId}
+          ivsStreamKey={ivsStream?.streamKey}
+          ivsIngestEndpoint={ivsStream?.ingestEndpoint}
           onEnd={() => navigate("/")}
         />
       </div>
