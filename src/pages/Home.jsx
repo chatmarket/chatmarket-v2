@@ -91,6 +91,27 @@ export default function Home() {
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />
             このプラットフォーム一つで。使い方は無限大！
           </p>
+
+          {/* 言論の自由メッセージ */}
+          <div className="mb-5 sm:mb-6 mx-auto max-w-xl border border-primary/30 rounded-xl bg-primary/5 px-4 py-3 space-y-2 text-left">
+            <div className="space-y-1">
+              <p className="text-[11px] sm:text-xs text-foreground/80 leading-relaxed">
+                言論の自由を体感してください、法的な問題発言以外は当サイトにおいて規制はかけません
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
+                ＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます
+              </p>
+            </div>
+            <div className="border-t border-primary/20 pt-2 space-y-1">
+              <p className="text-[11px] sm:text-xs text-foreground/80 leading-relaxed">
+                Experience free speech. No restrictions apply here, except for illegal remarks.
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
+                *Streamers can filter out specific words, so they can stream safely and focus on their content.
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 md:gap-3 justify-center items-center">
             <Link to="/go-live" className="w-full sm:w-auto">
               <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 sm:h-11 px-4 sm:px-6 w-full sm:w-auto text-sm">
