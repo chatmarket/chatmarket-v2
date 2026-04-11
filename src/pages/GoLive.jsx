@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
+import StreamStyleModal from "../components/live/StreamStyleModal";
 
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
@@ -25,7 +26,8 @@ export default function GoLive() {
   const [creating, setCreating] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [mode, setMode] = useState(MODE_LIVE);
-  const [thumbnailFile, setThumbnailFile] = useState(null); // 待機モード中
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [showStreamStyleModal, setShowStreamStyleModal] = useState(false); // 待機モード中
   const queryClient = useQueryClient();
   const [liveStreamId, setLiveStreamId] = useState(null); // 配信中のstream ID
 
@@ -187,11 +189,22 @@ export default function GoLive() {
         <h1 className="text-lg sm:text-2xl font-bold">配信・通話を開始</h1>
       </div>
 
+      {/* Stream Style Modal */}
+      {showStreamStyleModal && (
+        <StreamStyleModal
+          onSelect={(style) => {
+            setForm((f) => ({ ...f, streamType: style === "rtmp" ? STREAM_TYPE_VIMEO : STREAM_TYPE_WEBRTC }));
+            setShowStreamStyleModal(false);
+          }}
+          onClose={() => setShowStreamStyleModal(false)}
+        />
+      )}
+
       {/* Mode selector */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 sm:mb-8">
         <button
           type="button"
-          onClick={() => setMode(MODE_LIVE)}
+          onClick={() => { setMode(MODE_LIVE); setShowStreamStyleModal(true); }}
           className={`flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all ${
             mode === MODE_LIVE
               ? "border-red-500 bg-red-500/10"
