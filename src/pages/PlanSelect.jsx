@@ -208,7 +208,7 @@ export default function PlanSelect() {
   const selectedPlans = PLANS.filter((p) => selected.has(p.id));
   const totalPrice = FREE_TRIAL_EMAILS.includes(user?.email) 
     ? 0 
-    : selectedPlans.reduce((sum, p) => sum + p.price, 0);
+    : selectedPlans.filter((p) => !p.comingSoon).reduce((sum, p) => sum + p.price, 0);
 
   const handleApply = async () => {
     const ids = [...selected].join(",");
