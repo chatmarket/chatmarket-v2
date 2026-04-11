@@ -49,6 +49,7 @@ import CreatorRevenueDashboard from './pages/CreatorRevenueDashboard';
 import WithdrawalRequest from './pages/WithdrawalRequest';
 import LandingPage from './pages/LandingPage';
 import CreatorSchedule from './pages/CreatorSchedule';
+import ObsGuide from './pages/ObsGuide';
 import ChannelSchedule from './pages/ChannelSchedule';
 
 const AuthenticatedApp = () => {
@@ -119,6 +120,7 @@ const AuthenticatedApp = () => {
         <Route path="/info" element={<LandingPage />} />
         <Route path="/creator-schedule" element={<CreatorSchedule />} />
         <Route path="/channel-schedule/:channelId" element={<ChannelSchedule />} />
+        <Route path="/obs-guide" element={<ObsGuide />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Camera, Monitor, Mic2, X, Zap, Trophy } from "lucide-react";
 
 export default function StreamStyleModal({ onSelect, onClose }) {
@@ -84,6 +85,14 @@ export default function StreamStyleModal({ onSelect, onClose }) {
             >
               OBS配信を選ぶ
             </button>
+            <Link
+              to="/obs-guide"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-xs text-zinc-500 hover:text-purple-400 underline underline-offset-2 transition-colors"
+            >
+              ※ OBSの設定方法がわからない方はこちら
+            </Link>
           </div>
         </div>
       </div>
