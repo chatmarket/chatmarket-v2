@@ -6,8 +6,9 @@ import { PROGRESSIVE_TIERS, PLAN_REVENUE_SHARE, STRIPE_FEE_RATE } from "@/lib/pr
 const PLAN_ROWS = [
   { label: "FREEプラン",                     rate: PLAN_REVENUE_SHARE.free,          note: "" },
   { label: "BASIC / VOD / PPV プラン",       rate: PLAN_REVENUE_SHARE.basic,         note: "プログレッシブ対象", highlight: true },
-  { label: "ミニスクール / エンタープライズ", rate: PLAN_REVENUE_SHARE["mini-school"], note: "" },
-  { label: "クラウドファンディング（特例）",  rate: PLAN_REVENUE_SHARE.crowdfunding,   note: "NPO・政治政党 一律" },
+  { label: "CALL & ANSWER プラン",           rate: 0.85,                             note: "85%～", highlight: true },
+  { label: "ミニスクール / エンタープライズ", rate: PLAN_REVENUE_SHARE["mini-school"], note: "", comingSoon: true },
+  { label: "クラウドファンディング（特例）",  rate: PLAN_REVENUE_SHARE.crowdfunding,   note: "NPO・政治政党 一律", comingSoon: true },
 ];
 
 const TIER_LABELS = [
@@ -69,13 +70,17 @@ export default function ProgressiveIncentiveSection() {
                     </thead>
                     <tbody className="divide-y divide-border/30">
                       {PLAN_ROWS.map((row) => (
-                        <tr key={row.label} className={row.highlight ? "bg-primary/5" : ""}>
+                        <tr key={row.label} className={row.comingSoon ? "opacity-50" : row.highlight ? "bg-primary/5" : ""}>
                           <td className="px-4 py-2.5 font-medium">{row.label}</td>
-                          <td className="px-4 py-2.5 text-right font-black text-primary text-sm">
-                            {(row.rate * 100).toFixed(0)}%
+                          <td className="px-4 py-2.5 text-right font-black text-sm">
+                            {row.comingSoon ? (
+                              <span className="text-[11px] font-bold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">準備中</span>
+                            ) : (
+                              <span className="text-primary">{(row.rate * 100).toFixed(0)}%</span>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-center text-muted-foreground">
-                            {row.note && (
+                            {!row.comingSoon && row.note && (
                               <span className={`text-[10px] px-2 py-0.5 rounded-full ${row.highlight ? "bg-primary/20 text-primary" : "bg-secondary"}`}>
                                 {row.note}
                               </span>
