@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Radio, MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Users, Pause, Play, Monitor, Settings, X, AlertTriangle } from "lucide-react";
+import { Radio, MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Pause, Play, Monitor, Settings, X, AlertTriangle, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -28,24 +28,53 @@ export default function BroadcasterStream({ streamId, onEnd }) {
   const [camOn, setCamOn] = useState(true);
   const [paused, setPaused] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
-  const [status, setStatus] = useState("connecting");
+  // "preview" | "live" | "ended"
+  const [status, setStatus] = useState("preview");
   const [viewerCount, setViewerCount] = useState(0);
   const [comments, setComments] = useState([]);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showQualityModal, setShowQualityModal] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState(1); // index into QUALITY_PRESETS
+  const [selectedQuality, setSelectedQuality] = useState(1);
+  const [goingLive, setGoingLive] = useState(false);
 
-  // Poll viewer count
+  const isLive = status === "live";
+
+  // カメラ起動（プレビュー用・配信前から表示）
+  const startCamera = useCallback(async () => {
+    const preset = QUALITY_PRESETS[selectedQuality];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: preset.width, height: preset.height, frameRate: preset.frameRate },
+        audio: true,
+      });
+      localStreamRef.current = stream;
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+    } catch (err) {
+      toast.error("カメラ/マイクにアクセスできません: " + err.message);
+    }
+  }, [selectedQuality]);
+
   useEffect(() => {
+    startCamera();
+    return () => {
+      clearInterval(pollRef.current);
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      pcRef.current?.close();
+    };
+  }, [startCamera]);
+
+  // 視聴者数ポーリング（配信中のみ）
+  useEffect(() => {
+    if (!isLive) return;
     const interval = setInterval(async () => {
       const streams = await base44.entities.LiveStream.filter({ id: streamId });
       const s = streams[0];
       if (s?.viewer_count !== undefined) setViewerCount(s.viewer_count);
     }, 5000);
     return () => clearInterval(interval);
-  }, [streamId]);
+  }, [streamId, isLive]);
 
-  // Subscribe to comments & superchats
+  // コメント購読
   useEffect(() => {
     const unsubComment = base44.entities.Comment.subscribe((event) => {
       if (event.type === "create" && event.data?.target_id === streamId) {
@@ -60,24 +89,18 @@ export default function BroadcasterStream({ streamId, onEnd }) {
     return () => { unsubComment(); unsubSuper(); };
   }, [streamId]);
 
-  // Auto-scroll comments
   useEffect(() => {
     commentEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [comments]);
 
-  const startBroadcast = useCallback(async () => {
-    const preset = QUALITY_PRESETS[selectedQuality];
+  // 配信開始（GoLiveボタン押下時）
+  const handleGoLive = useCallback(async () => {
+    if (!localStreamRef.current) return;
+    setGoingLive(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: preset.width, height: preset.height, frameRate: preset.frameRate },
-        audio: true,
-      });
-      localStreamRef.current = stream;
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       pcRef.current = pc;
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current));
 
       const iceCandidates = [];
       pc.onicecandidate = (e) => { if (e.candidate) iceCandidates.push(e.candidate); };
@@ -116,18 +139,11 @@ export default function BroadcasterStream({ streamId, onEnd }) {
         }
       }, 5000);
     } catch (err) {
-      toast.error("カメラ/マイクにアクセスできません: " + err.message);
+      toast.error("配信開始に失敗しました: " + err.message);
+    } finally {
+      setGoingLive(false);
     }
-  }, [streamId, selectedQuality]);
-
-  useEffect(() => {
-    startBroadcast();
-    return () => {
-      clearInterval(pollRef.current);
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      pcRef.current?.close();
-    };
-  }, [startBroadcast]);
+  }, [streamId]);
 
   const toggleMic = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !micOn));
@@ -172,10 +188,8 @@ export default function BroadcasterStream({ streamId, onEnd }) {
     else navigate(-1);
   };
 
-  const isLive = status === "live";
-
   return (
-    <div className="w-full bg-black" style={{ aspectRatio: "16/9", maxHeight: "calc(100vh - 56px)" }}>
+    <div className="w-full bg-black rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "calc(100vh - 56px)" }}>
       <div className="flex h-full w-full">
 
         {/* ===== 左: 映像エリア (65%) ===== */}
@@ -185,43 +199,55 @@ export default function BroadcasterStream({ streamId, onEnd }) {
             autoPlay
             muted
             playsInline
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-black"
             style={{ display: camOn && !paused ? "block" : "none" }}
           />
           {(!camOn || paused) && (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900">
               <CameraOff className="w-14 h-14 text-zinc-600" />
-              {paused && <p className="absolute mt-20 text-white/50 text-sm font-bold">一時停止中</p>}
+              {paused && <p className="mt-3 text-white/50 text-sm font-bold">一時停止中</p>}
             </div>
           )}
 
-          {/* 待機中: 待機人数 */}
+          {/* ステータスバッジ */}
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            {isLive ? (
+              <>
+                <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
+                </span>
+                <span className="flex items-center gap-1.5 bg-black/70 text-white font-black px-3 py-1 rounded-full text-base">
+                  <Eye className="w-4 h-4" />{viewerCount}
+                </span>
+              </>
+            ) : (
+              <span className="flex items-center gap-1.5 bg-zinc-700/80 text-zinc-300 text-xs font-bold px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" /> PREVIEW
+              </span>
+            )}
+          </div>
+
+          {/* GoLiveボタン（プレビュー中のみ） */}
           {!isLive && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-black/70 backdrop-blur-sm rounded-2xl px-8 py-5 text-center">
-                <Users className="w-8 h-8 text-white/50 mx-auto mb-2" />
-                <p className="text-white/60 text-sm mb-1">現在の待機人数</p>
-                <p className="text-white text-5xl font-black">{viewerCount}<span className="text-2xl ml-1 font-normal">人</span></p>
-              </div>
-            </div>
-          )}
-
-          {/* LIVE中: バッジ */}
-          {isLive && (
-            <div className="absolute top-3 left-3 flex items-center gap-2">
-              <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
-              </span>
-              <span className="flex items-center gap-2 bg-black/70 text-white font-black px-3 py-1 rounded-full" style={{ fontSize: "20px" }}>
-                <Eye className="w-5 h-5" />
-                {viewerCount}
-              </span>
+            <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none">
+              <button
+                onClick={handleGoLive}
+                disabled={goingLive}
+                className="pointer-events-auto flex items-center gap-3 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-black text-lg px-10 py-4 rounded-2xl shadow-2xl shadow-red-500/40 transition-all scale-100 hover:scale-105 active:scale-95"
+              >
+                {goingLive ? (
+                  <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Zap className="w-6 h-6" />
+                )}
+                {goingLive ? "接続中..." : "配信を開始する"}
+              </button>
             </div>
           )}
         </div>
 
         {/* ===== 右: コメント + コントロール (35%) ===== */}
-        <div className="flex-[35] flex flex-col bg-zinc-950 h-full relative">
+        <div className="flex-[35] flex flex-col bg-zinc-950 h-full">
 
           {/* コメントスクロール */}
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 min-h-0">
@@ -251,38 +277,30 @@ export default function BroadcasterStream({ streamId, onEnd }) {
           </div>
 
           {/* コントロールバー */}
-          <div className="relative border-t border-zinc-800 shrink-0">
-            {/* ボタン群 */}
-            <div className="flex items-center justify-between px-3 py-3 gap-2">
-              <div className="flex gap-2">
+          <div className="border-t border-zinc-800 shrink-0 px-3 py-3">
+            {/* ロック中の注意書き（配信中のみ） */}
+            {isLive && (
+              <p className="text-[10px] text-zinc-600 text-center mb-2">🔒 配信中 — ボタンはロックされています</p>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              {/* コントロールボタン群 */}
+              <div className={`flex gap-2 ${isLive ? "opacity-30 pointer-events-none" : ""}`}>
                 <CtrlBtn active={micOn} icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />} onClick={toggleMic} danger={!micOn} />
                 <CtrlBtn active={camOn} icon={camOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />} onClick={toggleCam} danger={!camOn} />
                 <CtrlBtn icon={paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />} onClick={togglePause} active={!paused} />
                 <CtrlBtn icon={<Monitor className="w-4 h-4" />} onClick={toggleScreenShare} active={!screenSharing} accent={screenSharing} />
-                <CtrlBtn icon={<Settings className="w-4 h-4" />} onClick={() => !isLive && setShowQualityModal(true)} active={!isLive} faded={isLive} />
+                <CtrlBtn icon={<Settings className="w-4 h-4" />} onClick={() => setShowQualityModal(true)} active />
               </div>
+
+              {/* 配信終了ボタン（常に表示） */}
               <button
                 onClick={() => setShowEndConfirm(true)}
-                className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
+                className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors shrink-0"
               >
                 <PhoneOff className="w-3.5 h-3.5" /> 配信終了
               </button>
             </div>
-
-            {/* LIVE中: 誤操作防止オーバーレイ（配信終了ボタン以外を無効化） */}
-            {isLive && (
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-[1px] flex items-center justify-end pr-3 pointer-events-auto rounded-sm">
-                <div className="flex-1 text-center">
-                  <p className="text-white/40 text-[10px]">🔒 配信中 — 誤操作防止ロック中</p>
-                </div>
-                <button
-                  onClick={() => setShowEndConfirm(true)}
-                  className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-black px-5 py-2.5 rounded-full transition-colors shadow-lg shadow-red-500/30"
-                >
-                  <PhoneOff className="w-4 h-4" /> 配信終了
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -318,25 +336,26 @@ export default function BroadcasterStream({ streamId, onEnd }) {
         </div>
       )}
 
-      {/* ===== 高画質設定モーダル（配信前のみ） ===== */}
-      {showQualityModal && !isLive && (
+      {/* ===== 高画質設定モーダル ===== */}
+      {showQualityModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-black text-white text-lg flex items-center gap-2">
-                <Settings className="w-5 h-5 text-primary" /> 高画質配信設定
+                <Settings className="w-5 h-5 text-primary" /> 配信画質設定
               </h2>
               <button onClick={() => setShowQualityModal(false)} className="text-zinc-500 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-zinc-500 text-xs mb-4">配信画質を選択してください（配信開始前のみ変更可）</p>
+            {isLive && <p className="text-zinc-500 text-xs mb-3">※ 配信中は画質変更できません</p>}
             <div className="space-y-2">
               {QUALITY_PRESETS.map((p, i) => (
                 <button
                   key={i}
-                  onClick={() => setSelectedQuality(i)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${selectedQuality === i ? "border-primary bg-primary/10 text-primary" : "border-zinc-700 bg-zinc-800 text-white hover:border-zinc-500"}`}
+                  onClick={() => !isLive && setSelectedQuality(i)}
+                  disabled={isLive}
+                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${selectedQuality === i ? "border-primary bg-primary/10 text-primary" : "border-zinc-700 bg-zinc-800 text-white hover:border-zinc-500"}`}
                 >
                   <p className="font-bold text-sm">{p.label}</p>
                   <p className="text-xs text-zinc-500 mt-0.5">{p.width}×{p.height} / {p.frameRate}fps / {(p.bitrate / 1000000).toFixed(1)}Mbps</p>
@@ -347,7 +366,7 @@ export default function BroadcasterStream({ streamId, onEnd }) {
               onClick={() => setShowQualityModal(false)}
               className="w-full mt-4 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm"
             >
-              設定を保存
+              閉じる
             </button>
           </div>
         </div>
@@ -356,15 +375,14 @@ export default function BroadcasterStream({ streamId, onEnd }) {
   );
 }
 
-function CtrlBtn({ icon, onClick, active = true, danger, accent, faded }) {
+function CtrlBtn({ icon, onClick, active = true, danger, accent }) {
   return (
     <button
       onClick={onClick}
       className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors text-white
         ${danger ? "bg-red-500 hover:bg-red-600" : ""}
         ${accent ? "bg-blue-500 hover:bg-blue-600" : ""}
-        ${!danger && !accent && active ? "bg-white/10 hover:bg-white/20" : ""}
-        ${faded ? "opacity-30 cursor-not-allowed" : ""}
+        ${!danger && !accent ? "bg-white/10 hover:bg-white/20" : ""}
       `}
     >
       {icon}
