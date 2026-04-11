@@ -274,12 +274,16 @@ export default function PlanSelect() {
                     }
                     e.preventDefault();
                   }}
-                  className={`hover:no-underline py-4 ${ADMIN_EMAILS.includes(user?.email) ? "cursor-not-allowed" : ""}`}
+                  className={`hover:no-underline py-4 ${plan.comingSoon || ADMIN_EMAILS.includes(user?.email) ? "cursor-not-allowed" : ""}`}
                   disabled={ADMIN_EMAILS.includes(user?.email)}
                 >
                   <div className="flex items-center gap-4 text-left flex-1">
                     {/* Checkbox */}
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? "bg-primary border-primary" : "border-muted-foreground"}`}>
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                      plan.comingSoon
+                        ? "border-muted/30 bg-muted/10 opacity-30 cursor-not-allowed"
+                        : isSelected ? "bg-primary border-primary" : "border-muted-foreground"
+                    }`}>
                       {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
                     </div>
 
