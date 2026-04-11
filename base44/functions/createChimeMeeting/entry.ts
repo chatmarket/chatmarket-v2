@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Use AWS credentials from secrets
-    const region = Deno.env.get("AWS_REGION") || "ap-northeast-1";
+    // Global region: us-east-1 for Chime SDK (Virginia - optimal for global latency)
+    const region = "us-east-1";
     const accessKeyId = Deno.env.get("AWS_ACCESS_KEY_ID");
     const secretAccessKey = Deno.env.get("AWS_SECRET_ACCESS_KEY");
 
