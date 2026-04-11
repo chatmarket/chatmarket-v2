@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Radio, Loader2, Image, PhoneCall, Video, AlertTriangle, ExternalLink } from "lucide-react";
+import { Radio, Loader2, Image, PhoneCall, Video, AlertTriangle, ExternalLink, Users, Clock, CheckCircle2, XCircle, UserCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 
@@ -21,9 +21,12 @@ const STREAM_TYPE_YOUTUBE = "youtube";
 export default function GoLive() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [channel, setChannel] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [mode, setMode] = useState(MODE_LIVE); // "live" | "call"
+  const [waiting, setWaiting] = useState(false);
+  const [mode, setMode] = useState(MODE_LIVE);
+  const [thumbnailFile, setThumbnailFile] = useState(null); // 待機モード中
+  const queryClient = useQueryClient();
   const [liveStreamId, setLiveStreamId] = useState(null); // 配信中のstream ID
 
   const [form, setForm] = useState({
@@ -61,6 +64,43 @@ export default function GoLive() {
     queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }),
     enabled: !!user,
   });
+
+  // 自分のチャンネルへの通話申請（pending）を取得
+  const { data: pendingCalls = [] } = useQuery({
+    queryKey: ["pending-calls", channels[0]?.id],
+    queryFn: () => base44.entities.VideoCall.filter({ callee_channel_id: channels[0].id, status: "pending" }, "-created_date", 20),
+    enabled: !!channels[0]?.id && waiting,
+    refetchInterval: waiting ? 4000 : false,
+  });
+
+  const handleStartWaiting = async () => {
+    let ch = channels[0];
+    if (!ch) {
+      ch = await base44.entities.Channel.create({ name: user.full_name + "のチャンネル", owner_email: user.email });
+      queryClient.invalidateQueries({ queryKey: ["my-channels", user.email] });
+    }
+    setChannel(ch);
+    await base44.entities.Channel.update(ch.id, { call_enabled: true });
+    queryClient.invalidateQueries({ queryKey: ["my-channels", user.email] });
+    setWaiting(true);
+    toast.success("待機モードを開始しました。通話希望者を待っています。");
+  };
+
+  const handleStopWaiting = async () => {
+    if (channels[0]) await base44.entities.Channel.update(channels[0].id, { call_enabled: false });
+    setWaiting(false);
+    toast.info("待機モードを終了しました。");
+  };
+
+  const handleAcceptCall = (call) => {
+    navigate(`/call/${call.id}`);
+  };
+
+  const handleDeclineCall = async (call) => {
+    await base44.entities.VideoCall.update(call.id, { status: "declined" });
+    queryClient.invalidateQueries({ queryKey: ["pending-calls", channels[0]?.id] });
+    toast.info("通話申請を断りました。");
+  };
 
   const handleStart = async (e) => {
     e.preventDefault();
@@ -181,6 +221,72 @@ export default function GoLive() {
           <span className="text-xs text-muted-foreground text-center">特定の相手と双方向ビデオ通話（有料対応）</span>
         </button>
       </div>
+
+      {/* 待機モード（通話モードのみ） */}
+      {mode === MODE_CALL && (
+        <div className="mb-6">
+          {!waiting ? (
+            <button
+              type="button"
+              onClick={handleStartWaiting}
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 transition-all text-primary font-bold"
+            >
+              <Users className="w-5 h-5" />
+              待機して通話希望者を募る
+            </button>
+          ) : (
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="font-bold text-sm text-green-400">待機中 — 通話希望者を待っています</span>
+                </div>
+                <button onClick={handleStopWaiting} className="text-xs text-muted-foreground hover:text-destructive underline">
+                  待機終了
+                </button>
+              </div>
+
+              {pendingCalls.length === 0 ? (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  まだ通話申請がありません
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">通話申請 ({pendingCalls.length}件)</p>
+                  {pendingCalls.map((call) => (
+                    <div key={call.id} className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                        <UserCheck className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{call.caller_name || call.caller_email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{call.caller_email}</p>
+                        {call.message && (
+                          <p className="text-xs text-foreground/70 mt-1 line-clamp-2 bg-secondary px-2 py-1 rounded">💬 {call.message}</p>
+                        )}
+                        <div className="flex gap-2 text-xs text-muted-foreground mt-1">
+                          {call.duration_minutes && <span>⏱ {call.duration_minutes}分</span>}
+                          {call.price > 0 && <span className="text-primary font-bold">¥{call.price.toLocaleString()}</span>}
+                          {call.is_free_call && <span className="text-green-400">無料枠</span>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1 h-8 text-xs" onClick={() => handleAcceptCall(call)}>
+                          <CheckCircle2 className="w-3.5 h-3.5" /> 承認
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1 h-8 text-xs" onClick={() => handleDeclineCall(call)}>
+                          <XCircle className="w-3.5 h-3.5" /> 断る
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6">
         {/* Stream type selector (liveモードのみ) */}
