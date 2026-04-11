@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
 
     const params = {
       playback_policy: ['public'],
+      test: true,
     };
 
     if (isArchiveSaved) {
