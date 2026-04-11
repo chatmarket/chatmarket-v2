@@ -22,9 +22,10 @@ export default function VideoCard({ video, size = "default" }) {
   const isLarge = size === "large";
   const navigate = useNavigate();
 
+
   return (
     <Link to={`/watch/${video.id}`} className="group block">
-      <div className="relative overflow-hidden rounded-xl aspect-video bg-secondary">
+      <div className="relative overflow-hidden rounded-lg sm:rounded-xl aspect-video bg-secondary">
         {video.thumbnail_url ? (
           <img
             src={video.thumbnail_url}
@@ -67,8 +68,8 @@ export default function VideoCard({ video, size = "default" }) {
         ) : null}
       </div>
 
-      <div className="mt-3 space-y-1">
-        <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${isLarge ? "text-base" : "text-sm"}`}>
+      <div className="mt-2 space-y-1">
+        <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${isLarge ? "text-base" : "text-xs sm:text-sm"}`}>
           {video.is_free && <span className="text-primary font-bold mr-1">[FREE]</span>}
           {!video.is_free && video.price > 0 && <span className="text-yellow-400 font-bold mr-1">¥{video.price?.toLocaleString()}</span>}
           {video.title}

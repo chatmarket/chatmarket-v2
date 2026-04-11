@@ -136,10 +136,11 @@ export default function Home() {
 
       {/* ライブ配信中 */}
       {liveStreams.length > 0 && (
-        <section className="space-y-3 sm:space-y-4">
-          <div className="flex items-center gap-2 px-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <h2 className="text-lg sm:text-xl font-bold">ライブ配信中</h2>
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold">ライブ配信中</h2>
+            <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
           </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
@@ -149,8 +150,12 @@ export default function Home() {
 
       {/* おすすめ有料動画 */}
       {featuredVideos.length > 0 && (
-        <section className="space-y-2 sm:space-y-3 md:space-y-4 px-0">
-          <h2 className="text-lg sm:text-xl font-bold">おすすめ有料動画</h2>
+        <section className="space-y-3 px-0">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-yellow-400 shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold">おすすめ有料動画</h2>
+            <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-2 py-0.5 font-semibold">PPV</span>
+          </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {featuredVideos.map((v) => (
               <div key={v.id} className="relative group">
@@ -169,8 +174,12 @@ export default function Home() {
 
       {/* 無料動画 */}
       {freeVideos.length > 0 && (
-        <section className="space-y-2 sm:space-y-3 md:space-y-4 px-0">
-          <h2 className="text-lg sm:text-xl font-bold">無料で見られる動画</h2>
+        <section className="space-y-3 px-0">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-primary shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold">無料で見られる動画</h2>
+            <span className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-full px-2 py-0.5 font-semibold">FREE</span>
+          </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {freeVideos.map((v) => (
               <div key={v.id} className="relative group">
@@ -183,8 +192,12 @@ export default function Home() {
 
       {/* 新着動画 */}
       {recentVideos.length > 0 && (
-        <section className="space-y-2 sm:space-y-3 md:space-y-4 px-0">
-          <h2 className="text-lg sm:text-xl font-bold">新着動画</h2>
+        <section className="space-y-3 px-0">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-blue-400 shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold">新着動画</h2>
+            <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5 font-semibold">NEW</span>
+          </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {recentVideos.map((v) => (
               <div key={v.id} className="relative group">
