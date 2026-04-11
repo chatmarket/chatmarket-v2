@@ -30,6 +30,8 @@ export default function GoLive() {
   const [showStreamStyleModal, setShowStreamStyleModal] = useState(false); // 待機モード中
   const queryClient = useQueryClient();
   const [liveStreamId, setLiveStreamId] = useState(null); // 配信中のstream ID
+  const [muxStream, setMuxStream] = useState(null); // { streamId, streamKey, playbackId }
+  const [obsMode, setObsMode] = useState(false); // OBSダッシュボード表示
 
   const [form, setForm] = useState({
     title: "",
@@ -116,6 +118,19 @@ export default function GoLive() {
 
     setCreating(true);
 
+    // MUX ライブ枠を作成（OBSまたはWebRTC配信の場合）
+    let muxData = null;
+    if (mode === MODE_LIVE && (form.streamType === STREAM_TYPE_WEBRTC || form.streamType === STREAM_TYPE_VIMEO)) {
+      const muxRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: form.saveArchive });
+      if (!muxRes?.data?.streamId) {
+        toast.error('配信枠の作成に失敗しました。もう一度お試しください。');
+        setCreating(false);
+        return;
+      }
+      muxData = muxRes.data;
+      setMuxStream(muxData);
+    }
+
     let channel = channels[0];
     if (!channel) {
       channel = await base44.entities.Channel.create({
@@ -143,7 +158,7 @@ export default function GoLive() {
       price: form.isPaid ? form.price : 0,
       viewer_count: 0,
       stream_type: form.streamType,
-      vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? form.vimeoUrl : "",
+      vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? (muxData ? `https://global-live.mux.com/SFU/${muxData.playbackId}` : form.vimeoUrl) : "",
       youtube_url: form.streamType === STREAM_TYPE_YOUTUBE ? form.youtubeUrl : "",
     });
 
@@ -152,15 +167,73 @@ export default function GoLive() {
     setCreating(false);
 
     if (mode === MODE_CALL) {
-      // Video call mode — navigate to call page
       navigate(`/call/${stream.id}`);
+    } else if (form.streamType === STREAM_TYPE_VIMEO && muxData) {
+      // OBS配信ダッシュボードを表示
+      setObsMode(true);
     } else {
-      // Live mode — show broadcaster stream inline
+      // ブラウザ配信
       setLiveStreamId(stream.id);
     }
   };
 
   const minPrice = mode === MODE_LIVE ? 1 : (form.duration / 15) * 150;
+
+  // OBSダッシュボード
+  if (obsMode && muxStream) {
+    const RTMP_URL = 'rtmps://global-live.mux.com:443/app';
+    return (
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+            <Radio className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">OBS配信ダッシュボード</h1>
+            <p className="text-xs text-muted-foreground">以下の情報をOBSに設定して配信を開始してください</p>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">RTMP URL（サーバー）</label>
+              <div className="flex items-center gap-2">
+                <input readOnly value={RTMP_URL} className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-foreground border-0 focus:outline-none" />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(RTMP_URL); toast.success('コピーしました'); }}
+                  className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-3 py-2 rounded-lg transition-colors"
+                >コピー</button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ストリームキー</label>
+              <div className="flex items-center gap-2">
+                <input readOnly value={muxStream.streamKey} className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-foreground border-0 focus:outline-none" />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(muxStream.streamKey); toast.success('コピーしました'); }}
+                  className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-3 py-2 rounded-lg transition-colors"
+                >コピー</button>
+              </div>
+              <p className="text-[11px] text-destructive">⚠️ ストリームキーは他人に教えないでください</p>
+            </div>
+          </div>
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300 space-y-1">
+            <p className="font-bold">OBS設定手順</p>
+            <ol className="list-decimal list-inside space-y-1 text-xs text-blue-200/80">
+              <li>OBSを開き「設定」→「配信」を選択</li>
+              <li>サービスを「カスタム」に設定</li>
+              <li>上記のRTMP URLとストリームキーを貼り付け</li>
+              <li>「配信開始」ボタンをクリック</li>
+            </ol>
+          </div>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-sm font-semibold transition-colors"
+          >ホームに戻る</button>
+        </div>
+      </div>
+    );
+  }
 
   // 配信中の場合はBroadcasterStreamを表示
   if (liveStreamId) {
