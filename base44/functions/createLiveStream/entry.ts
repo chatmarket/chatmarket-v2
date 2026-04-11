@@ -1,12 +1,6 @@
 // @ts-nocheck
 /* global Deno */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import Mux from 'npm:@mux/mux-node@8.3.0';
-
-const mux = new Mux({
-  tokenId: Deno.env.get("MUX_TOKEN_ID"),
-  tokenSecret: Deno.env.get("MUX_TOKEN_SECRET"),
-});
 
 Deno.serve(async (req) => {
   try {
@@ -19,18 +13,37 @@ Deno.serve(async (req) => {
 
     const { isArchiveSaved } = await req.json();
 
-    const params = {
+    const tokenId = Deno.env.get("MUX_TOKEN_ID");
+    const tokenSecret = Deno.env.get("MUX_TOKEN_SECRET");
+    const credentials = btoa(`${tokenId}:${tokenSecret}`);
+
+    const body = {
       playback_policy: ['public'],
       test: true,
     };
 
     if (isArchiveSaved) {
-      params.new_asset_settings = {
+      body.new_asset_settings = {
         playback_policy: ['public'],
       };
     }
 
-    const liveStream = await mux.video.liveStreams.create(params);
+    const response = await fetch('https://api.mux.com/video/v1/live-streams', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return Response.json({ error: JSON.stringify(data) }, { status: 500 });
+    }
+
+    const liveStream = data.data;
 
     return Response.json({
       streamId: liveStream.id,
