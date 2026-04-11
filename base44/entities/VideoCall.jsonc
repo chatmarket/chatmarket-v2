@@ -1,0 +1,89 @@
+{
+  "name": "VideoCall",
+  "type": "object",
+  "properties": {
+    "caller_email": {
+      "type": "string",
+      "description": "\u767a\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "caller_name": {
+      "type": "string",
+      "description": "\u767a\u4fe1\u8005\u540d"
+    },
+    "callee_email": {
+      "type": "string",
+      "description": "\u7740\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "callee_name": {
+      "type": "string",
+      "description": "\u7740\u4fe1\u8005\u540d"
+    },
+    "callee_channel_id": {
+      "type": "string",
+      "description": "\u7740\u4fe1\u8005\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "calling",
+        "active",
+        "ended",
+        "declined",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "\u901a\u8a71\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "is_free_call": {
+      "type": "boolean",
+      "default": false,
+      "description": "CALL&ANSWER\u30d7\u30e9\u30f3\u7121\u6599\u901a\u8a71\u67a0\u3092\u4f7f\u7528"
+    },
+    "is_paid": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u6709\u6599\u901a\u8a71\u304b\u3069\u3046\u304b"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u901a\u8a71\u6599\u91d1\uff08\u5186\uff09\u767a\u4fe1\u8005\u304c\u652f\u6255\u3046"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 30,
+      "description": "\u901a\u8a71\u6642\u9593\uff08\u5206\uff09"
+    },
+    "yell_coin_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "\u901a\u8a71\u4e2d\u306b\u9001\u3089\u308c\u305f\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u901a\u8a71\u7533\u3057\u8fbc\u307f\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "thread_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u3059\u308b\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9ID"
+    },
+    "chime_meeting_id": {
+      "type": "string",
+      "description": "Amazon Chime Meeting ID"
+    },
+    "chime_attendee_caller": {
+      "type": "string",
+      "description": "Chime Attendee ID (caller)"
+    },
+    "chime_attendee_callee": {
+      "type": "string",
+      "description": "Chime Attendee ID (callee)"
+    }
+  },
+  "required": [
+    "caller_email",
+    "callee_email"
+  ]
+}
