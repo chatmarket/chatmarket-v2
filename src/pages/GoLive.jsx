@@ -16,6 +16,7 @@ import StreamStyleModal from "../components/live/StreamStyleModal";
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
 const STREAM_TYPE_WEBRTC = "webrtc";
+const STREAM_TYPE_OBS = "obs";
 const STREAM_TYPE_VIMEO = "vimeo";
 const STREAM_TYPE_YOUTUBE = "youtube";
 
@@ -120,7 +121,7 @@ export default function GoLive() {
 
     // MUX ライブ枠を作成（OBSまたはWebRTC配信の場合）
     let muxData = null;
-    if (mode === MODE_LIVE && (form.streamType === STREAM_TYPE_WEBRTC || form.streamType === STREAM_TYPE_VIMEO)) {
+    if (mode === MODE_LIVE && (form.streamType === STREAM_TYPE_WEBRTC || form.streamType === STREAM_TYPE_OBS)) {
       const muxRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: form.saveArchive });
       if (!muxRes?.data?.streamId) {
         toast.error('配信枠の作成に失敗しました。もう一度お試しください。');
@@ -168,7 +169,7 @@ export default function GoLive() {
 
     if (mode === MODE_CALL) {
       navigate(`/call/${stream.id}`);
-    } else if (form.streamType === STREAM_TYPE_VIMEO && muxData) {
+    } else if (form.streamType === STREAM_TYPE_OBS) {
       // OBS配信ダッシュボードを表示
       setObsMode(true);
     } else {
@@ -247,6 +248,8 @@ export default function GoLive() {
         </div>
         <BroadcasterStream
           streamId={liveStreamId}
+          muxStreamKey={muxStream?.streamKey}
+          muxPlaybackId={muxStream?.playbackId}
           onEnd={() => navigate("/")}
         />
       </div>
@@ -386,17 +389,17 @@ export default function GoLive() {
                 className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_WEBRTC ? "border-red-500 bg-red-500/10" : "border-border bg-card hover:border-border/70"}`}
               >
                 <Radio className={`w-5 h-5 ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`} />
-                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`}>ブラウザ配信 (WebRTC)</span>
-                <span className="text-[10px] text-muted-foreground">カメラから直接配信</span>
+                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`}>ブラウザから手軽に配信</span>
+                <span className="text-[10px] text-muted-foreground text-center">カメラから直接・ソフト不要</span>
               </button>
               <button
                 type="button"
-                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_VIMEO })}
-                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_VIMEO ? "border-blue-500 bg-blue-500/10" : "border-border bg-card hover:border-border/70"}`}
+                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_OBS })}
+                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_OBS ? "border-blue-500 bg-blue-500/10" : "border-border bg-card hover:border-border/70"}`}
               >
-                <Video className={`w-5 h-5 ${form.streamType === STREAM_TYPE_VIMEO ? "text-blue-400" : "text-muted-foreground"}`} />
-                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_VIMEO ? "text-blue-400" : "text-muted-foreground"}`}>Vimeo Live埋め込み</span>
-                <span className="text-[10px] text-muted-foreground">VimeoのURLを貼り付け</span>
+                <Video className={`w-5 h-5 ${form.streamType === STREAM_TYPE_OBS ? "text-blue-400" : "text-muted-foreground"}`} />
+                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_OBS ? "text-blue-400" : "text-muted-foreground"}`}>OBS・専用ソフトで本格配信</span>
+                <span className="text-[10px] text-muted-foreground text-center">RTMP配信・高画質対応</span>
               </button>
               <button
                 type="button"
@@ -410,21 +413,6 @@ export default function GoLive() {
                 <span className="text-[10px] text-muted-foreground">YouTube LiveのURLを貼り付け</span>
               </button>
             </div>
-            {form.streamType === STREAM_TYPE_VIMEO && (
-              <div className="space-y-2">
-                <Label>Vimeo Live URL</Label>
-                <Input
-                  value={form.vimeoUrl}
-                  onChange={(e) => setForm({ ...form, vimeoUrl: e.target.value })}
-                  placeholder="https://vimeo.com/event/XXXXXXX/embed"
-                  className="bg-secondary border-0"
-                />
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <ExternalLink className="w-3 h-3" />
-                  Vimeo LiveイベントのEmbedリンクを貼り付けてください（例: https://vimeo.com/event/1234567/embed）
-                </p>
-              </div>
-            )}
             {form.streamType === STREAM_TYPE_YOUTUBE && (
               <div className="space-y-2">
                 <Label>YouTube Live URL</Label>
