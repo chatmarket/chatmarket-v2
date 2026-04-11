@@ -16,9 +16,6 @@ import StreamStyleModal from "../components/live/StreamStyleModal";
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
 const STREAM_TYPE_WEBRTC = "webrtc";
-const STREAM_TYPE_OBS = "obs";
-const STREAM_TYPE_VIMEO = "vimeo";
-const STREAM_TYPE_YOUTUBE = "youtube";
 
 export default function GoLive() {
   const navigate = useNavigate();
@@ -32,7 +29,6 @@ export default function GoLive() {
   const queryClient = useQueryClient();
   const [liveStreamId, setLiveStreamId] = useState(null); // 配信中のstream ID
   const [ivsStream, setIvsStream] = useState(null); // { streamId, streamKey, ingestEndpoint, playbackUrl }
-  const [obsMode, setObsMode] = useState(false); // OBSダッシュボード表示
 
   const [form, setForm] = useState({
     title: "",
@@ -43,8 +39,6 @@ export default function GoLive() {
     price: mode === MODE_LIVE ? 1 : 150,
     isPaid: false,
     streamType: STREAM_TYPE_WEBRTC,
-    vimeoUrl: "",
-    youtubeUrl: "",
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
@@ -119,9 +113,9 @@ export default function GoLive() {
 
     setCreating(true);
 
-    // MUX ライブ枠を作成（OBSまたはWebRTC配信の場合）
+    // IVS ライブ枠を作成（WebRTC配信の場合）
     let ivsData = null;
-    if (mode === MODE_LIVE && (form.streamType === STREAM_TYPE_WEBRTC || form.streamType === STREAM_TYPE_OBS)) {
+    if (mode === MODE_LIVE && form.streamType === STREAM_TYPE_WEBRTC) {
       const ivsRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: form.saveArchive });
       if (!ivsRes?.data?.streamId) {
         toast.error('配信枠の作成に失敗しました。もう一度お試しください。');
@@ -159,9 +153,7 @@ export default function GoLive() {
       price: form.isPaid ? form.price : 0,
       viewer_count: 0,
       stream_type: form.streamType,
-      vimeo_url: form.streamType === STREAM_TYPE_VIMEO ? form.vimeoUrl : "",
       ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
-      youtube_url: form.streamType === STREAM_TYPE_YOUTUBE ? form.youtubeUrl : "",
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -170,9 +162,6 @@ export default function GoLive() {
 
     if (mode === MODE_CALL) {
       navigate(`/call/${stream.id}`);
-    } else if (form.streamType === STREAM_TYPE_OBS) {
-      // OBS配信ダッシュボードを表示
-      setObsMode(true);
     } else {
       // ブラウザ配信
       setLiveStreamId(stream.id);
@@ -181,62 +170,7 @@ export default function GoLive() {
 
   const minPrice = mode === MODE_LIVE ? 1 : (form.duration / 15) * 150;
 
-  // OBSダッシュボード
-  if (obsMode && ivsStream) {
-    const RTMP_URL = `rtmps://${ivsStream.ingestEndpoint}:443/app/`;
-    const streamKey = ivsStream.streamKey;
-    return (
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-            <Radio className="w-5 h-5 text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">OBS配信ダッシュボード (AWS IVS)</h1>
-            <p className="text-xs text-muted-foreground">以下の情報をOBSに設定して配信を開始してください</p>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">RTMP URL（サーバー）</label>
-              <div className="flex items-center gap-2">
-                <input readOnly value={RTMP_URL} className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-foreground border-0 focus:outline-none" />
-                <button
-                  onClick={() => { navigator.clipboard.writeText(RTMP_URL); toast.success('コピーしました'); }}
-                  className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-3 py-2 rounded-lg transition-colors"
-                >コピー</button>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ストリームキー</label>
-              <div className="flex items-center gap-2">
-                <input readOnly value={streamKey} className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-foreground border-0 focus:outline-none" />
-                <button
-                  onClick={() => { navigator.clipboard.writeText(streamKey); toast.success('コピーしました'); }}
-                  className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-3 py-2 rounded-lg transition-colors"
-                >コピー</button>
-              </div>
-              <p className="text-[11px] text-destructive">⚠️ ストリームキーは他人に教えないでください</p>
-            </div>
-          </div>
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300 space-y-1">
-            <p className="font-bold">OBS設定手順</p>
-            <ol className="list-decimal list-inside space-y-1 text-xs text-blue-200/80">
-              <li>OBSを開き「設定」→「配信」を選択</li>
-              <li>サービスを「カスタム」に設定</li>
-              <li>上記のRTMP URLとストリームキーを貼り付け</li>
-              <li>「配信開始」ボタンをクリック</li>
-            </ol>
-          </div>
-          <button
-            onClick={() => navigate('/')}
-            className="w-full py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-sm font-semibold transition-colors"
-          >ホームに戻る</button>
-        </div>
-      </div>
-    );
-  }
+
 
   // 配信中の場合はBroadcasterStreamを表示
   if (liveStreamId) {
@@ -271,7 +205,7 @@ export default function GoLive() {
       {showStreamStyleModal && (
         <StreamStyleModal
           onSelect={(style) => {
-            setForm((f) => ({ ...f, streamType: style === "rtmp" ? STREAM_TYPE_VIMEO : STREAM_TYPE_WEBRTC }));
+            setForm((f) => ({ ...f, streamType: STREAM_TYPE_WEBRTC }));
             setShowStreamStyleModal(false);
           }}
           onClose={() => setShowStreamStyleModal(false)}
@@ -380,56 +314,11 @@ export default function GoLive() {
       )}
 
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6">
-        {/* Stream type selector (liveモードのみ) */}
+        {/* ブラウザ配信固定 */}
         {mode === MODE_LIVE && (
-          <div className="space-y-3">
-            <Label>配信方式</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_WEBRTC })}
-                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_WEBRTC ? "border-red-500 bg-red-500/10" : "border-border bg-card hover:border-border/70"}`}
-              >
-                <Radio className={`w-5 h-5 ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`} />
-                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_WEBRTC ? "text-red-400" : "text-muted-foreground"}`}>ブラウザから手軽に配信</span>
-                <span className="text-[10px] text-muted-foreground text-center">カメラから直接・ソフト不要</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_OBS })}
-                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_OBS ? "border-blue-500 bg-blue-500/10" : "border-border bg-card hover:border-border/70"}`}
-              >
-                <Video className={`w-5 h-5 ${form.streamType === STREAM_TYPE_OBS ? "text-blue-400" : "text-muted-foreground"}`} />
-                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_OBS ? "text-blue-400" : "text-muted-foreground"}`}>OBS・専用ソフトで本格配信</span>
-                <span className="text-[10px] text-muted-foreground text-center">RTMP配信・高画質対応</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, streamType: STREAM_TYPE_YOUTUBE })}
-                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all ${form.streamType === STREAM_TYPE_YOUTUBE ? "border-red-600 bg-red-600/10" : "border-border bg-card hover:border-border/70"}`}
-              >
-                <svg className={`w-5 h-5 ${form.streamType === STREAM_TYPE_YOUTUBE ? "text-red-500" : "text-muted-foreground"}`} viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-                <span className={`text-xs font-bold ${form.streamType === STREAM_TYPE_YOUTUBE ? "text-red-500" : "text-muted-foreground"}`}>YouTube Live埋め込み</span>
-                <span className="text-[10px] text-muted-foreground">YouTube LiveのURLを貼り付け</span>
-              </button>
-            </div>
-            {form.streamType === STREAM_TYPE_YOUTUBE && (
-              <div className="space-y-2">
-                <Label>YouTube Live URL</Label>
-                <Input
-                  value={form.youtubeUrl}
-                  onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
-                  placeholder="https://www.youtube.com/embed/xxxxxxxxxx"
-                  className="bg-secondary border-0"
-                />
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <ExternalLink className="w-3 h-3" />
-                  YouTube LiveのEmbedリンクを貼り付けてください（例: https://www.youtube.com/embed/VIDEO_ID）
-                </p>
-              </div>
-            )}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300">
+            <p className="font-bold">配信方式</p>
+            <p className="mt-1">ブラウザから直接配信します。カメラが必要です。</p>
           </div>
         )}
 

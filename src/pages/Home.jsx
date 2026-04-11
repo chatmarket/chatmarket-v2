@@ -74,10 +74,10 @@ export default function Home() {
             .n-market{animation:neonBlue 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
           `}</style>
 
-          <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1" style={{ border: "2px solid #ff3366", boxShadow: "0 0 15px #ff3366, inset 0 0 15px rgba(255,51,102,.1)", background: "rgba(0,0,0,.7)", borderRadius: "12px", display: "inline-block", padding: "12px 24px" }}>
-            <span className="n-chat">CHAT</span>
+          <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1" style={{ display: "inline-block" }}>
+            <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px" }}>CHAT</span>
             <span className="mx-2 text-white/30">✦</span>
-            <span className="n-market">MARKET</span>
+            <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
           </div>
           <div className="text-[9px] sm:text-[11px] tracking-widest uppercase mb-4" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</div>
 
