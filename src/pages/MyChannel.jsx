@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Radio, Edit, Save, Upload, Settings } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 
@@ -49,6 +49,12 @@ export default function MyChannel() {
     queryKey: ["my-streams", channel?.id],
     queryFn: () => base44.entities.LiveStream.filter({ channel_id: channel.id }, "-created_date"),
     enabled: !!channel,
+  });
+
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ["my-subscriptions", user?.email],
+    queryFn: () => base44.entities.PlanSubscription.filter({ user_email: user.email }, "-created_date"),
+    enabled: !!user,
   });
 
   useEffect(() => {
@@ -187,6 +193,9 @@ export default function MyChannel() {
           <TabsTrigger value="streams" className="flex items-center gap-1">
             <Radio className="w-3.5 h-3.5" /> 配信履歴
           </TabsTrigger>
+          <TabsTrigger value="plans" className="flex items-center gap-1">
+            <CreditCard className="w-3.5 h-3.5" /> 契約プラン
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="videos">
@@ -248,6 +257,64 @@ export default function MyChannel() {
               </Link>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="plans">
+          <div className="space-y-4">
+            {/* 現在契約中 */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">現在契約中</h3>
+              {subscriptions.filter((s) => s.status === "active").length === 0 ? (
+                <div className="bg-card rounded-xl border border-border/50 p-6 text-center text-muted-foreground text-sm">
+                  現在契約中のプランはありません
+                  <div className="mt-3">
+                    <Link to="/plan-select">
+                      <Button size="sm" className="bg-primary hover:bg-primary/90 gap-2">
+                        <CreditCard className="w-4 h-4" /> プランを選ぶ
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {subscriptions.filter((s) => s.status === "active").map((sub) => (
+                    <div key={sub.id} className="bg-card rounded-xl border border-primary/30 p-4 flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{sub.plan_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          加入日: {sub.start_date ? new Date(sub.start_date).toLocaleDateString("ja-JP") : new Date(sub.created_date).toLocaleDateString("ja-JP")}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">契約中</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 過去の契約 */}
+            {subscriptions.filter((s) => s.status === "cancelled").length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">過去の契約</h3>
+                <div className="space-y-2">
+                  {subscriptions.filter((s) => s.status === "cancelled").map((sub) => (
+                    <div key={sub.id} className="bg-card rounded-xl border border-border/50 p-4 flex items-center gap-3 opacity-60">
+                      <XCircle className="w-5 h-5 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{sub.plan_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          加入: {sub.start_date ? new Date(sub.start_date).toLocaleDateString("ja-JP") : new Date(sub.created_date).toLocaleDateString("ja-JP")}
+                          {sub.end_date && ` → 解約: ${new Date(sub.end_date).toLocaleDateString("ja-JP")}`}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">解約済み</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
