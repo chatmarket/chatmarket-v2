@@ -75,7 +75,7 @@ export default function Home() {
           `}</style>
 
           <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1" style={{ display: "inline-block" }}>
-            <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px" }}>CHAT</span>
+            <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", textShadow: "0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366", color: "#fff" }}>CHAT</span>
             <span className="mx-2 text-white/30">✦</span>
             <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
           </div>
