@@ -41,9 +41,8 @@ export default function ProgressiveIncentiveSection() {
                 </div>
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-2">
                   <p className="text-blue-200 leading-relaxed">
-                    全決済（エール・チケット・VOD・通話）において、購入希望額に
-                    <span className="font-black text-blue-300"> {(STRIPE_FEE_RATE * 100).toFixed(1)}%</span>（Stripe決済手数料分）を
-                    「プラットフォーム利用料」として加算して請求します。
+                    全決済（エール・チケット・VOD・通話）において、購入希望額にプラットフォーム手数料として
+                    <span className="font-black text-blue-300"> {(STRIPE_FEE_RATE * 100).toFixed(1)}%</span>加算して請求いたします。
                   </p>
                   <div className="bg-blue-900/30 rounded-lg px-3 py-2 font-mono text-xs text-blue-300">
                     例: 1,000円分 → カード請求 <span className="font-black text-white">1,036円</span>
