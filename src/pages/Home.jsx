@@ -59,74 +59,55 @@ export default function Home() {
   const isEmpty = approvedVideos.length === 0 && liveStreams.length === 0;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 md:px-4 lg:px-8 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-12 lg:space-y-14">
+    <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 md:px-4 lg:px-8 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-12 lg:space-y-14 overflow-x-hidden">
 
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-lg sm:rounded-2xl md:rounded-3xl border border-border/40 p-4 sm:p-6 md:p-10 lg:p-14 text-center"
-        style={{ background: "linear-gradient(135deg,#0a0a0f 0%,#12050a 50%,#050a12 100%)" }}>
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: "linear-gradient(#ff3366 1px,transparent 1px),linear-gradient(90deg,#ff3366 1px,transparent 1px)",
-          backgroundSize: "40px 40px"
-        }} />
-        <div className="relative z-10 max-w-2xl mx-auto px-2 sm:px-0">
+      <section className="relative overflow-hidden rounded-xl border border-border/40 text-center" style={{ background: "linear-gradient(135deg,#0a0a0f 0%,#12050a 50%,#050a12 100%)" }}>
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#ff3366 1px,transparent 1px),linear-gradient(90deg,#ff3366 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
+        <div className="relative z-10 px-4 py-8 sm:py-12 md:py-16">
           <style>{`
-            @keyframes neonFlicker{0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366,0 0 80px #ff3366;color:#fff}20%,24%,55%{text-shadow:none;color:#ff3366}}
+            @keyframes neonFlicker{0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366;color:#fff}20%,24%,55%{text-shadow:none;color:#ff3366}}
             @keyframes neonBlue{0%,29%,31%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #00cfff,0 0 40px #00cfff;color:#fff}30%{text-shadow:none;color:#00cfff}}
             .n-chat{animation:neonFlicker 3s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
             .n-market{animation:neonBlue 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
-            .n-box{box-shadow:0 0 15px #ff3366,0 0 30px #ff3366,inset 0 0 15px rgba(255,51,102,.1);border:2px solid #ff3366}
           `}</style>
-          <div className="n-box inline-block rounded-xl sm:rounded-2xl px-4 sm:px-8 py-4 sm:py-5 mb-5 max-w-full"
-            style={{ background: "rgba(0,0,0,.7)", backdropFilter: "blur(10px)" }}>
-            <div className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-black">
-              <span className="n-chat">CHAT</span>
-              <span className="mx-2 sm:mx-3 text-white/30 text-xl sm:text-2xl">✦</span>
-              <span className="n-market">MARKET</span>
-            </div>
-            <div className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] md:text-[11px] tracking-[.2em] sm:tracking-[.3em] md:tracking-[.5em] uppercase" style={{ color: "#ff3366", textShadow: "0 0 10px #ff3366" }}>
-              Est. 2024 · The Creator Hub
-            </div>
+
+          <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1" style={{ border: "2px solid #ff3366", boxShadow: "0 0 15px #ff3366, inset 0 0 15px rgba(255,51,102,.1)", background: "rgba(0,0,0,.7)", borderRadius: "12px", display: "inline-block", padding: "12px 24px" }}>
+            <span className="n-chat">CHAT</span>
+            <span className="mx-2 text-white/30">✦</span>
+            <span className="n-market">MARKET</span>
           </div>
-          <p className="text-muted-foreground mb-4 sm:mb-6 text-xs sm:text-sm leading-relaxed">
-            有料ライブ配信・動画販売・1対1有料ビデオ通話を<br />
+          <div className="text-[9px] sm:text-[11px] tracking-widest uppercase mb-4" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</div>
+
+          <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
+            有料ライブ配信・動画販売・1対1有料ビデオ通話を<br className="hidden sm:inline" />
             このプラットフォーム一つで。使い方は無限大！
           </p>
 
-          {/* 言論の自由メッセージ */}
-          <div className="mb-5 sm:mb-6 mx-auto max-w-xl border border-primary/30 rounded-xl bg-primary/5 px-4 py-3 space-y-2 text-left">
-            <div className="space-y-1">
-              <p className="text-[11px] sm:text-xs text-foreground/80 leading-relaxed">
-                言論の自由を体感してください、法的な問題発言以外は当サイトにおいて規制はかけません
-              </p>
-              <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
-                ＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます
-              </p>
+          <div className="mx-auto max-w-sm border border-primary/30 rounded-xl bg-primary/5 px-3 py-2.5 space-y-1.5 text-left mb-5">
+            <div className="space-y-0.5">
+              <p className="text-[11px] text-foreground/80 leading-relaxed">言論の自由を体感してください、法的な問題発言以外は当サイトにおいて規制はかけません</p>
+              <p className="text-[10px] text-muted-foreground">＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます</p>
             </div>
-            <div className="border-t border-primary/20 pt-2 space-y-1">
-              <p className="text-[11px] sm:text-xs text-foreground/80 leading-relaxed">
-                Experience free speech. No restrictions apply here, except for illegal remarks.
-              </p>
-              <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
-                *Streamers can filter out specific words, so they can stream safely and focus on their content.
-              </p>
+            <div className="border-t border-primary/20 pt-1.5 space-y-0.5">
+              <p className="text-[11px] text-foreground/80 leading-relaxed">Experience free speech. No restrictions apply here, except for illegal remarks.</p>
+              <p className="text-[10px] text-muted-foreground">*Streamers can filter out specific words, so they can stream safely.</p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 md:gap-3 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
             <Link to="/go-live" className="w-full sm:w-auto">
-              <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 sm:h-11 px-4 sm:px-6 w-full sm:w-auto text-sm">
+              <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 px-5 w-full text-sm">
                 <Radio className="w-4 h-4" />ライブ配信を始める
               </Button>
             </Link>
             <Link to="/upload" className="w-full sm:w-auto">
-              <Button variant="secondary" className="gap-2 h-10 sm:h-11 px-4 sm:px-6 w-full sm:w-auto text-sm">
+              <Button variant="secondary" className="gap-2 h-10 px-5 w-full text-sm">
                 <Play className="w-4 h-4" />動画をアップロード
               </Button>
             </Link>
           </div>
         </div>
-        <div className="absolute -top-20 -right-32 sm:top-0 sm:right-0 w-48 sm:w-64 md:w-72 h-48 sm:h-64 md:h-72 rounded-full blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle,rgba(255,51,102,.15) 0%,transparent 70%)" }} />
       </section>
 
       {/* 1on1 待機中 */}

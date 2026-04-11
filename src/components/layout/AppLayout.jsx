@@ -168,7 +168,7 @@ export default function AppLayout() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden w-full">
         {/* Mobile/Tablet top bar */}
         <header className="lg:hidden sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 h-14 flex items-center px-4 gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
