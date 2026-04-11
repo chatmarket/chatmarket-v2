@@ -176,7 +176,7 @@ function CommunityBanner() {
           先輩クリエイターに質問してみましょう。
         </p>
         <Link
-          to="/blog"
+          to="/forum"
           className="inline-flex items-center gap-2 border border-primary text-primary hover:bg-primary/10 font-bold text-sm px-6 py-2.5 rounded-xl transition-colors"
         >
           <Users className="w-4 h-4" /> 掲示板を見る・質問する

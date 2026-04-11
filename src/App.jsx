@@ -51,6 +51,7 @@ import LandingPage from './pages/LandingPage';
 import CreatorSchedule from './pages/CreatorSchedule';
 import ObsGuide from './pages/ObsGuide';
 import EquipmentStore from './pages/EquipmentStore';
+import Forum from './pages/Forum';
 import ChannelSchedule from './pages/ChannelSchedule';
 
 const AuthenticatedApp = () => {
@@ -123,6 +124,7 @@ const AuthenticatedApp = () => {
         <Route path="/channel-schedule/:channelId" element={<ChannelSchedule />} />
         <Route path="/obs-guide" element={<ObsGuide />} />
         <Route path="/equipment" element={<EquipmentStore />} />
+        <Route path="/forum" element={<Forum />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

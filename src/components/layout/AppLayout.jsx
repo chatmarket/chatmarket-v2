@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ const CREATOR_ITEMS = [
   { path: "/call-slots", icon: Phone, label: "通話枠設定" },
   { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
   { path: "/equipment", icon: ShoppingBag, label: "機材ガイド" },
+  { path: "/forum", icon: MessageSquare, label: "掲示板" },
 ];
 
 export default function AppLayout() {
