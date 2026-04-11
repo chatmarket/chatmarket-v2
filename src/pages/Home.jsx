@@ -11,6 +11,7 @@ import ScrollRow from "../components/home/ScrollRow";
 import CallWaitingRow from "../components/home/CallWaitingRow";
 import CreatorRanking from "../components/home/CreatorRanking";
 import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
+import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -262,6 +263,10 @@ export default function Home() {
           <p className="text-xs sm:text-sm mt-1 sm:mt-2">ライブ配信や動画アップロードで最初の一歩を！</p>
         </div>
       )}
+
+      <div className="px-0">
+        <ProgressiveIncentiveSection />
+      </div>
 
       <div className="px-0">
         <PwaInstallGuideSection />
