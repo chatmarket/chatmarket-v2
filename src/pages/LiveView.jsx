@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel.jsx";
 import PaywallModal from "../components/video/PaywallModal";
+import TipOverlay from "../components/live/TipOverlay";
+import TipPanel from "../components/live/TipPanel";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
@@ -17,12 +19,31 @@ export default function LiveView() {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [activeTips, setActiveTips] = useState([]);
+  const [wallet, setWallet] = useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) base44.auth.me().then((u) => {
+        setUser(u);
+        base44.entities.YellCoinWallet.filter({ user_email: u.email }).then((r) => setWallet(r[0] || null));
+      }).catch(() => {});
     });
   }, []);
+
+  // Subscribe to new SuperChats for live overlay
+  useEffect(() => {
+    const unsub = base44.entities.SuperChat.subscribe((event) => {
+      if (event.type === "create" && event.data?.livestream_id === id) {
+        const tip = { ...event.data, id: event.id };
+        setActiveTips((prev) => [...prev.slice(-4), tip]);
+        setTimeout(() => {
+          setActiveTips((prev) => prev.filter((t) => t.id !== event.id));
+        }, 5000);
+      }
+    });
+    return unsub;
+  }, [id]);
 
   const { data: stream, isLoading } = useQuery({
     queryKey: ["livestream", id],
@@ -152,6 +173,9 @@ export default function LiveView() {
               </div>
             )}
 
+            {/* Tip overlay */}
+            {!needsPayment && <TipOverlay tips={activeTips} />}
+
             {/* Video controls */}
             {stream.status === "live" && !needsPayment && (
               <div className="absolute bottom-4 right-3">
@@ -159,6 +183,16 @@ export default function LiveView() {
               </div>
             )}
           </div>
+
+          {/* Tip Panel */}
+          {!needsPayment && (
+            <TipPanel
+              streamId={id}
+              user={user}
+              wallet={wallet}
+              onTipSent={() => base44.entities.YellCoinWallet.filter({ user_email: user?.email }).then((r) => setWallet(r[0] || null))}
+            />
+          )}
 
           {/* Stream info */}
           <div className="space-y-1 sm:space-y-2">
