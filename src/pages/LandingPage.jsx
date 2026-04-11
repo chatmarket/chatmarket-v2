@@ -396,7 +396,7 @@ export default function LandingPage() {
                   <span className="font-black text-green-400">¥8,900,000</span>
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>手数料（11%）</span>
+                          <span>プラットフォーム手数料(11%)</span>
                   <span>¥1,100,000</span>
                 </div>
               </div>
@@ -417,7 +417,7 @@ export default function LandingPage() {
                   <span className="font-black text-green-400">¥23,750,000</span>
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>手数料（5%）</span>
+                          <span>プラットフォーム手数料(5%)</span>
                   <span>¥1,250,000</span>
                 </div>
               </div>
