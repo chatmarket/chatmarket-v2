@@ -12,6 +12,7 @@ import CallWaitingRow from "../components/home/CallWaitingRow";
 import CreatorRanking from "../components/home/CreatorRanking";
 import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
+import ServerLimitBanner from "../components/home/ServerLimitBanner";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -110,6 +111,11 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* サーバー安定化バナー */}
+      <div className="px-0">
+        <ServerLimitBanner />
+      </div>
 
       {/* 1on1 待機中 */}
       <section className="px-0">
