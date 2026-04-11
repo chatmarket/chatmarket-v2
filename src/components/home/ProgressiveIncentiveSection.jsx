@@ -47,6 +47,7 @@ export default function ProgressiveIncentiveSection() {
                   <div className="bg-blue-900/30 rounded-lg px-3 py-2 font-mono text-xs text-blue-300">
                     例: 1,000円分 → カード請求 <span className="font-black text-white">1,036円</span>
                   </div>
+                  <p className="text-xs text-blue-300 font-semibold">🔒 世界標準のエスクロー決済Stripeを利用し安心なお取引が出来ます</p>
                   <p className="text-xs text-blue-300/70">プラットホーム手数料を頂く理由としまして、配信者への還元率を最大化する為になります、予めご理解ご了承の程よろしくお願いいたします。</p>
                 </div>
               </div>
