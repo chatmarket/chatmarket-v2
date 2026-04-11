@@ -273,9 +273,9 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">クリエイター収益還元率</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: "動画販売", rate: "85%", detail: "クリエイターへの配分（手数料15%）" },
-              { title: "ライブ配信", rate: "85%", detail: "チケット売上（手数料15%）" },
-              { title: "ビデオ通話", rate: "70%", detail: "通話料金（手数料30%）" },
+              { title: "動画販売", rate: "85%", detail: "クリエイターへの配分（手数料：15%）" },
+              { title: "ライブ配信", rate: "85%", detail: "チケット売上（手数料：15%）" },
+              { title: "ビデオ通話", rate: "70%", detail: "通話料金（手数料：30%）" },
             ].map((item, i) => (
               <div key={i} className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/40 rounded-xl p-8 text-center space-y-3">
                 <h3 className="font-bold text-xl">{item.title}</h3>
@@ -284,6 +284,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground text-center mt-4">※銀行振込手数料は受取者負担</p>
         </div>
       </section>
 
