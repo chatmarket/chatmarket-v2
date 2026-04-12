@@ -27,13 +27,8 @@ export default function WatchVideo() {
   const [previewEnded, setPreviewEnded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
+  const [signedVideoUrl, setSignedVideoUrl] = useState(null);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
-    });
-  }, []);
 
   const { data: video, isLoading } = useQuery({
     queryKey: ["video", id],
@@ -50,7 +45,6 @@ export default function WatchVideo() {
       setHasPurchased(true);
       return;
     }
-    // Always check purchases, even if list is empty
     base44.entities.Purchase.filter({
       item_type: "video",
       item_id: id,
@@ -60,6 +54,15 @@ export default function WatchVideo() {
       setHasPurchased(purchases.length > 0);
     });
   }, [user, video, id]);
+
+  // Get CloudFront signed URL once access is confirmed
+  useEffect(() => {
+    if (!video || !user) return;
+    if (!hasPurchased && !video.is_free && video.price > 0) return;
+    base44.functions.invoke('getSignedVideoUrl', { videoId: video.id })
+      .then(res => { if (res.data?.signedUrl) setSignedVideoUrl(res.data.signedUrl); })
+      .catch(() => setSignedVideoUrl(video.video_url));
+  }, [video?.id, user?.email, hasPurchased]);
 
   // Increment view count with session-based deduplication (prevents reload abuse)
   useEffect(() => {
@@ -189,24 +192,13 @@ export default function WatchVideo() {
         {/* Video Player */}
         <div className="space-y-3 sm:space-y-4">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-            {video.mux_playback_id ? (
+            {(signedVideoUrl || video.video_url) ? (
               <video
                 ref={videoRef}
-                src={`https://stream.mux.com/${video.mux_playback_id}.m3u8`}
+                src={signedVideoUrl || video.video_url}
                 className="w-full h-full object-contain"
                 controls
                 autoPlay
-                poster={`https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg`}
-                crossOrigin="anonymous"
-              >
-                <source src={`https://stream.mux.com/${video.mux_playback_id}.m3u8`} type="application/x-mpegURL" />
-              </video>
-            ) : video.video_url ? (
-              <video
-                ref={videoRef}
-                src={video.video_url}
-                className="w-full h-full object-contain"
-                controls
                 poster={video.thumbnail_url}
               />
             ) : (
@@ -224,8 +216,6 @@ export default function WatchVideo() {
               </div>
             )}
 
-
-
             {/* Preview indicator */}
             {isPaid && !hasPurchased && !previewEnded && (
               <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
@@ -234,7 +224,7 @@ export default function WatchVideo() {
             )}
 
             {/* Video controls overlay */}
-            {(video.mux_playback_id || video.video_url) && (
+            {(signedVideoUrl || video.video_url) && (
               <div className="absolute bottom-12 right-3">
                 <VideoControls videoRef={videoRef} showQuality={true} />
               </div>

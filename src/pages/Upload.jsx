@@ -45,12 +45,12 @@ export default function Upload() {
     enabled: !!user,
   });
 
-  // Server-side eligibility check (replaces all-records frontend fetch)
+  // Server-side usage limit check
   const { data: eligibility } = useQuery({
-    queryKey: ["upload-eligibility", user?.email],
+    queryKey: ['usage-limit', user?.email],
     queryFn: async () => {
-      const res = await base44.functions.invoke('checkUploadEligibility', {
-        is_free: form.is_free,
+      const res = await base44.functions.invoke('checkUsageLimit', {
+        action_type: 'upload',
         duration_seconds: videoDuration,
       });
       return res.data;
@@ -59,17 +59,17 @@ export default function Upload() {
     refetchOnWindowFocus: false,
   });
 
-  const remainingDuration = eligibility?.remaining_seconds ?? 7200; // 120分 = 7200秒
-  const freeVideoBlocked = form.is_free && eligibility?.allowed === false && eligibility?.reason === 'free_limit';
-  const uploadDurationExceeded = videoDuration > 0 && eligibility?.allowed === false && eligibility?.reason === 'duration_limit';
+  const remainingDuration = eligibility?.remaining_seconds ?? 7200;
+  const freeVideoBlocked = false; // Free limit now handled separately by checkUploadEligibility logic
+  const uploadDurationExceeded = videoDuration > 0 && eligibility?.allowed === false;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title) return;
 
-    // Final server-side eligibility re-check before upload
-    const check = await base44.functions.invoke('checkUploadEligibility', {
-      is_free: form.is_free,
+    // Final server-side usage limit check before upload
+    const check = await base44.functions.invoke('checkUsageLimit', {
+      action_type: 'upload',
       duration_seconds: videoDuration,
     });
     if (!check.data?.allowed) {
@@ -91,8 +91,29 @@ export default function Upload() {
     let thumbnail_url = "";
 
     if (videoFile) {
-      const res = await base44.integrations.Core.UploadFile({ file: videoFile });
-      video_url = res.file_url;
+      // Get S3 presigned upload URL
+      const s3Res = await base44.functions.invoke('uploadToS3', {
+        fileName: videoFile.name,
+        fileType: videoFile.type,
+        duration_seconds: videoDuration,
+      });
+      if (!s3Res.data?.presignedUrl) {
+        alert(s3Res.data?.error || 'アップロードURLの取得に失敗しました');
+        setUploading(false);
+        return;
+      }
+      // Upload directly to S3
+      const uploadRes = await fetch(s3Res.data.presignedUrl, {
+        method: 'PUT',
+        body: videoFile,
+        headers: { 'Content-Type': videoFile.type },
+      });
+      if (!uploadRes.ok) {
+        alert('S3へのアップロードに失敗しました');
+        setUploading(false);
+        return;
+      }
+      video_url = s3Res.data.cloudFrontUrl;
     }
     if (thumbnailFile) {
       const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
