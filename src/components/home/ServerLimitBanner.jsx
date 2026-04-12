@@ -27,7 +27,7 @@ export default function ServerLimitBanner() {
           <p className="text-xs sm:text-sm text-cyan-200 mt-1.5 leading-relaxed" style={{
             textShadow: "0 0 10px rgba(0, 255, 255, 0.5)",
           }}>
-            ビデオ通話、アップロード動画、ライブ配信は <span className="font-bold text-cyan-300">1日最大2時間</span> までのご利用とさせていただいております。<br className="hidden sm:inline" />
+            ビデオ通話、アップロード動画、ライブ配信は <span className="font-bold text-cyan-300">1日最大1時間</span> までのご利用とさせていただいております。<br className="hidden sm:inline" />
             ご不便をおかけして申し訳ございません。サーバー増強後、制限を解除いたします。
           </p>
         </div>

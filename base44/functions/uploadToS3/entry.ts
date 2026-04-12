@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const userVideos = await base44.entities.Video.filter({ created_by: user.email }, '-created_date', 100);
     const todayVideos = userVideos.filter(v => v.created_date >= todayStartISO);
     const usedSeconds = todayVideos.reduce((sum, v) => sum + (v.duration || 0), 0);
-    const remaining = Math.max(0, 7200 - usedSeconds);
+    const remaining = Math.max(0, 3600 - usedSeconds);
     if ((duration_seconds || 0) > remaining) {
       return Response.json({ error: `本日の利用制限に達しています。残り利用可能時間: ${Math.floor(remaining / 60)}分` }, { status: 429 });
     }

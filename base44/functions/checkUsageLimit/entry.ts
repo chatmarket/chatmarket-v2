@@ -1,8 +1,8 @@
-// Daily 2-hour usage limit check for streams, calls, and uploads
+// Daily 1-hour usage limit check for streams, calls, and uploads
 // Covers: video uploads, live streams, video calls
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const DAILY_LIMIT_SECONDS = 7200; // 2 hours
+const DAILY_LIMIT_SECONDS = 3600; // 1 hour
 
 Deno.serve(async (req) => {
   try {
