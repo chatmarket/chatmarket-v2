@@ -306,11 +306,10 @@ export default function PlanSelect() {
             return (
               <AccordionItem key={plan.id} value={plan.id} className="border border-border/50 rounded-lg px-4">
                 <AccordionTrigger 
-                  onClick={(e) => {
+                  onClick={() => {
                     if (!plan.comingSoon) {
                       togglePlan(plan.id);
                     }
-                    e.preventDefault();
                   }}
                   className={`hover:no-underline py-4 ${plan.comingSoon || ADMIN_EMAILS.includes(user?.email) ? "cursor-not-allowed" : ""}`}
                   disabled={ADMIN_EMAILS.includes(user?.email)}
