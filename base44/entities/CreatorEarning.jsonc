@@ -1,0 +1,66 @@
+{
+  "name": "CreatorEarning",
+  "type": "object",
+  "description": "\u30e9\u30a4\u30d0\u30fc\u5831\u916c\u30c6\u30fc\u30d6\u30eb\uff08\u30e6\u30fc\u30b6\u30fc\u306e\u30b3\u30a4\u30f3\u6b8b\u9ad8\u3068\u306f\u5225\u30c6\u30fc\u30d6\u30eb\u3067\u7ba1\u7406\u30fb\u6cd5\u52d9\u5206\u96e2\uff09",
+  "properties": {
+    "creator_email": {
+      "type": "string",
+      "description": "\u53d7\u53d6\u30e9\u30a4\u30d0\u30fc\u306e\u30e1\u30fc\u30eb"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u306e\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u8005\uff08\u8996\u8074\u8005\uff09\u306e\u30e1\u30fc\u30eb"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u8005\u540d"
+    },
+    "coin_amount": {
+      "type": "number",
+      "description": "\u53d7\u3051\u53d6\u3063\u305f\u30b3\u30a4\u30f3\u679a\u6570"
+    },
+    "yen_equivalent": {
+      "type": "number",
+      "description": "\u5186\u76f8\u5f53\u984d\uff08coin_amount \u00d7 1.1\uff09"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "superchat",
+        "direct_chat"
+      ],
+      "description": "\u5831\u916c\u767a\u751f\u30b5\u30fc\u30d3\u30b9\u7a2e\u5225"
+    },
+    "service_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u3059\u308b\u30b5\u30fc\u30d3\u30b9ID\uff08livestream_id / thread_id\uff09"
+    },
+    "transaction_id": {
+      "type": "string",
+      "description": "\u5bfe\u5fdc\u3059\u308bYellCoinTransaction\u306eID\uff08\u8a3c\u8de1\u7d10\u4ed8\u3051\uff09"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u6642\u306e\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "is_settled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u7cbe\u7b97\u6e08\u307f\u30d5\u30e9\u30b0"
+    }
+  },
+  "required": [
+    "creator_email",
+    "sender_email",
+    "coin_amount",
+    "service_type"
+  ]
+}

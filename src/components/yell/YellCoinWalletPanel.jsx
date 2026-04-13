@@ -7,6 +7,8 @@ import { Coins, Plus, ArrowUpRight, ArrowDownLeft, Zap, AlertTriangle, Clock } f
 import { toast } from "sonner";
 
 // チャージプラン
+const TERMS_VERSION = "2026-04";
+
 const CHARGE_PLANS = [
   { coins: 100, yen: 110, label: "100コイン" },
   { coins: 300, yen: 330, label: "300コイン" },
@@ -35,6 +37,7 @@ export default function YellCoinWalletPanel({ user }) {
 
   const wallet = wallets[0];
   const balance = wallet?.balance || 0;
+  const isFirstCharge = !wallet?.first_terms_agreed_at;
 
   // 直近で失効するコインの期限を計算
   const nextExpiry = useMemo(() => {
@@ -47,17 +50,27 @@ export default function YellCoinWalletPanel({ user }) {
 
   const chargeMutation = useMutation({
     mutationFn: async (plan) => {
+      const agreedAt = new Date().toISOString();
+      const walletUpdate = {
+        balance: balance + plan.coins,
+        total_charged: (wallet?.total_charged || 0) + plan.coins,
+        last_terms_agreed_at: agreedAt,
+        terms_version: TERMS_VERSION,
+      };
+      if (!wallet?.first_terms_agreed_at) {
+        walletUpdate.first_terms_agreed_at = agreedAt;
+      }
       if (wallet) {
-        await base44.entities.YellCoinWallet.update(wallet.id, {
-          balance: balance + plan.coins,
-          total_charged: (wallet.total_charged || 0) + plan.coins,
-        });
+        await base44.entities.YellCoinWallet.update(wallet.id, walletUpdate);
       } else {
         await base44.entities.YellCoinWallet.create({
           user_email: user.email,
           balance: plan.coins,
           total_charged: plan.coins,
           total_sent: 0,
+          first_terms_agreed_at: agreedAt,
+          last_terms_agreed_at: agreedAt,
+          terms_version: TERMS_VERSION,
         });
       }
       // 有効期限 = チャージ日から180日（資金決済法：自家型前払式支払手段）
@@ -66,10 +79,13 @@ export default function YellCoinWalletPanel({ user }) {
       await base44.entities.YellCoinTransaction.create({
         user_email: user.email,
         type: "charge",
+        service_type: "charge",
         amount: plan.coins,
         yen_amount: plan.yen,
         expires_at: expiresAt.toISOString(),
         is_expired: false,
+        terms_agreed_at: agreedAt,
+        terms_version: TERMS_VERSION,
       });
     },
     onSuccess: () => {
@@ -124,16 +140,30 @@ export default function YellCoinWalletPanel({ user }) {
           <p className="font-semibold text-sm flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-yellow-400" /> チャージプランを選択
           </p>
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 space-y-1">
-            <p className="text-[11px] text-red-300 font-semibold flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> 重要事項（ご確認ください）
-            </p>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              ・エールコインの<strong className="text-foreground">有効期限は購入日から180日</strong>です。期限を過ぎると自動失効します。<br />
-              ・購入後の現金への<strong className="text-red-400">払い戻し（返金）は一切できません。</strong><br />
-              ・1コイン = 1.1円相当（税込）
-            </p>
-          </div>
+          {isFirstCharge && (
+            <div className="bg-red-600/20 border-2 border-red-500/60 rounded-xl px-3 py-3 space-y-1">
+              <p className="text-xs text-red-300 font-black flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" /> 「初回購入」必読事項 — 同意タイムスタンプを保存します
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                ・エールコインは<strong className="text-foreground">購入日から180日</strong>の有効期限です。期限後は自動失効します。<br />
+                ・購入後の返金は<strong className="text-red-400">一切できません。</strong>（資金決済法第31条対応）<br />
+                ・1コイン = 1.1円相当（税込）<br />
+                ・同意時刻は当社サーバーに永久保存されます。
+              </p>
+            </div>
+          )}
+          {!isFirstCharge && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 space-y-1">
+              <p className="text-[11px] text-red-300 font-semibold flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> 重要事項
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                ・有効期限: 購入日から<strong className="text-foreground">180日</strong> ・返金不可 <strong className="text-red-400">一切不可</strong><br />
+                ・初回同意日時: {new Date(wallet?.first_terms_agreed_at).toLocaleString("ja-JP")}
+              </p>
+            </div>
+          )}
 
           {/* 同意チェックボックス */}
           <div className="bg-yellow-500/5 border border-yellow-500/30 rounded-xl px-4 py-3 space-y-2">

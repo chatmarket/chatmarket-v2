@@ -15,6 +15,8 @@ export default function YellCoinSendModal({ user, channel, threadId, onSent, onC
   const handleSend = async () => {
     if (!amount || amount <= 0 || sending) return;
     setSending(true);
+
+    // 1. DMチャットメッセージ作成
     await base44.entities.DirectChat.create({
       from_email: user.email,
       from_name: user.full_name || user.email,
@@ -25,6 +27,35 @@ export default function YellCoinSendModal({ user, channel, threadId, onSent, onC
       yell_coin: amount,
       thread_id: threadId,
     });
+
+    // 2. 消費ログ（証跡・永久保存）
+    const txRecord = await base44.entities.YellCoinTransaction.create({
+      user_email: user.email,
+      type: "send",
+      service_type: "direct_chat",
+      service_id: threadId,
+      channel_id: channel.id,
+      channel_owner_email: channel.owner_email,
+      target_name: channel.name,
+      amount,
+      message: message.trim(),
+    });
+
+    // 3. CreatorEarning作成（報酬テーブル分離）
+    base44.entities.CreatorEarning.create({
+      creator_email: channel.owner_email,
+      channel_id: channel.id,
+      channel_name: channel.name,
+      sender_email: user.email,
+      sender_name: user.full_name || user.email,
+      coin_amount: amount,
+      yen_equivalent: Math.floor(amount * 1.1),
+      service_type: "direct_chat",
+      service_id: threadId,
+      transaction_id: txRecord?.id || "",
+      message: message.trim(),
+    }).catch(() => {});
+
     toast.success(`エールコイン×${amount}を送りました！`);
     setSending(false);
     onSent();

@@ -44,6 +44,37 @@
       "type": "boolean",
       "default": false,
       "description": "\u5931\u52b9\u6e08\u307f\u30d5\u30e9\u30b0"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "superchat",
+        "direct_chat",
+        "charge",
+        "expire"
+      ],
+      "description": "\u6d88\u8cbb\u30b5\u30fc\u30d3\u30b9\u7a2e\u5225\uff08superchat=\u30e9\u30a4\u30d6\u6295\u3052\u92ad / direct_chat=DM\u30c1\u30e3\u30c3\u30c8\u9001\u4ed8\uff09"
+    },
+    "service_id": {
+      "type": "string",
+      "description": "\u6d88\u8cbb\u5148\u306eID\uff08livestream_id / thread_id \u306a\u3069\uff09"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u5148\u30c1\u30e3\u30f3\u30cd\u30ebID\uff08\u6c38\u4e45\u8a3c\u8de1\u7528\uff09"
+    },
+    "channel_owner_email": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u5148\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb\uff08\u6c38\u4e45\u8a3c\u8de1\u7528\uff09"
+    },
+    "terms_agreed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u898f\u7d04\u540c\u610f\u30bf\u30a4\u30e0\u30b9\u30bf\u30f3\u30d7\uff08\u30c1\u30e3\u30fc\u30b8\u6642\u30fb\u521d\u56de\u8cfc\u5165\uff09"
+    },
+    "terms_version": {
+      "type": "string",
+      "description": "\u540c\u610f\u3057\u305f\u898f\u7d04\u30d0\u30fc\u30b8\u30e7\u30f3"
     }
   },
   "required": [

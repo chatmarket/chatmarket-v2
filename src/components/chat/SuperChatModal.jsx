@@ -36,6 +36,8 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
     if (!selectedAmount) return;
     setSending(true);
     const chosen = AMOUNTS.find((a) => a.value === selectedAmount);
+
+    // 1. SuperChat作成
     await base44.entities.SuperChat.create({
       amount: selectedAmount,
       message,
@@ -44,6 +46,37 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
       user_email: user?.email,
       color: chosen?.color || "green",
     });
+
+    // 2. 消費ログ（証跡・永久保存）
+    const txRecord = await base44.entities.YellCoinTransaction.create({
+      user_email: user?.email,
+      type: "send",
+      service_type: "superchat",
+      service_id: livestreamId,
+      amount: selectedAmount,
+      yen_amount: selectedAmount,
+      message,
+    });
+
+    // 3. ライブ配信情報を取得してCreatorEarning作成（報酬テーブル分離）
+    base44.entities.LiveStream.filter({ id: livestreamId }).then((streams) => {
+      const stream = streams[0];
+      if (!stream) return;
+      base44.entities.CreatorEarning.create({
+        creator_email: stream.created_by || "",
+        channel_id: stream.channel_id || "",
+        channel_name: stream.channel_name || "",
+        sender_email: user?.email || "",
+        sender_name: user?.full_name || "匿名",
+        coin_amount: selectedAmount,
+        yen_equivalent: Math.floor(selectedAmount * 1.1),
+        service_type: "superchat",
+        service_id: livestreamId,
+        transaction_id: txRecord?.id || "",
+        message,
+      }).catch(() => {});
+    }).catch(() => {});
+
     queryClient.invalidateQueries({ queryKey: ["superchats", livestreamId] });
     setSentAmount(selectedAmount);
     setShowEffect(true);
