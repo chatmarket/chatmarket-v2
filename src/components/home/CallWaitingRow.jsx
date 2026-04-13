@@ -83,9 +83,9 @@ export default function CallWaitingRow({ user }) {
 
   // 6列でグループ化（2段で12個表示）
   const rows = [];
-  for (let i = 0; i < uniqueChannels.length; i += 6) {
+  for (let i = 0; i < Math.min(uniqueChannels.length, 12); i += 6) {
     rows.push(uniqueChannels.slice(i, i + 6));
-    }
+  }
 
     const isOwnChannel = (channel) => user && channel.owner_email === user.email;
 
