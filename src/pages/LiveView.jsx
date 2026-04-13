@@ -20,6 +20,8 @@ export default function LiveView() {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [previewSeconds, setPreviewSeconds] = useState(0);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [activeTips, setActiveTips] = useState([]);
   const [wallet, setWallet] = useState(null);
 
@@ -55,6 +57,23 @@ export default function LiveView() {
     refetchInterval: 5000,
   });
 
+  // 30秒プレビュータイマー（有料かつ未購入の場合のみ）
+  useEffect(() => {
+    if (!stream || !stream.price || stream.price === 0 || hasPurchased) return;
+    if (stream.status !== "live") return;
+    const timer = setInterval(() => {
+      setPreviewSeconds(prev => {
+        if (prev >= 30) {
+          clearInterval(timer);
+          setShowPaywall(true);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [stream?.id, stream?.status, hasPurchased]);
+
   // Check purchase
   useEffect(() => {
     if (!user || !stream) return;
@@ -85,6 +104,7 @@ export default function LiveView() {
       status: "completed",
     });
     setHasPurchased(true);
+    setShowPaywall(false);
   };
 
   if (isLoading) {
@@ -105,6 +125,8 @@ export default function LiveView() {
 
   const isPaid = stream.price > 0;
   const needsPayment = isPaid && !hasPurchased;
+  // プレビュー中かどうか（30秒以内は見せる）
+  const inPreview = needsPayment && previewSeconds < 30 && !showPaywall;
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
@@ -112,7 +134,28 @@ export default function LiveView() {
         {/* Stream Player */}
         <div className="space-y-3 sm:space-y-4 lg:col-span-2">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-            {needsPayment ? (
+            {showPaywall && !hasPurchased ? (
+              /* ペイウォールオーバーレイ */
+              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
+                <div className="text-center space-y-2">
+                  <Lock className="w-12 h-12 text-primary mx-auto" />
+                  <h2 className="text-xl font-bold">30秒プレビューが終了しました</h2>
+                  <p className="text-muted-foreground text-sm">続きを視聴するにはチケットを購入してください</p>
+                  <p className="text-3xl font-black text-primary">¥{stream.price?.toLocaleString()}</p>
+                </div>
+                {!user ? (
+                  <Button onClick={() => base44.auth.redirectToLogin()} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base">
+                    <CreditCard className="w-5 h-5" /> ログインして購入
+                  </Button>
+                ) : (
+                  <Button onClick={handlePurchase} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base">
+                    <CreditCard className="w-5 h-5" /> チケット購入
+                  </Button>
+                )}
+              </div>
+            ) : null}
+
+            {needsPayment && !inPreview && !showPaywall ? (
               <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-3 sm:gap-4 p-4">
                 <Lock className="w-12 h-12 text-muted-foreground" />
                 <h2 className="text-lg sm:text-xl font-bold">有料ライブ配信</h2>
@@ -159,6 +202,13 @@ export default function LiveView() {
                 SAMPLE
               </span>
             </div>
+
+            {/* 30秒プレビューカウントダウン */}
+            {inPreview && (
+              <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
+                プレビュー {30 - previewSeconds}秒
+              </div>
+            )}
 
             {/* Live badge */}
             {stream.status === "live" && !needsPayment && (
