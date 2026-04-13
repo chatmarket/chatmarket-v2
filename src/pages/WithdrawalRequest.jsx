@@ -40,10 +40,9 @@ export default function WithdrawalRequest() {
     enabled: !!user,
   });
 
-  const { data: allCalls = [] } = useQuery({
-    queryKey: ["my-calls-withdrawal", user?.email],
-    queryFn: () =>
-      base44.entities.VideoCall.filter((c) => c.status === "ended" && (c.caller_email === user.email || c.callee_email === user.email)),
+  const { data: allCallsCallee = [] } = useQuery({
+    queryKey: ["my-calls-callee-withdrawal", user?.email],
+    queryFn: () => base44.entities.VideoCall.filter({ status: "ended", callee_email: user.email }),
     enabled: !!user,
   });
 
@@ -56,7 +55,7 @@ export default function WithdrawalRequest() {
 
   // 収益計算
   const videoRevenue = allPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
-  const callRevenue = allCalls.reduce((sum, c) => sum + (c.price || 0), 0);
+  const callRevenue = allCallsCallee.reduce((sum, c) => sum + (c.price || 0), 0);
   const totalRevenue = videoRevenue + callRevenue;
 
   // クリエイター配分（動画85%、通話70%）
@@ -74,6 +73,7 @@ export default function WithdrawalRequest() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const amount = parseInt(form.amount);
+    try {
 
     if (!amount || amount <= 0) {
       toast.error("有効な申請額を入力してください");
@@ -113,7 +113,11 @@ export default function WithdrawalRequest() {
     toast.success("払い出し申請をしました。確認をお待ちください。");
     setForm({ amount: "", notes: "" });
     queryClient.invalidateQueries({ queryKey: ["my-withdrawals"] });
-    setSubmitting(false);
+    } catch (err) {
+      toast.error("申請に失敗しました: " + (err.message || "不明なエラー"));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!user) return null;
