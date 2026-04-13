@@ -11,6 +11,7 @@ import RevenueChart from "../components/dashboard/RevenueChart";
 import ViewerChart from "../components/dashboard/ViewerChart";
 import FanClubStatus from "../components/dashboard/FanClubStatus";
 import NotificationSidebar from "../components/dashboard/NotificationSidebar";
+import TicketSalesAnalytics from "../components/dashboard/TicketSalesAnalytics";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -192,6 +193,17 @@ export default function CreatorDashboard() {
               </Link>
             ))}
           </div>
+
+          {/* チケット売上分析 */}
+          {channel && (
+            <div className="bg-card border border-border/50 rounded-xl p-5 space-y-3">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400" />
+                チケット販売分析
+              </h3>
+              <TicketSalesAnalytics channelId={channel.id} />
+            </div>
+          )}
 
           {/* 直近アクティビティ */}
           <RecentActivityList activities={recentActivities} />
