@@ -12,6 +12,7 @@ import ViewerChart from "../components/dashboard/ViewerChart";
 import FanClubStatus from "../components/dashboard/FanClubStatus";
 import NotificationSidebar from "../components/dashboard/NotificationSidebar";
 import TicketSalesAnalytics from "../components/dashboard/TicketSalesAnalytics";
+import EventNotificationPanel from "../components/dashboard/EventNotificationPanel";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -203,6 +204,11 @@ export default function CreatorDashboard() {
               </h3>
               <TicketSalesAnalytics channelId={channel.id} />
             </div>
+          )}
+
+          {/* イベント通知管理 */}
+          {channel && (
+            <EventNotificationPanel channelId={channel.id} user={user} />
           )}
 
           {/* 直近アクティビティ */}
