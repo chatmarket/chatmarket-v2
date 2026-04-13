@@ -21,6 +21,8 @@ const superChatColors = {
 };
 
 export default function ChatPanel({ targetType, targetId }) {
+  // チャット専用のtarget_type（コメントと分離するため "_chat" サフィックスを付与）
+  const chatType = targetType + "_chat";
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [channel, setChannel] = useState(null);
@@ -66,8 +68,8 @@ export default function ChatPanel({ targetType, targetId }) {
   const isOwner = channel && user && channel.owner_email === user.email;
 
   const { data: comments = [] } = useQuery({
-    queryKey: ["comments", targetType, targetId],
-    queryFn: () => base44.entities.Comment.filter({ target_type: targetType, target_id: targetId }, "-created_date", 100),
+    queryKey: ["comments", chatType, targetId],
+    queryFn: () => base44.entities.Comment.filter({ target_type: chatType, target_id: targetId }, "-created_date", 100),
     refetchInterval: 3000,
   });
 
@@ -99,13 +101,13 @@ export default function ChatPanel({ targetType, targetId }) {
     mutationFn: (content) =>
       base44.entities.Comment.create({
         content,
-        target_type: targetType,
+        target_type: chatType,
         target_id: targetId,
         user_name: user?.full_name || "匿名",
         user_email: user?.email,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", targetType, targetId] });
+      queryClient.invalidateQueries({ queryKey: ["comments", chatType, targetId] });
       setMessage("");
     },
   });
