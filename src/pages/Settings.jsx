@@ -732,7 +732,7 @@ export default function Settings() {
 
             {callSettings.call_enabled && (
               <>
-                {/* 15分刻み料金テーブル */}
+                {/* 10分刻み料金テーブル */}
                 <div className="space-y-3 pt-2 border-t border-border/50">
                   <Label className="text-sm font-semibold">通話時間別料金設定（10分刻み・最大1時間）</Label>
                      <p className="text-xs text-muted-foreground">各時間の料金を入力してください。最低 ¥20（10分）、¥40（20分）... 10分あたり¥20以上が必要です。</p>

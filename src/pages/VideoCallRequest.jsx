@@ -252,13 +252,13 @@ export default function VideoCallRequest() {
         {userPlan === "free" && (
           <>
             <p className="font-semibold text-gray-400">FREEプランの通話ルール</p>
-            <p className="text-muted-foreground">15分刻み（最大2時間）で申し込めます。配信者設定料金を支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
+            <p className="text-muted-foreground">10分刻み（最大1時間）で申し込めます。配信者設定料金を支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
           </>
         )}
         {userPlan === "basic" && (
           <>
             <p className="font-semibold text-blue-400">BASICプランの通話ルール</p>
-            <p className="text-muted-foreground">15分刻み（最大2時間）で申し込めます。配信者が設定した料金を申込者（あなた）が支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
+            <p className="text-muted-foreground">10分刻み（最大1時間）で申し込めます。配信者が設定した料金を申込者（あなた）が支払います。承諾後に通話ボタンを押した時点で課金されます。</p>
           </>
         )}
         {userPlan === "call-anser" && (

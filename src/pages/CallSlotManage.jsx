@@ -18,7 +18,7 @@ export default function CallSlotManage() {
     date: "",
     start_time: "",
     duration_minutes: 30,
-    price: 3000,
+    price: 60,
   });
   const queryClient = useQueryClient();
 
@@ -142,7 +142,7 @@ export default function CallSlotManage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[15, 30, 45, 60, 90, 120].map((m) => (
+                  {[10, 20, 30, 40, 50, 60].map((m) => (
                     <SelectItem key={m} value={String(m)}>{m}分</SelectItem>
                   ))}
                 </SelectContent>
@@ -152,8 +152,8 @@ export default function CallSlotManage() {
               <Label>料金（円）</Label>
               <Input
                 type="number"
-                min={0}
-                step={100}
+                min={20}
+                step={10}
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
                 className="bg-secondary border-0"

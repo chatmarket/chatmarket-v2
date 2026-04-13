@@ -99,14 +99,16 @@ function FloatingItem({ item, onDone }) {
 // ---- Helper: available durations ----
 function getAvailableDurations(channel) {
   const options = [];
-  [15,30,45,60,75,90,105,120].forEach((min) => {
+  [10, 20, 30, 40, 50, 60].forEach((min) => {
     const price = channel?.[`call_price_${min}min`] || 0;
     if (price > 0) options.push({ minutes: min, price });
   });
-  if (options.length === 0) {
-    if ((channel?.call_price_30min || 0) > 0) options.push({ minutes: 30, price: channel.call_price_30min });
-    if ((channel?.call_price_60min || 0) > 0) options.push({ minutes: 60, price: channel.call_price_60min });
-  }
+  // 旧形式後方互換
+  [15, 45, 75, 90, 105, 120].forEach((min) => {
+    const price = channel?.[`call_price_${min}min`] || 0;
+    if (price > 0) options.push({ minutes: min, price });
+  });
+  options.sort((a, b) => a.minutes - b.minutes);
   return options;
 }
 
@@ -828,7 +830,7 @@ export default function VideoCallPage() {
             </div>
 
             <div>
-              <Label className="text-sm mb-2 block">延長時間を選択（15分刻み）</Label>
+              <Label className="text-sm mb-2 block">延長時間を選択（10分刻み）</Label>
               {extendDurations.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2">
                   {extendDurations.map(({ minutes, price }) => (
