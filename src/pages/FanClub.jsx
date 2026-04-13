@@ -9,6 +9,7 @@ import ExclusiveContent from "../components/fanclub/ExclusiveContent";
 import EventBooking from "../components/fanclub/EventBooking";
 import FanClubTipping from "../components/fanclub/FanClubTipping";
 import TipBroadcasterAlert from "../components/fanclub/TipBroadcasterAlert";
+import FanClubTickets from "../components/fanclub/FanClubTickets";
 
 export default function FanClub() {
   const { channelId } = useParams();
@@ -112,6 +113,11 @@ export default function FanClub() {
 
       {/* イベント予約 */}
       <EventBooking isMember={effectiveMember} />
+
+      {/* 会員限定チケット */}
+      {channel && (
+        <FanClubTickets channel={effectiveChannel} user={user} isMember={effectiveMember} />
+      )}
     </div>
   );
 }

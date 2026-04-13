@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream";
+import PpvPreSale from "../components/live/PpvPreSale";
 
 export default function LiveView() {
   const { id } = useParams();
@@ -183,6 +184,9 @@ export default function LiveView() {
               </div>
             )}
           </div>
+
+          {/* PPV事前チケット販売 */}
+          <PpvPreSale stream={stream} user={user} />
 
           {/* Tip Panel */}
           {!needsPayment && (

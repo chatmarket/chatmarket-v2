@@ -168,7 +168,7 @@ export default function TicketShop() {
 
   const { data: events = [], refetch } = useQuery({
     queryKey: ["ticket-events", channelId],
-    queryFn: () => base44.entities.TicketEvent.filter({ channel_id: channelId, status: "on_sale" }, "event_date"),
+    queryFn: () => base44.entities.TicketEvent.filter({ channel_id: channelId, sale_type: "public", status: "on_sale" }, "event_date"),
   });
 
   const { data: myTicketIds = [] } = useQuery({
