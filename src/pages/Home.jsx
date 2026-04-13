@@ -83,6 +83,8 @@ export default function Home() {
             <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center" }}>Est. 2026 · The Creator Hub</p>
           </div>
 
+          <div className="mt-8" />
+
           <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br className="hidden sm:inline" />
             このプラットフォーム一つで。使い方は無限大！
