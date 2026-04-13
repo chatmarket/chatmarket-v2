@@ -1,0 +1,90 @@
+{
+  "name": "DigitalTicket",
+  "type": "object",
+  "description": "\u30c7\u30b8\u30bf\u30eb\u30c1\u30b1\u30c3\u30c8\uff08\u8ee2\u58f2\u9632\u6b62QR\u30b3\u30fc\u30c9\u4ed8\u304d\uff09",
+  "properties": {
+    "owner_email": {
+      "type": "string",
+      "description": "\u6240\u6709\u8005\u30e1\u30fc\u30eb\uff08\u8cfc\u5165\u8005\u30fb\u5909\u66f4\u4e0d\u53ef\uff09"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "\u6240\u6709\u8005\u540d"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "\u30a4\u30d9\u30f3\u30c8ID\uff08\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u7b49\uff09"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "\u30a4\u30d9\u30f3\u30c8\u540d"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30a4\u30d9\u30f3\u30c8\u65e5\u6642"
+    },
+    "event_location": {
+      "type": "string",
+      "description": "\u4f1a\u5834\u30fb\u5834\u6240"
+    },
+    "ticket_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "vip",
+        "fanclub"
+      ],
+      "default": "general",
+      "description": "\u30c1\u30b1\u30c3\u30c8\u7a2e\u5225"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u95a2\u9023\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u8cfc\u5165\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "valid",
+        "used",
+        "cancelled"
+      ],
+      "default": "valid",
+      "description": "\u30c1\u30b1\u30c3\u30c8\u72b6\u614b"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u4f7f\u7528\u65e5\u6642\uff08\u5165\u5834\u6e08\u307f\uff09"
+    },
+    "used_by_email": {
+      "type": "string",
+      "description": "\u691c\u8a3c\u30b9\u30bf\u30c3\u30d5\u306e\u30e1\u30fc\u30eb"
+    },
+    "ticket_number": {
+      "type": "string",
+      "description": "\u30c1\u30b1\u30c3\u30c8\u756a\u53f7\uff08\u8868\u793a\u7528\uff09"
+    },
+    "seat_info": {
+      "type": "string",
+      "description": "\u5ea7\u5e2d\u30fb\u30a8\u30ea\u30a2\u60c5\u5831"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\u30a4\u30d9\u30f3\u30c8\u30b5\u30e0\u30cd\u30a4\u30ebURL"
+    }
+  },
+  "required": [
+    "owner_email",
+    "event_name"
+  ]
+}

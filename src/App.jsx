@@ -53,6 +53,8 @@ import ObsGuide from './pages/ObsGuide';
 import EquipmentStore from './pages/EquipmentStore';
 import Forum from './pages/Forum';
 import ChannelSchedule from './pages/ChannelSchedule';
+import MyTickets from './pages/MyTickets';
+import TicketVerify from './pages/TicketVerify';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -125,6 +127,8 @@ const AuthenticatedApp = () => {
         <Route path="/obs-guide" element={<ObsGuide />} />
         <Route path="/equipment" element={<EquipmentStore />} />
         <Route path="/forum" element={<Forum />} />
+        <Route path="/my-tickets" element={<MyTickets />} />
+        <Route path="/ticket-verify" element={<TicketVerify />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
