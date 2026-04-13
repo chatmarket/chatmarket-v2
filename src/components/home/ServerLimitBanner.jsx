@@ -18,7 +18,7 @@ export default function ServerLimitBanner() {
         
         <div className="flex-1 min-w-0">
           <p className="font-black text-base sm:text-lg text-transparent bg-clip-text" style={{
-            backgroundImage: "linear-gradient(90deg, #00ffff, #ff00ff, #00ffff)",
+            color: "#ffffff",
             textShadow: "0 0 20px #00ffff, 0 0 10px #ff00ff",
             filter: "drop-shadow(0 0 8px #00ffff)",
           }}>
