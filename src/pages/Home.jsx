@@ -80,7 +80,7 @@ export default function Home() {
               <span className="mx-2 text-white/30">✦</span>
               <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
             </div>
-            <p className="text-[9px] sm:text-[11px] tracking-widest uppercase" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</p>
+            <p className="text-[9px] sm:text-[11px] tracking-widest uppercase text-center w-full" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</p>
           </div>
 
           <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
