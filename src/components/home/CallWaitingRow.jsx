@@ -81,11 +81,11 @@ export default function CallWaitingRow({ user }) {
   // 待機中のVideoCallマップを作成（channel_idで検索可能に）
   const waitingCallMap = new Map(waitingCalls.map((c) => [c.callee_channel_id, c]));
 
-  // 6列でグループ化（2段で12個表示）
-  const rows = [];
-  for (let i = 0; i < Math.min(uniqueChannels.length, 12); i += 6) {
-    rows.push(uniqueChannels.slice(i, i + 6));
-  }
+  // 全件を最大2段に分割して表示
+  const half = Math.ceil(uniqueChannels.length / 2);
+  const rows = uniqueChannels.length > 0
+    ? [uniqueChannels.slice(0, half), uniqueChannels.slice(half)].filter(r => r.length > 0)
+    : [];
 
     const isOwnChannel = (channel) => user && channel.owner_email === user.email;
 
