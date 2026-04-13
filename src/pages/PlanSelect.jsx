@@ -299,7 +299,7 @@ export default function PlanSelect() {
 
       {/* プラン一覧 */}
       <div className="space-y-3">
-        <Accordion type="multiple" defaultValue={["basic", "vod", "ppv"]} className="space-y-2">
+        <Accordion type="multiple" defaultValue={["free", "basic", "call-anser", "vod"]} className="space-y-2">
           {PLANS.map((plan) => {
             const Icon = plan.icon;
             const isSelected = selected.has(plan.id);
