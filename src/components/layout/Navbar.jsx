@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins, Phone, GraduationCap, Building2 } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins, Phone, GraduationCap, Building2, Ticket } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
@@ -150,6 +150,10 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => navigate("/revenue")}>
                     <DollarSign className="w-4 h-4 mr-2 text-yellow-400" />
                     収益管理
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/my-tickets")}>
+                    <Ticket className="w-4 h-4 mr-2 text-primary" />
+                    マイチケット
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/my-library")}>
                     <Library className="w-4 h-4 mr-2 text-primary" />

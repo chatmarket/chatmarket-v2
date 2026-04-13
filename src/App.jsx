@@ -54,6 +54,7 @@ import EquipmentStore from './pages/EquipmentStore';
 import Forum from './pages/Forum';
 import ChannelSchedule from './pages/ChannelSchedule';
 import MyTickets from './pages/MyTickets';
+import TicketShop from './pages/TicketShop';
 import TicketVerify from './pages/TicketVerify';
 
 const AuthenticatedApp = () => {
@@ -128,6 +129,7 @@ const AuthenticatedApp = () => {
         <Route path="/equipment" element={<EquipmentStore />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/my-tickets" element={<MyTickets />} />
+        <Route path="/ticket-shop/:channelId" element={<TicketShop />} />
         <Route path="/ticket-verify" element={<TicketVerify />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
