@@ -127,6 +127,7 @@ const PLANS = [
     id: "digital-ticket",
     icon: Ticket,
     name: "デジタルチケットプラン",
+    comingSoon: true,
     price: 3300,
     period: "/月",
     revenueShare: "85%",
