@@ -109,7 +109,7 @@ export default function LiveView() {
     <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {/* Stream Player */}
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4 lg:col-span-2">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {needsPayment ? (
               <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-3 sm:gap-4 p-4">
@@ -214,7 +214,7 @@ export default function LiveView() {
         </div>
 
         {/* Chat */}
-        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)]">
+        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)] lg:col-span-1">
           <ChatPanel targetType="livestream" targetId={id} />
         </div>
       </div>
