@@ -68,17 +68,17 @@ export default function Home() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#ff3366 1px,transparent 1px),linear-gradient(90deg,#ff3366 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
         <div className="relative z-10 px-4 py-8 sm:py-12 md:py-16">
           <style>{`
-            @keyframes neonFlicker{0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366;color:#fff}20%,24%,55%{text-shadow:none;color:#ff3366}}
-            @keyframes neonBlue{0%,29%,31%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #00cfff,0 0 40px #00cfff;color:#fff}30%{text-shadow:none;color:#00cfff}}
-            .n-chat{animation:neonFlicker 3s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
-            .n-market{animation:neonBlue 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
+            @keyframes neonWhite{0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 5px #fff,0 0 15px #fff,0 0 30px #fff,0 0 60px #fff;color:#fff}20%,24%,55%{text-shadow:none;color:#ccc}}
+            @keyframes neonGreen{0%,29%,31%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #00ff88,0 0 40px #00ff88,0 0 80px #00ff88;color:#fff}30%{text-shadow:none;color:#00ff88}}
+            .n-chat{animation:neonWhite 3s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
+            .n-market{animation:neonGreen 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
           `}</style>
 
           <div className="flex flex-col items-center gap-3 mb-2 w-full">
             <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-none">
               <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", textShadow: "0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366", color: "#fff" }}>CHAT</span>
               <span className="mx-2 text-white/30">✶</span>
-              <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
+              <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,255,136,.05)", boxShadow: "0 0 15px #00ff88, inset 0 0 15px rgba(0,255,136,.1)" }}>MARKET</span>
             </div>
           </div>
 
