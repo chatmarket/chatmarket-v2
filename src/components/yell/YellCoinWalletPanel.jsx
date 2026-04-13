@@ -18,6 +18,7 @@ const CHARGE_PLANS = [
 
 export default function YellCoinWalletPanel({ user }) {
   const [showCharge, setShowCharge] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: wallets = [] } = useQuery({
@@ -123,22 +124,6 @@ export default function YellCoinWalletPanel({ user }) {
           <p className="font-semibold text-sm flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-yellow-400" /> チャージプランを選択
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {CHARGE_PLANS.map((plan) => (
-              <button
-                key={plan.coins}
-                onClick={() => chargeMutation.mutate(plan)}
-                disabled={chargeMutation.isPending}
-                className="relative bg-secondary hover:bg-secondary/70 border border-border/50 hover:border-yellow-500/50 rounded-xl p-3 text-center transition-all group"
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] px-2">人気</Badge>
-                )}
-                <p className="font-bold text-yellow-400">{plan.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">¥{plan.yen.toLocaleString()}</p>
-              </button>
-            ))}
-          </div>
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 space-y-1">
             <p className="text-[11px] text-red-300 font-semibold flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" /> 重要事項（ご確認ください）
@@ -149,6 +134,42 @@ export default function YellCoinWalletPanel({ user }) {
               ・1コイン = 1.1円相当（税込）
             </p>
           </div>
+
+          {/* 同意チェックボックス */}
+          <div className="bg-yellow-500/5 border border-yellow-500/30 rounded-xl px-4 py-3 space-y-2">
+            <p className="text-xs font-bold text-yellow-300">【重要：購入前にご確認ください】</p>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 accent-yellow-400"
+              />
+              <span className="text-[11px] text-foreground/80 leading-relaxed">
+                エールコインの有効期限は購入から<strong>180日間</strong>であり、購入後のキャンセル・払い戻しはできません。上記に同意して購入します。
+              </span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {CHARGE_PLANS.map((plan) => (
+              <button
+                key={plan.coins}
+                onClick={() => chargeMutation.mutate(plan)}
+                disabled={chargeMutation.isPending || !agreedToTerms}
+                className="relative bg-secondary hover:bg-secondary/70 border border-border/50 hover:border-yellow-500/50 rounded-xl p-3 text-center transition-all group disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {plan.popular && (
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] px-2">人気</Badge>
+                )}
+                <p className="font-bold text-yellow-400">{plan.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">¥{plan.yen.toLocaleString()}</p>
+              </button>
+            ))}
+          </div>
+          {!agreedToTerms && (
+            <p className="text-[11px] text-center text-muted-foreground">※ 上記の同意チェックを入れると購入できます</p>
+          )}
         </div>
       )}
 

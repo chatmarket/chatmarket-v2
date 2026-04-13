@@ -492,6 +492,51 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* エールコイン利用規約 */}
+      <section className="py-12 px-4 bg-secondary/20 border-t border-border/50">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <h2 className="text-xl font-black">エールコインの取扱いに関する規約</h2>
+          <div className="bg-card border border-border/50 rounded-xl p-6 space-y-5 text-sm">
+            <div className="space-y-2">
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <span className="text-yellow-400">第1条</span> エールコインの性質
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                エールコインは、ChatMarketが発行する自家型前払式支払手段（資金決済法に基づく）です。Stripe経由のポイントチャージ制により購入でき、プラットフォーム内のサービスにのみ利用できます。
+              </p>
+            </div>
+            <div className="space-y-2 border-t border-border/40 pt-4">
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <span className="text-orange-400">第2条</span> 有効期限
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                エールコインの有効期限は、ユーザーが当該コインを購入した日から<strong className="text-foreground">180日間</strong>とします。有効期限を経過したコインは自動的に失効し、以後利用できなくなります。失効したコインの復元はいかなる場合も行いません。
+              </p>
+            </div>
+            <div className="space-y-2 border-t border-border/40 pt-4">
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <span className="text-red-400">第3条</span> 払い戻しの禁止
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                法令により例外が認められる場合を除き、理由の如何を問わず、購入されたエールコインの現金への払い戻し（返金）は行いません。購入前に十分ご確認の上、ご利用ください。
+              </p>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mt-2">
+                <p className="text-red-300 font-semibold text-xs">⚠️ 重要：エールコインは購入後の返金・払い戻しができません。有効期限（180日）にご注意ください。</p>
+              </div>
+            </div>
+            <div className="space-y-2 border-t border-border/40 pt-4">
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <span className="text-blue-400">第4条</span> 残高・期限の確認
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                ユーザーはマイページ（設定 &gt; エールコイン）にて、現在の残高および直近で失効するコインの有効期限を常に確認することができます。
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">本規約はChatMarket利用規約の一部を構成します。詳細は運営事務局までお問い合わせください。</p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-border/50 text-center text-xs text-muted-foreground">
         <p>© 2024 Chat Market. All rights reserved.</p>
