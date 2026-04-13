@@ -79,7 +79,7 @@ export default function Home() {
             <span className="mx-2 text-white/30">✦</span>
             <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
           </div>
-          <div className="text-[9px] sm:text-[11px] tracking-widest uppercase mb-4" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</div>
+          <div className="text-[9px] sm:text-[11px] tracking-widest uppercase mb-4 text-center w-full" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</div>
 
           <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br className="hidden sm:inline" />
