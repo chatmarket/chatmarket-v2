@@ -190,7 +190,7 @@ export default function WatchVideo() {
     <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Video Player */}
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4 lg:col-span-2">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {(signedVideoUrl || video.video_url) ? (
               <video
@@ -289,7 +289,7 @@ export default function WatchVideo() {
         </div>
 
         {/* Chat */}
-        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)]">
+        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)] lg:col-span-1">
           <ChatPanel targetType="video" targetId={id} />
         </div>
       </div>
