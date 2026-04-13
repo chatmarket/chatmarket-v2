@@ -213,7 +213,7 @@ export default function LandingPage() {
                     "📱 iPadでスキャンするだけ入場",
                     "🎵 コンサート・講演会・料理教室など",
                     "📊 チケット販売分析",
-                    "💰 収益還元率85%"
+                    "💰 収益還元率？%"
                   ].map((f, i) => (
                     <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                       <span className="mt-0.5">{f}</span>
@@ -244,7 +244,8 @@ export default function LandingPage() {
                     "🔐 エンタープライズセキュリティ",
                     "👥 専任サポート",
                     "💼 プライベート契約",
-                    "📱 デジタルコンテンツ販売"
+                    "📱 デジタルコンテンツ販売",
+                    "💰 収益還元率？%（カスタム対応）"
                   ].map((f, i) => (
                     <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                       <span>{f}</span>
