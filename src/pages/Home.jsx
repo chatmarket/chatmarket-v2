@@ -76,7 +76,7 @@ export default function Home() {
 
           <div className="flex flex-col items-center gap-3 mb-2 w-full">
             <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-none">
-              <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", textShadow: "0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366", color: "#fff" }}>CHAT</span>
+              <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", border: "2px solid rgba(255,255,255,0.6)", boxShadow: "0 0 15px #fff, inset 0 0 15px rgba(255,255,255,0.1)" }}>CHAT</span>
               <span className="mx-2 text-white/30">✶</span>
               <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,255,136,.05)", boxShadow: "0 0 15px #00ff88, inset 0 0 15px rgba(0,255,136,.1)" }}>MARKET</span>
             </div>
