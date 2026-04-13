@@ -31,18 +31,19 @@ function getRevenueShare(plan) {
   return 0.70;
 }
 
-// 15分刻み選択肢を取得（price設定済みのもの）
+// 10分刻み選択肢を取得（price設定済みのもの）
 function getAvailableDurations(channel) {
   const options = [];
-  [15,30,45,60,75,90,105,120].forEach((min) => {
+  [10, 20, 30, 40, 50, 60].forEach((min) => {
     const price = channel[`call_price_${min}min`] || 0;
     if (price > 0) options.push({ minutes: min, price });
   });
-  // 旧形式（30min/60minのみ）の後方互換
-  if (options.length === 0) {
-    if (channel.call_price_30min > 0) options.push({ minutes: 30, price: channel.call_price_30min });
-    if (channel.call_price_60min > 0) options.push({ minutes: 60, price: channel.call_price_60min });
-  }
+  // 旧形式（15/45/75/90/105/120min）の後方互換
+  [15, 45, 75, 90, 105, 120].forEach((min) => {
+    const price = channel[`call_price_${min}min`] || 0;
+    if (price > 0) options.push({ minutes: min, price });
+  });
+  options.sort((a, b) => a.minutes - b.minutes);
   return options;
 }
 
@@ -282,7 +283,7 @@ export default function VideoCallRequest() {
         {/* 通話時間 & 料金 */}
         <div className="bg-card rounded-xl border border-border/50 p-4 space-y-4">
           <Label className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-muted-foreground" /> 通話時間を選択（15分刻み・最大2時間）
+            <Clock className="w-4 h-4 text-muted-foreground" /> 通話時間を選択（10分刻み・最大1時間）
           </Label>
           {availableDurations.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">配信者がまだ通話料金を設定していません</p>

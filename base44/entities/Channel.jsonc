@@ -68,10 +68,30 @@
       },
       "description": "\u696d\u7a2e\u30bf\u30b0\uff08\u6700\u592710\u500b\uff09"
     },
+    "call_price_10min": {
+      "type": "number",
+      "default": 0,
+      "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0810\u5206\uff09"
+    },
+    "call_price_20min": {
+      "type": "number",
+      "default": 0,
+      "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0820\u5206\uff09"
+    },
     "call_price_30min": {
       "type": "number",
       "default": 0,
       "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0830\u5206\uff09"
+    },
+    "call_price_40min": {
+      "type": "number",
+      "default": 0,
+      "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0840\u5206\uff09"
+    },
+    "call_price_50min": {
+      "type": "number",
+      "default": 0,
+      "description": "1\u5bfe1\u30d3\u30c7\u30aa\u901a\u8a71\u6599\u91d1\uff0850\u5206\uff09"
     },
     "call_price_60min": {
       "type": "number",
@@ -109,6 +129,20 @@
     "pinned_comment_user": {
       "type": "string",
       "description": "\u56fa\u5b9a\u30b3\u30e1\u30f3\u30c8\u306e\u6295\u7a3f\u8005\u540d"
+    },
+    "fanclub_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u6a5f\u80fd\u3092\u6709\u52b9\u306b\u3059\u308b\u304b"
+    },
+    "fanclub_monthly_price": {
+      "type": "number",
+      "default": 500,
+      "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u6708\u984d\u6599\u91d1\uff08\u5186\uff09"
+    },
+    "fanclub_description": {
+      "type": "string",
+      "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u306e\u8aac\u660e\u30fb\u7279\u5178\u5185\u5bb9"
     }
   },
   "required": [

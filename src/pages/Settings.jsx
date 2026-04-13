@@ -700,8 +700,8 @@ export default function Settings() {
             </p>
             <p className="text-xs text-muted-foreground">料金はあなた（配信者）が設定し、申込者が支払います。</p>
             <div className="text-xs space-y-0.5 text-muted-foreground">
-              <p>• 料金は <span className="text-primary font-semibold">15分刻み・最大2時間（120分）</span> で設定</p>
-              <p>• 最低料金：<span className="text-primary font-semibold">15分 ¥150以上</span>（例：30分=¥300以上、60分=¥600以上）</p>
+              <p>• 料金は <span className="text-primary font-semibold">10分刻み・最大1時間（60分）</span> で設定</p>
+              <p>• 最低料金：<span className="text-primary font-semibold">10分 ¥20以上</span>（例：30分=¥60以上、60分=¥120以上）</p>
               <p>• <span className="text-green-400 font-semibold">FREEプラン</span>：収益率 <span className="font-bold">70%</span>（手数料30%）</p>
               <p>• <span className="text-blue-400 font-semibold">BASICプラン</span>：収益率 <span className="font-bold">85%</span>（手数料15%）← <span className="text-yellow-400">推奨</span></p>
             </div>
@@ -734,41 +734,41 @@ export default function Settings() {
               <>
                 {/* 15分刻み料金テーブル */}
                 <div className="space-y-3 pt-2 border-t border-border/50">
-                  <Label className="text-sm font-semibold">通話時間別料金設定（15分刻み・最大2時間）</Label>
-                  <p className="text-xs text-muted-foreground">各時間の料金を入力してください。最低 ¥{150 * 1}（15分）、¥{150 * 2}（30分）... の倍数以上が必要です。</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[15, 30, 45, 60, 75, 90, 105, 120].map((min) => {
-                      const minPrice = (min / 15) * 150;
-                      const fieldKey = `call_price_${min}min`;
-                      const currentVal = callSettings[fieldKey] || 0;
-                      const revenueShare = (user?.plan === "basic" || user?.plan === "call-anser") ? 0.85 : 0.70;
-                      const isValid = currentVal === 0 || currentVal >= minPrice;
-                      return (
-                        <div key={min} className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">{min}分（最低¥{minPrice.toLocaleString()}）</Label>
-                          <Input
-                            type="number"
-                            min={minPrice}
-                            step={50}
-                            value={currentVal || ""}
-                            onChange={(e) => setCallSettings({ ...callSettings, [fieldKey]: parseInt(e.target.value) || 0 })}
-                            placeholder={`¥${minPrice}〜`}
-                            className={`bg-secondary border-0 text-sm ${!isValid ? "ring-1 ring-destructive" : ""}`}
-                          />
-                          {currentVal > 0 && (
-                            <p className={`text-[10px] ${isValid ? "text-muted-foreground" : "text-destructive font-bold"}`}>
-                              {isValid
-                                ? `受取: ¥${Math.floor(currentVal * revenueShare).toLocaleString()}`
-                                : `⚠️ ¥${minPrice}以上が必要`}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground bg-secondary rounded-lg p-2">
-                    ※ 空欄の時間帯は申込者が選択できません。よく使う時間だけ設定でOKです。
-                  </p>
+                  <Label className="text-sm font-semibold">通話時間別料金設定（10分刻み・最大1時間）</Label>
+                     <p className="text-xs text-muted-foreground">各時間の料金を入力してください。最低 ¥20（10分）、¥40（20分）... 10分あたり¥20以上が必要です。</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[10, 20, 30, 40, 50, 60].map((min) => {
+                        const minPrice = (min / 10) * 20;
+                        const fieldKey = `call_price_${min}min`;
+                        const currentVal = callSettings[fieldKey] || 0;
+                        const revenueShare = (user?.plan === "basic" || user?.plan === "call-anser") ? 0.85 : 0.70;
+                        const isValid = currentVal === 0 || currentVal >= minPrice;
+                        return (
+                          <div key={min} className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">{min}分（最低¥{minPrice.toLocaleString()}）</Label>
+                            <Input
+                              type="number"
+                              min={minPrice}
+                              step={10}
+                              value={currentVal || ""}
+                              onChange={(e) => setCallSettings({ ...callSettings, [fieldKey]: parseInt(e.target.value) || 0 })}
+                              placeholder={`¥${minPrice}〜`}
+                              className={`bg-secondary border-0 text-sm ${!isValid ? "ring-1 ring-destructive" : ""}`}
+                            />
+                            {currentVal > 0 && (
+                              <p className={`text-[10px] ${isValid ? "text-muted-foreground" : "text-destructive font-bold"}`}>
+                                {isValid
+                                  ? `受取: ¥${Math.floor(currentVal * revenueShare).toLocaleString()}`
+                                  : `⚠️ ¥${minPrice}以上が必要`}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground bg-secondary rounded-lg p-2">
+                       ※ 空欄の時間帯は申込者が選択できません。よく使う時間だけ設定でOKです。
+                    </p>
                 </div>
 
                 <div className="space-y-2 border-t border-border/50 pt-3">
@@ -801,9 +801,9 @@ export default function Settings() {
             onClick={async () => {
               if (!channelId) { toast.error("チャンネルが見つかりません"); return; }
               // バリデーション
-              const invalidFields = [15,30,45,60,75,90,105,120].filter((min) => {
+              const invalidFields = [10,20,30,40,50,60].filter((min) => {
                 const val = callSettings[`call_price_${min}min`] || 0;
-                const minPrice = (min / 15) * 150;
+                const minPrice = (min / 10) * 20;
                 return val > 0 && val < minPrice;
               });
               if (invalidFields.length > 0) {
@@ -813,14 +813,12 @@ export default function Settings() {
               setSaving(true);
               await base44.entities.Channel.update(channelId, {
                 call_enabled: callSettings.call_enabled,
+                call_price_10min: callSettings.call_price_10min || 0,
+                call_price_20min: callSettings.call_price_20min || 0,
                 call_price_30min: callSettings.call_price_30min || 0,
+                call_price_40min: callSettings.call_price_40min || 0,
+                call_price_50min: callSettings.call_price_50min || 0,
                 call_price_60min: callSettings.call_price_60min || 0,
-                call_price_15min: callSettings.call_price_15min || 0,
-                call_price_45min: callSettings.call_price_45min || 0,
-                call_price_75min: callSettings.call_price_75min || 0,
-                call_price_90min: callSettings.call_price_90min || 0,
-                call_price_105min: callSettings.call_price_105min || 0,
-                call_price_120min: callSettings.call_price_120min || 0,
                 call_available_dates: callSettings.call_available_dates,
                 call_theme: callSettings.call_theme,
               });
