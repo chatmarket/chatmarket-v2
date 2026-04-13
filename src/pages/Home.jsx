@@ -74,12 +74,14 @@ export default function Home() {
             .n-market{animation:neonBlue 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
           `}</style>
 
-          <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1" style={{ display: "inline-block" }}>
-            <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", textShadow: "0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366", color: "#fff" }}>CHAT</span>
-            <span className="mx-2 text-white/30">✦</span>
-            <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
+          <div className="flex flex-col items-center gap-3 mb-4">
+            <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-none">
+              <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", textShadow: "0 0 5px #fff,0 0 10px #fff,0 0 20px #ff3366,0 0 40px #ff3366", color: "#fff" }}>CHAT</span>
+              <span className="mx-2 text-white/30">✦</span>
+              <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
+            </div>
+            <p className="text-[9px] sm:text-[11px] tracking-widest uppercase" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</p>
           </div>
-          <div className="text-[9px] sm:text-[11px] tracking-widest uppercase mb-4 text-center" style={{ color: "#ff3366" }}>Est. 2024 · The Creator Hub</div>
 
           <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br className="hidden sm:inline" />
