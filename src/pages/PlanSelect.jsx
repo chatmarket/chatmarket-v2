@@ -240,6 +240,10 @@ export default function PlanSelect() {
         <h1 className="text-2xl font-black">プランを選択する</h1>
         <p className="text-muted-foreground text-sm mt-1">複数のプランを組み合わせてお申し込みいただけます。</p>
         <p className="text-sm text-foreground/80 mt-2">ChatMarketのプランは必要なプランをお選び頂き組み合わせてお申し込みが出来ます。</p>
+        <div className="mt-3 flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
+          <span className="text-yellow-400 text-lg shrink-0">🎁</span>
+          <p className="text-sm text-yellow-300 font-semibold">年払いで申し込むと <span className="text-white font-black">10ヶ月分のご請求</span>となり、<span className="text-white font-black">2ヶ月分がお得</span>になります。</p>
+        </div>
       </div>
 
       {/* おすすめコンボ */}
