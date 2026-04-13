@@ -80,10 +80,11 @@ export default function Home() {
               <span className="mx-2 text-white/30">✶</span>
               <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,0,255,.1)", boxShadow: "0 0 15px #00cfff, inset 0 0 15px rgba(0,207,255,.1)" }}>MARKET</span>
             </div>
-            <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center" }}>Est. 2026 · The Creator Hub</p>
           </div>
 
-          <div className="mt-8" />
+          <div className="mt-16" />
+
+          <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center", marginBottom: "12px" }}>Est. 2026 · The Creator Hub</p>
 
           <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
             有料ライブ配信・動画販売・1対1有料ビデオ通話を<br className="hidden sm:inline" />
