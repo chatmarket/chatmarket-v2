@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown, Ticket } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // 単体プランの定義
@@ -124,6 +124,27 @@ const PLANS = [
     exclusive: true,
   },
   {
+    id: "digital-ticket",
+    icon: Ticket,
+    name: "デジタルチケットプラン",
+    price: 3300,
+    period: "/月",
+    revenueShare: "85%",
+    color: "from-orange-500/20 to-orange-600/10 border-orange-500/30",
+    iconColor: "text-orange-400",
+    badge: "リアルイベント入場管理",
+    badgeColor: "bg-orange-500/20 text-orange-300",
+    description: "コンサート・講演会・料理教室など最大500名のリアルイベント向け。転売防止QRコードで入場管理。iPadで読み込むだけ。",
+    features: [
+      "最大500名規模のリアルイベント対応（当面の間）",
+      "転売防止動的QRコード（30秒ごとに自動更新）",
+      "iPadなどのカメラでQRをスキャンするだけで入場処理",
+      "チケット種別ごとの販売枚数・残り枠をリアルタイム管理",
+      "コンサート・講演会・料理教室・展示会など",
+      "収益還元率85%（将来的に規模拡大予定）",
+    ],
+  },
+  {
     id: "crowdfunding",
     icon: Heart,
     name: "BASIC＋クラウドファンディングプラン",
@@ -149,6 +170,7 @@ const COMBOS = [
   { ids: ["basic", "call-anser"], label: "BASIC＋CALL＆ANSER", discount: 0 },
   { ids: ["basic", "vod", "ppv"], label: "BASIC＋VOD＋PPV", discount: 0 },
   { ids: ["basic", "vod", "ppv", "call-anser"], label: "全部入り", discount: 0 },
+  { ids: ["basic", "digital-ticket"], label: "BASIC＋チケット", discount: 0 },
 ];
 
 const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
@@ -167,7 +189,7 @@ export default function PlanSelect() {
         base44.auth.me().then((u) => {
           setUser(u);
           if (ADMIN_EMAILS.includes(u.email)) {
-            setSelected(new Set(["basic", "vod", "ppv", "call-anser", "mini-school", "enterprise", "crowdfunding"]));
+            setSelected(new Set(["basic", "vod", "ppv", "call-anser", "mini-school", "enterprise", "crowdfunding", "digital-ticket"]));
           } else if (FREE_TRIAL_EMAILS.includes(u.email)) {
             setSelected(new Set(["basic", "vod", "ppv", "call-anser"]));
           }

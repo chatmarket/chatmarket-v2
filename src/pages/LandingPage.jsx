@@ -99,7 +99,7 @@ export default function LandingPage() {
             <p className="text-lg text-muted-foreground">始める時は無料から。成長に合わせてアップグレード。</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* FREE Plan */}
             <div className="relative rounded-2xl border-2 border-cyan-500/40 bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 p-8 space-y-6 hover:border-cyan-500/60 transition-all group">
               <div className="space-y-2">
@@ -191,6 +191,39 @@ export default function LandingPage() {
               </div>
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-sm text-amber-300/60">
                 詳細は後日アナウンスいたします
+              </div>
+            </div>
+
+            {/* Digital Ticket Plan */}
+            <div className="relative rounded-2xl border-2 border-orange-500/40 bg-gradient-to-br from-orange-500/10 to-orange-600/5 p-8 space-y-6 hover:border-orange-500/60 transition-all group">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-orange-500/20 text-orange-400 text-xs font-bold rounded-full">リアルイベント</span>
+                </div>
+                <h3 className="text-2xl font-black text-orange-400">TICKET</h3>
+                <p className="text-4xl font-black">¥3,300</p>
+                <p className="text-sm text-muted-foreground">月額料金（税込み）</p>
+              </div>
+              <div className="space-y-3 border-t border-orange-500/20 pt-6">
+                <p className="font-semibold text-sm">✨ イベント入場管理：</p>
+                <ul className="space-y-3">
+                  {[
+                    "🎫 最大500名規模対応（当面の間）",
+                    "🔐 転売防止動的QRコード（30秒更新）",
+                    "📱 iPadでスキャンするだけ入場",
+                    "🎵 コンサート・講演会・料理教室など",
+                    "📊 チケット販売分析",
+                    "💰 収益還元率85%"
+                  ].map((f, i) => (
+                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="mt-0.5">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4 text-sm">
+                <p className="text-orange-300 font-semibold">🚀 将来的に規模拡大予定</p>
+                <p className="text-xs text-muted-foreground mt-1">最大500名→順次拡大</p>
               </div>
             </div>
 
