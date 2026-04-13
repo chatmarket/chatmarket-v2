@@ -82,7 +82,8 @@ const PLANS = [
     id: "mini-school",
     icon: GraduationCap,
     name: "ミニスクールプラン",
-    price: 8900,
+    price: 0,
+    priceDisplay: "¥？",
     period: "/月",
     revenueShare: "90%",
     comingSoon: true,
@@ -104,7 +105,8 @@ const PLANS = [
     id: "enterprise",
     icon: Building2,
     name: "エンタープライズプラン",
-    price: 59800,
+    price: 0,
+    priceDisplay: "¥？",
     period: "/月",
     revenueShare: "90%",
     comingSoon: true,
@@ -128,7 +130,8 @@ const PLANS = [
     icon: Ticket,
     name: "デジタルチケットプラン",
     comingSoon: true,
-    price: 3300,
+    price: 0,
+    priceDisplay: "¥？",
     period: "/月",
     revenueShare: "85%",
     color: "from-orange-500/20 to-orange-600/10 border-orange-500/30",
@@ -149,7 +152,8 @@ const PLANS = [
     id: "crowdfunding",
     icon: Heart,
     name: "BASIC＋クラウドファンディングプラン",
-    price: 12000,
+    price: 0,
+    priceDisplay: "¥？",
     period: "/月",
     revenueShare: "90%",
     specialBadge: true,
@@ -332,8 +336,8 @@ export default function PlanSelect() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-lg font-black">¥{plan.price.toLocaleString()}</span>
-                      <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>
+                      <span className="text-lg font-black">{plan.priceDisplay || `¥${plan.price.toLocaleString()}`}</span>
+                      {!plan.priceDisplay && <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>}
                     </div>
                   </div>
                 </AccordionTrigger>
