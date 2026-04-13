@@ -110,8 +110,8 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-          <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", marginTop: "16px" }}>Est. 2026 · The Creator Hub</p>
         </div>
+        <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center", paddingBottom: "12px" }}>Est. 2026 · The Creator Hub</p>
       </section>
 
       {/* サーバー安定化バナー */}
