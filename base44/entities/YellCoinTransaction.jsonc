@@ -1,0 +1,54 @@
+{
+  "name": "YellCoinTransaction",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "charge",
+        "send",
+        "expire"
+      ],
+      "description": "\u30c1\u30e3\u30fc\u30b8 / \u9001\u4ed8 / \u5931\u52b9"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u30b3\u30a4\u30f3\u679a\u6570"
+    },
+    "target_name": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u5148\u30c1\u30e3\u30f3\u30cd\u30eb\u540d\uff08\u9001\u4ed8\u6642\uff09"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "\u9001\u4ed8\u5148ID\uff08\u30e9\u30a4\u30d6\u914d\u4fe1ID\u306a\u3069\uff09"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\uff08\u9001\u4ed8\u6642\uff09"
+    },
+    "yen_amount": {
+      "type": "number",
+      "description": "\u5186\u63db\u7b97\u91d1\u984d\uff08\u30c1\u30e3\u30fc\u30b8\u6642\uff09"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6709\u52b9\u671f\u9650\uff08\u30c1\u30e3\u30fc\u30b8\u65e5\u304b\u3089180\u65e5\u30fb\u81ea\u5bb6\u578b\u524d\u6255\u5f0f\u652f\u6255\u624b\u6bb5\uff09"
+    },
+    "is_expired": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u5931\u52b9\u6e08\u307f\u30d5\u30e9\u30b0"
+    }
+  },
+  "required": [
+    "user_email",
+    "type",
+    "amount"
+  ]
+}

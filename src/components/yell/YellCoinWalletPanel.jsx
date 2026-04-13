@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Plus, ArrowUpRight, ArrowDownLeft, Zap } from "lucide-react";
+import { Coins, Plus, ArrowUpRight, ArrowDownLeft, Zap, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 // チャージプラン
@@ -35,6 +35,15 @@ export default function YellCoinWalletPanel({ user }) {
   const wallet = wallets[0];
   const balance = wallet?.balance || 0;
 
+  // 直近で失効するコインの期限を計算
+  const nextExpiry = useMemo(() => {
+    const now = new Date();
+    const active = transactions
+      .filter(t => t.type === "charge" && !t.is_expired && t.expires_at && new Date(t.expires_at) > now)
+      .sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+    return active[0] || null;
+  }, [transactions]);
+
   const chargeMutation = useMutation({
     mutationFn: async (plan) => {
       if (wallet) {
@@ -50,11 +59,16 @@ export default function YellCoinWalletPanel({ user }) {
           total_sent: 0,
         });
       }
+      // 有効期限 = チャージ日から180日（資金決済法：自家型前払式支払手段）
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 180);
       await base44.entities.YellCoinTransaction.create({
         user_email: user.email,
         type: "charge",
         amount: plan.coins,
         yen_amount: plan.yen,
+        expires_at: expiresAt.toISOString(),
+        is_expired: false,
       });
     },
     onSuccess: () => {
@@ -64,9 +78,6 @@ export default function YellCoinWalletPanel({ user }) {
       toast.success("チャージ完了！");
     },
   });
-
-  const chargeTransactions = transactions.filter((t) => t.type === "charge");
-  const sendTransactions = transactions.filter((t) => t.type === "send");
 
   return (
     <div className="space-y-6">
@@ -81,6 +92,12 @@ export default function YellCoinWalletPanel({ user }) {
             <p className="text-xs text-muted-foreground mt-1">
               累計チャージ: {(wallet?.total_charged || 0).toLocaleString()} コイン ／ 累計送付: {(wallet?.total_sent || 0).toLocaleString()} コイン
             </p>
+            {nextExpiry && (
+              <p className="text-xs text-orange-400 flex items-center gap-1 mt-1.5">
+                <Clock className="w-3 h-3" />
+                直近の失効期限: {new Date(nextExpiry.expires_at).toLocaleDateString('ja-JP')}（{nextExpiry.amount.toLocaleString()}枚）
+              </p>
+            )}
           </div>
           <Button
             onClick={() => setShowCharge(!showCharge)}
@@ -88,6 +105,15 @@ export default function YellCoinWalletPanel({ user }) {
           >
             <Plus className="w-4 h-4" /> チャージ
           </Button>
+        </div>
+
+        {/* 法的注意事項 */}
+        <div className="mt-4 bg-black/30 border border-yellow-500/20 rounded-xl px-3 py-2.5 flex items-start gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-yellow-200/70 leading-relaxed">
+            エールコインは<strong className="text-yellow-300">購入日から180日</strong>の有効期限があります。期限を過ぎたコインは自動的に失効します。
+            <strong className="text-red-400"> 購入後の払い戻し（返金）は一切できません。</strong>
+          </p>
         </div>
       </div>
 
@@ -113,7 +139,16 @@ export default function YellCoinWalletPanel({ user }) {
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-muted-foreground">※ 1コイン = 1.1円相当。購入後の返金はできません。</p>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 space-y-1">
+            <p className="text-[11px] text-red-300 font-semibold flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" /> 重要事項（ご確認ください）
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              ・エールコインの<strong className="text-foreground">有効期限は購入日から180日</strong>です。期限を過ぎると自動失効します。<br />
+              ・購入後の現金への<strong className="text-red-400">払い戻し（返金）は一切できません。</strong><br />
+              ・1コイン = 1.1円相当（税込）
+            </p>
+          </div>
         </div>
       )}
 
@@ -128,24 +163,27 @@ export default function YellCoinWalletPanel({ user }) {
             {transactions.map((tx) => (
               <div key={tx.id} className="flex items-center gap-3 bg-card border border-border/50 rounded-xl p-3">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                  tx.type === "charge" ? "bg-green-500/10" : "bg-yellow-500/10"
+                  tx.type === "charge" ? "bg-green-500/10" : tx.type === "expire" ? "bg-red-500/10" : "bg-yellow-500/10"
                 }`}>
                   {tx.type === "charge"
                     ? <ArrowDownLeft className="w-4 h-4 text-green-400" />
+                    : tx.type === "expire"
+                    ? <AlertTriangle className="w-4 h-4 text-red-400" />
                     : <ArrowUpRight className="w-4 h-4 text-yellow-400" />
                   }
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">
-                    {tx.type === "charge" ? "チャージ" : `${tx.target_name || "送付"}へ`}
+                    {tx.type === "charge" ? "チャージ" : tx.type === "expire" ? "失効（有効期限切れ）" : `${tx.target_name || "送付"}へ`}
                   </p>
                   {tx.message && <p className="text-xs text-muted-foreground truncate">{tx.message}</p>}
                   <p className="text-xs text-muted-foreground">
                     {new Date(tx.created_date).toLocaleDateString("ja-JP")}
-                    {tx.yen_amount && ` • ¥${tx.yen_amount.toLocaleString()}`}
+                    {tx.yen_amount ? ` • ¥${tx.yen_amount.toLocaleString()}` : ""}
+                    {tx.type === "charge" && tx.expires_at && ` • 期限: ${new Date(tx.expires_at).toLocaleDateString("ja-JP")}`}
                   </p>
                 </div>
-                <p className={`font-bold text-sm shrink-0 ${tx.type === "charge" ? "text-green-400" : "text-yellow-400"}`}>
+                <p className={`font-bold text-sm shrink-0 ${tx.type === "charge" ? "text-green-400" : tx.type === "expire" ? "text-red-400" : "text-yellow-400"}`}>
                   {tx.type === "charge" ? "+" : "-"}{tx.amount.toLocaleString()} 枚
                 </p>
               </div>
