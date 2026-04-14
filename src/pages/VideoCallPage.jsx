@@ -1266,9 +1266,6 @@ export default function VideoCallPage() {
               </div>
               )}
               </div>
-              </div>
-              </div>
-              </div>
 
               {/* ---- Extension Modal ---- */}
               <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
@@ -1474,6 +1471,7 @@ export default function VideoCallPage() {
           </div>
         </DialogContent>
         </Dialog>
+        </div>
         </div>
         );
         }
