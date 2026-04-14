@@ -34,6 +34,11 @@ function getRevenueShare(plan) {
 // 最低コイン単価（15分あたり）
 const MIN_COINS_PER_15MIN = 500;
 
+// CALL&ANSERプラン: 1日の無料通話上限（分）
+const FREE_CALL_DAILY_LIMIT_MIN = 60;
+const FREE_CALL_SLOT_MIN = 10; // 10分単位
+const FREE_CALL_MAX_SLOTS = 6; // 最大6スロット（10分×6=60分）
+
 // コイン単価計算（15分換算）
 function calcCoinPer15(minutes, coinPrice) {
   return Math.round((coinPrice / minutes) * 15);
@@ -89,6 +94,9 @@ export default function VideoCallRequest() {
     base44.entities.Channel.filter({ id: channelId }).then((res) => setChannel(res[0]));
   }, [channelId]);
 
+  const [useFreeSlot, setUseFreeSlot] = useState(false);
+  const [freeSlotDuration, setFreeSlotDuration] = useState(10);
+
   const { data: existingRequests = [] } = useQuery({
     queryKey: ["call-requests", user?.email, channel?.owner_email],
     queryFn: () => base44.entities.VideoCall.filter({
@@ -108,6 +116,21 @@ export default function VideoCallRequest() {
   const selectedDuration = availableDurations.find((d) => d.minutes === durationMinutes) || availableDurations[0];
   const callPrice = selectedDuration?.price || 0;
 
+  // CALL&ANSERプラン: 今日の無料通話利用分を取得
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { data: todayFreeCalls = [] } = useQuery({
+    queryKey: ["free-calls-today", user?.email],
+    queryFn: () => base44.entities.VideoCall.filter({ caller_email: user.email, is_free_call: true }),
+    enabled: !!user && userPlan === "call-anser",
+  });
+  const todayFreeMinutesUsed = todayFreeCalls
+    .filter((c) => new Date(c.created_date) >= todayStart)
+    .reduce((sum, c) => sum + (c.duration_minutes || 0), 0);
+  const freeMinutesRemaining = Math.max(0, FREE_CALL_DAILY_LIMIT_MIN - todayFreeMinutesUsed);
+  const freeSlotsRemaining = Math.floor(freeMinutesRemaining / FREE_CALL_SLOT_MIN);
+  const freeSlotOptions = Array.from({ length: Math.min(freeSlotsRemaining, FREE_CALL_MAX_SLOTS) }, (_, i) => (i + 1) * FREE_CALL_SLOT_MIN);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || !channel) return;
@@ -124,7 +147,11 @@ export default function VideoCallRequest() {
 
     setSubmitting(true);
 
-    const coinPer15 = calcCoinPer15(durationMinutes, callPrice);
+    const isFree = userPlan === "call-anser" && useFreeSlot;
+    const actualDuration = isFree ? freeSlotDuration : durationMinutes;
+    const actualPrice = isFree ? 0 : callPrice;
+    const coinPer15 = isFree ? 0 : calcCoinPer15(actualDuration, actualPrice);
+
     await base44.entities.VideoCall.create({
       caller_email: user.email,
       caller_name: user.full_name || user.email,
@@ -132,24 +159,27 @@ export default function VideoCallRequest() {
       callee_name: channel.name,
       callee_channel_id: channelId,
       status: "pending",
-      is_free_call: false,
-      is_paid: true,
-      price: callPrice,
+      is_free_call: isFree,
+      is_paid: !isFree,
+      price: actualPrice,
       coin_price_per_15min: coinPer15,
-      duration_minutes: durationMinutes,
+      duration_minutes: actualDuration,
       message: `【希望日時】${preferredDate}${message ? `\n${message}` : ""}`,
       thread_id: threadId,
     });
 
     if (threadId) {
-      const planLabel = userPlan === "call-anser" ? "CALL＆ANSERプラン" : userPlan === "basic" ? "BASICプラン" : "FREEプラン";
+      const planLabel = "CALL＆ANSERプラン";
+      const callLabel = isFree
+        ? `【無料通話リクエスト（${planLabel}）】\n⏱ ${actualDuration}分 / 🆓 無料枠使用\n📅 希望日時: ${preferredDate}${message ? `\n💬 ${message}` : ""}`
+        : `【1対1ビデオ通話リクエスト（${planLabel}）】\n⏱ ${actualDuration}分 / 💴 ¥${actualPrice.toLocaleString()}\n📅 希望日時: ${preferredDate}${message ? `\n💬 ${message}` : ""}`;
       await base44.entities.DirectChat.create({
         from_email: user.email,
         from_name: user.full_name || user.email,
         to_channel_owner_email: channel.owner_email,
         to_channel_id: channel.id,
         to_channel_name: channel.name,
-        content: `【1対1ビデオ通話リクエスト（${planLabel}）】\n⏱ ${durationMinutes}分 / 💴 ¥${callPrice.toLocaleString()}\n📅 希望日時: ${preferredDate}${message ? `\n💬 ${message}` : ""}`,
+        content: callLabel,
         yell_coin: 0,
         thread_id: threadId,
       });
@@ -274,7 +304,8 @@ export default function VideoCallRequest() {
         {userPlan === "call-anser" && (
         <>
           <p className="font-semibold text-cyan-400">CALL＆ANSERプランの通話ルール</p>
-          <p className="text-muted-foreground">双方向有料通話プランです。自分から架電する場合は<span className="text-cyan-400 font-semibold">30分×4回/日の無料枠</span>があります。また、相手が設定した希望額を支払いこちらから発信することも可能です。</p>
+          <p className="text-muted-foreground">双方向通話プランです。<span className="text-cyan-400 font-semibold">1日60分（10分×6回）の無料通話枠</span>があります。無料枠を使わない場合は配信者設定料金で有料通話できます。</p>
+          <p className="text-cyan-400 font-semibold mt-1">本日の無料残枠: {freeMinutesRemaining}分 / {FREE_CALL_DAILY_LIMIT_MIN}分</p>
         </>
         )}
       </div>
@@ -290,7 +321,69 @@ export default function VideoCallRequest() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* 通話時間 & 料金 */}
+        {/* CALL&ANSERプラン: 無料/有料切り替え */}
+        {userPlan === "call-anser" && (
+          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+              <Phone className="w-4 h-4" /> 通話タイプを選択
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setUseFreeSlot(true)}
+                disabled={freeSlotsRemaining === 0}
+                className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                  useFreeSlot ? "border-cyan-400 bg-cyan-500/20" : "border-border bg-secondary hover:border-cyan-400/40"
+                }`}
+              >
+                <span className="text-lg">🆓</span>
+                <span className={`font-bold text-sm ${useFreeSlot ? "text-cyan-400" : "text-foreground"}`}>無料通話</span>
+                <span className="text-[10px] text-muted-foreground">残 {freeMinutesRemaining}分</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseFreeSlot(false)}
+                className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                  !useFreeSlot ? "border-primary bg-primary/10" : "border-border bg-secondary hover:border-primary/40"
+                }`}
+              >
+                <span className="text-lg">💰</span>
+                <span className={`font-bold text-sm ${!useFreeSlot ? "text-primary" : "text-foreground"}`}>有料通話</span>
+                <span className="text-[10px] text-muted-foreground">配信者設定料金</span>
+              </button>
+            </div>
+
+            {/* 無料枠: スロット選択 */}
+            {useFreeSlot && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">通話時間を選択（10分×最大{Math.min(freeSlotsRemaining, FREE_CALL_MAX_SLOTS)}スロット）</p>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {freeSlotOptions.map((min) => (
+                    <button
+                      key={min}
+                      type="button"
+                      onClick={() => setFreeSlotDuration(min)}
+                      className={`flex flex-col items-center gap-0.5 p-2 rounded-lg border-2 transition-all ${
+                        freeSlotDuration === min
+                          ? "border-cyan-400 bg-cyan-500/20"
+                          : "border-border bg-secondary hover:border-cyan-400/40"
+                      }`}
+                    >
+                      <span className={`font-bold text-xs ${freeSlotDuration === min ? "text-cyan-400" : "text-foreground"}`}>{min}分</span>
+                      <span className="text-[9px] text-cyan-400">無料</span>
+                    </button>
+                  ))}
+                </div>
+                {freeSlotsRemaining === 0 && (
+                  <p className="text-xs text-red-400 font-semibold">本日の無料通話枠を使い切りました（60分/日）。明日リセットされます。</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 通話時間 & 料金（有料の場合） */}
+        {(!useFreeSlot || userPlan !== "call-anser") && (
         <div className="bg-card rounded-xl border border-border/50 p-4 space-y-4">
           <Label className="flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-muted-foreground" /> 通話時間を選択（10分刻み・最大1時間）
@@ -350,6 +443,7 @@ export default function VideoCallRequest() {
             );
           })()}
         </div>
+        )}
 
         {/* 希望日時 */}
         <div className="space-y-1.5">
@@ -389,13 +483,20 @@ export default function VideoCallRequest() {
 
         <Button
           type="submit"
-          disabled={submitting || existingRequests.length > 0 || !callPrice}
-          className="w-full h-12 bg-primary hover:bg-primary/90 gap-2 text-base font-bold"
+          disabled={
+            submitting ||
+            existingRequests.length > 0 ||
+            (userPlan === "call-anser" && useFreeSlot ? freeSlotsRemaining === 0 : !callPrice)
+          }
+          className={`w-full h-12 gap-2 text-base font-bold ${userPlan === "call-anser" && useFreeSlot ? "bg-cyan-600 hover:bg-cyan-700" : "bg-primary hover:bg-primary/90"}`}
         >
           {submitting ? "送信中..." : (
             <>
               <PhoneCall className="w-5 h-5" />
-              {callPrice > 0 ? `¥${callPrice.toLocaleString()} で通話リクエストを送る` : "通話リクエストを送る"}
+              {userPlan === "call-anser" && useFreeSlot
+                ? `🆓 無料通話 ${freeSlotDuration}分 リクエストを送る`
+                : callPrice > 0 ? `¥${callPrice.toLocaleString()} で通話リクエストを送る` : "通話リクエストを送る"
+              }
             </>
           )}
         </Button>
