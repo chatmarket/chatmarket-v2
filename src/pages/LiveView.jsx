@@ -265,11 +265,6 @@ export default function LiveView() {
             {/* スーパーチャット オーバーレイ */}
             {!needsPayment && <TipOverlay tips={activeTips} />}
 
-            {/* ギフト オーバーレイ */}
-            {!needsPayment && (
-              <GiftOverlay gifts={activeGifts} viewerCount={stream?.viewer_count || 0} />
-            )}
-
             {/* アクティブな通話中 */}
             {activeCall && (
               <Link to={`/call/${activeCall.id}`}>
