@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel.jsx";
@@ -73,6 +74,20 @@ export default function LiveView() {
       if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
     });
   }, [stream?.channel_id]);
+
+  // アクティブな通話をチェック
+  const { data: activeCall } = useQuery({
+    queryKey: ["active-call", stream?.channel_id],
+    queryFn: async () => {
+      const calls = await base44.entities.VideoCall.filter({
+        status: "active",
+        callee_channel_id: stream?.channel_id
+      });
+      return calls[0] || null;
+    },
+    enabled: !!stream?.channel_id,
+    refetchInterval: 2000,
+  });
 
   // 30秒プレビュータイマー（有料かつ未購入の場合のみ）
   useEffect(() => {
@@ -247,6 +262,16 @@ export default function LiveView() {
             {/* ギフト オーバーレイ */}
             {!needsPayment && (
               <GiftOverlay gifts={activeGifts} viewerCount={stream?.viewer_count || 0} />
+            )}
+
+            {/* アクティブな通話中 */}
+            {activeCall && (
+              <Link to={`/call/${activeCall.id}`}>
+                <Button className="absolute top-3 right-3 z-20 bg-green-500 hover:bg-green-600 gap-2 animate-pulse shadow-lg shadow-green-500/50">
+                  <Radio className="w-4 h-4" />
+                  通話中
+                </Button>
+              </Link>
             )}
 
             {/* Video controls */}
