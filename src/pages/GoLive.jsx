@@ -36,8 +36,8 @@ export default function GoLive() {
     scheduled_at: "",
     availableTime: "",
     duration: mode === MODE_LIVE ? 60 : 15,
-    price: mode === MODE_LIVE ? 1 : 150,
-    isPaid: false,
+    price: mode === MODE_LIVE ? 150 : 500,
+    isPaid: true,
     streamType: STREAM_TYPE_WEBRTC,
     // Archive settings
     saveArchive: false,
@@ -151,7 +151,7 @@ export default function GoLive() {
       status: isLiveNow ? "live" : "scheduled",
       scheduled_at: form.scheduled_at || null,
       available_time: form.availableTime || "",
-      price: form.isPaid ? form.price : 0,
+      price: form.price,
       viewer_count: 0,
       stream_type: form.streamType,
       ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
@@ -187,7 +187,7 @@ export default function GoLive() {
   const liveRevenueRate = progressiveRate;
   const liveMinPrice = isCampaign ? 0 : Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
   const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 500);
-  const livePriceError = mode === MODE_LIVE && form.isPaid && !isCampaign && form.price < liveMinPrice && liveMinPrice > 0;
+  const livePriceError = mode === MODE_LIVE && !isCampaign && form.price < liveMinPrice && liveMinPrice > 0;
 
 
 
@@ -418,20 +418,14 @@ export default function GoLive() {
 
         {/* Pricing */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>有料にする</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {mode === MODE_LIVE ? "チケット購入が必要になります" : "通話料金を設定します"}
-              </p>
-            </div>
-            <Switch
-              checked={form.isPaid}
-              onCheckedChange={(v) => setForm({ ...form, isPaid: v })}
-            />
+          <div className="flex items-center gap-2">
+            <Label>料金設定</Label>
+            <span className="text-xs text-muted-foreground">
+              {mode === MODE_LIVE ? "ライブ配信は必ず有料設定が必要です" : "1対1通話は必ず有料設定が必要です"}
+            </span>
           </div>
 
-          {form.isPaid && mode === MODE_LIVE && (
+          {mode === MODE_LIVE && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>配信時間（最大120分）</Label>
@@ -490,7 +484,7 @@ export default function GoLive() {
             </div>
           )}
 
-          {form.isPaid && mode === MODE_CALL && (
+          {mode === MODE_CALL && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>時間（15分単位）</Label>
@@ -619,7 +613,7 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || livePriceError || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
+          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
         >
           {creating ? (
