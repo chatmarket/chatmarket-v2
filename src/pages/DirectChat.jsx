@@ -17,7 +17,11 @@ function makeThreadId(emailA, emailB) {
 function formatTime(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  return d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString("ja-JP", { 
+    hour: "2-digit", 
+    minute: "2-digit",
+    timeZone: "Asia/Tokyo"
+  });
 }
 
 export default function DirectChat() {
