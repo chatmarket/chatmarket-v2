@@ -701,7 +701,7 @@ export default function VideoCallPage() {
         </div>
       </div>
 
-      {/* Main video area */}
+      {/* Main video area - Picture-in-Picture Layout */}
       <div className="flex-1 relative bg-black">
         {/* Remote video (full screen) */}
         <div className="absolute inset-0 bg-black flex items-center justify-center">
@@ -721,8 +721,8 @@ export default function VideoCallPage() {
           </div>
         </div>
 
-        {/* Local video (PiP) */}
-        <div className="absolute bottom-4 right-4 w-32 h-44 md:w-40 md:h-56 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-black z-10">
+        {/* Local video (PiP - 右下) */}
+        <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-48 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
           <video
             ref={localVideoRef}
             autoPlay muted playsInline
@@ -731,14 +731,14 @@ export default function VideoCallPage() {
           />
           {!camOn && (
             <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
-              <CameraOff className="w-6 h-6 text-muted-foreground" />
+              <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
             </div>
           )}
           {selectedBg === "blur" && (
             <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
           )}
-          <div className="absolute bottom-1 left-1 right-1 text-center">
-            <span className="text-[10px] text-white/70 bg-black/50 px-2 py-0.5 rounded-full">あなた</span>
+          <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
+            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
           </div>
         </div>
 
@@ -847,43 +847,41 @@ export default function VideoCallPage() {
           </div>
         )}
 
-        {/* ---- Neon Countdown Timer (30秒前から表示) ---- */}
-        <AnimatePresence>
-          {remainingSeconds !== null && remainingSeconds <= 30 && remainingSeconds > 0 && (
-            <motion.div
-              key="countdown"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30"
-            >
-              <div className="text-center">
-                <p className="font-black leading-none drop-shadow-2xl"
-                  style={{
-                    fontSize: "120px",
-                    color: "#00ff9d",
-                    textShadow: `
-                      0 0 20px #00ff9d,
-                      0 0 40px #00ff9d,
-                      0 0 60px #00ff9d,
-                      0 0 100px rgba(0,255,157,0.5)
-                    `,
-                    fontFamily: "'Courier New', monospace",
-                    letterSpacing: "0.1em"
-                  }}>
-                  {String(remainingSeconds).padStart(2, '0')}
-                </p>
-                <p className="text-lg font-bold opacity-90 drop-shadow-lg"
-                  style={{
-                    color: remainingSeconds <= 10 ? "#ff0055" : "#00ff9d",
-                    textShadow: `0 0 20px ${remainingSeconds <= 10 ? "#ff0055" : "#00ff9d"}`
-                  }}>
-                  {remainingSeconds <= 10 ? "⚠️ まもなく終了" : "秒"}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* ---- Neon Countdown Timer (30秒前から表示) - 右上隅 ---- */}
+         <AnimatePresence>
+           {remainingSeconds !== null && remainingSeconds <= 30 && remainingSeconds > 0 && (
+             <motion.div
+               key="countdown"
+               initial={{ opacity: 0, scale: 0.5 }}
+               animate={{ opacity: 1, scale: 1 }}
+               exit={{ opacity: 0, scale: 0.5 }}
+               className="absolute top-4 right-4 pointer-events-none z-30"
+             >
+               <div className="text-center bg-black/70 backdrop-blur rounded-xl p-3 border border-cyan-500/30">
+                 <p className="font-black leading-none drop-shadow-2xl"
+                   style={{
+                     fontSize: "36px",
+                     color: "#00ff9d",
+                     textShadow: `
+                       0 0 10px #00ff9d,
+                       0 0 20px #00ff9d
+                     `,
+                     fontFamily: "'Courier New', monospace",
+                     letterSpacing: "0.1em"
+                   }}>
+                   {String(remainingSeconds).padStart(2, '0')}
+                 </p>
+                 <p className="text-xs font-bold opacity-90 drop-shadow-lg"
+                   style={{
+                     color: remainingSeconds <= 10 ? "#ff0055" : "#00ff9d",
+                     textShadow: `0 0 10px ${remainingSeconds <= 10 ? "#ff0055" : "#00ff9d"}`
+                   }}>
+                   {remainingSeconds <= 10 ? "⚠️ 終了" : "秒"}
+                 </p>
+               </div>
+             </motion.div>
+           )}
+         </AnimatePresence>
 
         {/* ---- Extension Banner (30秒前から) ---- */}
         <AnimatePresence>
@@ -1231,11 +1229,20 @@ export default function VideoCallPage() {
           </div>
           </div>
 
-          {/* Chat section - Mobile & Desktop */}
+          {/* Chat section - Collapsible */}
           {user && (
-            <div className="w-full lg:w-80 lg:border-l border-t lg:border-t-0 border-white/10 flex-shrink-0 max-h-48 lg:max-h-none overflow-y-auto lg:overflow-y-auto" style={{ background: "#050505" }}>
-              {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-            </div>
+            <details className="w-full lg:w-80 lg:border-l border-t lg:border-t-0 border-white/10 flex-shrink-0 group" style={{ background: "#050505" }}>
+              <summary className="bg-black/60 px-4 py-2 cursor-pointer hover:bg-black/80 transition-colors flex items-center justify-between text-white font-semibold text-sm list-none">
+                <span className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  チャット
+                </span>
+                <span className="transform group-open:rotate-180 transition-transform text-xs">▼</span>
+              </summary>
+              <div className="max-h-80 lg:max-h-96 overflow-y-auto">
+                {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-32 text-white/30 text-xs">通話開始後にチャット利用可</div>}
+              </div>
+            </details>
           )}
             </div>
 
