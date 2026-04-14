@@ -1279,16 +1279,14 @@ export default function VideoCallPage() {
 
               {/* Chat section - Below video */}
               {user && (
-               <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
-                 {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-               </div>
+                <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
+                  {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
+                </div>
               )}
               </div>
               </div>
-              </div>
-              </div>
 
-      {/* ---- Extension Modal ---- */}
+              {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
