@@ -1,33 +1,58 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Phone, TrendingUp, TrendingDown, Coins, DollarSign, Clock, AlertTriangle } from "lucide-react";
+import { Phone, TrendingUp, TrendingDown, Coins, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
-const COMM_COST_PER_MIN = 4;          // AWS通信実費: ¥4/分（双方向）
-const COIN_TO_YEN = 1;                // 1コイン = 1円（確定仕様）
-const PLATFORM_FEE_RATE = 0.15;       // 運営手数料: 15%
+// 確定仕様: 150コイン/15分 / ライバー85% / Admin15%
+const COINS_PER_15MIN    = 150;
+const PLATFORM_RATE      = 0.15;   // Admin手数料15%（絶対確保）
+const CREATOR_RATE       = 0.85;   // ライバー還元85%
+const COIN_TO_YEN        = 1;      // 1コイン = 1円
+const TURN_COST_PER_MIN  = 2;      // TURN fallback時の実費 ¥2/分
+const P2P_SUCCESS_RATE   = 0.80;   // P2P成功率80% → 実効コスト ×0.20
+// 期待インフラコスト: 15分 × ¥2 × 20% = ¥6/ユニット
+// 運営収益: 150 × 15% = ¥22.5 → 純利益 ¥16.5/ユニット
 
 function profitColor(val) {
   return val >= 0 ? "text-green-400" : "text-red-400";
 }
 
+function calcCallMetrics(call) {
+  const consumedCoins    = call.coins_consumed || 0;
+  const actualMin        = call.actual_duration_minutes || 0;
+
+  // Admin15%を必ず確保（DBに保存済みの値を優先、なければ計算）
+  const platformCoins    = call.platform_revenue_coins != null
+    ? call.platform_revenue_coins
+    : (consumedCoins - Math.floor(consumedCoins * CREATOR_RATE));
+  const creatorCoins     = call.creator_revenue_coins != null
+    ? call.creator_revenue_coins
+    : Math.floor(consumedCoins * CREATOR_RATE);
+
+  const platformRevYen   = platformCoins * COIN_TO_YEN;
+
+  // インフラコスト（DBに保存済みを優先）
+  const commCostYen      = call.comm_cost_yen != null
+    ? call.comm_cost_yen
+    : Math.round(actualMin * TURN_COST_PER_MIN * (1 - P2P_SUCCESS_RATE));
+
+  // 純利益 = Admin収益(¥22.5) - インフラコスト(¥6期待値) = ¥16.5
+  const profit           = call.platform_profit_yen != null
+    ? call.platform_profit_yen
+    : platformRevYen - commCostYen;
+
+  return { consumedCoins, actualMin, platformCoins, creatorCoins, platformRevYen, commCostYen, profit };
+}
+
 function CallCostCard({ call }) {
-  const isProfit = (call.platform_profit_yen || 0) >= 0;
-  const actualMin = call.actual_duration_minutes || 0;
-  const consumedCoins = call.coins_consumed || 0;
-  const platformRev = call.platform_revenue_coins || Math.floor(consumedCoins * PLATFORM_FEE_RATE);
-  const platformRevYen = platformRev * COIN_TO_YEN;
-  const commCost = call.comm_cost_yen || (actualMin * COMM_COST_PER_MIN);
-  const profit = call.platform_profit_yen !== undefined ? call.platform_profit_yen : (platformRevYen - commCost);
+  const { consumedCoins, actualMin, platformCoins, creatorCoins, platformRevYen, commCostYen, profit } = calcCallMetrics(call);
 
   return (
     <div className={`bg-card border rounded-2xl p-4 space-y-3 ${
-      call.auto_disconnected
-        ? "border-orange-500/40 bg-orange-500/5"
-        : call.status === "active"
-        ? "border-primary/40"
-        : "border-border/50"
+      call.auto_disconnected ? "border-orange-500/40 bg-orange-500/5"
+      : call.status === "active" ? "border-primary/40"
+      : "border-border/50"
     }`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -48,12 +73,12 @@ function CallCostCard({ call }) {
           <p className="font-bold text-sm mt-1 truncate">{call.caller_name} → {call.callee_name}</p>
           <p className="text-xs text-muted-foreground">{actualMin}分通話 / {consumedCoins.toLocaleString()}コイン消費</p>
         </div>
-        <div className={`text-right shrink-0 px-3 py-2 rounded-xl ${isProfit ? "bg-green-500/10 border border-green-500/30" : "bg-red-500/10 border border-red-500/30"}`}>
+        <div className={`text-right shrink-0 px-3 py-2 rounded-xl ${profit >= 0 ? "bg-green-500/10 border border-green-500/30" : "bg-red-500/10 border border-red-500/30"}`}>
           <p className="text-[10px] text-muted-foreground">運営純利益</p>
           <p className={`font-black text-lg ${profitColor(profit)}`}>
             {profit >= 0 ? "+" : ""}¥{profit.toFixed(1)}
           </p>
-          {isProfit
+          {profit >= 0
             ? <TrendingUp className="w-4 h-4 text-green-400 ml-auto" />
             : <TrendingDown className="w-4 h-4 text-red-400 ml-auto" />
           }
@@ -64,20 +89,22 @@ function CallCostCard({ call }) {
         <div className="bg-secondary/60 rounded-xl p-2.5 text-center">
           <p className="text-muted-foreground mb-1">15分単価</p>
           <p className="font-black text-base flex items-center justify-center gap-1">
-            <Coins className="w-3.5 h-3.5 text-yellow-400" />{(call.coin_price_per_15min || 500).toLocaleString()}
+            <Coins className="w-3.5 h-3.5 text-yellow-400" />{COINS_PER_15MIN}
           </p>
         </div>
-        <div className="bg-secondary/60 rounded-xl p-2.5 text-center">
-          <p className="text-muted-foreground mb-1">通信実費</p>
-          <p className="font-black text-base text-orange-400">¥{commCost.toFixed(1)}</p>
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-2.5 text-center">
+          <p className="text-muted-foreground mb-1">Admin収益(15%)</p>
+          <p className="font-black text-base text-primary">¥{platformRevYen.toFixed(1)}</p>
+          <p className="text-[9px] text-primary/60">{platformCoins}コイン</p>
         </div>
         <div className="bg-secondary/60 rounded-xl p-2.5 text-center">
-          <p className="text-muted-foreground mb-1">運営収益(15%)</p>
-          <p className="font-black text-base text-primary">¥{platformRevYen.toFixed(1)}</p>
+          <p className="text-muted-foreground mb-1">インフラコスト</p>
+          <p className="font-black text-base text-orange-400">¥{commCostYen.toFixed(1)}</p>
+          <p className="text-[9px] text-muted-foreground">TURN推定</p>
         </div>
         <div className="bg-secondary/60 rounded-xl p-2.5 text-center">
           <p className="text-muted-foreground mb-1">ライバー報酬(85%)</p>
-          <p className="font-black text-base text-blue-400">{(call.creator_revenue_coins || Math.floor(consumedCoins * 0.85)).toLocaleString()}枚</p>
+          <p className="font-black text-base text-blue-400">{creatorCoins.toLocaleString()}枚</p>
         </div>
       </div>
 
@@ -98,46 +125,64 @@ export default function VideoCallCostMonitor() {
     refetchInterval: 15000,
   });
 
-  const activeCalls = calls.filter(c => c.status === "active" && c.billing_started_at);
-  const endedCalls = calls.filter(c => c.status === "ended" && c.billing_started_at).slice(0, 20);
-
-  // 合計集計
-  const allBilled = [...activeCalls, ...endedCalls];
-  const totalCoins = allBilled.reduce((s, c) => s + (c.coins_consumed || 0), 0);
-  const totalCommCost = allBilled.reduce((s, c) => s + (c.comm_cost_yen || 0), 0);
-  const totalPlatformRev = allBilled.reduce((s, c) => s + ((c.platform_revenue_coins || Math.floor((c.coins_consumed || 0) * PLATFORM_FEE_RATE)) * COIN_TO_YEN), 0);
-  const totalProfit = totalPlatformRev - totalCommCost;
+  const activeCalls      = calls.filter(c => c.status === "active" && c.billing_started_at);
+  const endedCalls       = calls.filter(c => c.status === "ended" && c.billing_started_at).slice(0, 20);
+  const allBilled        = [...activeCalls, ...endedCalls];
   const autoDisconnected = calls.filter(c => c.auto_disconnected).length;
+
+  // 集計（Admin15%確保ベース）
+  const totalCoins        = allBilled.reduce((s, c) => s + (c.coins_consumed || 0), 0);
+  const totalPlatformCoins = allBilled.reduce((s, c) => {
+    const consumed = c.coins_consumed || 0;
+    return s + (c.platform_revenue_coins != null ? c.platform_revenue_coins : (consumed - Math.floor(consumed * CREATOR_RATE)));
+  }, 0);
+  const totalPlatformYen  = totalPlatformCoins * COIN_TO_YEN;
+  const totalCommCost     = allBilled.reduce((s, c) => {
+    if (c.comm_cost_yen != null) return s + c.comm_cost_yen;
+    const min = c.actual_duration_minutes || 0;
+    return s + Math.round(min * TURN_COST_PER_MIN * (1 - P2P_SUCCESS_RATE));
+  }, 0);
+  const totalProfit       = totalPlatformYen - totalCommCost;
 
   return (
     <div className="space-y-6">
+      {/* 方針バナー */}
+      <div className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 text-xs space-y-1">
+        <p className="font-bold text-primary">📋 確定仕様: Admin15%絶対確保モデル</p>
+        <p>・価格: <strong className="text-foreground">150コイン / 15分</strong>（全ユニット統一）</p>
+        <p>・ライバー: <strong className="text-foreground">85%（¥127.5）</strong> / Admin: <strong className="text-primary">15%（¥22.5）必ずシステム控除</strong></p>
+        <p>・インフラコスト超過分はBasicプランMRRから補填（期待値: ¥6/ユニット → 純利益¥16.5/ユニット）</p>
+      </div>
+
       {/* サマリー */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card border border-border/50 rounded-xl p-4">
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-green-400" />通話中</p>
           <p className="text-2xl font-black text-green-400">{activeCalls.length}</p>
         </div>
-        <div className="bg-card border border-border/50 rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">通信実費合計</p>
-          <p className="text-2xl font-black text-orange-400">¥{totalCommCost.toFixed(0)}</p>
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+          <p className="text-xs text-muted-foreground">Admin収益合計(15%)</p>
+          <p className="text-2xl font-black text-primary">¥{totalPlatformYen.toFixed(0)}</p>
+          <p className="text-xs text-primary/60">{totalPlatformCoins}コイン</p>
         </div>
         <div className="bg-card border border-border/50 rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">運営収益(15%)</p>
-          <p className="text-2xl font-black text-primary">¥{totalPlatformRev.toFixed(0)}</p>
+          <p className="text-xs text-muted-foreground">インフラコスト推定</p>
+          <p className="text-2xl font-black text-orange-400">¥{totalCommCost.toFixed(0)}</p>
+          <p className="text-xs text-muted-foreground">P2P{Math.round(P2P_SUCCESS_RATE*100)}%成功想定</p>
         </div>
         <div className={`rounded-xl p-4 border ${totalProfit >= 0 ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}>
           <p className="text-xs text-muted-foreground">運営純利益</p>
           <p className={`text-2xl font-black ${profitColor(totalProfit)}`}>
             {totalProfit >= 0 ? "+" : ""}¥{totalProfit.toFixed(0)}
           </p>
+          <p className="text-xs text-muted-foreground">流通: {totalCoins}コイン</p>
         </div>
       </div>
 
-      {/* コスト定義 */}
-      <div className="bg-secondary/40 border border-border/30 rounded-xl px-4 py-3 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-4 gap-2">
-        <p>📞 <strong className="text-foreground">最低料金</strong>: 500コイン/15分</p>
-        <p>📡 <strong className="text-foreground">Chime通信費</strong>: ¥{COMM_COST_PER_MIN}/分（双方向）</p>
-        <p>🎬 <strong className="text-foreground">録画費</strong>: ¥2/分</p>
+      {/* コスト定義メモ */}
+      <div className="bg-secondary/40 border border-border/30 rounded-xl px-4 py-3 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <p>💰 <strong className="text-foreground">Admin手数料</strong>: 15%（¥22.5/ユニット）</p>
+        <p>📡 <strong className="text-foreground">TURN実費(推定)</strong>: ¥{TURN_COST_PER_MIN}/分 × {Math.round((1-P2P_SUCCESS_RATE)*100)}%通話 = ¥6/ユニット</p>
         {autoDisconnected > 0 && (
           <p className="text-orange-400">⚠️ <strong>残高不足切断</strong>: {autoDisconnected}件</p>
         )}

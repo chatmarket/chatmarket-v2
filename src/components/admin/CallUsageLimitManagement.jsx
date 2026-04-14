@@ -73,8 +73,20 @@ export default function CallUsageLimitManagement() {
     0
   );
 
+  // Admin15%収益合計（コイン→円）
+  const adminRevenueYen = thisMonthCalls.reduce(
+    (sum, c) => sum + (c.platform_revenue_coins != null
+      ? c.platform_revenue_coins
+      : (c.coins_consumed || 0) - Math.floor((c.coins_consumed || 0) * CREATOR_RATE)
+    ),
+    0
+  );
+
+  // 補填必要額 = max(0, インフラコスト - Admin収益)
+  const subsidyNeeded = Math.max(0, effectiveInfraCost - adminRevenueYen);
+
   // 補填後の残MRR
-  const residualMRR = basicMRR - effectiveInfraCost;
+  const residualMRR = basicMRR - subsidyNeeded;
 
   // ヘビーユーザー（今月10回以上）
   const usageByUser = {};
@@ -111,15 +123,15 @@ export default function CallUsageLimitManagement() {
 
       {/* 方針バナー */}
       <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-xs space-y-1">
-        <p className="font-bold text-primary">📋 運営方針（確定）</p>
+        <p className="font-bold text-primary">📋 確定仕様: Admin15%絶対確保モデル</p>
         <p>・価格: 150エールコイン / 15分（全ユニット統一）</p>
-        <p>・ライバー還元: 85%（127.5円）／ 運営手数料: 0%</p>
-        <p>・通信方式: WebRTC P2P優先（NAT越え失敗時のみメディアサーバー）</p>
-        <p>・インフラ原価: BasicプランMRR（¥3,300×加入者）から補填</p>
+        <p>・ライバー還元: <strong className="text-foreground">85%（¥127.5）</strong> / Admin手数料: <strong className="text-primary">15%（¥22.5）システム側で必ず控除</strong></p>
+        <p>・通信方式: WebRTC P2P優先（NAT越え失敗時のみTURN: 約¥2/分 × 20% = 約¥6/ユニット）</p>
+        <p>・インフラ原価がAdmin収益（¥22.5）を上回る場合、超過分をBasicプランMRRから自動補填</p>
       </div>
 
       {/* 会計試算 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="bg-card border border-border/50 rounded-xl p-4 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="w-3.5 h-3.5" />Basic/CAプラン加入者</p>
           <p className="text-2xl font-black">{basicActiveCount}名</p>
@@ -135,7 +147,12 @@ export default function CallUsageLimitManagement() {
           <p className="text-2xl font-black text-orange-400">¥{effectiveInfraCost.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground">P2P成功率{Math.round(P2P_SUCCESS_RATE * 100)}%想定</p>
         </div>
-        <div className={`border rounded-xl p-4 space-y-1 ${residualMRR >= 0 ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}>
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-1">
+          <p className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="w-3.5 h-3.5 text-primary" />Admin収益(15%)</p>
+          <p className="text-2xl font-black text-primary">¥{adminRevenueYen.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">補填必要額: ¥{subsidyNeeded.toLocaleString()}</p>
+        </div>
+        <div className={`border rounded-xl p-4 space-y-1 col-span-1 sm:col-span-2 lg:col-span-1 ${residualMRR >= 0 ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}>
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="w-3.5 h-3.5" />補填後残MRR</p>
           <p className={`text-2xl font-black ${residualMRR >= 0 ? "text-green-400" : "text-red-400"}`}>
             ¥{residualMRR.toLocaleString()}
@@ -146,19 +163,23 @@ export default function CallUsageLimitManagement() {
 
       {/* P2Pインフラ説明 */}
       <div className="bg-secondary rounded-xl p-4 text-xs space-y-2">
-        <p className="font-bold text-foreground flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-primary" />インフラ構成（P2P最優先）</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+        <p className="font-bold text-foreground flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-primary" />収益構造 / インフラ構成（P2P最優先）</p>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-2">
+          <div className="bg-card rounded-lg p-3 border border-primary/30">
+            <p className="font-bold text-primary mb-1">① Admin 15% 絶対確保</p>
+            <p className="text-muted-foreground">150コイン × 15% = <strong className="text-primary">¥22.5</strong> をシステム側で必ず控除。手動調整不可。</p>
+          </div>
+          <div className="bg-card rounded-lg p-3 border border-blue-500/20">
+            <p className="font-bold text-blue-400 mb-1">② ライバー 85%</p>
+            <p className="text-muted-foreground">150コイン × 85% = <strong className="text-blue-400">¥127.5</strong> をCreatorEarningに記録。</p>
+          </div>
           <div className="bg-card rounded-lg p-3 border border-primary/20">
-            <p className="font-bold text-primary mb-1">① P2P（WebRTC）</p>
+            <p className="font-bold text-primary mb-1">③ P2P（WebRTC）</p>
             <p className="text-muted-foreground">端末間直接通信。サーバーコスト実質0円。約80%の通話で成功。</p>
           </div>
-          <div className="bg-card rounded-lg p-3 border border-yellow-500/20">
-            <p className="font-bold text-yellow-400 mb-1">② TURN fallback</p>
-            <p className="text-muted-foreground">NAT越え失敗時。Agora/SkyWayなど低コストMCU採用。約20円〜30円/15分。</p>
-          </div>
           <div className="bg-card rounded-lg p-3 border border-border">
-            <p className="font-bold mb-1">③ BasicプランMRRで補填</p>
-            <p className="text-muted-foreground">発生した通信費は月額3,300円×加入者のストック収益から差し引き。</p>
+            <p className="font-bold mb-1">④ MRRで超過補填</p>
+            <p className="text-muted-foreground">TURN費用がAdmin¥22.5を超えた場合のみ、BasicプランMRR（¥3,300×加入者）から補填。</p>
           </div>
         </div>
       </div>
