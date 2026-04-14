@@ -613,9 +613,7 @@ export default function VideoCallPage() {
             {/* ユニット表示 */}
             <div className="bg-black/70 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2 text-white/60 text-xs backdrop-blur">
               <span>第{currentUnit || 1}ユニット</span>
-              <span className="text-yellow-400 font-bold">
-                {currentUnit <= 1 ? "150コイン" : "500コイン"}/15分
-              </span>
+              <span className="text-primary font-bold">150コイン/15分</span>
             </div>
             {/* 次回課金カウントダウン */}
             {secondsUntilBilling !== null && (
@@ -624,7 +622,7 @@ export default function VideoCallPage() {
               }`}>
                 <Clock className="w-3.5 h-3.5" />
                 次回課金まで {Math.floor(secondsUntilBilling / 60)}:{String(secondsUntilBilling % 60).padStart(2, "0")}
-                <span className="ml-1 opacity-70">({currentUnit <= 0 ? 500 : 500}コイン)</span>
+                <span className="ml-1 opacity-70">(150コイン)</span>
               </div>
             )}
             {/* 12分時点のチャージ警告バナー */}
@@ -1045,12 +1043,13 @@ export default function VideoCallPage() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              次の15分分の通話料金（{currentUnit <= 1 ? 150 : 500}コイン）が不足しているため、通話を自動切断しました。
+              次の15分分の通話料金（150コイン）が不足しているため、通話を自動切断しました。
             </p>
             <div className="bg-secondary rounded-lg p-3 text-xs space-y-1 text-muted-foreground">
-              <p>📌 課金ルール（ステップアップ制）</p>
-              <p>・最初の15分: <span className="text-primary font-bold">150コイン</span>（特別価格）</p>
-              <p>・16分以降 / 15分毎: <span className="text-yellow-400 font-bold">500コイン</span></p>
+              <p>📌 課金ルール</p>
+              <p>・全ユニット統一: <span className="text-primary font-bold">150コイン / 15分</span></p>
+              <p>・ライバー還元: <span className="text-green-400 font-bold">85%（127.5円）</span></p>
+              <p>・運営手数料: <span className="text-muted-foreground">0%（この価格帯）</span></p>
             </div>
             <div className="bg-secondary rounded-lg p-3 text-xs text-muted-foreground">
               コインをチャージしてから再度通話をご利用ください。

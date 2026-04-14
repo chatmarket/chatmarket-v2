@@ -429,29 +429,26 @@ export default function VideoCallRequest() {
             </div>
           )}
 
-          {/* ステップアップ課金の料金表 */}
+          {/* 課金ルール */}
           <div className="bg-secondary rounded-lg p-3 text-xs space-y-2">
             <p className="font-semibold text-foreground flex items-center gap-1 mb-2">
-              <Coins className="w-3.5 h-3.5 text-yellow-400" /> 課金ルール（ステップアップ制）
+              <Coins className="w-3.5 h-3.5 text-yellow-400" /> 課金ルール（全ユニット統一）
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-2 text-center">
-                <p className="text-[10px] text-muted-foreground">最初の15分</p>
-                <p className="font-black text-lg text-primary">{FIRST_UNIT_COINS}コイン</p>
-                <p className="text-[9px] text-primary/70">お試し特別価格</p>
-              </div>
-              <div className="bg-secondary border border-border rounded-lg p-2 text-center">
-                <p className="text-[10px] text-muted-foreground">16分以降 / 15分毎</p>
-                <p className="font-black text-lg text-yellow-400">{NORMAL_COINS}コイン</p>
-                <p className="text-[9px] text-muted-foreground">通常価格</p>
-              </div>
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
+              <p className="text-[10px] text-muted-foreground">15分ごとに課金</p>
+              <p className="font-black text-2xl text-primary">150コイン</p>
+              <p className="text-[9px] text-primary/70">業界最安値・全ユニット統一価格</p>
             </div>
             <div className="flex justify-between text-muted-foreground pt-1 border-t border-border">
               <span>ライバー報酬（85%）</span>
-              <span>第1U: {Math.floor(FIRST_UNIT_COINS * 0.85)}コイン / 第2U以降: {Math.floor(NORMAL_COINS * 0.85)}コイン</span>
+              <span className="text-green-400 font-semibold">127コイン / 15分</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>運営手数料</span>
+              <span className="font-semibold">0%（この価格帯）</span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              ※ 通話開始時に150コインが即時引落。12分経過時点で次の500コインの残高確認を行います。残高不足の場合は15分で強制終了されます。
+              ※ 通話開始時に150コインが即時引落。12分経過時点で次の150コインの残高確認を行います。残高不足の場合は15分で強制終了されます。
             </p>
           </div>
         </div>

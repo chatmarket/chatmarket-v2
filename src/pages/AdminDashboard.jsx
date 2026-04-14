@@ -21,6 +21,7 @@ import LiveStreamCostMonitor from "../components/admin/LiveStreamCostMonitor";
 import VideoCallCostMonitor from "../components/admin/VideoCallCostMonitor";
 import CampaignChannelManagement from "../components/admin/CampaignChannelManagement";
 import DrameSettingsManagement from "../components/admin/DrameSettingsManagement";
+import CallUsageLimitManagement from "../components/admin/CallUsageLimitManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -161,14 +162,16 @@ export default function AdminDashboard() {
     .filter((p) => p.item_type === "livestream" && !excludedEmails.includes(p.created_by))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-  const totalCallRevenue = allCalls
-    .filter((c) => c.status === "ended" && (c.price || 0) > 0 && !excludedEmails.includes(c.caller_email) && !excludedEmails.includes(c.callee_email))
-    .reduce((sum, c) => sum + (c.price || 0), 0);
+  // コイン消費ベースの通話収益（確定仕様: 150コイン/15分、手数料0%）
+  const totalCallCoins = allCalls
+    .filter((c) => c.status === "ended" && (c.coins_consumed || 0) > 0 && !excludedEmails.includes(c.caller_email) && !excludedEmails.includes(c.callee_email))
+    .reduce((sum, c) => sum + (c.coins_consumed || 0), 0);
+  const totalCallRevenue = totalCallCoins; // コイン = 円
 
   const totalPlatformFee = 
     Math.floor(totalVideoRevenue * 0.15) +
     Math.floor(totalStreamRevenue * 0.15) +
-    Math.floor(totalCallRevenue * 0.30);
+    0; // 通話は手数料0%
 
   // エールコイン統計
   const totalYellCoinCharged = allYellCoinTransactions
@@ -402,6 +405,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="drama" className="gap-2">
             <Zap className="w-4 h-4" /> 演出設定
           </TabsTrigger>
+          <TabsTrigger value="call-limit" className="gap-2">
+            <Phone className="w-4 h-4" /> 通話制限管理
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -586,20 +592,20 @@ export default function AdminDashboard() {
             <div className="bg-card rounded-xl border border-border/50 p-5 space-y-4">
               <h3 className="font-bold flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-cyan-400" />
-                ビデオ通話
+                ビデオ通話（150円/15分・手数料0%）
               </h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">販売総額</span>
-                  <span className="font-semibold">¥{totalCallRevenue.toLocaleString()}</span>
+                  <span className="text-muted-foreground">流通コイン総額</span>
+                  <span className="font-semibold">{totalCallCoins.toLocaleString()}コイン</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">プラットフォーム手数料（30%）</span>
-                  <span className="font-semibold text-yellow-400">¥{Math.floor(totalCallRevenue * 0.30).toLocaleString()}</span>
+                  <span className="text-muted-foreground">プラットフォーム手数料</span>
+                  <span className="font-semibold text-muted-foreground">0%（BasicプランMRRで補填）</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">クリエイター配分（70%）</span>
-                  <span className="font-semibold text-green-400">¥{Math.floor(totalCallRevenue * 0.70).toLocaleString()}</span>
+                  <span className="text-muted-foreground">クリエイター配分（85%）</span>
+                  <span className="font-semibold text-green-400">{Math.floor(totalCallCoins * 0.85).toLocaleString()}コイン</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
                    終了通話: {allCalls.filter((c) => c.status === "ended" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(c.caller_email) && !ADMIN_EMAILS.includes(c.callee_email))).length}件
@@ -653,11 +659,11 @@ export default function AdminDashboard() {
                   <td className="text-right py-3 px-3 text-green-400">¥{Math.floor(totalStreamRevenue * 0.85).toLocaleString()}</td>
                 </tr>
                 <tr className="bg-secondary/50">
-                  <td className="py-3 px-3 font-bold">ビデオ通話</td>
-                  <td className="text-right py-3 px-3 font-bold">¥{totalCallRevenue.toLocaleString()}</td>
-                  <td className="text-right py-3 px-3 font-bold">30%</td>
-                  <td className="text-right py-3 px-3 font-bold text-yellow-400">¥{Math.floor(totalCallRevenue * 0.30).toLocaleString()}</td>
-                  <td className="text-right py-3 px-3 font-bold text-green-400">¥{Math.floor(totalCallRevenue * 0.70).toLocaleString()}</td>
+                  <td className="py-3 px-3 font-bold">ビデオ通話<span className="ml-1 text-[10px] text-primary">(手数料0%)</span></td>
+                  <td className="text-right py-3 px-3 font-bold">{totalCallCoins.toLocaleString()}コイン</td>
+                  <td className="text-right py-3 px-3 font-bold text-primary">0%</td>
+                  <td className="text-right py-3 px-3 font-bold text-muted-foreground">-</td>
+                  <td className="text-right py-3 px-3 font-bold text-green-400">{Math.floor(totalCallCoins * 0.85).toLocaleString()}コイン</td>
                 </tr>
               </tbody>
             </table>
@@ -783,6 +789,11 @@ export default function AdminDashboard() {
         {/* 演出設定タブ */}
         <TabsContent value="drama" className="space-y-6">
           <DrameSettingsManagement />
+        </TabsContent>
+
+        {/* 通話制限管理タブ */}
+        <TabsContent value="call-limit" className="space-y-6">
+          <CallUsageLimitManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
