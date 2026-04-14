@@ -56,6 +56,7 @@ import ChannelSchedule from './pages/ChannelSchedule';
 import MyTickets from './pages/MyTickets';
 import TicketShop from './pages/TicketShop';
 import TicketVerify from './pages/TicketVerify';
+import MillionaireChallenge from './pages/MillionaireChallenge';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -131,6 +132,7 @@ const AuthenticatedApp = () => {
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/ticket-shop/:channelId" element={<TicketShop />} />
         <Route path="/ticket-verify" element={<TicketVerify />} />
+        <Route path="/millionaire-challenge" element={<MillionaireChallenge />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
