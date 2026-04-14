@@ -30,6 +30,18 @@ export default function LiveView() {
   const [wallet, setWallet] = useState(null);
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
 
+  // id が未定義の場合は loader を表示
+  if (!id) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">配信を読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then((u) => {
