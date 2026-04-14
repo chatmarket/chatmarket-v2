@@ -682,6 +682,45 @@ export default function VideoCallPage() {
           </div>
         )}
 
+        {/* Call Progress HUD (経過時間 / 残り時間) */}
+        {callStartTime && call?.duration_minutes && (
+          <div className="absolute bottom-24 left-4 right-4 z-10 bg-black/70 border border-cyan-500/40 rounded-xl p-4 backdrop-blur">
+            <div className="space-y-2">
+              {/* Progress bar */}
+              <div className="w-full bg-black/50 rounded-full h-2 border border-cyan-500/20">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${Math.min(100, (remainingSeconds === null ? 0 : (call.duration_minutes * 60 - remainingSeconds) / (call.duration_minutes * 60)) * 100)}%` }}
+                  transition={{ duration: 1 }}
+                  style={{
+                    boxShadow: "0 0 10px rgba(0,229,255,0.5)",
+                  }}
+                />
+              </div>
+              
+              {/* Time display */}
+              <div className="flex justify-between items-center text-xs">
+                <div>
+                  <p className="text-cyan-400 font-bold">
+                    {callStartTime ? `${Math.floor((Date.now() - callStartTime) / 1000 / 60)}:${String(Math.floor(((Date.now() - callStartTime) / 1000) % 60)).padStart(2, '0')}` : "0:00"}
+                  </p>
+                  <p className="text-cyan-300/60 text-[10px]">経過時間</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-white/40 text-[10px]">/ {call.duration_minutes}分</p>
+                </div>
+                <div>
+                  <p className={`font-bold ${remainingSeconds <= 60 ? "text-red-400" : "text-cyan-400"}`}>
+                    {remainingSeconds !== null ? `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}` : "-"}
+                  </p>
+                  <p className={`text-[10px] ${remainingSeconds <= 60 ? "text-red-300/60" : "text-cyan-300/60"}`}>残り時間</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ---- Neon Countdown Timer (30秒前から表示) ---- */}
         <AnimatePresence>
           {remainingSeconds !== null && remainingSeconds <= 30 && remainingSeconds > 0 && (
