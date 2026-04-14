@@ -356,9 +356,9 @@ export default function Upload() {
                 placeholder="100"
               />
               {vodPriceError ? (
-                <p className="text-destructive text-xs font-semibold">⚠️ 有料動画の最低価格は100コインです（ブランド基準）</p>
+                <p className="text-destructive text-xs font-semibold">⚠️ 有料動画の最低価格は100円です</p>
               ) : (
-                <p className="text-xs text-muted-foreground">最低100コイン〜自由設定。有料動画は最初の30秒が無料プレビューされます</p>
+                <p className="text-xs text-muted-foreground">最低100円〜自由設定。有料動画は最初の30秒が無料プレビューされます</p>
               )}
               {form.price >= VOD_MIN_PRICE && (
                 <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
