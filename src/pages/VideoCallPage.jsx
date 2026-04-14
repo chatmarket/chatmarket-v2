@@ -810,7 +810,7 @@ export default function VideoCallPage() {
 
         {/* Call Progress HUD (経過時間 / 残り時間) */}
          {callStartTime && effectiveDuration && (
-           <div className="absolute bottom-20 md:bottom-24 left-2 md:left-4 right-2 md:right-4 z-10 bg-black/70 border border-cyan-500/40 rounded-lg md:rounded-xl p-2 md:p-4 backdrop-blur">
+           <div className="absolute bottom-48 md:bottom-52 left-2 md:left-4 right-2 md:right-4 z-10 bg-black/70 border border-cyan-500/40 rounded-lg md:rounded-xl p-2 md:p-4 backdrop-blur">
              <div className="space-y-2">
                {/* Progress bar */}
                <div className="w-full bg-black/50 rounded-full h-2 border border-cyan-500/20">
