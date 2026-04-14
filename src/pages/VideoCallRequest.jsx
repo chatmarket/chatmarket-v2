@@ -31,8 +31,10 @@ function getRevenueShare(plan) {
   return 0.70;
 }
 
-// 最低コイン単価（15分あたり）
-const MIN_COINS_PER_15MIN = 500;
+// ステップアップ課金定数
+const FIRST_UNIT_COINS  = 150;  // 第1ユニット（0〜15分）特別価格
+const NORMAL_COINS      = 500;  // 第2ユニット以降（16分〜）通常価格
+const MIN_COINS_PER_15MIN = FIRST_UNIT_COINS; // 通話開始の最低残高
 
 // CALL&ANSERプラン: 1日の無料通話上限（分）
 const FREE_CALL_DAILY_LIMIT_MIN = 60;
@@ -427,36 +429,31 @@ export default function VideoCallRequest() {
             </div>
           )}
 
-          {/* 料金内訳 */}
-          {callPrice > 0 && (() => {
-            const coinPer15 = calcCoinPer15(durationMinutes, callPrice);
-            const isBelowMin = coinPer15 < MIN_COINS_PER_15MIN;
-            return (
-              <div className={`bg-secondary rounded-lg p-3 text-xs space-y-1.5 ${isBelowMin ? "border border-red-500/40" : ""}`}>
-                <p className="font-semibold text-muted-foreground flex items-center gap-1 mb-1.5">
-                  <Coins className="w-3.5 h-3.5 text-yellow-400" /> 料金内訳（エールコイン課金）
-                </p>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>15分あたりコイン消費</span>
-                  <span className={`font-bold ${isBelowMin ? "text-red-400" : "text-yellow-400"}`}>
-                    {coinPer15.toLocaleString()}コイン
-                    {isBelowMin && " ⚠️ 最低500コイン以上必要"}
-                  </span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>ライバー報酬（85%）</span>
-                  <span>{Math.floor(coinPer15 * 0.85).toLocaleString()}コイン/15分</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>運営手数料（15%）</span>
-                  <span>{Math.floor(coinPer15 * 0.15).toLocaleString()}コイン/15分</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
-                  ※ 通話開始時に最初の15分分が即時消費されます。15分ごとに自動延長課金されます。
-                </p>
+          {/* ステップアップ課金の料金表 */}
+          <div className="bg-secondary rounded-lg p-3 text-xs space-y-2">
+            <p className="font-semibold text-foreground flex items-center gap-1 mb-2">
+              <Coins className="w-3.5 h-3.5 text-yellow-400" /> 課金ルール（ステップアップ制）
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-2 text-center">
+                <p className="text-[10px] text-muted-foreground">最初の15分</p>
+                <p className="font-black text-lg text-primary">{FIRST_UNIT_COINS}コイン</p>
+                <p className="text-[9px] text-primary/70">お試し特別価格</p>
               </div>
-            );
-          })()}
+              <div className="bg-secondary border border-border rounded-lg p-2 text-center">
+                <p className="text-[10px] text-muted-foreground">16分以降 / 15分毎</p>
+                <p className="font-black text-lg text-yellow-400">{NORMAL_COINS}コイン</p>
+                <p className="text-[9px] text-muted-foreground">通常価格</p>
+              </div>
+            </div>
+            <div className="flex justify-between text-muted-foreground pt-1 border-t border-border">
+              <span>ライバー報酬（85%）</span>
+              <span>第1U: {Math.floor(FIRST_UNIT_COINS * 0.85)}コイン / 第2U以降: {Math.floor(NORMAL_COINS * 0.85)}コイン</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              ※ 通話開始時に150コインが即時引落。12分経過時点で次の500コインの残高確認を行います。残高不足の場合は15分で強制終了されます。
+            </p>
+          </div>
         </div>
         )}
 
