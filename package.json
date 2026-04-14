@@ -47,6 +47,7 @@
     "@stripe/react-stripe-js": "^3.0.0",
     "@stripe/stripe-js": "^5.2.0",
     "@tanstack/react-query": "^5.84.1",
+    "agora-rtc-sdk-ng": "^4.24.3",
     "amazon-chime-sdk-js": "^3.30.0",
     "amazon-ivs-player": "^1.50.0",
     "amazon-ivs-web-broadcast": "^1.34.0",
