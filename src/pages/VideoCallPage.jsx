@@ -167,11 +167,12 @@ function getAvailableDurations(channel) {
 
 // ---- Main Component ----
 export default function VideoCallPage() {
-  const { callId } = useParams();
-  const navigate = useNavigate();
-  const localVideoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const agoraComponentRef = useRef(null);
+   const { callId } = useParams();
+   const navigate = useNavigate();
+   const localVideoRef = useRef(null);
+   const remoteVideoRef = useRef(null);
+   const [agoraToken, setAgoraToken] = useState(null);
+   const [agoraConnected, setAgoraConnected] = useState(false);
 
   const [user, setUser] = useState(null);
   const [micOn, setMicOn] = useState(true);
@@ -582,6 +583,29 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
+  // Agoraトークンをバックエンドから取得
+  const [agoraAppId, setAgoraAppId] = useState('');
+  useEffect(() => {
+    if (!call || !user) return;
+    const fetchToken = async () => {
+      try {
+        const res = await base44.functions.invoke('agoraTokenGenerator', {
+          channel_id: call.id,
+          user_id: String(user.id || '12345'),
+        });
+        if (res?.data?.token) {
+          setAgoraToken(res.data.token);
+        }
+        if (res?.data?.app_id) {
+          setAgoraAppId(res.data.app_id);
+        }
+      } catch (e) {
+        console.warn('[Agora] token fetch failed:', e);
+      }
+    };
+    fetchToken();
+  }, [call?.id, user?.email]);
+
   const addFloating = useCallback((emoji, type = "emoji") => {
     const id = Date.now() + Math.random();
     setFloatingItems((prev) => [...prev, { id, emoji, type }]);
@@ -704,76 +728,57 @@ export default function VideoCallPage() {
         </div>
       </div>
 
-      {/* Main video area - Picture-in-Picture Layout */}
-      <div className="flex-1 relative bg-black min-h-0 lg:flex-row">
-        {isBroadcaster ? (
-          /* 配信者: 自分の映像フルスクリーン + 視聴者をPiP（右下） */
-          <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
-            {selectedBg !== "none" && selectedBg !== "blur" && (
-              <img
-                src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
-                className="absolute inset-0 w-full h-full object-cover opacity-40"
-                alt=""
-              />
-            )}
-            {/* 自分の映像（フルスクリーン） */}
-            <div className="absolute inset-0 w-full h-full">
-              <video
-                ref={localVideoRef}
-                autoPlay muted playsInline
-                className="w-full h-full object-cover"
-                style={{ filter: currentFilter?.style || "" }}
-              />
-              {!camOn && (
-                <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
-                  <CameraOff className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
-                </div>
-              )}
-              {selectedBg === "blur" && (
-                <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
-              )}
-            </div>
-            {/* 視聴者の映像（PiP - 右下、画面内） */}
-            <div className="absolute bottom-20 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
-              <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
-            </div>
-          </div>
-        ) : (
-          /* 視聴者: 配信者の映像フルスクリーン + 自分をPiP（右下） */
-          <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
-            {selectedBg !== "none" && selectedBg !== "blur" && (
-              <img
-                src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
-                className="absolute inset-0 w-full h-full object-cover opacity-40"
-                alt=""
-              />
-            )}
-            {/* 配信者の映像（フルスクリーン） */}
-            <div className="absolute inset-0 w-full h-full">
-              <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
-            </div>
-            {/* 自分の映像（PiP - 右下） */}
-            <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
-              <video
-                ref={localVideoRef}
-                autoPlay muted playsInline
-                className="w-full h-full object-cover"
-                style={{ filter: currentFilter?.style || "" }}
-              />
-              {!camOn && (
-                <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
-                  <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
-                </div>
-              )}
-              {selectedBg === "blur" && (
-                <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
-              )}
-              <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-                <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
-              </div>
-            </div>
-          </div>
+      {/* Main video area */}
+      <div className="flex-1 relative bg-black min-h-0">
+        {/* Agora接続エンジン（UI無し） - call active + token取得済み時のみ */}
+        {call?.status === "active" && agoraToken && agoraAppId && user && (
+          <AgoraVideoCall
+            appId={agoraAppId}
+            channelId={call.id}
+            userId={String(user.id || '12345')}
+            token={agoraToken}
+            isPublisher={true}
+            remoteVideoRef={remoteVideoRef}
+            localVideoRef={localVideoRef}
+            micEnabled={micOn}
+            camEnabled={camOn}
+            onCallActive={() => setAgoraConnected(true)}
+          />
         )}
+
+        {/* 相手映像（フルスクリーン） - AgoraがここにRemoteTrackをplay()する */}
+        <div className="absolute inset-0 w-full h-full bg-black">
+          <div ref={remoteVideoRef} className="w-full h-full" />
+          {!agoraConnected && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-white/40 text-sm">
+                {call?.status === "active" ? "相手の映像を待っています..." : "通話開始をお待ちください"}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* 背景 */}
+        {selectedBg !== "none" && selectedBg !== "blur" && (
+          <img
+            src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
+            className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+            alt=""
+          />
+        )}
+
+        {/* 自分の映像（PiP右下） - AgoraがここにLocalTrackをplay()する */}
+        <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black/80 z-10">
+          <div ref={localVideoRef} className="w-full h-full" style={{ filter: currentFilter?.style || "" }} />
+          {!camOn && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+              <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+            </div>
+          )}
+          <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
+            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
+          </div>
+        </div>
       {/* NG Word Detection indicator */}
         {isListening && (
           <div className="absolute top-2 md:top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 border border-green-500/40 rounded-full px-2 md:px-3 py-0.5 md:py-1 flex items-center gap-1 text-green-400 text-[10px] md:text-xs backdrop-blur">

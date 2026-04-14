@@ -21,9 +21,9 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { channel_id, user_id, role } = body;
+    const { channel_id, user_id, role = 'publisher' } = body;
 
-    if (!channel_id || !user_id || !role) {
+    if (!channel_id || !user_id) {
       return Response.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
