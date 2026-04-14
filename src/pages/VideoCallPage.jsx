@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import MessageModal from "../components/chat/MessageModal";
 import CallChatPanel from "../components/call/CallChatPanel";
+import AdaptiveBitrateManager from "../components/call/AdaptiveBitrateManager";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -157,6 +158,7 @@ export default function VideoCallPage() {
   // Quality
   const [audioQuality, setAudioQuality] = useState("medium");
   const [videoQuality, setVideoQuality] = useState("720p");
+  const [abrEnabled, setAbrEnabled] = useState(true); // ABR（アダプティブビットレート）有効フラグ
 
   // Floating items
   const [floatingItems, setFloatingItems] = useState([]);
@@ -542,6 +544,18 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* ABR Manager */}
+      <AdaptiveBitrateManager
+        enabled={abrEnabled && call?.status === "active"}
+        currentQuality={videoQuality}
+        onQualityChange={(newQuality) => {
+          setVideoQuality(newQuality);
+          setAbrEnabled(false); // 自動切り替え後、一時的に無効化して手動操作を優先
+          setTimeout(() => setAbrEnabled(true), 5000); // 5秒後に再有効化
+        }}
+        measureInterval={3000}
+      />
+
       {/* Main container: Video + Chat */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Video call section */}
@@ -946,19 +960,31 @@ export default function VideoCallPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-white/60 mb-1 block">📹 映像品質</label>
-                      <div className="flex flex-wrap gap-2">
-                        {VIDEO_QUALITY.map((q) => (
-                          <button
-                            key={q.id}
-                            onClick={() => { setVideoQuality(q.id); toast.success(`映像品質を「${q.label}」に変更しました`); }}
-                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${videoQuality === q.id ? "bg-primary text-primary-foreground border-primary" : "bg-white/5 text-white/70 border-white/10 hover:border-primary/40"}`}
-                          >
-                            {q.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                       <div className="flex items-center justify-between mb-2">
+                         <label className="text-xs text-white/60">📹 映像品質</label>
+                         <label className="flex items-center gap-1.5 text-[10px] text-white/40 cursor-pointer">
+                           <input
+                             type="checkbox"
+                             checked={abrEnabled}
+                             onChange={(e) => setAbrEnabled(e.target.checked)}
+                             className="w-3 h-3 rounded"
+                           />
+                           自動最適化
+                         </label>
+                       </div>
+                       <div className="flex flex-wrap gap-2">
+                         {VIDEO_QUALITY.map((q) => (
+                           <button
+                             key={q.id}
+                             disabled={abrEnabled}
+                             onClick={() => { setVideoQuality(q.id); setAbrEnabled(false); toast.success(`映像品質を「${q.label}」に手動変更しました`); }}
+                             className={`text-xs px-3 py-1.5 rounded-full border transition-all disabled:opacity-50 ${videoQuality === q.id ? "bg-primary text-primary-foreground border-primary" : "bg-white/5 text-white/70 border-white/10 hover:border-primary/40"}`}
+                           >
+                             {q.label}
+                           </button>
+                         ))}
+                       </div>
+                     </div>
                   </div>
                 )}
               </div>
