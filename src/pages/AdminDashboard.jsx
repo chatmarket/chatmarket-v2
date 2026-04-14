@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -20,6 +20,7 @@ import WithdrawalManagement from "../components/admin/WithdrawalManagement";
 import LiveStreamCostMonitor from "../components/admin/LiveStreamCostMonitor";
 import VideoCallCostMonitor from "../components/admin/VideoCallCostMonitor";
 import CampaignChannelManagement from "../components/admin/CampaignChannelManagement";
+import DrameSettingsManagement from "../components/admin/DrameSettingsManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -398,6 +399,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="campaign" className="gap-2">
             <Tag className="w-4 h-4" /> キャンペーン管理
           </TabsTrigger>
+          <TabsTrigger value="drama" className="gap-2">
+            <Zap className="w-4 h-4" /> 演出設定
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -774,6 +778,11 @@ export default function AdminDashboard() {
         {/* キャンペーン管理タブ */}
         <TabsContent value="campaign" className="space-y-6">
           <CampaignChannelManagement />
+        </TabsContent>
+
+        {/* 演出設定タブ */}
+        <TabsContent value="drama" className="space-y-6">
+          <DrameSettingsManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}

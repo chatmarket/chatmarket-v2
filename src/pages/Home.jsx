@@ -13,6 +13,9 @@ import CreatorRanking from "../components/home/CreatorRanking";
 import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
 import ServerLimitBanner from "../components/home/ServerLimitBanner";
+import HeroSlot from "../components/home/HeroSlot";
+import GiantKillingBanner from "../components/home/GiantKillingBanner";
+import MillionaireSupporters from "../components/home/MillionaireSupporters";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -62,6 +65,12 @@ export default function Home() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 md:px-4 lg:px-8 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-12 lg:space-y-14 overflow-x-hidden">
+
+      {/* ジャイアント・キリング速報バナー（グローバル固定） */}
+      <GiantKillingBanner />
+
+      {/* ヒーロースロット（1位ライバー常駐枠） */}
+      <HeroSlot />
 
       {/* Hero */}
       <section className="relative overflow-hidden rounded-xl border border-border/40 text-center" style={{ background: "linear-gradient(135deg,#0a0a0f 0%,#12050a 50%,#050a12 100%)" }}>
@@ -265,6 +274,9 @@ export default function Home() {
 
       {/* クリエイターランキング */}
       <CreatorRanking />
+
+      {/* ミリオネア・サポーター */}
+      <MillionaireSupporters />
 
       {/* 空の状態 */}
       {isEmpty && (

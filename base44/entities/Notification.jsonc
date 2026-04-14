@@ -1,0 +1,71 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u901a\u77e5\u5148\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb\uff08broadcast=\u5168\u54e1\uff09"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "new_video",
+        "giant_killing",
+        "millionaire_achieved",
+        "top_supporter"
+      ],
+      "description": "\u901a\u77e5\u7a2e\u5225"
+    },
+    "title": {
+      "type": "string",
+      "description": "\u901a\u77e5\u30bf\u30a4\u30c8\u30eb"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u901a\u77e5\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "link": {
+      "type": "string",
+      "description": "\u30ea\u30f3\u30afURL\uff08\u914d\u4fe1\u30eb\u30fc\u30e0\u306a\u3069\uff09"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u65e2\u8aad\u30d5\u30e9\u30b0"
+    },
+    "is_broadcast": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u5168\u30e6\u30fc\u30b6\u30fc\u5411\u3051\u30d6\u30ed\u30fc\u30c9\u30ad\u30e3\u30b9\u30c8\u901a\u77e5"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u95a2\u9023\u30c1\u30e3\u30f3\u30cd\u30eb\u540d\uff08\u30ad\u30e3\u30c3\u30b7\u30e5\uff09"
+    },
+    "video_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u52d5\u753bID"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\u30b5\u30e0\u30cd\u30a4\u30ebURL"
+    },
+    "rank_before": {
+      "type": "number",
+      "description": "\u30b8\u30e3\u30a4\u30a2\u30f3\u30c8\u30fb\u30ad\u30ea\u30f3\u30b0\u524d\u306e\u9806\u4f4d"
+    },
+    "rank_after": {
+      "type": "number",
+      "description": "\u30b8\u30e3\u30a4\u30a2\u30f3\u30c8\u30fb\u30ad\u30ea\u30f3\u30b0\u5f8c\u306e\u9806\u4f4d"
+    }
+  },
+  "required": [
+    "type",
+    "title",
+    "message"
+  ]
+}
