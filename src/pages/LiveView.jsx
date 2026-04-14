@@ -6,6 +6,8 @@ import ChatPanel from "../components/chat/ChatPanel.jsx";
 import PaywallModal from "../components/video/PaywallModal";
 import TipOverlay from "../components/live/TipOverlay";
 import TipPanel from "../components/live/TipPanel";
+import GiftOverlay from "../components/live/GiftOverlay";
+import GiftPanel from "../components/live/GiftPanel";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
@@ -23,7 +25,9 @@ export default function LiveView() {
   const [previewSeconds, setPreviewSeconds] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const [activeTips, setActiveTips] = useState([]);
+  const [activeGifts, setActiveGifts] = useState([]);
   const [wallet, setWallet] = useState(null);
+  const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -34,19 +38,32 @@ export default function LiveView() {
     });
   }, []);
 
-  // Subscribe to new SuperChats for live overlay
+  // SuperChat & ギフト リアルタイム購読
   useEffect(() => {
     const unsub = base44.entities.SuperChat.subscribe((event) => {
-      if (event.type === "create" && event.data?.livestream_id === id) {
-        const tip = { ...event.data, id: event.id };
-        setActiveTips((prev) => [...prev.slice(-4), tip]);
-        setTimeout(() => {
-          setActiveTips((prev) => prev.filter((t) => t.id !== event.id));
-        }, 5000);
+      if (event.type !== "create" || event.data?.livestream_id !== id) return;
+      const item = { ...event.data, id: event.id };
+
+      if (item.gift_id) {
+        // ギフト
+        setActiveGifts((prev) => [...prev.slice(-4), item]);
+        setTimeout(() => setActiveGifts((prev) => prev.filter((g) => g.id !== event.id)), 5000);
+      } else {
+        // 通常スーパーチャット
+        setActiveTips((prev) => [...prev.slice(-4), item]);
+        setTimeout(() => setActiveTips((prev) => prev.filter((t) => t.id !== event.id)), 5000);
       }
     });
     return unsub;
   }, [id]);
+
+  // チャンネルオーナーメール取得
+  useEffect(() => {
+    if (!stream?.channel_id) return;
+    base44.entities.Channel.filter({ id: stream.channel_id }).then((r) => {
+      if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
+    });
+  }, [stream?.channel_id]);
 
   const { data: stream, isLoading } = useQuery({
     queryKey: ["livestream", id],
@@ -224,8 +241,13 @@ export default function LiveView() {
               </div>
             )}
 
-            {/* Tip overlay */}
+            {/* スーパーチャット オーバーレイ */}
             {!needsPayment && <TipOverlay tips={activeTips} />}
+
+            {/* ギフト オーバーレイ */}
+            {!needsPayment && (
+              <GiftOverlay gifts={activeGifts} viewerCount={stream?.viewer_count || 0} />
+            )}
 
             {/* Video controls */}
             {stream.status === "live" && !needsPayment && (
@@ -238,14 +260,24 @@ export default function LiveView() {
           {/* PPV事前チケット販売 */}
           <PpvPreSale stream={stream} user={user} />
 
-          {/* Tip Panel */}
+          {/* Tip & Gift パネル */}
           {!needsPayment && (
-            <TipPanel
-              streamId={id}
-              user={user}
-              wallet={wallet}
-              onTipSent={() => base44.entities.YellCoinWallet.filter({ user_email: user?.email }).then((r) => setWallet(r[0] || null))}
-            />
+            <div className="space-y-2">
+              <GiftPanel
+                streamId={id}
+                channelId={stream?.channel_id}
+                channelOwnerEmail={channelOwnerEmail}
+                user={user}
+                wallet={wallet}
+                onGiftSent={() => base44.entities.YellCoinWallet.filter({ user_email: user?.email }).then((r) => setWallet(r[0] || null))}
+              />
+              <TipPanel
+                streamId={id}
+                user={user}
+                wallet={wallet}
+                onTipSent={() => base44.entities.YellCoinWallet.filter({ user_email: user?.email }).then((r) => setWallet(r[0] || null))}
+              />
+            </div>
           )}
 
           {/* Stream info */}
