@@ -52,18 +52,24 @@ export default function CallChatPanel({ call, user }) {
     if (!input.trim() || !call || !user || !threadId) return;
     setSending(true);
     const toEmail = user.email === call.caller_email ? call.callee_email : call.caller_email;
-    await base44.entities.DirectChat.create({
-      from_email: user.email,
-      from_name: user.full_name || user.email,
-      to_channel_owner_email: toEmail,
-      to_channel_id: call.callee_channel_id || "",
-      to_channel_name: call.callee_name || "",
-      content: input.trim(),
-      yell_coin: 0,
-      thread_id: threadId,
-    });
-    setInput("");
-    setSending(false);
+    try {
+      await base44.entities.DirectChat.create({
+        from_email: user.email,
+        from_name: user.full_name || user.email,
+        to_channel_owner_email: toEmail,
+        to_channel_id: call.callee_channel_id || "",
+        to_channel_name: call.callee_name || "",
+        content: input.trim(),
+        yell_coin: 0,
+        thread_id: threadId,
+      });
+      console.log(`✅ Message sent from ${user.email} to ${toEmail} in thread ${threadId}`);
+      setInput("");
+    } catch (err) {
+      console.error(`❌ Failed to send message: ${err.message}`);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
