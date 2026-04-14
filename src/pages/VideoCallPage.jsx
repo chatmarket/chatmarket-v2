@@ -1279,14 +1279,14 @@ export default function VideoCallPage() {
 
               {/* Chat section - Below video */}
               {user && (
-                <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
-                  {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-                </div>
+               <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
+                 {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
+               </div>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+              </div>
+              </div>
+              </div>
+              </div>
 
       {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
@@ -1389,27 +1389,27 @@ export default function VideoCallPage() {
             <Button variant="outline" className="w-full" onClick={() => { setShowInsufficientModal(false); navigate(-1); }}>
               閉じる
             </Button>
-          </div>
-          </DialogContent>
-          </Dialog>
+            </div>
+            </DialogContent>
+            </Dialog>
 
-          {/* Extend paid success overlay */}
-          <AnimatePresence>
-          {extendPaid && (
-          <motion.div
+            {/* Extend paid success overlay */}
+            <AnimatePresence>
+            {extendPaid && (
+            <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 pointer-events-none"
-          >
+            >
             <div className="bg-card border border-primary/40 rounded-2xl p-8 flex flex-col items-center gap-3">
-              <CheckCircle2 className="w-12 h-12 text-primary" />
-              <p className="text-white font-bold text-lg">延長決済完了！</p>
-              <p className="text-muted-foreground text-sm">{extendMinutes}分延長されました</p>
+             <CheckCircle2 className="w-12 h-12 text-primary" />
+             <p className="text-white font-bold text-lg">延長決済完了！</p>
+             <p className="text-muted-foreground text-sm">{extendMinutes}分延長されました</p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+            )}
+            </AnimatePresence>
 
       {/* Yell Modal */}
       <Dialog open={showYellModal} onOpenChange={setShowYellModal}>
