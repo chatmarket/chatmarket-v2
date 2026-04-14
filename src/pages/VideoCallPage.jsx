@@ -1142,9 +1142,10 @@ export default function VideoCallPage() {
       </div>
 
       {/* Bottom controls */}
+      </div>
       <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20">
-        {/* Feature row */}
-        <div className="flex items-center justify-center gap-2 mb-4">
+      {/* Feature row */}
+      <div className="flex items-center justify-center gap-2 mb-4">
           {[
             { key: "emoji", icon: Smile, label: "絵文字" },
             { key: "throw", icon: Sparkles, label: "投げ" },
@@ -1284,11 +1285,13 @@ export default function VideoCallPage() {
               )}
               </div>
               </div>
+              </div>
+              </div>
 
               {/* ---- Extension Modal ---- */}
               <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
                 <DialogContent className="bg-card border-border max-w-sm">
-          <DialogHeader>
+                  <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-primary" /> 通話を延長する
             </DialogTitle>
@@ -1353,12 +1356,12 @@ export default function VideoCallPage() {
               </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+          </Dialog>
 
-      {/* 残高不足自動切断モーダル */}
-      <Dialog open={showInsufficientModal} onOpenChange={() => {}}>
-        <DialogContent className="bg-card border-border max-w-sm">
+          {/* 残高不足自動切断モーダル */}
+          <Dialog open={showInsufficientModal} onOpenChange={() => {}}>
+          <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-orange-400">
               <AlertTriangle className="w-5 h-5" /> エールコイン残高不足
@@ -1387,12 +1390,12 @@ export default function VideoCallPage() {
               閉じる
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+          </Dialog>
 
-      {/* Extend paid success overlay */}
-      <AnimatePresence>
-        {extendPaid && (
+          {/* Extend paid success overlay */}
+          <AnimatePresence>
+          {extendPaid && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1405,12 +1408,12 @@ export default function VideoCallPage() {
               <p className="text-muted-foreground text-sm">{extendMinutes}分延長されました</p>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+          </AnimatePresence>
 
-      {/* Yell Modal */}
-      <Dialog open={showYellModal} onOpenChange={setShowYellModal}>
-        <DialogContent className="bg-card border-border max-w-sm">
+          {/* Yell Modal */}
+          <Dialog open={showYellModal} onOpenChange={setShowYellModal}>
+          <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Coins className="w-5 h-5 text-yellow-400" /> エールコインを送る
@@ -1432,12 +1435,12 @@ export default function VideoCallPage() {
               {yellSending ? "送信中..." : `¥${selectedYell?.toLocaleString() || 0} を送る`}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+          </Dialog>
 
-      {/* Block Modal */}
-      <Dialog open={showBlockModal} onOpenChange={setShowBlockModal}>
-        <DialogContent className="bg-card border-border max-w-sm">
+          {/* Block Modal */}
+          <Dialog open={showBlockModal} onOpenChange={setShowBlockModal}>
+          <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-orange-400">
               <Shield className="w-5 h-5" /> ブロックしますか？
@@ -1448,22 +1451,22 @@ export default function VideoCallPage() {
             <Button variant="outline" className="flex-1" onClick={() => setShowBlockModal(false)}>キャンセル</Button>
             <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white" onClick={handleBlock}>ブロック</Button>
           </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+          </Dialog>
 
-      {/* Message Modal */}
-      {showMessageModal && call && user && (
-        <MessageModal
+          {/* Message Modal */}
+          {showMessageModal && call && user && (
+          <MessageModal
           channel={{ id: call.callee_channel_id, name: call.callee_name, owner_email: call.callee_email }}
           video={null}
           user={user}
           onClose={() => setShowMessageModal(false)}
-        />
-      )}
+          />
+          )}
 
-      {/* Report Modal */}
-      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-        <DialogContent className="bg-card border-border max-w-sm">
+          {/* Report Modal */}
+          <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+          <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-400">
               <AlertTriangle className="w-5 h-5" /> 通報する
@@ -1483,13 +1486,12 @@ export default function VideoCallPage() {
               </SelectContent>
             </Select>
             <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setShowReportModal(false)}>キャンセル</Button>
-                <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleReport} disabled={!reportReason}>通報する</Button>
-              </div>
+              <Button variant="outline" className="flex-1" onClick={() => setShowReportModal(false)}>キャンセル</Button>
+              <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleReport} disabled={!reportReason}>通報する</Button>
+            </div>
             </div>
             </DialogContent>
             </Dialog>
-            </div>
             </div>
             );
             }
