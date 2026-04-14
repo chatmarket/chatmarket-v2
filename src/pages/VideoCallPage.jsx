@@ -1470,7 +1470,8 @@ export default function VideoCallPage() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+        </Dialog>
+        </div>
+        </div>
+        );
+        }
