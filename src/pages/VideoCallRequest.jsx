@@ -353,29 +353,44 @@ export default function VideoCallRequest() {
               </button>
             </div>
 
-            {/* 無料枠: スロット選択 */}
+            {/* 無料枠: スロット数選択 */}
             {useFreeSlot && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">通話時間を選択（10分×最大{Math.min(freeSlotsRemaining, FREE_CALL_MAX_SLOTS)}スロット）</p>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {freeSlotOptions.map((min) => (
-                    <button
-                      key={min}
-                      type="button"
-                      onClick={() => setFreeSlotDuration(min)}
-                      className={`flex flex-col items-center gap-0.5 p-2 rounded-lg border-2 transition-all ${
-                        freeSlotDuration === min
-                          ? "border-cyan-400 bg-cyan-500/20"
-                          : "border-border bg-secondary hover:border-cyan-400/40"
-                      }`}
-                    >
-                      <span className={`font-bold text-xs ${freeSlotDuration === min ? "text-cyan-400" : "text-foreground"}`}>{min}分</span>
-                      <span className="text-[9px] text-cyan-400">無料</span>
-                    </button>
-                  ))}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">使用スロット数を選択（1スロット = 10分）</p>
+                  <p className="text-xs text-cyan-400 font-semibold">残 {freeSlotsRemaining}スロット（{freeMinutesRemaining}分）</p>
                 </div>
-                {freeSlotsRemaining === 0 && (
-                  <p className="text-xs text-red-400 font-semibold">本日の無料通話枠を使い切りました（60分/日）。明日リセットされます。</p>
+                {freeSlotsRemaining === 0 ? (
+                  <p className="text-xs text-red-400 font-semibold text-center py-2">本日の無料通話枠を使い切りました（60分/日）。明日リセットされます。</p>
+                ) : (
+                  <div className="grid grid-cols-6 gap-2">
+                    {Array.from({ length: freeSlotsRemaining }, (_, i) => i + 1).map((slots) => {
+                      const min = slots * FREE_CALL_SLOT_MIN;
+                      const selected = freeSlotDuration === min;
+                      return (
+                        <button
+                          key={slots}
+                          type="button"
+                          onClick={() => setFreeSlotDuration(min)}
+                          className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${
+                            selected
+                              ? "border-cyan-400 bg-cyan-500/20"
+                              : "border-border bg-secondary hover:border-cyan-400/40"
+                          }`}
+                        >
+                          <span className={`font-black text-base leading-none ${selected ? "text-cyan-400" : "text-foreground"}`}>{slots}</span>
+                          <span className={`text-[10px] font-semibold ${selected ? "text-cyan-300" : "text-muted-foreground"}`}>{min}分</span>
+                          <span className="text-[9px] text-cyan-400/70">無料</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {freeSlotDuration > 0 && freeSlotsRemaining > 0 && (
+                  <div className="bg-cyan-500/10 rounded-lg px-3 py-2 text-xs text-cyan-300 flex items-center justify-between">
+                    <span>選択中: <span className="font-bold text-cyan-400">{freeSlotDuration / FREE_CALL_SLOT_MIN}スロット / {freeSlotDuration}分</span></span>
+                    <span>使用後の残枠: {freeMinutesRemaining - freeSlotDuration}分</span>
+                  </div>
                 )}
               </div>
             )}
