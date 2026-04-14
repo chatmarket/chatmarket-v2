@@ -1,8 +1,8 @@
-// Daily 1-hour usage limit check for streams, calls, and uploads
+// Daily 2-hour usage limit check for streams, calls, and uploads
 // Covers: video uploads, live streams, video calls
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const DAILY_LIMIT_SECONDS = 3600; // 1 hour
+const DAILY_LIMIT_SECONDS = 7200; // 2 hours = 120 minutes
 
 Deno.serve(async (req) => {
   try {
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     // Sum today's video upload durations
     const userVideos = await base44.entities.Video.filter({ created_by: user.email }, '-created_date', 100);
     const todayVideos = userVideos.filter(v => v.created_date >= todayStart);
-    const uploadedSeconds = todayVideos.reduce((sum, v) => sum + (v.duration || 0), 0);
+    const uploadedSeconds = todayVideos.reduce((sum, v) => sum + (parseInt(v.duration) || 0), 0);
 
     // Sum today's live streams
     const userStreams = await base44.entities.LiveStream.filter({ channel_id: '' }, '-created_date', 50)
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       return Response.json({
         allowed: false,
         reason: 'daily_limit',
-        message: `本日の利用制限に達しています。残り利用可能時間: ${Math.floor(remaining / 60)}分`,
+        message: `本日のアップロード制限に達しています。残り利用可能時間: ${Math.floor(remaining / 60)}分 / 制限: 120分`,
         remaining_seconds: remaining,
         total_used_seconds: totalUsed,
       });

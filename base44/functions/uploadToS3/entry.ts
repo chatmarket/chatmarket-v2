@@ -36,15 +36,20 @@ Deno.serve(async (req) => {
     const { fileName, fileType, duration_seconds } = await req.json();
     if (!fileName || !fileType) return Response.json({ error: 'Missing fileName or fileType' }, { status: 400 });
 
-    // Inline daily 2-hour usage limit check
+    // Inline daily 2-hour usage limit check (7200 seconds = 120 minutes)
+    const DAILY_LIMIT_SECONDS = 7200;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayStartISO = todayStart.toISOString();
     const userVideos = await base44.entities.Video.filter({ created_by: user.email }, '-created_date', 100);
     const todayVideos = userVideos.filter(v => v.created_date >= todayStartISO);
-    const usedSeconds = todayVideos.reduce((sum, v) => sum + (v.duration || 0), 0);
-    const remaining = Math.max(0, 3600 - usedSeconds);
-    if ((duration_seconds || 0) > remaining) {
+    const usedSeconds = todayVideos.reduce((sum, v) => {
+      const duration = parseInt(v.duration) || 0;
+      return sum + Math.max(0, duration);
+    }, 0);
+    const remaining = Math.max(0, DAILY_LIMIT_SECONDS - usedSeconds);
+    const durationToAdd = parseInt(duration_seconds) || 0;
+    if (durationToAdd > remaining) {
       return Response.json({ error: `本日の利用制限に達しています。残り利用可能時間: ${Math.floor(remaining / 60)}分` }, { status: 429 });
     }
 
@@ -53,6 +58,10 @@ Deno.serve(async (req) => {
     const region = Deno.env.get('AWS_REGION') || 'ap-northeast-1';
     const bucket = Deno.env.get('S3_BUCKET_VOD');
     const cloudfrontDomain = Deno.env.get('CLOUDFRONT_DOMAIN');
+
+    if (!accessKeyId || !secretKey || !bucket || !cloudfrontDomain) {
+      return Response.json({ error: 'Missing AWS configuration' }, { status: 500 });
+    }
 
     const now = new Date();
     const dateStamp = now.toISOString().slice(0, 10).replace(/-/g, '');

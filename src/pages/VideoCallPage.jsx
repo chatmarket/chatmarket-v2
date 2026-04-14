@@ -1259,14 +1259,14 @@ export default function VideoCallPage() {
           )}
           </div>
 
+          </div>
+
           {/* Chat section - Below video */}
           {user && (
-          <div className="w-full h-48 lg:h-auto lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 flex-shrink-0 flex-col order-3 lg:order-2 overflow-y-auto" style={{ background: "#050505" }}>
-          {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-          </div>
+            <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
+              {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
+            </div>
           )}
-          </div>
-          </div>
           </div>
 
           {/* ---- Extension Modal ---- */}
