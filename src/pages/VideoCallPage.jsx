@@ -1052,18 +1052,18 @@ export default function VideoCallPage() {
 
               <button
                 onClick={() => setShowYellModal(true)}
-                className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+                className="flex items-center gap-1 md:gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-10 md:h-12 px-3 md:px-5 rounded-full font-bold text-xs md:text-sm transition-all"
               >
-                <Coins className="w-5 h-5" />
-                エール
+                <Coins className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">エール</span>
               </button>
 
               <button
                 onClick={handleStartWaiting}
-                className="flex items-center gap-2 bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
+                className="flex items-center gap-1 md:gap-2 bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 h-10 md:h-12 px-3 md:px-5 rounded-full font-bold text-xs md:text-sm transition-all"
               >
-                <Radio className="w-5 h-5" />
-                待機開始
+                <Radio className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">待機開始</span>
               </button>
 
               <motion.button
