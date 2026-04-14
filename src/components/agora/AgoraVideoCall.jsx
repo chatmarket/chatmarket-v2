@@ -148,6 +148,23 @@ export default function AgoraVideoCall({
     }
   };
 
+  // Agoraシグナリング送信（通知用）
+  const sendSignalMessage = async (message) => {
+    try {
+      if (agoraEngineRef.current) {
+        const rtmClient = agoraEngineRef.current._rtmClient;
+        if (!rtmClient) {
+          console.warn('RTM client not initialized for signaling');
+          return;
+        }
+        await rtmClient.sendChannelMessage(message);
+        console.log(`✓ Agora signal sent: ${message}`);
+      }
+    } catch (err) {
+      console.warn('Agora signaling error (non-critical):', err);
+    }
+  };
+
   // 通話終了
   const handleEndCall = async () => {
     try {

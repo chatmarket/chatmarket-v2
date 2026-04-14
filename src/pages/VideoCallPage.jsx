@@ -171,6 +171,7 @@ export default function VideoCallPage() {
   const navigate = useNavigate();
   const localVideoRef = useRef(null);
   const canvasRef = useRef(null);
+  const agoraComponentRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [micOn, setMicOn] = useState(true);
