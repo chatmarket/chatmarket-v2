@@ -140,6 +140,30 @@
     "chime_attendee_callee": {
       "type": "string",
       "description": "Chime Attendee ID (callee)"
+    },
+    "recording_url": {
+      "type": "string",
+      "description": "S3+CloudFront\u9332\u753b\u30d3\u30c7\u30aaURL"
+    },
+    "recording_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "\u9332\u753b\u51e6\u7406\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "recording_duration_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "\u9332\u753b\u30d5\u30a1\u30a4\u30eb\u306e\u5b9f\u969b\u306e\u9577\u3055\uff08\u79d2\uff09"
+    },
+    "recording_s3_key": {
+      "type": "string",
+      "description": "S3\u4fdd\u5b58\u6642\u306e\u30ad\u30fc\uff08\u30d1\u30b9\uff09"
     }
   },
   "required": [

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Phone, ArrowLeft, Clock, Coins, PhoneCall, PhoneOff, PhoneMissed } from "lucide-react";
+import { Phone, ArrowLeft, Clock, Coins, PhoneCall, PhoneOff, PhoneMissed, Play, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const STATUS_MAP = {
   ended: { label: "終了", icon: Phone, color: "text-green-400 bg-green-500/10" },
@@ -33,6 +35,7 @@ function getRevenueForCall(call, userEmail) {
 
 export default function CallHistory() {
   const [user, setUser] = useState(null);
+  const [selectedRecording, setSelectedRecording] = useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -114,15 +117,66 @@ export default function CallHistory() {
       ) : (
         <div className="space-y-2">
           {allCalls.map((call) => (
-            <CallHistoryItem key={call.id} call={call} userEmail={user.email} />
+            <CallHistoryItem 
+              key={call.id} 
+              call={call} 
+              userEmail={user.email}
+              onPlayRecording={setSelectedRecording}
+            />
           ))}
         </div>
+      )}
+
+      {/* Recording Player Modal */}
+      {selectedRecording && (
+        <Dialog open={!!selectedRecording} onOpenChange={() => setSelectedRecording(null)}>
+          <DialogContent className="bg-card border-border max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Play className="w-5 h-5 text-primary" /> 通話アーカイブ再生
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="bg-black rounded-xl overflow-hidden aspect-video">
+                <video
+                  src={selectedRecording.recording_url}
+                  controls
+                  autoPlay
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">相手</p>
+                  <p className="font-semibold">{selectedRecording.partner_name}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">通話日時</p>
+                  <p className="font-semibold">{format(new Date(selectedRecording.created_date), "yyyy/MM/dd HH:mm")}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">通話時間</p>
+                  <p className="font-semibold">{selectedRecording.actual_duration_minutes}分</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">録画長</p>
+                  <p className="font-semibold">{Math.round(selectedRecording.recording_duration_seconds / 60)}分</p>
+                </div>
+              </div>
+              <a href={selectedRecording.recording_url} download className="w-full">
+                <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
+                  <Download className="w-4 h-4" /> ダウンロード
+                </Button>
+              </a>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
 }
 
-function CallHistoryItem({ call, userEmail }) {
+function CallHistoryItem({ call, userEmail, onPlayRecording }) {
   const isCaller = call.caller_email === userEmail;
   const partnerName = isCaller
     ? call.callee_name || call.callee_email
@@ -132,6 +186,14 @@ function CallHistoryItem({ call, userEmail }) {
   const StatusIcon = statusInfo.icon;
 
   const revenue = getRevenueForCall(call, userEmail);
+  const hasRecording = call.status === "ended" && call.recording_url && call.recording_status === "completed";
+
+  const handlePlayRecording = () => {
+    onPlayRecording({
+      ...call,
+      partner_name: partnerName,
+    });
+  };
 
   return (
     <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
@@ -147,12 +209,17 @@ function CallHistoryItem({ call, userEmail }) {
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isCaller ? "bg-blue-500/10 text-blue-400" : "bg-green-500/10 text-green-400"}`}>
             {isCaller ? "発信" : "着信"}
           </span>
+          {hasRecording && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex items-center gap-1">
+              <Play className="w-2.5 h-2.5" /> 録画
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
           <span>{format(new Date(call.created_date), "yyyy/MM/dd HH:mm")}</span>
-          {call.duration_minutes > 0 && (
+          {call.actual_duration_minutes > 0 && (
             <span className="flex items-center gap-0.5">
-              <Clock className="w-3 h-3" /> {call.duration_minutes}分
+              <Clock className="w-3 h-3" /> {call.actual_duration_minutes}分
             </span>
           )}
           <span className={`text-[10px] font-semibold ${statusInfo.color.split(" ")[0]}`}>
@@ -178,6 +245,16 @@ function CallHistoryItem({ call, userEmail }) {
             )}
             {isCaller && (call.price || 0) > 0 && (
               <p className="text-sm font-bold text-red-400">-¥{(call.price || 0).toLocaleString()}</p>
+            )}
+            {hasRecording && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 h-8 text-xs"
+                onClick={handlePlayRecording}
+              >
+                <Play className="w-3 h-3" /> 再生
+              </Button>
             )}
           </>
         )}
