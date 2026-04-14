@@ -787,9 +787,7 @@ export default function VideoCallPage() {
             </div>
           </div>
         )}
-      </div>
-
-        {/* NG Word Detection indicator */}
+      {/* NG Word Detection indicator */}
         {isListening && (
           <div className="absolute top-2 md:top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 border border-green-500/40 rounded-full px-2 md:px-3 py-0.5 md:py-1 flex items-center gap-1 text-green-400 text-[10px] md:text-xs backdrop-blur">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
@@ -1276,9 +1274,9 @@ export default function VideoCallPage() {
 
           {/* Chat section - Below video */}
           {user && (
-            <div className="w-full h-48 lg:h-auto lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 flex-shrink-0 order-3 lg:order-2 overflow-y-auto" style={{ background: "#050505" }}>
-              {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-            </div>
+          <div className="w-full h-48 lg:h-auto lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 flex-shrink-0 flex-col order-3 lg:order-2 overflow-y-auto" style={{ background: "#050505" }}>
+          {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
+          </div>
           )}
           </div>
 
