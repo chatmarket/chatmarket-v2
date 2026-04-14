@@ -658,9 +658,9 @@ export default function VideoCallPage() {
       />
 
       {/* Main container: Video + Chat */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Video call section */}
-        <div className="flex-1 flex flex-col min-w-0">
+       <div className="flex-1 flex flex-col overflow-hidden">
+         {/* Video call section */}
+         <div className="flex-1 flex flex-col min-w-0 lg:flex-row">
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
@@ -702,9 +702,9 @@ export default function VideoCallPage() {
       </div>
 
       {/* Main video area - Picture-in-Picture Layout */}
-      <div className="flex-1 relative bg-black">
+      <div className="flex-1 relative bg-black min-h-0 lg:flex-row">
         {/* Remote video (full screen) */}
-        <div className="absolute inset-0 bg-black flex items-center justify-center">
+        <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
           {selectedBg !== "none" && selectedBg !== "blur" && (
             <img
               src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
@@ -719,26 +719,26 @@ export default function VideoCallPage() {
             <p className="text-white/80 font-semibold">{otherName}</p>
             <p className="text-white/40 text-xs animate-pulse">接続中...</p>
           </div>
-        </div>
 
-        {/* Local video (PiP - 右下) */}
-        <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-48 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
-          <video
-            ref={localVideoRef}
-            autoPlay muted playsInline
-            className="w-full h-full object-cover"
-            style={{ filter: currentFilter?.style || "" }}
-          />
-          {!camOn && (
-            <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
-              <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+          {/* Local video (PiP - ビデオ内部の右下) */}
+          <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
+            <video
+              ref={localVideoRef}
+              autoPlay muted playsInline
+              className="w-full h-full object-cover"
+              style={{ filter: currentFilter?.style || "" }}
+            />
+            {!camOn && (
+              <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
+                <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+              </div>
+            )}
+            {selectedBg === "blur" && (
+              <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
+            )}
+            <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
+              <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
             </div>
-          )}
-          {selectedBg === "blur" && (
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
-          )}
-          <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
           </div>
         </div>
 
@@ -1229,22 +1229,15 @@ export default function VideoCallPage() {
           </div>
           </div>
 
-          {/* Chat section - Collapsible */}
+          </div>
+
+          {/* Chat section - Below video */}
           {user && (
-            <details className="w-full lg:w-80 lg:border-l border-t lg:border-t-0 border-white/10 flex-shrink-0 group" style={{ background: "#050505" }}>
-              <summary className="bg-black/60 px-4 py-2 cursor-pointer hover:bg-black/80 transition-colors flex items-center justify-between text-white font-semibold text-sm list-none">
-                <span className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4" />
-                  チャット
-                </span>
-                <span className="transform group-open:rotate-180 transition-transform text-xs">▼</span>
-              </summary>
-              <div className="max-h-80 lg:max-h-96 overflow-y-auto">
-                {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-32 text-white/30 text-xs">通話開始後にチャット利用可</div>}
-              </div>
-            </details>
-          )}
+            <div className="w-full h-48 lg:h-auto lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 flex-shrink-0 order-3 lg:order-2 overflow-y-auto" style={{ background: "#050505" }}>
+              {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
             </div>
+          )}
+          </div>
 
           {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
