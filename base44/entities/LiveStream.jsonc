@@ -96,6 +96,46 @@
     "webrtc_ice_candidates_viewer": {
       "type": "string",
       "description": "\u8996\u8074\u8005\u306eICE candidates (JSON\u914d\u5217\u6587\u5b57\u5217)"
+    },
+    "live_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u914d\u4fe1\u958b\u59cb\u65e5\u6642\uff08\u30b3\u30b9\u30c8\u8a08\u7b97\u8d77\u70b9\uff09"
+    },
+    "live_ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u914d\u4fe1\u7d42\u4e86\u65e5\u6642"
+    },
+    "cost_input_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u5834\u6240\u4ee3\uff08\u30d3\u30c7\u30aa\u5165\u529b\u8cbb\uff09\u7d2f\u8a08\uff08\u5186\uff09: 30\u5186/\u6642\u9593"
+    },
+    "cost_output_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u9001\u6599\uff08\u30d3\u30c7\u30aa\u51fa\u529b\u8cbb\uff09\u7d2f\u8a08\uff08\u5186\uff09: 5\u5186/\u8996\u8074\u8005/\u6642\u9593"
+    },
+    "total_viewer_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "\u7d2f\u8a08\u8996\u8074\u8005\u5206\uff08\u8996\u8074\u8005\u6570\u00d7\u5206\uff09: \u51fa\u529b\u30b3\u30b9\u30c8\u8a08\u7b97\u7528"
+    },
+    "revenue_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3053\u306e\u914d\u4fe1\u3067\u6d88\u8cbb\u3055\u308c\u305f\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u5408\u8a08"
+    },
+    "zero_viewer_since": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u8996\u8074\u80050\u4eba\u306b\u306a\u3063\u305f\u6642\u523b\uff08\u30aa\u30fc\u30c8\u30b9\u30c8\u30c3\u30d7\u5224\u5b9a\u7528\uff09"
+    },
+    "auto_stopped": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30b7\u30b9\u30c6\u30e0\u5074\u306e\u5f37\u5236\u7d42\u4e86\u30d5\u30e9\u30b0"
     }
   },
   "required": [

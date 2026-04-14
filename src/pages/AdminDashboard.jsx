@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -17,6 +17,7 @@ import ProgressiveIncentiveList from "../components/admin/ProgressiveIncentiveLi
 import CrowdfundingManagement from "../components/admin/CrowdfundingManagement";
 import ChannelSuspensionManagement from "../components/admin/ChannelSuspensionManagement";
 import WithdrawalManagement from "../components/admin/WithdrawalManagement";
+import LiveStreamCostMonitor from "../components/admin/LiveStreamCostMonitor";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -386,6 +387,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="withdrawal" className="gap-2">
             <DollarSign className="w-4 h-4" /> 払い出し管理
           </TabsTrigger>
+          <TabsTrigger value="live-cost" className="gap-2">
+            <Radio className="w-4 h-4" /> ライブコスト
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -747,6 +751,11 @@ export default function AdminDashboard() {
         {/* 払い出し管理タブ */}
         <TabsContent value="withdrawal" className="space-y-6">
           <WithdrawalManagement />
+        </TabsContent>
+
+        {/* ライブコストモニタータブ */}
+        <TabsContent value="live-cost" className="space-y-6">
+          <LiveStreamCostMonitor />
         </TabsContent>
 
         {/* ユーザー管理タブ */}

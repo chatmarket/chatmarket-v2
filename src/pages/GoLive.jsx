@@ -140,6 +140,7 @@ export default function GoLive() {
       thumbnail_url = res.file_url;
     }
 
+    const isLiveNow = !form.scheduled_at;
     const stream = await base44.entities.LiveStream.create({
       title: form.title,
       description: form.description,
@@ -147,13 +148,19 @@ export default function GoLive() {
       channel_name: channel.name,
       channel_avatar: channel.avatar_url,
       thumbnail_url,
-      status: form.scheduled_at ? "scheduled" : "live",
+      status: isLiveNow ? "live" : "scheduled",
       scheduled_at: form.scheduled_at || null,
       available_time: form.availableTime || "",
       price: form.isPaid ? form.price : 0,
       viewer_count: 0,
       stream_type: form.streamType,
       ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
+      // コスト計算起点
+      live_started_at: isLiveNow ? new Date().toISOString() : null,
+      cost_input_yen: 0,
+      cost_output_yen: 0,
+      total_viewer_minutes: 0,
+      revenue_coins: 0,
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
