@@ -17,6 +17,10 @@ export default function CallChatPanel({ call, user }) {
   const threadId = call && user ? makeThreadId(call.caller_email, call.callee_email) : null;
 
   useEffect(() => {
+    console.log(`📞 CallChatPanel Debug:`, { call_id: call?.id, call_status: call?.status, user_email: user?.email, threadId });
+  }, [call, user]);
+
+  useEffect(() => {
     if (!threadId) return;
     
     // メッセージ履歴を取得
