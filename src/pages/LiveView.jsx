@@ -161,10 +161,10 @@ export default function LiveView() {
   const inPreview = needsPayment && previewSeconds < 30 && !showPaywall;
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+    <div className="w-full min-h-screen bg-background">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-0 xl:gap-4 h-screen">
         {/* Stream Player */}
-        <div className="space-y-3 sm:space-y-4 lg:col-span-2">
+        <div className="space-y-3 sm:space-y-4 xl:col-span-3 flex flex-col overflow-y-auto p-3 sm:p-4 xl:p-6">
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {showPaywall && !hasPurchased ? (
               /* ペイウォールオーバーレイ */
@@ -325,7 +325,7 @@ export default function LiveView() {
         </div>
 
         {/* Chat */}
-        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)] lg:col-span-1">
+        <div className="xl:col-span-1 h-[300px] sm:h-[400px] xl:h-screen xl:overflow-hidden border-t xl:border-t-0 xl:border-l border-border/50">
           <ChatPanel targetType="livestream" targetId={id} />
         </div>
       </div>
