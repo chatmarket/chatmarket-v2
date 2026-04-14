@@ -134,9 +134,10 @@ export default function VideoCallCostMonitor() {
       </div>
 
       {/* コスト定義 */}
-      <div className="bg-secondary/40 border border-border/30 rounded-xl px-4 py-3 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div className="bg-secondary/40 border border-border/30 rounded-xl px-4 py-3 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-4 gap-2">
         <p>📞 <strong className="text-foreground">最低料金</strong>: 500コイン/15分</p>
-        <p>📡 <strong className="text-foreground">通信実費</strong>: ¥{COMM_COST_PER_MIN}/分（双方向）</p>
+        <p>📡 <strong className="text-foreground">Chime通信費</strong>: ¥{COMM_COST_PER_MIN}/分（双方向）</p>
+        <p>🎬 <strong className="text-foreground">録画費</strong>: ¥2/分</p>
         {autoDisconnected > 0 && (
           <p className="text-orange-400">⚠️ <strong>残高不足切断</strong>: {autoDisconnected}件</p>
         )}

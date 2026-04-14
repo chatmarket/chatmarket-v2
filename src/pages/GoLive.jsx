@@ -175,11 +175,17 @@ export default function GoLive() {
     }
   };
 
-  // ライブ配信の最低コイン価格: 15分150コイン（キャンペーン許可チャンネルは免除）
-  const LIVE_MIN_COINS_PER_15MIN = 150;
+  // ライブ配信の最低コイン価格
+  // キャンペーン許可: 制限なし
+  // トップライバー（累計1,000万円超）: 15分200コイン・最大95%還元
+  // 通常: 15分150コイン・85%還元
   const isCampaign = channels[0]?.campaign_allowed === true;
+  const cumulativeRevenue = channels[0]?.cumulative_revenue_yen || 0;
+  const isTopLiver = !isCampaign && cumulativeRevenue >= 10000000;
+  const LIVE_MIN_COINS_PER_15MIN = isTopLiver ? 200 : 150;
+  const liveRevenueRate = isTopLiver ? 0.95 : 0.85;
   const liveMinPrice = isCampaign ? 0 : Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
-  const minPrice = mode === MODE_LIVE ? liveMinPrice : (form.duration / 15) * 150;
+  const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 500);
   const livePriceError = mode === MODE_LIVE && form.isPaid && !isCampaign && form.price < liveMinPrice && liveMinPrice > 0;
 
 
@@ -470,8 +476,11 @@ export default function GoLive() {
                   </p>
                 )}
                 <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
-                  <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * 0.85)}コイン（85%）</span></p>
-                  <p>運営収益: {Math.floor(form.price * 0.15)}コイン（15%）</p>
+                  {isTopLiver && (
+                    <p className="text-yellow-400 font-bold">👑 トップライバー特例: 最大95%還元 / 最低200コイン/15分</p>
+                  )}
+                  <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span></p>
+                  <p>運営収益: {Math.floor(form.price * (1 - liveRevenueRate))}コイン（{Math.round((1 - liveRevenueRate) * 100)}%）</p>
                 </div>
               </div>
             </div>

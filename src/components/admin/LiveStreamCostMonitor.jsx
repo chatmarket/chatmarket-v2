@@ -4,20 +4,20 @@ import { base44 } from "@/api/base44Client";
 import { Radio, TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle, StopCircle } from "lucide-react";
 import { format } from "date-fns";
 
-// コスト定数（確定仕様）
-const INPUT_COST_PER_HOUR = 30;          // 円/時間（場所代: AWS IVS入力）
-const OUTPUT_COST_PER_VIEWER_HOUR = 5;   // 円/視聴者/時間（送料: AWS IVS出力）
-const COIN_TO_YEN = 1;                   // 1コイン = 1円（決済手数料はユーザー側負担で別途加算）
-const PLATFORM_FEE_RATE = 0.15;          // 運営手数料: 15%
+// AWSコスト定数（確定仕様: lib/pricing.js と同期）
+const INPUT_COST_PER_HOUR        = 30;  // 円/時間（IVS入力・場所代）
+const OUTPUT_COST_PER_VIEWER_HOUR = 5; // 円/視聴者/時間（IVS出力・送料）
+const COIN_TO_YEN                = 1;  // 1コイン = 1円
+const PLATFORM_FEE_RATE          = 0.15;
 
 function calcProfit(stream) {
-  const inputCost = stream.cost_input_yen || 0;
+  // DB保存されたコスト値を優先、なければ動的計算
+  const inputCost  = stream.cost_input_yen  || 0;
   const outputCost = stream.cost_output_yen || 0;
-  const totalCost = inputCost + outputCost;
-  // 運営収益 = 消費コイン × 15% × 1円（確定仕様: 1コイン=1円）
-  const revenueCoins = stream.revenue_coins || 0;
+  const totalCost  = inputCost + outputCost;
+  const revenueCoins    = stream.revenue_coins || 0;
   const platformRevenue = revenueCoins * COIN_TO_YEN * PLATFORM_FEE_RATE;
-  const profit = platformRevenue - totalCost;
+  const profit          = platformRevenue - totalCost;
   return { inputCost, outputCost, totalCost, platformRevenue, profit };
 }
 
@@ -173,10 +173,11 @@ export default function LiveStreamCostMonitor() {
       </div>
 
       {/* コスト定義メモ */}
-      <div className="bg-secondary/40 border border-border/30 rounded-xl px-4 py-3 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <p>📍 <strong className="text-foreground">場所代</strong>: ¥{INPUT_COST_PER_HOUR}/時間（HD入力コスト）</p>
-        <p>📦 <strong className="text-foreground">送料</strong>: ¥{OUTPUT_COST_PER_VIEWER_HOUR}/視聴者/時間（出力コスト）</p>
-        <p>⛔ <strong className="text-foreground">オートストップ</strong>: 視聴者0人が5分継続で強制終了</p>
+      <div className="bg-secondary/40 border border-border/30 rounded-xl px-4 py-3 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-4 gap-2">
+        <p>📍 <strong className="text-foreground">IVS場所代</strong>: ¥{INPUT_COST_PER_HOUR}/時間</p>
+        <p>📦 <strong className="text-foreground">IVS送料</strong>: ¥{OUTPUT_COST_PER_VIEWER_HOUR}/視聴者/時間</p>
+        <p>💰 <strong className="text-foreground">1コイン</strong>: 1円（外乗せ方式）</p>
+        <p>⛔ <strong className="text-foreground">オートストップ</strong>: 視聴者0人×5分</p>
       </div>
 
       {/* ライブ中 */}

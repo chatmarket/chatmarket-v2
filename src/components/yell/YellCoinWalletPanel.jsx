@@ -5,18 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Coins, Plus, ArrowUpRight, ArrowDownLeft, Zap, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { calcCoinCharge } from "@/lib/pricing";
 
-// チャージプラン
 const TERMS_VERSION = "2026-04";
 
-// 最低チャージ額: ¥1,100（1,000コイン）— Stripe固定手数料対策・少額決済防止
+// 外乗せ方式: ユーザーには純粋なコイン数を付与。請求額はStripe手数料込み。
+// ceil((coins + 40) / (1 - 0.036))
 const CHARGE_PLANS = [
-  { coins: 1000, yen: 1100, label: "1,000コイン" },
-  { coins: 3000, yen: 3300, label: "3,000コイン", popular: true },
-  { coins: 5000, yen: 5500, label: "5,000コイン" },
-  { coins: 10000, yen: 11000, label: "10,000コイン" },
-  { coins: 30000, yen: 33000, label: "30,000コイン" },
-];
+  { coins: 1000 },
+  { coins: 3000, popular: true },
+  { coins: 5000 },
+  { coins: 10000 },
+  { coins: 30000 },
+].map(p => ({ ...p, yen: calcCoinCharge(p.coins).chargeYen, label: `${p.coins.toLocaleString()}コイン` }));
 
 export default function YellCoinWalletPanel({ user }) {
   const [showCharge, setShowCharge] = useState(false);
@@ -148,7 +149,7 @@ export default function YellCoinWalletPanel({ user }) {
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 ・エールコインは<strong className="text-foreground">購入日から180日</strong>の有効期限です。期限後は自動失効します。<br />
                 ・購入後の返金は<strong className="text-red-400">一切できません。</strong>（資金決済法第31条対応）<br />
-                ・1コイン = 1.1円相当（税込）<br />
+                ・1コイン = 1円（Stripe手数料は別途外乗せ）<br />
                 ・同意時刻は当社サーバーに永久保存されます。
               </p>
             </div>
