@@ -1283,10 +1283,11 @@ export default function VideoCallPage() {
               </div>
               )}
               </div>
+              </div>
 
               {/* ---- Extension Modal ---- */}
               <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
-        <DialogContent className="bg-card border-border max-w-sm">
+                <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-primary" /> 通話を延長する
