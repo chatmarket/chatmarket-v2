@@ -12,13 +12,48 @@ export default function CallChatPanel({ call, user }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [currentCall, setCurrentCall] = useState(call);
   const bottomRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
+  const redirectedRef = useRef(false);
 
   const threadId = call && user ? makeThreadId(call.caller_email, call.callee_email) : null;
 
+  // 3秒ごとにステータスポーリング
   useEffect(() => {
-    console.log(`📞 CallChatPanel Debug:`, { call_id: call?.id, call_status: call?.status, user_email: user?.email, threadId });
-  }, [call, user]);
+    if (!call?.id) return;
+
+    const pollStatus = async () => {
+      try {
+        const calls = await base44.entities.VideoCall.filter({ id: call.id });
+        const updatedCall = calls[0];
+        if (!updatedCall) return;
+
+        console.log(`📞 Polled call status: ${updatedCall.status}`);
+        setCurrentCall(updatedCall);
+
+        // accepted → VideoCallPageへリダイレクト
+        if (updatedCall.status === "accepted" && !redirectedRef.current) {
+          redirectedRef.current = true;
+          console.log(`✅ Call accepted! Redirecting to /call/${call.id}`);
+          setTimeout(() => navigate(`/call/${call.id}`), 300);
+        }
+      } catch (err) {
+        console.error('Failed to poll call status:', err);
+      }
+    };
+
+    pollStatus();
+    pollingIntervalRef.current = setInterval(pollStatus, 3000);
+
+    return () => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    };
+  }, [call?.id, navigate]);
+
+  useEffect(() => {
+    console.log(`📞 CallChatPanel Debug:`, { call_id: call?.id, call_status: currentCall?.status, user_email: user?.email, threadId });
+  }, [call, user, currentCall]);
 
   useEffect(() => {
     if (!threadId) return;
@@ -84,9 +119,9 @@ export default function CallChatPanel({ call, user }) {
           <MessageCircle className="w-4 h-4" style={{ color: "#00ff9d" }} />
           <p className="text-sm font-bold text-white">チャット</p>
         </div>
-        {call?.status === "active" && (
+        {currentCall?.status === "active" && (
           <button
-            onClick={() => navigate(`/call/${call.id}`)}
+            onClick={() => navigate(`/call/${currentCall.id}`)}
             className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/30 text-xs font-bold transition-all"
           >
             <Phone className="w-3 h-3" /> 通話画面
