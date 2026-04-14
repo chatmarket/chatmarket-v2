@@ -18,13 +18,27 @@ export default function CallChatPanel({ call, user }) {
 
   useEffect(() => {
     if (!threadId) return;
-    base44.entities.DirectChat.filter({ thread_id: threadId }, "created_date", 50)
-      .then(setMessages).catch(() => {});
+    
+    // メッセージ履歴を取得
+    base44.entities.DirectChat.filter({ thread_id: threadId })
+      .then((msgs) => {
+        console.log(`📨 Loaded ${msgs.length} messages for thread ${threadId}`);
+        setMessages(msgs.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
+      })
+      .catch((err) => {
+        console.error('Failed to load messages:', err);
+      });
 
+    // リアルタイム購読
     const unsub = base44.entities.DirectChat.subscribe((event) => {
       if (event.data?.thread_id === threadId) {
-        if (event.type === "create") setMessages((prev) => [...prev, event.data]);
-        if (event.type === "update") setMessages((prev) => prev.map((m) => m.id === event.id ? event.data : m));
+        if (event.type === "create") {
+          console.log('📨 New message received');
+          setMessages((prev) => [...prev, event.data]);
+        }
+        if (event.type === "update") {
+          setMessages((prev) => prev.map((m) => m.id === event.id ? event.data : m));
+        }
       }
     });
     return () => unsub();
