@@ -94,7 +94,7 @@ const VIDEO_QUALITY = [
 ];
 
 // ---- Floating emoji animation component ----
-function FloatingItem({ item, onDone }) {
+function FloatingItem({ item, onDone, type = "emoji" }) {
   useEffect(() => {
     const t = setTimeout(onDone, 2200);
     return () => clearTimeout(t);
@@ -102,13 +102,19 @@ function FloatingItem({ item, onDone }) {
 
   return (
     <motion.div
-      className="pointer-events-none fixed text-4xl z-50 select-none"
+      className="pointer-events-none fixed z-50 select-none"
       initial={{ opacity: 1, y: 0, x: Math.random() * 80 + 20 + "%" }}
       animate={{ opacity: 0, y: -200 }}
       transition={{ duration: 2, ease: "easeOut" }}
       style={{ bottom: "200px" }}
     >
-      {item}
+      {type === "coin" ? (
+        <div className="text-3xl font-black text-yellow-400 drop-shadow-lg" style={{ textShadow: "0 0 12px rgba(255,215,0,0.8)" }}>
+          💰 {item}
+        </div>
+      ) : (
+        <div className="text-4xl">{item}</div>
+      )}
     </motion.div>
   );
 }
@@ -473,9 +479,9 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
-  const addFloating = useCallback((emoji) => {
+  const addFloating = useCallback((emoji, type = "emoji") => {
     const id = Date.now() + Math.random();
-    setFloatingItems((prev) => [...prev, { id, emoji }]);
+    setFloatingItems((prev) => [...prev, { id, emoji, type }]);
   }, []);
 
   const removeFloating = useCallback((id) => {
@@ -542,7 +548,7 @@ export default function VideoCallPage() {
         <div className="flex-1 flex flex-col lg:min-w-0">
       {/* Floating items */}
       {floatingItems.map((f) => (
-        <FloatingItem key={f.id} item={f.emoji} onDone={() => removeFloating(f.id)} />
+        <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
       ))}
 
       {/* Top bar */}
@@ -847,19 +853,36 @@ export default function VideoCallPage() {
                 )}
 
                 {activePanel === "throw" && (
-                  <div className="grid grid-cols-4 gap-2">
-                    {THROW_MARKS.map((mark) => (
-                      <button
-                        key={mark.emoji}
-                        onClick={() => { addFloating(mark.emoji); toast.success(`${mark.label}を投げました！`); }}
-                        className="flex flex-col items-center gap-1 bg-white/5 hover:bg-white/10 rounded-xl p-2 transition-all"
-                      >
-                        <span className="text-2xl">{mark.emoji}</span>
-                        <span className="text-[10px] text-white/60">{mark.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                   <div className="space-y-3">
+                     <div className="grid grid-cols-4 gap-2">
+                       {THROW_MARKS.map((mark) => (
+                         <button
+                           key={mark.emoji}
+                           onClick={() => { addFloating(mark.emoji); toast.success(`${mark.label}を投げました！`); }}
+                           className="flex flex-col items-center gap-1 bg-white/5 hover:bg-white/10 rounded-xl p-2 transition-all"
+                         >
+                           <span className="text-2xl">{mark.emoji}</span>
+                           <span className="text-[10px] text-white/60">{mark.label}</span>
+                         </button>
+                       ))}
+                     </div>
+                     <div className="border-t border-white/10 pt-3">
+                       <p className="text-xs text-white/40 mb-2">💰 エールコイン</p>
+                       <div className="grid grid-cols-3 gap-2">
+                         {YELL_AMOUNTS.map((amt) => (
+                           <button
+                             key={amt.value}
+                             onClick={() => { addFloating(`¥${amt.value}`, "coin"); toast.success(`¥${amt.value}を投げました！`); }}
+                             className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-all border ${colorStyles[amt.color].includes("border") ? colorStyles[amt.color].split(" ").filter(c => c.includes("border")).join(" ") : "border-white/10"} bg-white/5 hover:bg-white/10`}
+                           >
+                             <span className="text-lg font-bold">💰</span>
+                             <span className="text-[9px] text-white/60">{amt.label}</span>
+                           </button>
+                         ))}
+                       </div>
+                     </div>
+                   </div>
+                 )}
 
                 {activePanel === "filter" && (
                   <div className="flex gap-2 overflow-x-auto pb-1">
