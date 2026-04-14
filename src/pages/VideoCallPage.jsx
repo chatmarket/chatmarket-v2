@@ -1120,9 +1120,9 @@ export default function VideoCallPage() {
           </div>
 
           {/* Chat section - Desktop only */}
-          {call && user && (
+          {user && (
           <div className="hidden lg:flex w-80 border-l border-white/10 flex-col" style={{ background: "#050505" }}>
-            <CallChatPanel call={call} user={user} />
+            {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
           </div>
           )}
           </div>
