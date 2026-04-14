@@ -26,15 +26,7 @@ export default function Home() {
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) {
-        base44.auth.me().then((u) => {
-          setUser(u);
-          // unei@chatmarket.info または ono@onestep-corp.com は Admin Dashboard へリダイレクト
-          if (["unei@chatmarket.info", "ono@onestep-corp.com"].includes(u.email)) {
-            window.location.href = "/admin/dashboard";
-          }
-        }).catch(() => {});
-      }
+      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
   }, []);
 
