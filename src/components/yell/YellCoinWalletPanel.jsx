@@ -9,13 +9,13 @@ import { toast } from "sonner";
 // チャージプラン
 const TERMS_VERSION = "2026-04";
 
+// 最低チャージ額: ¥1,100（1,000コイン）— Stripe固定手数料対策・少額決済防止
 const CHARGE_PLANS = [
-  { coins: 100, yen: 110, label: "100コイン" },
-  { coins: 300, yen: 330, label: "300コイン" },
-  { coins: 500, yen: 550, label: "500コイン", popular: true },
   { coins: 1000, yen: 1100, label: "1,000コイン" },
-  { coins: 3000, yen: 3300, label: "3,000コイン" },
+  { coins: 3000, yen: 3300, label: "3,000コイン", popular: true },
   { coins: 5000, yen: 5500, label: "5,000コイン" },
+  { coins: 10000, yen: 11000, label: "10,000コイン" },
+  { coins: 30000, yen: 33000, label: "30,000コイン" },
 ];
 
 export default function YellCoinWalletPanel({ user }) {
