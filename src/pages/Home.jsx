@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search } from "lucide-react";
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
@@ -18,9 +18,11 @@ import GiantKillingBanner from "../components/home/GiantKillingBanner";
 import MillionaireSupporters from "../components/home/MillionaireSupporters";
 
 export default function Home() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -111,17 +113,45 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
-            <Link to="/go-live" className="w-full sm:w-auto">
-              <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 px-5 w-full text-sm">
-                <Radio className="w-4 h-4" />ライブ配信を始める
+          <div className="flex flex-col gap-4 justify-center items-center">
+            {/* 検索フォーム */}
+            <div className="w-full max-w-md flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                  }
+                }}
+                placeholder="チャンネル名や動画を検索..."
+                className="flex-1 bg-secondary border border-primary/30 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/60"
+              />
+              <Button
+                onClick={() => {
+                  if (searchQuery.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                  }
+                }}
+                className="bg-primary hover:bg-primary/90 gap-2 px-4"
+              >
+                <Search className="w-4 h-4" />
               </Button>
-            </Link>
-            <Link to="/upload" className="w-full sm:w-auto">
-              <Button variant="secondary" className="gap-2 h-10 px-5 w-full text-sm">
-                <Play className="w-4 h-4" />動画をアップロード
-              </Button>
-            </Link>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
+              <Link to="/go-live" className="w-full sm:w-auto">
+                <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 px-5 w-full text-sm">
+                  <Radio className="w-4 h-4" />ライブ配信を始める
+                </Button>
+              </Link>
+              <Link to="/upload" className="w-full sm:w-auto">
+                <Button variant="secondary" className="gap-2 h-10 px-5 w-full text-sm">
+                  <Play className="w-4 h-4" />動画をアップロード
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
