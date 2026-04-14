@@ -271,7 +271,7 @@ export default function VideoCallPage() {
   // 通話開始時刻をセット
   // AUTO_ACCEPT 自動承諾ロジック
   useEffect(() => {
-    if (!call || !calleeChannel) return;
+    if (!call || !calleeChannel || !user) return;
     
     // callee が AUTO_ACCEPT モードで、pending 状態の場合は自動承諾
     if (
@@ -279,7 +279,19 @@ export default function VideoCallPage() {
       call.status === 'pending' &&
       user?.email === call.callee_email
     ) {
-      base44.functions.invoke('autoAcceptCall', { call_id: call.id }).catch(() => {});
+      base44.functions.invoke('autoAcceptCall', { call_id: call.id })
+        .then(() => {
+          // status 更新を確実にするため再フェッチ
+          setTimeout(() => {
+            base44.entities.VideoCall.filter({ id: call.id }).then((calls) => {
+              if (calls[0]?.status === 'accepted') {
+                // accepted 状態に更新されたら active に変更
+                base44.entities.VideoCall.update(call.id, { status: 'active' });
+              }
+            });
+          }, 500);
+        })
+        .catch(() => {});
     }
   }, [call?.status, calleeChannel?.incoming_call_mode, user?.email, call?.callee_email]);
 
