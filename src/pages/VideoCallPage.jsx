@@ -1487,8 +1487,8 @@ export default function VideoCallPage() {
               <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleReport} disabled={!reportReason}>通報する</Button>
             </div>
           </div>
-        </DialogContent>
-        </Dialog>
-        </div>
-        );
-        }
+          </DialogContent>
+          </Dialog>
+          </div>
+          );
+          }
