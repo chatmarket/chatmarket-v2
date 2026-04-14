@@ -269,6 +269,20 @@ export default function VideoCallPage() {
   );
 
   // 通話開始時刻をセット
+  // AUTO_ACCEPT 自動承諾ロジック
+  useEffect(() => {
+    if (!call || !calleeChannel) return;
+    
+    // callee が AUTO_ACCEPT モードで、pending 状態の場合は自動承諾
+    if (
+      calleeChannel.incoming_call_mode === 'AUTO_ACCEPT' &&
+      call.status === 'pending' &&
+      user?.email === call.callee_email
+    ) {
+      base44.functions.invoke('autoAcceptCall', { call_id: call.id }).catch(() => {});
+    }
+  }, [call?.status, calleeChannel?.incoming_call_mode, user?.email, call?.callee_email]);
+
   useEffect(() => {
     if (call?.status === "active" && !callStartTime) {
       setCallStartTime(Date.now());

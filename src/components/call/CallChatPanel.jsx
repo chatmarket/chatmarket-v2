@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, Phone } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function makeThreadId(emailA, emailB) {
   return [emailA, emailB].sort().join("__");
 }
 
 export default function CallChatPanel({ call, user }) {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -53,9 +55,19 @@ export default function CallChatPanel({ call, user }) {
   return (
     <div className="flex flex-col h-full bg-black">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-        <MessageCircle className="w-4 h-4" style={{ color: "#00ff9d" }} />
-        <p className="text-sm font-bold text-white">チャット</p>
+      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="w-4 h-4" style={{ color: "#00ff9d" }} />
+          <p className="text-sm font-bold text-white">チャット</p>
+        </div>
+        {call?.status === "active" && (
+          <button
+            onClick={() => navigate(`/call/${call.id}`)}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/30 text-xs font-bold transition-all"
+          >
+            <Phone className="w-3 h-3" /> 通話画面
+          </button>
+        )}
       </div>
 
       {/* Messages */}
