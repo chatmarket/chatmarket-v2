@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import { AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,27 +42,35 @@ export default function AgoraVideoCall({
     agoraClientRef.current = client;
 
     // ---- リモートユーザーが映像/音声を配信し始めたとき ----
-    client.on('user-published', async (user, mediaType) => {
-      console.log(`[Agora] user-published uid=${user.uid} type=${mediaType}`);
-      await client.subscribe(user, mediaType);
-      console.log(`[Agora] subscribed uid=${user.uid} type=${mediaType}`);
+     client.on('user-published', async (user, mediaType) => {
+       console.log(`[Agora] user-published uid=${user.uid} type=${mediaType}`);
+       console.log(`[Agora] remoteVideoRef exists:`, !!remoteVideoRef?.current);
 
-      if (mediaType === 'video') {
-        const track = user.videoTrack;
-        if (track && remoteVideoRef?.current) {
-          // ★ここが核心: Agoraのplay()にDOMエレメントを渡す
-          track.play(remoteVideoRef.current, { fit: 'cover' });
-          console.log(`[Agora] ✓ Remote video playing in remoteVideoRef`);
-        } else {
-          console.warn('[Agora] remoteVideoRef.current is null — remote video cannot render');
-        }
-      }
+       await client.subscribe(user, mediaType);
+       console.log(`[Agora] subscribed uid=${user.uid} type=${mediaType}`);
 
-      if (mediaType === 'audio') {
-        user.audioTrack?.play();
-        console.log(`[Agora] ✓ Remote audio playing`);
-      }
-    });
+       if (mediaType === 'video') {
+         const track = user.videoTrack;
+         console.log(`[Agora] video track:`, !!track, 'ref:', !!remoteVideoRef?.current);
+
+         if (track && remoteVideoRef?.current) {
+           try {
+             // ★確実に映像を描画
+             track.play(remoteVideoRef.current, { fit: 'cover' });
+             console.log(`[Agora] ✓✓✓ Remote video playing in remoteVideoRef`);
+           } catch (e) {
+             console.error('[Agora] video play failed:', e);
+           }
+         } else {
+           console.error('[Agora] ❌ Cannot render: track=', !!track, 'ref=', !!remoteVideoRef?.current);
+         }
+       }
+
+       if (mediaType === 'audio') {
+         user.audioTrack?.play();
+         console.log(`[Agora] ✓ Remote audio playing`);
+       }
+     });
 
     client.on('user-unpublished', (user, mediaType) => {
       console.log(`[Agora] user-unpublished uid=${user.uid} type=${mediaType}`);
