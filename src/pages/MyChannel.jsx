@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ArchivePriceModal from "../components/stream/ArchivePriceModal";
+import VideoEditPanel from "../components/channel/VideoEditPanel";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
@@ -16,6 +17,7 @@ export default function MyChannel() {
   const [saving, setSaving] = useState(false);
   const [channelForm, setChannelForm] = useState({});
   const [archiveModalStream, setArchiveModalStream] = useState(null);
+  const [editingVideo, setEditingVideo] = useState(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -110,6 +112,13 @@ export default function MyChannel() {
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-streams", channel?.id] })}
         />
       )}
+      {editingVideo && (
+        <VideoEditPanel
+          video={editingVideo}
+          onClose={() => setEditingVideo(null)}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["my-videos"] })}
+        />
+      )}
       {/* Channel Header */}
       <div className="bg-card rounded-2xl border border-border/50 p-6 mb-8">
         <div className="flex items-start gap-4">
@@ -202,7 +211,17 @@ export default function MyChannel() {
           {videos.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
               {videos.map((v) => (
-                <VideoCard key={v.id} video={v} />
+                <div key={v.id} className="relative group">
+                  <VideoCard video={v} />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute bottom-2 right-2 gap-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setEditingVideo(v)}
+                  >
+                    <DollarSign className="w-3.5 h-3.5" /> 値付け
+                  </Button>
+                </div>
               ))}
             </div>
           ) : (

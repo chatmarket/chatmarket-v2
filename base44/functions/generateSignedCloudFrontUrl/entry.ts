@@ -21,12 +21,27 @@ Deno.serve(async (req) => {
     }
 
     // Call取得（アクセス権限チェック）
+    if (!call_id) {
+      return Response.json({ error: 'Missing call_id for access verification' }, { status: 400 });
+    }
+
     const calls = await base44.entities.VideoCall.filter({ id: call_id });
     const call = calls?.[0];
 
-    // 通話参加者のみアクセス可（caller or callee）
-    if (call && call.caller_email !== user.email && call.callee_email !== user.email) {
-      return Response.json({ error: 'Forbidden: Not a call participant' }, { status: 403 });
+    // 厳格な権限チェック：通話参加者のみ
+    if (!call) {
+      return Response.json({ error: 'Call not found' }, { status: 404 });
+    }
+
+    const isCaller = call.caller_email === user.email;
+    const isCallee = call.callee_email === user.email;
+
+    if (!isCaller && !isCallee) {
+      console.warn(`Access denied: ${user.email} attempted to access call ${call_id} (caller: ${call.caller_email}, callee: ${call.callee_email})`);
+      return Response.json({ 
+        error: '権限がありません。通話に参加していないユーザーはアーカイブにアクセスできません。',
+        code: 'FORBIDDEN_NOT_PARTICIPANT'
+      }, { status: 403 });
     }
 
     const cloudFrontDomain = Deno.env.get('CLOUDFRONT_DOMAIN') || 'dcf7xy7bz1z8n.cloudfront.net';

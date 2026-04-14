@@ -572,9 +572,9 @@ export default function VideoCallPage() {
       />
 
       {/* Main container: Video + Chat */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Video call section */}
-        <div className="flex-1 flex flex-col lg:min-w-0">
+        <div className="flex-1 flex flex-col min-w-0">
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
@@ -1134,13 +1134,13 @@ export default function VideoCallPage() {
           </div>
           </div>
 
-          {/* Chat section - Desktop only */}
+          {/* Chat section - Mobile & Desktop */}
           {user && (
-          <div className="hidden lg:flex w-80 border-l border-white/10 flex-col" style={{ background: "#050505" }}>
-            {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-          </div>
+            <div className="w-full lg:w-80 lg:border-l border-t lg:border-t-0 border-white/10 flex-shrink-0 max-h-48 lg:max-h-none overflow-y-auto lg:overflow-y-auto" style={{ background: "#050505" }}>
+              {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
+            </div>
           )}
-          </div>
+            </div>
 
           {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>

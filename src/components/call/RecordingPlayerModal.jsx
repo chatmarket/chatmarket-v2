@@ -10,7 +10,7 @@ export default function RecordingPlayerModal({ call, onClose }) {
   const [signedUrl, setSignedUrl] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 署名付きURLを取得
+  // 署名付きURLを取得（権限検証付き）
   const handleLoadRecording = async () => {
     if (signedUrl) return; // 既に読み込み済み
 
@@ -22,13 +22,26 @@ export default function RecordingPlayerModal({ call, onClose }) {
         expires_in_seconds: 86400, // 24時間有効
       });
 
+      if (res.data?.error_code === 'FORBIDDEN_NOT_PARTICIPANT') {
+        toast.error('権限がありません。通話に参加していないユーザーはアーカイブにアクセスできません。');
+        onClose();
+        return;
+      }
+
       if (res.data?.signed_url) {
         setSignedUrl(res.data.signed_url);
         toast.success('アーカイブをロードしました');
+      } else if (res.data?.error) {
+        toast.error(res.data.error);
       }
     } catch (err) {
       console.error('Failed to generate signed URL:', err);
-      toast.error('アーカイブの読み込みに失敗しました');
+      if (err.response?.status === 403) {
+        toast.error('権限がありません');
+        onClose();
+      } else {
+        toast.error('アーカイブの読み込みに失敗しました');
+      }
     }
     setLoading(false);
   };
