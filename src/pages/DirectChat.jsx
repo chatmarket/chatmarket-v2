@@ -68,6 +68,23 @@ export default function DirectChat() {
     refetchInterval: 3000,
   });
 
+  // アクティブな通話をチェック
+  const { data: activeCall } = useQuery({
+    queryKey: ["active-call", user?.email, channel?.owner_email],
+    queryFn: async () => {
+      const calls = await base44.entities.VideoCall.filter({
+        status: "active"
+      });
+      return calls.find(
+        (c) =>
+          (c.caller_email === user?.email && c.callee_email === channel?.owner_email) ||
+          (c.caller_email === channel?.owner_email && c.callee_email === user?.email)
+      ) || null;
+    },
+    enabled: !!user && !!channel,
+    refetchInterval: 2000,
+  });
+
   // リアルタイム購読
   useEffect(() => {
     if (!threadId) return;
@@ -148,13 +165,24 @@ export default function DirectChat() {
           <p className="font-bold text-sm">{channel.name}</p>
           <p className="text-xs text-muted-foreground">1対1ビデオ通話前のお問い合わせチャット</p>
         </div>
+        {/* アクティブな通話中 */}
+        {activeCall && (
+          <Link to={`/call/${activeCall.id}`}>
+            <Button size="sm" className="gap-1.5 bg-green-500 hover:bg-green-600 text-xs animate-pulse shadow-lg shadow-green-500/50">
+              <Video className="w-3.5 h-3.5" />
+              通話中をクリック
+            </Button>
+          </Link>
+        )}
         {/* ビデオ通話申し込みボタン */}
-        <Link to={`/call-request/${channelId}`}>
-          <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-xs">
-            <PhoneCall className="w-3.5 h-3.5" />
-            通話申し込み
-          </Button>
-        </Link>
+        {!activeCall && (
+          <Link to={`/call-request/${channelId}`}>
+            <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-xs">
+              <PhoneCall className="w-3.5 h-3.5" />
+              通話申し込み
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Messages */}
