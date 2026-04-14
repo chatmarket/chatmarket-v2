@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import MessageModal from "../components/chat/MessageModal";
+import CallChatPanel from "../components/call/CallChatPanel";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -535,6 +536,10 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Main container: Video + Chat */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Video call section */}
+        <div className="flex-1 flex flex-col lg:min-w-0">
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} onDone={() => removeFloating(f.id)} />
@@ -1061,10 +1066,19 @@ export default function VideoCallPage() {
               <span className="text-[10px] text-primary/60">🖼️ {BACKGROUNDS.find(b => b.id === selectedBg)?.label}</span>
             </>
           )}
-        </div>
-      </div>
+          </div>
+          </div>
+          </div>
 
-      {/* ---- Extension Modal ---- */}
+          {/* Chat section - Desktop only */}
+          {call && user && (
+          <div className="hidden lg:flex w-80 border-l border-white/10 flex-col" style={{ background: "#050505" }}>
+            <CallChatPanel call={call} user={user} />
+          </div>
+          )}
+          </div>
+
+          {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
