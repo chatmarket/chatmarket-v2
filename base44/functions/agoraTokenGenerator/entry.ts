@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
     const appId = Deno.env.get('AGORA_APP_ID') || 'sandbox_app_id';
     const uid = parseInt(user_id, 10);
     
-    // MVP版: 仮のトークンを生成（Sandbox環境向け）
-    // 本番環境ではhttps://github.com/AgoraIO/Tools/tree/master/DynamicKey/AgoraDynamicKeyで署名を生成
+    // MVP版: 署名なしトークン（開発用）
+    // App CertificateがあればRtcTokenBuilderで署名付きトークンに切り替え可能
     const timestamp = Math.floor(Date.now() / 1000);
     const expirationTime = timestamp + ONE_HOUR;
     const token = btoa(JSON.stringify({
@@ -41,6 +41,8 @@ Deno.serve(async (req) => {
       exp: expirationTime,
       role: role === 'publisher' ? 1 : 2,
     }));
+    
+    console.log(`Token generated: appId=${appId}, uid=${uid}, channel=${channel_id}, role=${role}`);
 
     console.log(`Token generated for ${user.email} in channel ${channel_id}`);
 

@@ -26,18 +26,26 @@ export default function AgoraVideoCall({
   useEffect(() => {
     const setupAgoraEngine = async () => {
       try {
+        if (!appId || !token) {
+          console.warn('Agora setup: missing appId or token');
+          setError('App ID またはトークンが不足しています');
+          return;
+        }
+
         const agoraEngine = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         agoraEngineRef.current = agoraEngine;
+        console.log(`Agora client created. Joining channel: ${channelId}`);
 
         // リモートユーザーの参加を検出
         agoraEngine.on('user-published', async (user, mediaType) => {
-          console.log(`Remote user ${user.uid} published ${mediaType}`);
+          console.log(`✓ Remote user ${user.uid} published ${mediaType}`);
           await agoraEngine.subscribe(user, mediaType);
 
           if (mediaType === 'video') {
             const remoteVideoTrack = user.videoTrack;
             if (remoteVideoRef.current && remoteVideoTrack) {
               remoteVideoTrack.play(remoteVideoRef.current, { fit: 'cover' });
+              console.log(`✓ Remote video rendered for uid ${user.uid}`);
             }
           }
 
@@ -45,13 +53,14 @@ export default function AgoraVideoCall({
             const remoteAudioTrack = user.audioTrack;
             if (remoteAudioTrack) {
               remoteAudioTrack.play();
+              console.log(`✓ Remote audio playing for uid ${user.uid}`);
             }
           }
         });
 
         // リモートユーザーの退出を検出
         agoraEngine.on('user-unpublished', (user) => {
-          console.log(`Remote user ${user.uid} unpublished`);
+          console.log(`⚠ Remote user ${user.uid} unpublished`);
           if (remoteVideoRef.current) {
             remoteVideoRef.current.innerHTML = '';
           }
@@ -59,13 +68,15 @@ export default function AgoraVideoCall({
         });
 
         // チャネルに参加
-        await agoraEngine.join(appId, channelId, token, parseInt(userId, 10));
-        console.log(`Successfully joined channel: ${channelId}`);
+        const uid = parseInt(userId, 10);
+        await agoraEngine.join(appId, channelId, token, uid);
+        console.log(`✓ Successfully joined channel: ${channelId} as uid: ${uid}`);
 
         // Publisherの場合はローカルビデオストリームをパブリッシュ
         if (isPublisher) {
           const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
           const videoTrack = await AgoraRTC.createCameraVideoTrack();
+          console.log('✓ Audio & video tracks created');
 
           // ローカルビデオをプレビュー
           if (localVideoRef.current && videoTrack) {
@@ -74,7 +85,7 @@ export default function AgoraVideoCall({
 
           // パブリッシュ
           await agoraEngine.publish([audioTrack, videoTrack]);
-          console.log('Published local streams');
+          console.log('✓ Published local streams');
 
           // トラックをエンジンに保存（ミュート制御用）
           agoraEngine._audioTrack = audioTrack;
@@ -84,8 +95,9 @@ export default function AgoraVideoCall({
         setIsCallActive(true);
         setRemoteUserCount(1);
         setError(null);
+        toast.success(`${isPublisher ? '配信者' : '視聴者'}として接続しました`);
       } catch (err) {
-        console.error('Agora setup error:', err);
+        console.error('❌ Agora setup error:', err);
         setError(err.message);
         toast.error(`通話接続エラー: ${err.message}`);
       }
@@ -94,7 +106,6 @@ export default function AgoraVideoCall({
     setupAgoraEngine();
 
     return () => {
-      // クリーンアップ
       if (agoraEngineRef.current) {
         agoraEngineRef.current._audioTrack?.close();
         agoraEngineRef.current._videoTrack?.close();
