@@ -17,11 +17,26 @@ function makeThreadId(emailA, emailB) {
 function formatTime(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  return d.toLocaleTimeString("ja-JP", { 
-    hour: "2-digit", 
-    minute: "2-digit",
-    timeZone: "Asia/Tokyo"
-  });
+  const now = new Date();
+  const today = new Date(now.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }));
+  const msgDate = new Date(d.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }));
+  
+  // 同じ日付なら時刻のみ、異なる場合は日付も含める
+  if (today.toDateString() === msgDate.toDateString()) {
+    return d.toLocaleTimeString("ja-JP", { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Tokyo"
+    });
+  } else {
+    return d.toLocaleString("ja-JP", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Tokyo"
+    });
+  }
 }
 
 export default function DirectChat() {
