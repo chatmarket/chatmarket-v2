@@ -10,8 +10,11 @@ export default function ViewerStream({ streamId, stream }) {
   const [error, setError] = useState(null);
 
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
+  const isWebRTC = stream?.stream_type === "webrtc";
 
   useEffect(() => {
+    // WebRTC の場合はスキップ（AgoraVideoCall で別途処理）
+    if (isWebRTC) return;
     if (!playbackUrl || stream?.status !== "live") return;
 
     let isMounted = true;
@@ -87,7 +90,7 @@ export default function ViewerStream({ streamId, stream }) {
           <p className="text-lg font-semibold text-white">
             {stream?.status === "live" ? "接続中..." : "配信者の接続を待っています..."}
           </p>
-          <p className="text-sm text-white/50">Amazon IVS 超低遅延ストリーミング</p>
+          <p className="text-sm text-white/50">{isWebRTC ? "Agora WebRTC ストリーミング" : "Amazon IVS 超低遅延ストリーミング"}</p>
         </div>
       )}
 
