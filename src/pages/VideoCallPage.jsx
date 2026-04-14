@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import AgoraVideoCall from "@/components/agora/AgoraVideoCall";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -241,43 +242,55 @@ export default function VideoCallPage() {
     });
   }, [user, coinsConsumed]);
 
-  // 課金ティック（通話中・発信者のみ）
+  // 課金ティック + 15分MVP課金トリガー（通話中・発信者のみ）
   useEffect(() => {
     if (call?.status !== "active" || !user || call.caller_email !== user.email) return;
 
-    const tick = async () => {
-      const res = await base44.functions.invoke("videoCallBilling", { call_id: call.id, action: "tick" });
-      const data = res.data;
-      if (!data) return;
+    // MVP版: 15分タイマーを別途管理
+    const mvpBillingTimer = setTimeout(async () => {
+      console.log('MVP: 15分経過 - 150コイン課金トリガー発火');
+      try {
+        // 発信者から150コイン減算
+        const wallet = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
+        if (wallet[0]) {
+          await base44.entities.YellCoinWallet.update(wallet[0].id, {
+            balance: Math.max(0, (wallet[0].balance || 0) - 150),
+            total_sent: (wallet[0].total_sent || 0) + 150,
+          });
+          console.log(`MVP: Caller wallet updated: -150 coins`);
+        }
 
-      if (data.success === false && data.auto_disconnected) {
-        setShowInsufficientModal(true);
-        clearInterval(billingTickRef.current);
-        return;
-      }
+        // ライバーに127コイン加算（ライバー85%相当）
+        const calleeWallet = await base44.entities.YellCoinWallet.filter({ user_email: call.callee_email });
+        if (calleeWallet[0]) {
+          await base44.entities.YellCoinWallet.update(calleeWallet[0].id, {
+            balance: (calleeWallet[0].balance || 0) + 127,
+          });
+          console.log(`MVP: Callee wallet updated: +127 coins`);
+        }
 
-      if (data.coins_consumed_total !== undefined) {
-        setCoinsConsumed(data.coins_consumed_total);
-      }
-      if (data.balance_after !== undefined) {
-        setCoinBalance(data.balance_after);
-      }
-      if (data.next_billing_at) {
-        setNextBillingAt(new Date(data.next_billing_at));
-      }
-      if (data.unit !== undefined) {
-        setCurrentUnit(data.unit);
-      }
-    };
+        // 通話レコード更新（課金履歴）
+        await base44.entities.VideoCall.update(call.id, {
+          coins_consumed: 150,
+          creator_revenue_coins: 127,
+          platform_revenue_coins: 23,
+          actual_duration_minutes: 15,
+        });
 
-    billingTickRef.current = setInterval(tick, 60000); // 1分ごとにtick
-    tick(); // 即時実行（最初の15分を課金開始）
+        toast.success('15分経過: 150コイン課金完了（ライバーに127コイン分配）');
+        setCoinBalance(prev => Math.max(0, (prev || 0) - 150));
+      } catch (err) {
+        console.error('MVP billing error:', err);
+        toast.error('課金処理エラー');
+      }
+    }, 15 * 60 * 1000); // 15分後
 
     return () => {
+      clearTimeout(mvpBillingTimer);
       clearInterval(billingTickRef.current);
       clearTimeout(checkNextRef.current);
     };
-  }, [call?.status, call?.id, user?.email]);
+  }, [call?.status, call?.id, user?.email, call?.callee_email]);
 
   // 次回課金までの残り秒数カウントダウン + 12分時点の残高チェック
   useEffect(() => {
