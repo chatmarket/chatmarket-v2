@@ -22,6 +22,7 @@ import VideoCallCostMonitor from "../components/admin/VideoCallCostMonitor";
 import CampaignChannelManagement from "../components/admin/CampaignChannelManagement";
 import DrameSettingsManagement from "../components/admin/DrameSettingsManagement";
 import CallUsageLimitManagement from "../components/admin/CallUsageLimitManagement";
+import TestUserCreationForm from "../components/admin/TestUserCreationForm";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -798,6 +799,9 @@ export default function AdminDashboard() {
 
         {/* ユーザー管理タブ */}
         <TabsContent value="users" className="space-y-6">
+          {/* テストユーザー作成 */}
+          <TestUserCreationForm />
+
           <div className="bg-card rounded-xl border border-border/50 p-5">
             <p className="text-sm text-muted-foreground mb-4">登録済みユーザー一覧（{allUsers.length}件）</p>
             <div className="overflow-x-auto">
