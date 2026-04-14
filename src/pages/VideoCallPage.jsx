@@ -643,6 +643,9 @@ export default function VideoCallPage() {
     ? user?.email === call.caller_email ? call.callee_name : call.caller_name
     : "相手";
 
+  // 配信者判定: calleeがlistreamerの場合、userが配信者
+  const isBroadcaster = user && call && user?.email === call?.callee_email;
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* ABR Manager */}
@@ -703,44 +706,88 @@ export default function VideoCallPage() {
 
       {/* Main video area - Picture-in-Picture Layout */}
       <div className="flex-1 relative bg-black min-h-0 lg:flex-row">
-        {/* Remote video (full screen) */}
-        <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
-          {selectedBg !== "none" && selectedBg !== "blur" && (
-            <img
-              src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
-              className="absolute inset-0 w-full h-full object-cover opacity-40"
-              alt=""
-            />
-          )}
-          <div className="flex flex-col items-center gap-3 relative z-10">
-            <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
-              <span className="text-4xl font-black text-primary">{otherName?.[0] || "?"}</span>
+        {isBroadcaster ? (
+          /* 配信者: 自分の映像フルスクリーン + 相手をPiP（右下） */
+          <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
+            {selectedBg !== "none" && selectedBg !== "blur" && (
+              <img
+                src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
+                className="absolute inset-0 w-full h-full object-cover opacity-40"
+                alt=""
+              />
+            )}
+            {/* 自分の映像（フルスクリーン） */}
+            <div className="absolute inset-0 w-full h-full">
+              <video
+                ref={localVideoRef}
+                autoPlay muted playsInline
+                className="w-full h-full object-cover"
+                style={{ filter: currentFilter?.style || "" }}
+              />
+              {!camOn && (
+                <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
+                  <CameraOff className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
+                </div>
+              )}
+              {selectedBg === "blur" && (
+                <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
+              )}
             </div>
-            <p className="text-white/80 font-semibold">{otherName}</p>
-            <p className="text-white/40 text-xs animate-pulse">接続中...</p>
-          </div>
-
-          {/* Local video (PiP - ビデオ内部の右下) */}
-          <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
-            <video
-              ref={localVideoRef}
-              autoPlay muted playsInline
-              className="w-full h-full object-cover"
-              style={{ filter: currentFilter?.style || "" }}
-            />
-            {!camOn && (
-              <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
-                <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+            {/* 相手の映像（PiP - 右下） */}
+            <div className="absolute bottom-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
+                  <span className="text-2xl font-black text-primary">{otherName?.[0] || "?"}</span>
+                </div>
+                <p className="text-white/70 text-xs font-semibold">{otherName}</p>
+                <p className="text-white/40 text-[10px] animate-pulse">接続中...</p>
               </div>
-            )}
-            {selectedBg === "blur" && (
-              <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
-            )}
-            <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-              <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
+              <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
+                <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">相手</span>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* リスナー: 相手の映像フルスクリーン + 自分をPiP（右下） */
+          <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
+            {selectedBg !== "none" && selectedBg !== "blur" && (
+              <img
+                src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
+                className="absolute inset-0 w-full h-full object-cover opacity-40"
+                alt=""
+              />
+            )}
+            {/* 相手の映像（フルスクリーン） */}
+            <div className="flex flex-col items-center gap-3 relative z-10">
+              <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
+                <span className="text-4xl font-black text-primary">{otherName?.[0] || "?"}</span>
+              </div>
+              <p className="text-white/80 font-semibold">{otherName}</p>
+              <p className="text-white/40 text-xs animate-pulse">接続中...</p>
+            </div>
+            {/* 自分の映像（PiP - 右下） */}
+            <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
+              <video
+                ref={localVideoRef}
+                autoPlay muted playsInline
+                className="w-full h-full object-cover"
+                style={{ filter: currentFilter?.style || "" }}
+              />
+              {!camOn && (
+                <div className="absolute inset-0 flex items-center justify-center bg-secondary/90">
+                  <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+                </div>
+              )}
+              {selectedBg === "blur" && (
+                <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
+              )}
+              <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
+                <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
         {/* NG Word Detection indicator */}
         {isListening && (
@@ -1225,10 +1272,6 @@ export default function VideoCallPage() {
               <span className="text-[10px] text-primary/60">🖼️ {BACKGROUNDS.find(b => b.id === selectedBg)?.label}</span>
             </>
           )}
-          </div>
-          </div>
-          </div>
-
           </div>
 
           {/* Chat section - Below video */}
