@@ -1242,34 +1242,32 @@ export default function VideoCallPage() {
 
               {/* Quality indicator */}
               <div className="flex items-center justify-center gap-3 mt-3">
-          <span className="text-[10px] text-white/30">🎙️ {AUDIO_QUALITY.find(q => q.id === audioQuality)?.label}</span>
-          <span className="text-white/20">·</span>
-          <span className="text-[10px] text-white/30">📹 {videoQuality}</span>
-          {selectedFilter !== "none" && (
-            <>
+              <span className="text-[10px] text-white/30">🎙️ {AUDIO_QUALITY.find(q => q.id === audioQuality)?.label}</span>
+              <span className="text-white/20">·</span>
+              <span className="text-[10px] text-white/30">📹 {videoQuality}</span>
+              {selectedFilter !== "none" && (
+              <>
               <span className="text-white/20">·</span>
               <span className="text-[10px] text-primary/60">✨ {FILTERS.find(f => f.id === selectedFilter)?.label}</span>
-            </>
-          )}
-          {selectedBg !== "none" && (
-            <>
+              </>
+              )}
+              {selectedBg !== "none" && (
+              <>
               <span className="text-white/20">·</span>
               <span className="text-[10px] text-primary/60">🖼️ {BACKGROUNDS.find(b => b.id === selectedBg)?.label}</span>
-            </>
-          )}
-          </div>
+              </>
+              )}
+              </div>
 
-          </div>
-
-          {/* Chat section - Below video */}
-          {user && (
-            <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
+              {/* Chat section - Below video */}
+              {user && (
+              <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
               {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
-            </div>
-          )}
-          </div>
+              </div>
+              )}
+              </div>
 
-          {/* ---- Extension Modal ---- */}
+              {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
