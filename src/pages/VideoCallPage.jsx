@@ -246,7 +246,7 @@ export default function VideoCallPage() {
     });
   }, []);
 
-  const { data: call } = useQuery({
+  const { data: call, refetch: refetchCall } = useQuery({
     queryKey: ["videocall", callId],
     queryFn: async () => {
       const calls = await base44.entities.VideoCall.filter({ id: callId });
@@ -281,19 +281,23 @@ export default function VideoCallPage() {
     ) {
       base44.functions.invoke('autoAcceptCall', { call_id: call.id })
         .then(() => {
-          // status 更新を確実にするため再フェッチ
+          // status 更新を確実にするため即座に refetch
           setTimeout(() => {
+            refetchCall();
             base44.entities.VideoCall.filter({ id: call.id }).then((calls) => {
               if (calls[0]?.status === 'accepted') {
                 // accepted 状態に更新されたら active に変更
-                base44.entities.VideoCall.update(call.id, { status: 'active' });
+                base44.entities.VideoCall.update(call.id, { status: 'active' }).then(() => {
+                  // active に更新した後も refetch を再実行
+                  setTimeout(() => refetchCall(), 300);
+                });
               }
             });
-          }, 500);
+          }, 200);
         })
         .catch(() => {});
     }
-  }, [call?.status, calleeChannel?.incoming_call_mode, user?.email, call?.callee_email]);
+  }, [call?.status, calleeChannel?.incoming_call_mode, user?.email, call?.callee_email, refetchCall]);
 
   useEffect(() => {
     if (call?.status === "active" && !callStartTime) {
