@@ -51,10 +51,70 @@
       "default": 0,
       "description": "\u901a\u8a71\u6599\u91d1\uff08\u5186\uff09\u767a\u4fe1\u8005\u304c\u652f\u6255\u3046"
     },
+    "coin_price_per_15min": {
+      "type": "number",
+      "default": 500,
+      "description": "15\u5206\u3042\u305f\u308a\u306e\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u6d88\u8cbb\u6570\uff08\u6700\u4f4e500\uff09"
+    },
+    "coins_consumed": {
+      "type": "number",
+      "default": 0,
+      "description": "\u901a\u8a71\u4e2d\u306b\u8ab2\u91d1\u6d88\u8cbb\u3057\u305f\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u5408\u8a08"
+    },
+    "coins_held": {
+      "type": "number",
+      "default": 0,
+      "description": "\u4e8b\u524d\u30db\u30fc\u30eb\u30c9\u3057\u305f\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3"
+    },
+    "billing_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u8ab2\u91d1\u958b\u59cb\u30bf\u30a4\u30e0\u30b9\u30bf\u30f3\u30d7\uff08\u4e21\u8005\u63a5\u7d9a\u78ba\u7acb\u6642\uff09"
+    },
+    "billing_interval_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u6d88\u8cbb\u6e08\u307f15\u5206\u30a4\u30f3\u30bf\u30fc\u30d0\u30eb\u6570"
+    },
+    "next_billing_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6b21\u56de15\u5206\u8ab2\u91d1\u30bf\u30a4\u30e0\u30b9\u30bf\u30f3\u30d7"
+    },
+    "auto_disconnected": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u6b8b\u9ad8\u4e0d\u8db3\u3067\u81ea\u52d5\u5207\u65ad\u3055\u308c\u305f\u30d5\u30e9\u30b0"
+    },
     "duration_minutes": {
       "type": "number",
       "default": 30,
       "description": "\u901a\u8a71\u6642\u9593\uff08\u5206\uff09"
+    },
+    "actual_duration_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "\u5b9f\u969b\u306e\u901a\u8a71\u6642\u9593\uff08\u5206\uff09"
+    },
+    "comm_cost_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "AWS\u901a\u4fe1\u5b9f\u8cbb\uff084\u5186/\u5206\u00d7\u5b9f\u969b\u306e\u901a\u8a71\u6642\u9593\uff09"
+    },
+    "platform_revenue_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "\u904b\u55b6\u7dcf\u53ce\u76ca\uff08\u6d88\u8cbb\u30b3\u30a4\u30f3\u306e15%\uff09"
+    },
+    "platform_profit_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u904b\u55b6\u7d14\u5229\u76ca\uff08\u904b\u55b6\u53ce\u76ca - \u901a\u4fe1\u30b3\u30b9\u30c8\uff09"
+    },
+    "creator_revenue_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30e9\u30a4\u30d0\u30fc\u5831\u916c\uff08\u6d88\u8cbb\u30b3\u30a4\u30f3\u306e85%\uff09"
     },
     "yell_coin_amount": {
       "type": "number",

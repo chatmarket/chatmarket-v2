@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -18,6 +18,7 @@ import CrowdfundingManagement from "../components/admin/CrowdfundingManagement";
 import ChannelSuspensionManagement from "../components/admin/ChannelSuspensionManagement";
 import WithdrawalManagement from "../components/admin/WithdrawalManagement";
 import LiveStreamCostMonitor from "../components/admin/LiveStreamCostMonitor";
+import VideoCallCostMonitor from "../components/admin/VideoCallCostMonitor";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -390,6 +391,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="live-cost" className="gap-2">
             <Radio className="w-4 h-4" /> ライブコスト
           </TabsTrigger>
+          <TabsTrigger value="call-cost" className="gap-2">
+            <Phone className="w-4 h-4" /> 通話コスト
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -756,6 +760,11 @@ export default function AdminDashboard() {
         {/* ライブコストモニタータブ */}
         <TabsContent value="live-cost" className="space-y-6">
           <LiveStreamCostMonitor />
+        </TabsContent>
+
+        {/* 通話コストモニタータブ */}
+        <TabsContent value="call-cost" className="space-y-6">
+          <VideoCallCostMonitor />
         </TabsContent>
 
         {/* ユーザー管理タブ */}

@@ -170,6 +170,16 @@ export default function VideoCallPage() {
   const countdownAlertedRef = useRef(false);
   const extendBannerShownRef = useRef(false);
 
+  // ---- コインベース課金 ----
+  const [coinBalance, setCoinBalance] = useState(null);
+  const [coinsConsumed, setCoinsConsumed] = useState(0);
+  const [nextBillingAt, setNextBillingAt] = useState(null);
+  const [secondsUntilBilling, setSecondsUntilBilling] = useState(null);
+  const [showInsufficientModal, setShowInsufficientModal] = useState(false);
+  const billingTickRef = useRef(null);
+  const warned5minRef = useRef(false);
+  const warned1minRef = useRef(false);
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
@@ -198,7 +208,77 @@ export default function VideoCallPage() {
     if (call?.status === "active" && !callStartTime) {
       setCallStartTime(Date.now());
     }
-  }, [call?.status]);
+    // 自動切断検出
+    if (call?.auto_disconnected && call?.status === "ended") {
+      setShowInsufficientModal(true);
+    }
+  }, [call?.status, call?.auto_disconnected]);
+
+  // コイン残高取得
+  useEffect(() => {
+    if (!user) return;
+    base44.entities.YellCoinWallet.filter({ user_email: user.email }).then((wallets) => {
+      setCoinBalance(wallets[0]?.balance || 0);
+    });
+  }, [user, coinsConsumed]);
+
+  // 課金ティック（通話中・発信者のみ）
+  useEffect(() => {
+    if (call?.status !== "active" || !user || call.caller_email !== user.email) return;
+
+    const tick = async () => {
+      const res = await base44.functions.invoke("videoCallBilling", { call_id: call.id, action: "tick" });
+      const data = res.data;
+      if (!data) return;
+
+      if (data.success === false && data.auto_disconnected) {
+        setShowInsufficientModal(true);
+        clearInterval(billingTickRef.current);
+        return;
+      }
+
+      if (data.coins_consumed_total !== undefined) {
+        setCoinsConsumed(data.coins_consumed_total);
+      }
+      if (data.balance_after !== undefined) {
+        setCoinBalance(data.balance_after);
+      }
+      if (data.next_billing_at) {
+        setNextBillingAt(new Date(data.next_billing_at));
+      }
+    };
+
+    billingTickRef.current = setInterval(tick, 60000); // 1分ごとにtick
+    tick(); // 即時実行（最初の15分を課金開始）
+
+    return () => clearInterval(billingTickRef.current);
+  }, [call?.status, call?.id, user?.email]);
+
+  // 次回課金までの残り秒数カウントダウン
+  useEffect(() => {
+    if (!nextBillingAt) return;
+    const timer = setInterval(() => {
+      const secs = Math.max(0, Math.ceil((nextBillingAt - Date.now()) / 1000));
+      setSecondsUntilBilling(secs);
+
+      // 5分前警告
+      if (secs <= 300 && !warned5minRef.current) {
+        warned5minRef.current = true;
+        toast.warning("⏰ 次の15分課金まで5分前です", { duration: 5000 });
+      }
+      // 1分前警告
+      if (secs <= 60 && !warned1minRef.current) {
+        warned1minRef.current = true;
+        toast.warning("⚡ 次の15分課金まで1分前です！残高を確認してください", { duration: 8000 });
+      }
+      // リセット（次のインターバル用）
+      if (secs === 0) {
+        warned5minRef.current = false;
+        warned1minRef.current = false;
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [nextBillingAt]);
 
   // 延長用の選択肢セット
   useEffect(() => {
@@ -272,9 +352,15 @@ export default function VideoCallPage() {
     }
   };
 
-  const handleEndCall = async () => {
-    if (!window.confirm("通話を終了しますか？")) return;
-    if (call) await base44.entities.VideoCall.update(call.id, { status: "ended" });
+  const handleEndCall = async (skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm("通話を終了しますか？")) return;
+    clearInterval(billingTickRef.current);
+    // 精算
+    if (call && call.status === "active" && user && call.caller_email === user.email) {
+      await base44.functions.invoke("videoCallBilling", { call_id: call.id, action: "end" });
+    } else if (call) {
+      await base44.entities.VideoCall.update(call.id, { status: "ended" });
+    }
     localStream?.getTracks().forEach((t) => t.stop());
     toast.success("通話を終了しました");
     navigate(-1);
@@ -497,11 +583,30 @@ export default function VideoCallPage() {
           </div>
         )}
 
+        {/* Coin billing HUD (発信者のみ) */}
+        {call?.billing_started_at && user?.email === call?.caller_email && (
+          <div className="absolute top-4 left-4 z-10 space-y-1">
+            <div className="bg-black/70 border border-yellow-500/40 rounded-xl px-3 py-1.5 flex items-center gap-2 text-yellow-400 text-xs font-bold backdrop-blur">
+              <Coins className="w-3.5 h-3.5" />
+              残高 {coinBalance !== null ? coinBalance.toLocaleString() : "…"} コイン
+            </div>
+            {secondsUntilBilling !== null && (
+              <div className={`bg-black/70 border rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-bold backdrop-blur ${
+                secondsUntilBilling <= 60 ? "border-red-500/60 text-red-400" : secondsUntilBilling <= 300 ? "border-yellow-500/40 text-yellow-400" : "border-white/20 text-white/60"
+              }`}>
+                <Clock className="w-3.5 h-3.5" />
+                次回課金まで {Math.floor(secondsUntilBilling / 60)}:{String(secondsUntilBilling % 60).padStart(2, "0")}
+                <span className="text-muted-foreground ml-1">({(call.coin_price_per_15min || 500).toLocaleString()}コイン)</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Yell coin badge */}
         {call?.yell_coin_amount > 0 && (
-          <div className="absolute top-4 left-4 z-10 bg-yellow-500/20 border border-yellow-500/40 rounded-full px-3 py-1 flex items-center gap-1.5 text-yellow-400 text-xs font-bold backdrop-blur">
+          <div className="absolute top-4 right-4 z-10 bg-yellow-500/20 border border-yellow-500/40 rounded-full px-3 py-1 flex items-center gap-1.5 text-yellow-400 text-xs font-bold backdrop-blur">
             <Coins className="w-3.5 h-3.5" />
-            ¥{call.yell_coin_amount?.toLocaleString()} エール済み
+            {call.yell_coin_amount?.toLocaleString()} エール済み
           </div>
         )}
 
@@ -882,6 +987,34 @@ export default function VideoCallPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 残高不足自動切断モーダル */}
+      <Dialog open={showInsufficientModal} onOpenChange={() => {}}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-400">
+              <AlertTriangle className="w-5 h-5" /> エールコイン残高不足
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              次の15分分の通話料金（{(call?.coin_price_per_15min || 500).toLocaleString()}コイン）が不足しているため、通話を自動切断しました。
+            </p>
+            <div className="bg-secondary rounded-lg p-3 text-xs text-muted-foreground">
+              コインをチャージしてから再度通話をご利用ください。
+            </div>
+            <Button
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+              onClick={() => { setShowInsufficientModal(false); localStream?.getTracks().forEach(t => t.stop()); navigate("/settings"); }}
+            >
+              <Coins className="w-4 h-4 mr-2" /> コインをチャージする
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => { setShowInsufficientModal(false); navigate(-1); }}>
+              閉じる
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

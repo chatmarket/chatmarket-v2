@@ -31,6 +31,14 @@ function getRevenueShare(plan) {
   return 0.70;
 }
 
+// 最低コイン単価（15分あたり）
+const MIN_COINS_PER_15MIN = 500;
+
+// コイン単価計算（15分換算）
+function calcCoinPer15(minutes, coinPrice) {
+  return Math.round((coinPrice / minutes) * 15);
+}
+
 // 10分刻み選択肢を取得（price設定済みのもの）
 function getAvailableDurations(channel) {
   const options = [];
@@ -116,6 +124,7 @@ export default function VideoCallRequest() {
 
     setSubmitting(true);
 
+    const coinPer15 = calcCoinPer15(durationMinutes, callPrice);
     await base44.entities.VideoCall.create({
       caller_email: user.email,
       caller_name: user.full_name || user.email,
@@ -126,6 +135,7 @@ export default function VideoCallRequest() {
       is_free_call: false,
       is_paid: true,
       price: callPrice,
+      coin_price_per_15min: coinPer15,
       duration_minutes: durationMinutes,
       message: `【希望日時】${preferredDate}${message ? `\n${message}` : ""}`,
       thread_id: threadId,
@@ -310,27 +320,35 @@ export default function VideoCallRequest() {
           )}
 
           {/* 料金内訳 */}
-          {callPrice > 0 && (
-            <div className="bg-secondary rounded-lg p-3 text-xs space-y-1.5">
-              <p className="font-semibold text-muted-foreground flex items-center gap-1 mb-1.5">
-                <Coins className="w-3.5 h-3.5 text-yellow-400" /> 料金内訳
-              </p>
-              <div className="flex justify-between text-muted-foreground">
-                <span>通話料金 ({durationMinutes}分)</span><span>¥{callPrice.toLocaleString()}</span>
+          {callPrice > 0 && (() => {
+            const coinPer15 = calcCoinPer15(durationMinutes, callPrice);
+            const isBelowMin = coinPer15 < MIN_COINS_PER_15MIN;
+            return (
+              <div className={`bg-secondary rounded-lg p-3 text-xs space-y-1.5 ${isBelowMin ? "border border-red-500/40" : ""}`}>
+                <p className="font-semibold text-muted-foreground flex items-center gap-1 mb-1.5">
+                  <Coins className="w-3.5 h-3.5 text-yellow-400" /> 料金内訳（エールコイン課金）
+                </p>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>15分あたりコイン消費</span>
+                  <span className={`font-bold ${isBelowMin ? "text-red-400" : "text-yellow-400"}`}>
+                    {coinPer15.toLocaleString()}コイン
+                    {isBelowMin && " ⚠️ 最低500コイン以上必要"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>ライバー報酬（85%）</span>
+                  <span>{Math.floor(coinPer15 * 0.85).toLocaleString()}コイン/15分</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>運営手数料（15%）</span>
+                  <span>{Math.floor(coinPer15 * 0.15).toLocaleString()}コイン/15分</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
+                  ※ 通話開始時に最初の15分分が即時消費されます。15分ごとに自動延長課金されます。
+                </p>
               </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>プラットフォーム手数料 ({userPlan === "free" ? "30" : "15"}%)</span>
-                <span>-¥{Math.floor(callPrice * (userPlan === "free" ? 0.30 : 0.15)).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between font-bold border-t border-border pt-1.5 text-sm">
-                <span>配信者受取額</span>
-                <span className="text-primary">¥{Math.floor(callPrice * revenueShare).toLocaleString()}</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
-                ※ あなた（申込者）が¥{callPrice.toLocaleString()}を支払います。通話開始時に課金されます。
-              </p>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* 希望日時 */}
