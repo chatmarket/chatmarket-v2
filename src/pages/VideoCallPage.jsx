@@ -576,9 +576,9 @@ export default function VideoCallPage() {
       </div>
 
       {/* Main video area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative bg-black">
         {/* Remote video (full screen) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="absolute inset-0 bg-black flex items-center justify-center">
           {selectedBg !== "none" && selectedBg !== "blur" && (
             <img
               src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
@@ -682,7 +682,7 @@ export default function VideoCallPage() {
           </div>
         )}
 
-        {/* ---- Countdown (30秒前から表示) ---- */}
+        {/* ---- Neon Countdown Timer (30秒前から表示) ---- */}
         <AnimatePresence>
           {remainingSeconds !== null && remainingSeconds <= 30 && remainingSeconds > 0 && (
             <motion.div
@@ -692,12 +692,27 @@ export default function VideoCallPage() {
               exit={{ opacity: 0, scale: 0.5 }}
               className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
             >
-              <div className={`text-center ${remainingSeconds <= 10 ? "text-red-400" : "text-yellow-300"}`}>
+              <div className="text-center">
                 <p className="font-black leading-none drop-shadow-2xl"
-                  style={{ fontSize: "120px", textShadow: "0 0 40px rgba(0,0,0,0.8)" }}>
-                  {remainingSeconds}
+                  style={{
+                    fontSize: "180px",
+                    color: "#00ff9d",
+                    textShadow: `
+                      0 0 20px #00ff9d,
+                      0 0 40px #00ff9d,
+                      0 0 60px #00ff9d,
+                      0 0 100px rgba(0,255,157,0.5)
+                    `,
+                    fontFamily: "'Courier New', monospace",
+                    letterSpacing: "0.1em"
+                  }}>
+                  {String(remainingSeconds).padStart(2, '0')}
                 </p>
-                <p className="text-lg font-bold opacity-80 -mt-4 drop-shadow-lg">
+                <p className="text-2xl font-bold opacity-90 -mt-8 drop-shadow-lg"
+                  style={{
+                    color: remainingSeconds <= 10 ? "#ff0055" : "#00ff9d",
+                    textShadow: `0 0 20px ${remainingSeconds <= 10 ? "#ff0055" : "#00ff9d"}`
+                  }}>
                   {remainingSeconds <= 10 ? "⚠️ まもなく終了" : "秒"}
                 </p>
               </div>
@@ -730,12 +745,20 @@ export default function VideoCallPage() {
                   >
                     終了
                   </button>
-                  <button
+                  <motion.button
                     onClick={() => setShowExtendModal(true)}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-4 py-2 rounded-xl"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-xs font-bold px-4 py-2 rounded-xl border-2"
+                    style={{
+                      background: "rgba(0,255,157,0.1)",
+                      borderColor: "#00ff9d",
+                      color: "#00ff9d",
+                      boxShadow: "0 0 15px rgba(0,255,157,0.5)",
+                    }}
                   >
                     延長する
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
@@ -935,19 +958,24 @@ export default function VideoCallPage() {
                 待機開始
               </button>
 
-              <button
+              <motion.button
                 onClick={handleEndCall}
-                className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-all"
+                animate={{ boxShadow: ["0 0 20px rgba(255,0,85,0.6)", "0 0 40px rgba(255,0,85,1)", "0 0 20px rgba(255,0,85,0.6)"] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-500"
+                style={{
+                  boxShadow: "0 0 30px #ff0055, inset 0 0 20px rgba(255,0,85,0.3)",
+                }}
               >
                 <PhoneOff className="w-6 h-6 text-white" />
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="flex-1 text-center">
-                <p className="text-white font-bold text-lg">待機中...</p>
-                <p className="text-white/60 text-xs">相手からの接続を待っています</p>
-              </div>
+              </motion.button>
+              </>
+              ) : (
+              <>
+               <div className="flex-1 text-center">
+                 <p className="text-white font-bold text-lg">待機中...</p>
+                 <p className="text-white/60 text-xs">相手からの接続を待っています</p>
+               </div>
               <button
                 onClick={async () => {
                   const isAuth = await base44.auth.isAuthenticated();
@@ -962,15 +990,20 @@ export default function VideoCallPage() {
                 <PhoneCall className="w-5 h-5" />
                 申し込む
               </button>
-              <button
+              <motion.button
                 onClick={handleEndCall}
-                className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-all"
+                animate={{ boxShadow: ["0 0 20px rgba(255,0,85,0.6)", "0 0 40px rgba(255,0,85,1)", "0 0 20px rgba(255,0,85,0.6)"] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-500"
+                style={{
+                  boxShadow: "0 0 30px #ff0055, inset 0 0 20px rgba(255,0,85,0.3)",
+                }}
               >
                 <PhoneOff className="w-6 h-6 text-white" />
-              </button>
-            </>
-          )}
-        </div>
+              </motion.button>
+              </>
+              )}
+              </div>
 
         {/* Quality indicator */}
         <div className="flex items-center justify-center gap-3 mt-3">
