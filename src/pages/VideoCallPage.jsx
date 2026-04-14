@@ -1489,6 +1489,5 @@ export default function VideoCallPage() {
         </DialogContent>
         </Dialog>
         </div>
-        </div>
         );
         }
