@@ -13,6 +13,7 @@ import FanClubStatus from "../components/dashboard/FanClubStatus";
 import NotificationSidebar from "../components/dashboard/NotificationSidebar";
 import TicketSalesAnalytics from "../components/dashboard/TicketSalesAnalytics";
 import EventNotificationPanel from "../components/dashboard/EventNotificationPanel";
+import ProgressiveRateCard from "../components/dashboard/ProgressiveRateCard";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -141,6 +142,9 @@ export default function CreatorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* メインコンテンツ（左2/3） */}
         <div className="lg:col-span-2 space-y-6">
+          {/* プログレッシブ還元率 */}
+          {channel && <ProgressiveRateCard channel={channel} />}
+
           {/* 当月売上サマリー */}
           <EarningsSummaryCard
             totalRevenue={totalRevenue}
