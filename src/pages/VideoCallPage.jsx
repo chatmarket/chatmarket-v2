@@ -707,7 +707,7 @@ export default function VideoCallPage() {
       {/* Main video area - Picture-in-Picture Layout */}
       <div className="flex-1 relative bg-black min-h-0 lg:flex-row">
         {isBroadcaster ? (
-          /* 配信者: 自分の映像フルスクリーン + 相手をPiP（右下） */
+          /* 配信者: 自分の映像フルスクリーン + 視聴者をPiP（右下） */
           <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
             {selectedBg !== "none" && selectedBg !== "blur" && (
               <img
@@ -733,22 +733,13 @@ export default function VideoCallPage() {
                 <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
               )}
             </div>
-            {/* 相手の映像（PiP - 右下） */}
-            <div className="absolute bottom-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
-                  <span className="text-2xl font-black text-primary">{otherName?.[0] || "?"}</span>
-                </div>
-                <p className="text-white/70 text-xs font-semibold">{otherName}</p>
-                <p className="text-white/40 text-[10px] animate-pulse">接続中...</p>
-              </div>
-              <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-                <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">相手</span>
-              </div>
+            {/* 視聴者の映像（PiP - 右下） */}
+            <div className="absolute bottom-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
+              <div ref={canvasRef} style={{ width: '100%', height: '100%', display: 'none' }} />
             </div>
           </div>
         ) : (
-          /* リスナー: 相手の映像フルスクリーン + 自分をPiP（右下） */
+          /* 視聴者: 配信者の映像フルスクリーン + 自分をPiP（右下） */
           <div className="flex-1 relative bg-black flex items-center justify-center order-2 lg:order-1">
             {selectedBg !== "none" && selectedBg !== "blur" && (
               <img
@@ -757,13 +748,9 @@ export default function VideoCallPage() {
                 alt=""
               />
             )}
-            {/* 相手の映像（フルスクリーン） */}
-            <div className="flex flex-col items-center gap-3 relative z-10">
-              <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
-                <span className="text-4xl font-black text-primary">{otherName?.[0] || "?"}</span>
-              </div>
-              <p className="text-white/80 font-semibold">{otherName}</p>
-              <p className="text-white/40 text-xs animate-pulse">接続中...</p>
+            {/* 配信者の映像（フルスクリーン） */}
+            <div className="absolute inset-0 w-full h-full">
+              <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
             </div>
             {/* 自分の映像（PiP - 右下） */}
             <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">

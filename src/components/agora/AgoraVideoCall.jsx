@@ -21,6 +21,7 @@ export default function AgoraVideoCall({
   const [isCamOn, setIsCamOn] = useState(true);
   const [remoteUserCount, setRemoteUserCount] = useState(0);
   const [error, setError] = useState(null);
+  const remoteUidRef = useRef(null);
 
   // Agoraエンジン初期化
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function AgoraVideoCall({
         // リモートユーザーの参加を検出
         agoraEngine.on('user-published', async (user, mediaType) => {
           console.log(`✓ Remote user ${user.uid} published ${mediaType}`);
+          remoteUidRef.current = user.uid;
           await agoraEngine.subscribe(user, mediaType);
 
           if (mediaType === 'video') {
@@ -70,6 +72,7 @@ export default function AgoraVideoCall({
           if (remoteVideoRef.current) {
             remoteVideoRef.current.innerHTML = '';
           }
+          remoteUidRef.current = null;
           setRemoteUserCount(0);
         });
 
