@@ -323,9 +323,17 @@ export default function GoLive() {
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6">
         {/* ブラウザ配信固定 */}
         {mode === MODE_LIVE && (
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300">
-            <p className="font-bold">配信方式</p>
-            <p className="mt-1">ブラウザから直接配信します。カメラが必要です。</p>
+          <div className="space-y-3">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300">
+              <p className="font-bold">配信方式</p>
+              <p className="mt-1">ブラウザから直接配信します。カメラが必要です。</p>
+            </div>
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-orange-300 leading-relaxed">
+                <strong>自動強制終了について：</strong>配信開始後、視聴者が0人の状態が<strong>5分間継続</strong>した場合、サーバー負荷を避けるためシステムが自動的に配信を強制終了します。
+              </p>
+            </div>
           </div>
         )}
 
