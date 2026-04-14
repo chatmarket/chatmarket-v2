@@ -1266,9 +1266,12 @@ export default function VideoCallPage() {
               </div>
               )}
               </div>
+              </div>
+              </div>
+              </div>
 
-             {/* ---- Extension Modal ---- */}
-      <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
+              {/* ---- Extension Modal ---- */}
+              <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
