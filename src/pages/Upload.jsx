@@ -60,8 +60,11 @@ export default function Upload() {
   });
 
   const remainingDuration = eligibility?.remaining_seconds ?? 7200;
-  const freeVideoBlocked = false; // Free limit now handled separately by checkUploadEligibility logic
+  const freeVideoBlocked = false;
   const uploadDurationExceeded = videoDuration > 0 && eligibility?.allowed === false;
+  // VOD最低価格: 100コイン（1コイン=1円）
+  const VOD_MIN_PRICE = 100;
+  const vodPriceError = !form.is_free && form.price > 0 && form.price < VOD_MIN_PRICE;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -342,19 +345,28 @@ export default function Upload() {
 
           {!form.is_free && (
             <div className="space-y-2">
-              <Label>価格（円）</Label>
+              <Label>価格（エールコイン）</Label>
               <Input
                 type="number"
-                min={1}
+                min={VOD_MIN_PRICE}
                 step={1}
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-                className="bg-secondary border-0"
-                placeholder="500"
+                className={`bg-secondary border-0 ${vodPriceError ? "ring-1 ring-destructive" : ""}`}
+                placeholder="100"
               />
-              <p className="text-xs text-muted-foreground">
-                ※ 有料動画は最初の30秒が無料プレビューされます
-              </p>
+              {vodPriceError ? (
+                <p className="text-destructive text-xs font-semibold">⚠️ 有料動画の最低価格は100コインです（ブランド基準）</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">最低100コイン〜自由設定。有料動画は最初の30秒が無料プレビューされます</p>
+              )}
+              {form.price >= VOD_MIN_PRICE && (
+                <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
+                  <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * 0.85)}コイン（85%）</span></p>
+                  <p>運営収益: {Math.floor(form.price * 0.15)}コイン（15%）</p>
+                  <p className="text-[10px]">※ 損益分岐点: 約55円相当 / 最低価格100円はブランド維持基準</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -375,7 +387,7 @@ export default function Upload() {
 
         <Button
           type="submit"
-          disabled={uploading || !form.title || freeVideoBlocked || uploadDurationExceeded || !videoFile || !copyrightConfirmed}
+          disabled={uploading || !form.title || freeVideoBlocked || uploadDurationExceeded || !videoFile || !copyrightConfirmed || vodPriceError}
           className="w-full h-12 bg-primary hover:bg-primary/90 text-base gap-2"
         >
           {uploading ? (

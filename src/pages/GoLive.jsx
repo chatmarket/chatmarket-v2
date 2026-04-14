@@ -175,7 +175,12 @@ export default function GoLive() {
     }
   };
 
-  const minPrice = mode === MODE_LIVE ? 1 : (form.duration / 15) * 150;
+  // ライブ配信の最低コイン価格: 15分150コイン（キャンペーン許可チャンネルは免除）
+  const LIVE_MIN_COINS_PER_15MIN = 150;
+  const isCampaign = channels[0]?.campaign_allowed === true;
+  const liveMinPrice = isCampaign ? 0 : Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
+  const minPrice = mode === MODE_LIVE ? liveMinPrice : (form.duration / 15) * 150;
+  const livePriceError = mode === MODE_LIVE && form.isPaid && !isCampaign && form.price < liveMinPrice && liveMinPrice > 0;
 
 
 
@@ -442,23 +447,32 @@ export default function GoLive() {
               </div>
 
               <div className="space-y-2">
-                <Label>チケット料金（円）</Label>
+                <Label>チケット料金（エールコイン）</Label>
                 <Input
                   type="number"
-                  min={1}
+                  min={isCampaign ? 0 : liveMinPrice}
                   max={1000000}
                   step={1}
                   value={form.price}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    setForm({ ...form, price: Math.max(Math.min(val, 1000000), 1) });
+                    const val = parseInt(e.target.value) || 0;
+                    setForm({ ...form, price: Math.min(val, 1000000) });
                   }}
-                  className="bg-secondary border-0"
-                  placeholder="1"
+                  className={`bg-secondary border-0 ${livePriceError ? "ring-1 ring-destructive" : ""}`}
+                  placeholder={String(liveMinPrice)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  ¥1から自由に設定できます。
-                </p>
+                {isCampaign ? (
+                  <p className="text-xs text-yellow-400">🏷️ キャンペーン許可済み — 最低価格制限なし</p>
+                ) : (
+                  <p className={`text-xs ${livePriceError ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+                    最低設定: {liveMinPrice}コイン / {form.duration}分（15分150コイン）
+                    {livePriceError && " ← この価格では設定できません"}
+                  </p>
+                )}
+                <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
+                  <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * 0.85)}コイン（85%）</span></p>
+                  <p>運営収益: {Math.floor(form.price * 0.15)}コイン（15%）</p>
+                </div>
               </div>
             </div>
           )}
@@ -592,7 +606,7 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
+          disabled={creating || !form.title || livePriceError || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
         >
           {creating ? (

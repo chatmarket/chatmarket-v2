@@ -4,19 +4,19 @@ import { base44 } from "@/api/base44Client";
 import { Radio, TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle, StopCircle } from "lucide-react";
 import { format } from "date-fns";
 
-// コスト定数（表示用）
-const INPUT_COST_PER_HOUR = 30;   // 円/時間
-const OUTPUT_COST_PER_VIEWER_HOUR = 5; // 円/視聴者/時間
-const REVENUE_PER_HOUR_COINS = 600;    // コイン/時間 (15分150コイン)
-const PLATFORM_FEE_RATE = 0.15;
+// コスト定数（確定仕様）
+const INPUT_COST_PER_HOUR = 30;          // 円/時間（場所代: AWS IVS入力）
+const OUTPUT_COST_PER_VIEWER_HOUR = 5;   // 円/視聴者/時間（送料: AWS IVS出力）
+const COIN_TO_YEN = 1;                   // 1コイン = 1円（決済手数料はユーザー側負担で別途加算）
+const PLATFORM_FEE_RATE = 0.15;          // 運営手数料: 15%
 
 function calcProfit(stream) {
   const inputCost = stream.cost_input_yen || 0;
   const outputCost = stream.cost_output_yen || 0;
   const totalCost = inputCost + outputCost;
-  // 運営収益 = 消費コイン × 15% × 1.1円（1コイン=1.1円）
+  // 運営収益 = 消費コイン × 15% × 1円（確定仕様: 1コイン=1円）
   const revenueCoins = stream.revenue_coins || 0;
-  const platformRevenue = revenueCoins * 1.1 * PLATFORM_FEE_RATE;
+  const platformRevenue = revenueCoins * COIN_TO_YEN * PLATFORM_FEE_RATE;
   const profit = platformRevenue - totalCost;
   return { inputCost, outputCost, totalCost, platformRevenue, profit };
 }
@@ -145,7 +145,7 @@ export default function LiveStreamCostMonitor() {
   const totalInputCost = allStreams.reduce((s, st) => s + (st.cost_input_yen || 0), 0);
   const totalOutputCost = allStreams.reduce((s, st) => s + (st.cost_output_yen || 0), 0);
   const totalRevCoins = allStreams.reduce((s, st) => s + (st.revenue_coins || 0), 0);
-  const totalPlatformRev = totalRevCoins * 1.1 * 0.15;
+  const totalPlatformRev = totalRevCoins * COIN_TO_YEN * PLATFORM_FEE_RATE;
   const totalProfit = totalPlatformRev - totalInputCost - totalOutputCost;
 
   return (

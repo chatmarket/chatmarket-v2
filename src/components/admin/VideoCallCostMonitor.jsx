@@ -4,9 +4,9 @@ import { base44 } from "@/api/base44Client";
 import { Phone, TrendingUp, TrendingDown, Coins, DollarSign, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
-const COMM_COST_PER_MIN = 4;
-const COIN_TO_YEN = 1.1;
-const PLATFORM_FEE_RATE = 0.15;
+const COMM_COST_PER_MIN = 4;          // AWS通信実費: ¥4/分（双方向）
+const COIN_TO_YEN = 1;                // 1コイン = 1円（確定仕様）
+const PLATFORM_FEE_RATE = 0.15;       // 運営手数料: 15%
 
 function profitColor(val) {
   return val >= 0 ? "text-green-400" : "text-red-400";
