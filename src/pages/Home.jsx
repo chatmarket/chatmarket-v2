@@ -16,7 +16,7 @@ import ServerLimitBanner from "../components/home/ServerLimitBanner";
 import HeroSlot from "../components/home/HeroSlot";
 import GiantKillingBanner from "../components/home/GiantKillingBanner";
 import MillionaireSupporters from "../components/home/MillionaireSupporters";
-import DebugLog from "../components/home/DebugLog";
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -334,8 +334,6 @@ export default function Home() {
           onClose={() => setMessageTarget(null)}
         />
       )}
-
-      <DebugLog />
     </div>
   );
 }
