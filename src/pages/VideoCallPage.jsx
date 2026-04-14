@@ -1483,12 +1483,13 @@ export default function VideoCallPage() {
               </SelectContent>
             </Select>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setShowReportModal(false)}>キャンセル</Button>
-              <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleReport} disabled={!reportReason}>通報する</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setShowReportModal(false)}>キャンセル</Button>
+                <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white" onClick={handleReport} disabled={!reportReason}>通報する</Button>
+              </div>
             </div>
-          </div>
-          </DialogContent>
-          </Dialog>
-          </div>
-          );
-          }
+            </DialogContent>
+            </Dialog>
+            </div>
+            </div>
+            );
+            }
