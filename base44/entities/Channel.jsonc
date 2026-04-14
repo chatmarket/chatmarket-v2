@@ -113,6 +113,15 @@
       "default": false,
       "description": "\u30d3\u30c7\u30aa\u901a\u8a71\u53d7\u4ed8\u4e2d\u304b\u3069\u3046\u304b"
     },
+    "incoming_call_mode": {
+      "type": "string",
+      "enum": [
+        "MANUAL",
+        "AUTO_ACCEPT"
+      ],
+      "default": "MANUAL",
+      "description": "\u53d7\u4fe1\u901a\u8a71\u306e\u81ea\u52d5\u627f\u8afe\u30e2\u30fc\u30c9\u3002AUTO_ACCEPT=\u5373\u5ea7\u306b\u63a5\u7d9a\u5408\u610f\u3092\u81ea\u52d5\u751f\u6210"
+    },
     "default_call_duration_minutes": {
       "type": "number",
       "default": 0,
