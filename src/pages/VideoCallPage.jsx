@@ -840,6 +840,18 @@ export default function VideoCallPage() {
           </div>
         )}
 
+        {/* PiP ワイプ（ビデオフレーム内） */}
+        {camOn && (
+          <div className="absolute bottom-4 right-4 w-28 h-40 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg bg-black/90 z-10">
+            <video ref={localVideoRef} autoPlay muted className="w-full h-full object-cover" />
+            {!camOn && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                <CameraOff className="w-6 h-6 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Call Progress HUD (経過時間 / 残り時間) */}
          {callStartTime && effectiveDuration && (
            <div className="absolute bottom-48 md:bottom-52 left-2 md:left-4 right-2 md:right-4 z-10 bg-black/70 border border-cyan-500/40 rounded-lg md:rounded-xl p-2 md:p-4 backdrop-blur">
