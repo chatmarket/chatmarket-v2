@@ -138,6 +138,16 @@ Deno.serve(async (req) => {
           channel_owner_email: call.callee_email,
           message:             `1対1ビデオ通話（第1ユニット・特別価格）`,
         });
+        // ミリオネア・チャレンジ集計: チャンネルの月間収益コインに加算
+        if (call.callee_channel_id) {
+          const channels = await base44.entities.Channel.filter({ id: call.callee_channel_id });
+          const ch = channels[0];
+          if (ch) {
+            await base44.entities.Channel.update(call.callee_channel_id, {
+              monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + FIRST_UNIT_COINS,
+            });
+          }
+        }
         await base44.entities.VideoCall.update(call_id, {
           billing_started_at:     now.toISOString(),
           next_billing_at:        nextBillingAt.toISOString(),
@@ -212,6 +222,16 @@ Deno.serve(async (req) => {
         channel_owner_email: call.callee_email,
         message:             `1対1ビデオ通話（第${unitNumber}ユニット）`,
       });
+      // ミリオネア・チャレンジ集計: チャンネルの月間収益コインに加算
+      if (call.callee_channel_id) {
+        const channels = await base44.entities.Channel.filter({ id: call.callee_channel_id });
+        const ch = channels[0];
+        if (ch) {
+          await base44.entities.Channel.update(call.callee_channel_id, {
+            monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + NORMAL_COINS,
+          });
+        }
+      }
 
       const newConsumed = (call.coins_consumed || 0) + NORMAL_COINS;
       await base44.entities.VideoCall.update(call_id, {

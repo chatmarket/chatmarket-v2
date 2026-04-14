@@ -176,7 +176,11 @@ export default function VideoCallPage() {
   const [nextBillingAt, setNextBillingAt] = useState(null);
   const [secondsUntilBilling, setSecondsUntilBilling] = useState(null);
   const [showInsufficientModal, setShowInsufficientModal] = useState(false);
+  const [currentUnit, setCurrentUnit] = useState(0); // 課金ユニット番号
+  const [showChargeAlert, setShowChargeAlert] = useState(false); // 12分警告
   const billingTickRef = useRef(null);
+  const checkNextRef = useRef(null);
+  const chargeAlertShownRef = useRef(false);
   const warned5minRef = useRef(false);
   const warned1minRef = useRef(false);
 
@@ -246,39 +250,54 @@ export default function VideoCallPage() {
       if (data.next_billing_at) {
         setNextBillingAt(new Date(data.next_billing_at));
       }
+      if (data.unit !== undefined) {
+        setCurrentUnit(data.unit);
+      }
     };
 
     billingTickRef.current = setInterval(tick, 60000); // 1分ごとにtick
     tick(); // 即時実行（最初の15分を課金開始）
 
-    return () => clearInterval(billingTickRef.current);
+    return () => {
+      clearInterval(billingTickRef.current);
+      clearTimeout(checkNextRef.current);
+    };
   }, [call?.status, call?.id, user?.email]);
 
-  // 次回課金までの残り秒数カウントダウン
+  // 次回課金までの残り秒数カウントダウン + 12分時点の残高チェック
   useEffect(() => {
-    if (!nextBillingAt) return;
-    const timer = setInterval(() => {
+    if (!nextBillingAt || !call?.id || !user) return;
+    chargeAlertShownRef.current = false;
+    warned5minRef.current = false;
+    warned1minRef.current = false;
+
+    const timer = setInterval(async () => {
       const secs = Math.max(0, Math.ceil((nextBillingAt - Date.now()) / 1000));
       setSecondsUntilBilling(secs);
 
-      // 5分前警告
-      if (secs <= 300 && !warned5minRef.current) {
-        warned5minRef.current = true;
-        toast.warning("⏰ 次の15分課金まで5分前です", { duration: 5000 });
+      // 12分経過 = 次課金3分前(180秒) → 残高チェック
+      if (secs <= 180 && secs > 60 && !chargeAlertShownRef.current && call?.caller_email === user.email) {
+        chargeAlertShownRef.current = true;
+        const res = await base44.functions.invoke("videoCallBilling", { call_id: call.id, action: "check_next" });
+        if (res.data && !res.data.has_enough) {
+          setShowChargeAlert(true);
+          toast.error(`⚠️ 残高不足！次の15分（500コイン）が不足しています。今すぐチャージしてください。`, { duration: 10000 });
+        }
       }
       // 1分前警告
       if (secs <= 60 && !warned1minRef.current) {
         warned1minRef.current = true;
-        toast.warning("⚡ 次の15分課金まで1分前です！残高を確認してください", { duration: 8000 });
+        toast.warning("⚡ 次の課金まで1分前！残高を確認してください", { duration: 8000 });
       }
       // リセット（次のインターバル用）
       if (secs === 0) {
-        warned5minRef.current = false;
+        chargeAlertShownRef.current = false;
         warned1minRef.current = false;
+        setShowChargeAlert(false);
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [nextBillingAt]);
+  }, [nextBillingAt, call?.id, user?.email]);
 
   // 延長用の選択肢セット
   useEffect(() => {
@@ -586,17 +605,42 @@ export default function VideoCallPage() {
         {/* Coin billing HUD (発信者のみ) */}
         {call?.billing_started_at && user?.email === call?.caller_email && (
           <div className="absolute top-4 left-4 z-10 space-y-1">
+            {/* 残高 */}
             <div className="bg-black/70 border border-yellow-500/40 rounded-xl px-3 py-1.5 flex items-center gap-2 text-yellow-400 text-xs font-bold backdrop-blur">
               <Coins className="w-3.5 h-3.5" />
               残高 {coinBalance !== null ? coinBalance.toLocaleString() : "…"} コイン
             </div>
+            {/* ユニット表示 */}
+            <div className="bg-black/70 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2 text-white/60 text-xs backdrop-blur">
+              <span>第{currentUnit || 1}ユニット</span>
+              <span className="text-yellow-400 font-bold">
+                {currentUnit <= 1 ? "150コイン" : "500コイン"}/15分
+              </span>
+            </div>
+            {/* 次回課金カウントダウン */}
             {secondsUntilBilling !== null && (
               <div className={`bg-black/70 border rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-bold backdrop-blur ${
-                secondsUntilBilling <= 60 ? "border-red-500/60 text-red-400" : secondsUntilBilling <= 300 ? "border-yellow-500/40 text-yellow-400" : "border-white/20 text-white/60"
+                secondsUntilBilling <= 60 ? "border-red-500/60 text-red-400" : secondsUntilBilling <= 180 ? "border-orange-500/60 text-orange-400" : "border-white/20 text-white/60"
               }`}>
                 <Clock className="w-3.5 h-3.5" />
                 次回課金まで {Math.floor(secondsUntilBilling / 60)}:{String(secondsUntilBilling % 60).padStart(2, "0")}
-                <span className="text-muted-foreground ml-1">({(call.coin_price_per_15min || 500).toLocaleString()}コイン)</span>
+                <span className="ml-1 opacity-70">({currentUnit <= 0 ? 500 : 500}コイン)</span>
+              </div>
+            )}
+            {/* 12分時点のチャージ警告バナー */}
+            {showChargeAlert && (
+              <div className="bg-red-900/90 border border-red-500/60 rounded-xl px-3 py-2 flex items-start gap-2 text-xs backdrop-blur max-w-[220px]">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-red-300 font-bold">残高不足！</p>
+                  <p className="text-red-300/80">次の500コインが不足しています。3分以内にチャージしないと強制終了されます。</p>
+                  <button
+                    className="mt-1 text-yellow-400 font-bold underline text-[11px]"
+                    onClick={() => { window.open("/settings", "_blank"); }}
+                  >
+                    チャージする →
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1001,8 +1045,13 @@ export default function VideoCallPage() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              次の15分分の通話料金（{(call?.coin_price_per_15min || 500).toLocaleString()}コイン）が不足しているため、通話を自動切断しました。
+              次の15分分の通話料金（{currentUnit <= 1 ? 150 : 500}コイン）が不足しているため、通話を自動切断しました。
             </p>
+            <div className="bg-secondary rounded-lg p-3 text-xs space-y-1 text-muted-foreground">
+              <p>📌 課金ルール（ステップアップ制）</p>
+              <p>・最初の15分: <span className="text-primary font-bold">150コイン</span>（特別価格）</p>
+              <p>・16分以降 / 15分毎: <span className="text-yellow-400 font-bold">500コイン</span></p>
+            </div>
             <div className="bg-secondary rounded-lg p-3 text-xs text-muted-foreground">
               コインをチャージしてから再度通話をご利用ください。
             </div>
