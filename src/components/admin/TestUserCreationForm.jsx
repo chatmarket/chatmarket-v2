@@ -18,12 +18,31 @@ export default function TestUserCreationForm() {
 
     setLoading(true);
     try {
-      await base44.users.inviteUser(email.trim(), "user");
-      toast.success(`${email} をテストユーザーとして招待しました`);
+      const trimmedEmail = email.trim();
+      
+      // ユーザーを招待
+      await base44.users.inviteUser(trimmedEmail, "user");
+
+      // call-anser プランを登録
+      await base44.entities.PlanSubscription.create({
+        user_email: trimmedEmail,
+        plan_id: "call-anser",
+        status: "active",
+      });
+
+      // YellCoinWallet に初期残高500コインを付与
+      await base44.entities.YellCoinWallet.create({
+        user_email: trimmedEmail,
+        balance: 500,
+        total_charged: 500,
+        total_sent: 0,
+      });
+
+      toast.success(`${trimmedEmail} を招待しました（call-anser プラン + 500コイン付与）`);
       setEmail("");
       setFullName("");
     } catch (err) {
-      toast.error(`招待エラー: ${err.message}`);
+      toast.error(`エラー: ${err.message}`);
     } finally {
       setLoading(false);
     }
