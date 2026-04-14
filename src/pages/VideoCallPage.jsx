@@ -1253,8 +1253,8 @@ export default function VideoCallPage() {
               )}
               </div>
 
-        {/* Quality indicator */}
-        <div className="flex items-center justify-center gap-3 mt-3">
+              {/* Quality indicator */}
+              <div className="flex items-center justify-center gap-3 mt-3">
           <span className="text-[10px] text-white/30">🎙️ {AUDIO_QUALITY.find(q => q.id === audioQuality)?.label}</span>
           <span className="text-white/20">·</span>
           <span className="text-[10px] text-white/30">📹 {videoQuality}</span>
@@ -1278,6 +1278,8 @@ export default function VideoCallPage() {
           {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
           </div>
           )}
+          </div>
+          </div>
           </div>
 
           {/* ---- Extension Modal ---- */}
