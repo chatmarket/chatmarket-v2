@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import RecordingPlayerModal from "@/components/call/RecordingPlayerModal";
 
 const STATUS_MAP = {
   ended: { label: "終了", icon: Phone, color: "text-green-400 bg-green-500/10" },
@@ -129,22 +130,11 @@ export default function CallHistory() {
 
       {/* Recording Player Modal */}
       {selectedRecording && (
-        <Dialog open={!!selectedRecording} onOpenChange={() => setSelectedRecording(null)}>
-          <DialogContent className="bg-card border-border max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Play className="w-5 h-5 text-primary" /> 通話アーカイブ再生
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="bg-black rounded-xl overflow-hidden aspect-video">
-                <video
-                  src={selectedRecording.recording_url}
-                  controls
-                  autoPlay
-                  className="w-full h-full"
-                />
-              </div>
+        <RecordingPlayerModal
+          call={selectedRecording}
+          onClose={() => setSelectedRecording(null)}
+        />
+      )}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-muted-foreground text-xs mb-1">相手</p>
@@ -163,15 +153,7 @@ export default function CallHistory() {
                   <p className="font-semibold">{Math.round(selectedRecording.recording_duration_seconds / 60)}分</p>
                 </div>
               </div>
-              <a href={selectedRecording.recording_url} download className="w-full">
-                <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
-                  <Download className="w-4 h-4" /> ダウンロード
-                </Button>
-              </a>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+
     </div>
   );
 }
