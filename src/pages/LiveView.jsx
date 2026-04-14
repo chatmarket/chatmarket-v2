@@ -57,14 +57,6 @@ export default function LiveView() {
     return unsub;
   }, [id]);
 
-  // チャンネルオーナーメール取得
-  useEffect(() => {
-    if (!stream?.channel_id) return;
-    base44.entities.Channel.filter({ id: stream.channel_id }).then((r) => {
-      if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
-    });
-  }, [stream?.channel_id]);
-
   const { data: stream, isLoading } = useQuery({
     queryKey: ["livestream", id],
     queryFn: async () => {
@@ -73,6 +65,14 @@ export default function LiveView() {
     },
     refetchInterval: 5000,
   });
+
+  // チャンネルオーナーメール取得
+  useEffect(() => {
+    if (!stream?.channel_id) return;
+    base44.entities.Channel.filter({ id: stream.channel_id }).then((r) => {
+      if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
+    });
+  }, [stream?.channel_id]);
 
   // 30秒プレビュータイマー（有料かつ未購入の場合のみ）
   useEffect(() => {
