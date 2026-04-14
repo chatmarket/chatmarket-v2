@@ -23,6 +23,7 @@ import CampaignChannelManagement from "../components/admin/CampaignChannelManage
 import DrameSettingsManagement from "../components/admin/DrameSettingsManagement";
 import CallUsageLimitManagement from "../components/admin/CallUsageLimitManagement";
 import TestUserCreationForm from "../components/admin/TestUserCreationForm";
+import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -801,6 +802,9 @@ export default function AdminDashboard() {
         <TabsContent value="users" className="space-y-6">
           {/* テストユーザー作成 */}
           <TestUserCreationForm />
+
+          {/* 登録済みテストユーザー一覧 */}
+          <RegisteredTestUsersList />
 
           <div className="bg-card rounded-xl border border-border/50 p-5">
             <p className="text-sm text-muted-foreground mb-4">登録済みユーザー一覧（{allUsers.length}件）</p>
