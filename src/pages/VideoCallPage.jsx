@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -23,6 +23,14 @@ const PLAN_MATRIX = {
   basic:        { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
   "call-anser": { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
 };
+const PLAN_DEFAULT_DURATION = {
+  free:         15,
+  basic:        15,
+  "call-anser": 15,
+};
+const MILLIONAIRE_CHALLENGE_START = new Date("2026-04-01");
+const MILLIONAIRE_CHALLENGE_END = new Date("2026-06-30");
+
 function getPlanMatrix(plan) { return PLAN_MATRIX[plan] || PLAN_MATRIX.free; }
 function getUserPlan(user) {
   if (!user) return "free";
@@ -30,6 +38,27 @@ function getUserPlan(user) {
   if (user.plan === "basic") return "basic";
   if (user.role === "admin") return "basic";
   return "free";
+}
+
+function isMillionaireChallengePeriod() {
+  const now = new Date();
+  return now >= MILLIONAIRE_CHALLENGE_START && now <= MILLIONAIRE_CHALLENGE_END;
+}
+
+function getEffectiveDuration(channel, user) {
+  // 1. ミリオネア・チャレンジ期間中は全員15分ロック
+  if (isMillionaireChallengePeriod()) {
+    return 15;
+  }
+  
+  // 2. ライバー個別設定があれば使用
+  if (channel?.default_call_duration_minutes && channel.default_call_duration_minutes > 0) {
+    return channel.default_call_duration_minutes;
+  }
+  
+  // 3. プラン別デフォルト値を使用
+  const plan = getUserPlan(user);
+  return PLAN_DEFAULT_DURATION[plan] || 15;
 }
 
 // ---- Constants ----
@@ -232,6 +261,12 @@ export default function VideoCallPage() {
     enabled: !!call?.callee_email,
   });
 
+  // 有効な通話時間を計算（優先順: ミリオネア期間 > ライバー設定 > プラン別デフォルト）
+  const effectiveDuration = useMemo(
+    () => getEffectiveDuration(calleeChannel, user),
+    [calleeChannel, user]
+  );
+
   // 通話開始時刻をセット
   useEffect(() => {
     if (call?.status === "active" && !callStartTime) {
@@ -348,17 +383,37 @@ export default function VideoCallPage() {
     }
   }, [calleeChannel]);
 
-  // カウントダウンタイマー
+  // カウントダウンタイマー（有効な時間に基づいて動作）
+  const warned3minRef = useRef(false);
+  const warned1minBannerRef = useRef(false);
+
   useEffect(() => {
-    if (!callStartTime || !call?.duration_minutes) return;
-    const totalMs = call.duration_minutes * 60 * 1000;
+    if (!callStartTime || !effectiveDuration) return;
+    const totalMs = effectiveDuration * 60 * 1000;
+    warned3minRef.current = false;
+    warned1minBannerRef.current = false;
 
     const timer = setInterval(() => {
       const elapsed = Date.now() - callStartTime;
       const remaining = Math.max(0, Math.ceil((totalMs - elapsed) / 1000));
       setRemainingSeconds(remaining);
 
-      // 30秒前にバナー表示
+      // 3分前（180秒）にAgoraシグナリングで通知
+      if (remaining === 180 && !warned3minRef.current && call?.id) {
+        warned3minRef.current = true;
+        // Agoraシグナリング通知（実装予定）
+        console.log("🔔 Agora Signal: 3分前の通知");
+        toast.warning("⏰ あと3分で通話が終了します");
+      }
+
+      // 1分前（60秒）にAgoraシグナリングで通知＆バナー表示
+      if (remaining === 60 && !warned1minBannerRef.current && call?.id) {
+        warned1minBannerRef.current = true;
+        console.log("🔔 Agora Signal: 1分前の通知");
+        toast.error("⏰ あと1分で通話が終了します");
+      }
+
+      // 30秒前にバナー表示（延長提案）
       if (remaining <= 30 && !extendBannerShownRef.current) {
         extendBannerShownRef.current = true;
         setShowExtendBanner(true);
@@ -372,7 +427,7 @@ export default function VideoCallPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [callStartTime, call?.duration_minutes, extendPaid]);
+  }, [callStartTime, effectiveDuration, extendPaid, call?.id]);
 
   // Start camera
   useEffect(() => {
@@ -723,7 +778,7 @@ export default function VideoCallPage() {
         )}
 
         {/* Call Progress HUD (経過時間 / 残り時間) */}
-         {callStartTime && call?.duration_minutes && (
+         {callStartTime && effectiveDuration && (
            <div className="absolute bottom-20 md:bottom-24 left-2 md:left-4 right-2 md:right-4 z-10 bg-black/70 border border-cyan-500/40 rounded-lg md:rounded-xl p-2 md:p-4 backdrop-blur">
              <div className="space-y-2">
                {/* Progress bar */}
@@ -731,7 +786,7 @@ export default function VideoCallPage() {
                 <motion.div
                   className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
                   initial={{ width: "0%" }}
-                  animate={{ width: `${Math.min(100, (remainingSeconds === null ? 0 : (call.duration_minutes * 60 - remainingSeconds) / (call.duration_minutes * 60)) * 100)}%` }}
+                  animate={{ width: `${Math.min(100, (remainingSeconds === null ? 0 : (effectiveDuration * 60 - remainingSeconds) / (effectiveDuration * 60)) * 100)}%` }}
                   transition={{ duration: 1 }}
                   style={{
                     boxShadow: "0 0 10px rgba(0,229,255,0.5)",
@@ -748,7 +803,7 @@ export default function VideoCallPage() {
                   <p className="text-cyan-300/60 text-[8px] md:text-[10px]">経過</p>
                 </div>
                 <div className="text-center hidden md:block">
-                  <p className="text-white/40 text-[9px]">/ {call.duration_minutes}分</p>
+                  <p className="text-white/40 text-[9px]">/ {effectiveDuration}分{isMillionaireChallengePeriod() ? " (固定)" : ""}</p>
                 </div>
                 <div className="min-w-max">
                   <p className={`font-bold text-sm md:text-base ${remainingSeconds <= 60 ? "text-red-400" : "text-cyan-400"}`}>
