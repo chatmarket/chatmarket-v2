@@ -1267,7 +1267,7 @@ export default function VideoCallPage() {
               )}
               </div>
 
-              {/* ---- Extension Modal ---- */}
+             {/* ---- Extension Modal ---- */}
       <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
@@ -1471,7 +1471,6 @@ export default function VideoCallPage() {
           </div>
         </DialogContent>
         </Dialog>
-        </div>
         </div>
         );
         }
