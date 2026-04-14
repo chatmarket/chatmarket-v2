@@ -663,7 +663,7 @@ export default function VideoCallPage() {
       {/* Main container: Video + Chat */}
        <div className="flex-1 flex flex-col overflow-hidden">
          {/* Video call section */}
-         <div className="flex-1 flex flex-col min-w-0 lg:flex-row">
+         <div className="flex-1 flex flex-col min-w-0">
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
@@ -733,9 +733,9 @@ export default function VideoCallPage() {
                 <div className="absolute inset-0 bg-black/20 backdrop-blur-lg" />
               )}
             </div>
-            {/* 視聴者の映像（PiP - 右下） */}
-            <div className="absolute bottom-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
-              <div ref={canvasRef} style={{ width: '100%', height: '100%', display: 'none' }} />
+            {/* 視聴者の映像（PiP - 右下、画面内） */}
+            <div className="absolute bottom-20 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black z-10">
+              <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
             </div>
           </div>
         ) : (
