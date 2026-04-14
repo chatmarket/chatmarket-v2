@@ -855,12 +855,12 @@ export default function VideoCallPage() {
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30"
             >
               <div className="text-center">
                 <p className="font-black leading-none drop-shadow-2xl"
                   style={{
-                    fontSize: "180px",
+                    fontSize: "120px",
                     color: "#00ff9d",
                     textShadow: `
                       0 0 20px #00ff9d,
@@ -873,7 +873,7 @@ export default function VideoCallPage() {
                   }}>
                   {String(remainingSeconds).padStart(2, '0')}
                 </p>
-                <p className="text-2xl font-bold opacity-90 -mt-8 drop-shadow-lg"
+                <p className="text-lg font-bold opacity-90 drop-shadow-lg"
                   style={{
                     color: remainingSeconds <= 10 ? "#ff0055" : "#00ff9d",
                     textShadow: `0 0 20px ${remainingSeconds <= 10 ? "#ff0055" : "#00ff9d"}`

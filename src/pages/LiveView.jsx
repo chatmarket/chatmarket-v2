@@ -30,18 +30,7 @@ export default function LiveView() {
   const [wallet, setWallet] = useState(null);
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
 
-  // id が未定義の場合は loader を表示
-  if (!id) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">配信を読み込み中...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // すべてのフックを最上部に配置（条件分岐の前に）
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then((u) => {
@@ -51,18 +40,15 @@ export default function LiveView() {
     });
   }, []);
 
-  // SuperChat & ギフト リアルタイム購読
   useEffect(() => {
     const unsub = base44.entities.SuperChat.subscribe((event) => {
       if (event.type !== "create" || event.data?.livestream_id !== id) return;
       const item = { ...event.data, id: event.id };
 
       if (item.gift_id) {
-        // ギフト
         setActiveGifts((prev) => [...prev.slice(-4), item]);
         setTimeout(() => setActiveGifts((prev) => prev.filter((g) => g.id !== event.id)), 5000);
       } else {
-        // 通常スーパーチャット
         setActiveTips((prev) => [...prev.slice(-4), item]);
         setTimeout(() => setActiveTips((prev) => prev.filter((t) => t.id !== event.id)), 5000);
       }
@@ -79,15 +65,6 @@ export default function LiveView() {
     refetchInterval: 5000,
   });
 
-  // チャンネルオーナーメール取得
-  useEffect(() => {
-    if (!stream?.channel_id) return;
-    base44.entities.Channel.filter({ id: stream.channel_id }).then((r) => {
-      if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
-    });
-  }, [stream?.channel_id]);
-
-  // アクティブな通話をチェック
   const { data: activeCall } = useQuery({
     queryKey: ["active-call", stream?.channel_id],
     queryFn: async () => {
@@ -101,7 +78,13 @@ export default function LiveView() {
     refetchInterval: 2000,
   });
 
-  // 30秒プレビュータイマー（有料かつ未購入の場合のみ）
+  useEffect(() => {
+    if (!stream?.channel_id) return;
+    base44.entities.Channel.filter({ id: stream.channel_id }).then((r) => {
+      if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
+    });
+  }, [stream?.channel_id]);
+
   useEffect(() => {
     if (!stream || !stream.price || stream.price === 0 || hasPurchased) return;
     if (stream.status !== "live") return;
@@ -118,7 +101,6 @@ export default function LiveView() {
     return () => clearInterval(timer);
   }, [stream?.id, stream?.status, hasPurchased]);
 
-  // Check purchase
   useEffect(() => {
     if (!user || !stream) return;
     if (!stream.price || stream.price === 0) {
@@ -134,6 +116,18 @@ export default function LiveView() {
       if (purchases.length > 0) setHasPurchased(true);
     });
   }, [user, stream, id]);
+
+  // id が未定義の場合は loader を表示
+  if (!id) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">配信を読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handlePurchase = async () => {
     if (!user) {
