@@ -31,10 +31,16 @@ function getRevenueShare(plan) {
   return 0.70;
 }
 
-// ステップアップ課金定数
-const FIRST_UNIT_COINS  = 150;  // 第1ユニット（0〜15分）特別価格
-const NORMAL_COINS      = 500;  // 第2ユニット以降（16分〜）通常価格
-const MIN_COINS_PER_15MIN = FIRST_UNIT_COINS; // 通話開始の最低残高
+// プラン別定数（バックエンドと同期）
+const PLAN_MATRIX = {
+  free:       { min_coins: 200, creator_rate: 0.70, platform_rate: 0.30 },
+  basic:      { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
+  "call-anser": { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
+};
+
+function getPlanMatrix(plan) {
+  return PLAN_MATRIX[plan] || PLAN_MATRIX.free;
+}
 
 // CALL&ANSERプラン: 1日の無料通話上限（分）
 const FREE_CALL_DAILY_LIMIT_MIN = 60;
@@ -429,28 +435,37 @@ export default function VideoCallRequest() {
             </div>
           )}
 
-          {/* 課金ルール */}
-          <div className="bg-secondary rounded-lg p-3 text-xs space-y-2">
-            <p className="font-semibold text-foreground flex items-center gap-1 mb-2">
-              <Coins className="w-3.5 h-3.5 text-yellow-400" /> 課金ルール（全ユニット統一）
-            </p>
-            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
-              <p className="text-[10px] text-muted-foreground">15分ごとに課金</p>
-              <p className="font-black text-2xl text-primary">150コイン</p>
-              <p className="text-[9px] text-primary/70">業界最安値・全ユニット統一価格</p>
-            </div>
-            <div className="flex justify-between text-muted-foreground pt-1 border-t border-border">
-              <span>ライバー報酬（85%）</span>
-              <span className="text-green-400 font-semibold">127コイン / 15分</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>運営手数料</span>
-              <span className="font-semibold">0%（この価格帯）</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              ※ 通話開始時に150コインが即時引落。12分経過時点で次の150コインの残高確認を行います。残高不足の場合は15分で強制終了されます。
-            </p>
-          </div>
+          {/* プラン別課金ルール */}
+          {(() => {
+            const pm = getPlanMatrix(userPlan);
+            const creatorCoins = Math.floor(pm.min_coins * pm.creator_rate);
+            const platformCoins = pm.min_coins - creatorCoins;
+            return (
+              <div className="bg-secondary rounded-lg p-3 text-xs space-y-2">
+                <p className="font-semibold text-foreground flex items-center gap-1 mb-2">
+                  <Coins className="w-3.5 h-3.5 text-yellow-400" /> 課金ルール（あなたのプラン）
+                </p>
+                <div className={`border rounded-lg p-3 text-center ${userPlan === "free" ? "bg-orange-500/10 border-orange-500/30" : "bg-primary/10 border-primary/30"}`}>
+                  <p className="text-[10px] text-muted-foreground">15分ごとに課金</p>
+                  <p className={`font-black text-2xl ${userPlan === "free" ? "text-orange-400" : "text-primary"}`}>{pm.min_coins}コイン</p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">
+                    {userPlan === "free" ? "FREEプラン最低価格" : "Basicプラン最低価格（業界最安値）"}
+                  </p>
+                </div>
+                <div className="flex justify-between text-muted-foreground pt-1 border-t border-border">
+                  <span>ライバー報酬（{Math.round(pm.creator_rate * 100)}%）</span>
+                  <span className="text-green-400 font-semibold">{creatorCoins}コイン / 15分</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Admin手数料（{Math.round(pm.platform_rate * 100)}%）</span>
+                  <span className="font-semibold">{platformCoins}コイン / 15分</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  ※ 通話開始時に{pm.min_coins}コインが即時引落。12分経過時点で次の{pm.min_coins}コインの残高確認を行います。
+                </p>
+              </div>
+            );
+          })()}
         </div>
         )}
 

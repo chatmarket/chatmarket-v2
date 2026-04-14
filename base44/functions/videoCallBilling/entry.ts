@@ -1,25 +1,107 @@
 /**
  * videoCallBilling
  *
- * 確定仕様（2026-04）:
- *   全ユニット: 150エールコイン / 15分（業界最安値・固定）
- *   ライバー還元率: 85%（127.5円相当）
- *   運営手数料（Admin）: 15%（22.5円）— 必ずシステム側で控除
- *   インフラ原価補填: 運営15%（22.5円）を上回るインフラコストはBasicプランMRRから補填
- *   通信方式: WebRTC P2P優先（コスト0）、NAT越え失敗時はTURN（約¥2/分）
+ * 確定仕様（2026-04）プラン別マトリックス:
+ *
+ *   FREEプラン:
+ *     最低価格: 200エールコイン / 15分
+ *     ライバー還元: 70% (140コイン = ¥140)
+ *     Admin手数料: 30% (60コイン = ¥60) ← AWS原価と相殺して収支トントン
+ *
+ *   BasicプランおよびCALLプラン:
+ *     最低価格: 150エールコイン / 15分
+ *     ライバー還元: 85% (127.5コイン = ¥127.5)
+ *     Admin手数料: 15% (22.5コイン = ¥22.5) ← 不足分はBasicプランMRRから補填
+ *
+ *   プランアップグレード: ライバーのプラン変更後、次回tickから自動的に新レートを適用
  *
  * POST body: { call_id: string, action: "tick" | "end" | "check_next" }
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const COINS_PER_15MIN     = 150;    // 全ユニット統一価格
-const CREATOR_RATE        = 0.85;   // ライバー還元率85%
-const PLATFORM_RATE       = 0.15;   // 運営手数料15%（Admin絶対確保）
-const TURN_COST_PER_MIN   = 2;      // TURN fallback使用時の実費（円/分）
-const P2P_SUCCESS_RATE    = 0.80;   // P2P成功率80%想定 → 実効コスト = ×0.20
-// 1ユニット(15分)の期待インフラコスト = 15分 × ¥2 × 20% = ¥6
-// 運営収益 = 150 × 15% = ¥22.5 → ¥22.5 - ¥6 = 約¥16.5 の純利益
+// ── プラン別定数 ──
+const PLAN_CONFIG = {
+  free: {
+    min_coins:      200,   // 最低価格 200コイン/15分
+    creator_rate:   0.70,  // ライバー70%
+    platform_rate:  0.30,  // Admin30%（¥60 → AWS原価と相殺）
+  },
+  basic: {
+    min_coins:      150,   // 最低価格 150コイン/15分
+    creator_rate:   0.85,  // ライバー85%
+    platform_rate:  0.15,  // Admin15%（¥22.5 → 不足分はMRR補填）
+  },
+};
+
+// ライバーのプランを判定（サブスクリプションをチェック）
+async function getCallerPlanConfig(base44, callerEmail) {
+  const subs = await base44.asServiceRole.entities.PlanSubscription.filter({
+    user_email: callerEmail,
+    status: 'active',
+  });
+  const activeSub = subs[0];
+  if (activeSub && (activeSub.plan_id === 'basic' || activeSub.plan_id === 'call-anser')) {
+    return { plan: 'basic', ...PLAN_CONFIG.basic };
+  }
+  return { plan: 'free', ...PLAN_CONFIG.free };
+}
+
+// ライバー（着信側）のプランを判定
+async function getCalleePlanConfig(base44, calleeEmail) {
+  const subs = await base44.asServiceRole.entities.PlanSubscription.filter({
+    user_email: calleeEmail,
+    status: 'active',
+  });
+  const activeSub = subs[0];
+  if (activeSub && (activeSub.plan_id === 'basic' || activeSub.plan_id === 'call-anser')) {
+    return { plan: 'basic', ...PLAN_CONFIG.basic };
+  }
+  return { plan: 'free', ...PLAN_CONFIG.free };
+}
+
+// 1ユニット課金処理（共通）
+async function chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg) {
+  const coinsToCharge = planCfg.min_coins;
+  const creatorCoins  = Math.floor(coinsToCharge * planCfg.creator_rate);
+  const platformCoins = coinsToCharge - creatorCoins;
+
+  const nextBillingAt = new Date(now.getTime() + 15 * 60 * 1000);
+
+  await base44.entities.YellCoinWallet.update(wallet.id, {
+    balance:    wallet.balance - coinsToCharge,
+    total_sent: (wallet.total_sent || 0) + coinsToCharge,
+  });
+
+  await base44.entities.YellCoinTransaction.create({
+    user_email:          call.caller_email,
+    type:                'send',
+    service_type:        'direct_chat',
+    service_id:          call.id,
+    amount:              coinsToCharge,
+    target_name:         call.callee_name,
+    target_id:           call.callee_channel_id,
+    channel_id:          call.callee_channel_id,
+    channel_owner_email: call.callee_email,
+    message:             `1対1ビデオ通話（第${unitNumber}ユニット）ライバー${Math.round(planCfg.creator_rate*100)}% / Admin${Math.round(planCfg.platform_rate*100)}% [${planCfg.plan}プラン]`,
+  });
+
+  // ミリオネア・チャレンジ集計
+  if (call.callee_channel_id) {
+    const channels = await base44.entities.Channel.filter({ id: call.callee_channel_id });
+    const ch = channels[0];
+    if (ch) {
+      await base44.entities.Channel.update(call.callee_channel_id, {
+        monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + coinsToCharge,
+      });
+    }
+  }
+
+  return { coinsToCharge, creatorCoins, platformCoins, nextBillingAt };
+}
+
+const TURN_COST_PER_MIN = 2;
+const P2P_SUCCESS_RATE  = 0.80;
 
 Deno.serve(async (req) => {
   try {
@@ -43,14 +125,17 @@ Deno.serve(async (req) => {
 
     // ── action: check_next ── 次ユニット残高確認（課金なし）
     if (action === 'check_next') {
+      // 発信者のプランを動的チェック（アップグレード直後に即反映）
+      const planCfg = await getCallerPlanConfig(base44, call.caller_email);
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
       const wallet = wallets[0];
       const balance = wallet?.balance || 0;
       return Response.json({
-        success: true,
+        success:        true,
         balance,
-        next_unit_cost: COINS_PER_15MIN,
-        has_enough: balance >= COINS_PER_15MIN,
+        plan:           planCfg.plan,
+        next_unit_cost: planCfg.min_coins,
+        has_enough:     balance >= planCfg.min_coins,
       });
     }
 
@@ -60,100 +145,76 @@ Deno.serve(async (req) => {
       const actualMinutes = Math.ceil((now - billingStart) / 1000 / 60);
       const consumedCoins = call.coins_consumed || 0;
 
-      // 分配計算（Admin15%絶対確保）
-      const creatorRevenueCoins  = Math.floor(consumedCoins * CREATOR_RATE);   // 85%
-      const platformRevenueCoins = consumedCoins - creatorRevenueCoins;        // 残り15%（端数もAdminへ）
+      // 終了時点のプランで分配比率を確定（最後に適用されたプランを使用）
+      const planCfg = await getCallerPlanConfig(base44, call.caller_email);
+      const creatorRevenueCoins  = Math.floor(consumedCoins * planCfg.creator_rate);
+      const platformRevenueCoins = consumedCoins - creatorRevenueCoins;
 
-      // インフラコスト試算（P2P成功率考慮）
-      const expectedCommCostYen = Math.round(actualMinutes * TURN_COST_PER_MIN * (1 - P2P_SUCCESS_RATE));
-      const platformRevenueYen  = Math.round(platformRevenueCoins); // 1コイン=1円
-      const platformProfitYen   = platformRevenueYen - expectedCommCostYen;
+      const commCostYen    = Math.round(actualMinutes * TURN_COST_PER_MIN * (1 - P2P_SUCCESS_RATE));
+      const platformRevYen = platformRevenueCoins;
+      const profitYen      = platformRevYen - commCostYen;
 
       await base44.entities.VideoCall.update(call_id, {
         status:                  'ended',
         actual_duration_minutes: actualMinutes,
-        comm_cost_yen:           expectedCommCostYen,
+        comm_cost_yen:           commCostYen,
         platform_revenue_coins:  platformRevenueCoins,
         creator_revenue_coins:   creatorRevenueCoins,
-        platform_profit_yen:     platformProfitYen,
+        platform_profit_yen:     profitYen,
       });
 
       return Response.json({
-        success: true,
+        success:                true,
         actual_minutes:         actualMinutes,
+        plan:                   planCfg.plan,
         coins_consumed:         consumedCoins,
         creator_revenue_coins:  creatorRevenueCoins,
         platform_revenue_coins: platformRevenueCoins,
-        platform_profit_yen:    platformProfitYen,
-        comm_cost_yen:          expectedCommCostYen,
+        platform_profit_yen:    profitYen,
       });
     }
 
     // ── action: tick ── 毎分フロントから呼ぶ課金タイマー
     if (action === 'tick') {
+      // tickごとにプランを動的チェック → アップグレード後は即座に新レート適用
+      const planCfg = await getCallerPlanConfig(base44, call.caller_email);
 
       // ── 最初のユニット（課金開始）──
       if (!call.billing_started_at) {
         const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
         const wallet = wallets[0];
 
-        if (!wallet || wallet.balance < COINS_PER_15MIN) {
+        if (!wallet || wallet.balance < planCfg.min_coins) {
           await base44.entities.VideoCall.update(call_id, { auto_disconnected: true, status: 'ended' });
           return Response.json({
             success: false, reason: 'insufficient_balance',
-            required: COINS_PER_15MIN, balance: wallet?.balance || 0, auto_disconnected: true,
+            required: planCfg.min_coins, balance: wallet?.balance || 0,
+            plan: planCfg.plan, auto_disconnected: true,
           });
         }
 
-        const nextBillingAt = new Date(now.getTime() + 15 * 60 * 1000);
-
-        // コイン消費（発信者ウォレット）
-        await base44.entities.YellCoinWallet.update(wallet.id, {
-          balance:    wallet.balance - COINS_PER_15MIN,
-          total_sent: (wallet.total_sent || 0) + COINS_PER_15MIN,
-        });
-
-        // トランザクション記録
-        await base44.entities.YellCoinTransaction.create({
-          user_email:          call.caller_email,
-          type:                'send',
-          service_type:        'direct_chat',
-          service_id:          call_id,
-          amount:              COINS_PER_15MIN,
-          target_name:         call.callee_name,
-          target_id:           call.callee_channel_id,
-          channel_id:          call.callee_channel_id,
-          channel_owner_email: call.callee_email,
-          message:             '1対1ビデオ通話（第1ユニット）ライバー85% / Admin15%',
-        });
-
-        // ミリオネア・チャレンジ集計（全額を月間集計に加算）
-        if (call.callee_channel_id) {
-          const channels = await base44.entities.Channel.filter({ id: call.callee_channel_id });
-          const ch = channels[0];
-          if (ch) {
-            await base44.entities.Channel.update(call.callee_channel_id, {
-              monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + COINS_PER_15MIN,
-            });
-          }
-        }
+        const { coinsToCharge, creatorCoins, platformCoins, nextBillingAt } =
+          await chargeOneUnit(base44, call, wallet, 1, now, planCfg);
 
         await base44.entities.VideoCall.update(call_id, {
           billing_started_at:     now.toISOString(),
           next_billing_at:        nextBillingAt.toISOString(),
           billing_interval_count: 1,
-          coins_consumed:         COINS_PER_15MIN,
+          coins_consumed:         coinsToCharge,
+          platform_revenue_coins: platformCoins,
+          creator_revenue_coins:  creatorCoins,
         });
 
         return Response.json({
           success: true, billed: true,
-          coins_billed:         COINS_PER_15MIN,
-          unit:                 1,
-          next_billing_at:      nextBillingAt.toISOString(),
-          balance_after:        wallet.balance - COINS_PER_15MIN,
-          coins_consumed_total: COINS_PER_15MIN,
-          creator_coins:        Math.floor(COINS_PER_15MIN * CREATOR_RATE),
-          platform_coins:       COINS_PER_15MIN - Math.floor(COINS_PER_15MIN * CREATOR_RATE),
+          plan:            planCfg.plan,
+          coins_billed:    coinsToCharge,
+          creator_coins:   creatorCoins,
+          platform_coins:  platformCoins,
+          unit:            1,
+          next_billing_at: nextBillingAt.toISOString(),
+          balance_after:   wallet.balance - coinsToCharge,
+          coins_consumed_total: coinsToCharge,
         });
       }
 
@@ -162,21 +223,24 @@ Deno.serve(async (req) => {
       if (!nextBillingAt || now < nextBillingAt) {
         return Response.json({
           success: true, billed: false,
-          seconds_until_next_billing: nextBillingAt ? Math.max(0, Math.ceil((nextBillingAt - now) / 1000)) : 900,
+          plan: planCfg.plan,
+          seconds_until_next_billing: nextBillingAt
+            ? Math.max(0, Math.ceil((nextBillingAt - now) / 1000))
+            : 900,
           coins_consumed_total: call.coins_consumed || 0,
           unit: call.billing_interval_count || 1,
         });
       }
 
-      // ── 15分経過 → 次ユニット課金 ──
+      // ── 15分経過 → 次ユニット課金（プランは現時点で動的取得済み）──
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
       const wallet = wallets[0];
 
-      if (!wallet || wallet.balance < COINS_PER_15MIN) {
+      if (!wallet || wallet.balance < planCfg.min_coins) {
         const billingStart  = new Date(call.billing_started_at);
         const actualMinutes = Math.ceil((now - billingStart) / 1000 / 60);
         const consumedCoins = call.coins_consumed || 0;
-        const creatorCoins  = Math.floor(consumedCoins * CREATOR_RATE);
+        const creatorCoins  = Math.floor(consumedCoins * planCfg.creator_rate);
         const platformCoins = consumedCoins - creatorCoins;
         const commCostYen   = Math.round(actualMinutes * TURN_COST_PER_MIN * (1 - P2P_SUCCESS_RATE));
 
@@ -192,59 +256,37 @@ Deno.serve(async (req) => {
 
         return Response.json({
           success: false, reason: 'insufficient_balance', auto_disconnected: true,
-          required: COINS_PER_15MIN, balance: wallet?.balance || 0,
+          plan: planCfg.plan,
+          required: planCfg.min_coins, balance: wallet?.balance || 0,
         });
       }
 
-      const unitNumber       = (call.billing_interval_count || 0) + 1;
-      const newNextBillingAt = new Date(nextBillingAt.getTime() + 15 * 60 * 1000);
+      const unitNumber = (call.billing_interval_count || 0) + 1;
+      const { coinsToCharge, creatorCoins, platformCoins, nextBillingAt: newNextBillingAt } =
+        await chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg);
 
-      await base44.entities.YellCoinWallet.update(wallet.id, {
-        balance:    wallet.balance - COINS_PER_15MIN,
-        total_sent: (wallet.total_sent || 0) + COINS_PER_15MIN,
-      });
-
-      await base44.entities.YellCoinTransaction.create({
-        user_email:          call.caller_email,
-        type:                'send',
-        service_type:        'direct_chat',
-        service_id:          call_id,
-        amount:              COINS_PER_15MIN,
-        target_name:         call.callee_name,
-        target_id:           call.callee_channel_id,
-        channel_id:          call.callee_channel_id,
-        channel_owner_email: call.callee_email,
-        message:             `1対1ビデオ通話（第${unitNumber}ユニット）ライバー85% / Admin15%`,
-      });
-
-      // ミリオネア・チャレンジ集計
-      if (call.callee_channel_id) {
-        const channels = await base44.entities.Channel.filter({ id: call.callee_channel_id });
-        const ch = channels[0];
-        if (ch) {
-          await base44.entities.Channel.update(call.callee_channel_id, {
-            monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + COINS_PER_15MIN,
-          });
-        }
-      }
-
-      const newConsumed = (call.coins_consumed || 0) + COINS_PER_15MIN;
+      const newConsumed        = (call.coins_consumed || 0) + coinsToCharge;
+      const newCreatorTotal    = (call.creator_revenue_coins || 0) + creatorCoins;
+      const newPlatformTotal   = (call.platform_revenue_coins || 0) + platformCoins;
 
       await base44.entities.VideoCall.update(call_id, {
         next_billing_at:        newNextBillingAt.toISOString(),
         billing_interval_count: unitNumber,
         coins_consumed:         newConsumed,
+        creator_revenue_coins:  newCreatorTotal,
+        platform_revenue_coins: newPlatformTotal,
       });
 
       return Response.json({
         success: true, billed: true,
-        coins_billed:         COINS_PER_15MIN,
+        plan:                 planCfg.plan,
+        coins_billed:         coinsToCharge,
+        creator_coins:        creatorCoins,
+        platform_coins:       platformCoins,
         unit:                 unitNumber,
         coins_consumed_total: newConsumed,
         next_billing_at:      newNextBillingAt.toISOString(),
-        balance_after:        wallet.balance - COINS_PER_15MIN,
-        creator_coins:        Math.floor(COINS_PER_15MIN * CREATOR_RATE),
-        platform_coins:       COINS_PER_15MIN - Math.floor(COINS_PER_15MIN * CREATOR_RATE),
+        balance_after:        wallet.balance - coinsToCharge,
       });
     }
 

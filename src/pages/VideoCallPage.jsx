@@ -14,6 +14,21 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import MessageModal from "../components/chat/MessageModal";
 
+// ---- プラン別定数（バックエンドと同期） ----
+const PLAN_MATRIX = {
+  free:         { min_coins: 200, creator_rate: 0.70, platform_rate: 0.30 },
+  basic:        { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
+  "call-anser": { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
+};
+function getPlanMatrix(plan) { return PLAN_MATRIX[plan] || PLAN_MATRIX.free; }
+function getUserPlan(user) {
+  if (!user) return "free";
+  if (user.plan === "call-anser") return "call-anser";
+  if (user.plan === "basic") return "basic";
+  if (user.role === "admin") return "basic";
+  return "free";
+}
+
 // ---- Constants ----
 const YELL_AMOUNTS = [
   { value: 200, color: "green", label: "¥200" },
@@ -610,10 +625,12 @@ export default function VideoCallPage() {
               <Coins className="w-3.5 h-3.5" />
               残高 {coinBalance !== null ? coinBalance.toLocaleString() : "…"} コイン
             </div>
-            {/* ユニット表示 */}
+            {/* ユニット表示（プラン別） */}
             <div className="bg-black/70 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2 text-white/60 text-xs backdrop-blur">
               <span>第{currentUnit || 1}ユニット</span>
-              <span className="text-primary font-bold">150コイン/15分</span>
+              <span className={`font-bold ${getUserPlan(user) === "free" ? "text-orange-400" : "text-primary"}`}>
+                {getPlanMatrix(getUserPlan(user)).min_coins}コイン/15分
+              </span>
             </div>
             {/* 次回課金カウントダウン */}
             {secondsUntilBilling !== null && (

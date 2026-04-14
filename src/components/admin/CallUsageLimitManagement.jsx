@@ -122,12 +122,23 @@ export default function CallUsageLimitManagement() {
       </div>
 
       {/* 方針バナー */}
-      <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-xs space-y-1">
-        <p className="font-bold text-primary">📋 確定仕様: Admin15%絶対確保モデル</p>
-        <p>・価格: 150エールコイン / 15分（全ユニット統一）</p>
-        <p>・ライバー還元: <strong className="text-foreground">85%（¥127.5）</strong> / Admin手数料: <strong className="text-primary">15%（¥22.5）システム側で必ず控除</strong></p>
-        <p>・通信方式: WebRTC P2P優先（NAT越え失敗時のみTURN: 約¥2/分 × 20% = 約¥6/ユニット）</p>
-        <p>・インフラ原価がAdmin収益（¥22.5）を上回る場合、超過分をBasicプランMRRから自動補填</p>
+      <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-xs space-y-2">
+        <p className="font-bold text-primary">📋 確定仕様: プラン別マトリックス</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2.5 space-y-0.5">
+            <p className="font-bold text-orange-400">FREEプラン</p>
+            <p>最低価格: <strong className="text-foreground">200コイン / 15分</strong></p>
+            <p>ライバー: <strong className="text-green-400">70%（¥140）</strong> / Admin: <strong className="text-orange-400">30%（¥60）</strong></p>
+            <p className="text-muted-foreground text-[10px]">Admin¥60 → AWS原価と相殺して収支トントン</p>
+          </div>
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-2.5 space-y-0.5">
+            <p className="font-bold text-primary">Basicプラン</p>
+            <p>最低価格: <strong className="text-foreground">150コイン / 15分</strong></p>
+            <p>ライバー: <strong className="text-green-400">85%（¥127.5）</strong> / Admin: <strong className="text-primary">15%（¥22.5）</strong></p>
+            <p className="text-muted-foreground text-[10px]">不足分はBasicプランMRR（¥3,300×加入者）から補填</p>
+          </div>
+        </div>
+        <p className="text-muted-foreground">・プランアップグレード後は次回tickから自動的に新レート（15%）を適用</p>
       </div>
 
       {/* 会計試算 */}

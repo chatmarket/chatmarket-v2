@@ -147,11 +147,18 @@ export default function VideoCallCostMonitor() {
   return (
     <div className="space-y-6">
       {/* 方針バナー */}
-      <div className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 text-xs space-y-1">
-        <p className="font-bold text-primary">📋 確定仕様: Admin15%絶対確保モデル</p>
-        <p>・価格: <strong className="text-foreground">150コイン / 15分</strong>（全ユニット統一）</p>
-        <p>・ライバー: <strong className="text-foreground">85%（¥127.5）</strong> / Admin: <strong className="text-primary">15%（¥22.5）必ずシステム控除</strong></p>
-        <p>・インフラコスト超過分はBasicプランMRRから補填（期待値: ¥6/ユニット → 純利益¥16.5/ユニット）</p>
+      <div className="bg-secondary border border-border/30 rounded-xl px-4 py-3 text-xs space-y-2">
+        <p className="font-bold text-foreground">📋 プラン別マトリックス（確定仕様）</p>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2 space-y-0.5">
+            <p className="font-bold text-orange-400">FREEプラン</p>
+            <p className="text-muted-foreground">200コイン/15分 / ライバー<span className="text-green-400 font-bold">70%</span> / Admin<span className="text-orange-400 font-bold">30%（¥60）</span></p>
+          </div>
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-2 space-y-0.5">
+            <p className="font-bold text-primary">Basicプラン</p>
+            <p className="text-muted-foreground">150コイン/15分 / ライバー<span className="text-green-400 font-bold">85%</span> / Admin<span className="text-primary font-bold">15%（¥22.5）</span></p>
+          </div>
+        </div>
       </div>
 
       {/* サマリー */}
