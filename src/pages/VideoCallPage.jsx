@@ -1147,7 +1147,18 @@ export default function VideoCallPage() {
                     base44.auth.redirectToLogin();
                     return;
                   }
-                  navigate('/plan-select');
+                  // コイン残高確認
+                  const wallet = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
+                  const balance = wallet[0]?.balance || 0;
+                  const minCoins = 150; // Basic最小コスト
+                  if (balance >= minCoins) {
+                    // コイン充分 → 通話開始
+                    await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
+                    toast.success('通話を開始します');
+                  } else {
+                    // コイン不足 → プラン選択へ
+                    navigate('/plan-select');
+                  }
                 }}
                 className="flex items-center gap-2 bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
               >

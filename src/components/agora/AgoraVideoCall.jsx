@@ -32,9 +32,15 @@ export default function AgoraVideoCall({
           return;
         }
 
+        if (!channelId || !userId) {
+          console.warn('Agora setup: missing channelId or userId');
+          setError('チャネルまたはユーザーIDが不足しています');
+          return;
+        }
+
         const agoraEngine = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         agoraEngineRef.current = agoraEngine;
-        console.log(`Agora client created. Joining channel: ${channelId}`);
+        console.log(`Agora client created. Joining channel: ${channelId} with token length: ${token.length}`);
 
         // リモートユーザーの参加を検出
         agoraEngine.on('user-published', async (user, mediaType) => {
@@ -67,15 +73,19 @@ export default function AgoraVideoCall({
           setRemoteUserCount(0);
         });
 
-        // チャネルに参加
+        // チャネルに参加（トークン検証付き）
         const uid = parseInt(userId, 10);
+        if (isNaN(uid)) {
+          throw new Error(`Invalid userId: ${userId}`);
+        }
+
         await agoraEngine.join(appId, channelId, token, uid);
         console.log(`✓ Successfully joined channel: ${channelId} as uid: ${uid}`);
 
         // Publisherの場合はローカルビデオストリームをパブリッシュ
         if (isPublisher) {
-          const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-          const videoTrack = await AgoraRTC.createCameraVideoTrack();
+          const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: 'high_quality' });
+          const videoTrack = await AgoraRTC.createCameraVideoTrack({ encoderConfig: '720p_auto' });
           console.log('✓ Audio & video tracks created');
 
           // ローカルビデオをプレビュー
@@ -109,7 +119,7 @@ export default function AgoraVideoCall({
       if (agoraEngineRef.current) {
         agoraEngineRef.current._audioTrack?.close();
         agoraEngineRef.current._videoTrack?.close();
-        agoraEngineRef.current.leave();
+        agoraEngineRef.current.leave().catch((e) => console.warn('Leave error:', e));
       }
     };
   }, [appId, channelId, token, userId, isPublisher]);
