@@ -1,17 +1,34 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Clock, AlertTriangle, Zap, Link as LinkIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 
-const DAILY_LIMIT_MINUTES = 60;
-const ALERT_THRESHOLD_MINUTES = 10; // 10分以下でアラート表示
+const PLAN_LIMITS = {
+  free: 60,
+  basic: 120,
+  default: 60,
+};
+const ALERT_THRESHOLD_MINUTES = 10;
 const STORAGE_KEY = "daily_view_time";
 
 export default function DailyViewTimeIndicator() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [dailyViewedMinutes, setDailyViewedMinutes] = useState(0);
-  const [remainingMinutes, setRemainingMinutes] = useState(DAILY_LIMIT_MINUTES);
+  const [remainingMinutes, setRemainingMinutes] = useState(60);
   const [showAlert, setShowAlert] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const alertShownRef = useRef(false);
+  
+  const dailyLimit = PLAN_LIMITS[user?.plan] || PLAN_LIMITS.default;
+
+  // ユーザー情報取得
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+    });
+  }, []);
 
   // 今日の視聴時間を読み込み
   useEffect(() => {
@@ -32,11 +49,11 @@ export default function DailyViewTimeIndicator() {
     };
 
     const viewed = loadDailyViewTime();
-    const remaining = Math.max(0, DAILY_LIMIT_MINUTES - viewed);
+    const remaining = Math.max(0, dailyLimit - viewed);
     
     setDailyViewedMinutes(viewed);
     setRemainingMinutes(remaining);
-    setLimitReached(viewed >= DAILY_LIMIT_MINUTES);
+    setLimitReached(viewed >= dailyLimit);
 
     // 残り時間が少なくなったらアラート表示
     if (remaining <= ALERT_THRESHOLD_MINUTES && remaining > 0 && !alertShownRef.current) {
@@ -44,7 +61,7 @@ export default function DailyViewTimeIndicator() {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 8000);
     }
-  }, []);
+  }, [dailyLimit]);
 
   // ポーラーで定期的に更新（ユーザーが別タブから時間を追加した場合など）
   useEffect(() => {
@@ -57,11 +74,11 @@ export default function DailyViewTimeIndicator() {
 
       if (data.date === today) {
         const viewed = data.minutes || 0;
-        const remaining = Math.max(0, DAILY_LIMIT_MINUTES - viewed);
-        
+        const remaining = Math.max(0, dailyLimit - viewed);
+
         setDailyViewedMinutes(viewed);
         setRemainingMinutes(remaining);
-        setLimitReached(viewed >= DAILY_LIMIT_MINUTES);
+        setLimitReached(viewed >= dailyLimit);
 
         // 新しくアラート条件に達したらアラート表示
         if (remaining <= ALERT_THRESHOLD_MINUTES && remaining > 0 && !alertShownRef.current) {
@@ -73,9 +90,9 @@ export default function DailyViewTimeIndicator() {
     }, 5000); // 5秒ごとに更新
 
     return () => clearInterval(interval);
-  }, []);
+    }, [dailyLimit]);
 
-  const progressPercentage = (dailyViewedMinutes / DAILY_LIMIT_MINUTES) * 100;
+    const progressPercentage = (dailyViewedMinutes / dailyLimit) * 100;
   const isWarning = remainingMinutes <= ALERT_THRESHOLD_MINUTES;
   const isLimited = limitReached;
 
@@ -89,7 +106,7 @@ export default function DailyViewTimeIndicator() {
             <span className="text-muted-foreground">本日の視聴時間</span>
           </div>
           <span className={`text-xs font-bold ${isLimited ? "text-red-500" : isWarning ? "text-yellow-500" : "text-foreground"}`}>
-            {remainingMinutes}分 / {DAILY_LIMIT_MINUTES}分
+            {remainingMinutes}分 / {dailyLimit}分
           </span>
         </div>
 
@@ -116,7 +133,7 @@ export default function DailyViewTimeIndicator() {
           ) : isWarning ? (
             <span className="text-yellow-500 font-semibold">残り時間が少なくなっています。計画的に視聴してください。</span>
           ) : (
-            <>毎日午前0時にリセットされます。1日60分の視聴上限があります。</>
+            <>毎日午前0時にリセット。現在の上限：{dailyLimit}分 {user?.plan === "free" && <span className="text-primary font-semibold">→ プラン加入で120分に拡張可能</span>}</>
           )}
         </p>
       </div>
@@ -148,10 +165,35 @@ export default function DailyViewTimeIndicator() {
             className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 flex items-start gap-2"
           >
             <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-            <div className="text-xs text-red-700 leading-relaxed">
+            <div className="text-xs text-red-700 leading-relaxed flex-1">
               <p className="font-bold">本日の視聴上限に達しました</p>
               <p>明日午前0時にリセットされます。</p>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Upsellバナー（FREEプラン、45分超過時） */}
+      <AnimatePresence>
+        {user?.plan === "free" && dailyViewedMinutes >= 45 && !isLimited && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-gradient-to-r from-primary/20 to-blue-500/20 border border-primary/50 rounded-lg p-3 flex items-start gap-2"
+          >
+            <Zap className="w-4 h-4 text-primary shrink-0 mt-0.5 animate-pulse" />
+            <div className="text-xs text-primary leading-relaxed flex-1">
+              <p className="font-bold">🎯 プラン加入で明日から2時間楽しめます！</p>
+              <p className="mt-1">今なら全プラン初月無料。さらに多くのコンテンツをお楽しみください。</p>
+            </div>
+            <button
+              onClick={() => navigate("/plan-select")}
+              className="shrink-0 ml-2 px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
+            >
+              <LinkIcon className="w-3 h-3" />
+              プランを見る
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
