@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare, Users
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare, Users, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { path: "/fanclub", icon: Crown, label: "ファンクラブ" },
   { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
   { path: "/blog", icon: BookOpen, label: "ブログ" },
+  { path: "/recruit", icon: Zap, label: "ライバー募集" },
 ];
 
 const CREATOR_ITEMS = [
