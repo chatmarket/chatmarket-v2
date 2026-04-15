@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import NotificationBell from "./NotificationBell";
 import LangSwitcher from "./LangSwitcher";
+import Footer from "./Footer";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -228,6 +229,9 @@ export default function AppLayout() {
         <main className="flex-1 pb-20 lg:pb-6 overflow-x-hidden">
           <Outlet />
         </main>
+
+        {/* Footer */}
+        <Footer />
       </div>
 
       {/* Mobile Bottom Navigation */}
