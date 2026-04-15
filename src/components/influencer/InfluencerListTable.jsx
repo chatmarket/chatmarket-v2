@@ -14,39 +14,70 @@ export default function InfluencerListTable({ influencers }) {
     return `${baseUrl}/plan-select?ref=${code}&from=${influencer.country}`;
   };
 
-  const handleExport = () => {
-    const csv = [
-      ["Name", "Country", "SNS URL", "Contact", "Invite Code"].join(","),
-      ...influencers.map((inf, idx) => [
-        inf.name,
-        inf.country,
-        inf.sns_url,
-        inf.contact,
-        generateInviteCode(inf, idx),
-      ].join(",")),
-    ].join("\n");
+  const handleExport = (format = "csv") => {
+    const data = influencers.map((inf, idx) => [
+      inf.name,
+      inf.country,
+      inf.sns_url,
+      inf.contact,
+      generateInviteCode(inf, idx),
+    ]);
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `influencer_campaign_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("CSVをエクスポートしました");
+    if (format === "csv") {
+      const csv = [
+        ["Name", "Country", "SNS URL", "Contact", "Invite Code"].join(","),
+        ...data.map(row => row.map(cell => `"${cell}"`).join(",")),
+      ].join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `influencer_campaign_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSVをエクスポートしました");
+    } else if (format === "json") {
+      const json = JSON.stringify(
+        data.map((row, idx) => ({
+          name: row[0],
+          country: row[1],
+          sns_url: row[2],
+          contact: row[3],
+          invite_code: row[4],
+        })),
+        null,
+        2
+      );
+
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `influencer_campaign_${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("JSONをエクスポートしました");
+    }
   };
 
   return (
     <div className="space-y-4">
       {/* ツールバー */}
-      <div className="flex items-center justify-between pb-4 border-b border-border/50">
+      <div className="flex items-center justify-between pb-4 border-b border-border/50 flex-wrap gap-2">
         <p className="text-sm font-semibold text-muted-foreground">
           {influencers.length} 件のインフルエンサー
         </p>
-        <Button onClick={handleExport} variant="outline" size="sm" className="gap-2">
-          <Download className="w-4 h-4" />
-          エクスポート
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => handleExport("csv")} variant="outline" size="sm" className="gap-2">
+            <Download className="w-4 h-4" />
+            CSV
+          </Button>
+          <Button onClick={() => handleExport("json")} variant="outline" size="sm" className="gap-2">
+            <Download className="w-4 h-4" />
+            JSON
+          </Button>
+        </div>
       </div>
 
       {/* テーブル */}
