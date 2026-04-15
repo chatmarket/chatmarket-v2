@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown, Ticket } from "lucide-react";
+import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown, Ticket, Users } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // 単体プランの定義
@@ -185,6 +185,27 @@ const PLANS = [
     description: "NPO・政治政党向けのクラウドファンディングプラン。独自審査・電話確認あり。",
     features: ["BASICプランの全機能込み", "NPO・政治政党向けクラウドファンディング", "プロジェクトページ作成・公開", "収益還元率90%（プログレッシブ対応）"],
     exclusive: true,
+  },
+  {
+    id: "fan-community",
+    icon: Users,
+    name: "ファンコミュニティ機能",
+    price: 0,
+    priceDisplay: "¥0",
+    period: "/月",
+    revenueShare: "—",
+    comingSoon: true,
+    color: "from-cyan-500/20 to-blue-600/10 border-cyan-500/30",
+    iconColor: "text-cyan-400",
+    badge: "フォロワー限定コンテンツ",
+    badgeColor: "bg-cyan-500/20 text-cyan-300",
+    description: "チャネルオーナーがフォロワー限定のニュース・オフショットを共有できる機能。",
+    features: [
+      "テキスト・画像投稿機能",
+      "フォロワー限定の公開設定",
+      "いいね・コメント機能",
+      "BASICプランに無料で付属",
+    ],
   },
 ];
 

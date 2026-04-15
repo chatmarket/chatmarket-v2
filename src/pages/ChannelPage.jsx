@@ -6,15 +6,17 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag, Users as UsersIcon } from "lucide-react";
 import ReportChannelDialog from "../components/channel/ReportChannelDialog";
 import CategoryBadge from "../components/channel/CategoryBadge";
+import FanCommunityTab from "../components/community/FanCommunityTab";
 
 export default function ChannelPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [showReport, setShowReport] = useState(false);
+  const [activeTab, setActiveTab] = useState("videos"); // "videos" | "community"
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -207,8 +209,35 @@ export default function ChannelPage() {
         onClose={() => setShowReport(false)}
       />
 
+      {/* Tab navigation */}
+      <div className="border-b border-border/50 mb-6 sm:mb-8 flex gap-4">
+        <button
+          onClick={() => setActiveTab("videos")}
+          className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+            activeTab === "videos"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Video className="w-4 h-4" />
+          動画 ({videos.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("community")}
+          className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+            activeTab === "community"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <UsersIcon className="w-4 h-4" />
+          ファンコミュニティ
+          <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold">準備中</span>
+        </button>
+      </div>
+
       {/* Live streams */}
-      {liveStreams.length > 0 && (
+      {activeTab === "videos" && liveStreams.length > 0 && (
         <section className="mb-6 sm:mb-8">
           <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
             <Radio className="w-5 h-5 text-red-400" /> ライブ配信中
@@ -221,24 +250,36 @@ export default function ChannelPage() {
         </section>
       )}
 
-      {/* Videos */}
-      <section>
-        <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
-          <Video className="w-5 h-5 text-primary" /> 投稿動画
-          <span className="text-sm font-normal text-muted-foreground">（{videos.length}本）</span>
-        </h2>
-        {videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
-            {videos.map((v) => (
-              <VideoCard key={v.id} video={v} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">まだ動画がありません</p>
-          </div>
-        )}
-      </section>
+      {/* Videos tab */}
+      {activeTab === "videos" && (
+        <section>
+          <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
+            <Video className="w-5 h-5 text-primary" /> 投稿動画
+            <span className="text-sm font-normal text-muted-foreground">（{videos.length}本）</span>
+          </h2>
+          {videos.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
+              {videos.map((v) => (
+                <VideoCard key={v.id} video={v} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">まだ動画がありません</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Community tab */}
+      {activeTab === "community" && (
+        <FanCommunityTab
+          channel={channel}
+          currentUser={currentUser}
+          isOwner={isOwner}
+          isFollower={isFollowing}
+        />
+      )}
     </div>
   );
 }
