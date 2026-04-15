@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap } from "lucide-react";
 import { isBefore } from "date-fns";
+import { t } from "@/lib/i18n";
 
 const _RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
 const _now = new Date();
@@ -103,20 +104,20 @@ export default function Home() {
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <p className="text-[11px] font-bold mb-0.5" style={{ color: "#fbbf24", letterSpacing: "0.1em" }}>
-                  ⏰ 期間限定 〜 4/30まで
-                </p>
-                <p className="font-black text-sm sm:text-base leading-tight" style={{ color: "#fef3c7" }}>
-                  【4/16解禁】全有料プラン完全無料！先行ライバー300名限定募集！
-                </p>
+                   {t("limitedPeriod")}
+                 </p>
+                 <p className="font-black text-sm sm:text-base leading-tight" style={{ color: "#fef3c7" }}>
+                   {t("recruitBannerText")}
+                 </p>
               </div>
               <div className="shrink-0 px-4 py-2 rounded-xl font-black text-sm whitespace-nowrap"
-                style={{
-                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                  color: "#1a0800",
-                  boxShadow: "0 0 12px rgba(245,158,11,0.7)",
-                }}>
-                Pro枠を確保 →
-              </div>
+                 style={{
+                   background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                   color: "#1a0800",
+                   boxShadow: "0 0 12px rgba(245,158,11,0.7)",
+                 }}>
+                 {t("securePro")}
+               </div>
             </div>
           </div>
         </Link>
@@ -146,19 +147,18 @@ export default function Home() {
           <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center", marginBottom: "12px" }}>Est. 2026 · The Creator Hub</p>
 
           <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
-            有料ライブ配信・動画販売・1対1有料ビデオ通話を<br className="hidden sm:inline" />
-            このプラットフォーム一つで。使い方は無限大！
-          </p>
+             {t("hero_sub")}
+           </p>
 
           <div className="mx-auto max-w-sm border border-primary/30 rounded-xl bg-primary/5 px-3 py-2.5 space-y-1.5 text-left mb-5">
             <div className="space-y-0.5">
-              <p className="text-[11px] text-foreground/80 leading-relaxed">言論の自由を体感してください、法的な問題発言以外は当サイトにおいて規制はかけません</p>
-              <p className="text-[10px] text-muted-foreground">＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます</p>
-            </div>
-            <div className="border-t border-primary/20 pt-1.5 space-y-0.5">
-              <p className="text-[11px] text-foreground/80 leading-relaxed">Experience free speech. No restrictions apply here, except for illegal remarks.</p>
-              <p className="text-[10px] text-muted-foreground">*Streamers can filter out specific words, so they can stream safely.</p>
-            </div>
+               <p className="text-[11px] text-foreground/80 leading-relaxed">{t("freeSpeak")}</p>
+               <p className="text-[10px] text-muted-foreground">{t("freeSpeakSub")}</p>
+             </div>
+             <div className="border-t border-primary/20 pt-1.5 space-y-0.5">
+               <p className="text-[11px] text-foreground/80 leading-relaxed">{t("freeSpeakEn")}</p>
+               <p className="text-[10px] text-muted-foreground">{t("freeSpeakEn_sub")}</p>
+             </div>
           </div>
 
           <div className="flex flex-col gap-4 justify-center items-center">
@@ -173,7 +173,7 @@ export default function Home() {
                     navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
                   }
                 }}
-                placeholder="チャンネル名や動画を検索..."
+                placeholder={t("searchPlaceholder")}
                 className="flex-1 bg-secondary border border-primary/30 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/60"
               />
               <Button
@@ -190,15 +190,15 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
               <Link to="/go-live" className="w-full sm:w-auto">
-                <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 px-5 w-full text-sm">
-                  <Radio className="w-4 h-4" />ライブ配信を始める
-                </Button>
-              </Link>
-              <Link to="/upload" className="w-full sm:w-auto">
-                <Button variant="secondary" className="gap-2 h-10 px-5 w-full text-sm">
-                  <Play className="w-4 h-4" />動画をアップロード
-                </Button>
-              </Link>
+                 <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 px-5 w-full text-sm">
+                   <Radio className="w-4 h-4" />{t("liveStarting")}
+                 </Button>
+               </Link>
+               <Link to="/upload" className="w-full sm:w-auto">
+                 <Button variant="secondary" className="gap-2 h-10 px-5 w-full text-sm">
+                   <Play className="w-4 h-4" />{t("uploadVideo")}
+                 </Button>
+               </Link>
             </div>
           </div>
         </div>
@@ -215,13 +215,13 @@ export default function Home() {
       </section>
 
       {/* ライブ配信中 */}
-      {liveStreams.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-            <h2 className="text-base sm:text-lg font-bold">ライブ配信中</h2>
-            <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
-          </div>
+       {liveStreams.length > 0 && (
+         <section className="space-y-3">
+           <div className="flex items-center gap-2">
+             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+             <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
+             <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
+           </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
           </ScrollRow>
@@ -229,23 +229,23 @@ export default function Home() {
       )}
 
       {/* おすすめ有料動画 */}
-      {featuredVideos.length > 0 && (
-        <section className="space-y-3 px-0">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-5 rounded-full bg-yellow-400 shrink-0" />
-            <h2 className="text-base sm:text-lg font-bold">おすすめ有料動画</h2>
-            <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-2 py-0.5 font-semibold">PPV</span>
-          </div>
+       {featuredVideos.length > 0 && (
+         <section className="space-y-3 px-0">
+           <div className="flex items-center gap-2">
+             <span className="w-1 h-5 rounded-full bg-yellow-400 shrink-0" />
+             <h2 className="text-base sm:text-lg font-bold">{t("recommendedPaidVideos")}</h2>
+             <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-2 py-0.5 font-semibold">PPV</span>
+           </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {featuredVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
                 <button
-                  onClick={() => handleMessage(v)}
-                  className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />メッセージ
-                </button>
+                   onClick={() => handleMessage(v)}
+                   className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                 >
+                   <MessageCircle className="w-3.5 h-3.5" />{t("message")}
+                 </button>
               </div>
             ))}
           </ScrollRow>
@@ -253,13 +253,13 @@ export default function Home() {
       )}
 
       {/* 無料動画 */}
-      {freeVideos.length > 0 && (
-        <section className="space-y-3 px-0">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-5 rounded-full bg-primary shrink-0" />
-            <h2 className="text-base sm:text-lg font-bold">無料で見られる動画</h2>
-            <span className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-full px-2 py-0.5 font-semibold">FREE</span>
-          </div>
+       {freeVideos.length > 0 && (
+         <section className="space-y-3 px-0">
+           <div className="flex items-center gap-2">
+             <span className="w-1 h-5 rounded-full bg-primary shrink-0" />
+             <h2 className="text-base sm:text-lg font-bold">{t("freeVideos")}</h2>
+             <span className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-full px-2 py-0.5 font-semibold">FREE</span>
+           </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {freeVideos.map((v) => (
               <div key={v.id} className="relative group">
@@ -271,23 +271,23 @@ export default function Home() {
       )}
 
       {/* 新着動画 */}
-      {recentVideos.length > 0 && (
-        <section className="space-y-3 px-0">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-5 rounded-full bg-blue-400 shrink-0" />
-            <h2 className="text-base sm:text-lg font-bold">新着動画</h2>
-            <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5 font-semibold">NEW</span>
-          </div>
+       {recentVideos.length > 0 && (
+         <section className="space-y-3 px-0">
+           <div className="flex items-center gap-2">
+             <span className="w-1 h-5 rounded-full bg-blue-400 shrink-0" />
+             <h2 className="text-base sm:text-lg font-bold">{t("latestVideos")}</h2>
+             <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5 font-semibold">NEW</span>
+           </div>
           <ScrollRow cardWidth={280} mobileCardWidth="72vw">
             {recentVideos.map((v) => (
               <div key={v.id} className="relative group">
                 <VideoCard video={v} />
                 <button
-                  onClick={() => handleMessage(v)}
-                  className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />メッセージ
-                </button>
+                   onClick={() => handleMessage(v)}
+                   className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                 >
+                   <MessageCircle className="w-3.5 h-3.5" />{t("message")}
+                 </button>
               </div>
             ))}
           </ScrollRow>
@@ -304,15 +304,15 @@ export default function Home() {
             <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-lg sm:rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-bold text-xs sm:text-sm md:text-base flex items-center gap-1 sm:gap-2">
-                    クラウドファンディング
-                    <span className="text-[10px] sm:text-xs font-bold bg-red-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full">{crowdfundings.length}件</span>
-                  </h2>
-                  <p className="text-[10px] sm:text-xs text-red-300/70 hidden sm:block">NPO・社会課題プロジェクトを支援</p>
-                </div>
+                   <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
+                 </div>
+                 <div className="min-w-0 flex-1">
+                   <h2 className="font-bold text-xs sm:text-sm md:text-base flex items-center gap-1 sm:gap-2">
+                     {t("crowdfunding")}
+                     <span className="text-[10px] sm:text-xs font-bold bg-red-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full">{crowdfundings.length}件</span>
+                   </h2>
+                   <p className="text-[10px] sm:text-xs text-red-300/70 hidden sm:block">NPO・社会課題プロジェクトを支援</p>
+                 </div>
               </div>
               {cfExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />}
             </div>
@@ -334,16 +334,16 @@ export default function Home() {
                     </div>
                     <Link to={`/crowdfunding/${cf.id}`} onClick={(e) => e.stopPropagation()} className="w-full sm:w-auto">
                       <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-1 shrink-0 text-xs px-3 w-full sm:w-auto">
-                        支援 <ExternalLink className="w-3 h-3" />
-                      </Button>
+                         {t("supportProject")} <ExternalLink className="w-3 h-3" />
+                       </Button>
                     </Link>
                   </div>
                 );
               })}
               <div className="px-3 sm:px-4 md:px-5 py-2 sm:py-3 text-center">
                 <Link to="/crowdfunding">
-                  <button className="text-xs text-red-400 hover:text-red-300 underline">すべて見る →</button>
-                </Link>
+                   <button className="text-xs text-red-400 hover:text-red-300 underline">{t("viewAll")}</button>
+                 </Link>
               </div>
             </div>
           )}
@@ -357,13 +357,13 @@ export default function Home() {
       <MillionaireSupporters />
 
       {/* 空の状態 */}
-      {isEmpty && (
-        <div className="text-center py-12 sm:py-16 md:py-20 lg:py-24 text-muted-foreground px-4">
-          <Radio className="w-12 h-12 mx-auto mb-4 opacity-30" />
-          <p className="text-base sm:text-lg">まだコンテンツがありません</p>
-          <p className="text-xs sm:text-sm mt-1 sm:mt-2">ライブ配信や動画アップロードで最初の一歩を！</p>
-        </div>
-      )}
+       {isEmpty && (
+         <div className="text-center py-12 sm:py-16 md:py-20 lg:py-24 text-muted-foreground px-4">
+           <Radio className="w-12 h-12 mx-auto mb-4 opacity-30" />
+           <p className="text-base sm:text-lg">{t("noContentMessage")}</p>
+           <p className="text-xs sm:text-sm mt-1 sm:mt-2">{t("noContentSub")}</p>
+         </div>
+       )}
 
       <div className="px-0">
         <ProgressiveIncentiveSection />
