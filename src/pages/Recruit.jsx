@@ -178,7 +178,7 @@ export default function Recruit() {
             style={{ boxShadow: "0 0 20px rgba(255,80,80,0.3)" }}
           >
             <Flame className="w-4 h-4" />
-            先着300名限定 · 4/16〜4/30キャンペーン
+            先着300名が埋まり次第終了
           </motion.div>
 
           <motion.h1
@@ -287,10 +287,10 @@ export default function Recruit() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
-              🎉 4/16スタート限定キャンペーン
+              🎉 先着300名限定キャンペーン
             </span>
             <h2 className="text-3xl sm:text-4xl font-black mt-4">今だけ、全部タダ。</h2>
-            <p className="text-muted-foreground mt-2 text-sm">BASIC・CALL&ANSER・VOD・PPV — すべてのプランが同時に無料</p>
+            <p className="text-muted-foreground mt-2 text-sm">BASIC・CALL&ANSER・VOD・PPV — すべてのプランが同時に無料（埋まり次第終了）</p>
           </div>
 
           {/* 全プランカード */}
@@ -339,7 +339,7 @@ export default function Recruit() {
                 <p className="text-yellow-300 font-black text-lg">3ヶ月で最大 {TOTAL_VALUE} × 3ヶ月 FREE</p>
               </div>
               <div className="text-xs text-muted-foreground text-center">
-                限定<span className="text-yellow-400 font-black text-sm"> {slotsRemaining} </span>名枠（先着順）
+                限定<span className="text-yellow-400 font-black text-sm"> {slotsRemaining} </span>名枠（先着順・埋まり次第終了）
               </div>
             </motion.div>
 
@@ -359,7 +359,7 @@ export default function Recruit() {
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-2 text-sm">
                 <p className="text-primary font-bold">✅ 適用条件</p>
                 <ul className="text-muted-foreground space-y-1 text-xs">
-                  <li>• 新規ライバー登録（4/16以降）</li>
+                  <li>• 新規ライバー登録（先着300名が埋まるまで）</li>
                   <li>• 利用規約への同意</li>
                   <li>• 審査不要・即時適用</li>
                 </ul>
@@ -367,7 +367,7 @@ export default function Recruit() {
               <div className="bg-primary/20 border border-primary/40 rounded-xl p-3 text-center">
                 <p className="text-primary font-black text-lg">初月 {TOTAL_VALUE} FREE</p>
               </div>
-              <p className="text-xs text-muted-foreground text-center">適用上限なし・期間中登録した全員に適用</p>
+              <p className="text-xs text-muted-foreground text-center">先着300名限定・埋まり次第終了</p>
             </motion.div>
           </div>
         </div>
