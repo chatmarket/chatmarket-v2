@@ -207,6 +207,28 @@ const PLANS = [
       "BASICプランに無料で付属",
     ],
   },
+  {
+    id: "fanclub",
+    icon: Heart,
+    name: "ファンクラブプラン",
+    price: 0,
+    priceDisplay: "¥0",
+    period: "/月",
+    revenueShare: "70%",
+    color: "from-pink-500/20 to-rose-600/10 border-pink-500/30",
+    iconColor: "text-pink-400",
+    badge: "メンバーシップ",
+    badgeColor: "bg-pink-500/20 text-pink-300",
+    description: "月額課金型のファンクラブを運営。月額を自由に設定できます。専用コンテンツやチャット特典でファンとの結びつきを強化。",
+    features: [
+      "月額課金型メンバーシップ運営",
+      "月額料金は配信者が自由に設定",
+      "会員専用のコンテンツ・特典提供",
+      "会員限定チャットルーム",
+      "会員管理ダッシュボード",
+      "収益還元率70%（プログレッシブ対応）",
+    ],
+  },
 ];
 
 // 推奨コンボ
