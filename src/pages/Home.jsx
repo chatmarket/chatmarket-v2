@@ -106,7 +106,7 @@ export default function Home() {
                   ⏰ 期間限定 〜 4/30まで
                 </p>
                 <p className="font-black text-sm sm:text-base leading-tight" style={{ color: "#fef3c7" }}>
-                  【4/16解禁】業界最高95%還元・先行ライバー300名限定募集開始！
+                  【4/16解禁】全有料プラン完全無料！先行ライバー300名限定募集！
                 </p>
               </div>
               <div className="shrink-0 px-4 py-2 rounded-xl font-black text-sm whitespace-nowrap"
