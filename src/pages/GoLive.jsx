@@ -189,7 +189,7 @@ export default function GoLive() {
     || (progressiveRate >= 0.95 ? 200 : progressiveRate >= 0.90 ? 175 : 150);
   const liveRevenueRate = progressiveRate;
   const liveMinPrice = isCampaign ? 0 : Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
-  const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 500);
+  const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 150);
   const livePriceError = mode === MODE_LIVE && !isCampaign && form.price < liveMinPrice && liveMinPrice > 0;
 
 
