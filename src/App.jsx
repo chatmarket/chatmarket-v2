@@ -59,6 +59,8 @@ import TicketVerify from './pages/TicketVerify';
 import MillionaireChallenge from './pages/MillionaireChallenge';
 import VideoEngineComparison from './pages/VideoEngineComparison';
 import InfraSlide from './pages/InfraSlide';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -137,6 +139,8 @@ const AuthenticatedApp = () => {
         <Route path="/millionaire-challenge" element={<MillionaireChallenge />} />
         <Route path="/admin/video-engine-comparison" element={<VideoEngineComparison />} />
         <Route path="/infra-slide" element={<InfraSlide />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

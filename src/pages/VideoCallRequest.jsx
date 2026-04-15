@@ -105,6 +105,7 @@ export default function VideoCallRequest() {
   const [useFreeSlot, setUseFreeSlot] = useState(false);
   const [freeSlotDuration, setFreeSlotDuration] = useState(10);
   const [recordingEnabled, setRecordingEnabled] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   // 録画オプション料金（15分ごとに追加）
   const RECORDING_OPTION_PRICE_PER_15MIN = 50;
@@ -545,10 +546,28 @@ export default function VideoCallRequest() {
           <span>リクエストはチャットで通知されます。配信者が承諾すると通話ボタンが有効になり、あなたが通話ボタンを押した時点で課金されます。</span>
         </div>
 
+        {/* 利用規約同意チェックボックス */}
+        <label className="flex items-start gap-3 cursor-pointer bg-secondary rounded-xl p-3">
+          <input
+            type="checkbox"
+            checked={termsAgreed}
+            onChange={(e) => setTermsAgreed(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded accent-primary shrink-0"
+          />
+          <span className="text-xs text-muted-foreground leading-relaxed">
+            <Link to="/terms" target="_blank" className="text-primary underline font-semibold">利用規約</Link>
+            および
+            <Link to="/privacy" target="_blank" className="text-primary underline font-semibold">プライバシーポリシー</Link>
+            に同意します。通話録画・課金・キャンセル不可の条件を理解した上で申し込みます。
+            <span className="text-destructive font-semibold ml-1">*必須</span>
+          </span>
+        </label>
+
         <Button
           type="submit"
           disabled={
             submitting ||
+            !termsAgreed ||
             existingRequests.length > 0 ||
             (userPlan === "call-anser" && useFreeSlot ? freeSlotsRemaining === 0 : !callPrice)
           }
