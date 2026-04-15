@@ -323,7 +323,7 @@ export default function VideoCallRequest() {
         {userPlan === "call-anser" && (
         <>
           <p className="font-semibold text-cyan-400">CALL＆ANSERプランの通話ルール</p>
-          <p className="text-muted-foreground">双方向通話プランです。<span className="text-cyan-400 font-semibold">1日60分（10分×6回）の無料通話枠</span>があります。無料枠を使わない場合は配信者設定料金で有料通話できます。</p>
+          <p className="text-muted-foreground">相手にお支払いしてお話が出来るプランです。<span className="text-cyan-400 font-semibold">1日60分（10分×6回）の無料通話枠</span>があります。有料通話は<span className="text-cyan-400 font-semibold">15分150円〜上限なし</span>（配信者設定）で申し込めます。</p>
           <p className="text-cyan-400 font-semibold mt-1">本日の無料残枠: {freeMinutesRemaining}分 / {FREE_CALL_DAILY_LIMIT_MIN}分</p>
         </>
         )}
@@ -460,7 +460,7 @@ export default function VideoCallRequest() {
                   <p className="text-[10px] text-muted-foreground">15分ごとに課金</p>
                   <p className={`font-black text-2xl ${userPlan === "free" ? "text-orange-400" : "text-primary"}`}>{pm.min_coins}コイン</p>
                   <p className="text-[9px] text-muted-foreground mt-0.5">
-                    {userPlan === "free" ? "FREEプラン最低価格" : "Basicプラン最低価格（業界最安値）"}
+                   {userPlan === "free" ? "FREEプラン最低価格" : "15分150円〜上限なし（配信者設定）"}
                   </p>
                 </div>
                 <div className="flex justify-between text-muted-foreground pt-1 border-t border-border">

@@ -1480,13 +1480,13 @@ export default function VideoCallPage() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              次の15分分の通話料金（150コイン）が不足しているため、通話を自動切断しました。
+              次の15分分の通話料金（150コイン〜）が不足しているため、通話を自動切断しました。
             </p>
             <div className="bg-secondary rounded-lg p-3 text-xs space-y-1 text-muted-foreground">
               <p>📌 課金ルール</p>
-              <p>・全ユニット統一: <span className="text-primary font-bold">150コイン / 15分</span></p>
-              <p>・ライバー還元: <span className="text-green-400 font-bold">85%（127.5円）</span></p>
-              <p>・運営手数料: <span className="text-muted-foreground">0%（この価格帯）</span></p>
+               <p>・通話料金: <span className="text-primary font-bold">15分150円〜上限なし（配信者設定）</span></p>
+               <p>・ライバー還元: <span className="text-green-400 font-bold">85%</span></p>
+               <p>・運営手数料: <span className="text-muted-foreground">15%</span></p>
             </div>
             <div className="bg-secondary rounded-lg p-3 text-xs text-muted-foreground">
               コインをチャージしてから再度通話をご利用ください。
