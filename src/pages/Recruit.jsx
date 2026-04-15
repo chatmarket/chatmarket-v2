@@ -23,9 +23,8 @@ const ALL_PLANS = [
   { name: "CALL&ANSER", price: "¥5,500",  color: "#00d4ff", desc: "1日60分無料通話枠" },
   { name: "VOD",        price: "¥4,980",  color: "#f59e0b", desc: "動画アーカイブ販売" },
   { name: "PPV",        price: "¥3,300",  color: "#ff6b6b", desc: "有料ライブ配信" },
-  { name: "TICKET",     price: "¥3,300",  color: "#a78bfa", desc: "リアルイベント入場管理" },
 ];
-const TOTAL_VALUE = "¥20,380"; // 月額合計
+const TOTAL_VALUE = "¥17,080"; // 月額合計
 
 function getProSlotsUsed() {
   const stored = localStorage.getItem(STORAGE_KEY);
