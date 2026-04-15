@@ -20,6 +20,7 @@ import WithdrawalManagement from "../components/admin/WithdrawalManagement";
 import LiveStreamCostMonitor from "../components/admin/LiveStreamCostMonitor";
 import VideoCallCostMonitor from "../components/admin/VideoCallCostMonitor";
 import CallProfitBreakdown from "../components/admin/CallProfitBreakdown";
+import RecordingCostBreakdown from "../components/admin/RecordingCostBreakdown";
 import CampaignChannelManagement from "../components/admin/CampaignChannelManagement";
 import DrameSettingsManagement from "../components/admin/DrameSettingsManagement";
 import CallUsageLimitManagement from "../components/admin/CallUsageLimitManagement";
@@ -636,6 +637,8 @@ export default function AdminDashboard() {
 
           {/* Chime SDK 収支内訳 */}
           <CallProfitBreakdown calls={allCalls} />
+          {/* 録画コスト精査 */}
+          <RecordingCostBreakdown />
 
           {/* 収益内訳表 */}
           <div className="bg-card rounded-xl border border-border/50 p-5 overflow-x-auto">

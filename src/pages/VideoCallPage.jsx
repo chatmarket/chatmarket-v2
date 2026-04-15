@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import {
   Phone, PhoneOff, PhoneCall, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
-  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio, MessageCircle
+  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio, MessageCircle, Video, VideoOff
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -200,6 +200,11 @@ export default function VideoCallPage() {
 
   // Message modal
   const [showMessageModal, setShowMessageModal] = useState(false);
+
+  // 録画
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingPipelineId, setRecordingPipelineId] = useState(null);
+  const [recordingStartTime, setRecordingStartTime] = useState(null);
 
   // NG Word Detection
   const recognitionRef = useRef(null);
@@ -493,24 +498,49 @@ export default function VideoCallPage() {
     }
   };
 
+  // 録画開始
+  const handleStartRecording = async () => {
+    if (!call?.chime_meeting_id) { toast.error("通話が開始されていません"); return; }
+    try {
+      const res = await base44.functions.invoke('startChimeRecording', { callId: call.id });
+      if (res?.data?.pipeline_id) {
+        setRecordingPipelineId(res.data.pipeline_id);
+        setIsRecording(true);
+        setRecordingStartTime(Date.now());
+        toast.success("🔴 録画を開始しました（S3保存中）");
+      }
+    } catch (e) {
+      toast.error("録画開始に失敗しました: " + e.message);
+    }
+  };
+
+  // 録画停止
+  const handleStopRecording = async () => {
+    if (!recordingPipelineId) return;
+    const durationSec = recordingStartTime ? Math.floor((Date.now() - recordingStartTime) / 1000) : 0;
+    try {
+      await base44.functions.invoke('stopChimeRecording', {
+        callId: call.id,
+        pipelineId: recordingPipelineId,
+        durationSeconds: durationSec,
+      });
+      setIsRecording(false);
+      setRecordingPipelineId(null);
+      toast.success("⏹️ 録画を停止しました。S3に保存中…");
+    } catch (e) {
+      toast.error("録画停止エラー: " + e.message);
+    }
+  };
+
   const handleEndCall = async (skipConfirm = false) => {
     if (!skipConfirm && !window.confirm("通話を終了しますか？")) return;
     clearInterval(billingTickRef.current);
-    
-    // 録画保存（オプション）
-    if (call && localStream) {
-      try {
-        // MediaRecorder は実装例。実際には以下の機能が必要：
-        // 1. localStream と remote stream を結合
-        // 2. WebM形式でエンコード
-        // 3. base64に変換してアップロード
-        // ここではプレースホルダー
-        toast.loading("通話内容を保存中...");
-      } catch (err) {
-        console.log("Recording save skipped (not implemented)");
-      }
+
+    // 録画中なら自動停止
+    if (isRecording && recordingPipelineId) {
+      await handleStopRecording();
     }
-    
+
     // 精算
     if (call && call.status === "active" && user && call.caller_email === user.email) {
       await base44.functions.invoke("videoCallBilling", { call_id: call.id, action: "end" });
@@ -1126,6 +1156,18 @@ export default function VideoCallPage() {
       <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20">
       {/* Feature row */}
       <div className="flex items-center justify-center gap-2 mb-4">
+          {/* 録画ボタン（calleeのみ・通話中） */}
+          {call?.status === "active" && user?.email === call?.callee_email && (
+            <button
+              onClick={isRecording ? handleStopRecording : handleStartRecording}
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
+                isRecording ? "bg-red-500/20 border border-red-500/60 animate-pulse" : "bg-white/5 hover:bg-white/10"
+              }`}
+            >
+              {isRecording ? <VideoOff className="w-5 h-5 text-red-400" /> : <Video className="w-5 h-5 text-white/70" />}
+              <span className={`text-[10px] ${isRecording ? "text-red-400" : "text-white/50"}`}>{isRecording ? "録画中" : "録画"}</span>
+            </button>
+          )}
           {[
             { key: "emoji", icon: Smile, label: "絵文字" },
             { key: "throw", icon: Sparkles, label: "投げ" },
