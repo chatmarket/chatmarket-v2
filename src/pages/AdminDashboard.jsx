@@ -26,6 +26,7 @@ import DrameSettingsManagement from "../components/admin/DrameSettingsManagement
 import CallUsageLimitManagement from "../components/admin/CallUsageLimitManagement";
 import TestUserCreationForm from "../components/admin/TestUserCreationForm";
 import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList";
+import RecruitApplicationManagement from "../components/admin/RecruitApplicationManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -139,6 +140,17 @@ export default function AdminDashboard() {
     queryKey: ["admin-all-crowdfunding-projects"],
     queryFn: () => base44.entities.CrowdfundingProject.list(),
     enabled: !!user && user.email === "unei@chatmarket.info",
+  });
+
+  const { data: applications = [] } = useQuery({
+    queryKey: ["admin-recruit-applications"],
+    queryFn: () =>
+      base44.entities.BlogPost.filter(
+        { channel_id: "recruit_application", status: "draft" },
+        "-created_date"
+      ),
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user?.email),
+    refetchInterval: 15000,
   });
 
   const { data: pendingReports = [] } = useQuery({
@@ -411,6 +423,14 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="call-limit" className="gap-2">
             <Phone className="w-4 h-4" /> 通話制限管理
+          </TabsTrigger>
+          <TabsTrigger value="recruit" className="gap-2 relative">
+            <Zap className="w-4 h-4" /> ライバー申込状況
+            {applications.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                {applications.length > 9 ? "9+" : applications.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -803,6 +823,11 @@ export default function AdminDashboard() {
         {/* 通話制限管理タブ */}
         <TabsContent value="call-limit" className="space-y-6">
           <CallUsageLimitManagement />
+        </TabsContent>
+
+        {/* ライバー申込状況タブ */}
+        <TabsContent value="recruit" className="space-y-6">
+          <RecruitApplicationManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
