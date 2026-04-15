@@ -46,11 +46,11 @@ export default function Preview30SecPaywallModal({
 
   if (!video) return null;
 
-  // Stripe手数料計算（固定: 3.6% + ¥0.40）
-  const STRIPE_RATE = 0.036;
-  const STRIPE_FIXED = 40; // 40円
-  const stripeFee = Math.round(video.price * STRIPE_RATE + STRIPE_FIXED);
-  const totalCharge = video.price + stripeFee;
+  // プラットホーム手数料計算（固定: 3.6% + ¥40）
+  const PLATFORM_FEE_RATE = 0.036;
+  const PLATFORM_FEE_FIXED = 40; // 40円
+  const platformFee = Math.round(video.price * PLATFORM_FEE_RATE + PLATFORM_FEE_FIXED);
+  const totalCharge = video.price + platformFee;
 
   // エールコイン決済（残高確認 → 購入 → ロック解除）
   const handleCoinPurchase = async () => {
@@ -59,8 +59,11 @@ export default function Preview30SecPaywallModal({
       return;
     }
 
-    // コイン価格計算（1円 = 10コイン）
-    const coinPrice = Math.ceil(video.price * 10);
+    // コイン価格計算: 手数料込み（1円 = 10コイン）
+    // ベース: video.price + プラットホーム手数料 → コインに変換
+    const totalYen = video.price + platformFee;
+    const coinPrice = Math.ceil(totalYen * 10);
+    
     if (wallet.balance < coinPrice) {
       // 残高不足 → チャージ画面へ
       toast.error(`残高不足です（需要: ${coinPrice.toLocaleString()}コイン、保有: ${wallet.balance.toLocaleString()}コイン）`);
@@ -72,10 +75,11 @@ export default function Preview30SecPaywallModal({
     setCoinProcessing(true);
     try {
       // Purchase レコード作成（コイン決済）
+      // ベースコンテンツ価格（video.price）をベースに、5%利益確保
       const purchase = await base44.entities.Purchase.create({
         item_type: "video",
         item_id: video.id,
-        amount: coinPrice,
+        amount: totalYen,
         buyer_email: user.email,
         status: "completed",
         payment_method: "coin",
@@ -109,7 +113,7 @@ export default function Preview30SecPaywallModal({
       const res = await base44.functions.invoke("createCheckoutSession", {
         item_type: "video",
         item_id: video.id,
-        amount: video.price,
+        amount: totalCharge, // 手数料を含めた総額
         item_title: video.title,
       });
 
@@ -159,29 +163,29 @@ export default function Preview30SecPaywallModal({
             </p>
           </div>
 
-          {/* Stripe手数料外出し表示（透明性） */}
+          {/* プラットホーム手数料外出し表示（透明性） */}
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 space-y-2 text-xs">
-            <p className="font-semibold text-blue-400 flex items-center gap-1">
-              <DollarSign className="w-3.5 h-3.5" />
-              決済手数料（Stripe）
-            </p>
-            <div className="space-y-1 text-muted-foreground">
-              <div className="flex justify-between">
-                <span>ビデオ購入価格</span>
-                <span className="font-semibold text-foreground">¥{video.price?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-[10px]">
-                <span>Stripe決済手数料 (3.6% + ¥40)</span>
-                <span className="text-blue-400 font-semibold">¥{stripeFee.toLocaleString()}</span>
-              </div>
-              <div className="border-t border-blue-500/20 pt-1 flex justify-between font-bold">
-                <span>あなたがお支払い</span>
-                <span className="text-blue-400">¥{totalCharge.toLocaleString()}</span>
-              </div>
-            </div>
-            <p className="text-[9px] text-muted-foreground/60 border-t border-blue-500/20 pt-1 leading-relaxed">
-              ※ Stripe手数料はお客様ご負担です。ご請求額は合計金額となります。
-            </p>
+           <p className="font-semibold text-blue-400 flex items-center gap-1">
+             <DollarSign className="w-3.5 h-3.5" />
+             プラットホーム手数料
+           </p>
+           <div className="space-y-1 text-muted-foreground">
+             <div className="flex justify-between">
+               <span>ビデオ購入価格</span>
+               <span className="font-semibold text-foreground">¥{video.price?.toLocaleString()}</span>
+             </div>
+             <div className="flex justify-between text-[10px]">
+               <span>プラットホーム手数料 (3.6% + ¥40)</span>
+               <span className="text-blue-400 font-semibold">¥{platformFee.toLocaleString()}</span>
+             </div>
+             <div className="border-t border-blue-500/20 pt-1 flex justify-between font-bold">
+               <span>あなたがお支払い</span>
+               <span className="text-blue-400">¥{totalCharge.toLocaleString()}</span>
+             </div>
+           </div>
+           <p className="text-[9px] text-muted-foreground/60 border-t border-blue-500/20 pt-1 leading-relaxed">
+             ※ プラットホーム手数料は決済サービス提供の対価としてお客様ご負担です。ご請求額は合計金額となります。
+           </p>
           </div>
 
           {/* 購入ボタン（2並列導線） */}
@@ -207,19 +211,19 @@ export default function Preview30SecPaywallModal({
                       <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
                       処理中...
                     </>
-                  ) : wallet && wallet.balance >= Math.ceil(video.price * 10) ? (
-                    <>
-                      <Check className="w-5 h-5" />
-                      {Math.ceil(video.price * 10).toLocaleString()}コインで購入（最速）
-                    </>
+                  ) : wallet && wallet.balance >= Math.ceil((video.price + platformFee) * 10) ? (
+                   <>
+                     <Check className="w-5 h-5" />
+                     {Math.ceil((video.price + platformFee) * 10).toLocaleString()}コインで購入（最速）
+                   </>
                   ) : (
-                    <>
-                      <Coins className="w-5 h-5" />
-                      コインで購入
-                    </>
+                   <>
+                     <Coins className="w-5 h-5" />
+                     コインで購入
+                   </>
                   )}
                 </Button>
-                {wallet && wallet.balance >= Math.ceil(video.price * 10) && (
+                {wallet && wallet.balance >= Math.ceil((video.price + platformFee) * 10) && (
                   <span className="absolute -top-2.5 right-3 bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                     <Flame className="w-3 h-3" />
                     推奨！最速
@@ -253,9 +257,9 @@ export default function Preview30SecPaywallModal({
               </div>
 
               {/* 残高不足の場合のメッセージ */}
-              {wallet && wallet.balance < Math.ceil(video.price * 10) && (
+              {wallet && wallet.balance < Math.ceil((video.price + platformFee) * 10) && (
                 <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2.5 text-xs text-orange-300 text-center">
-                  🪙 コイン残高: {wallet.balance.toLocaleString()} / 必要: {Math.ceil(video.price * 10).toLocaleString()}
+                  🪙 コイン残高: {wallet.balance.toLocaleString()} / 必要: {Math.ceil((video.price + platformFee) * 10).toLocaleString()}
                   <p className="text-[9px] mt-1 opacity-70">カード支払いをするか、コインをチャージしてください</p>
                 </div>
               )}
