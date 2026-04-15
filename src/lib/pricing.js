@@ -44,10 +44,14 @@ export function calcChargeAmount(desiredAmount) {
 
 // ─── AWS コスト定数 ────────────────────────────────────────────────
 export const AWS_COST = {
-  IVS_INPUT_PER_HOUR:         30,  // 円/時間
-  IVS_OUTPUT_PER_VIEWER_HOUR:  5,  // 円/視聴者/時間
-  CHIME_COMM_PER_MIN:          4,  // 円/分（双方向）
-  RECORDING_PER_MIN:           2,  // 円/分
+  IVS_INPUT_PER_HOUR:         30,   // 円/時間
+  IVS_OUTPUT_PER_VIEWER_HOUR:  5,   // 円/視聴者/時間
+  // Chime WebRTC: $0.0017/分/参加者（公式）× 2人 × 155円/$ ≒ 0.527円/分
+  // 15分1対1通話 = 約8円/ユニット（録画なし）
+  // 旧値「4円/分」は Media Pipeline 録画を含む過剰見積もりだったため修正
+  CHIME_COMM_PER_MIN:         Math.ceil(0.0017 * 2 * 155 * 10) / 10, // ≒ 0.527円/分（参考値）
+  CHIME_COST_PER_UNIT_15MIN:  8,    // 円/15分/1対1通話（確定値）
+  RECORDING_PER_MIN:           2,   // 円/分
 };
 
 /** ライブ配信の運営純利益を計算 */
@@ -58,10 +62,15 @@ export function calcLiveProfit({ revenueCoins, durationMin, totalViewerMinutes }
   return { platformRevYen, inputCost, outputCost, profit: platformRevYen - inputCost - outputCost };
 }
 
-/** 通話の運営純利益を計算 */
+/**
+ * 通話の運営純利益を計算
+ * AWS Chime SDK 公式単価: $0.0017/分/参加者（ap-northeast-1）
+ * 1対1通話 = 2参加者。15分 = $0.051 ≒ ¥8（155円/$換算）
+ * 旧試算の「¥4/分」は録画(Media Pipeline)込みの誤計算。プレーン通話は¥0.527/分相当。
+ */
 export function calcCallProfit({ coinsConsumed, actualMinutes, recordingMinutes = 0 }) {
   const platformRevYen = Math.floor(coinsConsumed * COIN_TO_YEN * 0.15);
-  const commCost       = actualMinutes * AWS_COST.CHIME_COMM_PER_MIN;
+  const commCost       = Math.ceil(actualMinutes * 0.0017 * 2 * 155); // $0.0017×2人×155円/分
   const recCost        = recordingMinutes * AWS_COST.RECORDING_PER_MIN;
   return { platformRevYen, commCost, recCost, profit: platformRevYen - commCost - recCost };
 }

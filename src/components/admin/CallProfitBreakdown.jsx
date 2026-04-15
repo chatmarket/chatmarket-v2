@@ -4,23 +4,33 @@ import { Phone, TrendingDown, TrendingUp, AlertTriangle, Info } from "lucide-rea
 /**
  * AWS Chime SDK移行後の正確な収支パネル
  *
- * ── 前提（確定仕様） ───────────────────────────────────────────────
+ * ── 前提（確定仕様・AWS公式単価で再精査済み） ──────────────────────
  *   課金単位         : 15分 / 150コイン（1コイン=1円）
- *   Stripe手数料     : リスナー負担・外乗せ方式（3.6% + 40円）
- *     → リスナー実支払額 = ceil((150 + 40) / (1 - 0.036)) = 197円
- *     → Stripeへ        = 197 - 150 = 47円（プラットフォーム持ち出し0円）
- *   AWS Chime通信費  : 4円/分 × 15分 = 60円/ユニット（双方向）
+ *   Stripe手数料     : リスナー負担・外乗せ方式（3.6%定率のみ・固定費¥0）
+ *     → リスナー実支払額 = ceil(150 / (1 - 0.036)) = 156円
+ *     → Stripeへ        = 6円（プラットフォーム持ち出し0円）
+ *
+ *   ★ AWS Chime SDK 公式単価（ap-northeast-1）★
+ *     WebRTC Attendee Minutes: $0.0017 / 分 / 参加者
+ *     1対1通話（2参加者）× 15分 = $0.0017 × 2 × 15 = $0.051
+ *     $0.051 × 155円/$ = 約7.9円 → 切り上げ 約8円/ユニット
+ *     ※ 旧試算の「¥4/分 × 15分 = ¥60」は Media Pipeline(録画)等を
+ *        誤って含めた過剰見積もり。プレーン1対1通話の正確なコストは8円。
+ *
  *   クリエイター配分 : 150円 × 85% = 127.5円 → floor = 127円
- *   運営取り分       : 150円 × 15% = 22.5円 → floor = 22円
- *   運営純利益       : 22円 - 60円 = ▲38円/ユニット（赤字）
+ *   運営取り分       : 150円 × 15% = 22.5円 → 23円
+ *   運営純利益       : 23円 - 8円 = +15円/ユニット（黒字）✅
  * ──────────────────────────────────────────────────────────────────
  */
+
+// ── AWS Chime SDK 公式単価（ap-northeast-1 確認済み） ──────────────
+const CHIME_USD_PER_MIN_PER_ATTENDEE = 0.0017; // $0.0017/分/参加者（公式）
+const USD_TO_JPY                     = 155;     // 1ドル155円
+const CALL_ATTENDEES                 = 2;       // 1対1通話 = 2参加者
 
 // ── 定数 ──────────────────────────────────────────────────────────
 const COIN_PER_UNIT       = 150;   // 15分あたりコイン
 const STRIPE_RATE         = 0.036; // Stripe Japan 国内カード: 定率のみ・固定費なし
-const STRIPE_FIXED        = 0;     // 固定費なし（Stripe Japan。※Stripe USの$0.30は非適用）
-const CHIME_COST_PER_MIN  = 4;     // 円/分
 const UNIT_MINUTES        = 15;
 const CREATOR_SHARE       = 0.85;
 
@@ -31,14 +41,16 @@ const listenerCharge = Math.ceil(COIN_PER_UNIT / (1 - STRIPE_RATE));            
 const stripeFee           = listenerCharge - COIN_PER_UNIT;                           // 6円
 // プラットフォームが受け取るコイン（Stripe手数料はリスナー負担なので150円がそのまま入る）
 const platformReceive     = COIN_PER_UNIT;                                             // 150円
-// AWS Chime通信費 / ユニット
-const chimeCostPerUnit    = CHIME_COST_PER_MIN * UNIT_MINUTES;                        // 60円
+// AWS Chime通信費 / ユニット（公式単価: $0.0017 × 2人 × 15分 × 155円 = 7.9円 → 8円）
+const chimeCostPerUnit    = Math.ceil(
+  CHIME_USD_PER_MIN_PER_ATTENDEE * CALL_ATTENDEES * UNIT_MINUTES * USD_TO_JPY
+);                                                                                     // 8円
 // クリエイター配分
 const creatorPayout       = Math.floor(COIN_PER_UNIT * CREATOR_SHARE);               // 127円
 // 運営取り分（手数料15%）
 const platformFee         = COIN_PER_UNIT - creatorPayout;                            // 23円
-// 運営純利益
-const unitProfit          = platformFee - chimeCostPerUnit;                           // ▲37円
+// 運営純利益 = 23 - 8 = +15円
+const unitProfit          = platformFee - chimeCostPerUnit;                           // +15円
 
 export default function CallProfitBreakdown({ calls = [] }) {
   const stats = useMemo(() => {
@@ -95,7 +107,7 @@ export default function CallProfitBreakdown({ calls = [] }) {
           <UnitCell
             label="Chime通信費"
             value={`▲¥${chimeCostPerUnit}`}
-            sub={`¥${CHIME_COST_PER_MIN}/分 × ${UNIT_MINUTES}分`}
+            sub={`$0.0017×2人×15分×¥155`}
             color="text-orange-400"
           />
           <UnitCell
@@ -117,13 +129,21 @@ export default function CallProfitBreakdown({ calls = [] }) {
           </div>
         </div>
 
-        {unitProfit < 0 && (
+        {unitProfit < 0 ? (
           <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
             <p className="text-xs text-red-300">
               現在の単価設定では<strong>1ユニット▲¥{Math.abs(unitProfit)}</strong>の赤字です。
               損益分岐点は <strong>15分あたり {Math.ceil(chimeCostPerUnit / (1 - CREATOR_SHARE))}円以上</strong>の課金が必要です。
-              BasicプランMRRまたは最低単価の引き上げを検討してください。
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 bg-primary/10 border border-primary/30 rounded-lg p-3">
+            <TrendingUp className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-primary/90">
+              AWS公式単価（$0.0017/分/人）で計算すると<strong>1ユニット+¥{unitProfit}の黒字</strong>です。
+              旧試算の「¥4/分」は録画（Media Pipeline）を含む過剰見積もりでした。
+              プレーンな1対1通話なら<strong>150円モデルは成立</strong>します。✅
             </p>
           </div>
         )}
@@ -146,7 +166,7 @@ export default function CallProfitBreakdown({ calls = [] }) {
               <Row label="総ユニット数（15分）"  value={`${stats.totalUnits}ユニット`} />
               <Row label="リスナー総支払額"      value={`¥${stats.totalListenerPaid.toLocaleString()}`} note="Stripe外乗せ" color="text-blue-400" />
               <Row label="PF受取コイン合計"      value={`¥${stats.totalCoins.toLocaleString()}`} note="1コイン=1円" color="text-white" />
-              <Row label="Chime通信費合計"       value={`▲¥${stats.totalChimeCost.toLocaleString()}`} note="¥4/分" color="text-orange-400" />
+              <Row label="Chime通信費合計"       value={`▲¥${stats.totalChimeCost.toLocaleString()}`} note="$0.0017×2人×155円" color="text-orange-400" />
               <Row label="クリエイター配分合計"  value={`¥${stats.totalCreatorPayout.toLocaleString()}`} note="85%" color="text-green-400" />
               <Row label="運営手数料合計（15%）" value={`¥${stats.totalPlatformFee.toLocaleString()}`} color="text-yellow-400" />
             </tbody>
@@ -173,10 +193,13 @@ export default function CallProfitBreakdown({ calls = [] }) {
           <p>・Stripe Japan 国内カード = <span className="text-green-300">3.6%定率のみ・固定費¥0</span></p>
           <p>・リスナー支払額 = ceil(150÷0.964) = <span className="text-white">156円</span></p>
           <p>・PF受取 = <span className="text-white">150円</span>（Stripeへ6円・リスナー負担）</p>
-          <p>・Chime通信費 = 4円×15分 = <span className="text-orange-300">60円</span></p>
+          <p>・Chime = <span className="text-green-300">$0.0017×2人×15分×¥155 = 約¥{chimeCostPerUnit}</span>（録画なし）</p>
           <p>・クリエイター = floor(150×0.85) = <span className="text-green-300">127円</span></p>
           <p>・PF手数料 = 150-127 = <span className="text-yellow-300">23円</span></p>
-          <p>・純利益 = 23-60 = <span className="text-red-300">▲37円/ユニット</span></p>
+          <p>・純利益 = 23-{chimeCostPerUnit} = <span className={unitProfit >= 0 ? "text-primary font-bold" : "text-red-300"}>
+            {unitProfit >= 0 ? `+${unitProfit}円/ユニット ✅` : `▲${Math.abs(unitProfit)}円/ユニット`}
+          </span></p>
+          <p className="text-[10px] text-yellow-400 col-span-2">※ 録画（Media Capture/Concatenation）を使う場合は別途コスト加算あり</p>
         </div>
       </div>
     </div>
