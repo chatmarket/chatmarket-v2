@@ -102,6 +102,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // ★ 録画オプション未購入の場合は起動拒否（AWSコスト保護）
+    if (!call.recording_option) {
+      return Response.json({
+        error: 'Recording option not purchased. Add recording_option to this call to enable recording.',
+        code: 'RECORDING_OPTION_REQUIRED',
+      }, { status: 403 });
+    }
+
     const accessKeyId     = Deno.env.get('AWS_ACCESS_KEY_ID');
     const secretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
     const bucketName      = Deno.env.get('S3_BUCKET_VOD') || 'chat-market-vod';

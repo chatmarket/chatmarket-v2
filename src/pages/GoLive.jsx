@@ -235,7 +235,16 @@ export default function GoLive() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 sm:mb-8">
         <button
           type="button"
-          onClick={() => { setMode(MODE_LIVE); setShowStreamStyleModal(true); }}
+          onClick={() => {
+            const plan = user?.plan;
+            const isEligible = plan === "basic" || plan === "standard" || plan === "premium" || user?.role === "admin";
+            if (!isEligible) {
+              toast.error("1対多ライブ配信はBASICプラン以上でご利用いただけます。");
+              navigate("/plan-select");
+              return;
+            }
+            setMode(MODE_LIVE); setShowStreamStyleModal(true);
+          }}
           className={`flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all ${
             mode === MODE_LIVE
               ? "border-red-500 bg-red-500/10"
@@ -247,6 +256,9 @@ export default function GoLive() {
             1対多 ライブ配信
           </span>
           <span className="text-xs text-muted-foreground text-center">多数の視聴者に向けた有料ライブ配信（PPV）</span>
+          {user && !["basic","standard","premium"].includes(user?.plan) && user?.role !== "admin" && (
+            <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full">BASICプラン以上</span>
+          )}
         </button>
 
         <button
@@ -545,16 +557,28 @@ export default function GoLive() {
 
           {form.saveArchive && (
             <div className="space-y-4 pt-2 border-t border-border/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>アーカイブを有料公開する</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">¥1〜自由設定で動画として販売できます</p>
+              {(() => {
+                const canSellArchive = ["basic","standard","premium"].includes(user?.plan) || user?.role === "admin";
+                return (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>アーカイブを有料公開する</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">¥1〜自由設定で動画として販売できます</p>
+                    {!canSellArchive && (
+                      <p className="text-xs text-yellow-400 mt-1">⚠️ BASICプラン以上で利用可能</p>
+                    )}
+                  </div>
+                  <Switch
+                    checked={form.archiveIsPaid}
+                    disabled={!canSellArchive}
+                    onCheckedChange={(v) => {
+                      if (!canSellArchive) { toast.error("アーカイブ販売はBASICプラン以上でご利用いただけます。"); return; }
+                      setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false });
+                    }}
+                  />
                 </div>
-                <Switch
-                  checked={form.archiveIsPaid}
-                  onCheckedChange={(v) => setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false })}
-                />
-              </div>
+                );
+              })()}
 
               {form.archiveIsPaid && (
                 <>

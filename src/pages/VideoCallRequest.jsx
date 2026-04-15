@@ -104,6 +104,10 @@ export default function VideoCallRequest() {
 
   const [useFreeSlot, setUseFreeSlot] = useState(false);
   const [freeSlotDuration, setFreeSlotDuration] = useState(10);
+  const [recordingEnabled, setRecordingEnabled] = useState(false);
+
+  // 録画オプション料金（15分ごとに追加）
+  const RECORDING_OPTION_PRICE_PER_15MIN = 50;
 
   const { data: existingRequests = [] } = useQuery({
     queryKey: ["call-requests", user?.email, channel?.owner_email],
@@ -160,6 +164,7 @@ export default function VideoCallRequest() {
     const actualPrice = isFree ? 0 : callPrice;
     const coinPer15 = isFree ? 0 : calcCoinPer15(actualDuration, actualPrice);
 
+    const recordingOptEnabled = !isFree && recordingEnabled;
     await base44.entities.VideoCall.create({
       caller_email: user.email,
       caller_name: user.full_name || user.email,
@@ -172,6 +177,8 @@ export default function VideoCallRequest() {
       price: actualPrice,
       coin_price_per_15min: coinPer15,
       duration_minutes: actualDuration,
+      recording_option: recordingOptEnabled,
+      recording_option_price: recordingOptEnabled ? RECORDING_OPTION_PRICE_PER_15MIN : 0,
       message: `【希望日時】${preferredDate}${message ? `\n${message}` : ""}`,
       thread_id: threadId,
     });
@@ -499,6 +506,39 @@ export default function VideoCallRequest() {
           />
           <p className="text-xs text-muted-foreground text-right">{message.length}/200</p>
         </div>
+
+        {/* 録画オプション */}
+        {(!useFreeSlot || userPlan !== "call-anser") && (
+          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={recordingEnabled}
+                onChange={(e) => setRecordingEnabled(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded accent-cyan-400 shrink-0"
+              />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  🎥 録画保存オプション
+                  <span className="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full font-bold">
+                    +¥{RECORDING_OPTION_PRICE_PER_15MIN}/15分
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  ＋{RECORDING_OPTION_PRICE_PER_15MIN}円：録画保存（アーカイブ販売用）。
+                  <span className="text-cyan-400">※この料金はAWSのサーバー利用料およびデータ保存料の実費として充当されます。クリエイターへの収益分配の対象外です。</span>
+                </p>
+              </div>
+            </label>
+            {recordingEnabled && (
+              <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-3 text-xs text-cyan-300 space-y-1">
+                <p className="font-semibold flex items-center gap-1">✅ 録画オプション有効</p>
+                <p>通話録画はS3に保存され、将来のアーカイブ販売に利用できます。</p>
+                <p className="text-muted-foreground">¥{RECORDING_OPTION_PRICE_PER_15MIN}/15分（全額AWS実費充当・運営利益なし）</p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex items-start gap-1.5 text-xs text-muted-foreground bg-secondary rounded-lg p-3">
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />

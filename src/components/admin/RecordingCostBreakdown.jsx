@@ -1,51 +1,61 @@
 import React, { useState } from "react";
-import { Video, DollarSign, AlertTriangle, CheckCircle, Info, TrendingUp } from "lucide-react";
+import { Video, AlertTriangle, CheckCircle, Info, TrendingUp, ShieldCheck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 /**
- * AWS Chime SDK 録画コスト公式試算（ap-northeast-1 確認済み）
+ * 録画オプション：実費還元モデル（社長方針：透明性の高い実費精算）
  *
- * ── AWS公式単価 ───────────────────────────────────────────────────
- *   WebRTC Attendee     : $0.0017 /分/人
- *   Media Capture       : $0.0102 /分  ← 公式ページより
- *   Concatenation       : $0.0102 /分  ← 任意・単一ファイル化
- *   S3 ストレージ       : $0.025  /GB/月（15分≒50MB≒¥0.2）
- *   USD/JPY             : 155円
+ * ── 収支設計 ──────────────────────────────────────────────────────
+ *   通話基本料     : 150円  → クリエイター127円 + 運営23円
+ *   録画オプション : +50円  → 全額AWSインフラ費用に充当（利益0円）
  *
- * ── 15分/1対1通話 試算 ───────────────────────────────────────────
- *   パターンA: 録画なし
- *     WebRTC: $0.0017×2×15 = $0.051 ≒ ¥8
- *     合計: ¥8   →  150円売上で +¥15 黒字
+ *   AWS実費 (15分/録画あり):
+ *     WebRTC       : ¥8   ($0.0017×2人×15分×155)
+ *     Media Capture: ¥24  ($0.0102×15分×155)
+ *     合計         : ¥32
  *
- *   パターンB: 録画あり(Capture only)
- *     WebRTC: ¥8 + Capture: $0.0102×15×155 = $0.153×155 ≒ ¥24
- *     合計: ¥32  →  150円売上で ▲¥9 赤字
+ *   50円 − 32円 = +18円（繰越バッファ、利益計上しない）
  *
- *   パターンC: 録画+連結(Capture+Concatenation)
- *     合計: ¥8 + ¥24 + ¥24 = ¥56  →  150円売上で ▲¥33 赤字
- *
- * ★ 結論: 「録画込みで¥15以内」は不可能。
- *    アーカイブ販売を有効にする場合は通話料+録画オプション料（+¥30程度）設計が必要。
+ * ── 収支サマリ（1ユニット・録画あり） ────────────────────────────
+ *   リスナー支払: 156円（通話）+ 52円（録画: ceil(50/0.964)）= 208円
+ *   クリエイター: 127円 (通話分150円の85%)
+ *   録画インフラ: 32円  → 運営コスト充当
+ *   運営純利益  : 23円 - 8円(WebRTC) = +15円  ← 通話分のみ計上
+ *   録画P/L     : 50円 - 32円 = +18円 → インフラバッファ（利益0扱い）
  * ──────────────────────────────────────────────────────────────────
  */
 
 const USD = 155;
-const UNIT = 15; // 分
+const UNIT = 15;
 
 const COSTS = {
-  webrtc:      { usd: 0.0017 * 2 * UNIT, label: 'WebRTC (2人×15分)', tier: 'base' },
-  capture:     { usd: 0.0102 * UNIT,     label: 'Media Capture (15分)', tier: 'recording' },
-  concat:      { usd: 0.0102 * UNIT,     label: 'Concatenation (15分)', tier: 'optional' },
-  s3:          { usd: 0.0006,            label: 'S3保存 (≈50MB)', tier: 'optional' },
+  webrtc:  { usd: 0.0017 * 2 * UNIT, label: 'WebRTC (2人×15分)', tier: 'base' },
+  capture: { usd: 0.0102 * UNIT,     label: 'Media Capture (15分)', tier: 'recording' },
+  concat:  { usd: 0.0102 * UNIT,     label: 'Concatenation (15分)', tier: 'optional' },
+  s3:      { usd: 0.0006,            label: 'S3保存 (≈50MB)', tier: 'optional' },
 };
 
 const toYen = (usd) => Math.ceil(usd * USD);
 
+// コスト定数
+const WEBRTC_COST  = toYen(COSTS.webrtc.usd);   // 8円
+const CAPTURE_COST = toYen(COSTS.capture.usd);  // 24円
+const TOTAL_REC_COST = WEBRTC_COST + CAPTURE_COST; // 32円
+
+const CALL_COINS      = 150;
+const CREATOR_RATE    = 0.85;
+const CREATOR_PAYOUT  = Math.floor(CALL_COINS * CREATOR_RATE); // 127円
+const PLATFORM_FEE    = CALL_COINS - CREATOR_PAYOUT;           // 23円
+const RECORDING_OPT   = 50; // 録画オプション料金
+
 const patterns = [
   {
     id: 'A',
-    label: 'パターンA: 録画なし（推奨）',
+    label: 'パターンA: 録画なし（標準）',
     keys: ['webrtc'],
-    profit: 150 - Math.floor(150 * 0.85) - toYen(COSTS.webrtc.usd),
+    revenue: CALL_COINS,
+    optRevenue: 0,
     color: 'border-primary/40 bg-primary/5',
     badge: '黒字確定',
     badgeColor: 'bg-primary/20 text-primary',
@@ -54,157 +64,212 @@ const patterns = [
   },
   {
     id: 'B',
-    label: 'パターンB: 録画あり（Capture）',
+    label: 'パターンB: 録画あり（実費還元オプション）',
     keys: ['webrtc', 'capture'],
-    profit: 150 - Math.floor(150 * 0.85) - toYen(COSTS.webrtc.usd) - toYen(COSTS.capture.usd),
-    color: 'border-red-500/30 bg-red-500/5',
-    badge: '赤字注意',
-    badgeColor: 'bg-red-500/20 text-red-400',
-    icon: AlertTriangle,
-    iconColor: 'text-red-400',
+    revenue: CALL_COINS,
+    optRevenue: RECORDING_OPT,
+    color: 'border-cyan-500/30 bg-cyan-500/5',
+    badge: '実費還元モデル',
+    badgeColor: 'bg-cyan-500/20 text-cyan-300',
+    icon: ShieldCheck,
+    iconColor: 'text-cyan-400',
   },
   {
     id: 'C',
     label: 'パターンC: 録画+連結（フルアーカイブ）',
     keys: ['webrtc', 'capture', 'concat', 's3'],
-    profit: 150 - Math.floor(150 * 0.85) - toYen(COSTS.webrtc.usd) - toYen(COSTS.capture.usd) - toYen(COSTS.concat.usd) - toYen(COSTS.s3.usd),
+    revenue: CALL_COINS,
+    optRevenue: RECORDING_OPT,
     color: 'border-orange-500/30 bg-orange-500/5',
-    badge: '要追加課金',
+    badge: '要検討',
     badgeColor: 'bg-orange-500/20 text-orange-400',
     icon: AlertTriangle,
     iconColor: 'text-orange-400',
   },
 ];
 
-const ARCHIVE_STRATEGY = [
-  { label: '通話料（録画なし基本）', yen: 150, type: 'revenue' },
-  { label: '録画オプション追加料', yen: 50,  type: 'revenue' },
-  { label: 'WebRTC + Capture合計', yen: -32, type: 'cost' },
-  { label: '純利益（録画込み）',   yen: null, type: 'profit' },
-];
+function calcPattern(p) {
+  const totalCostYen = p.keys.reduce((s, k) => s + toYen(COSTS[k].usd), 0);
+  // 通話分のみで純利益計算（録画分は分離）
+  const callProfit = PLATFORM_FEE - WEBRTC_COST;           // 15円
+  const recBalance = p.optRevenue - (totalCostYen - WEBRTC_COST); // 録画料 - 録画コスト
+  return { totalCostYen, callProfit, recBalance };
+}
 
 export default function RecordingCostBreakdown() {
-  const [selected, setSelected] = useState('A');
+  const [selected, setSelected] = useState('B');
+
+  // 実際の録画オプション利用実績を取得
+  const { data: calls = [] } = useQuery({
+    queryKey: ['recording-option-calls'],
+    queryFn: () => base44.entities.VideoCall.filter({ recording_option: true }),
+  });
+
+  const recCallCount = calls.length;
+  const recRevenue   = recCallCount * RECORDING_OPT;
+  const recInfraCost = recCallCount * (CAPTURE_COST); // WebRTCは通話基本に含む
+  const recBalance   = recRevenue - recInfraCost;
 
   const pattern = patterns.find(p => p.id === selected);
-  const totalCostUsd = pattern.keys.reduce((s, k) => s + COSTS[k].usd, 0);
-  const totalCostYen = toYen(totalCostUsd);
-  const platformFee  = 150 - Math.floor(150 * 0.85); // 23円
-
-  // アーカイブ戦略の計算
-  const archiveRevenue = 150 + 50; // 200円
-  const archiveCost    = toYen(COSTS.webrtc.usd) + toYen(COSTS.capture.usd); // 32円
-  const archiveCreator = Math.floor(150 * 0.85); // 127円（通話分のみ）
-  const archiveProfit  = platformFee + 50 - archiveCost; // 手数料23 + 録画オプション50 - コスト32 = 41円
+  const { totalCostYen, callProfit, recBalance: patRecBalance } = calcPattern(pattern);
 
   return (
     <div className="space-y-5">
       {/* タイトル */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Video className="w-4 h-4 text-cyan-400" />
-        <h3 className="font-bold text-base">録画コスト精査（AWS公式単価）</h3>
-        <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold">
-          $0.0017/分/人 公式確認済み
+        <h3 className="font-bold text-base">録画オプション 収支（実費還元モデル）</h3>
+        <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">
+          利益計上なし・AWS実費充当
         </span>
       </div>
 
-      {/* 公式単価テーブル */}
-      <div className="bg-secondary/60 rounded-xl p-4 space-y-2">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">AWS公式単価（ap-northeast-1 / USD×155円）</p>
-        <div className="grid grid-cols-2 gap-2">
-          {Object.entries(COSTS).map(([key, c]) => (
-            <div key={key} className={`rounded-lg p-3 ${c.tier === 'recording' ? 'bg-orange-500/10 border border-orange-500/20' : c.tier === 'optional' ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-background/60'}`}>
-              <p className="text-[10px] text-muted-foreground">{c.label}</p>
-              <p className="font-bold text-sm">${c.usd.toFixed(4)}</p>
-              <p className="text-xs text-primary font-bold">≈ ¥{toYen(c.usd)}</p>
-            </div>
-          ))}
+      {/* 方針説明 */}
+      <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
+          <p className="text-sm font-bold text-cyan-300">経営方針：透明性の高い実費精算モデル</p>
+        </div>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p>• 録画オプション <strong className="text-white">¥50/15分</strong> は全額AWSインフラ費（Media Capture + S3）に充当</p>
+          <p>• 運営の収益には計上しない。差額はインフラバッファとして積み立て</p>
+          <p>• 通話基本料(¥150)の収支と完全に分離して管理する</p>
         </div>
       </div>
 
-      {/* パターン選択 */}
+      {/* 1ユニットあたりの収支 */}
+      <div className="bg-secondary/60 rounded-xl p-4 space-y-3">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">1ユニット（15分）の収支比較</p>
+        <div className="grid grid-cols-2 gap-3">
+          {/* 通話基本 */}
+          <div className="bg-background/60 rounded-xl p-3 space-y-2 border border-border/40">
+            <p className="text-[11px] font-bold text-muted-foreground">通話基本料 ¥150</p>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">クリエイター(85%)</span>
+                <span className="text-green-400 font-bold">¥{CREATOR_PAYOUT}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">PF手数料(15%)</span>
+                <span className="text-yellow-400 font-bold">¥{PLATFORM_FEE}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">WebRTCコスト</span>
+                <span className="text-orange-400 font-bold">▲¥{WEBRTC_COST}</span>
+              </div>
+              <div className="flex justify-between border-t border-border/40 pt-1">
+                <span className="font-bold">運営純利益</span>
+                <span className="text-primary font-black">+¥{callProfit}</span>
+              </div>
+            </div>
+          </div>
+          {/* 録画オプション */}
+          <div className="bg-background/60 rounded-xl p-3 space-y-2 border border-cyan-500/20">
+            <p className="text-[11px] font-bold text-cyan-400">録画オプション ¥50</p>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Media Captureコスト</span>
+                <span className="text-orange-400 font-bold">▲¥{CAPTURE_COST}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">クリエイター還元</span>
+                <span className="text-muted-foreground">¥0（対象外）</span>
+              </div>
+              <div className="flex justify-between border-t border-border/40 pt-1">
+                <span className="font-bold">収支差額</span>
+                <span className={`font-black ${RECORDING_OPT - CAPTURE_COST >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                  {RECORDING_OPT - CAPTURE_COST >= 0 ? '+' : ''}¥{RECORDING_OPT - CAPTURE_COST}
+                </span>
+              </div>
+              <p className="text-[9px] text-muted-foreground">※差額はインフラバッファ（利益計上なし）</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 累積実績 */}
+      <div className="bg-secondary/60 rounded-xl p-4 space-y-3">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">録画オプション 累計実績</p>
+        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="bg-background/60 rounded-lg p-3">
+            <p className="text-muted-foreground">利用件数</p>
+            <p className="font-black text-lg text-white">{recCallCount}件</p>
+          </div>
+          <div className="bg-background/60 rounded-lg p-3">
+            <p className="text-muted-foreground">オプション収入</p>
+            <p className="font-black text-lg text-cyan-400">¥{recRevenue.toLocaleString()}</p>
+          </div>
+          <div className="bg-background/60 rounded-lg p-3">
+            <p className="text-muted-foreground">Chime実費</p>
+            <p className="font-black text-lg text-orange-400">¥{recInfraCost.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className={`rounded-xl p-3 border-2 flex items-center justify-between ${recBalance >= 0 ? 'bg-cyan-500/10 border-cyan-500/40' : 'bg-red-500/10 border-red-500/40'}`}>
+          <div>
+            <p className="text-sm font-bold">インフラバッファ累計</p>
+            <p className="text-xs text-muted-foreground">オプション収入 ¥{recRevenue} − Chime実費 ¥{recInfraCost}（運営利益には含まない）</p>
+          </div>
+          <p className={`text-2xl font-black ${recBalance >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+            {recBalance >= 0 ? '+' : ''}¥{recBalance.toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* パターン比較 */}
       <div className="space-y-3">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">構成パターン比較</p>
         {patterns.map(p => {
           const Icon = p.icon;
-          const cost = toYen(p.keys.reduce((s, k) => s + COSTS[k].usd, 0));
+          const c = calcPattern(p);
+          const cost = p.keys.reduce((s, k) => s + toYen(COSTS[k].usd), 0);
           return (
             <button
               key={p.id}
               onClick={() => setSelected(p.id)}
               className={`w-full text-left rounded-xl border-2 p-4 transition-all ${p.color} ${selected === p.id ? 'ring-2 ring-primary/40' : 'opacity-80 hover:opacity-100'}`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <Icon className={`w-4 h-4 ${p.iconColor}`} />
                   <span className="font-bold text-sm">{p.label}</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${p.badgeColor}`}>{p.badge}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Chimeコスト</p>
+                  <p className="text-xs text-muted-foreground">AWS実費</p>
                   <p className="font-bold text-sm text-orange-400">¥{cost}</p>
                 </div>
               </div>
-              <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                <span>売上¥150 − クリエイター¥{Math.floor(150 * 0.85)} − コスト¥{cost} =</span>
-                <span className={`font-black text-base ${p.profit >= 0 ? 'text-primary' : 'text-red-400'}`}>
-                  {p.profit >= 0 ? '+' : ''}¥{p.profit}
-                </span>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-background/40 rounded-lg p-2">
+                  <p className="text-muted-foreground">通話分の運営純利益</p>
+                  <p className={`font-black text-base ${c.callProfit >= 0 ? 'text-primary' : 'text-red-400'}`}>
+                    {c.callProfit >= 0 ? '+' : ''}¥{c.callProfit}
+                  </p>
+                </div>
+                {p.optRevenue > 0 && (
+                  <div className="bg-background/40 rounded-lg p-2">
+                    <p className="text-muted-foreground">録画料インフラ収支</p>
+                    <p className={`font-black text-base ${c.recBalance >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                      {c.recBalance >= 0 ? '+' : ''}¥{c.recBalance}（バッファ）
+                    </p>
+                  </div>
+                )}
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* 重要警告 */}
-      <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
-          <p className="text-sm font-bold text-orange-300">「録画込みで¥15以内」は現時点では不可能</p>
-        </div>
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>• Media Captureだけで <strong className="text-orange-300">¥24/15分</strong> の追加コストが発生（AWS公式: $0.0102/分）</p>
-          <p>• 録画なし（パターンA）= <strong className="text-primary">¥8コスト・¥15黒字</strong> ← これが正しい構成</p>
-          <p>• 録画あり（パターンB）= <strong className="text-red-400">¥32コスト・▲¥9赤字</strong> ← 追加料金設計が必須</p>
-        </div>
-      </div>
-
-      {/* アーカイブ販売で回収する戦略 */}
-      <div className="bg-primary/5 border border-primary/30 rounded-xl p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-primary" />
-          <p className="text-sm font-bold">推奨: 「録画オプション¥50」追加課金モデル</p>
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="bg-background/60 rounded-lg p-3">
-            <p className="text-muted-foreground">通話基本</p>
-            <p className="font-black text-lg text-white">¥150</p>
-          </div>
-          <div className="bg-background/60 rounded-lg p-3">
-            <p className="text-muted-foreground">録画オプション</p>
-            <p className="font-black text-lg text-primary">+¥50</p>
-          </div>
-          <div className="bg-background/60 rounded-lg p-3">
-            <p className="text-muted-foreground">運営純利益</p>
-            <p className={`font-black text-lg ${archiveProfit >= 0 ? 'text-primary' : 'text-red-400'}`}>+¥{archiveProfit}</p>
-          </div>
-        </div>
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>計算: PF手数料(¥23) + 録画料(¥50) − Chimeコスト(¥32) = <strong className="text-primary">+¥{archiveProfit}</strong></p>
-          <p>さらにアーカイブ動画をVOD販売すれば追加収益も獲得可能</p>
-        </div>
-      </div>
-
       {/* 計算根拠 */}
       <div className="bg-secondary/40 rounded-lg p-3">
         <div className="flex items-center gap-1 text-xs text-muted-foreground font-bold mb-2">
-          <Info className="w-3 h-3" /> 計算根拠（AWS公式・全項目）
+          <Info className="w-3 h-3" /> 計算根拠
         </div>
         <div className="text-xs text-muted-foreground space-y-0.5">
-          <p>・WebRTC: $0.0017 × 2人 × 15分 × ¥155 = <span className="text-white">¥{toYen(COSTS.webrtc.usd)}</span></p>
-          <p>・Media Capture: $0.0102 × 15分 × ¥155 = <span className="text-orange-300">¥{toYen(COSTS.capture.usd)}</span></p>
-          <p>・Concatenation: $0.0102 × 15分 × ¥155 = <span className="text-yellow-300">¥{toYen(COSTS.concat.usd)}</span>（任意）</p>
-          <p>・S3: 15分≒50MB → $0.025/GB × 0.05GB × ¥155 = <span className="text-muted-foreground">≈¥{toYen(COSTS.s3.usd)}</span>（無視レベル）</p>
+          <p>・WebRTC: $0.0017 × 2人 × 15分 × ¥155 = <span className="text-white">¥{WEBRTC_COST}</span>（通話基本に含む）</p>
+          <p>・Media Capture: $0.0102 × 15分 × ¥155 = <span className="text-orange-300">¥{CAPTURE_COST}</span>（録画オプション¥50で充当）</p>
+          <p>・録画収支: ¥{RECORDING_OPT} − ¥{CAPTURE_COST} = <span className="text-cyan-400">+¥{RECORDING_OPT - CAPTURE_COST}</span>（利益計上なし・バッファ）</p>
+          <p>・通話純利益: ¥{PLATFORM_FEE}(PF手数料) − ¥{WEBRTC_COST}(WebRTC) = <span className="text-primary font-bold">+¥{callProfit}</span>/ユニット</p>
         </div>
       </div>
     </div>

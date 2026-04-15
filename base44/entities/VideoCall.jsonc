@@ -39,7 +39,7 @@
     "is_free_call": {
       "type": "boolean",
       "default": false,
-      "description": "CALL&ANSWER\u30d7\u30e9\u30f3\u7121\u6599\u901a\u8a71\u67a0\u3092\u4f7f\u7528"
+      "description": "CALL&ANSER\u30d7\u30e9\u30f3\u7121\u6599\u901a\u8a71\u67a0\u3092\u4f7f\u7528"
     },
     "is_paid": {
       "type": "boolean",
@@ -164,6 +164,21 @@
     "recording_s3_key": {
       "type": "string",
       "description": "S3\u4fdd\u5b58\u6642\u306e\u30ad\u30fc\uff08\u30d1\u30b9\uff09"
+    },
+    "recording_option": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u9332\u753b\u4fdd\u5b58\u30aa\u30d7\u30b7\u30e7\u30f3\u3092\u7533\u3057\u8fbc\u3093\u3060\u304b"
+    },
+    "recording_option_price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u9332\u753b\u30aa\u30d7\u30b7\u30e7\u30f3\u6599\u91d1\uff08\u5186\uff09\u3002\u5168\u984dAWS\u5b9f\u8cbb\u5145\u5f53\u30fb\u30af\u30ea\u30a8\u30a4\u30bf\u30fc\u9084\u5143\u5bfe\u8c61\u5916"
+    },
+    "recording_infra_cost_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u9332\u753b\u306b\u4f7f\u3063\u305fAWS\u5b9f\u8cbb\uff08Media Capture\uff09\u8a08\u4e0a\u7528"
     }
   },
   "required": [
