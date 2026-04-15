@@ -116,6 +116,8 @@ export default function Recruit() {
     e.preventDefault();
     if (!name || !email) { toast.error("お名前とメールアドレスは必須です"); return; }
     setSubmitting(true);
+
+    // 1. 申請レコード保存
     try {
       await base44.entities.BlogPost.create({
         title: `【ライバー募集申請】${name}`,
@@ -126,8 +128,6 @@ export default function Recruit() {
           followers: followerCount,
           pr,
           campaign_tier: isProTier ? "pro_90days_all_plans" : "standard_30days_all_plans",
-          all_plans_free: true,
-          requires_review: isProTier,
           applied_at: new Date().toISOString(),
         }),
         channel_id: "recruit_application",
@@ -135,9 +135,24 @@ export default function Recruit() {
       });
     } catch (_) {}
 
+    // 2. 全プラン自動付与（バックエンド経由）
+    try {
+      const res = await base44.functions.invoke("campaignAutoGrant", {
+        email,
+        followers: followerCount,
+        name,
+      });
+      if (res.data?.success) {
+        const months = res.data.months;
+        toast.success(`✅ 全プランを${months}ヶ月間、自動で有効化しました！`);
+      }
+    } catch (err) {
+      // 付与失敗はサイレント（申請は通す）
+      console.error("campaignAutoGrant error:", err);
+    }
+
     setSubmitting(false);
     setSubmitted(true);
-    toast.success("申請を受け付けました！メールにてご連絡します。");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
