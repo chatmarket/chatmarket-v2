@@ -79,6 +79,30 @@ export default function Home() {
       {/* ジャイアント・キリング速報バナー（グローバル固定） */}
       <GiantKillingBanner />
 
+      {/* ネオン白文字のメッセージ */}
+      <div className="text-center py-4">
+        <style>{`
+          @keyframes neonWhiteFlicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+              text-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #0ff, 0 0 82px #0ff;
+              color: #fff;
+            }
+            20%, 24%, 55% {
+              text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+              color: #f0f0f0;
+            }
+          }
+          .neon-white-message {
+            animation: neonWhiteFlicker 3s infinite;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.1em;
+          }
+        `}</style>
+        <p className="neon-white-message text-sm font-bold tracking-widest">
+          まだ、未完成。皆様の意見を聞きながら進化していきます。
+        </p>
+      </div>
+
       {/* ヒーロースロット（1位ライバー常駐枠） */}
       <HeroSlot />
 
