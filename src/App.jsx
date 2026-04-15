@@ -63,6 +63,7 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Recruit from './pages/Recruit';
 import Community from './pages/Community';
+import NotificationCenter from './pages/NotificationCenter';
 
 // 認証不要の公開ページパス
 const PUBLIC_PATHS = ['/recruit', '/terms', '/privacy', '/info'];
@@ -150,6 +151,7 @@ const AuthenticatedApp = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/recruit" element={<Recruit />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
