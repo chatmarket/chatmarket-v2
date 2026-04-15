@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import {
   Phone, PhoneOff, PhoneCall, Coins, Shield, Flag, Mic, MicOff, Camera, CameraOff,
-  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio, MessageCircle, Video, VideoOff
+  AlertTriangle, Smile, Settings, Image, Sparkles, X, Clock, CreditCard, CheckCircle2, Radio, MessageCircle, Video, VideoOff, Maximize, Minimize
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -200,6 +200,58 @@ export default function VideoCallPage() {
 
   // Message modal
   const [showMessageModal, setShowMessageModal] = useState(false);
+
+  // フルスクリーン
+  const videoContainerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    const el = videoContainerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  // 音声レベルインジケーター
+  const [audioLevel, setAudioLevel] = useState(0);
+  const audioAnalyserRef = useRef(null);
+  const audioAnimFrameRef = useRef(null);
+
+  useEffect(() => {
+    if (!localStream || !micOn) {
+      setAudioLevel(0);
+      if (audioAnimFrameRef.current) cancelAnimationFrame(audioAnimFrameRef.current);
+      if (audioAnalyserRef.current) { audioAnalyserRef.current.context?.close(); audioAnalyserRef.current = null; }
+      return;
+    }
+    const ctx = new AudioContext();
+    const source = ctx.createMediaStreamSource(localStream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    audioAnalyserRef.current = analyser;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const tick = () => {
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((s, v) => s + v, 0) / data.length;
+      setAudioLevel(Math.min(100, Math.round(avg * 2.5)));
+      audioAnimFrameRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      cancelAnimationFrame(audioAnimFrameRef.current);
+      ctx.close();
+    };
+  }, [localStream, micOn]);
 
   // 録画
   const [isRecording, setIsRecording] = useState(false);
@@ -752,7 +804,7 @@ export default function VideoCallPage() {
       </div>
 
       {/* Main video area */}
-      <div className="flex-1 relative bg-black min-h-0">
+      <div ref={videoContainerRef} className="flex-1 relative bg-black min-h-0">
         {/* Chime接続エンジン（UI無し） - call active + meeting取得済み時のみ */}
         {call?.status === "active" && chimeMeeting && chimeAttendee && (
           <ChimeVideoCall
@@ -799,6 +851,45 @@ export default function VideoCallPage() {
             <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
           </div>
         </div>
+      {/* フルスクリーンボタン */}
+        <button
+          onClick={toggleFullscreen}
+          className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
+          title={isFullscreen ? "全画面解除" : "全画面表示"}
+        >
+          {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+        </button>
+
+        {/* マイクOFF警告 */}
+        {!micOn && call?.status === "active" && (
+          <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 bg-red-900/90 border border-red-500/60 rounded-xl px-4 py-2 flex items-center gap-2 text-red-300 text-xs font-bold backdrop-blur shadow-lg animate-pulse">
+            <MicOff className="w-4 h-4 shrink-0" />
+            マイクがオフです。マイクをONにしてください
+          </div>
+        )}
+
+        {/* 音声レベルインジケーター */}
+        {call?.status === "active" && (
+          <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur rounded-lg px-2 py-1.5">
+            <Mic className={`w-3 h-3 shrink-0 ${micOn ? "text-primary" : "text-red-400"}`} />
+            <div className="flex items-end gap-[2px] h-4">
+              {[20, 40, 60, 80, 100].map((threshold, i) => (
+                <div
+                  key={i}
+                  className="w-1 rounded-sm transition-all duration-75"
+                  style={{
+                    height: `${(i + 1) * 16}%`,
+                    background: !micOn ? "#ef4444" : audioLevel >= threshold ? "#00ff9d" : "rgba(255,255,255,0.2)",
+                  }}
+                />
+              ))}
+            </div>
+            <span className={`text-[9px] font-bold ${micOn ? "text-primary" : "text-red-400"}`}>
+              {micOn ? (audioLevel > 5 ? "送信中" : "待機") : "OFF"}
+            </span>
+          </div>
+        )}
+
       {/* NG Word Detection indicator */}
         {isListening && (
           <div className="absolute top-2 md:top-4 left-1/2 -translate-x-1/2 z-10 bg-black/80 border border-green-500/40 rounded-full px-2 md:px-3 py-0.5 md:py-1 flex items-center gap-1 text-green-400 text-[10px] md:text-xs backdrop-blur">

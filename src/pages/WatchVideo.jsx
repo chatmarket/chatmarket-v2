@@ -7,7 +7,7 @@ import PaywallModal from "../components/video/PaywallModal";
 import PaywallOverlay from "../components/video/PaywallOverlay";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
-import { Eye, Calendar, Heart } from "lucide-react";
+import { Eye, Calendar, Heart, Maximize, Minimize } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -29,6 +29,24 @@ export default function WatchVideo() {
   const [favoriteId, setFavoriteId] = useState(null);
   const [signedVideoUrl, setSignedVideoUrl] = useState(null);
   const queryClient = useQueryClient();
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   const { data: video, isLoading } = useQuery({
     queryKey: ["video", id],
@@ -191,7 +209,7 @@ export default function WatchVideo() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Video Player */}
         <div className="space-y-3 sm:space-y-4 lg:col-span-2">
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+          <div ref={containerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {(signedVideoUrl || video.video_url) ? (
               <video
                 ref={videoRef}
@@ -225,8 +243,15 @@ export default function WatchVideo() {
 
             {/* Video controls overlay */}
             {(signedVideoUrl || video.video_url) && (
-              <div className="absolute bottom-12 right-3">
+              <div className="absolute bottom-12 right-3 flex items-center gap-2">
                 <VideoControls videoRef={videoRef} showQuality={true} />
+                <button
+                  onClick={toggleFullscreen}
+                  className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
+                  title={isFullscreen ? "全画面解除" : "全画面表示"}
+                >
+                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </button>
               </div>
             )}
           </div>
