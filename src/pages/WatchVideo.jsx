@@ -17,6 +17,7 @@ import VideoComments from "../components/video/VideoComments";
 import VideoReactions from "../components/video/VideoReactions";
 import VideoControls from "../components/video/VideoControls";
 import RecommendedVideos from "../components/video/RecommendedVideos";
+import DailyViewTimeIndicator from "../components/video/DailyViewTimeIndicator";
 
 const FREE_PREVIEW_SECONDS = 30;
 
@@ -192,6 +193,10 @@ export default function WatchVideo() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Video Player */}
         <div className="space-y-3 sm:space-y-4 lg:col-span-2">
+          {/* 残り視聴時間インジケーター */}
+          <div className="bg-card border border-border/50 rounded-xl p-3 sm:p-4">
+            <DailyViewTimeIndicator />
+          </div>
           <div ref={containerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {(signedVideoUrl || video.video_url) ? (
               <video
