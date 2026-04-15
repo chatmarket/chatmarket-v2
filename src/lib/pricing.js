@@ -140,7 +140,7 @@ export function minLivePrice(durationMin, isTopLiver = false) {
 
 // ─── 通話料金ルール ────────────────────────────────────────────────
 export const CALL_RULES = {
-  MIN_COINS_PER_15MIN: 500,
+  MIN_COINS_PER_15MIN: 150,  // 確定仕様: 15分150円
   STEP_MINUTES:        15,
   MAX_MINUTES:         120,
   COMM_COST_PER_MIN:   AWS_COST.CHIME_COMM_PER_MIN,
