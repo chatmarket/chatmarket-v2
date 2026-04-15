@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124a
 const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
   { path: "/search", icon: Search, label: "さがす" },
+  { path: "/community", icon: Users, label: "コミュニティ" },
   { path: "/fanclub", icon: Crown, label: "ファンクラブ" },
   { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
   { path: "/blog", icon: BookOpen, label: "ブログ" },

@@ -1,0 +1,72 @@
+{
+  "name": "CommunityPost",
+  "type": "object",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u6295\u7a3f\u8005\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u6295\u7a3f\u8005\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "channel_avatar": {
+      "type": "string",
+      "description": "\u6295\u7a3f\u8005\u30a2\u30d0\u30bf\u30fcURL"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "\u6295\u7a3f\u8005\u30e1\u30fc\u30eb"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "\u6295\u7a3f\u8005\u540d"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u672c\u6587"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "\u6dfb\u4ed8\u753b\u50cfURL"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "basic",
+        "call-anser",
+        "vod",
+        "ppv"
+      ],
+      "default": "public",
+      "description": "\u516c\u958b\u7bc4\u56f2"
+    },
+    "like_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3044\u3044\u306d\u6570"
+    },
+    "like_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u3044\u3044\u306d\u3057\u305f\u30e1\u30fc\u30eb\u30ea\u30b9\u30c8"
+    },
+    "comment_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30b3\u30e1\u30f3\u30c8\u6570"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30d4\u30f3\u7559\u3081"
+    }
+  },
+  "required": [
+    "author_email",
+    "content"
+  ]
+}

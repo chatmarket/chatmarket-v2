@@ -1,0 +1,39 @@
+{
+  "name": "CommunityComment",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string",
+      "description": "\u6295\u7a3fID"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "\u30b3\u30e1\u30f3\u30c8\u8005\u30e1\u30fc\u30eb"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "\u30b3\u30e1\u30f3\u30c8\u8005\u540d"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u30b3\u30e1\u30f3\u30c8\u5185\u5bb9"
+    },
+    "like_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3044\u3044\u306d\u6570"
+    },
+    "like_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u3044\u3044\u306d\u3057\u305f\u30e1\u30fc\u30eb\u30ea\u30b9\u30c8"
+    }
+  },
+  "required": [
+    "post_id",
+    "author_email",
+    "content"
+  ]
+}
