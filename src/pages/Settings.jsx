@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key, Crown } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key, Crown, Coins } from "lucide-react";
+import CoinPurchasePanel from "../components/yell/CoinPurchasePanel";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CategoryTagSelector from "../components/channel/CategoryTagSelector";
@@ -259,6 +260,9 @@ export default function Settings() {
           </TabsTrigger>
           <TabsTrigger value="fanclub" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Crown className="w-4 h-4" /> ファンクラブ
+          </TabsTrigger>
+          <TabsTrigger value="coins" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
+            <Coins className="w-4 h-4" /> コイン購入
           </TabsTrigger>
           <TabsTrigger value="recovery" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Key className="w-4 h-4" /> 復旧設定
@@ -908,6 +912,18 @@ export default function Settings() {
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             保存する
           </Button>
+          </TabsContent>
+
+          {/* Coin Purchase Tab */}
+          <TabsContent value="coins" className="space-y-5">
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-2">
+              <Coins className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-yellow-300">エールコインを購入</p>
+                <p className="text-xs text-yellow-200/70 mt-0.5">ライブ配信・ビデオ通話の視聴・応援に使えます。</p>
+              </div>
+            </div>
+            <CoinPurchasePanel onSuccess={() => {}} />
           </TabsContent>
 
           {/* Account Recovery Tab */}
