@@ -156,9 +156,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   };
 
   return (
-    <div className="w-full bg-zinc-950 rounded-xl overflow-hidden border border-zinc-800">
-      {/* 映像プレビュー (16:9) */}
-      <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
+    <div className="w-full flex flex-col lg:flex-row gap-4 bg-zinc-950 rounded-xl overflow-hidden">
+      {/* 左側: 映像プレビュー（大きく表示） */}
+      <div className="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800">
+        {/* 映像プレビュー (16:9) */}
+        <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
         <video
           ref={previewVideoRef}
           autoPlay
@@ -206,10 +208,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </button>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* コントロールバー */}
-      <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
+        {/* コントロールバー */}
+        <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
         {/* 左: マイク/カメラ/設定 */}
         <div className={`flex gap-2 ${isLive ? "opacity-30 pointer-events-none select-none" : ""}`}>
           <CtrlBtn
@@ -237,29 +239,53 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         >
           <PhoneOff className="w-3.5 h-3.5" /> 配信終了
         </button>
+        </div>
+
+        {/* IVSストリームキー表示（プレビュー中のみ・OBS用） */}
+        {!isLive && ivsStreamKey && (
+          <div className="px-4 pb-4 space-y-2">
+            <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">OBSで配信する場合（RTMPS情報）</p>
+            <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-zinc-500">Ingest Endpoint</p>
+                <p className="text-xs text-zinc-300 font-mono truncate">rtmps://{ivsIngestEndpoint}:443/app/</p>
+              </div>
+            </div>
+            <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-zinc-500">Stream Key</p>
+                <p className="text-xs text-zinc-300 font-mono truncate">{ivsStreamKey.slice(0, 30)}...</p>
+              </div>
+              <button onClick={copyStreamKey} className="shrink-0 text-zinc-400 hover:text-primary transition-colors">
+                {copiedKey ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* IVSストリームキー表示（プレビュー中のみ・OBS用） */}
-      {!isLive && ivsStreamKey && (
-        <div className="px-4 pb-4 space-y-2">
-          <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">OBSで配信する場合（RTMPS情報）</p>
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-zinc-500">Ingest Endpoint</p>
-              <p className="text-xs text-zinc-300 font-mono truncate">rtmps://{ivsIngestEndpoint}:443/app/</p>
-            </div>
+      {/* 右側: チャット・エール表示エリア */}
+      <div className="w-full lg:w-80 flex flex-col gap-4">
+        {/* チャットセクション */}
+        <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800">
+            <p className="text-sm font-bold text-white">💬 チャット</p>
           </div>
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-zinc-500">Stream Key</p>
-              <p className="text-xs text-zinc-300 font-mono truncate">{ivsStreamKey.slice(0, 30)}...</p>
-            </div>
-            <button onClick={copyStreamKey} className="shrink-0 text-zinc-400 hover:text-primary transition-colors">
-              {copiedKey ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-            </button>
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            <p className="text-xs text-zinc-500 text-center py-8">配信中にチャットが表示されます</p>
           </div>
         </div>
-      )}
+
+        {/* エール・スーパーチャットセクション */}
+        <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800">
+            <p className="text-sm font-bold text-yellow-400">⭐ エール・スーパーチャット</p>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            <p className="text-xs text-zinc-500 text-center py-8">応援メッセージが表示されます</p>
+          </div>
+        </div>
+      </div>
 
       {/* 配信終了確認モーダル */}
       {showEndConfirm && (
