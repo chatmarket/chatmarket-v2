@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 import StreamStyleModal from "../components/live/StreamStyleModal";
+import StripeFeeProfitBreakdown from "../components/live/StripeFeeProfitBreakdown";
 
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
@@ -40,6 +41,8 @@ export default function GoLive() {
     price: mode === MODE_LIVE ? 150 : 150,
     isPaid: true,
     streamType: STREAM_TYPE_WEBRTC,
+    // 【施策3】画質制限
+    quality: "720p", // デフォルト: 720p
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
@@ -178,8 +181,8 @@ export default function GoLive() {
       viewer_count: 0,
       stream_type: form.streamType,
       ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
-      // 【施策3】画質制限フラグ: 150円設定は720p、それ以上は1080pを許可
-      max_bitrate_restriction: maxQualityByPrice,
+      // 【施策3】実効画質: 価格に応じた画質を保存
+      max_bitrate_restriction: effectiveQuality,
       // コスト計算起点
       live_started_at: isLiveNow ? new Date().toISOString() : null,
       cost_input_yen: 0,
@@ -226,11 +229,45 @@ export default function GoLive() {
   const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 150);
   const livePriceError = mode === MODE_LIVE && form.price < liveMinPrice;
   
-  // 【施策3】画質制限: 150円設定は480p/720pに制限、高額設定のみ1080pを許可
-  const maxQualityByPrice = form.price <= 150 ? "720p" : form.price <= 300 ? "1080p" : "1080p+";
-  const qualityRestrictionWarning = form.price <= 150 
-    ? "最低150円設定の配信は720p（HD）までの画質に自動制限されます。より高画質での配信をご希望の場合は、チケット価格を300円以上に設定してください。"
-    : "";
+  // 【施策3】画質・価格連動バリデーション
+  // 1080p選択時: 最低300円を強制
+  // 150円設定時: 720p以下に制限
+  const qualityOptions = [
+    { label: "720p (HD)", value: "720p", minPrice: 150 },
+    { label: "1080p (Full HD)", value: "1080p", minPrice: 300 },
+  ];
+  
+  // 価格と画質の連動ロジック
+  const getQualityForPrice = (price) => {
+    if (price >= 300) return "1080p"; // 300円以上なら1080p可
+    return "720p"; // 150~299円は720p固定
+  };
+  
+  // 現在設定の画質
+  const currentQuality = form.quality;
+  const effectiveQuality = getQualityForPrice(form.price); // 価格に応じた実効画質
+  
+  // 1080p選択時の最低価格チェック
+  const is1080pSelected = currentQuality === "1080p";
+  const price1080pError = is1080pSelected && form.price < 300;
+  
+  // アーカイブ価格の自動計算（高画質時：100円/15分固定）
+  const autoArchivePrice = effectiveQuality === "1080p" 
+    ? Math.ceil((form.duration / 15) * 100)
+    : Math.ceil((form.duration / 15) * 150);
+  
+  // 画質変更時にアーカイブ価格を自動更新
+  useEffect(() => {
+    if (form.saveArchive && form.archiveIsPaid && effectiveQuality === "1080p") {
+      setForm(f => ({ ...f, archivePrice: autoArchivePrice }));
+    }
+  }, [effectiveQuality, form.duration, form.saveArchive, form.archiveIsPaid]);
+  
+  const qualityRestrictionWarning = is1080pSelected && form.price < 300
+    ? `⚠️ 1080p配信には最低300円の設定が必要です（現在: ${form.price}円）`
+    : is1080pSelected && form.price >= 300
+    ? `✅ 1080p配信が有効（最低価格: 300円以上 / 現在: ${form.price}円）`
+    : `✓ 720p配信（価格: ${form.price}円）`;
 
 
 
@@ -502,11 +539,38 @@ export default function GoLive() {
                 <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
               </div>
 
+              {/* 【新機能】画質選択 */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  📺 配信画質を選択
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {qualityOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, quality: opt.value })}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                        currentQuality === opt.value
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-secondary hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="font-bold text-sm">{opt.label}</span>
+                      <span className="text-xs text-muted-foreground">最低: ¥{opt.minPrice}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {qualityRestrictionWarning}
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label>チケット料金（エールコイン）</Label>
                 <Input
                   type="number"
-                  min={isCampaign ? 0 : liveMinPrice}
+                  min={is1080pSelected ? 300 : 150}
                   max={1000000}
                   step={1}
                   value={form.price}
@@ -514,24 +578,36 @@ export default function GoLive() {
                     const val = parseInt(e.target.value) || 0;
                     setForm({ ...form, price: Math.min(val, 1000000) });
                   }}
-                  className={`bg-secondary border-0 ${livePriceError ? "ring-1 ring-destructive" : ""}`}
-                  placeholder={String(liveMinPrice)}
+                  className={`bg-secondary border-0 ${price1080pError || livePriceError ? "ring-1 ring-destructive" : ""}`}
+                  placeholder={is1080pSelected ? "300" : "150"}
                 />
-                {livePriceError ? (
-                   <p className={`text-xs text-destructive font-semibold`}>
-                     ⛔ 最低{liveMinPrice}コイン必須 / {form.duration}分 ← この価格では配信できません
+                {price1080pError ? (
+                   <p className="text-xs text-destructive font-semibold">
+                     ⛔ 1080p配信には最低300円が必要です（現在: {form.price}円）
+                   </p>
+                 ) : livePriceError ? (
+                   <p className="text-xs text-destructive font-semibold">
+                     ⛔ 最低{liveMinPrice}コイン必須 / {form.duration}分
                    </p>
                  ) : (
-                   <p className={`text-xs text-muted-foreground`}>
-                     最低設定: {liveMinPrice}コイン / {form.duration}分（15分150コイン固定・還元率{Math.round(liveRevenueRate * 100)}%）
+                   <p className="text-xs text-muted-foreground">
+                     最低設定: {is1080pSelected ? "300" : "150"}コイン / {form.duration}分
                    </p>
                  )}
-                 <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
-                  <p className="text-red-400 font-bold">🔴 無料配信は禁止 — 最低150円/回を強制</p>
-                  <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span></p>
-                  <p>運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}% - IVS等インフラ費用を相殺）</p>
-                  {qualityRestrictionWarning && (
-                    <p className="text-yellow-400 mt-2">⚠️ {qualityRestrictionWarning}</p>
+                 <div className={`rounded-lg p-3 text-xs space-y-1.5 ${is1080pSelected ? "bg-blue-500/10 border border-blue-500/30" : "bg-secondary/60"}`}>
+                  <p className={is1080pSelected ? "text-blue-400 font-bold" : "text-red-400 font-bold"}>
+                    {is1080pSelected ? "✅ 1080p配信有効" : "🔴 無料配信は禁止"}
+                  </p>
+                  <p className={is1080pSelected ? "text-blue-300" : "text-muted-foreground"}>
+                    ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span>
+                  </p>
+                  <p className={is1080pSelected ? "text-blue-300" : "text-muted-foreground"}>
+                    運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}%）
+                  </p>
+                  {is1080pSelected && (
+                    <p className="text-blue-300 mt-1 border-t border-blue-500/30 pt-1">
+                      💾 アーカイブ販売価格: ¥{autoArchivePrice}/15分
+                    </p>
                   )}
                 </div>
               </div>
@@ -673,10 +749,32 @@ export default function GoLive() {
                 </>
               )}
 
+              {form.saveArchive && form.archiveIsPaid && (
+               <>
+               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-300 space-y-1">
+               <p className="font-semibold">💾 アーカイブ販売価格（自動設定）</p>
+               <p>
+                 {effectiveQuality === "1080p"
+                   ? `1080p高画質配信のため、販売価格は自動的に ¥${autoArchivePrice}/15分 に設定されます。`
+                   : `720p標準画質のため、販売価格は ¥${autoArchivePrice}/15分 に設定可能です。`}
+               </p>
+               <p className="text-[10px] text-blue-400 border-t border-blue-500/30 pt-1">
+                 ※ 高画質ソースの維持コストを考慮した設定です
+               </p>
+               </div>
+
+               {/* 【新機能】Stripe手数料・運営利益の透明性表示 */}
+               <StripeFeeProfitBreakdown 
+                 price={form.price} 
+                 duration={form.duration}
+                 quality={effectiveQuality}
+               />
+               </>
+               )}
               {form.saveArchive && !form.archiveIsPaid && (
-                <p className="text-xs text-muted-foreground">
-                  ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
-                </p>
+              <p className="text-xs text-muted-foreground">
+              ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
+              </p>
               )}
             </div>
           )}
@@ -684,7 +782,7 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
+          disabled={creating || !form.title || livePriceError || price1080pError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
         >
           {creating ? (
