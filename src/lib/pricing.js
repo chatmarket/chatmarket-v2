@@ -20,17 +20,20 @@
 export const COIN_TO_YEN = 1; // 1コイン = 1円（確定）
 
 // ─── Stripe手数料（視聴者負担・外出し） ───────────────────────────
-export const STRIPE_FEE_RATE  = 0.036; // 3.6%
-export const STRIPE_FEE_FIXED = 40;    // 固定40円（Stripe Japan）
+// Stripe Japan 国内カード: 3.6%のみ・固定手数料なし（公式: stripe.com/jp/pricing 確認済み）
+// ※ STRIPE_FEE_FIXED=40は Stripe US の料金。Stripe Japan 国内カードには適用されない。
+export const STRIPE_FEE_RATE  = 0.036; // 3.6%のみ
+export const STRIPE_FEE_FIXED = 0;     // 固定費なし（Stripe Japan 国内カード）
 
 /**
  * 視聴者が実際に支払う金額（Stripe手数料込み・外乗せ）
+ * Stripe Japan 国内カード: ceil(coins / (1 - 0.036))
+ * 例: 150円 → ceil(150 / 0.964) = 156円
  * @param {number} coinAmount  購入コイン数（= 円相当）
  * @returns {{ chargeYen: number, coinAmount: number }}
  */
 export function calcCoinCharge(coinAmount) {
-  // ceil((coins + 40) / (1 - 0.036)) で手数料を完全外乗せ
-  const chargeYen = Math.ceil((coinAmount + STRIPE_FEE_FIXED) / (1 - STRIPE_FEE_RATE));
+  const chargeYen = Math.ceil(coinAmount / (1 - STRIPE_FEE_RATE));
   return { chargeYen, coinAmount }; // DB残高は coinAmount のみ（端数なし）
 }
 

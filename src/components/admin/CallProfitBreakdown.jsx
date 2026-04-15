@@ -18,14 +18,17 @@ import { Phone, TrendingDown, TrendingUp, AlertTriangle, Info } from "lucide-rea
 
 // ── 定数 ──────────────────────────────────────────────────────────
 const COIN_PER_UNIT       = 150;   // 15分あたりコイン
-const STRIPE_RATE         = 0.036;
-const STRIPE_FIXED        = 40;    // 円
+const STRIPE_RATE         = 0.036; // Stripe Japan 国内カード: 定率のみ・固定費なし
+const STRIPE_FIXED        = 0;     // 固定費なし（Stripe Japan。※Stripe USの$0.30は非適用）
 const CHIME_COST_PER_MIN  = 4;     // 円/分
 const UNIT_MINUTES        = 15;
 const CREATOR_SHARE       = 0.85;
 
 // リスナーが実際に支払う金額（外乗せ）
-const listenerCharge = Math.ceil((COIN_PER_UNIT + STRIPE_FIXED) / (1 - STRIPE_RATE)); // 197円
+// ceil(150 / (1 - 0.036)) = ceil(155.6) = 156円
+const listenerCharge = Math.ceil(COIN_PER_UNIT / (1 - STRIPE_RATE));                 // 156円
+// Stripeが持っていく = 156 - 150 = 6円
+const stripeFee           = listenerCharge - COIN_PER_UNIT;                           // 6円
 // プラットフォームが受け取るコイン（Stripe手数料はリスナー負担なので150円がそのまま入る）
 const platformReceive     = COIN_PER_UNIT;                                             // 150円
 // AWS Chime通信費 / ユニット
@@ -80,13 +83,13 @@ export default function CallProfitBreakdown({ calls = [] }) {
           <UnitCell
             label="リスナー支払額"
             value={`¥${listenerCharge}`}
-            sub="Stripe外乗せ後"
+            sub={`Stripe外乗せ（+¥${stripeFee}）`}
             color="text-blue-400"
           />
           <UnitCell
-            label="PF受取（コイン）"
+            label="PF受取"
             value={`¥${platformReceive}`}
-            sub="Stripe手数料込み"
+            sub="固定費なし・定率3.6%のみ"
             color="text-white"
           />
           <UnitCell
@@ -167,8 +170,9 @@ export default function CallProfitBreakdown({ calls = [] }) {
           <Info className="w-3 h-3" /> 計算根拠（確定仕様）
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
-          <p>・リスナー支払額 = ceil((150+40)÷(1-0.036)) = <span className="text-white">197円</span></p>
-          <p>・PF受取 = <span className="text-white">150円</span>（Stripe手数料はリスナー負担）</p>
+          <p>・Stripe Japan 国内カード = <span className="text-green-300">3.6%定率のみ・固定費¥0</span></p>
+          <p>・リスナー支払額 = ceil(150÷0.964) = <span className="text-white">156円</span></p>
+          <p>・PF受取 = <span className="text-white">150円</span>（Stripeへ6円・リスナー負担）</p>
           <p>・Chime通信費 = 4円×15分 = <span className="text-orange-300">60円</span></p>
           <p>・クリエイター = floor(150×0.85) = <span className="text-green-300">127円</span></p>
           <p>・PF手数料 = 150-127 = <span className="text-yellow-300">23円</span></p>
