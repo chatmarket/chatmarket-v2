@@ -178,6 +178,8 @@ export default function GoLive() {
       viewer_count: 0,
       stream_type: form.streamType,
       ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
+      // 【施策3】画質制限フラグ: 150円設定は720p、それ以上は1080pを許可
+      max_bitrate_restriction: maxQualityByPrice,
       // コスト計算起点
       live_started_at: isLiveNow ? new Date().toISOString() : null,
       cost_input_yen: 0,
@@ -199,21 +201,36 @@ export default function GoLive() {
   };
 
   // ライブ配信の最低コイン価格（プログレッシブ還元率連動）
-  // キャンペーン許可: 制限なし
-  // progressive_rate >= 0.95: 200コイン/15分
-  // progressive_rate >= 0.90: 175コイン/15分
-  // 通常 (0.85〜0.89): 150コイン/15分
-  // VODプラン加入チェック（アーカイブ販売にはVODプラン必要）
+  // 【施策1】無料配信は完全禁止 - 150円以上の設定を強制
   const hasVodPlan = user?.plan === "vod" || user?.plan === "basic" || user?.plan === "standard" || user?.plan === "premium" || user?.role === "admin";
 
   const isCampaign = channels[0]?.campaign_allowed === true;
   const progressiveRate = channels[0]?.progressive_rate || 0.85;
-  const LIVE_MIN_COINS_PER_15MIN = channels[0]?.live_min_per_15min
-    || (progressiveRate >= 0.95 ? 200 : progressiveRate >= 0.90 ? 175 : 150);
-  const liveRevenueRate = progressiveRate;
-  const liveMinPrice = isCampaign ? 0 : Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
+  
+  // 【施策2】運営手数料のダイナミック調整: 基本15%から動的に15~20%へ
+  // progressiveRate が高いほど、IVS等のインフラコストが増加するため手数料アップ
+  let platformFeeRate = 0.15; // デフォルト15%
+  if (progressiveRate >= 0.95) {
+    platformFeeRate = 0.20; // 最高還元率95%時は運営20%
+  } else if (progressiveRate >= 0.90) {
+    platformFeeRate = 0.18; // 高還元率90%時は運営18%
+  } else if (progressiveRate >= 0.87) {
+    platformFeeRate = 0.16; // 標準還元率87%時は運営16%
+  }
+  // ライバー還元率 = 1 - platformFeeRate
+  const liveRevenueRate = 1 - platformFeeRate;
+  
+  // 無料配信完全禁止: 最低150円（≈1500コイン相当）を強制
+  const LIVE_MIN_COINS_PER_15MIN = 150;
+  const liveMinPrice = Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
   const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 150);
-  const livePriceError = mode === MODE_LIVE && !isCampaign && form.price < liveMinPrice && liveMinPrice > 0;
+  const livePriceError = mode === MODE_LIVE && form.price < liveMinPrice;
+  
+  // 【施策3】画質制限: 150円設定は480p/720pに制限、高額設定のみ1080pを許可
+  const maxQualityByPrice = form.price <= 150 ? "720p" : form.price <= 300 ? "1080p" : "1080p+";
+  const qualityRestrictionWarning = form.price <= 150 
+    ? "最低150円設定の配信は720p（HD）までの画質に自動制限されます。より高画質での配信をご希望の場合は、チケット価格を300円以上に設定してください。"
+    : "";
 
 
 
@@ -500,23 +517,22 @@ export default function GoLive() {
                   className={`bg-secondary border-0 ${livePriceError ? "ring-1 ring-destructive" : ""}`}
                   placeholder={String(liveMinPrice)}
                 />
-                {isCampaign ? (
-                  <p className="text-xs text-yellow-400">🏷️ キャンペーン許可済み — 最低価格制限なし</p>
-                ) : (
-                  <p className={`text-xs ${livePriceError ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
-                    最低設定: {liveMinPrice}コイン / {form.duration}分（15分150コイン・還元率{Math.round(liveRevenueRate * 100)}%連動）
-                    {livePriceError && " ← この価格では設定できません"}
-                  </p>
-                )}
-                <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
-                  {progressiveRate >= 0.95 && (
-                    <p className="text-yellow-400 font-bold">👑 最高還元率95%: 最低200コイン/15分が必須です</p>
-                  )}
-                  {progressiveRate >= 0.90 && progressiveRate < 0.95 && (
-                    <p className="text-orange-400 font-bold">🔥 高還元率{Math.round(progressiveRate * 100)}%: 最低175コイン/15分が必須です</p>
-                  )}
+                {livePriceError ? (
+                   <p className={`text-xs text-destructive font-semibold`}>
+                     ⛔ 最低{liveMinPrice}コイン必須 / {form.duration}分 ← この価格では配信できません
+                   </p>
+                 ) : (
+                   <p className={`text-xs text-muted-foreground`}>
+                     最低設定: {liveMinPrice}コイン / {form.duration}分（15分150コイン固定・還元率{Math.round(liveRevenueRate * 100)}%）
+                   </p>
+                 )}
+                 <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
+                  <p className="text-red-400 font-bold">🔴 無料配信は禁止 — 最低150円/回を強制</p>
                   <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span></p>
-                  <p>運営収益: {Math.floor(form.price * (1 - liveRevenueRate))}コイン（{Math.round((1 - liveRevenueRate) * 100)}%）</p>
+                  <p>運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}% - IVS等インフラ費用を相殺）</p>
+                  {qualityRestrictionWarning && (
+                    <p className="text-yellow-400 mt-2">⚠️ {qualityRestrictionWarning}</p>
+                  )}
                 </div>
               </div>
             </div>

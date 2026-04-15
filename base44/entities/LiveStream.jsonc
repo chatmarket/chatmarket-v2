@@ -39,7 +39,7 @@
     "price": {
       "type": "number",
       "default": 0,
-      "description": "\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u5186\uff09"
+      "description": "\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u5186\uff09\u3010\u65bd\u7b561\u3011\u6700\u4f4e150\u5186\u5f37\u5236"
     },
     "viewer_count": {
       "type": "number",
@@ -136,6 +136,17 @@
       "type": "boolean",
       "default": false,
       "description": "\u30b7\u30b9\u30c6\u30e0\u5074\u306e\u5f37\u5236\u7d42\u4e86\u30d5\u30e9\u30b0"
+    },
+    "max_bitrate_restriction": {
+      "type": "string",
+      "enum": [
+        "480p",
+        "720p",
+        "1080p",
+        "1080p+"
+      ],
+      "default": "1080p",
+      "description": "\u3010\u65bd\u7b563\u3011\u753b\u8cea\u5236\u9650: 150\u5186\u8a2d\u5b9a\u306f720p\u3001300\u5186\u4ee5\u4e0a\u306f1080p\u3092\u8a31\u53ef"
     }
   },
   "required": [
