@@ -42,7 +42,7 @@ export default function GoLive() {
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
-    archivePrice: 1,
+    archivePrice: 150,
     archiveConsentConfirmed: false,
   });
 
@@ -180,6 +180,9 @@ export default function GoLive() {
   // progressive_rate >= 0.95: 200コイン/15分
   // progressive_rate >= 0.90: 175コイン/15分
   // 通常 (0.85〜0.89): 150コイン/15分
+  // VODプラン加入チェック（アーカイブ販売にはVODプラン必要）
+  const hasVodPlan = user?.plan === "vod" || user?.plan === "basic" || user?.plan === "standard" || user?.plan === "premium" || user?.role === "admin";
+
   const isCampaign = channels[0]?.campaign_allowed === true;
   const progressiveRate = channels[0]?.progressive_rate || 0.85;
   const LIVE_MIN_COINS_PER_15MIN = channels[0]?.live_min_per_15min
@@ -563,19 +566,24 @@ export default function GoLive() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>アーカイブを有料公開する</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">¥1〜自由設定で動画として販売できます</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">¥150〜自由設定で動画として販売できます</p>
                     {!canSellArchive && (
                       <p className="text-xs text-yellow-400 mt-1">⚠️ BASICプラン以上で利用可能</p>
                     )}
                   </div>
                   <Switch
-                    checked={form.archiveIsPaid}
-                    disabled={!canSellArchive}
-                    onCheckedChange={(v) => {
-                      if (!canSellArchive) { toast.error("アーカイブ販売はBASICプラン以上でご利用いただけます。"); return; }
-                      setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false });
-                    }}
-                  />
+                     checked={form.archiveIsPaid}
+                     disabled={!canSellArchive}
+                     onCheckedChange={(v) => {
+                       if (!canSellArchive) { toast.error("アーカイブ販売はBASICプラン以上でご利用いただけます。"); return; }
+                       if (v && !hasVodPlan) {
+                         toast.error("アーカイブを有料販売するにはVODプランへの加入が必要です。", { duration: 5000 });
+                         navigate("/plan-select");
+                         return;
+                       }
+                       setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false });
+                     }}
+                   />
                 </div>
                 );
               })()}
@@ -585,15 +593,15 @@ export default function GoLive() {
                   <div className="space-y-2">
                     <Label>アーカイブ販売価格（円）</Label>
                     <Input
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={form.archivePrice}
-                      onChange={(e) => setForm({ ...form, archivePrice: parseInt(e.target.value) || 1 })}
-                      className="bg-secondary border-0"
-                      placeholder="1"
+                     type="number"
+                     min={150}
+                     step={1}
+                     value={form.archivePrice}
+                     onChange={(e) => setForm({ ...form, archivePrice: Math.max(150, parseInt(e.target.value) || 150) })}
+                     className="bg-secondary border-0"
+                     placeholder="150"
                     />
-                    <p className="text-xs text-muted-foreground">¥1〜自由に設定できます</p>
+                    <p className="text-xs text-muted-foreground">¥150〜自由に設定できます</p>
                   </div>
 
                   {/* Consent notice */}
