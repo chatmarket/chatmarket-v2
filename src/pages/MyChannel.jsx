@@ -10,6 +10,7 @@ import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XC
 import { Link, useNavigate } from "react-router-dom";
 import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 import VideoEditPanel from "../components/channel/VideoEditPanel";
+import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
@@ -105,6 +106,9 @@ export default function MyChannel() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* 承認済み通話の入室ボタン（大きく表示） */}
+      <AcceptedCallsList userEmail={user?.email} />
+
       {archiveModalStream && (
         <ArchivePriceModal
           stream={archiveModalStream}

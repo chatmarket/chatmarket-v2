@@ -568,21 +568,13 @@ export default function VideoCallRequest() {
 
         <Button
           type="submit"
-          disabled={
-            submitting ||
-            !termsAgreed ||
-            existingRequests.length > 0 ||
-            (userPlan === "call-anser" && useFreeSlot ? freeSlotsRemaining === 0 : (!callPrice || effectiveAvailableDurations.length === 0))
-          }
-          className={`w-full h-12 gap-2 text-base font-bold ${userPlan === "call-anser" && useFreeSlot ? "bg-cyan-600 hover:bg-cyan-700" : "bg-primary hover:bg-primary/90"}`}
+          disabled={submitting || !termsAgreed || existingRequests.length > 0 || !preferredDate}
+          className={`w-full h-12 gap-2 text-base font-bold bg-primary hover:bg-primary/90 disabled:opacity-50`}
         >
           {submitting ? "送信中..." : (
             <>
               <PhoneCall className="w-5 h-5" />
-              {userPlan === "call-anser" && useFreeSlot
-                ? `🆓 無料通話 ${freeSlotDuration}分 リクエストを送る`
-                : callPrice > 0 ? `¥${callPrice.toLocaleString()} で通話リクエストを送る` : "通話リクエストを送る"
-              }
+              通話リクエストを送る
             </>
           )}
         </Button>

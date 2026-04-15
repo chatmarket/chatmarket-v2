@@ -14,6 +14,7 @@ import NotificationSidebar from "../components/dashboard/NotificationSidebar";
 import TicketSalesAnalytics from "../components/dashboard/TicketSalesAnalytics";
 import EventNotificationPanel from "../components/dashboard/EventNotificationPanel";
 import ProgressiveRateCard from "../components/dashboard/ProgressiveRateCard";
+import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -142,6 +143,9 @@ export default function CreatorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* メインコンテンツ（左2/3） */}
         <div className="lg:col-span-2 space-y-6">
+          {/* 承認済み通話の入室ボタン */}
+          <AcceptedCallsList userEmail={user?.email} />
+
           {/* プログレッシブ還元率 */}
           {channel && <ProgressiveRateCard channel={channel} />}
 
