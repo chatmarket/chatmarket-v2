@@ -1,7 +1,11 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Video, PhoneCall, Users, TrendingUp, Download, Smartphone } from "lucide-react";
+import { Radio, Video, PhoneCall, Users, TrendingUp, Download, Smartphone, Zap } from "lucide-react";
+import { isBefore } from "date-fns";
+
+const RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
+const showRecruitBanner = isBefore(new Date(), RECRUIT_DEADLINE);
 
 const SignUpButton = ({ variant = "default" }) => {
   const navigate = useNavigate();
@@ -61,7 +65,52 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <div className="mt-8 sm:mt-10">
+          {/* 期間限定ライバー募集バナー */}
+          {showRecruitBanner && (
+            <div className="mt-8 sm:mt-10">
+              <Link to="/recruit">
+                <div
+                  className="relative overflow-hidden rounded-2xl px-6 py-5 cursor-pointer group transition-transform hover:scale-[1.02]"
+                  style={{
+                    background: "linear-gradient(135deg, #1a0a00 0%, #3d1a00 40%, #1a0a00 100%)",
+                    border: "2px solid #f59e0b",
+                    boxShadow: "0 0 30px rgba(245,158,11,0.5), 0 0 60px rgba(245,158,11,0.2), inset 0 0 30px rgba(245,158,11,0.05)",
+                  }}
+                >
+                  {/* 背景グリッター */}
+                  <div className="absolute inset-0 opacity-20" style={{
+                    backgroundImage: "radial-gradient(circle at 20% 50%, #f59e0b 1px, transparent 1px), radial-gradient(circle at 80% 20%, #fbbf24 1px, transparent 1px)",
+                    backgroundSize: "30px 30px"
+                  }} />
+
+                  <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                    <div className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                      style={{ background: "rgba(245,158,11,0.2)", border: "1px solid #f59e0b" }}>
+                      <Zap className="w-6 h-6" style={{ color: "#f59e0b" }} />
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <p className="text-xs font-bold mb-1" style={{ color: "#fbbf24", letterSpacing: "0.1em" }}>
+                        ⏰ 期間限定 〜 4/30まで
+                      </p>
+                      <p className="font-black text-base sm:text-lg leading-tight" style={{ color: "#fef3c7" }}>
+                        【4/16解禁】業界最高95%還元・先行ライバー300名限定募集開始！
+                      </p>
+                    </div>
+                    <div className="shrink-0 px-4 py-2 rounded-xl font-black text-sm whitespace-nowrap transition-all group-hover:scale-105"
+                      style={{
+                        background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                        color: "#1a0a00",
+                        boxShadow: "0 0 15px rgba(245,158,11,0.6)",
+                      }}>
+                      Pro枠を確保 →
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          )}
+
+          <div className="mt-6 sm:mt-8">
             <SignUpButton />
           </div>
         </div>
