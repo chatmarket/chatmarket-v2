@@ -36,7 +36,7 @@ export default function GoLive() {
     scheduled_at: "",
     availableTime: "",
     duration: mode === MODE_LIVE ? 60 : 15,
-    price: mode === MODE_LIVE ? 150 : 500,
+    price: mode === MODE_LIVE ? 150 : 150,
     isPaid: true,
     streamType: STREAM_TYPE_WEBRTC,
     // Archive settings
