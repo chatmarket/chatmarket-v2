@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ---- キャンペーン設定 ----
-const CAMPAIGN_START = new Date("2026-04-16T00:00:00+09:00");
+const CAMPAIGN_START = new Date("2026-04-16T20:00:00+09:00");
 const PRO_SLOTS_TOTAL = 300;
 const STORAGE_KEY = "recruit_pro_slots_used";
 
