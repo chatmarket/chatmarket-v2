@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import AgoraVideoCall from "@/components/agora/AgoraVideoCall";
+import ChimeVideoCall from "@/components/call/ChimeVideoCall";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,8 +171,9 @@ export default function VideoCallPage() {
    const navigate = useNavigate();
    const localVideoRef = useRef(null);
    const remoteVideoRef = useRef(null);
-   const [agoraToken, setAgoraToken] = useState(null);
-   const [agoraConnected, setAgoraConnected] = useState(false);
+   const [chimeMeeting, setChimeMeeting] = useState(null);
+   const [chimeAttendee, setChimeAttendee] = useState(null);
+   const [chimeConnected, setChimeConnected] = useState(false);
 
   const [user, setUser] = useState(null);
   const [micOn, setMicOn] = useState(true);
@@ -430,18 +431,15 @@ export default function VideoCallPage() {
       const remaining = Math.max(0, Math.ceil((totalMs - elapsed) / 1000));
       setRemainingSeconds(remaining);
 
-      // 3分前（180秒）にAgoraシグナリングで通知
+      // 3分前（180秒）に通知
       if (remaining === 180 && !warned3minRef.current && call?.id) {
         warned3minRef.current = true;
-        // Agoraシグナリング通知（実装予定）
-        console.log("🔔 Agora Signal: 3分前の通知");
         toast.warning("⏰ あと3分で通話が終了します");
       }
 
-      // 1分前（60秒）にAgoraシグナリングで通知＆バナー表示
+      // 1分前（60秒）に通知
       if (remaining === 60 && !warned1minBannerRef.current && call?.id) {
         warned1minBannerRef.current = true;
-        console.log("🔔 Agora Signal: 1分前の通知");
         toast.error("⏰ あと1分で通話が終了します");
       }
 
@@ -583,28 +581,23 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
-  // Agoraトークンをバックエンドから取得
-  const [agoraAppId, setAgoraAppId] = useState('');
+  // Chimeミーティング情報をバックエンドから取得
   useEffect(() => {
-    if (!call || !user) return;
-    const fetchToken = async () => {
+    if (!call || !user || call.status !== 'active' || chimeMeeting) return;
+    const fetchMeeting = async () => {
       try {
-        const res = await base44.functions.invoke('agoraTokenGenerator', {
-          channel_id: call.id,
-          user_id: String(user.id || '12345'),
-        });
-        if (res?.data?.token) {
-          setAgoraToken(res.data.token);
-        }
-        if (res?.data?.app_id) {
-          setAgoraAppId(res.data.app_id);
+        const res = await base44.functions.invoke('createChimeMeeting', { callId: call.id });
+        if (res?.data?.Meeting) {
+          setChimeMeeting(res.data.Meeting);
+          setChimeAttendee(res.data.Attendee);
+          console.log('[Chime] Meeting info received');
         }
       } catch (e) {
-        console.warn('[Agora] token fetch failed:', e);
+        console.warn('[Chime] meeting fetch failed:', e);
       }
     };
-    fetchToken();
-  }, [call?.id, user?.email]);
+    fetchMeeting();
+  }, [call?.id, call?.status, user?.email]);
 
   const addFloating = useCallback((emoji, type = "emoji") => {
     const id = Date.now() + Math.random();
@@ -730,26 +723,23 @@ export default function VideoCallPage() {
 
       {/* Main video area */}
       <div className="flex-1 relative bg-black min-h-0">
-        {/* Agora接続エンジン（UI無し） - call active + token取得済み時のみ */}
-        {call?.status === "active" && agoraToken && agoraAppId && user && (
-          <AgoraVideoCall
-            appId={agoraAppId}
-            channelId={call.id}
-            userId={String(user.id || '12345')}
-            token={agoraToken}
-            isPublisher={true}
+        {/* Chime接続エンジン（UI無し） - call active + meeting取得済み時のみ */}
+        {call?.status === "active" && chimeMeeting && chimeAttendee && (
+          <ChimeVideoCall
+            meetingResponse={chimeMeeting}
+            attendeeResponse={chimeAttendee}
             remoteVideoRef={remoteVideoRef}
             localVideoRef={localVideoRef}
             micEnabled={micOn}
             camEnabled={camOn}
-            onCallActive={() => setAgoraConnected(true)}
+            onConnected={() => setChimeConnected(true)}
           />
         )}
 
-        {/* 相手映像（フルスクリーン） - AgoraがここにRemoteTrackをplay()する */}
+        {/* 相手映像（フルスクリーン） - ChimeがここにRemoteVideoをbindする */}
         <div className="absolute inset-0 w-full h-full bg-black">
-          <div ref={remoteVideoRef} className="w-full h-full" />
-          {!agoraConnected && (
+          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          {!chimeConnected && (
             <div className="absolute inset-0 flex items-center justify-center">
               <p className="text-white/40 text-sm">
                 {call?.status === "active" ? "相手の映像を待っています..." : "通話開始をお待ちください"}
@@ -767,9 +757,9 @@ export default function VideoCallPage() {
           />
         )}
 
-        {/* 自分の映像（PiP右下） - AgoraがここにLocalTrackをplay()する */}
+        {/* 自分の映像（PiP右下） - ChimeがここにLocalVideoをpreviewする */}
         <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black/80 z-10">
-          <div ref={localVideoRef} className="w-full h-full" style={{ filter: currentFilter?.style || "" }} />
+          <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
           {!camOn && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/80">
               <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
@@ -845,17 +835,7 @@ export default function VideoCallPage() {
           </div>
         )}
 
-        {/* PiP ワイプ（ビデオフレーム内） */}
-        {camOn && (
-          <div className="absolute bottom-4 right-4 w-28 h-40 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg bg-black/90 z-10">
-            <video ref={localVideoRef} autoPlay muted className="w-full h-full object-cover" />
-            {!camOn && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                <CameraOff className="w-6 h-6 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* Call Progress HUD (経過時間 / 残り時間) */}
          {callStartTime && effectiveDuration && (
