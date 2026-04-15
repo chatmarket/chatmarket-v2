@@ -275,7 +275,7 @@ export default function Recruit() {
               🎉 4/16スタート限定キャンペーン
             </span>
             <h2 className="text-3xl sm:text-4xl font-black mt-4">今だけ、全部タダ。</h2>
-            <p className="text-muted-foreground mt-2 text-sm">BASIC・CALL&ANSER・VOD・PPV・TICKET — すべてのプランが同時に無料</p>
+            <p className="text-muted-foreground mt-2 text-sm">BASIC・CALL&ANSER・VOD・PPV — すべてのプランが同時に無料</p>
           </div>
 
           {/* 全プランカード */}
@@ -405,7 +405,7 @@ export default function Recruit() {
             { value: "95%", label: "最大還元率", color: "text-primary" },
             { value: "300名", label: "限定先着枠", color: "text-red-400" },
             { value: TOTAL_VALUE, label: "月額相当が無料", color: "text-amber-400" },
-            { value: "全5プラン", label: "同時開放", color: "text-cyan-400" },
+            { value: "全4プラン", label: "同時開放", color: "text-cyan-400" },
           ].map((s, i) => (
             <div key={i} className="bg-card border border-border/50 rounded-xl p-5">
               <p className={`text-2xl sm:text-3xl font-black ${s.color}`}>{s.value}</p>
@@ -576,7 +576,7 @@ export default function Recruit() {
           <h2 className="text-xl font-black mb-6 text-center">よくある質問</h2>
           <div className="space-y-3">
             {[
-              { q: "「全有料プラン無料」とは何が含まれますか？", a: `BASIC（¥3,300）・CALL&ANSER（¥5,500）・VOD（¥4,980）・PPV（¥3,300）・TICKET（¥3,300）のすべてが無料になります。通常月額${TOTAL_VALUE}相当の機能を全部タダで使えます。` },
+              { q: "「全有料プラン無料」とは何が含まれますか？", a: `BASIC（¥3,300）・CALL&ANSER（¥5,500）・VOD（¥4,980）・PPV（¥3,300）のすべてが無料になります。通常月額${TOTAL_VALUE}相当の機能を全部タダで使えます。` },
               { q: "無料期間終了後はどうなりますか？", a: "無料期間終了後は通常の各プラン月額に自動移行します。継続しない場合は期間中にキャンセルしてください。" },
               { q: "Pro特典（3ヶ月）の審査基準は？", a: "SNSアカウントのフォロワー数が合算1万人以上であることが基準です。複数SNSの合算も可能です。審査は通常2〜3営業日以内に完了します。" },
               { q: "既存ユーザーは対象ですか？", a: "本キャンペーンは4/16以降の新規ライバー登録者が対象です。" },
