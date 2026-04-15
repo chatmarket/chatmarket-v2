@@ -481,7 +481,7 @@ export default function GoLive() {
                   <p className="text-xs text-yellow-400">🏷️ キャンペーン許可済み — 最低価格制限なし</p>
                 ) : (
                   <p className={`text-xs ${livePriceError ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
-                    最低設定: {liveMinPrice}コイン / {form.duration}分（15分{LIVE_MIN_COINS_PER_15MIN}コイン・還元率{Math.round(liveRevenueRate * 100)}%連動）
+                    最低設定: {liveMinPrice}コイン / {form.duration}分（15分150コイン・還元率{Math.round(liveRevenueRate * 100)}%連動）
                     {livePriceError && " ← この価格では設定できません"}
                   </p>
                 )}
