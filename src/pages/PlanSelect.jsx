@@ -71,7 +71,7 @@ const PLANS = [
     description: "制作した動画を販売して収益化。アーカイブは720p（HD）で配信。BASICプランとの組み合わせでご利用いただけます。",
     features: [
       "制作動画の販売機能",
-      "動画１時間以内、1動画150円〜（最低15分15円から設定可能）",
+      "販売価格 15分 15円から設定自由",
       "生配信アーカイブ販売機能",
       "アーカイブ配信画質：720p (HD)",
       "1日の合計視聴時間：最大60分まで",
@@ -89,10 +89,10 @@ const PLANS = [
     iconColor: "text-red-400",
     badge: "有料ライブ配信",
     badgeColor: "bg-red-500/20 text-red-300",
-    description: "1対多数の有料ライブ配信でファンから直接収益化。最低15分15円から。BASICプランとの組み合わせでご利用いただけます。",
+    description: "1対多数の有料ライブ配信でファンから直接収益化。最低15分150円から。BASICプランとの組み合わせでご利用いただけます。",
     features: [
       "1対多数の有料ライブ配信",
-      "配信料金：最低15分15円〜（自由設定、将来的に最低設定金額を低く設定できるようにしていきます）",
+      "配信料金：最低15分150円〜（自由設定、将来的に最低設定金額を低く設定できるようにしていきます）",
       "視聴者からエールコイン受取",
       "ライブ配信アーカイブ配信画質：720p (HD)",
       "1日の合計視聴時間：最大60分まで"
@@ -326,15 +326,25 @@ export default function PlanSelect() {
         </div>
       )}
 
-      <div>
-        <h1 className="text-2xl font-black">プランを選択する</h1>
-        <p className="text-muted-foreground text-sm mt-1">複数のプランを組み合わせてお申し込みいただけます。</p>
-        <p className="text-sm text-foreground/80 mt-2">ChatMarketのプランは必要なプランをお選び頂き組み合わせてお申し込みが出来ます。</p>
-        <div className="mt-3 flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
-          <span className="text-yellow-400 text-lg shrink-0">🎁</span>
-          <p className="text-sm text-yellow-300 font-semibold">年払いで申し込むと <span className="text-white font-black">10ヶ月分のご請求</span>となり、<span className="text-white font-black">2ヶ月分がお得</span>になります。</p>
-        </div>
-      </div>
+      <div className="space-y-3">
+         <h1 className="text-2xl font-black">プランを選択する</h1>
+         <p className="text-muted-foreground text-sm">複数のプランを組み合わせてお申し込みいただけます。</p>
+
+         {/* 目立つ説明バナー */}
+         <div className="bg-gradient-to-r from-primary/15 to-blue-500/15 border-2 border-primary/50 rounded-xl p-4 space-y-2">
+           <p className="text-sm font-black text-primary flex items-center gap-2">
+             ✨ ChatMarketは複数プランの自由な組み合わせ対応！
+           </p>
+           <p className="text-sm text-foreground/80 leading-relaxed">
+             必要なプランをお選び頂き、組み合わせてお申し込みが出来ます。BASICプランをベースに、VOD・PPV・CALL&ANSERなど、あなたのビジネス展開に必要なプランだけを選択できます。
+           </p>
+         </div>
+
+         <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
+           <span className="text-yellow-400 text-lg shrink-0">🎁</span>
+           <p className="text-sm text-yellow-300 font-semibold">年払いで申し込むと <span className="text-white font-black">10ヶ月分のご請求</span>となり、<span className="text-white font-black">2ヶ月分がお得</span>になります。</p>
+         </div>
+       </div>
 
       {/* おすすめコンボ */}
       <div className="space-y-2">
