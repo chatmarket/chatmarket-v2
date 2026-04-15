@@ -125,8 +125,11 @@ export default function VideoCallRequest() {
   const revenueShare = getRevenueShare(userPlan);
   const availableDurations = channel ? getAvailableDurations(channel) : [];
 
+  // FREEプランの場合、デフォルト料金を設定
+  const effectiveAvailableDurations = availableDurations.length > 0 ? availableDurations : (userPlan === "free" ? [{ minutes: 30, price: 500 }, { minutes: 60, price: 1000 }] : []);
+
   // 選択中の料金
-  const selectedDuration = availableDurations.find((d) => d.minutes === durationMinutes) || availableDurations[0];
+  const selectedDuration = effectiveAvailableDurations.find((d) => d.minutes === durationMinutes) || effectiveAvailableDurations[0];
   const callPrice = selectedDuration?.price || 0;
 
   // CALL&ANSERプラン: 今日の無料通話利用分を取得
@@ -569,7 +572,7 @@ export default function VideoCallRequest() {
             submitting ||
             !termsAgreed ||
             existingRequests.length > 0 ||
-            (userPlan === "call-anser" && useFreeSlot ? freeSlotsRemaining === 0 : !callPrice)
+            (userPlan === "call-anser" && useFreeSlot ? freeSlotsRemaining === 0 : (!callPrice || effectiveAvailableDurations.length === 0))
           }
           className={`w-full h-12 gap-2 text-base font-bold ${userPlan === "call-anser" && useFreeSlot ? "bg-cyan-600 hover:bg-cyan-700" : "bg-primary hover:bg-primary/90"}`}
         >
@@ -584,7 +587,7 @@ export default function VideoCallRequest() {
           )}
         </Button>
 
-        {availableDurations.length === 0 && (
+        {availableDurations.length === 0 && userPlan !== "free" && (
           <p className="text-xs text-center text-muted-foreground">配信者がまだ通話料金を設定していません</p>
         )}
       </form>
