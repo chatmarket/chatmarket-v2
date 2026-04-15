@@ -106,8 +106,20 @@ export default function GoLive() {
   useEffect(() => {
     if (!waiting || pendingCalls.length === 0) return;
     if (pendingCalls.length > prevCallCountRef.current) {
-      const newCallCount = pendingCalls.length - prevCallCountRef.current;
-      toast.success(`🔔 新しい通話申し込み ${newCallCount}件`, { duration: 4000 });
+      const newCalls = pendingCalls.slice(prevCallCountRef.current);
+      newCalls.forEach((call) => {
+        toast.success(
+          <div
+            onClick={() => handleAcceptCall(call)}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <p className="font-bold">通話申し込み</p>
+            <p className="text-sm">{call.caller_name || call.caller_email}</p>
+            <p className="text-xs opacity-70 mt-1">クリックして通話を開始</p>
+          </div>,
+          { duration: 8000 }
+        );
+      });
     }
     prevCallCountRef.current = pendingCalls.length;
   }, [pendingCalls.length, waiting]);
