@@ -20,11 +20,11 @@ const STORAGE_KEY = "recruit_pro_slots_used";
 // 全有料プラン一覧
 const ALL_PLANS = [
   { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話85%還元" },
-  { name: "CALL&ANSER", price: "¥5,500",  color: "#00d4ff", desc: "1日60分無料通話枠" },
-  { name: "VOD",        price: "¥4,980",  color: "#f59e0b", desc: "動画アーカイブ販売" },
-  { name: "PPV",        price: "¥3,300",  color: "#ff6b6b", desc: "有料ライブ配信" },
+  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "1日60分無料通話枠" },
+  { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売" },
+  { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信" },
 ];
-const TOTAL_VALUE = "¥17,080"; // 月額合計
+const TOTAL_VALUE = "¥29,700"; // 月額合計
 
 function getProSlotsUsed() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -576,7 +576,7 @@ export default function Recruit() {
           <h2 className="text-xl font-black mb-6 text-center">よくある質問</h2>
           <div className="space-y-3">
             {[
-              { q: "「全有料プラン無料」とは何が含まれますか？", a: `BASIC（¥3,300）・CALL&ANSER（¥5,500）・VOD（¥4,980）・PPV（¥3,300）のすべてが無料になります。通常月額${TOTAL_VALUE}相当の機能を全部タダで使えます。` },
+              { q: "「全有料プラン無料」とは何が含まれますか？", a: `BASIC（¥3,300）・CALL&ANSER（¥6,600）・VOD（¥9,900）・PPV（¥9,900）のすべてが無料になります。通常月額${TOTAL_VALUE}相当の機能を全部タダで使えます。` },
               { q: "無料期間終了後はどうなりますか？", a: "無料期間終了後は通常の各プラン月額に自動移行します。継続しない場合は期間中にキャンセルしてください。" },
               { q: "Pro特典（3ヶ月）の審査基準は？", a: "SNSアカウントのフォロワー数が合算1万人以上であることが基準です。複数SNSの合算も可能です。審査は通常2〜3営業日以内に完了します。" },
               { q: "既存ユーザーは対象ですか？", a: "本キャンペーンは4/16以降の新規ライバー登録者が対象です。" },
