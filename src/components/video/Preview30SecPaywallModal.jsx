@@ -33,6 +33,17 @@ export default function Preview30SecPaywallModal({
     });
   }, [user?.email, open, video?.id]);
 
+  // モーダル開閉時に body overflow を制御（ロック強化）
+  useEffect(() => {
+    if (open) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [open]);
+
   if (!video) return null;
 
   // Stripe手数料計算（固定: 3.6% + ¥0.40）
@@ -113,17 +124,6 @@ export default function Preview30SecPaywallModal({
       setProcessing(false);
     }
   };
-
-  // モーダル開閉時に body overflow を制御（ロック強化）
-  useEffect(() => {
-    if (open) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

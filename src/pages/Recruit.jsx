@@ -162,7 +162,7 @@ export default function Recruit() {
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
 
       {/* ===== HERO ===== */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden">
+      <section className="relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-5" style={{
           backgroundImage: "linear-gradient(#00ff9d 1px,transparent 1px),linear-gradient(90deg,#00ff9d 1px,transparent 1px)",
           backgroundSize: "60px 60px"
@@ -283,7 +283,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== 全プラン無料 詳細 ===== */}
-      <section className="py-16 px-4 bg-gradient-to-b from-background to-secondary/20">
+      <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-background to-secondary/20">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
@@ -374,7 +374,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== 解放される機能 ===== */}
-      <section className="py-16 px-4">
+      <section className="w-full py-16 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">プロフェッショナル機能、全開放</h2>
           <p className="text-center text-muted-foreground mb-10 text-sm">通常は月額費用が必要な全機能が、キャンペーン期間中は完全無料で使い放題</p>
@@ -414,7 +414,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== 数字 ===== */}
-      <section className="py-12 px-4 bg-secondary/20 border-y border-border/30">
+      <section className="w-full py-12 px-4 sm:px-6 bg-secondary/20 border-y border-border/30">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
             { value: "95%", label: "最大還元率", color: "text-primary" },
@@ -431,7 +431,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== 機能一覧 ===== */}
-      <section className="py-16 px-4">
+      <section className="w-full py-16 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-black text-center mb-8">使える全機能</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -459,7 +459,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== 申し込みフォーム ===== */}
-      <section ref={formRef} className="py-16 px-4 bg-gradient-to-b from-secondary/20 to-background">
+      <section ref={formRef} className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-secondary/20 to-background">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8 space-y-2">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
@@ -586,7 +586,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== FAQ ===== */}
-      <section className="py-12 px-4 border-t border-border/30">
+      <section className="w-full py-12 px-4 sm:px-6 border-t border-border/30">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-xl font-black mb-6 text-center">よくある質問</h2>
           <div className="space-y-3">
@@ -609,7 +609,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== Footer CTA ===== */}
-      <section className="py-16 px-4 bg-gradient-to-br from-amber-500/10 to-background border-t border-amber-500/20">
+      <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-br from-amber-500/10 to-background border-t border-amber-500/20">
         <div className="max-w-xl mx-auto text-center space-y-5">
           <p className="text-amber-400 font-bold text-sm">{slotsRemaining}名限定枠 残りわずか</p>
           <h2 className="text-3xl font-black">今すぐ全プラン無料でデビュー</h2>
