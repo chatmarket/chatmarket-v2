@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream";
 import PpvPreSale from "../components/live/PpvPreSale";
+import Preview30SecPaywallModal from "../components/video/Preview30SecPaywallModal";
 
 export default function LiveView() {
   const { id } = useParams();

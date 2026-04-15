@@ -5,6 +5,8 @@ import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel.jsx";
 import PaywallModal from "../components/video/PaywallModal";
 import PaywallOverlay from "../components/video/PaywallOverlay";
+import Preview30SecPaywallModal from "../components/video/Preview30SecPaywallModal";
+import { usePreview30SecLock } from "../hooks/usePreview30SecLock";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import { Eye, Calendar, Heart, Maximize, Minimize } from "lucide-react";
@@ -129,35 +131,16 @@ export default function WatchVideo() {
     });
   }, [video?.id, user?.email]);
 
-  // Monitor video time for paywall & prevent seeking past preview
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v || !video || video.is_free || hasPurchased) return;
-
-    const handleTimeUpdate = () => {
-      if (v.currentTime >= FREE_PREVIEW_SECONDS && !hasPurchased) {
-        v.pause();
-        setPreviewEnded(true);
-        setShowPaywall(true);
-      }
-    };
-
-    const handleSeeking = () => {
-      if (v.currentTime >= FREE_PREVIEW_SECONDS && !hasPurchased) {
-        v.currentTime = FREE_PREVIEW_SECONDS - 0.1;
-        v.pause();
-        setPreviewEnded(true);
-        setShowPaywall(true);
-      }
-    };
-
-    v.addEventListener("timeupdate", handleTimeUpdate);
-    v.addEventListener("seeking", handleSeeking);
-    return () => {
-      v.removeEventListener("timeupdate", handleTimeUpdate);
-      v.removeEventListener("seeking", handleSeeking);
-    };
-  }, [video, hasPurchased]);
+  // ---- 【鉄壁実装】30秒プレビューロック + 完全DOM操作ブロック ----
+  const { unlock } = usePreview30SecLock({
+    videoRef,
+    enabled: isPaid && !hasPurchased,
+    onLimitReached: () => {
+      setPreviewEnded(true);
+      setShowPaywall(true);
+    },
+    previewSeconds: FREE_PREVIEW_SECONDS,
+  });
 
   if (isLoading) {
     return (
@@ -324,13 +307,18 @@ export default function WatchVideo() {
         <RecommendedVideos currentVideoId={id} category={video.category} />
       </div>
 
-      {/* Paywall Modal */}
+      {/* ---- Paywall Modal（新・Stripe手数料外出し版） ----*/}
       {showPaywall && !hasPurchased && video && (
-        <PaywallModal
+        <Preview30SecPaywallModal
+          open={showPaywall}
+          onOpenChange={(open) => setShowPaywall(open)}
           video={video}
           user={user}
-          onPurchased={() => setHasPurchased(true)}
-          onClose={() => setShowPaywall(false)}
+          onPurchased={() => {
+            setHasPurchased(true);
+            unlock(); // ロック解除 → 再生再開可能に
+            setShowPaywall(false);
+          }}
         />
       )}
     </div>
