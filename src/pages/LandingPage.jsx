@@ -5,7 +5,9 @@ import { Radio, Video, PhoneCall, Users, TrendingUp, Download, Smartphone, Zap }
 import { isBefore } from "date-fns";
 
 const RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
-const showRecruitBanner = isBefore(new Date(), RECRUIT_DEADLINE);
+const _now = new Date();
+const showRecruitBanner = isBefore(_now, RECRUIT_DEADLINE);
+console.log('[RecruitBanner] now:', _now.toISOString(), '| deadline:', RECRUIT_DEADLINE.toISOString(), '| show:', showRecruitBanner);
 
 const SignUpButton = ({ variant = "default" }) => {
   const navigate = useNavigate();

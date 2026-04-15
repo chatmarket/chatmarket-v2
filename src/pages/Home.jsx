@@ -3,7 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search } from "lucide-react";
+import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap } from "lucide-react";
+import { isBefore } from "date-fns";
+
+const _RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
+const _now = new Date();
+const SHOW_RECRUIT_BANNER = isBefore(_now, _RECRUIT_DEADLINE);
+console.log('[RecruitBanner/Home] now:', _now.toISOString(), '| show:', SHOW_RECRUIT_BANNER);
 import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
@@ -74,6 +80,47 @@ export default function Home() {
 
       {/* ヒーロースロット（1位ライバー常駐枠） */}
       <HeroSlot />
+
+      {/* 期間限定ライバー募集バナー（〜4/30） */}
+      {SHOW_RECRUIT_BANNER && (
+        <Link to="/recruit" className="block">
+          <div
+            className="relative overflow-hidden rounded-2xl px-5 py-4 cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            style={{
+              background: "linear-gradient(135deg, #1a0800 0%, #3d1500 50%, #1a0800 100%)",
+              border: "2px solid #f59e0b",
+              boxShadow: "0 0 25px rgba(245,158,11,0.6), 0 0 50px rgba(245,158,11,0.2)",
+            }}
+          >
+            {/* パルス装飾 */}
+            <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-amber-400 animate-ping opacity-75" />
+            <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-amber-400" />
+
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(245,158,11,0.25)", border: "1px solid #f59e0b" }}>
+                <Zap className="w-5 h-5" style={{ color: "#f59e0b" }} />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <p className="text-[11px] font-bold mb-0.5" style={{ color: "#fbbf24", letterSpacing: "0.1em" }}>
+                  ⏰ 期間限定 〜 4/30まで
+                </p>
+                <p className="font-black text-sm sm:text-base leading-tight" style={{ color: "#fef3c7" }}>
+                  【4/16解禁】業界最高95%還元・先行ライバー300名限定募集開始！
+                </p>
+              </div>
+              <div className="shrink-0 px-4 py-2 rounded-xl font-black text-sm whitespace-nowrap"
+                style={{
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                  color: "#1a0800",
+                  boxShadow: "0 0 12px rgba(245,158,11,0.7)",
+                }}>
+                Pro枠を確保 →
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* Hero */}
       <section className="relative overflow-hidden rounded-xl border border-border/40 text-center" style={{ background: "linear-gradient(135deg,#0a0a0f 0%,#12050a 50%,#050a12 100%)" }}>
