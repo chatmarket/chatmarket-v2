@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const STREAM_TYPE_WEBRTC = "webrtc";
 
 export default function GoLive() {
   const navigate = useNavigate();
+  const prevCallCountRef = useRef(null);
   const [user, setUser] = useState(null);
   const [channel, setChannel] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -100,6 +101,16 @@ export default function GoLive() {
     queryClient.invalidateQueries({ queryKey: ["pending-calls", channels[0]?.id] });
     toast.info("通話申請を断りました。");
   };
+
+  // 待機中の新規通話申し込み通知（前回のカウントと比較）
+  useEffect(() => {
+    if (!waiting || pendingCalls.length === 0) return;
+    if (pendingCalls.length > prevCallCountRef.current) {
+      const newCallCount = pendingCalls.length - prevCallCountRef.current;
+      toast.success(`🔔 新しい通話申し込み ${newCallCount}件`, { duration: 4000 });
+    }
+    prevCallCountRef.current = pendingCalls.length;
+  }, [pendingCalls.length, waiting]);
 
   const handleStart = async (e) => {
     e.preventDefault();
