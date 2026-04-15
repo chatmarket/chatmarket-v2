@@ -161,6 +161,7 @@ export default function Preview30SecPaywallModal({
             <p className="text-4xl font-black text-primary">
               ¥{video.price?.toLocaleString()}
             </p>
+            <p className="text-xs text-muted-foreground">最低15円（15分単位）から設定可能</p>
           </div>
 
           {/* プラットホーム手数料外出し表示（透明性） */}
@@ -171,20 +172,23 @@ export default function Preview30SecPaywallModal({
            </p>
            <div className="space-y-1 text-muted-foreground">
              <div className="flex justify-between">
-               <span>ビデオ購入価格</span>
+               <span>動画購入価格</span>
                <span className="font-semibold text-foreground">¥{video.price?.toLocaleString()}</span>
              </div>
              <div className="flex justify-between text-[10px]">
-               <span>プラットホーム手数料 (3.6% + ¥40)</span>
+               <span>決済手数料 (3.6% + ¥40) ※外出し</span>
                <span className="text-blue-400 font-semibold">¥{platformFee.toLocaleString()}</span>
              </div>
              <div className="border-t border-blue-500/20 pt-1 flex justify-between font-bold">
-               <span>あなたがお支払い</span>
+               <span>ご請求額</span>
                <span className="text-blue-400">¥{totalCharge.toLocaleString()}</span>
              </div>
            </div>
            <p className="text-[9px] text-muted-foreground/60 border-t border-blue-500/20 pt-1 leading-relaxed">
-             ※ プラットホーム手数料は決済サービス提供の対価としてお客様ご負担です。ご請求額は合計金額となります。
+             💡 決済手数料は決済サービス提供の対価としてお客様ご負担です。より多くの方に楽しんでいただくため、エールコイン決済をお勧めします。
+           </p>
+           <p className="text-[9px] text-muted-foreground/60 border-t border-blue-500/20 pt-1 leading-relaxed">
+             ※ 本日の視聴可能時間：最大60分まで（1日のご利用上限）
            </p>
           </div>
 
