@@ -227,6 +227,27 @@ export default function Recruit() {
             プロフェッショナル機能を<strong className="text-foreground">全部無制限で使い倒せ。</strong>
           </motion.p>
 
+          <style>{`
+            @keyframes neonBlueFlicker {
+              0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff, 0 0 21px #00d4ff, 0 0 42px #0099ff, 0 0 82px #0099ff;
+                color: #00d4ff;
+              }
+              20%, 24%, 55% {
+                text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff;
+                color: #00b8d4;
+              }
+            }
+            .neon-blue-disclaimer {
+              animation: neonBlueFlicker 3s infinite;
+              font-family: 'Courier New', monospace;
+              letter-spacing: 0.05em;
+            }
+          `}</style>
+          <p className="neon-blue-disclaimer text-xs font-semibold text-center mt-3">
+            振り込み手数料、規定のプラットフォーム手数料は発生致しますので予めご了承ください
+          </p>
+
           {/* カウントダウン or 開始済み */}
           {!countdown.started ? (
             <div className="space-y-3">
