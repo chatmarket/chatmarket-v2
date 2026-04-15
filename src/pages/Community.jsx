@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Users, Filter, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import PostCard from "../components/community/PostCard";
 import PostComposer from "../components/community/PostComposer";
-
-const PLAN_ORDER = ["public", "basic", "call-anser", "vod", "ppv"];
 
 const FILTER_OPTIONS = [
   { value: "all", label: "すべて" },
@@ -16,11 +16,59 @@ const FILTER_OPTIONS = [
   { value: "ppv", label: "PPV限定" },
 ];
 
+const PLAN_LABEL = {
+  basic: "BASICプラン",
+  "call-anser": "CALL&ANSERプラン",
+  vod: "VODプラン",
+  ppv: "PPVプラン",
+};
+
 function getUserPlans(user, subscriptions) {
-  if (!user) return [];
+  if (!user) return ["public"];
   if (user.role === "admin") return ["public", "basic", "call-anser", "vod", "ppv"];
-  const active = subscriptions.filter(s => s.user_email === user.email && s.status === "active").map(s => s.plan_id);
+  const active = subscriptions
+    .filter(s => s.user_email === user.email && s.status === "active")
+    .map(s => s.plan_id);
   return ["public", ...active];
+}
+
+function LockedPostPlaceholder({ visibility }) {
+  const planName = PLAN_LABEL[visibility] || "限定プラン";
+  return (
+    <div className="relative bg-card border border-border/50 rounded-2xl overflow-hidden">
+      {/* ぼかしコンテンツ（ダミー） */}
+      <div className="p-4 space-y-3 select-none pointer-events-none" style={{ filter: "blur(4px)", opacity: 0.4 }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full bg-secondary" />
+          <div className="space-y-1.5">
+            <div className="h-3 bg-secondary rounded w-24" />
+            <div className="h-2.5 bg-secondary rounded w-16" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 bg-secondary rounded w-full" />
+          <div className="h-3 bg-secondary rounded w-4/5" />
+          <div className="h-3 bg-secondary rounded w-3/5" />
+        </div>
+      </div>
+      {/* ロックオーバーレイ */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm gap-3 p-4">
+        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+          <Lock className="w-5 h-5 text-yellow-400" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-bold">ここから先は限定プランへの加入が必要です</p>
+          <p className="text-xs text-muted-foreground">この投稿は <span className="text-yellow-400 font-bold">{planName}</span> 加入者のみ閲覧できます</p>
+        </div>
+        <Link to="/plan-select">
+          <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90">
+            <Lock className="w-3.5 h-3.5" />
+            プランに加入する
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 export default function Community() {
@@ -36,11 +84,11 @@ export default function Community() {
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["community-posts"],
     queryFn: () => base44.entities.CommunityPost.list("-created_date", 50),
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 
   const { data: subscriptions = [] } = useQuery({
-    queryKey: ["user-subscriptions", user?.email],
+    queryKey: ["user-subscriptions-community", user?.email],
     queryFn: () => base44.entities.PlanSubscription.filter({ user_email: user.email, status: "active" }),
     enabled: !!user,
   });
@@ -51,23 +99,29 @@ export default function Community() {
     enabled: !!user,
   });
 
+  // 各投稿の投稿者チャンネルオーナーメールを逆引きするため、ユニークなchannel_idを収集
+  const channelIds = [...new Set(posts.map(p => p.channel_id).filter(Boolean))];
+  const { data: allChannels = [] } = useQuery({
+    queryKey: ["channels-for-community", channelIds.join(",")],
+    queryFn: () => base44.entities.Channel.list(),
+    enabled: channelIds.length > 0,
+  });
+
+  const channelOwnerMap = Object.fromEntries(allChannels.map(c => [c.id, c.owner_email]));
+
   const userPlans = getUserPlans(user, subscriptions);
 
-  const visiblePosts = posts.filter(post => {
-    // 閲覧権限チェック
-    if (!userPlans.includes(post.visibility)) return false;
-    // フィルター
+  // フィルタリング（投稿自体は常に取得、表示時に制御）
+  const filteredPosts = posts.filter(post => {
     if (filter !== "all" && post.visibility !== filter) return false;
     return true;
   });
 
   // ピン留め優先ソート
   const sortedPosts = [
-    ...visiblePosts.filter(p => p.is_pinned),
-    ...visiblePosts.filter(p => !p.is_pinned),
+    ...filteredPosts.filter(p => p.is_pinned),
+    ...filteredPosts.filter(p => !p.is_pinned),
   ];
-
-  const lockedCount = posts.filter(p => !userPlans.includes(p.visibility)).length;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -82,16 +136,8 @@ export default function Community() {
         </div>
       </div>
 
-      {/* ロック中の投稿通知 */}
-      {lockedCount > 0 && (
-        <div className="bg-secondary border border-border/50 rounded-xl px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground">
-          <Lock className="w-4 h-4 shrink-0 text-yellow-400" />
-          <span>プラン加入者限定の投稿が <span className="text-yellow-400 font-bold">{lockedCount}件</span> あります。</span>
-        </div>
-      )}
-
-      {/* 投稿フォーム */}
-      {user && <PostComposer user={user} channel={channel} />}
+      {/* 投稿フォーム（チャンネルオーナーのみ） */}
+      {user && channel && <PostComposer user={user} channel={channel} />}
       {!user && (
         <div className="bg-card border border-border/50 rounded-2xl p-6 text-center space-y-3">
           <p className="text-sm text-muted-foreground">投稿・コメント・いいねにはログインが必要です</p>
@@ -142,18 +188,26 @@ export default function Community() {
         <div className="text-center py-16 text-muted-foreground space-y-2">
           <Users className="w-12 h-12 mx-auto opacity-20" />
           <p className="text-sm">まだ投稿がありません</p>
-          {user && <p className="text-xs">最初の投稿をしてみましょう！</p>}
         </div>
       ) : (
         <div className="space-y-4">
-          {sortedPosts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              user={user}
-              userPlans={userPlans}
-            />
-          ))}
+          {sortedPosts.map(post => {
+            const canView = userPlans.includes(post.visibility);
+            const postChannelOwner = channelOwnerMap[post.channel_id] || post.author_email;
+
+            if (!canView) {
+              return <LockedPostPlaceholder key={post.id} visibility={post.visibility} />;
+            }
+            return (
+              <PostCard
+                key={post.id}
+                post={post}
+                user={user}
+                userPlans={userPlans}
+                channelOwnerEmail={postChannelOwner}
+              />
+            );
+          })}
         </div>
       )}
     </div>

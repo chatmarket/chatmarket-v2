@@ -16,13 +16,16 @@ const VISIBILITY_LABELS = {
   ppv: { label: "PPV限定", color: "text-red-400 bg-red-500/15 border-red-500/30" },
 };
 
-export default function PostCard({ post, user, userPlans, onDelete }) {
+export default function PostCard({ post, user, userPlans, channelOwnerEmail }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const qc = useQueryClient();
 
   const isLiked = post.like_emails?.includes(user?.email);
   const isAuthor = post.author_email === user?.email;
+  const isChannelOwner = user && channelOwnerEmail && user.email === channelOwnerEmail;
+  const isAdmin = user?.role === "admin";
+  const canDelete = isAuthor || isChannelOwner || isAdmin;
   const badge = VISIBILITY_LABELS[post.visibility];
 
   const { data: comments = [] } = useQuery({
@@ -97,8 +100,8 @@ export default function PostCard({ post, user, userPlans, onDelete }) {
                 <Lock className="w-2.5 h-2.5" />{badge.label}
               </span>
             )}
-            {isAuthor && (
-              <button onClick={deletePost} className="text-muted-foreground hover:text-destructive transition-colors">
+            {canDelete && (
+              <button onClick={deletePost} className="text-muted-foreground hover:text-destructive transition-colors" title="投稿を削除">
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
