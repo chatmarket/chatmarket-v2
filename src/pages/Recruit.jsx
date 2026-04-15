@@ -20,7 +20,7 @@ const STORAGE_KEY = "recruit_pro_slots_used";
 // 全有料プラン一覧
 const ALL_PLANS = [
   { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話85%還元" },
-  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "1日60分無料通話枠" },
+  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "15分150円〜上限なし通話" },
   { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売" },
   { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信" },
 ];
