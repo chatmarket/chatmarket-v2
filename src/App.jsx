@@ -61,6 +61,7 @@ import VideoEngineComparison from './pages/VideoEngineComparison';
 import InfraSlide from './pages/InfraSlide';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Recruit from './pages/Recruit';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -141,6 +142,7 @@ const AuthenticatedApp = () => {
         <Route path="/infra-slide" element={<InfraSlide />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/recruit" element={<Recruit />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
