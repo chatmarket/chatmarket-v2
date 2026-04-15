@@ -97,9 +97,27 @@ export default function Home() {
             font-family: 'Courier New', monospace;
             letter-spacing: 0.1em;
           }
+          @keyframes neonBlueFlicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+              text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff, 0 0 21px #00d4ff, 0 0 42px #0099ff, 0 0 82px #0099ff;
+              color: #00d4ff;
+            }
+            20%, 24%, 55% {
+              text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff;
+              color: #00b8d4;
+            }
+          }
+          .neon-blue-message {
+            animation: neonBlueFlicker 3s infinite;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.05em;
+          }
         `}</style>
         <p className="neon-white-message text-sm font-bold tracking-widest">
           まだ、未完成。皆様の意見を聞きながら進化していきます。
+        </p>
+        <p className="neon-blue-message text-xs font-semibold mt-2">
+          無料期間はベータ版稼働中です、一部機能が正常に利用出来ない場合もありますので予めご了承下さい
         </p>
       </div>
 
