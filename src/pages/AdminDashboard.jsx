@@ -151,7 +151,7 @@ export default function AdminDashboard() {
     queryKey: ["admin-recruit-applications"],
     queryFn: () =>
       base44.entities.BlogPost.filter(
-        { channel_id: "recruit_application", status: "draft" },
+        { channel_id: "recruit_application" },
         "-created_date"
       ),
     enabled: !!user && SUPER_ADMIN_EMAILS.includes(user?.email),
