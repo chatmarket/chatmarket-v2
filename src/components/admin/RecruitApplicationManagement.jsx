@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Clock, User, Mail, Users, Link as LinkIcon, MessageCircle, Zap, Save, Download } from "lucide-react";
+import { Users, MessageCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecruitApplicationManagement({ applications: propsApplications = [] }) {
