@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
   
-  const SUPER_ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+  const SUPER_ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
   const isSuperAdmin = user && SUPER_ADMIN_EMAILS.includes(user.email);
   const isViewerOnly = user?.email === "kimurayasunari5@gmail.com";
   const displayUserRole = isViewerOnly ? "viewer" : user?.role;
@@ -52,8 +52,8 @@ export default function AdminDashboard() {
     enabled: !!user && user.email === "unei@chatmarket.info",
   });
 
-  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "admin@example.com"];
-  const SUPER_ADMIN_EMAILS_CHECK = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com", "admin@example.com"];
+  const SUPER_ADMIN_EMAILS_CHECK = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
   const VIEWER_EMAILS = ["kimurayasunari5@gmail.com"];
 
   useEffect(() => {
@@ -76,55 +76,55 @@ export default function AdminDashboard() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ["admin-all-users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["admin-all-channels"],
     queryFn: () => base44.entities.Channel.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allVideos = [] } = useQuery({
     queryKey: ["admin-all-videos"],
     queryFn: () => base44.entities.Video.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allStreams = [] } = useQuery({
     queryKey: ["admin-all-streams"],
     queryFn: () => base44.entities.LiveStream.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allCalls = [] } = useQuery({
     queryKey: ["admin-all-calls"],
     queryFn: () => base44.entities.VideoCall.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allPurchases = [] } = useQuery({
     queryKey: ["admin-all-purchases"],
     queryFn: () => base44.entities.Purchase.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allYellCoinTransactions = [] } = useQuery({
     queryKey: ["admin-all-yell-transactions"],
     queryFn: () => base44.entities.YellCoinTransaction.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allYellCoinWallets = [] } = useQuery({
     queryKey: ["admin-all-yell-wallets"],
     queryFn: () => base44.entities.YellCoinWallet.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allSubscriptions = [] } = useQuery({
     queryKey: ["admin-all-subscriptions"],
     queryFn: () => base44.entities.PlanSubscription.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   // 管理者・ビューアー以外のサブスク加入者のみカウント
@@ -133,13 +133,13 @@ export default function AdminDashboard() {
   const { data: allCancellationReasons = [] } = useQuery({
     queryKey: ["admin-all-cancellation-reasons"],
     queryFn: () => base44.entities.CancellationReason.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: allCrowdfundingProjects = [] } = useQuery({
     queryKey: ["admin-all-crowdfunding-projects"],
     queryFn: () => base44.entities.CrowdfundingProject.list(),
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
   });
 
   const { data: applications = [] } = useQuery({

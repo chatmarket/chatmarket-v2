@@ -14,6 +14,15 @@ import Footer from "./Footer";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
+const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com"];
+
+const ADMIN_NAV_ITEMS = [
+  { path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },
+  { path: "/recruit", icon: Zap, label: "ライバー申込一覧" },
+  { path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
+  { path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
+];
+
 const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
   { path: "/search", icon: Search, label: "さがす" },
@@ -107,6 +116,27 @@ export default function AppLayout() {
                 </div>
               </Link>
             ))}
+
+            {SUPER_ADMIN_EMAILS.includes(user.email) && (
+              <>
+                <div className="pt-3 pb-1 px-3">
+                  <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ スーパー管理者</p>
+                </div>
+                {ADMIN_NAV_ITEMS.map(({ path, icon: Icon, label }) => (
+                  <Link key={path} to={path} onClick={onClose}>
+                    <div className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      isActive(path)
+                        ? "bg-purple-500/20 text-purple-300"
+                        : "text-purple-400/70 hover:bg-purple-500/10 hover:text-purple-300"
+                    )}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                    </div>
+                  </Link>
+                ))}
+              </>
+            )}
           </>
         )}
       </nav>

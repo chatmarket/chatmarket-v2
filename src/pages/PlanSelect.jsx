@@ -241,7 +241,7 @@ const COMBOS = [
   { ids: ["basic", "digital-ticket"], label: "BASIC＋チケット", discount: 0 },
 ];
 
-const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
 const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
 
 export default function PlanSelect() {
