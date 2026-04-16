@@ -220,8 +220,8 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <span className="px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full">準備中</span>
                 <h3 className="text-2xl font-black text-amber-400">VOD</h3>
-                <p className="text-4xl font-black">¥4,980</p>
-                <p className="text-sm text-muted-foreground">月額料金（近日提供予定）</p>
+                <p className="text-4xl font-black">¥9,900</p>
+                <p className="text-sm text-muted-foreground">月額料金（税込み）</p>
               </div>
               <div className="space-y-3 border-t border-amber-500/20 pt-6">
                 <p className="font-semibold text-sm">✨ BASIC機能 + ：</p>
