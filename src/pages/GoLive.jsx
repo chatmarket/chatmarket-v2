@@ -85,6 +85,7 @@ export default function GoLive() {
     setChannel(ch);
     await base44.entities.Channel.update(ch.id, { call_enabled: true });
     queryClient.invalidateQueries({ queryKey: ["my-channels", user.email] });
+    prevCallCountRef.current = null; // 待機開始時にリセット（既存申請を通知しない）
     setWaiting(true);
     toast.success("待機モードを開始しました。通話希望者を待っています。");
   };
@@ -107,7 +108,12 @@ export default function GoLive() {
 
   // 待機中の新規通話申し込み通知（前回のカウントと比較）
   useEffect(() => {
-    if (!waiting || pendingCalls.length === 0) return;
+    if (!waiting) return;
+    // 初回ロード時は通知せずカウントだけ記録
+    if (prevCallCountRef.current === null) {
+      prevCallCountRef.current = pendingCalls.length;
+      return;
+    }
     if (pendingCalls.length > prevCallCountRef.current) {
       const newCalls = pendingCalls.slice(prevCallCountRef.current);
       newCalls.forEach((call) => {
@@ -116,11 +122,11 @@ export default function GoLive() {
             onClick={() => handleAcceptCall(call)}
             className="cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <p className="font-bold">通話申し込み</p>
+            <p className="font-bold">📞 通話申し込みが届きました</p>
             <p className="text-sm">{call.caller_name || call.caller_email}</p>
             <p className="text-xs opacity-70 mt-1">クリックして通話を開始</p>
           </div>,
-          { duration: 8000 }
+          { duration: 10000 }
         );
       });
     }

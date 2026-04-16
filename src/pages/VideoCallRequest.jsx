@@ -188,17 +188,16 @@ export default function VideoCallRequest() {
     });
 
     if (threadId) {
-      const planLabel = "CALL＆ANSERプラン";
       const callLabel = isFree
-        ? `【無料通話リクエスト（${planLabel}）】\n⏱ ${actualDuration}分 / 🆓 無料枠使用\n📅 希望日時: ${preferredDate}${message ? `\n💬 ${message}` : ""}`
-        : `【1対1ビデオ通話リクエスト（${planLabel}）】\n⏱ ${actualDuration}分 / 💴 ¥${actualPrice.toLocaleString()}\n📅 希望日時: ${preferredDate}${message ? `\n💬 ${message}` : ""}`;
+        ? `【無料通話リクエスト】${actualDuration}分 無料枠 📅${preferredDate}${message ? ` 💬${message}` : ""}`
+        : `【通話リクエスト】${actualDuration}分 ¥${actualPrice.toLocaleString()} 📅${preferredDate}${message ? ` 💬${message}` : ""}`;
       await base44.entities.DirectChat.create({
         from_email: user.email,
         from_name: user.full_name || user.email,
         to_channel_owner_email: channel.owner_email,
         to_channel_id: channel.id,
         to_channel_name: channel.name,
-        content: callLabel,
+        content: callLabel.slice(0, 500),
         yell_coin: 0,
         thread_id: threadId,
       });
