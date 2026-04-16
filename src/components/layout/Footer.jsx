@@ -25,55 +25,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-3">
-            <h3 className="font-bold text-sm">プラットフォーム</h3>
-            <ul className="space-y-1.5 text-xs">
-              <li>
-                <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-                  ホーム
-                </Link>
-              </li>
-              <li>
-                <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors">
-                  配信を探す
-                </Link>
-              </li>
-              <li>
-                <Link to="/plan-select" className="text-muted-foreground hover:text-foreground transition-colors">
-                  料金プラン
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
-                  ブログ
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Creator */}
-          <div className="space-y-3">
-            <h3 className="font-bold text-sm">配信者向け</h3>
-            <ul className="space-y-1.5 text-xs">
-              <li>
-                <Link to="/recruit" className="text-muted-foreground hover:text-foreground transition-colors">
-                  新人配信者募集
-                </Link>
-              </li>
-              <li>
-                <Link to="/obs-guide" className="text-muted-foreground hover:text-foreground transition-colors">
-                  OBS設定ガイド
-                </Link>
-              </li>
-              <li>
-                <Link to="/info" className="text-muted-foreground hover:text-foreground transition-colors">
-                  プラットフォーム概要
-                </Link>
-              </li>
-            </ul>
-          </div>
-
           {/* Legal */}
           <div className="space-y-3">
             <h3 className="font-bold text-sm">法務・サポート</h3>

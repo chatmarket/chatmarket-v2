@@ -39,21 +39,21 @@ export default function LegalCommercial() {
           <table className="w-full">
             <tbody>
               <Row label="販売事業者">
-                ChatMarket Inc.（株式会社ワンステップ 内）
+                株式会社 ONE STEP
               </Row>
               <Row label="運営責任者">
-                小野 聡也
+                小野 貴志
               </Row>
               <Row label="所在地">
-                〒150-0002 東京都渋谷区渋谷2-22-3<br />
-                渋谷東口ビル 9F
+                〒101-0024 東京都千代田区神田和泉町1番地6-16<br />
+                ヤマトビル405
               </Row>
               <Row label="お問い合わせ">
-                Email: support@chatmarket.info<br />
+                Email: unui@chatmarket.info<br />
                 受付時間：平日10:00〜18:00（JST）
               </Row>
               <Row label="販売URL">
-                https://chatmarket.info
+                https://chatmarket.jp
               </Row>
             </tbody>
           </table>
