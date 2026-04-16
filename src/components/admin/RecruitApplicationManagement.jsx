@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Clock, User, Mail, Users, Link as LinkIcon, MessageCircle, Zap, Save } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, User, Mail, Users, Link as LinkIcon, MessageCircle, Zap, Save, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecruitApplicationManagement({ applications: propsApplications = [] }) {
@@ -76,15 +76,54 @@ export default function RecruitApplicationManagement({ applications: propsApplic
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ["申し込み日時", "申し込み者", "メール", "フォロワー数", "SNS", "自己PR", "ステータス"];
+    const rows = applications.map((app) => {
+      const data = JSON.parse(app.content);
+      return [
+        new Date(app.created_date).toLocaleString("ja-JP"),
+        data.name || "",
+        data.email || "",
+        data.followers || "0",
+        data.sns_url || "",
+        data.pr ? data.pr.replace(/\n/g, " ").substring(0, 100) : "",
+        app.recruit_status || "未対応",
+      ];
+    });
+
+    const csvContent = [
+      headers.map((h) => `"${h}"`).join(","),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `recruit-applications-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    toast.success("CSVファイルをダウンロードしました");
+  };
+
   return (
     <div className="space-y-6">
-      {/* 件数バッジ */}
-      <div className="flex items-center gap-3">
-        <h3 className="text-lg font-bold">ライバー申込状況</h3>
+      {/* 件数バッジとCSVエクスポート */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-bold">ライバー申込状況</h3>
+          {applications.length > 0 && (
+            <Badge className="bg-red-500 text-white text-base px-3 py-1">
+              {applications.length}件
+            </Badge>
+          )}
+        </div>
         {applications.length > 0 && (
-          <Badge className="bg-red-500 text-white text-base px-3 py-1">
-            {applications.length}件
-          </Badge>
+          <Button
+            onClick={handleExportCSV}
+            variant="outline"
+            className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
+          >
+            <Download className="w-4 h-4" /> CSV出力
+          </Button>
         )}
       </div>
 
