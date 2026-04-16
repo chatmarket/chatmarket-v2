@@ -89,9 +89,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/recruit" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="https://www.onestep-corp.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
                   企業情報
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 export default function VideoModeration() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function VideoModeration() {
       base44.auth.me().then((u) => {
         setUser(u);
         setIsAdmin(u?.role === 'admin');
+        setAuthLoading(false);
       });
     });
   }, []);
@@ -38,6 +40,14 @@ export default function VideoModeration() {
       queryClient.invalidateQueries({ queryKey: ['pending-videos'] });
     },
   });
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
