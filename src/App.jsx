@@ -61,6 +61,8 @@ import VideoEngineComparison from './pages/VideoEngineComparison';
 import InfraSlide from './pages/InfraSlide';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import PrivacyEn from './pages/PrivacyEn';
+import PrivacyKo from './pages/PrivacyKo';
 import Recruit from './pages/Recruit';
 import Community from './pages/Community';
 import NotificationCenter from './pages/NotificationCenter';
@@ -152,6 +154,8 @@ const AuthenticatedApp = () => {
         <Route path="/infra-slide" element={<InfraSlide />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/privacy/en" element={<PrivacyEn />} />
+        <Route path="/privacy/ko" element={<PrivacyKo />} />
         <Route path="/recruit" element={<Recruit />} />
         <Route path="/community" element={<Community />} />
         <Route path="/notifications" element={<NotificationCenter />} />
