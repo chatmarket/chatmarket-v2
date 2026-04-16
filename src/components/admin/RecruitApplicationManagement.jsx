@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, User, Mail, Users, Link as LinkIcon, MessageCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
 
-export default function RecruitApplicationManagement() {
+export default function RecruitApplicationManagement({ applications: propsApplications = [] }) {
   const queryClient = useQueryClient();
   const prevCountRef = useRef(0);
 
-  const { data: applications = [] } = useQuery({
+  // propsから受け取った場合はそれを使用、なければクエリで取得
+  const { data: queriedApplications = [] } = useQuery({
     queryKey: ["admin-recruit-applications"],
     queryFn: () =>
       base44.entities.BlogPost.filter(
@@ -18,7 +19,10 @@ export default function RecruitApplicationManagement() {
         "-created_date"
       ),
     refetchInterval: 15000,
+    enabled: propsApplications.length === 0, // propsがある場合はクエリを無効化
   });
+
+  const applications = propsApplications.length > 0 ? propsApplications : queriedApplications;
 
   // 新しい申し込みの通知
   useEffect(() => {

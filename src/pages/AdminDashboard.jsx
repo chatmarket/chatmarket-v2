@@ -835,7 +835,7 @@ export default function AdminDashboard() {
 
         {/* ライバー申込状況タブ */}
         <TabsContent value="recruit" className="space-y-6">
-          <RecruitApplicationManagement />
+          <RecruitApplicationManagement applications={applications} />
         </TabsContent>
 
         {/* 決済レポートタブ */}
