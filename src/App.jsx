@@ -65,10 +65,11 @@ import Recruit from './pages/Recruit';
 import Community from './pages/Community';
 import NotificationCenter from './pages/NotificationCenter';
 import InfluencerCampaign from './pages/InfluencerCampaign';
+import LegalCommercial from './pages/LegalCommercial';
 import CompanyInfo from './pages/CompanyInfo';
 
 // 認証不要の公開ページパス
-const PUBLIC_PATHS = ['/recruit', '/terms', '/privacy', '/info', '/company'];
+const PUBLIC_PATHS = ['/recruit', '/terms', '/privacy', '/info', '/company', '/legal'];
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -155,6 +156,7 @@ const AuthenticatedApp = () => {
         <Route path="/community" element={<Community />} />
         <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="/influencer-campaign" element={<InfluencerCampaign />} />
+        <Route path="/legal" element={<LegalCommercial />} />
         <Route path="/company" element={<CompanyInfo />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>

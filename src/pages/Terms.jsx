@@ -77,7 +77,34 @@ export default function Terms() {
           </ul>
         </Section>
 
-        <Section title="第7条（VODプランおよび動画販売）">
+        <Section title="第7条（視聴時間制限）">
+          <p>本サービスでは、サーバーコスト・公平な利用環境の維持を目的として、プランごとに1日の動画・アーカイブ視聴時間に上限を設けています。</p>
+          <ul className="list-disc list-inside space-y-1 pl-2">
+            <li><strong>FREEプラン：</strong>1日の合計視聴時間は最大60分までです。</li>
+            <li><strong>有料プラン（BASIC等）：</strong>1日の合計視聴時間は最大120分までです。</li>
+            <li>上限に達した場合、JST 0:00（翌日）にリセットされるまで視聴ができなくなります。</li>
+            <li><strong>視聴制限は運営の判断で変更・廃止・強化される場合があります。</strong>変更は本サービス内での告知をもって効力を発します。</li>
+            <li>ライブ配信（リアルタイム視聴）は本制限の対象外です。</li>
+          </ul>
+        </Section>
+
+        <Section title="第8条（コンテンツの著作権）">
+          <p>本サービス上で配信者（ライバー）が作成・投稿した配信・動画・画像等のコンテンツ（以下「クリエイターコンテンツ」）の著作権は、作成したクリエイターに帰属します。</p>
+          <ul className="list-disc list-inside space-y-1 pl-2">
+            <li>クリエイターは、本サービスにコンテンツを投稿することにより、当社に対して以下の権利を無償・非独占的にライセンスしたものとみなします：
+              <ul className="list-disc list-inside space-y-1 pl-4 mt-1">
+                <li>本サービスの運営・提供に必要な範囲での複製・表示・送信</li>
+                <li>本サービス・ChatMarket の宣伝・広告・マーケティング目的でのサムネイル・切り抜き・プロモーション動画等への使用</li>
+                <li>プレスリリース・SNS・App Store等の掲載物への引用・使用</li>
+              </ul>
+            </li>
+            <li>当社がクリエイターコンテンツを宣伝目的で使用する際は、可能な範囲でクリエイター名・チャンネル名をクレジット表記します。</li>
+            <li>クリエイターは、自身のコンテンツが第三者の著作権・肖像権・プライバシー権を侵害しないことを保証するものとします。</li>
+            <li>本サービスのロゴ・UI・システム・ブランド等に関する知的財産権はすべて当社に帰属します。</li>
+          </ul>
+        </Section>
+
+        <Section title="第9条（VODプランおよび動画販売）">
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>VODプラン加入者は動画のアップロードおよび有料販売が可能です。</li>
             <li>動画の販売価格は<strong>最低¥150</strong>です。¥150未満の価格設定はシステムにより拒否されます。</li>
@@ -87,7 +114,7 @@ export default function Terms() {
           </ul>
         </Section>
 
-        <Section title="第8条（禁止事項）">
+        <Section title="第10条（禁止事項）">
           <p>以下の行為を禁止します。</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>本人確認書類の偽造・不正登録</li>
@@ -99,28 +126,29 @@ export default function Terms() {
           </ul>
         </Section>
 
-        <Section title="第9条（アカウントの停止・解約）">
+        <Section title="第11条（アカウントの停止・解約）">
           <p>当社は、本規約違反が認められた場合、事前通知なくアカウントを停止・削除できます。停止時点でのコイン残高は原則として没収されます（法令に基づく場合を除く）。</p>
         </Section>
 
-        <Section title="第10条（免責事項）">
+        <Section title="第12条（免責事項）">
           <p>当社は、通信環境の問題・システム障害・天災等によるサービス中断について責任を負いません。ユーザー間のトラブルについては当事者間で解決するものとし、当社は仲介義務を負いません。</p>
         </Section>
 
-        <Section title="第11条（規約の変更）">
+        <Section title="第13条（規約の変更）">
           <p>当社は本規約を予告なく変更できます。変更後も継続してサービスを利用した場合、変更後の規約に同意したものとみなします。重要な変更はサービス内通知またはメールでお知らせします。</p>
         </Section>
 
-        <Section title="第12条（準拠法・管轄）">
+        <Section title="第14条（準拠法・管轄）">
           <p>本規約は日本法に準拠します。紛争については東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
         </Section>
 
         <div className="border-t border-border pt-4 text-xs text-muted-foreground text-right">
           <p>ChatMarket 運営事務局</p>
-          <p>最終更新：2026年4月15日</p>
+          <p>最終更新：2026年4月16日</p>
         </div>
 
-        <div className="flex gap-4 pt-2">
+        <div className="flex gap-4 pt-2 flex-wrap">
+          <Link to="/legal" className="text-xs text-primary hover:underline">特定商取引法に基づく表記 →</Link>
           <Link to="/privacy" className="text-xs text-primary hover:underline">プライバシーポリシー →</Link>
         </div>
       </div>

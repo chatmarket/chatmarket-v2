@@ -89,6 +89,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
+                  特定商取引法に基づく表記
+                </Link>
+              </li>
+              <li>
                 <a href="https://www.onestep-corp.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
                   企業情報
                 </a>
@@ -103,14 +108,17 @@ export default function Footer() {
         {/* Bottom */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>
-            © {currentYear} ChatMarket, Inc. All rights reserved.
+            © 2026 ChatMarket Inc. All rights reserved.
           </p>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Link to="/terms" className="hover:text-foreground transition-colors underline underline-offset-2">
               利用規約
             </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors underline underline-offset-2">
               プライバシー
+            </Link>
+            <Link to="/legal" className="hover:text-foreground transition-colors underline underline-offset-2">
+              特商法表記
             </Link>
             <span>made with ❤️ in Japan</span>
           </div>
