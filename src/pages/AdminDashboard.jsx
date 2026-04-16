@@ -334,7 +334,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Stripe API Key を設定してください</p>
+            <p className="text-sm text-muted-foreground">Stripe API Key が設定されていません</p>
           )}
         </div>
 
