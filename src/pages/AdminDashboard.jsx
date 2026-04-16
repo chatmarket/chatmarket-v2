@@ -372,75 +372,98 @@ export default function AdminDashboard() {
 
       {/* タブ */}
       <Tabs defaultValue={initialTab}>
-        <TabsList className="bg-secondary">
-          <TabsTrigger value="revenue" className="gap-2">
-            <DollarSign className="w-4 h-4" /> 収益管理
-          </TabsTrigger>
-          <TabsTrigger value="subscription" className="gap-2">
-            <Coins className="w-4 h-4" /> サブスク管理
-          </TabsTrigger>
-          <TabsTrigger value="stripe" className="gap-2">
-            <CreditCard className="w-4 h-4" /> Stripe連携
-          </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="w-4 h-4" /> ユーザー管理
-          </TabsTrigger>
-          <TabsTrigger value="financial" className="gap-2">
-            <FileText className="w-4 h-4" /> 決算書
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
-            <AlertCircle className="w-4 h-4" /> 通報管理
-          </TabsTrigger>
-          <TabsTrigger value="moderation" className="gap-2">
-            <AlertCircle className="w-4 h-4" /> コンテンツ審査
-          </TabsTrigger>
-          <TabsTrigger value="kyc" className="gap-2">
-            <Users className="w-4 h-4" /> KYC審査
-          </TabsTrigger>
-          <TabsTrigger value="crowdfunding" className="gap-2">
-            <DollarSign className="w-4 h-4" /> クラウドファンディング
-          </TabsTrigger>
-          <TabsTrigger value="suspension" className="gap-2 relative">
-            <Ban className="w-4 h-4" /> チャンネル閉鎖
-            {pendingReports.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {pendingReports.length > 9 ? "9+" : pendingReports.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="incentive" className="gap-2">
-            <TrendingUp className="w-4 h-4" /> プログレッシブ
-          </TabsTrigger>
-          <TabsTrigger value="withdrawal" className="gap-2">
-            <DollarSign className="w-4 h-4" /> 払い出し管理
-          </TabsTrigger>
-          <TabsTrigger value="live-cost" className="gap-2">
-            <Radio className="w-4 h-4" /> ライブコスト
-          </TabsTrigger>
-          <TabsTrigger value="call-cost" className="gap-2">
-            <Phone className="w-4 h-4" /> 通話コスト
-          </TabsTrigger>
-          <TabsTrigger value="campaign" className="gap-2">
-            <Tag className="w-4 h-4" /> キャンペーン管理
-          </TabsTrigger>
-          <TabsTrigger value="drama" className="gap-2">
-            <Zap className="w-4 h-4" /> 演出設定
-          </TabsTrigger>
-          <TabsTrigger value="call-limit" className="gap-2">
-            <Phone className="w-4 h-4" /> 通話制限管理
-          </TabsTrigger>
-          <TabsTrigger value="recruit" className="gap-2 relative">
-            <Zap className="w-4 h-4" /> ライバー申込状況
-            {applications.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {applications.length > 9 ? "9+" : applications.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="purchases" className="gap-2">
-            <CreditCard className="w-4 h-4" /> 決済レポート
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b border-border/50 overflow-x-auto">
+          <TabsList className="bg-secondary w-full justify-start rounded-none border-0 h-auto p-0">
+            <div className="flex gap-0">
+              {/* 📊 基本管理 */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="revenue" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <DollarSign className="w-4 h-4" /> 収益管理
+                </TabsTrigger>
+                <TabsTrigger value="subscription" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Coins className="w-4 h-4" /> サブスク
+                </TabsTrigger>
+                <TabsTrigger value="stripe" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <CreditCard className="w-4 h-4" /> Stripe
+                </TabsTrigger>
+                <TabsTrigger value="users" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Users className="w-4 h-4" /> ユーザー
+                </TabsTrigger>
+                <TabsTrigger value="financial" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <FileText className="w-4 h-4" /> 決算書
+                </TabsTrigger>
+              </div>
+
+              {/* ⚖️ 管理・審査 */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="reports" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <AlertCircle className="w-4 h-4" /> 通報
+                </TabsTrigger>
+                <TabsTrigger value="moderation" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <AlertCircle className="w-4 h-4" /> 審査
+                </TabsTrigger>
+                <TabsTrigger value="kyc" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Users className="w-4 h-4" /> KYC
+                </TabsTrigger>
+                <TabsTrigger value="suspension" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary relative">
+                  <Ban className="w-4 h-4" /> 閉鎖
+                  {pendingReports.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-3 h-3 rounded-full flex items-center justify-center text-[8px]">
+                      {pendingReports.length > 9 ? "9+" : pendingReports.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </div>
+
+              {/* 💰 マネタイズ */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="crowdfunding" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <DollarSign className="w-4 h-4" /> CF
+                </TabsTrigger>
+                <TabsTrigger value="incentive" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <TrendingUp className="w-4 h-4" /> 還元率
+                </TabsTrigger>
+                <TabsTrigger value="withdrawal" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <DollarSign className="w-4 h-4" /> 払出
+                </TabsTrigger>
+              </div>
+
+              {/* 🎛️ インフラ・設定 */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="live-cost" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Radio className="w-4 h-4" /> ライブ
+                </TabsTrigger>
+                <TabsTrigger value="call-cost" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Phone className="w-4 h-4" /> 通話
+                </TabsTrigger>
+                <TabsTrigger value="campaign" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Tag className="w-4 h-4" /> キャンペーン
+                </TabsTrigger>
+                <TabsTrigger value="drama" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Zap className="w-4 h-4" /> 演出
+                </TabsTrigger>
+                <TabsTrigger value="call-limit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Phone className="w-4 h-4" /> 制限
+                </TabsTrigger>
+              </div>
+
+              {/* 📝 レポート・ライバー */}
+              <div className="flex gap-0">
+                <TabsTrigger value="recruit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary relative">
+                  <Zap className="w-4 h-4" /> 申込
+                  {applications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-3 h-3 rounded-full flex items-center justify-center text-[8px]">
+                      {applications.length > 9 ? "9+" : applications.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="purchases" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <CreditCard className="w-4 h-4" /> 決済
+                </TabsTrigger>
+              </div>
+            </div>
+          </TabsList>
+        </div>
 
         {/* サブスク管理タブ */}
         <TabsContent value="subscription" className="space-y-6">

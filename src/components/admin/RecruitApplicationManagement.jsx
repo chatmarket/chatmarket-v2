@@ -15,11 +15,11 @@ export default function RecruitApplicationManagement({ applications: propsApplic
     queryKey: ["admin-recruit-applications"],
     queryFn: () =>
       base44.entities.BlogPost.filter(
-        { channel_id: "recruit_application", status: "draft" },
+        { channel_id: "recruit_application" }, // statusフィルタを削除して全申し込みを取得
         "-created_date"
       ),
     refetchInterval: 15000,
-    enabled: propsApplications.length === 0, // propsがある場合はクエリを無効化
+    enabled: propsApplications.length === 0,
   });
 
   const applications = propsApplications.length > 0 ? propsApplications : queriedApplications;
