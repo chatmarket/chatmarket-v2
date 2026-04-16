@@ -27,6 +27,7 @@ import CallUsageLimitManagement from "../components/admin/CallUsageLimitManageme
 import TestUserCreationForm from "../components/admin/TestUserCreationForm";
 import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList";
 import RecruitApplicationManagement from "../components/admin/RecruitApplicationManagement";
+import PurchaseReportTab from "../components/admin/PurchaseReportTab";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -436,6 +437,9 @@ export default function AdminDashboard() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-2">
+            <CreditCard className="w-4 h-4" /> 決済レポート
+          </TabsTrigger>
         </TabsList>
 
         {/* サブスク管理タブ */}
@@ -832,6 +836,11 @@ export default function AdminDashboard() {
         {/* ライバー申込状況タブ */}
         <TabsContent value="recruit" className="space-y-6">
           <RecruitApplicationManagement />
+        </TabsContent>
+
+        {/* 決済レポートタブ */}
+        <TabsContent value="purchases" className="space-y-6">
+          <PurchaseReportTab purchases={allPurchases} />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
