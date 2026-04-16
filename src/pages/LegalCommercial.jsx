@@ -49,7 +49,7 @@ export default function LegalCommercial() {
                 ヤマトビル405
               </Row>
               <Row label="お問い合わせ">
-                Email: unui@chatmarket.info<br />
+                Email: <a href="mailto:unei@chatmarket.info" className="text-primary underline">unui@chatmarket.info</a><br />
                 受付時間：平日10:00〜18:00（JST）
               </Row>
               <Row label="販売URL">
@@ -64,7 +64,7 @@ export default function LegalCommercial() {
           <p>本サービスで提供するデジタルコンテンツ・機能の価格は以下の通りです。</p>
           <div className="space-y-3 mt-2">
             <div>
-              <p className="font-bold text-foreground text-xs mb-1.5">▼ エールコイン（仮想通貨）</p>
+              <p className="font-bold text-foreground text-xs mb-1.5">▼ エールコイン（サービス内通貨）</p>
               <ul className="list-disc list-inside pl-2 space-y-1">
                 <li>1コイン ＝ 約1.1円相当（運営が随時改定）</li>
                 <li>購入プランにより異なります。詳細はコイン購入ページをご参照ください。</li>
@@ -84,9 +84,9 @@ export default function LegalCommercial() {
             <div>
               <p className="font-bold text-foreground text-xs mb-1.5">▼ クリエイターが販売するコンテンツ</p>
               <ul className="list-disc list-inside pl-2 space-y-1">
-                <li>各コンテンツのページに販売価格を表示しています（最低¥150）。</li>
+                <li>各コンテンツのページに販売価格を表示しています（最低¥15）。</li>
                 <li>1対1ビデオ通話：各クリエイターが設定する料金（15分あたり、エールコインで表示）</li>
-                <li>有料ライブ配信（PPV）：各配信の詳細ページに表示する価格（最低¥150相当）</li>
+                <li>有料ライブ配信（PPV）：各配信の詳細ページに表示する価格（最低¥15相当）</li>
               </ul>
             </div>
           </div>
@@ -120,14 +120,14 @@ export default function LegalCommercial() {
           </div>
           <p>本サービスで提供するコンテンツはすべてデジタル形式であり、消費者契約法第15条の2および特定商取引法の規定に基づき、以下の理由により返金・返品には応じられません。</p>
           <ul className="list-disc list-inside pl-2 space-y-1">
-            <li><strong>エールコイン：</strong>購入後のコインは仮想通貨として即時発行されるデジタル財です。購入完了後の返金はお受けできません（コインの有効期限は購入日から180日）。</li>
+            <li><strong>エールコイン：</strong>購入後のコインはサービス内通貨（エールコイン）として即時発行されるデジタル財です。購入完了後の返金はお受けできません（コインの有効期限は購入日から180日）。</li>
             <li><strong>月額サブスクリプション：</strong>サービスへのアクセス権が付与された時点でデジタル役務の提供が開始されるため、契約後の返金はできません。月中に解約した場合も、当月分の返金はありません。</li>
             <li><strong>ビデオ通話・有料配信・動画購入：</strong>視聴・通話開始をもってデジタルコンテンツの提供が完了するため、利用後の返金はお受けできません。</li>
             <li><strong>通話途中での切断（コイン残高不足等）：</strong>未使用分の返金はありません。</li>
           </ul>
           <div className="bg-secondary rounded-xl p-3 text-xs">
             <p className="font-bold text-foreground mb-1">例外的に返金に応じる場合</p>
-            <p>当社の重大な過失によりサービスが利用できなかった場合、または法令に基づく場合は、個別にご対応いたします。お問い合わせは support@chatmarket.info までご連絡ください。</p>
+            <p>当社の重大な過失によりサービスが利用できなかった場合、または法令に基づく場合は、個別にご対応いたします。お問い合わせは <a href="mailto:unei@chatmarket.info" className="text-primary underline">unei@chatmarket.info</a> までご連絡ください。</p>
           </div>
         </Section>
 
