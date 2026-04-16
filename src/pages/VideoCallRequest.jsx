@@ -588,6 +588,11 @@ export default function VideoCallRequest() {
           </span>
         </label>
 
+        {/* 環境免責 */}
+        <div className="bg-secondary/80 border border-border rounded-xl p-3 text-xs text-muted-foreground">
+          <p>通話申し込みを行うことで、<a href="/terms" className="text-primary underline" target="_blank">利用規約</a>に同意したものとみなされます。通信環境やブラウザ設定に起因する接続不良については、利用規約に基づき補償の対象外となります。</p>
+        </div>
+
         <Button
           type="submit"
           disabled={submitting || !termsAgreed || existingRequests.length > 0 || !preferredDate}

@@ -141,7 +141,7 @@ export default function CoinPurchasePanel({ onSuccess }) {
                       )}
                     </p>
                     <p>お支払い: <span className="font-semibold text-foreground/80">¥{plan.charge_amount.toLocaleString()}</span>
-                      <span className="text-muted-foreground/60"> (定価¥{plan.base_price.toLocaleString()} + システム利用料3.6%)</span>
+                      <span className="text-muted-foreground/60"> (定価¥{plan.base_price.toLocaleString()} + 事務手数料3.6%)</span>
                     </p>
                   </div>
                 </div>
@@ -164,13 +164,18 @@ export default function CoinPurchasePanel({ onSuccess }) {
         })}
       </div>
 
+      {/* 環境免責 */}
+      <div className="bg-secondary/80 border border-border rounded-xl p-3 text-xs text-muted-foreground space-y-1">
+        <p>購入を行うことで、<a href="/terms" className="text-primary underline" target="_blank">利用規約</a>に同意したものとみなされます。通信環境やブラウザ設定に起因する接続不良については、利用規約に基づき補償の対象外となります。</p>
+      </div>
+
       {/* テストモードバナー */}
       <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 flex items-start gap-2 text-xs text-blue-300">
         <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-400" />
         <div className="space-y-0.5">
           <p className="font-bold text-blue-300">🧪 現在はデモ版です</p>
-          <p>本物のカードは使用しないでください。Stripeのテスト用カード番号をご利用ください。</p>
-          <p>テストカード例: <span className="font-mono font-bold text-blue-200">4242 4242 4242 4242</span>　有効期限: 任意の未来日　CVC: 任意3桁</p>
+          <p>テスト用カード（<span className="font-mono font-bold text-blue-200">4242 4242 4242 4242</span>）を使用してください。有効期限: 任意の未来日　CVC: 任意3桁</p>
+          <p className="text-blue-300/60">※このコインは本番環境へは引き継がれません。</p>
         </div>
       </div>
 
@@ -179,7 +184,7 @@ export default function CoinPurchasePanel({ onSuccess }) {
         <div className="flex items-start gap-1.5">
           <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary/60" />
           <div className="space-y-1">
-            <p>・表示の支払額にはシステム利用料（3.6%）が含まれます。</p>
+            <p>・表示の支払額には事務手数料（3.6%）が含まれます。</p>
             <p>・コインの有効期限は購入日から180日です。</p>
             <p>・ボーナスコインを含む払い出しには通常のライバー還元率（85〜95%）が適用されます。</p>
             <p>・購入後のキャンセル・返金はできません。</p>

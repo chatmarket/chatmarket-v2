@@ -68,7 +68,7 @@ export default function LegalCommercial() {
               <ul className="list-disc list-inside pl-2 space-y-1">
                 <li>1コイン ＝ 約1.1円相当（運営が随時改定）</li>
                 <li>購入プランにより異なります。詳細はコイン購入ページをご参照ください。</li>
-                <li>コイン購入時、表示価格に加えてシステム利用料（決済手数料の一部として3.6%）が上乗せされます。</li>
+                <li>コイン購入時、表示価格に加えて事務手数料（3.6%）が上乗せされます。</li>
               </ul>
             </div>
             <div>

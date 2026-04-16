@@ -161,6 +161,7 @@ const AuthenticatedApp = () => {
         <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="/influencer-campaign" element={<InfluencerCampaign />} />
         <Route path="/legal" element={<LegalCommercial />} />
+        <Route path="/legal/tokushoho" element={<LegalCommercial />} />
         <Route path="/company" element={<CompanyInfo />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
