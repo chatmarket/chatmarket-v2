@@ -12,11 +12,6 @@ export default function RecruitApplicationManagement({ applications: propsApplic
 
   // AdminDashboardからpropsで受け取ったapplicationsを使用
   const applications = propsApplications && propsApplications.length > 0 ? propsApplications : [];
-  
-  // デバッグ用
-  useEffect(() => {
-    console.log('RecruitApplicationManagement - applications:', applications.length, applications);
-  }, [applications]);
 
   // 新しい申し込みの通知
   useEffect(() => {
