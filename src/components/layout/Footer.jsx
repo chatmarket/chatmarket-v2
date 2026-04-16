@@ -53,6 +53,14 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* PWA案内 */}
+        <div className="border border-primary/30 bg-primary/5 rounded-xl px-4 py-3 flex items-start gap-3 mb-6">
+          <span className="text-xl shrink-0">📲</span>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-bold text-primary">アプリストアを通さない直営だから85%還元。</span>ブラウザの「ホーム画面に追加」でアプリのようにご利用いただけます。
+          </p>
+        </div>
+
         {/* Divider */}
         <div className="border-t border-border/30 my-6 lg:my-8" />
 

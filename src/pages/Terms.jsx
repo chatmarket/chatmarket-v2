@@ -22,6 +22,15 @@ export default function Terms() {
         </div>
       </div>
 
+      {/* PWA案内バナー */}
+      <div className="mb-6 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 flex items-start gap-3">
+        <span className="text-2xl shrink-0">📲</span>
+        <div>
+          <p className="text-sm font-bold text-primary">アプリストアを通さない直営だから高還元</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Apple・Googleのストア手数料（最大30%）がゼロ。その分をそのままクリエイターへ。ブラウザの「ホーム画面に追加」からアプリのようにご利用いただけます。</p>
+        </div>
+      </div>
+
       <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-8">
         <p className="text-xs text-muted-foreground">制定日：2026年4月15日　運営：ChatMarket（以下「当社」）</p>
 
@@ -45,13 +54,14 @@ export default function Terms() {
         </Section>
 
         <Section title="第4条（クリエイターへの収益還元）">
+          <p>本サービスはApple・Google等のアプリストアを経由しない直営PWAとして提供しています。ストア手数料（最大30%）が発生しないため、クリエイターへの高還元を実現しています。</p>
           <p>クリエイター（配信者・ライバー）への報酬は、ユーザーが消費したエールコインをもとに以下の方式で計算されます。</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><strong>FREEプラン：</strong>消費コインの70%がクリエイターに還元されます。</li>
-            <li><strong>BASICプラン・CALL&ANSERプラン：</strong>消費コインの85%が還元されます。</li>
-            <li><strong>プログレッシブ・インセンティブ：</strong>月間売上に応じて還元率が最大95%まで段階的に引き上げられます（85%〜95%の間で適用）。</li>
+            <li><strong>BASICプラン（月額¥3,300）：</strong>消費コインの<strong className="text-primary">85%</strong>がクリエイターに還元されます。当社の取り分は15%のみです。</li>
+            <li><strong>プログレッシブ・インセンティブ：</strong>月間売上に応じて還元率が最大<strong className="text-primary">95%</strong>まで段階的に引き上げられます。</li>
             <li>ボーナスコインを含む消費についても、上記還元率が同様に適用されます。</li>
-            <li>録画オプション料金（¥50/15分）はAWSインフラ実費に充当され、クリエイター還元の対象外です。</li>
+            <li>録画オプション料金はAWSインフラ実費に充当され、クリエイター還元の対象外です。</li>
           </ul>
         </Section>
 
@@ -73,7 +83,7 @@ export default function Terms() {
             <li>録画オプション料金はAWSインフラ実費への充当であり、クリエイター収益・運営利益の分配対象外です。</li>
             <li>アーカイブを有料公開する場合、映り込む全員から事前に肖像権に関する明示的な同意を得る責任は、コンテンツ投稿者にあります。</li>
             <li>同意を得ていないアーカイブの公開による法的問題について、当社は一切の責任を負いません。</li>
-            <li>アーカイブ販売の最低価格は¥150です。</li>
+            <li>アーカイブ販売の最低価格は<strong>¥15</strong>です。</li>
           </ul>
         </Section>
 
@@ -107,7 +117,7 @@ export default function Terms() {
         <Section title="第9条（VODプランおよび動画販売）">
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>VODプラン加入者は動画のアップロードおよび有料販売が可能です。</li>
-            <li>動画の販売価格は<strong>最低¥150</strong>です。¥150未満の価格設定はシステムにより拒否されます。</li>
+            <li>動画の販売価格は<strong>最低¥15</strong>です。¥15未満の価格設定はシステムにより拒否されます。</li>
             <li>販売動画の長さは最大1時間（60分）までです。</li>
             <li>アップロードされた動画は当社の審査を経て公開されます。審査に通過しない場合、理由を通知した上で非公開とします。</li>
             <li>著作権・肖像権を侵害するコンテンツは厳禁です。違反した場合、アカウントを停止します。</li>
