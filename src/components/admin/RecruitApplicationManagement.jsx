@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Clock, User, Mail, Users, Link as LinkIcon, MessageCircle, Zap } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CheckCircle2, XCircle, Clock, User, Mail, Users, Link as LinkIcon, MessageCircle, Zap, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecruitApplicationManagement({ applications: propsApplications = [] }) {
@@ -63,6 +64,18 @@ export default function RecruitApplicationManagement({ applications: propsApplic
     }
   };
 
+  const handleStatusChange = async (app, newStatus) => {
+    try {
+      await base44.entities.BlogPost.update(app.id, {
+        recruit_status: newStatus,
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-recruit-applications"] });
+      toast.success(`ステータスを「${newStatus}」に更新しました`);
+    } catch (err) {
+      toast.error("ステータス更新に失敗しました: " + err.message);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 件数バッジ */}
@@ -75,105 +88,95 @@ export default function RecruitApplicationManagement({ applications: propsApplic
         )}
       </div>
 
-      {/* 申込一覧 */}
+      {/* 申込一覧テーブル */}
       {applications.length === 0 ? (
         <div className="bg-card rounded-xl border border-border/50 p-8 text-center text-muted-foreground">
           <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />
           <p>申込はまだありません</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {applications.map((app) => {
-            const data = JSON.parse(app.content);
-            const isTierPro = (data.followers || 0) >= 10000;
+        <div className="bg-card rounded-xl border border-border/50 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 bg-secondary/50">
+                <th className="text-left py-3 px-4 font-bold">申し込み者</th>
+                <th className="text-left py-3 px-4 font-bold">メール</th>
+                <th className="text-left py-3 px-4 font-bold">フォロワー</th>
+                <th className="text-center py-3 px-4 font-bold">ステータス</th>
+                <th className="text-left py-3 px-4 font-bold">申し込み日時</th>
+                <th className="text-center py-3 px-4 font-bold">アクション</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => {
+                const data = JSON.parse(app.content);
+                const isTierPro = (data.followers || 0) >= 10000;
 
-            return (
-              <div
-                key={app.id}
-                className="bg-card rounded-xl border border-border/50 p-5 space-y-4 hover:border-primary/30 transition-all"
-              >
-                {/* ヘッダー */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="text-base font-bold text-foreground">
-                        {data.name}
-                      </h4>
-                      {isTierPro && (
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">
-                          Pro申し込み
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground font-mono">
-                      {data.email}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(app.created_date).toLocaleString("ja-JP")}
-                  </p>
-                </div>
-
-                {/* フォロワー数 */}
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="w-4 h-4 text-primary" />
-                  <span className="text-muted-foreground">フォロワー:</span>
-                  <span className="font-bold">
-                    {(data.followers || 0).toLocaleString()}人
-                  </span>
-                  {isTierPro && (
-                    <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                      1万人以上 → 3ヶ月無料
-                    </span>
-                  )}
-                </div>
-
-                {/* SNS */}
-                {data.sns_url && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <LinkIcon className="w-4 h-4 text-blue-400" />
-                    <a
-                      href={data.sns_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline truncate"
-                    >
-                      {data.sns_url}
-                    </a>
-                  </div>
-                )}
-
-                {/* PR */}
-                {data.pr && (
-                  <div className="bg-secondary rounded-lg p-3 text-sm">
-                    <p className="text-xs text-muted-foreground mb-1 font-semibold">
-                      自己PR:
-                    </p>
-                    <p className="text-foreground line-clamp-3">{data.pr}</p>
-                  </div>
-                )}
-
-                {/* アクション */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleApprove(app)}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    承認
-                  </Button>
-                  <Button
-                    onClick={() => handleReject(app)}
-                    variant="outline"
-                    className="flex-1 border-red-500/40 text-red-400 hover:bg-red-500/10 gap-2"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    却下
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+                return (
+                  <tr key={app.id} className="border-b border-border/30 hover:bg-secondary/50 transition-colors">
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-bold flex items-center gap-2">
+                          {data.name}
+                          {isTierPro && (
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-xs">
+                              Pro
+                            </Badge>
+                          )}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-xs text-muted-foreground">{data.email}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-primary" />
+                        <span className="font-bold">{(data.followers || 0).toLocaleString()}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <Select
+                        value={app.recruit_status || "未対応"}
+                        onValueChange={(status) => handleStatusChange(app, status)}
+                      >
+                        <SelectTrigger className="w-24 h-8 text-xs bg-secondary border-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="未対応">未対応</SelectItem>
+                          <SelectItem value="審査中">審査中</SelectItem>
+                          <SelectItem value="採用">採用</SelectItem>
+                          <SelectItem value="不採用">不採用</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground">
+                      {new Date(app.created_date).toLocaleString("ja-JP")}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex gap-1 justify-center">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApprove(app)}
+                          className="h-7 px-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/40"
+                          variant="outline"
+                        >
+                          承認
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleReject(app)}
+                          className="h-7 px-2 border-red-500/40 text-red-400 hover:bg-red-500/10"
+                          variant="outline"
+                        >
+                          却下
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
