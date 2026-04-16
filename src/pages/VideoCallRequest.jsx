@@ -204,8 +204,31 @@ export default function VideoCallRequest() {
     }
 
     setSubmitting(false);
-    toast.success("通話リクエストを送りました！承諾後、通話ボタンが有効になります。");
-    navigate(`/chat/${channelId}`);
+    toast.success("通話リクエストを送りました！配信者の承諾を待っています…");
+
+    // 申込完了後: accepted になったら自動で通話ルームへ遷移（最大3分ポーリング）
+    const callDoc = await base44.entities.VideoCall.filter({
+      caller_email: user.email,
+      callee_email: channel.owner_email,
+      status: "pending",
+    }).then((r) => r[0]);
+    if (!callDoc) { navigate(`/chat/${channelId}`); return; }
+    const callId = callDoc.id;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 60; // 3秒×60=3分
+    const poll = setInterval(async () => {
+      attempts++;
+      const updated = await base44.entities.VideoCall.filter({ id: callId }).then((r) => r[0]);
+      if (updated?.status === "accepted" || updated?.status === "calling" || updated?.status === "active") {
+        clearInterval(poll);
+        toast.success("承諾されました！通話ルームへ移動します…");
+        navigate(`/call/${callId}`);
+      } else if (updated?.status === "declined" || updated?.status === "cancelled" || attempts >= MAX_ATTEMPTS) {
+        clearInterval(poll);
+        if (updated?.status === "declined") toast.error("通話が断られました。");
+        navigate(`/chat/${channelId}`);
+      }
+    }, 3000);
   };
 
   if (!channel || !userLoaded) {
