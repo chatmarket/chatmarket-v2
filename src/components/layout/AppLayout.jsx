@@ -256,6 +256,11 @@ export default function AppLayout() {
           </div>
         </header>
 
+        {/* テスト運営中バナー */}
+        <div className="text-center text-xs py-2 px-4 font-semibold" style={{ background: "rgba(0,200,255,0.07)", color: "#00cfff", textShadow: "0 0 8px #00cfff, 0 0 16px #00cfff88", borderBottom: "1px solid rgba(0,200,255,0.2)" }}>
+          現在、ライバーさんの集客中はテスト運営中につき全機能が正常に動作しない事もございます。数日内に正常になります。
+        </div>
+
         {/* Page content */}
         <main className="flex-1 pb-20 lg:pb-6 overflow-x-hidden">
           <Outlet />
