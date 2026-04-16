@@ -12,9 +12,10 @@ import GiftPanel from "../components/live/GiftPanel";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
-import { Users, Radio, Lock, CreditCard } from "lucide-react";
+import { Users, Radio, Lock, CreditCard, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream";
 import PpvPreSale from "../components/live/PpvPreSale";
@@ -144,6 +145,7 @@ export default function LiveView() {
     });
     setHasPurchased(true);
     setShowPaywall(false);
+    toast.success("チケット購入完了！配信を視聴します🎉");
   };
 
   if (isLoading) {
@@ -179,34 +181,34 @@ export default function LiveView() {
                 <div className="text-center space-y-2">
                   <Lock className="w-12 h-12 text-primary mx-auto" />
                   <h2 className="text-xl font-bold">30秒プレビューが終了しました</h2>
-                  <p className="text-muted-foreground text-sm">続きを視聴するにはチケットを購入してください</p>
+                  <p className="text-muted-foreground text-sm">チケットを購入してすぐ視聴を再開</p>
                   <p className="text-3xl font-black text-primary">¥{stream.price?.toLocaleString()}</p>
                 </div>
                 {!user ? (
-                  <Button onClick={() => base44.auth.redirectToLogin()} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base">
+                  <Button onClick={() => base44.auth.redirectToLogin()} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base font-bold">
                     <CreditCard className="w-5 h-5" /> ログインして購入
                   </Button>
                 ) : (
-                  <Button onClick={handlePurchase} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base">
-                    <CreditCard className="w-5 h-5" /> チケット購入
+                  <Button onClick={handlePurchase} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base font-bold">
+                    <Zap className="w-5 h-5" /> 今すぐ購入して視聴する
                   </Button>
                 )}
               </div>
             ) : null}
 
             {needsPayment && !inPreview && !showPaywall ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-3 sm:gap-4 p-4">
-                <Lock className="w-12 h-12 text-muted-foreground" />
-                <h2 className="text-lg sm:text-xl font-bold">有料ライブ配信</h2>
-                <p className="text-muted-foreground text-sm">チケットを購入して視聴</p>
-                <div className="text-2xl font-bold text-primary">
-                  ¥{stream.price?.toLocaleString()}
-                </div>
-                <Button onClick={handlePurchase} className="bg-primary hover:bg-primary/90 gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  チケット購入
-                </Button>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-3 sm:gap-4 p-4">
+              <Lock className="w-12 h-12 text-muted-foreground" />
+              <h2 className="text-lg sm:text-xl font-bold">有料ライブ配信</h2>
+              <p className="text-muted-foreground text-sm">チケットを購入してすぐ視聴開始</p>
+              <div className="text-2xl font-bold text-primary">
+                ¥{stream.price?.toLocaleString()}
               </div>
+              <Button onClick={handlePurchase} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base font-bold">
+                <Zap className="w-5 h-5" />
+                今すぐ購入して視聴する
+              </Button>
+            </div>
             ) : stream.status === "live" && stream.stream_type === "vimeo" && stream.vimeo_url ? (
               <iframe
                 src={stream.vimeo_url}
