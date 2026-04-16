@@ -72,7 +72,7 @@ function Slide1() {
           <NeonText color={NEON_GREEN} bold>インフラ戦略</NeonText>
         </h1>
         <p className="text-sm md:text-base text-white/50 max-w-lg mx-auto">
-          TikTok・Clubhouseを支える世界シェアNo.1エンジンで<br />
+          Amazon AWSが支える世界最高水準インフラで<br />
           「15分¥150」を実現する仕組み
         </p>
       </motion.div>
@@ -96,7 +96,7 @@ function Slide1() {
                 transition: "opacity 0.05s",
               }}
             >
-              Powered by Agora.io
+              Powered by ChatMarket
             </span>
             <Zap size={16} style={{ color: NEON_GREEN, filter: `drop-shadow(0 0 6px ${NEON_GREEN})` }} />
           </div>
@@ -122,9 +122,9 @@ function Slide2() {
           <div className="p-6 md:p-8 text-center space-y-3">
             <div className="text-3xl mb-2">🌐</div>
             <h2 className="text-xl md:text-3xl font-black text-white leading-tight">
-              TikTok・Clubhouseを支える<br />
-              <NeonText color={NEON_GREEN} size="inherit" bold>世界シェアNo.1エンジン</NeonText><br />
-              <span className="text-white">「Agora」を完全搭載</span>
+              Amazon AWS を支える<br />
+              <NeonText color={NEON_GREEN} size="inherit" bold>世界最高水準インフラ</NeonText><br />
+              <span className="text-white">ChatMarket に完全搭載</span>
             </h2>
           </div>
         </NeonBorder>
@@ -133,7 +133,7 @@ function Slide2() {
           {[
             { val: "200+", label: "国・地域でサービス中" },
             { val: "200億+", label: "月間接続分数" },
-            { val: "10ms", label: "最短遅延（SD-RTN™）" },
+            { val: "10ms", label: "最短遅延（AWS Chime）" },
           ].map((item) => (
             <NeonBorder key={item.label} color={NEON_CYAN}>
               <div className="p-3 text-center">
@@ -247,7 +247,7 @@ function Slide3() {
       <div className="z-10 grid grid-cols-2 gap-3 w-full max-w-md">
         {[
           { label: "公衆インターネット（東アジア）", val: "最大51分/日で損失", bad: true },
-          { label: "Agora SD-RTN™（東アジア）", val: "ほぼ0（測定外）", bad: false },
+          { label: "AWS Chime SDK（東アジア）", val: "ほぼ0（測定外）", bad: false },
         ].map((item) => (
           <div
             key={item.label}
@@ -278,7 +278,7 @@ function Slide4() {
 
   const nodes = [
     { x: 60,  y: 100, label: "ユーザー", icon: "👤", color: NEON_CYAN },
-    { x: 190, y: 40,  label: "Agora SD-RTN™", icon: "🌐", color: NEON_GREEN },
+    { x: 190, y: 40,  label: "AWS Chime SDK", icon: "🌐", color: NEON_GREEN },
     { x: 320, y: 100, label: "ライバー", icon: "🎤", color: NEON_GOLD },
     { x: 190, y: 160, label: "150円/15分", icon: "💰", color: "#ff88ff" },
   ];
@@ -427,7 +427,7 @@ function Slide5() {
           >
             ¥150
           </p>
-          <p className="text-xs text-white/30 mt-1">Agora SD-RTN™ × P2P最適化</p>
+          <p className="text-xs text-white/30 mt-1">AWS Chime SDK × P2P最適化</p>
         </div>
       </motion.div>
 
@@ -456,7 +456,7 @@ function Slide5() {
 
       {/* ロードマップテキスト */}
       <p className="z-10 text-[10px] text-white/20 text-center italic">
-        将来ロードマップ: NTTグループ（SkyWay）と連携し、100K回/月超での更なるコスト最適化を予定
+        将来ロードマップ: Amazon IVS との更なる統合で、100K回/月超のコスト最適化を予定
       </p>
     </div>
   );
@@ -484,7 +484,7 @@ function CircuitBackground() {
 // ── メインコンポーネント ──
 const SLIDES = [
   { id: 1, title: "タイトル", component: Slide1 },
-  { id: 2, title: "Agora権威付け", component: Slide2 },
+  { id: 2, title: "インフラ実績", component: Slide2 },
   { id: 3, title: "安定性メーター", component: Slide3 },
   { id: 4, title: "収益構造", component: Slide4 },
   { id: 5, title: "150円強調", component: Slide5 },
