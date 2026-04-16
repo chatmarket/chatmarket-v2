@@ -36,6 +36,10 @@ export default function AdminDashboard() {
   const [savingStripe, setSavingStripe] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
+
+  // URLパラメータでタブ初期値を制御
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab") || "revenue";
   
   const SUPER_ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
   const isSuperAdmin = user && SUPER_ADMIN_EMAILS.includes(user.email);
@@ -366,7 +370,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* タブ */}
-      <Tabs defaultValue="revenue">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="bg-secondary">
           <TabsTrigger value="revenue" className="gap-2">
             <DollarSign className="w-4 h-4" /> 収益管理

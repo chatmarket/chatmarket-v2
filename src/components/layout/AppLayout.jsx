@@ -18,7 +18,7 @@ const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com"];
 
 const ADMIN_NAV_ITEMS = [
   { path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },
-  { path: "/recruit", icon: Zap, label: "ライバー申込一覧" },
+  { path: "/admin/dashboard?tab=recruit", icon: Zap, label: "ライバー申込一覧" },
   { path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
   { path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
 ];
@@ -161,7 +161,7 @@ export default function AppLayout() {
                 <Settings className="w-4 h-4 shrink-0" />設定
               </div>
             </Link>
-            {user.role === "admin" && (
+            {SUPER_ADMIN_EMAILS.includes(user.email) && (
               <Link to="/admin/dashboard" onClick={onClose}>
                 <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-400 hover:bg-purple-500/10 transition-all">
                   <BarChart3 className="w-4 h-4 shrink-0" />管理者
