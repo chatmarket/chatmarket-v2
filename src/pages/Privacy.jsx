@@ -109,7 +109,7 @@ export default function Privacy() {
         <Section title="第11条（お問い合わせ）">
           <p>個人情報の取り扱いに関するお問い合わせ：<br />
           ChatMarket 個人情報保護担当<br />
-          Email: support@chatmarket.info</p>
+          Email: unei@chatmarket.info</p>
         </Section>
 
         <div className="border-t border-border pt-4 text-xs text-muted-foreground text-right">
