@@ -69,6 +69,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import InfluencerCampaign from './pages/InfluencerCampaign';
 import LegalCommercial from './pages/LegalCommercial';
 import CompanyInfo from './pages/CompanyInfo';
+import TestPayment from './pages/TestPayment';
 
 // 認証不要の公開ページパス
 const PUBLIC_PATHS = ['/recruit', '/terms', '/privacy', '/info', '/company', '/legal'];
@@ -163,6 +164,7 @@ const AuthenticatedApp = () => {
         <Route path="/legal" element={<LegalCommercial />} />
         <Route path="/legal/tokushoho" element={<LegalCommercial />} />
         <Route path="/company" element={<CompanyInfo />} />
+        <Route path="/test-payment" element={<TestPayment />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
