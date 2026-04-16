@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,6 @@ import { motion, AnimatePresence } from "framer-motion";
 // ---- キャンペーン設定 ----
 const CAMPAIGN_START = new Date("2026-04-16T20:00:00+09:00");
 const PRO_SLOTS_TOTAL = 300;
-const STORAGE_KEY = "recruit_pro_slots_used";
 
 // 全有料プラン一覧
 const ALL_PLANS = [
@@ -25,16 +25,6 @@ const ALL_PLANS = [
   { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信" },
 ];
 const TOTAL_VALUE = "¥29,700"; // 月額合計
-
-function getProSlotsUsed() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) return parseInt(stored, 10);
-  const elapsed = Math.max(0, Date.now() - CAMPAIGN_START.getTime());
-  const hoursElapsed = elapsed / (1000 * 60 * 60);
-  const organic = Math.floor(Math.min(hoursElapsed * 2.3, 220));
-  localStorage.setItem(STORAGE_KEY, String(organic));
-  return organic;
-}
 
 function useCountdown(targetDate) {
   const [diff, setDiff] = useState(targetDate - Date.now());
@@ -50,21 +40,6 @@ function useCountdown(targetDate) {
     secs: Math.floor((total % 60000) / 1000),
     started: diff <= 0,
   };
-}
-
-function useSlotsCounter() {
-  const [used, setUsed] = useState(getProSlotsUsed);
-  useEffect(() => {
-    const t = setInterval(() => {
-      setUsed(prev => {
-        const next = Math.min(prev + (Math.random() < 0.15 ? 1 : 0), PRO_SLOTS_TOTAL - 1);
-        localStorage.setItem(STORAGE_KEY, String(next));
-        return next;
-      });
-    }, 8000);
-    return () => clearInterval(t);
-  }, []);
-  return PRO_SLOTS_TOTAL - used;
 }
 
 function CountdownBox({ value, label }) {
@@ -83,8 +58,15 @@ export default function Recruit() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const countdown = useCountdown(CAMPAIGN_START.getTime());
-  const slotsRemaining = useSlotsCounter();
   const formRef = useRef(null);
+
+  // 実際の申し込み数を取得して残り枠を計算
+  const { data: applications = [] } = useQuery({
+    queryKey: ["recruit-applications-count"],
+    queryFn: () => base44.entities.BlogPost.filter({ channel_id: "recruit_application" }),
+    refetchInterval: 30000,
+  });
+  const slotsRemaining = Math.max(0, PRO_SLOTS_TOTAL - applications.length);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
