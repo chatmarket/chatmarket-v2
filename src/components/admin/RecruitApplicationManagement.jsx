@@ -10,19 +10,8 @@ export default function RecruitApplicationManagement({ applications: propsApplic
   const queryClient = useQueryClient();
   const prevCountRef = useRef(0);
 
-  // propsから受け取った場合はそれを使用、なければクエリで取得
-  const { data: queriedApplications = [] } = useQuery({
-    queryKey: ["admin-recruit-applications"],
-    queryFn: () =>
-      base44.entities.BlogPost.filter(
-        { channel_id: "recruit_application" }, // statusフィルタを削除して全申し込みを取得
-        "-created_date"
-      ),
-    refetchInterval: 15000,
-    enabled: propsApplications.length === 0,
-  });
-
-  const applications = propsApplications.length > 0 ? propsApplications : queriedApplications;
+  // AdminDashboardからpropsで受け取ったapplicationsを使用
+  const applications = propsApplications && propsApplications.length > 0 ? propsApplications : [];
 
   // 新しい申し込みの通知
   useEffect(() => {

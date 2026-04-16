@@ -372,9 +372,9 @@ export default function AdminDashboard() {
 
       {/* タブ */}
       <Tabs defaultValue={initialTab}>
-        <div className="border-b border-border/50 overflow-x-auto">
-          <TabsList className="bg-secondary w-full justify-start rounded-none border-0 h-auto p-0">
-            <div className="flex gap-0">
+        <div className="overflow-x-auto border-b border-border/50">
+          <TabsList className="bg-secondary flex flex-wrap gap-0 rounded-none p-0 h-auto w-full">
+            <div className="flex flex-wrap gap-0">
               {/* 📊 基本管理 */}
               <div className="flex gap-0 border-r border-border/30">
                 <TabsTrigger value="revenue" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
