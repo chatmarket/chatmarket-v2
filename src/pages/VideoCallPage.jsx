@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MessageModal from "../components/chat/MessageModal";
 import CallChatPanel from "../components/call/CallChatPanel";
 import AdaptiveBitrateManager from "../components/call/AdaptiveBitrateManager";
+import WaitingScreenDisplay from "../components/call/WaitingScreenDisplay";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -818,7 +819,11 @@ export default function VideoCallPage() {
           />
         )}
 
-        {/* 相手映像（フルスクリーン） - ChimeがここにRemoteVideoをbindする */}
+        {/* 待機中画面（isWaiting時はWaitingScreenDisplayを表示） */}
+        {isWaiting ? (
+          <WaitingScreenDisplay channel={calleeChannel} localVideoRef={localVideoRef} />
+        ) : (
+        /* 相手映像（フルスクリーン） - ChimeがここにRemoteVideoをbindする */
         <div className="absolute inset-0 w-full h-full bg-black">
           <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
           {!chimeConnected && (
@@ -829,9 +834,10 @@ export default function VideoCallPage() {
             </div>
           )}
         </div>
+        )}
 
-        {/* 背景 */}
-        {selectedBg !== "none" && selectedBg !== "blur" && (
+        {/* 背景・PiP（待機中は非表示） */}
+        {!isWaiting && selectedBg !== "none" && selectedBg !== "blur" && (
           <img
             src={BACKGROUNDS.find((b) => b.id === selectedBg)?.preview}
             className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
@@ -839,7 +845,8 @@ export default function VideoCallPage() {
           />
         )}
 
-        {/* 自分の映像（PiP右下） - ChimeがここにLocalVideoをpreviewする */}
+        {/* 自分の映像（PiP右下） - 待機中・カメラモードはWaitingScreenDisplay内で表示するため非表示 */}
+        {!isWaiting && (
         <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black/80 z-10">
           <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
           {!camOn && (
@@ -851,6 +858,7 @@ export default function VideoCallPage() {
             <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
           </div>
         </div>
+        )}
       {/* フルスクリーンボタン */}
         <button
           onClick={toggleFullscreen}
@@ -1327,10 +1335,6 @@ export default function VideoCallPage() {
               </>
               ) : (
               <>
-               <div className="flex-1 text-center">
-                 <p className="text-white font-bold text-lg">待機中...</p>
-                 <p className="text-white/60 text-xs">相手からの接続を待っています</p>
-               </div>
               <button
                 onClick={async () => {
                   const isAuth = await base44.auth.isAuthenticated();
