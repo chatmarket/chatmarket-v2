@@ -81,7 +81,7 @@ export default function Home() {
       <GiantKillingBanner />
 
       {/* ネオン白文字のメッセージ */}
-      <div className="text-center py-4">
+      <div className="text-center py-3">
         <style>{`
           @keyframes neonWhiteFlicker {
             0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
@@ -96,7 +96,7 @@ export default function Home() {
           .neon-white-message {
             animation: neonWhiteFlicker 3s infinite;
             font-family: 'Courier New', monospace;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
           }
           @keyframes neonBlueFlicker {
             0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
@@ -114,11 +114,11 @@ export default function Home() {
             letter-spacing: 0.05em;
           }
         `}</style>
-        <p className="neon-white-message text-sm font-bold tracking-widest">
+        <p className="neon-white-message text-xs sm:text-sm font-bold tracking-tight">
           まだ、未完成。皆様の意見を聞きながら進化していきます。
         </p>
-        <p className="neon-blue-message text-xs font-semibold mt-2">
-          無料期間はベータ版稼働中です、一部機能が正常に利用出来ない場合もありますので予めご了承下さい
+        <p className="neon-blue-message text-[10px] sm:text-xs font-semibold mt-1">
+          ベータ版稼働中、一部機能が正常に利用出来ない場合もありますので予めご了承下さい
         </p>
       </div>
 
