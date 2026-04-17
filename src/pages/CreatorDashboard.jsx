@@ -16,6 +16,8 @@ import EventNotificationPanel from "../components/dashboard/EventNotificationPan
 import ProgressiveRateCard from "../components/dashboard/ProgressiveRateCard";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import CallWaitingWidget from "../components/dashboard/CallWaitingWidget";
+import SkillRankCard from "../components/dashboard/SkillRankCard";
+import ArchiveAssetCard from "../components/dashboard/ArchiveAssetCard";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -149,6 +151,17 @@ export default function CreatorDashboard() {
 
           {/* 承認済み通話の入室ボタン */}
           <AcceptedCallsList userEmail={user?.email} />
+
+          {/* スキルランク・市場価値スコア */}
+          <SkillRankCard
+            videoCalls={videoCalls}
+            liveStreams={liveStreams}
+            videos={videos}
+            purchases={purchases}
+          />
+
+          {/* アーカイブ不労所得カード */}
+          <ArchiveAssetCard videos={videos} purchases={purchases} />
 
           {/* プログレッシブ還元率 */}
           {channel && <ProgressiveRateCard channel={channel} />}
