@@ -165,84 +165,100 @@ export default function Home() {
         </Link>
       )}
 
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-xl border border-border/40 text-center" style={{ background: "linear-gradient(135deg,#0a0a0f 0%,#12050a 50%,#050a12 100%)" }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#ff3366 1px,transparent 1px),linear-gradient(90deg,#ff3366 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
-        <div className="relative z-10 px-4 py-8 sm:py-12 md:py-16">
-          <style>{`
-            @keyframes neonWhite{0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 5px #fff,0 0 15px #fff,0 0 30px #fff,0 0 60px #fff;color:#fff}20%,24%,55%{text-shadow:none;color:#ccc}}
-            @keyframes neonGreen{0%,29%,31%,100%{text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #00ff88,0 0 40px #00ff88,0 0 80px #00ff88;color:#fff}30%{text-shadow:none;color:#00ff88}}
-            .n-chat{animation:neonWhite 3s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
-            .n-market{animation:neonGreen 2.5s infinite alternate;font-family:Georgia,serif;letter-spacing:.15em}
-          `}</style>
+      {/* Hero — ブランドメッセージ刷新 */}
+      <section className="relative overflow-hidden rounded-2xl text-center" style={{
+        background: "linear-gradient(160deg, #0d1117 0%, #0a1628 40%, #0d1a12 80%, #0a0e18 100%)",
+        border: "1px solid rgba(0,255,157,0.15)",
+      }}>
+        {/* 光のオーロラ背景 */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-10" style={{ background: "radial-gradient(ellipse, #00ff9d 0%, transparent 70%)", filter: "blur(40px)" }} />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full opacity-8" style={{ background: "radial-gradient(ellipse, #60a5fa 0%, transparent 70%)", filter: "blur(40px)" }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(0,255,157,1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,157,1) 1px,transparent 1px)", backgroundSize: "50px 50px" }} />
+        </div>
 
-          <div className="flex flex-col items-center gap-3 mb-2 w-full">
-            <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-none">
-              <span className="n-chat" style={{ padding: "12px 24px", borderRadius: "12px", border: "2px solid rgba(255,255,255,0.6)", boxShadow: "0 0 15px #fff, inset 0 0 15px rgba(255,255,255,0.1)" }}>CHAT</span>
-              <span className="mx-2 text-white/30">✶</span>
-              <span className="n-market" style={{ padding: "12px 24px", borderRadius: "12px", background: "rgba(0,255,136,.05)", boxShadow: "0 0 15px #00ff88, inset 0 0 15px rgba(0,255,136,.1)" }}>MARKET</span>
+        <div className="relative z-10 px-5 py-12 sm:py-16 md:py-20 space-y-8">
+
+          {/* ブランドラベル */}
+          <p style={{ color: "rgba(0,255,157,0.5)", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            ChatMarket · Est. 2026
+          </p>
+
+          {/* メインキャッチコピー */}
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight"
+              style={{ fontFamily: "'Georgia', 'Noto Serif JP', serif", color: "#fff" }}>
+              あなたの時間は、<br />
+              <span style={{
+                background: "linear-gradient(135deg, #00ff9d, #60a5fa, #a78bfa)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>誰かの宝物だ。</span>
+            </h1>
+            <p className="text-sm sm:text-base text-white/40 italic" style={{ fontFamily: "'Georgia', serif", letterSpacing: "0.05em" }}>
+              "Your time is a treasure to someone else."
+            </p>
+          </div>
+
+          {/* 理念テキスト */}
+          <div className="mx-auto max-w-xl space-y-3">
+            <div className="rounded-2xl px-6 py-5 text-left space-y-3"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
+              <p className="text-sm sm:text-base leading-relaxed text-white/80" style={{ fontFamily: "'Georgia', 'Noto Serif JP', serif" }}>
+                「<span className="text-white font-bold">私なんかが稼げるの？</span>」そう思う必要はありません。
+              </p>
+              <p className="text-xs sm:text-sm leading-relaxed text-white/60">
+                あなたが「普通」だと思っている経験や言葉は、世界のどこかで誰かを救う特別な価値になります。
+                ChatMarketは、安売りではなく、<span className="text-primary font-semibold">あなたの価値を正しく証明し、独り立ちするための場所</span>です。
+              </p>
+              {/* 画質×価値の補足 */}
+              <div className="flex items-start gap-2 pt-1 border-t border-white/5">
+                <span className="text-[10px] text-primary/70 font-mono leading-relaxed mt-0.5">▸</span>
+                <p className="text-[11px] text-white/40 leading-relaxed">
+                  質の高い価値提供には、それに見合う対価が伴います — SD 15円 / HD 55円 / FHD 150円〜
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-16" />
-
-          <p style={{ color: "#ff3366", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center", marginBottom: "12px" }}>Est. 2026 · The Creator Hub</p>
-
-          <p className="text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed">
-             {t("hero_sub")}
-           </p>
-
-          <div className="mx-auto max-w-sm border border-primary/30 rounded-xl bg-primary/5 px-3 py-2.5 space-y-1.5 text-left mb-5">
-            <div className="space-y-0.5">
-               <p className="text-[11px] text-foreground/80 leading-relaxed">{t("freeSpeak")}</p>
-               <p className="text-[10px] text-muted-foreground">{t("freeSpeakSub")}</p>
-             </div>
-             <div className="border-t border-primary/20 pt-1.5 space-y-0.5">
-               <p className="text-[11px] text-foreground/80 leading-relaxed">{t("freeSpeakEn")}</p>
-               <p className="text-[10px] text-muted-foreground">{t("freeSpeakEn_sub")}</p>
-             </div>
+          {/* 検索フォーム */}
+          <div className="w-full max-w-md mx-auto flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                }
+              }}
+              placeholder={t("searchPlaceholder")}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+            />
+            <Button
+              onClick={() => { if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery)}`); }}
+              className="bg-primary hover:bg-primary/90 px-4"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
           </div>
 
-          <div className="flex flex-col gap-4 justify-center items-center">
-            {/* 検索フォーム */}
-            <div className="w-full max-w-md flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-                  }
-                }}
-                placeholder={t("searchPlaceholder")}
-                className="flex-1 bg-secondary border border-primary/30 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/60"
-              />
-              <Button
-                onClick={() => {
-                  if (searchQuery.trim()) {
-                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-                  }
-                }}
-                className="bg-primary hover:bg-primary/90 gap-2 px-4"
-              >
-                <Search className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
-              <Link to="/go-live" className="w-full sm:w-auto">
-                 <Button className="bg-primary hover:bg-primary/90 gap-2 h-10 px-5 w-full text-sm">
-                   <Radio className="w-4 h-4" />{t("liveStarting")}
-                 </Button>
-               </Link>
-               <Link to="/upload" className="w-full sm:w-auto">
-                 <Button variant="secondary" className="gap-2 h-10 px-5 w-full text-sm">
-                   <Play className="w-4 h-4" />{t("uploadVideo")}
-                 </Button>
-               </Link>
-            </div>
+          {/* CTA ボタン */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Link to="/recruit" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-black text-sm text-black transition-all hover:scale-105 active:scale-95"
+                style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 25px rgba(0,255,157,0.4)" }}>
+                <Radio className="w-4 h-4" /> 自分の価値を証明する（ライバー登録）
+              </button>
+            </Link>
+            <Link to="/search" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm text-white border transition-all hover:border-primary/60 hover:bg-primary/5"
+                style={{ borderColor: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)" }}>
+                <Play className="w-4 h-4" /> 宝物を見つける（視聴を始める）
+              </button>
+            </Link>
           </div>
+
         </div>
       </section>
 
