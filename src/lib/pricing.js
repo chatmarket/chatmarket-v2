@@ -108,9 +108,9 @@ export function isTopLiver(cumulativeRevenueYen) {
   return cumulativeRevenueYen >= TOP_LIVER_THRESHOLD;
 }
 
-/** トップライバー特例: 最低 15分200コイン（通常は150） */
+/** トップライバー特例: 最低 15分200コイン */
 export const TOP_LIVER_MIN_COINS_PER_15MIN = 200;
-export const STANDARD_MIN_COINS_PER_15MIN  = 150; // 通常ライブ最低価格
+export const STANDARD_MIN_COINS_PER_15MIN  = 15;  // 通常ライブ最低価格（SD画質前提）
 
 export function getProgressiveRate(monthlyGrossRevenue) {
   for (let i = PROGRESSIVE_TIERS.length - 1; i >= 0; i--) {
@@ -136,17 +136,43 @@ export function calcPayout({ grossRevenue, planId, monthlyGrossRevenue = 0, infr
   return { grossRevenue, infraCost, afterInfra, rate, payout: Math.max(0, payout), transferFee };
 }
 
+// ─── 画質連動型・価格帯ルール ─────────────────────────────────────
+// SD（480p）: 15〜54円/15分　→ Chime推定コスト約2〜3円でギリギリ黒字
+// HD（720p）: 55〜149円/15分 → Chime推定コスト約5〜6円で黒字
+// FHD（1080p）: 150円〜      → Chime推定コスト約8円で黒字
+export const BITRATE_TIERS = [
+  { minCoins: 15,  maxCoins: 54,  quality: "480p",  label: "SD"  },
+  { minCoins: 55,  maxCoins: 149, quality: "720p",  label: "HD"  },
+  { minCoins: 150, maxCoins: null, quality: "1080p", label: "FHD" },
+];
+
+/**
+ * コイン単価から許可される最大画質を返す
+ * @param {number} coinsPerBlock  15分あたりのコイン数
+ * @returns {string} "480p" | "720p" | "1080p"
+ */
+export function getMaxBitrateForPrice(coinsPerBlock) {
+  if (coinsPerBlock >= 150) return "1080p";
+  if (coinsPerBlock >= 55)  return "720p";
+  if (coinsPerBlock >= 15)  return "480p";
+  return "480p"; // 最低でもSD
+}
+
 // ─── ライブ配信料金ルール ─────────────────────────────────────────
 export const LIVE_RULES = {
-  MIN_COINS_PER_15MIN:         STANDARD_MIN_COINS_PER_15MIN, // 150
+  MIN_COINS_PER_15MIN:         15,   // 最低15コイン（SD画質前提）
   TOP_MIN_COINS_PER_15MIN:     TOP_LIVER_MIN_COINS_PER_15MIN, // 200
+  SD_MAX_COINS_PER_15MIN:      54,   // 54以下はSD強制
+  HD_MIN_COINS_PER_15MIN:      55,   // 55以上でHD許可
+  HD_MAX_COINS_PER_15MIN:      149,  // 149以下はHD上限
+  FHD_MIN_COINS_PER_15MIN:     150,  // 150以上でFHD許可（従来の最低価格）
   CREATOR_SHARE:               0.85,
   PLATFORM_SHARE:              0.15,
 };
 
 /** ライブ最低価格を計算（duration_min 分の配信） */
 export function minLivePrice(durationMin, isTopLiver = false) {
-  const perBlock = isTopLiver ? TOP_LIVER_MIN_COINS_PER_15MIN : STANDARD_MIN_COINS_PER_15MIN;
+  const perBlock = isTopLiver ? TOP_LIVER_MIN_COINS_PER_15MIN : LIVE_RULES.MIN_COINS_PER_15MIN;
   return Math.ceil(durationMin / 15) * perBlock;
 }
 
