@@ -21,10 +21,10 @@ const PRO_SLOTS_TOTAL = 300;
 
 // 全有料プラン一覧
 const ALL_PLANS = [
-  { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話85%還元" },
-  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "通話：15分150円〜上限なし" },
-  { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売" },
-  { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信" },
+  { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話で 最大85〜95%を稼ぐ" },
+  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "通話：15分で 150円以上 稼ぐ（上限なし）" },
+  { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売で 収益化" },
+  { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信で 最大95%還元" },
 ];
 const TOTAL_VALUE = "¥29,700"; // 月額合計
 
@@ -310,8 +310,8 @@ export default function Recruit() {
                 <p className="font-black text-base" style={{ color: plan.color }}>{plan.name}</p>
                 <p className="text-xs text-muted-foreground">{plan.desc}</p>
                 <div className="space-y-0.5">
-                  <p className="text-xs line-through text-muted-foreground/50">{plan.price}/月</p>
-                  <p className="font-black text-sm" style={{ color: plan.color }}>→ ¥0</p>
+                  <p className="text-xs text-muted-foreground/50">通常：{plan.price}/月</p>
+                  <p className="font-black text-sm" style={{ color: plan.color }}>→ 無料</p>
                 </div>
               </div>
             ))}
@@ -327,8 +327,8 @@ export default function Recruit() {
                 <p className="font-black text-base" style={{ color: plan.color }}>{plan.name}</p>
                 <p className="text-xs text-muted-foreground">{plan.desc}</p>
                 <div className="space-y-0.5">
-                  <p className="text-xs line-through text-muted-foreground/50">{plan.price}/月</p>
-                  <p className="font-black text-sm" style={{ color: plan.color }}>→ ¥0</p>
+                  <p className="text-xs text-muted-foreground/50">通常：{plan.price}/月</p>
+                  <p className="font-black text-sm" style={{ color: plan.color }}>→ 無料</p>
                 </div>
               </div>
             ))}
@@ -409,12 +409,12 @@ export default function Recruit() {
                 <TrendingUp className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-4xl font-black text-primary">85〜95%</p>
+                <p className="text-4xl font-black text-primary">最大95%を稼げる</p>
                 <p className="font-bold text-lg mt-1">業界最高水準の還元率</p>
                 </div>
-                <p className="text-sm text-muted-foreground">BASICプランで即85%。月間売上に応じてプログレッシブに最大95%まで自動上昇。</p>
+                <p className="text-sm text-muted-foreground">15分で 150円に設定すれば、あなたの手取りは 最大 142.5円。月間売上に応じてプログレッシブに自動アップ。</p>
                 <div className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary/80">
-                ライブ配信料金：SD 15円〜 / HD 55円〜 / FHD 150円〜（15分あたり）
+                💰 収入例：150円 × 視聴者100人 × 4回/月 = 60,000円の手取り（初月）
                 </div>
             </div>
             <div className="bg-card border border-cyan-400/30 rounded-2xl p-7 space-y-4 hover:border-cyan-400/50 transition-all">
@@ -422,20 +422,20 @@ export default function Recruit() {
                 <PhoneCall className="w-7 h-7 text-cyan-400" />
               </div>
               <div>
-                <p className="text-4xl font-black text-cyan-400">60分/日</p>
-                <p className="font-bold text-lg mt-1">無料通話枠（CALL&ANSER）</p>
+                <p className="text-4xl font-black text-cyan-400">15分で150円〜</p>
+                <p className="font-bold text-lg mt-1">通話で稼ぐ（CALL&ANSER）</p>
                 </div>
-                <p className="text-sm text-muted-foreground">1日60分の無料1対1ビデオ通話枠。有料は15分150円〜上限なし。</p>
+                <p className="text-sm text-muted-foreground">1対1ビデオ通話で 15分150円以上。1日60分の無料枠でテストしてから有料化できます。</p>
             </div>
             <div className="bg-card border border-amber-400/30 rounded-2xl p-7 space-y-4 hover:border-amber-400/50 transition-all">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center">
                 <Video className="w-7 h-7 text-amber-400" />
               </div>
               <div>
-                <p className="text-4xl font-black text-amber-400">二次収益</p>
-                <p className="font-bold text-lg mt-1">動画アーカイブ販売</p>
-              </div>
-              <p className="text-sm text-muted-foreground">通話・配信の録画をそのまま動画コンテンツとして販売。寝ながら稼ぐ仕組み。</p>
+                <p className="text-4xl font-black text-amber-400">寝ながら稼ぐ</p>
+                <p className="font-bold text-lg mt-1">動画アーカイブ販売（VOD）</p>
+                </div>
+                <p className="text-sm text-muted-foreground">配信・通話を動画化して販売。一度アップロードすれば、その後 何度でも売上が発生。あなたは何もしなくても収入が増え続けます。</p>
             </div>
           </div>
         </div>
