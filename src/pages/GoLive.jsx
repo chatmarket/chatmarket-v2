@@ -540,26 +540,44 @@ export default function GoLive() {
                 <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
               </div>
 
-              {/* 画質連動インジケーター（価格から自動決定） */}
+              {/* 画質連動インジケーター（価格から自動決定・グレーアウト制限） */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">📺 配信画質（価格により自動決定）</Label>
+                <Label className="flex items-center gap-1.5">
+                  📺 配信画質
+                  <span className="text-[10px] text-muted-foreground font-normal">（設定価格により自動決定）</span>
+                </Label>
                 <div className="grid grid-cols-3 gap-2">
-                  {qualityOptions.map((opt) => (
-                    <div
-                      key={opt.value}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                        effectiveQuality === opt.value
-                          ? "border-primary bg-primary/10"
-                          : "border-border bg-secondary opacity-40"
-                      }`}
-                    >
-                      <span className="font-bold text-sm">{opt.label}</span>
-                      <span className="text-xs text-muted-foreground">{opt.minPrice}円〜/15分</span>
-                      <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
-                    </div>
-                  ))}
+                  {qualityOptions.map((opt) => {
+                    const isAvailable = pricePerBlock >= opt.minPrice;
+                    const isActive = effectiveQuality === opt.value;
+                    return (
+                      <div
+                        key={opt.value}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                          isActive
+                            ? "border-primary bg-primary/10"
+                            : isAvailable
+                            ? "border-border bg-secondary"
+                            : "border-border bg-secondary opacity-30 cursor-not-allowed"
+                        }`}
+                      >
+                        <span className={`font-bold text-sm ${isActive ? "text-primary" : isAvailable ? "text-foreground" : "text-muted-foreground"}`}>{opt.label}</span>
+                        <span className="text-xs text-muted-foreground">{opt.minPrice}円〜/15分</span>
+                        {!isAvailable && <span className="text-[10px] text-destructive/70">🔒 価格不足</span>}
+                        {isActive && <span className="text-[10px] text-primary font-bold">✓ 適用中</span>}
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-primary font-semibold">{qualityRestrictionWarning}</p>
+                {/* ヘルプチップ */}
+                <details className="text-xs">
+                  <summary className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none">
+                    💡 なぜ価格で画質が変わるの？
+                  </summary>
+                  <p className="mt-1.5 text-muted-foreground bg-secondary/60 rounded-lg px-3 py-2 leading-relaxed">
+                    世界一安価な価格設定（15円〜）を実現するため、価格帯に応じたインフラ最適化を行っています。低価格ではSD品質のサーバーを使用してコストを抑え、より多くのファンと繋がれる環境を提供しています。価格を上げることで高品質なインフラが確保され、HD・FHD配信が可能になります。
+                  </p>
+                </details>
               </div>
 
               <div className="space-y-2">
@@ -583,11 +601,33 @@ export default function GoLive() {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    最低: {liveMinPrice}コイン / {form.duration}分 ｜ 15円=SD・55円=HD・150円=FHD
+                    最低: {liveMinPrice}コイン / {form.duration}分
                   </p>
                 )}
+
+                {/* リアルタイム画質プラン案内 */}
+                {form.price > 0 && !livePriceError && (() => {
+                  if (effectiveQuality === "480p") return (
+                    <div className="rounded-lg p-3 text-xs bg-green-500/10 border border-green-500/30 space-y-0.5">
+                      <p className="font-bold text-green-400">🌱 エコノミープラン：標準画質（480p）での配信となります。</p>
+                      <p className="text-green-300/80">※ 初めてのファン獲得に最適！</p>
+                    </div>
+                  );
+                  if (effectiveQuality === "720p") return (
+                    <div className="rounded-lg p-3 text-xs bg-blue-500/10 border border-blue-500/30 space-y-0.5">
+                      <p className="font-bold text-blue-400">⭐ スタンダードプラン：高画質（720p）での配信となります。</p>
+                      <p className="text-blue-300/80">※ 一番人気の設定です。</p>
+                    </div>
+                  );
+                  return (
+                    <div className="rounded-lg p-3 text-xs bg-amber-500/10 border border-amber-500/30 space-y-0.5">
+                      <p className="font-bold text-amber-400">👑 プレミアムプラン：最高画質（1080p）での配信となります。</p>
+                      <p className="text-amber-300/80">※ プロフェッショナルな表現に。</p>
+                    </div>
+                  );
+                })()}
+
                 <div className="rounded-lg p-3 text-xs space-y-1.5 bg-secondary/60">
-                  <p className="text-primary font-bold">{qualityRestrictionWarning}</p>
                   <p className="text-muted-foreground">
                     ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span>
                   </p>
