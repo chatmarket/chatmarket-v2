@@ -9,6 +9,7 @@ import TipOverlay from "../components/live/TipOverlay";
 import TipPanel from "../components/live/TipPanel";
 import GiftOverlay from "../components/live/GiftOverlay";
 import GiftPanel from "../components/live/GiftPanel";
+import GiftRankingWidget from "../components/live/GiftRankingWidget";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
@@ -269,6 +270,12 @@ export default function LiveView() {
 
             {/* スーパーチャット オーバーレイ */}
             {!needsPayment && <TipOverlay tips={activeTips} />}
+          </div>
+
+          {/* ===== ギフトランキングウィジェット ===== */}
+          {!needsPayment && (
+            <GiftRankingWidget streamId={id} isLive={stream.status === "live"} />
+          )}
 
             {/* アクティブな通話中 */}
             {activeCall && (
