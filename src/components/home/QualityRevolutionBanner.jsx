@@ -59,11 +59,11 @@ export default function QualityRevolutionBanner() {
       <div className="text-center space-y-1">
         <div className="flex items-center justify-center gap-2">
           <Zap className="w-4 h-4 text-cyan-400" />
-          <p className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">55円革命</p>
+          <p className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">15円革命</p>
           <Zap className="w-4 h-4 text-cyan-400" />
         </div>
         <p className="text-base sm:text-lg font-black text-white leading-tight">
-          「なぜこの画質でこの値段？」<br />
+          「なぜ15円でライブ配信できるの？」<br />
           <span className="text-cyan-400">— それが ChatMarket の答えです。</span>
         </p>
         <p className="text-xs text-white/40 leading-relaxed">
@@ -117,7 +117,7 @@ export default function QualityRevolutionBanner() {
         style={{ background: "rgba(0,212,255,0.06)", border: "1px solid rgba(0,212,255,0.15)" }}
       >
         <p className="text-xs font-black text-cyan-300 flex items-center gap-1.5">
-          <Star className="w-3.5 h-3.5" /> 55円で YouTube並みのHD配信 — どこにもない体験
+          <Star className="w-3.5 h-3.5" /> 15円からライブ配信スタート — どこにもない体験
         </p>
         <p className="text-[10px] text-white/40 leading-relaxed">
           Apple・Googleのストア経由なら同じ画質でも配信者の手取りは最大30%カット。<br />
@@ -132,7 +132,7 @@ export default function QualityRevolutionBanner() {
           style={{ background: "rgba(0,212,255,0.12)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)" }}
         >
           <Crown className="w-4 h-4" />
-          55円HDで配信を始める
+          15円から配信を始める
           <ChevronRight className="w-4 h-4" />
         </div>
       </Link>
