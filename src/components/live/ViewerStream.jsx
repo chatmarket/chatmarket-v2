@@ -29,30 +29,29 @@ export default function ViewerStream({ streamId, stream }) {
           return;
         }
 
+        const { PlayerState, PlayerEventType } = await import("amazon-ivs-player");
+
         const player = create({
-          wasmWorker: "https://player.live-video.net/1.29.0/amazon-ivs-wasmworker.min.js",
-          wasmBinary: "https://player.live-video.net/1.29.0/amazon-ivs-wasmworker.min.wasm",
+          wasmWorker: "https://player.live-video.net/1.36.0/amazon-ivs-wasmworker.min.js",
+          wasmBinary: "https://player.live-video.net/1.36.0/amazon-ivs-wasmworker.min.wasm",
         });
 
         playerRef.current = player;
         player.attachHTMLVideoElement(videoRef.current);
-        player.load(playbackUrl);
-        player.play();
 
-        player.addEventListener("PlayerEventType.STATE_CHANGED" in player
-          ? player.PlayerEventType?.STATE_CHANGED
-          : "stateChanged", (state) => {
+        player.addEventListener(PlayerEventType.STATE_CHANGED, (state) => {
           if (!isMounted) return;
-          if (state === "Playing" || state === "playing") setReady(true);
+          if (state === PlayerState.PLAYING) setReady(true);
         });
 
-        player.addEventListener("PlayerEventType.ERROR" in player
-          ? player.PlayerEventType?.ERROR
-          : "error", (err) => {
+        player.addEventListener(PlayerEventType.ERROR, (err) => {
           if (!isMounted) return;
           console.error("IVS Player error:", err);
-          setError("映像の読み込みに失敗しました");
+          setError("映像の読み込みに失敗しました。再試行してください。");
         });
+
+        player.load(playbackUrl);
+        player.play();
 
         if (isMounted) setReady(false);
       } catch (err) {

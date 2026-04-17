@@ -169,15 +169,7 @@ export default function CoinPurchasePanel({ onSuccess }) {
         <p>購入を行うことで、<a href="/terms" className="text-primary underline" target="_blank">利用規約</a>に同意したものとみなされます。通信環境やブラウザ設定に起因する接続不良については、利用規約に基づき補償の対象外となります。</p>
       </div>
 
-      {/* テストモードバナー */}
-      <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 flex items-start gap-2 text-xs text-blue-300">
-        <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-400" />
-        <div className="space-y-0.5">
-          <p className="font-bold text-blue-300">🧪 現在はデモ版です</p>
-          <p>テスト用カード（<span className="font-mono font-bold text-blue-200">4242 4242 4242 4242</span>）を使用してください。有効期限: 任意の未来日　CVC: 任意3桁</p>
-          <p className="text-blue-300/60">※このコインは本番環境へは引き継がれません。</p>
-        </div>
-      </div>
+
 
       {/* 注意書き */}
       <div className="bg-secondary rounded-xl p-3 space-y-1 text-xs text-muted-foreground">
