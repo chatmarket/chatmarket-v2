@@ -205,9 +205,9 @@ export default function AppLayout() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden w-full lg:pt-0 pt-14">
+      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden w-full lg:pt-0 pt-16">
         {/* Mobile/Tablet top bar */}
-        <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 h-14 flex items-center px-4 gap-3">
+        <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 h-16 flex items-center px-4 gap-3">
           <Button variant="ghost" onClick={() => setSidebarOpen(true)} className="h-12 w-12 p-0">
             <Menu className="w-6 h-6" />
           </Button>
