@@ -10,6 +10,7 @@ import {
   TrendingUp, Video, PhoneCall, Zap, CheckCircle2, ArrowRight,
   Coins, ChevronDown, Flame, Gift, Crown
 } from "lucide-react";
+import RevenueModel from "@/components/recruit/RevenueModel";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -415,6 +416,9 @@ export default function Recruit() {
           </div>
         </div>
       </section>
+
+      {/* ===== 収益モデル・インセンティブ ===== */}
+      <RevenueModel />
 
       {/* ===== 数字 ===== */}
       <section className="w-full py-12 px-4 sm:px-6 bg-secondary/20 border-y border-border/30">
