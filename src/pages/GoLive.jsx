@@ -229,51 +229,46 @@ export default function GoLive() {
   // ライバー還元率 = 1 - platformFeeRate
   const liveRevenueRate = 1 - platformFeeRate;
   
-  // 無料配信完全禁止: 最低150円（≈1500コイン相当）を強制
-  const LIVE_MIN_COINS_PER_15MIN = 150;
+  // 【画質連動型】価格帯に応じた画質制限
+  // SD(480p): 15〜54円/15分, HD(720p): 55〜149円/15分, FHD(1080p): 150円以上/15分
+  const LIVE_MIN_COINS_PER_15MIN = 15; // 最低15円（SD画質）
   const liveMinPrice = Math.ceil((form.duration / 15) * LIVE_MIN_COINS_PER_15MIN);
-  const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 150);
+  const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 15);
   const livePriceError = mode === MODE_LIVE && form.price < liveMinPrice;
-  
-  // 【施策3】画質・価格連動バリデーション
-  // 1080p選択時: 最低300円を強制
-  // 150円設定時: 720p以下に制限
-  const qualityOptions = [
-    { label: "720p (HD)", value: "720p", minPrice: 150 },
-    { label: "1080p (Full HD)", value: "1080p", minPrice: 300 },
-  ];
-  
-  // 価格と画質の連動ロジック
+
+  // 価格から実効画質を導出
+  const pricePerBlock = Math.floor(form.price / Math.ceil(form.duration / 15));
   const getQualityForPrice = (price) => {
-    if (price >= 300) return "1080p"; // 300円以上なら1080p可
-    return "720p"; // 150~299円は720p固定
+    if (price >= 150) return "1080p";
+    if (price >= 55)  return "720p";
+    return "480p";
   };
-  
-  // 現在設定の画質
-  const currentQuality = form.quality;
-  const effectiveQuality = getQualityForPrice(form.price); // 価格に応じた実効画質
-  
-  // 1080p選択時の最低価格チェック
-  const is1080pSelected = currentQuality === "1080p";
-  const price1080pError = is1080pSelected && form.price < 300;
-  
-  // アーカイブ価格の自動計算（高画質時：100円/15分固定）
-  const autoArchivePrice = effectiveQuality === "1080p" 
-    ? Math.ceil((form.duration / 15) * 100)
-    : Math.ceil((form.duration / 15) * 150);
-  
+  const effectiveQuality = getQualityForPrice(pricePerBlock);
+
+  const qualityOptions = [
+    { label: "SD 480p", value: "480p",  minPrice: 15,  desc: "低コスト・入門向け" },
+    { label: "HD 720p", value: "720p",  minPrice: 55,  desc: "標準・推奨" },
+    { label: "FHD 1080p", value: "1080p", minPrice: 150, desc: "高画質・プロ向け" },
+  ];
+
+  // 選択中の画質に対応した最低価格チェック
+  const selectedQualityOption = qualityOptions.find(q => q.value === effectiveQuality) || qualityOptions[0];
+  const price1080pError = false; // 価格連動なのでエラーはlivePriceErrorで統合
+
+  // アーカイブ価格の自動計算
+  const autoArchivePrice = Math.ceil((form.duration / 15) * (effectiveQuality === "1080p" ? 100 : effectiveQuality === "720p" ? 75 : 50));
+
+  const qualityRestrictionWarning =
+    effectiveQuality === "480p"  ? `📺 SD 480p（15〜54円/15分）— 低コスト配信` :
+    effectiveQuality === "720p"  ? `📺 HD 720p（55〜149円/15分）— 標準画質` :
+                                   `📺 FHD 1080p（150円以上/15分）— 高画質`;
+
   // 画質変更時にアーカイブ価格を自動更新
   useEffect(() => {
-    if (form.saveArchive && form.archiveIsPaid && effectiveQuality === "1080p") {
+    if (form.saveArchive && form.archiveIsPaid) {
       setForm(f => ({ ...f, archivePrice: autoArchivePrice }));
     }
   }, [effectiveQuality, form.duration, form.saveArchive, form.archiveIsPaid]);
-  
-  const qualityRestrictionWarning = is1080pSelected && form.price < 300
-    ? `⚠️ 1080p配信には最低300円の設定が必要です（現在: ${form.price}円）`
-    : is1080pSelected && form.price >= 300
-    ? `✅ 1080p配信が有効（最低価格: 300円以上 / 現在: ${form.price}円）`
-    : `✓ 720p配信（価格: ${form.price}円）`;
 
 
 
@@ -545,38 +540,33 @@ export default function GoLive() {
                 <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
               </div>
 
-              {/* 【新機能】画質選択 */}
+              {/* 画質連動インジケーター（価格から自動決定） */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  📺 配信画質を選択
-                </Label>
-                <div className="grid grid-cols-2 gap-2">
+                <Label className="flex items-center gap-1.5">📺 配信画質（価格により自動決定）</Label>
+                <div className="grid grid-cols-3 gap-2">
                   {qualityOptions.map((opt) => (
-                    <button
+                    <div
                       key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, quality: opt.value })}
                       className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                        currentQuality === opt.value
+                        effectiveQuality === opt.value
                           ? "border-primary bg-primary/10"
-                          : "border-border bg-secondary hover:border-primary/40"
+                          : "border-border bg-secondary opacity-40"
                       }`}
                     >
                       <span className="font-bold text-sm">{opt.label}</span>
-                      <span className="text-xs text-muted-foreground">最低: ¥{opt.minPrice}</span>
-                    </button>
+                      <span className="text-xs text-muted-foreground">{opt.minPrice}円〜/15分</span>
+                      <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
+                    </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {qualityRestrictionWarning}
-                </p>
+                <p className="text-xs text-primary font-semibold">{qualityRestrictionWarning}</p>
               </div>
 
               <div className="space-y-2">
                 <Label>チケット料金（エールコイン）</Label>
                 <Input
                   type="number"
-                  min={is1080pSelected ? 300 : 150}
+                  min={liveMinPrice}
                   max={1000000}
                   step={1}
                   value={form.price}
@@ -584,37 +574,26 @@ export default function GoLive() {
                     const val = parseInt(e.target.value) || 0;
                     setForm({ ...form, price: Math.min(val, 1000000) });
                   }}
-                  className={`bg-secondary border-0 ${price1080pError || livePriceError ? "ring-1 ring-destructive" : ""}`}
-                  placeholder={is1080pSelected ? "300" : "150"}
+                  className={`bg-secondary border-0 ${livePriceError ? "ring-1 ring-destructive" : ""}`}
+                  placeholder={String(liveMinPrice)}
                 />
-                {price1080pError ? (
-                   <p className="text-xs text-destructive font-semibold">
-                     ⛔ 1080p配信には最低300円が必要です（現在: {form.price}円）
-                   </p>
-                 ) : livePriceError ? (
-                   <p className="text-xs text-destructive font-semibold">
-                     ⛔ 最低{liveMinPrice}コイン必須 / {form.duration}分
-                   </p>
-                 ) : (
-                   <p className="text-xs text-muted-foreground">
-                     最低設定: {is1080pSelected ? "300" : "150"}コイン / {form.duration}分
-                   </p>
-                 )}
-                 <div className={`rounded-lg p-3 text-xs space-y-1.5 ${is1080pSelected ? "bg-blue-500/10 border border-blue-500/30" : "bg-secondary/60"}`}>
-                  <p className={is1080pSelected ? "text-blue-400 font-bold" : "text-red-400 font-bold"}>
-                    {is1080pSelected ? "✅ 1080p配信有効" : "🔴 無料配信は禁止"}
+                {livePriceError ? (
+                  <p className="text-xs text-destructive font-semibold">
+                    ⛔ 最低{liveMinPrice}コイン必須（{form.duration}分）
                   </p>
-                  <p className={is1080pSelected ? "text-blue-300" : "text-muted-foreground"}>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    最低: {liveMinPrice}コイン / {form.duration}分 ｜ 15円=SD・55円=HD・150円=FHD
+                  </p>
+                )}
+                <div className="rounded-lg p-3 text-xs space-y-1.5 bg-secondary/60">
+                  <p className="text-primary font-bold">{qualityRestrictionWarning}</p>
+                  <p className="text-muted-foreground">
                     ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span>
                   </p>
-                  <p className={is1080pSelected ? "text-blue-300" : "text-muted-foreground"}>
+                  <p className="text-muted-foreground">
                     運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}%）
                   </p>
-                  {is1080pSelected && (
-                    <p className="text-blue-300 mt-1 border-t border-blue-500/30 pt-1">
-                      💾 アーカイブ販売価格: ¥{autoArchivePrice}/15分
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -788,7 +767,7 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || livePriceError || price1080pError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
+          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
         >
           {creating ? (
