@@ -14,6 +14,7 @@ import ReportManagement from "../components/admin/ReportManagement";
 import ContentModeration from "../components/admin/ContentModeration.jsx";
 import KycManagement from "../components/admin/KycManagement.jsx";
 import ProgressiveIncentiveList from "../components/admin/ProgressiveIncentiveList";
+import ProgressiveRateMasterManager from "../components/admin/ProgressiveRateMasterManager";
 import CrowdfundingManagement from "../components/admin/CrowdfundingManagement";
 import ChannelSuspensionManagement from "../components/admin/ChannelSuspensionManagement";
 import WithdrawalManagement from "../components/admin/WithdrawalManagement";
@@ -803,6 +804,8 @@ export default function AdminDashboard() {
 
         {/* プログレッシブインセンティブタブ */}
         <TabsContent value="incentive" className="space-y-6">
+          <ProgressiveRateMasterManager />
+          <hr className="border-border/40" />
           <ProgressiveIncentiveList
             users={allUsers}
             subscriptions={allSubscriptions}

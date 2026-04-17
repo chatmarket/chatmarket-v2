@@ -4,15 +4,22 @@ import { motion } from "framer-motion";
 
 // ===== 定数（A/Bテスト・微調整はここだけ変更 =====
 export const REVENUE_CONFIG = {
-  baseRate: 85,         // 基本還元率(%)
+  baseRate: 85,         // 基本還元率(%) 〜100万円
   maxRate: 95,          // 最大還元率(%)
   platformFee: 15,      // 基本プラットフォーム手数料(%)
+  // 月間合計収益額しきい値（円）→ 翌月適用還元率
   steps: [
-    { label: "STEP 1", threshold: "月間売上 〜¥29,999", rate: 85, color: "#00ff9d", desc: "BASICプラン加入でスタート" },
-    { label: "STEP 2", threshold: "月間売上 ¥30,000〜", rate: 88, color: "#00d4ff", desc: "月3万超えで自動アップ" },
-    { label: "STEP 3", threshold: "月間売上 ¥50,000〜", rate: 90, color: "#f59e0b", desc: "月5万超えでさらに優遇" },
-    { label: "STEP 4", threshold: "月間売上 ¥100,000〜", rate: 93, color: "#ff6b6b", desc: "月10万プレイヤー" },
-    { label: "MAX",    threshold: "月間売上 ¥300,000〜", rate: 95, color: "#fbbf24", desc: "トップクリエイター限定" },
+    { label: "STEP 1", threshold: "月間売上 〜¥999,999",    rate: 85, color: "#00ff9d", desc: "基本還元率（100万円未満）" },
+    { label: "STEP 2", threshold: "月間売上 ¥1,000,000〜",  rate: 86, color: "#00d4ff", desc: "100万円超で自動アップ" },
+    { label: "STEP 3", threshold: "月間売上 ¥3,000,000〜",  rate: 87, color: "#7c3aed", desc: "300万円超" },
+    { label: "STEP 4", threshold: "月間売上 ¥6,000,000〜",  rate: 88, color: "#f59e0b", desc: "600万円超" },
+    { label: "STEP 5", threshold: "月間売上 ¥9,000,000〜",  rate: 89, color: "#f97316", desc: "900万円超" },
+    { label: "STEP 6", threshold: "月間売上 ¥12,000,000〜", rate: 90, color: "#ef4444", desc: "1,200万円超" },
+    { label: "STEP 7", threshold: "月間売上 ¥15,000,000〜", rate: 91, color: "#ec4899", desc: "1,500万円超" },
+    { label: "STEP 8", threshold: "月間売上 ¥16,500,000〜", rate: 92, color: "#ff6b6b", desc: "1,650万円超" },
+    { label: "STEP 9", threshold: "月間売上 ¥18,000,000〜", rate: 93, color: "#a855f7", desc: "1,800万円超" },
+    { label: "STEP 10",threshold: "月間売上 ¥19,500,000〜", rate: 94, color: "#06b6d4", desc: "1,950万円超" },
+    { label: "MAX",    threshold: "月間売上 ¥20,000,000〜", rate: 95, color: "#fbbf24", desc: "2,000万円超・トップクリエイター" },
   ],
   competitors: [
     { name: "他社A", rate: 50, color: "#666" },
@@ -169,12 +176,17 @@ export default function RevenueModel() {
           <p className="text-muted-foreground text-sm">月間売上に応じて還元率が段階的に自動アップ。手続き不要。</p>
         </div>
 
-        {/* STEPカード */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 relative mb-6">
-          {steps.map((step, i) => (
-            <StepCard key={i} step={step} index={i} />
-          ))}
+        {/* STEPカード - 横スクロール対応 */}
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-2 relative mb-2" style={{ minWidth: "max-content" }}>
+            {steps.map((step, i) => (
+              <div key={i} className="w-36 shrink-0">
+                <StepCard step={step} index={i} />
+              </div>
+            ))}
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground text-center mb-6">← 横にスクロールして全ステップを確認 →</p>
 
         {/* 説明 */}
         <div className="bg-secondary/50 border border-border/40 rounded-2xl p-5 space-y-3 text-sm">

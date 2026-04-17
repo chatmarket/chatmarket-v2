@@ -1,0 +1,38 @@
+{
+  "name": "ProgressiveRateMaster",
+  "type": "object",
+  "description": "\u30d7\u30ed\u30b0\u30ec\u30c3\u30b7\u30d6\u30fb\u30a4\u30f3\u30bb\u30f3\u30c6\u30a3\u30d6\u9084\u5143\u7387\u30de\u30b9\u30bf\uff08\u7ba1\u7406\u753b\u9762\u304b\u3089\u5909\u66f4\u53ef\u80fd\uff09",
+  "properties": {
+    "threshold_yen": {
+      "type": "number",
+      "description": "\u3053\u306e\u3057\u304d\u3044\u5024\uff08\u5186\uff09\u3092\u8d85\u3048\u305f\u5834\u5408\u306b\u9069\u7528\u3055\u308c\u308b\u9084\u5143\u7387\u30020=\u57fa\u672c\u7387\uff08100\u4e07\u5186\u672a\u6e80\uff09"
+    },
+    "rate_percent": {
+      "type": "number",
+      "description": "\u9069\u7528\u3055\u308c\u308b\u9084\u5143\u7387\uff08%\uff09\u4f8b: 85, 86, 87..."
+    },
+    "label": {
+      "type": "string",
+      "description": "\u8868\u793a\u30e9\u30d9\u30eb \u4f8b: STEP 1, MAX"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u8aac\u660e\u30c6\u30ad\u30b9\u30c8"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u3053\u306e\u30c6\u30a3\u30a2\u304c\u6709\u52b9\u304b\u3069\u3046\u304b"
+    },
+    "sort_order": {
+      "type": "number",
+      "description": "\u8868\u793a\u9806"
+    }
+  },
+  "required": [
+    "threshold_yen",
+    "rate_percent",
+    "label",
+    "sort_order"
+  ]
+}
