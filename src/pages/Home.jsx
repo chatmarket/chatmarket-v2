@@ -216,7 +216,7 @@ export default function Home() {
               <div className="flex items-start gap-2 pt-1 border-t border-white/5">
                 <span className="text-[10px] text-primary/70 font-mono leading-relaxed mt-0.5">▸</span>
                 <p className="text-[11px] text-white/40 leading-relaxed">
-                  質の高い価値提供には、それに見合う対価が伴います — SD 15円 / HD 55円 / FHD 150円〜
+                  あなたのスキルに、ふさわしい価格設定を。SD 15円〜 / HD 55円〜 / FHD 150円〜 と、成長に合わせて単価をランクアップできます。
                 </p>
               </div>
             </div>
