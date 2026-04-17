@@ -23,6 +23,7 @@ import ServerLimitBanner from "../components/home/ServerLimitBanner";
 import HeroSlot from "../components/home/HeroSlot";
 import GiantKillingBanner from "../components/home/GiantKillingBanner";
 import MillionaireSupporters from "../components/home/MillionaireSupporters";
+import QualityRevolutionBanner from "../components/home/QualityRevolutionBanner";
 
 
 export default function Home() {
@@ -259,8 +260,30 @@ export default function Home() {
             </Link>
           </div>
 
+          {/* 即登録ステップ（3タップ導線） */}
+          {!user && (
+            <div className="mx-auto max-w-sm">
+              <p className="text-[10px] text-white/25 mb-2 text-center tracking-widest uppercase">— 登録は30秒 —</p>
+              <div className="flex items-center justify-center gap-1 text-[10px] text-white/40">
+                <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center font-black shrink-0">1</span>
+                <span>メールアドレスで登録</span>
+                <span className="mx-1 text-white/20">›</span>
+                <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center font-black shrink-0">2</span>
+                <span>プランを選ぶ</span>
+                <span className="mx-1 text-white/20">›</span>
+                <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center font-black shrink-0">3</span>
+                <span>今すぐ配信</span>
+              </div>
+            </div>
+          )}
+
         </div>
       </section>
+
+      {/* 55円革命バナー */}
+      <div className="px-0">
+        <QualityRevolutionBanner />
+      </div>
 
       {/* サーバー安定化バナー */}
       <div className="px-0">

@@ -30,6 +30,9 @@ export default function ServerLimitBanner() {
             ビデオ通話、アップロード動画、ライブ配信は <span className="font-bold text-cyan-300">1日最大1時間</span> までのご利用とさせていただいております。<br className="hidden sm:inline" />
             ご不便をおかけして申し訳ございません。サーバー増強後、制限を解除いたします。
           </p>
+          <p className="text-[10px] text-cyan-400/60 mt-2 leading-relaxed">
+            🛡️ インフラ：AWS IVS + Chime による自動スケール対応済み。急増アクセスにも対応できる要塞設計を構築中です。
+          </p>
         </div>
       </div>
 
