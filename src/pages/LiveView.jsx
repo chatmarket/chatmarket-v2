@@ -237,12 +237,14 @@ export default function LiveView() {
               </div>
             )}
 
-            {/* SAMPLE watermark */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
-                SAMPLE
-              </span>
-            </div>
+            {/* SAMPLE watermark — 未購入かつ有料配信の場合のみ表示 */}
+            {needsPayment && (
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
+                  SAMPLE
+                </span>
+              </div>
+            )}
 
             {/* 30秒プレビューカウントダウン */}
             {inPreview && (
