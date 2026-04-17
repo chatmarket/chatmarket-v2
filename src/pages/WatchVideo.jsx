@@ -244,8 +244,8 @@ export default function WatchVideo() {
             )}
           </div>
 
-          {/* Video info */}
-          <div className="space-y-3">
+          {/* Video info — sticky 固定 */}
+          <div className="sticky top-4 space-y-3 bg-background z-10">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
               <h1 className="text-xl md:text-2xl font-bold flex-1">
                 {video.is_free && (
