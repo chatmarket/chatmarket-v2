@@ -514,7 +514,7 @@ export default function GoLive() {
         {/* Pricing */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
           <div className="flex items-center gap-2">
-            <Label>料金設定</Label>
+            <Label>販売単価</Label>
             <span className="text-xs text-muted-foreground">
               {mode === MODE_LIVE ? "ライブ配信は必ず有料設定が必要です" : "1対1通話は必ず有料設定が必要です"}
             </span>
@@ -584,10 +584,10 @@ export default function GoLive() {
 
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  💰 あなたへの報酬設定（15分単位）
-                  <span className="text-[10px] text-green-400 font-bold">最大{Math.round(liveRevenueRate * 100)}%があなたの報酬</span>
+                  💰 販売単価（15分単位）
+                  <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * liveRevenueRate)}〜{Math.round(form.price * 0.95)}円</span>
                 </Label>
-                <p className="text-xs text-muted-foreground">設定した販売価格の最大{Math.round(liveRevenueRate * 100)}%があなたの報酬になります。</p>
+                <p className="text-xs text-muted-foreground">ファンが支払う金額。最大{Math.round(liveRevenueRate * 100)}%があなたの報酬になります。</p>
                 <Input
                   type="number"
                   min={liveMinPrice}
@@ -699,10 +699,10 @@ export default function GoLive() {
 
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  💰 あなたへの報酬設定（15分単位）
-                  <span className="text-[10px] text-green-400 font-bold">最大85%があなたの報酬</span>
+                  💰 販売単価（15分単位）
+                  <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * 0.85)}〜{Math.round(form.price * 0.95)}円</span>
                 </Label>
-                <p className="text-xs text-muted-foreground">設定した販売価格の最大85%があなたの報酬になります。</p>
+                <p className="text-xs text-muted-foreground">ファンが支払う金額。最大85%があなたの報酬になります。</p>
                 <Input
                   type="number"
                   min={minPrice}
