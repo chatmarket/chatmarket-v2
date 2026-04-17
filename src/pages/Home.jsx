@@ -42,21 +42,29 @@ export default function Home() {
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
     queryFn: () => base44.entities.Video.list("-created_date", 30),
+    staleTime: 60000,
+    gcTime: 300000,
   });
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels-all"],
     queryFn: () => base44.entities.Channel.list(),
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["livestreams-home"],
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6),
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
 
   const { data: crowdfundings = [] } = useQuery({
     queryKey: ["crowdfunding-active"],
     queryFn: () => base44.entities.CrowdfundingProject.filter({ status: "active" }, "-created_date", 10),
+    staleTime: 120000,
+    gcTime: 300000,
   });
 
   const approvedVideos = videos.filter((v) => !v.moderation_status || v.moderation_status === "approved");
@@ -81,39 +89,7 @@ export default function Home() {
       <GiantKillingBanner />
 
       {/* ネオン白文字のメッセージ */}
-      <div className="text-center py-3">
-        <style>{`
-          @keyframes neonWhiteFlicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-              text-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #0ff, 0 0 82px #0ff;
-              color: #fff;
-            }
-            20%, 24%, 55% {
-              text-shadow: 0 0 5px #fff, 0 0 10px #fff;
-              color: #f0f0f0;
-            }
-          }
-          .neon-white-message {
-            animation: neonWhiteFlicker 3s infinite;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 0.05em;
-          }
-          @keyframes neonBlueFlicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-              text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff, 0 0 21px #00d4ff, 0 0 42px #0099ff, 0 0 82px #0099ff;
-              color: #00d4ff;
-            }
-            20%, 24%, 55% {
-              text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff;
-              color: #00b8d4;
-            }
-          }
-          .neon-blue-message {
-            animation: neonBlueFlicker 3s infinite;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 0.05em;
-          }
-        `}</style>
+      <div className="text-center py-3 neon-messages">
         <p className="neon-white-message text-xs sm:text-sm font-bold tracking-tight">
           まだ、未完成。皆様の意見を聞きながら進化していきます。
         </p>
