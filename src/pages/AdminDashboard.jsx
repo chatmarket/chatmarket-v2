@@ -804,6 +804,10 @@ export default function AdminDashboard() {
 
         {/* プログレッシブインセンティブタブ */}
         <TabsContent value="incentive" className="space-y-6">
+          <div className="bg-primary/10 border border-primary/30 rounded-xl px-5 py-4">
+            <p className="text-primary font-black text-lg">🎯 頑張った分だけ翌月の収益還元率がUP!</p>
+            <p className="text-sm text-muted-foreground mt-1">月間売上に応じて還元率が段階的に自動アップ。翌月から即反映されます。</p>
+          </div>
           <ProgressiveRateMasterManager />
           <hr className="border-border/40" />
           <ProgressiveIncentiveList
