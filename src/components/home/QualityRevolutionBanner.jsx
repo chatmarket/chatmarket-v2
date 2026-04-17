@@ -9,7 +9,7 @@ import { Zap, Star, Crown, ChevronRight } from "lucide-react";
 const TIERS = [
   {
     label: "SD",
-    price: "15円〜",
+    price: "15円/15分〜",
     quality: "480p",
     color: "#9ca3af",
     bg: "rgba(156,163,175,0.08)",
@@ -20,7 +20,7 @@ const TIERS = [
   },
   {
     label: "HD",
-    price: "55円〜",
+    price: "55円/15分〜",
     quality: "720p",
     color: "#00d4ff",
     bg: "rgba(0,212,255,0.10)",
@@ -32,7 +32,7 @@ const TIERS = [
   },
   {
     label: "FHD",
-    price: "150円〜",
+    price: "150円/15分〜",
     quality: "1080p",
     color: "#f59e0b",
     bg: "rgba(245,158,11,0.08)",
@@ -117,7 +117,7 @@ export default function QualityRevolutionBanner() {
         style={{ background: "rgba(0,212,255,0.06)", border: "1px solid rgba(0,212,255,0.15)" }}
       >
         <p className="text-xs font-black text-cyan-300 flex items-center gap-1.5">
-          <Star className="w-3.5 h-3.5" /> 最低視聴料15円〜配信者が自由に価格設定しスタート
+          <Star className="w-3.5 h-3.5" /> 最低視聴料15円/15分〜配信者が自由に価格設定しスタート
         </p>
         <p className="text-[10px] text-white/40 leading-relaxed">
           Apple・Googleのストア経由なら同じ画質でも配信者の手取りは最大30%カット。<br />
