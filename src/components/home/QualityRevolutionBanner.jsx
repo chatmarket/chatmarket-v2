@@ -63,7 +63,7 @@ export default function QualityRevolutionBanner() {
           <Zap className="w-4 h-4 text-cyan-400" />
         </div>
         <p className="text-base sm:text-lg font-black text-white leading-tight">
-          「なぜ15円でライブ配信できるの？」<br />
+          「配信者が15円から自由に値付けできる」<br />
           <span className="text-cyan-400">— それが ChatMarket の答えです。</span>
         </p>
         <p className="text-xs text-white/40 leading-relaxed">
