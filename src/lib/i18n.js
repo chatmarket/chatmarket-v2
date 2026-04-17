@@ -209,3 +209,112 @@ export function t(key) {
   const lang = getLang();
   return translations[lang]?.[key] || translations["ja"][key] || key;
 }
+
+/**
+ * 多言語メタデータ定義（SEO用）
+ * page: ページキー, lang: 言語コード
+ */
+export const PAGE_META = {
+  home: {
+    ja: {
+      title: "ChatMarket | 有料ライブ配信・動画販売・1対1ビデオ通話プラットフォーム",
+      description: "ChatMarketは有料ライブ配信・動画販売・1対1有料ビデオ通話をこのプラットフォーム一つで実現。最大95%の高収益還元率でクリエイターの収益化を強力にサポートします。",
+      keywords: "ライブ配信,動画販売,ビデオ通話,有料配信,クリエイター,収益化,チャットマーケット",
+    },
+    en: {
+      title: "ChatMarket | Live Streaming, Video Sales & 1-on-1 Video Calls Platform",
+      description: "ChatMarket is the all-in-one platform for creators to monetize through live streaming, video sales, and 1-on-1 video calls. Earn up to 95% revenue share.",
+      keywords: "live streaming,video monetization,creator platform,streaming earnings,video calls",
+    },
+  },
+  recruit: {
+    ja: {
+      title: "ライバー募集 | ChatMarket | 全有料プラン3ヶ月完全無料",
+      description: "ChatMarket先着300名限定キャンペーン。全有料プラン（月額¥29,700相当）が無料に。フォロワー1万人以上でさらに3ヶ月追加無料。",
+      keywords: "ライバー募集,有料プラン無料,プロクリエイター,配信プラットフォーム",
+    },
+    en: {
+      title: "Creator Recruitment | ChatMarket | All Paid Plans FREE for 300 Creators",
+      description: "Limited-time campaign: All premium features ($297/month equivalent) FREE for 300 selected creators. Influencers with 10K+ followers get 3 extra months.",
+      keywords: "creator recruitment,live streaming platform,premium features free,streaming monetization",
+    },
+  },
+  watch: {
+    ja: {
+      title: "動画を視聴 | ChatMarket",
+      description: "クリエイターの動画を視聴。有料動画から無料動画まで、豊富なコンテンツを楽しめます。",
+      keywords: "動画視聴,有料動画,ライブ配信",
+    },
+    en: {
+      title: "Watch Video | ChatMarket",
+      description: "Stream exclusive creator content. Watch paid and free videos on ChatMarket.",
+      keywords: "video streaming,paid videos,creator content",
+    },
+  },
+  privacy: {
+    ja: {
+      title: "プライバシーポリシー | ChatMarket",
+      description: "ChatMarketのプライバシーポリシーをご確認ください。",
+      keywords: "プライバシー,個人情報保護",
+    },
+    en: {
+      title: "Privacy Policy | ChatMarket",
+      description: "ChatMarket Privacy Policy - Learn how we protect your data.",
+      keywords: "privacy policy,data protection",
+    },
+  },
+  terms: {
+    ja: {
+      title: "利用規約 | ChatMarket",
+      description: "ChatMarketの利用規約です。ご利用前に必ずお読みください。",
+      keywords: "利用規約,サービス利用",
+    },
+    en: {
+      title: "Terms of Service | ChatMarket",
+      description: "ChatMarket Terms of Service - Please read before using our platform.",
+      keywords: "terms of service,user agreement",
+    },
+  },
+};
+
+/**
+ * グローバルメタデータ（言語共通）
+ */
+export const GLOBAL_META = {
+  siteUrl: "https://chatmarket.info",
+  siteName: "ChatMarket",
+  twitterHandle: "@ChatMarket",
+  image: "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png",
+};
+
+/**
+ * 言語コード定義
+ */
+export const SUPPORTED_LANGS = ["ja", "en"];
+export const DEFAULT_LANG = "ja";
+
+/**
+ * 言語別ロケール情報
+ */
+export const LANG_LOCALE = {
+  ja: "ja_JP",
+  en: "en_US",
+};
+
+/**
+ * メタデータ取得ヘルパー
+ */
+export function getMeta(page, lang = "ja") {
+  return PAGE_META[page]?.[lang] || PAGE_META[page]?.["ja"] || {};
+}
+
+/**
+ * 言語別カノニカルURL生成
+ */
+export function getCanonicalUrl(pathname, lang = "ja") {
+  const cleanPath = pathname.replace(/^\/(en\/)/, "");
+  if (lang === "ja") {
+    return `${GLOBAL_META.siteUrl}${cleanPath}`;
+  }
+  return `${GLOBAL_META.siteUrl}/en${cleanPath}`;
+}

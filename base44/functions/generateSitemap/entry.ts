@@ -34,18 +34,29 @@ Deno.serve(async (req) => {
       console.log('Failed to fetch videos for sitemap:', e.message);
     }
 
-    // サイトマップXML生成
+    // サイトマップXML生成（マルチリンガル対応）
     const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    const urlsetOpen = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0">\n';
+    const xmlnsDeclaration = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"';
+    const urlsetOpen = `<urlset ${xmlnsDeclaration}>\n`;
     const urlsetClose = '</urlset>';
 
     let xmlContent = xmlHeader + urlsetOpen;
 
-    // 静的ページ
+    // 静的ページ（hreflang付き）
     staticPages.forEach(page => {
       const lastmod = new Date().toISOString().split('T')[0];
       xmlContent += `  <url>\n`;
       xmlContent += `    <loc>https://chatmarket.info${page.url}</loc>\n`;
+      
+      // hreflang ブロック（日本語版と英語版）
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://chatmarket.info${page.url}" />\n`;
+      if (page.url === '/') {
+        xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.info/en/" />\n`;
+      } else {
+        xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.info/en${page.url}" />\n`;
+      }
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://chatmarket.info${page.url}" />\n`;
+      
       xmlContent += `    <lastmod>${lastmod}</lastmod>\n`;
       xmlContent += `    <changefreq>${page.changefreq}</changefreq>\n`;
       xmlContent += `    <priority>${page.priority}</priority>\n`;
@@ -53,7 +64,7 @@ Deno.serve(async (req) => {
       xmlContent += `  </url>\n`;
     });
 
-    // チャンネルページ
+    // チャンネルページ（hreflang付き）
     channels.forEach(channel => {
       if (!channel.id) return;
       const lastmod = channel.updated_date 
@@ -61,6 +72,12 @@ Deno.serve(async (req) => {
         : new Date().toISOString().split('T')[0];
       xmlContent += `  <url>\n`;
       xmlContent += `    <loc>https://chatmarket.info/channel/${channel.id}</loc>\n`;
+      
+      // hreflang ブロック
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://chatmarket.info/channel/${channel.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.info/en/channel/${channel.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://chatmarket.info/channel/${channel.id}" />\n`;
+      
       xmlContent += `    <lastmod>${lastmod}</lastmod>\n`;
       xmlContent += `    <changefreq>weekly</changefreq>\n`;
       xmlContent += `    <priority>0.7</priority>\n`;
@@ -68,7 +85,7 @@ Deno.serve(async (req) => {
       xmlContent += `  </url>\n`;
     });
 
-    // 動画ページ
+    // 動画ページ（hreflang付き）
     videos.forEach(video => {
       if (!video.id) return;
       const lastmod = video.updated_date 
@@ -76,15 +93,21 @@ Deno.serve(async (req) => {
         : new Date().toISOString().split('T')[0];
       xmlContent += `  <url>\n`;
       xmlContent += `    <loc>https://chatmarket.info/watch/${video.id}</loc>\n`;
-      xmlContent += `    <lastmod>${lastmod}</lastmod>\n`;
-      xmlContent += `    <changefreq>monthly</changefreq>\n`;
-      xmlContent += `    <priority>0.6</priority>\n`;
+      
+      // hreflang ブロック
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://chatmarket.info/watch/${video.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.info/en/watch/${video.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://chatmarket.info/watch/${video.id}" />\n`;
+      
       if (video.thumbnail_url) {
         xmlContent += `    <image:image>\n`;
         xmlContent += `      <image:loc>${video.thumbnail_url}</image:loc>\n`;
         xmlContent += `      <image:title>${(video.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</image:title>\n`;
         xmlContent += `    </image:image>\n`;
       }
+      xmlContent += `    <lastmod>${lastmod}</lastmod>\n`;
+      xmlContent += `    <changefreq>monthly</changefreq>\n`;
+      xmlContent += `    <priority>0.6</priority>\n`;
       xmlContent += `    <mobile:mobile/>\n`;
       xmlContent += `  </url>\n`;
     });
