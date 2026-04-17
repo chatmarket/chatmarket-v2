@@ -11,6 +11,7 @@ import {
   Coins, ChevronDown, Flame, Gift, Crown
 } from "lucide-react";
 import RevenueModel from "@/components/recruit/RevenueModel";
+import BusinessModelShowcase from "@/components/recruit/BusinessModelShowcase";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -393,6 +394,9 @@ export default function Recruit() {
           </div>
         </div>
       </section>
+
+      {/* ===== 利用シーン図解 ===== */}
+      <BusinessModelShowcase onCtaClick={scrollToForm} />
 
       {/* ===== 解放される機能 ===== */}
       <section className="w-full py-16 px-4 sm:px-6">
