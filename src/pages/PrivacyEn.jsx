@@ -129,7 +129,7 @@ export default function PrivacyEn() {
         <Section title="Article 11 – Contact">
           <p>
             ChatMarket Privacy Officer<br />
-            Email: <a href="mailto:unei@chatmarket.info" className="text-primary underline">unui@chatmarket.info</a>
+            Email: <a href="mailto:unei@chatmarket.info" className="text-primary underline">info@live-chat-market.com</a>
           </p>
         </Section>
 

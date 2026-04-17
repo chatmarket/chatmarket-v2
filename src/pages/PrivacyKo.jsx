@@ -111,7 +111,7 @@ export default function PrivacyKo() {
         </Section>
 
         <Section title="제9조 (정보 열람·정정·삭제 청구 / GDPR·개인정보보호법 대응)">
-          <p>이용자는 당사가 보유한 개인정보의 열람·정정·삭제를 청구할 수 있습니다. 이메일(<a href="mailto:unei@chatmarket.info" className="text-primary underline">unei@chatmarket.info</a>)로 문의해 주십시오. 본인 확인 후 법령이 정하는 기간 내에 대응합니다.</p>
+          <p>이용자는 당사가 보유한 개인정보의 열람·정정·삭제를 청구할 수 있습니다. 이메일(<a href="mailto:info@live-chat-market.com" className="text-primary underline">info@live-chat-market.com</a>)로 문의해 주십시오. 본인 확인 후 법령이 정하는 기간 내에 대응합니다.</p>
           <p className="font-semibold text-foreground mt-3">▼ GDPR (EU/UK 거주자)</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><strong>열람권(Right of Access):</strong> 당사가 보유한 모든 개인 데이터의 사본을 요청할 수 있습니다.</li>
@@ -135,7 +135,7 @@ export default function PrivacyKo() {
           <p>
             개인정보 취급 관련 문의:<br />
             ChatMarket 개인정보보호 담당<br />
-            Email: <a href="mailto:unei@chatmarket.info" className="text-primary underline">unei@chatmarket.info</a>
+            Email: <a href="mailto:info@live-chat-market.com" className="text-primary underline">info@live-chat-market.com</a>
           </p>
         </Section>
 

@@ -49,11 +49,11 @@ export default function LegalCommercial() {
                 ヤマトビル405
               </Row>
               <Row label="お問い合わせ">
-                Email: <a href="mailto:unei@chatmarket.info" className="text-primary underline">unui@chatmarket.info</a><br />
+                Email: <a href="mailto:unei@chatmarket.info" className="text-primary underline">info@live-chat-market.com</a><br />
                 受付時間：平日10:00〜18:00（JST）
               </Row>
               <Row label="販売URL">
-                https://chatmarket.jp
+                https://live-chat-market.com
               </Row>
             </tbody>
           </table>

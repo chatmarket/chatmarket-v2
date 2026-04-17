@@ -111,7 +111,7 @@ export default function Privacy() {
         </Section>
 
         <Section title="第9条（開示・訂正・削除の請求／GDPR対応）">
-          <p>ユーザーは当社に対して保有する個人情報の開示・訂正・削除を請求できます。請求はメール（<a href="mailto:unei@chatmarket.info" className="text-primary underline">unei@chatmarket.info</a>）にてお問い合わせください。本人確認の上、法令に定める期間内に対応します。</p>
+          <p>ユーザーは当社に対して保有する個人情報の開示・訂正・削除を請求できます。請求はメール（<a href="mailto:info@live-chat-market.com" className="text-primary underline">info@live-chat-market.com</a>）にてお問い合わせください。本人確認の上、法令に定める期間内に対応します。</p>
           <p className="font-semibold text-foreground mt-3">▼ EU/UK GDPR・韓国個人情報保護法への対応</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li><strong>アクセス権（Right of Access）：</strong>ご自身に関して当社が保有するすべての個人データのコピーを請求できます。</li>
@@ -130,7 +130,7 @@ export default function Privacy() {
         <Section title="第11条（お問い合わせ）">
           <p>個人情報の取り扱いに関するお問い合わせ：<br />
           ChatMarket 個人情報保護担当<br />
-          Email: unei@chatmarket.info</p>
+          Email: <a href="mailto:info@live-chat-market.com" className="text-primary underline">info@live-chat-market.com</a></p>
         </Section>
 
         <div className="border-t border-border pt-4 text-xs text-muted-foreground text-right">
