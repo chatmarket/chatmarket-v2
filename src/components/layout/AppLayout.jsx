@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare, Users, Zap
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare, Users, Zap, Globe, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com", "un
 const ADMIN_NAV_ITEMS = [
   { path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },
   { path: "/admin/dashboard?tab=recruit", icon: Zap, label: "ライバー申込一覧" },
+  { path: "/admin/analytics", icon: Globe, label: "プラットフォーム分析" },
   { path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
   { path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
 ];

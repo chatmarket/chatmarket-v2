@@ -32,6 +32,7 @@ import MyLibrary from './pages/MyLibrary';
 import RevenueManagement from './pages/RevenueManagement';
 import VideoCallRequest from './pages/VideoCallRequest';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminAnalytics from './pages/AdminAnalytics';
 import ContentAnalytics from './pages/ContentAnalytics';
 import CallHistory from './pages/CallHistory';
 import CallSlotManage from './pages/CallSlotManage.jsx';
@@ -125,6 +126,7 @@ const AuthenticatedApp = () => {
         <Route path="/revenue" element={<RevenueManagement />} />
         <Route path="/call-request/:channelId" element={<VideoCallRequest />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/analytics" element={<ContentAnalytics />} />
         <Route path="/call-history" element={<CallHistory />} />
         <Route path="/call-slots" element={<CallSlotManage />} />
