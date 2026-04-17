@@ -202,6 +202,9 @@ export default function RevenueModel() {
             <span className="text-blue-400">振込は最短翌営業日。</span>
           </h2>
           <p className="text-muted-foreground text-sm">業界標準のStripe決済だから、安心・安全・明快。</p>
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            世界標準の決済インフラ『Stripe』を採用。クレジットカードはもちろん、Apple PayやGoogle Payにも対応し、リスナーの離脱を防ぎます。ライバーへの報酬支払いはクリーンかつスピーディーです。
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
