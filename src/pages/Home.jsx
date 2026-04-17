@@ -189,15 +189,15 @@ export default function Home() {
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight"
               style={{ fontFamily: "'Georgia', 'Noto Serif JP', serif", color: "#fff" }}>
-              あなたの時間は、<br />
+              あなたの15分を、<br />
               <span style={{
                 background: "linear-gradient(135deg, #00ff9d, #60a5fa, #a78bfa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>誰かの宝物だ。</span>
+              }}>いくらで売りますか？</span>
             </h1>
             <p className="text-sm sm:text-base text-white/40 italic" style={{ fontFamily: "'Georgia', serif", letterSpacing: "0.05em" }}>
-              "Your time is a treasure to someone else."
+              "What price for your 15 minutes of skill?"
             </p>
           </div>
 
