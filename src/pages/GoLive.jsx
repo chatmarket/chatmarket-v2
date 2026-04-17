@@ -287,6 +287,7 @@ export default function GoLive() {
           ivsStreamKey={ivsStream?.streamKey}
           ivsIngestEndpoint={ivsStream?.ingestEndpoint}
           onEnd={() => navigate("/")}
+          streamQuality={effectiveQuality}
         />
       </div>
     );

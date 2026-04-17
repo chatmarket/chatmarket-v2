@@ -21,11 +21,28 @@ const QUALITY_PRESETS = [
   { label: "低帯域 (360p 15fps)", width: 640, height: 360, framerate: 15, bitrate: 500000 },
 ];
 
-export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd }) {
+// 視聴者数ランクアップ推奨ポップアップの定義
+const RANKUP_THRESHOLDS = [
+  {
+    quality: "480p",
+    trigger: 100,
+    message: "🎉 視聴者が100名を超えました！大盛況ですね！次回の配信は 55円（高画質HD） に設定して、さらなるファン満足度と収益アップを目指しませんか？",
+    color: "green",
+  },
+  {
+    quality: "720p",
+    trigger: 300,
+    message: "🚀 300名があなたの配信を視聴中！トップライバーの仲間入りです。次は 150円（最高画質FHD） 設定で、プロ品質の配信を届けましょう！",
+    color: "blue",
+  },
+];
+
+export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, streamQuality }) {
   const navigate = useNavigate();
   const previewVideoRef = useRef(null);
   const clientRef = useRef(null);
   const localStreamRef = useRef(null);
+  const rankupShownRef = useRef(false);
 
   const [status, setStatus] = useState("preview"); // "preview" | "live" | "ended"
   const [micOn, setMicOn] = useState(true);
@@ -36,6 +53,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [rankupPopup, setRankupPopup] = useState(null); // { message, color }
 
   const isLive = status === "live";
 
@@ -63,16 +81,28 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
   }, []);
 
-  // 視聴者数ポーリング
+  // 視聴者数ポーリング + ランクアップ推奨チェック
   useEffect(() => {
     if (!isLive) return;
     const interval = setInterval(async () => {
       const streams = await base44.entities.LiveStream.filter({ id: streamId });
       const s = streams[0];
-      if (s?.viewer_count !== undefined) setViewerCount(s.viewer_count);
+      if (s?.viewer_count !== undefined) {
+        const count = s.viewer_count;
+        setViewerCount(count);
+
+        // ランクアップ推奨チェック（1回のみ表示）
+        if (!rankupShownRef.current && streamQuality) {
+          const threshold = RANKUP_THRESHOLDS.find(t => t.quality === streamQuality && count >= t.trigger);
+          if (threshold) {
+            rankupShownRef.current = true;
+            setRankupPopup({ message: threshold.message, color: threshold.color });
+          }
+        }
+      }
     }, 10000);
     return () => clearInterval(interval);
-  }, [streamId, isLive]);
+  }, [streamId, isLive, streamQuality]);
 
   const handleGoLive = useCallback(async () => {
     if (!ivsStreamKey || !ivsIngestEndpoint) {
@@ -286,6 +316,31 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           </div>
         </div>
       </div>
+
+      {/* ランクアップ推奨ポップアップ（配信者のみ表示） */}
+      {rankupPopup && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90vw] max-w-md">
+          <div className={`rounded-2xl p-5 shadow-2xl border-2 ${
+            rankupPopup.color === "blue"
+              ? "bg-blue-900/95 border-blue-400/60"
+              : "bg-green-900/95 border-green-400/60"
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <p className={`text-sm font-bold leading-relaxed ${rankupPopup.color === "blue" ? "text-blue-200" : "text-green-200"}`}>
+                  {rankupPopup.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setRankupPopup(null)}
+                className="shrink-0 text-white/50 hover:text-white transition-colors mt-0.5"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 配信終了確認モーダル */}
       {showEndConfirm && (
