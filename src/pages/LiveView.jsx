@@ -270,12 +270,6 @@ export default function LiveView() {
 
             {/* スーパーチャット オーバーレイ */}
             {!needsPayment && <TipOverlay tips={activeTips} />}
-          </div>
-
-          {/* ===== ギフトランキングウィジェット ===== */}
-          {!needsPayment && (
-            <GiftRankingWidget streamId={id} isLive={stream.status === "live"} />
-          )}
 
             {/* アクティブな通話中 */}
             {activeCall && (
@@ -294,6 +288,11 @@ export default function LiveView() {
               </div>
             )}
           </div>
+
+          {/* ===== ギフトランキングウィジェット ===== */}
+          {!needsPayment && (
+            <GiftRankingWidget streamId={id} isLive={stream.status === "live"} />
+          )}
 
           {/* PPV事前チケット販売 */}
           <PpvPreSale stream={stream} user={user} />
