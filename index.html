@@ -98,16 +98,45 @@
       [id*="base44"],
       [class*="base44"],
       [data-base44],
-      iframe[src*="base44"] { display: none !important; }
+      iframe[src*="base44"],
+      button:has(svg + span:contains("Edit with Base44")),
+      [role="button"]:has(svg + span:contains("Edit with Base44")) { display: none !important; }
+      
+      /* Catch all Edit with Base44 variants */
+      button[aria-label*="Edit"], button:contains("Edit with Base44"),
+      div:contains("Edit with Base44") { display: none !important; }
     </style>
     <script>
+      function hideEditButton() {
+        // Try multiple selectors
+        const selectors = [
+          '#edit-with-base44',
+          '[id*="base44"]',
+          '[class*="base44"]',
+          'button:has(svg)',
+          'div:has(svg)'
+        ];
+        
+        selectors.forEach(sel => {
+          try {
+            document.querySelectorAll(sel).forEach(el => {
+              if (el.textContent.includes('Edit with Base44') || 
+                  el.textContent.includes('Edit') && el.textContent.includes('Base44')) {
+                el.style.display = 'none';
+                el.remove();
+              }
+            });
+          } catch (e) {}
+        });
+      }
+      
       const observer = new MutationObserver(() => {
-        const el = document.getElementById('edit-with-base44') ||
-          document.querySelector('[id*="base44"]') ||
-          document.querySelector('[class*="edit-with"]');
-        if (el) el.remove();
+        hideEditButton();
       });
+      
+      hideEditButton();
       observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+      window.addEventListener('load', hideEditButton);
     </script>
   </head>
   <body>
