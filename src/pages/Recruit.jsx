@@ -298,9 +298,26 @@ export default function Recruit() {
           </div>
 
           {/* 全プランカード */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-10">
+          <div className="hidden md:flex justify-center gap-3 mb-10">
             {ALL_PLANS.map((plan) => (
-              <div key={plan.name} className="rounded-xl border p-4 text-center space-y-2"
+              <div key={plan.name + "_d"} className="w-44 rounded-xl border p-4 text-center space-y-2 shrink-0"
+                style={{
+                  borderColor: plan.color + "66",
+                  background: `${plan.color}11`,
+                  boxShadow: `0 0 15px ${plan.color}22`,
+                }}>
+                <p className="font-black text-base" style={{ color: plan.color }}>{plan.name}</p>
+                <p className="text-xs text-muted-foreground">{plan.desc}</p>
+                <div className="space-y-0.5">
+                  <p className="text-xs line-through text-muted-foreground/50">{plan.price}/月</p>
+                  <p className="font-black text-sm" style={{ color: plan.color }}>→ ¥0</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid md:hidden grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
+            {ALL_PLANS.map((plan) => (
+              <div key={plan.name + "_m"} className="rounded-xl border p-4 text-center space-y-2"
                 style={{
                   borderColor: plan.color + "66",
                   background: `${plan.color}11`,
