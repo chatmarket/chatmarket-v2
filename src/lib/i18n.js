@@ -55,6 +55,15 @@ export const translations = {
     freeSpeak_sub: "＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます",
     freeSpeakEn: "Experience free speech. No restrictions apply here, except for illegal remarks.",
     freeSpeakEn_sub: "*Streamers can filter out specific words, so they can stream safely.",
+    // Progressive rate
+    progressive_title: "プログレッシブ・インセンティブ",
+    progressive_monthly_revenue: "今月の累計収益",
+    progressive_next_rate: "来月の予定還元率",
+    // {remaining} {nextRate} はプログラムから流し込む動的値
+    progressive_next_tier_msg: "あと {remaining} で来月の還元率が {nextRate}% にアップ！",
+    progressive_max_tier: "👑 最高ティア（95%）達成中！",
+    progressive_note: "※ 毎月末日の月間収益（JPY基準）に基づき、翌月の還元率が自動更新されます",
+    progressive_currency_note: "※ しきい値はすべて日本円（JPY）基準で判定されます",
     },
   en: {
     login: "Login",
@@ -112,6 +121,14 @@ export const translations = {
     freeSpeakSub: "*Streamers can filter out specific words, so they can stream safely.",
     freeSpeakEn: "Experience free speech. No restrictions apply here, except for illegal remarks.",
     freeSpeakEn_sub: "*Streamers can filter out specific words, so they can stream safely.",
+    // Progressive rate
+    progressive_title: "Progressive Incentive",
+    progressive_monthly_revenue: "Monthly Revenue (This Month)",
+    progressive_next_rate: "Next Month's Revenue Share",
+    progressive_next_tier_msg: "{remaining} more to unlock {nextRate}% next month!",
+    progressive_max_tier: "👑 Top Tier (95%) Achieved!",
+    progressive_note: "* Updated automatically each month based on JPY-denominated revenue.",
+    progressive_currency_note: "* All thresholds are evaluated in Japanese Yen (JPY). Overseas earnings are converted at the time of settlement.",
     },
   ko: {
     login: "로그인",
@@ -169,6 +186,14 @@ export const translations = {
     freeSpeakSub: "*방송인이 설정한 금지 단어가 있으므로 안전하게 방송할 수 있습니다.",
     freeSpeakEn: "Experience free speech. No restrictions apply here, except for illegal remarks.",
     freeSpeakEn_sub: "*Streamers can filter out specific words, so they can stream safely.",
+    // Progressive rate
+    progressive_title: "프로그레시브 인센티브",
+    progressive_monthly_revenue: "이번 달 누계 수익",
+    progressive_next_rate: "다음 달 예정 환원율",
+    progressive_next_tier_msg: "앞으로 {remaining} 더 달성하면 다음 달 환원율이 {nextRate}%로 상승!",
+    progressive_max_tier: "👑 최고 등급(95%) 달성 중!",
+    progressive_note: "※ 매월 말일 월간 수익(JPY 기준)에 따라 다음 달 환원율이 자동 갱신됩니다.",
+    progressive_currency_note: "※ 기준 금액은 모두 일본 엔(JPY)으로 판정됩니다.",
     },
 };
 
