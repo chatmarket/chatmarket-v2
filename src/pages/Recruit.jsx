@@ -612,6 +612,43 @@ export default function Recruit() {
               </details>
             ))}
           </div>
+
+          {/* 収益・支払いFAQ */}
+          <div className="mt-8">
+            <h3 className="text-base font-black mb-4 flex items-center gap-2">
+              <span className="text-primary">💰</span>
+              収益と支払いに関するよくある質問
+              <span className="text-xs font-normal text-muted-foreground ml-1">/ FAQ: Earnings & Payments</span>
+            </h3>
+            <div className="space-y-3">
+              {[
+                {
+                  q: "Q1. 報酬の振込時期はいつですか？ / When will I receive my payouts?",
+                  a: "原則として、振込申請から最短3営業日以内に指定口座へ送金されます（Stripeのスピード決済を採用）。月1回の締め日を待つ必要はありません。\n\nPayouts are generally processed within 3 business days of your request, thanks to our Stripe-integrated system. You don't have to wait for a once-a-month cycle.",
+                },
+                {
+                  q: "Q2. 収益還元率と手数料について教えてください。 / What is the revenue share and are there any fees?",
+                  a: "基本還元率は業界最高水準の85%です。プラットフォーム利用料や決済手数料はすべて差し引かれた後の金額があなたの収益となります。さらに、累計売上に応じた「プログレッシブ・ボーナス」で最大95%まで自動アップします。\n\nOur base revenue share is 85%, among the highest in the industry. All platform and transaction fees are already accounted for in your net earnings. Additionally, we offer \"Progressive Bonuses\" based on your performance (up to 95%).",
+                },
+                {
+                  q: "Q3. 利用可能な決済手段は何ですか？ / What payment methods are available for fans?",
+                  a: "世界135カ国以上で使われているStripe決済を導入しています。主要なクレジットカード（Visa, Mastercard等）のほか、Apple Pay、Google Payにも対応しており、世界中のファンからスムーズにギフトを受け取れます。\n\nWe use Stripe, a global leader in payment processing. We support all major credit cards (Visa, Mastercard, etc.), Apple Pay, and Google Pay, allowing you to receive gifts seamlessly from fans in over 135 countries.",
+                },
+                {
+                  q: "Q4. 報酬の受け取りには何が必要ですか？ / What do I need to receive my earnings?",
+                  a: "本人確認（KYC）が完了した銀行口座、またはStripeアカウントが必要です。登録は数分で完了し、すぐに配信・収益化をスタートできます。\n\nYou will need a verified bank account or a Stripe account. The setup takes only a few minutes, allowing you to start streaming and earning immediately.",
+                },
+              ].map((item, i) => (
+                <details key={i} className="bg-card border border-primary/20 rounded-xl p-4 group">
+                  <summary className="flex items-center justify-between cursor-pointer font-semibold text-sm list-none">
+                    {item.q}
+                    <ChevronDown className="w-4 h-4 text-muted-foreground group-open:rotate-180 transition-transform shrink-0 ml-2" />
+                  </summary>
+                  <div className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.a}</div>
+                </details>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
