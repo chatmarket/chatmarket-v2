@@ -85,8 +85,10 @@ export default function LegalCommercial() {
               <p className="font-bold text-foreground text-xs mb-1.5">▼ クリエイターが販売するコンテンツ</p>
               <ul className="list-disc list-inside pl-2 space-y-1">
                 <li>各コンテンツのページに販売価格を表示しています（最低¥15）。</li>
-                <li>1対1ビデオ通話：各クリエイターが設定する料金（15分あたり、エールコインで表示）</li>
-                <li>有料ライブ配信（PPV）：各配信の詳細ページに表示する価格（最低¥15相当）</li>
+                <li>1対1ビデオ通話：各クリエイターが設定する料金（<strong>最低 15分 150円〜</strong>、エールコインで表示）</li>
+                <li>有料ライブ配信（PPV）：各配信の詳細ページに表示する価格<br />
+                  　— SD 480p：<strong>15分 15円〜</strong>　/ HD 720p：<strong>15分 55円〜</strong>　/ FHD 1080p：<strong>15分 150円〜</strong><br />
+                  　（設定料金により配信画質が自動決定されます）</li>
               </ul>
             </div>
           </div>

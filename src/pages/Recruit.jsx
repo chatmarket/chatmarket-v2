@@ -22,7 +22,7 @@ const PRO_SLOTS_TOTAL = 300;
 // 全有料プラン一覧
 const ALL_PLANS = [
   { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話85%還元" },
-  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "15分150円〜上限なし通話" },
+  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "通話：15分150円〜上限なし" },
   { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売" },
   { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信" },
 ];
@@ -411,8 +411,11 @@ export default function Recruit() {
               <div>
                 <p className="text-4xl font-black text-primary">85〜95%</p>
                 <p className="font-bold text-lg mt-1">業界最高水準の還元率</p>
-              </div>
-              <p className="text-sm text-muted-foreground">BASICプランで即85%。月間売上に応じてプログレッシブに最大95%まで自動上昇。</p>
+                </div>
+                <p className="text-sm text-muted-foreground">BASICプランで即85%。月間売上に応じてプログレッシブに最大95%まで自動上昇。</p>
+                <div className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary/80">
+                ライブ配信料金：SD 15円〜 / HD 55円〜 / FHD 150円〜（15分あたり）
+                </div>
             </div>
             <div className="bg-card border border-cyan-400/30 rounded-2xl p-7 space-y-4 hover:border-cyan-400/50 transition-all">
               <div className="w-14 h-14 rounded-2xl bg-cyan-500/20 flex items-center justify-center">
@@ -421,8 +424,8 @@ export default function Recruit() {
               <div>
                 <p className="text-4xl font-black text-cyan-400">60分/日</p>
                 <p className="font-bold text-lg mt-1">無料通話枠（CALL&ANSER）</p>
-              </div>
-              <p className="text-sm text-muted-foreground">1日60分の無料1対1ビデオ通話枠。ファンとの距離がゼロになる。</p>
+                </div>
+                <p className="text-sm text-muted-foreground">1日60分の無料1対1ビデオ通話枠。有料は15分150円〜上限なし。</p>
             </div>
             <div className="bg-card border border-amber-400/30 rounded-2xl p-7 space-y-4 hover:border-amber-400/50 transition-all">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center">
