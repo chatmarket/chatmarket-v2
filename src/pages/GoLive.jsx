@@ -606,6 +606,28 @@ export default function GoLive() {
                   </p>
                 )}
 
+                {/* セルフブランディング啓蒙メッセージ（55円以下の場合） */}
+                {form.price > 0 && form.price <= 55 && !livePriceError && (
+                  <div className="rounded-xl p-4 space-y-2 border"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(168,85,247,0.08), rgba(99,102,241,0.06))",
+                      borderColor: "rgba(168,85,247,0.35)",
+                    }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-purple-400 text-sm">💎</span>
+                      <p className="text-xs font-black text-purple-300 tracking-wide">セルフブランディングのアドバイス</p>
+                    </div>
+                    <p className="text-xs text-purple-200/80 leading-relaxed">
+                      極端な低価格設定は、あなたの素晴らしいスキルや魅力の価値を、自分自身で低く見積もってしまっていませんか？<br /><br />
+                      初回のファン獲得には有効ですが、あなたの価値はもっと高いはずです。<br />
+                      <span className="text-purple-300 font-bold">55円（HD）や150円（FHD）</span> といった適切な価格設定は、あなたを大切にしてくれる「質の高いファン」を惹きつける鍵となります。
+                    </p>
+                    <p className="text-[10px] text-purple-400/60 italic border-t border-purple-500/20 pt-2">
+                      EN: Don't undersell yourself. Your talent deserves a premium audience. Consider a price that reflects your true value.
+                    </p>
+                  </div>
+                )}
+
                 {/* リアルタイム画質プラン案内 */}
                 {form.price > 0 && !livePriceError && (() => {
                   if (effectiveQuality === "480p") return (
