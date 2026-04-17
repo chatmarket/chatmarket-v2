@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 import StreamStyleModal from "../components/live/StreamStyleModal";
 import StripeFeeProfitBreakdown from "../components/live/StripeFeeProfitBreakdown";
+import RevenueSimulator from "../components/live/RevenueSimulator";
 
 const MODE_LIVE = "live";
 const MODE_CALL = "call";
@@ -582,7 +583,11 @@ export default function GoLive() {
               </div>
 
               <div className="space-y-2">
-                <Label>チケット料金（エールコイン）</Label>
+                <Label className="flex items-center gap-2">
+                  💰 あなたへの報酬設定（15分単位）
+                  <span className="text-[10px] text-green-400 font-bold">最大{Math.round(liveRevenueRate * 100)}%があなたの報酬</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">設定した販売価格の最大{Math.round(liveRevenueRate * 100)}%があなたの報酬になります。</p>
                 <Input
                   type="number"
                   min={liveMinPrice}
@@ -628,9 +633,18 @@ export default function GoLive() {
                   </div>
                 )}
 
+                {/* 収益シミュレーター */}
+                 {form.price > 0 && !livePriceError && (
+                   <RevenueSimulator 
+                     price={form.price} 
+                     duration={form.duration} 
+                     revenueRate={liveRevenueRate}
+                   />
+                 )}
+
                 {/* リアルタイム画質プラン案内 */}
-                {form.price > 0 && !livePriceError && (() => {
-                  if (effectiveQuality === "480p") return (
+                 {form.price > 0 && !livePriceError && (() => {
+                   if (effectiveQuality === "480p") return (
                     <div className="rounded-lg p-3 text-xs bg-green-500/10 border border-green-500/30 space-y-0.5">
                       <p className="font-bold text-green-400">🌱 エコノミープラン：標準画質（480p）での配信となります。</p>
                       <p className="text-green-300/80">※ 初めてのファン獲得に最適！</p>
@@ -684,7 +698,11 @@ export default function GoLive() {
               </div>
 
               <div className="space-y-2">
-                <Label>料金（円）</Label>
+                <Label className="flex items-center gap-2">
+                  💰 あなたへの報酬設定（15分単位）
+                  <span className="text-[10px] text-green-400 font-bold">最大85%があなたの報酬</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">設定した販売価格の最大85%があなたの報酬になります。</p>
                 <Input
                   type="number"
                   min={minPrice}

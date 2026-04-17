@@ -252,8 +252,8 @@ export default function WatchVideo() {
                   <span className="inline-block bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded mr-2 align-middle">FREE</span>
                 )}
                 {!video.is_free && video.price > 0 && (
-                  <span className="inline-block bg-yellow-400/20 text-yellow-400 text-sm font-bold px-2 py-0.5 rounded mr-2 align-middle">¥{video.price?.toLocaleString()}</span>
-                )}
+                   <span className="inline-block bg-green-500/20 text-green-400 text-sm font-bold px-2 py-0.5 rounded mr-2 align-middle">販売価格 ¥{video.price?.toLocaleString()}</span>
+                 )}
                 {video.title}
               </h1>
               <button
