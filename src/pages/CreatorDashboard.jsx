@@ -18,6 +18,9 @@ import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import CallWaitingWidget from "../components/dashboard/CallWaitingWidget";
 import SkillRankCard from "../components/dashboard/SkillRankCard";
 import ArchiveAssetCard from "../components/dashboard/ArchiveAssetCard";
+import ThanksLetterCard from "../components/dashboard/ThanksLetterCard";
+import PriceUpNudgeCard from "../components/dashboard/PriceUpNudgeCard";
+import WishlistBoard from "../components/dashboard/WishlistBoard";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -151,6 +154,21 @@ export default function CreatorDashboard() {
 
           {/* 承認済み通話の入室ボタン */}
           <AcceptedCallsList userEmail={user?.email} />
+
+          {/* ありがとうの可視化（サンクスレター） */}
+          <ThanksLetterCard superChats={superChats} videoCalls={videoCalls} />
+
+          {/* 価格アップの背中押し通知 */}
+          <PriceUpNudgeCard videoCalls={videoCalls} liveStreams={liveStreams} />
+
+          {/* ファンのウィッシュリスト掲示板 */}
+          {channel && (
+            <WishlistBoard
+              channelId={channel.id}
+              userEmail={user?.email}
+              userName={user?.full_name}
+            />
+          )}
 
           {/* スキルランク・市場価値スコア */}
           <SkillRankCard
