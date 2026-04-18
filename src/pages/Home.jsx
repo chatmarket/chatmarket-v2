@@ -42,13 +42,13 @@ export default function Home() {
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
     queryFn: () => base44.entities.Video.list("-created_date", 30),
-    staleTime: 300000,
-    gcTime: 600000,
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels-all"],
-    queryFn: () => base44.entities.Channel.list(),
+    queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 50),
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -56,15 +56,15 @@ export default function Home() {
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["livestreams-home"],
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6),
-    staleTime: 60000,
-    refetchInterval: 60000,
+    staleTime: 300000,
+    refetchInterval: 120000,
   });
 
   const { data: crowdfundings = [] } = useQuery({
     queryKey: ["crowdfunding-active"],
     queryFn: () => base44.entities.CrowdfundingProject.filter({ status: "active" }, "-created_date", 10),
-    staleTime: 300000,
-    gcTime: 600000,
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   const approvedVideos = videos.filter((v) => !v.moderation_status || v.moderation_status === "approved");
