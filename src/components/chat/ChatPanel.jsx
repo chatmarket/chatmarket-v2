@@ -152,17 +152,17 @@ export default function ChatPanel({ targetType, targetId }) {
     if (comments.length > 0) scanMessages(comments);
   }, [comments]);
 
-  // 自動スクロール
+  const allMessages = [
+    ...filterMessages(comments.filter((c) => filterNg(c.content || ""))).map((c) => ({ ...c, type: "comment" })),
+    ...superChats.map((s) => ({ ...s, type: "superchat" })),
+  ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+
+  // 自動スクロール（allMessages定義後）
   useEffect(() => {
     if (autoScroll) {
       scrollBottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [allMessages.length, autoScroll]);
-
-  const allMessages = [
-    ...filterMessages(comments.filter((c) => filterNg(c.content || ""))).map((c) => ({ ...c, type: "comment" })),
-    ...superChats.map((s) => ({ ...s, type: "superchat" })),
-  ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
   return (
     <div className="flex flex-col h-full bg-card rounded-xl border border-border/50 relative">
