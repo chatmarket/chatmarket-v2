@@ -33,7 +33,7 @@ export default function MillionaireSupporters() {
   const { data: transactions = [] } = useQuery({
     queryKey: ["millionaire-top-supporters"],
     queryFn: () =>
-      base44.entities.YellCoinTransaction.filter({ type: "send" }, "-created_date", 500),
+      base44.entities.YellCoinTransaction.filter({ type: "send" }, "-created_date", 100),
     enabled: millionaireChannels.length > 0 || candidateChannels.length > 0,
     staleTime: 600000,
     gcTime: 1200000,
