@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
+import ViewerCountGraph from "./ViewerCountGraph";
 
 // amazon-ivs-web-broadcast is loaded via CDN script tag approach via dynamic import
 let IVSBroadcastClient = null;
@@ -238,10 +239,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </span>
           )}
         </div>
-        {/* コスト概算（右上） */}
+        {/* コスト・利益トラッカー（右上） */}
         {isLive && (
           <div className="absolute top-3 right-3">
-            <LiveCostTracker startedAt={liveStartedAt} viewerCount={viewerCount} />
+            <LiveCostTracker startedAt={liveStartedAt} viewerCount={viewerCount} priceCoins={150} />
           </div>
         )}
 
@@ -327,6 +328,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
       {/* 右側: チャット・エール表示エリア */}
       <div className="w-full lg:w-80 flex flex-col gap-4">
+        {/* 視聴者数グラフ */}
+        <ViewerCountGraph streamId={streamId} isLive={isLive} />
+
         {/* チャットセクション */}
         <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
           <div className="px-4 py-3 border-b border-zinc-800">

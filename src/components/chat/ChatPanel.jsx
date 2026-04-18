@@ -38,7 +38,9 @@ export default function ChatPanel({ targetType, targetId }) {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [aiBlocked, setAiBlocked] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const scrollBottomRef = useRef(null);
+  const prevMsgCountRef = useRef(0);
   const queryClient = useQueryClient();
   const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
 
@@ -157,11 +159,16 @@ export default function ChatPanel({ targetType, targetId }) {
     ...superChats.map((s) => ({ ...s, type: "superchat" })),
   ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
-  // 自動スクロール（allMessages定義後）
+  // 自動スクロール＆新着バッジ（allMessages定義後）
   useEffect(() => {
+    const newCount = allMessages.length;
     if (autoScroll) {
       scrollBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      setUnreadCount(0);
+    } else if (newCount > prevMsgCountRef.current) {
+      setUnreadCount(c => c + (newCount - prevMsgCountRef.current));
     }
+    prevMsgCountRef.current = newCount;
   }, [allMessages.length, autoScroll]);
 
   return (
@@ -173,12 +180,17 @@ export default function ChatPanel({ targetType, targetId }) {
           <span className="text-[10px] text-green-400/70 flex items-center gap-1"><Shield className="w-3 h-3" />AIモデレーション中</span>
         </div>
         <button
-          onClick={() => setAutoScroll((v) => !v)}
+          onClick={() => { setAutoScroll((v) => !v); if (!autoScroll) setUnreadCount(0); }}
           title={autoScroll ? "自動スクロールON" : "自動スクロールOFF"}
-          className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all ${autoScroll ? "bg-primary/20 border-primary/40 text-primary" : "bg-secondary border-border text-muted-foreground"}`}
+          className={`relative flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all ${autoScroll ? "bg-primary/20 border-primary/40 text-primary" : "bg-secondary border-border text-muted-foreground"}`}
         >
           <ChevronsDown className="w-3 h-3" />
           {autoScroll ? "自動↓" : "停止"}
+          {!autoScroll && unreadCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center leading-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </button>
         {isOwner && (
           <button

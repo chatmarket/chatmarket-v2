@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Radio, Volume2, VolumeX, Wifi, WifiOff } from "lucide-react";
+import { Radio, Volume2, VolumeX, Wifi, WifiOff, Settings } from "lucide-react";
 import { toast } from "sonner";
+
+// 価格帯→解放画質マップ
+const QUALITY_OPTIONS = [
+  { label: "SD", value: "480p", minPrice: 0, color: "text-zinc-400", desc: "480p" },
+  { label: "HD", value: "720p", minPrice: 55, color: "text-blue-400", desc: "720p" },
+  { label: "FHD", value: "1080p", minPrice: 150, color: "text-yellow-400", desc: "1080p" },
+];
 
 export default function ViewerStream({ streamId, stream }) {
   const videoRef = useRef(null);
@@ -9,6 +16,12 @@ export default function ViewerStream({ streamId, stream }) {
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState(null);
   const [quality, setQuality] = useState(null); // "good" | "poor" | null
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState("auto");
+
+  // 価格から解放可能な画質を判定
+  const streamPrice = stream?.price || 0;
+  const availableQualities = QUALITY_OPTIONS.filter(q => streamPrice >= q.minPrice);
 
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
   const isWebRTC = stream?.stream_type === "webrtc";
@@ -114,6 +127,46 @@ export default function ViewerStream({ streamId, stream }) {
             {quality === "poor" ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
             {quality === "poor" ? "低品質" : "良好"}
           </div>
+
+          {/* 画質選択ボタン */}
+          <div className="relative">
+            <button
+              onClick={() => setShowQualityMenu(v => !v)}
+              className="flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-bold hover:bg-black/80 transition-colors"
+            >
+              <Settings className="w-3 h-3" />
+              {selectedQuality === "auto" ? "自動" : selectedQuality}
+            </button>
+            {showQualityMenu && (
+              <div className="absolute bottom-8 right-0 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl py-1 min-w-[130px] z-50">
+                <button
+                  onClick={() => { setSelectedQuality("auto"); setShowQualityMenu(false); }}
+                  className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors ${selectedQuality === "auto" ? "text-primary" : "text-white hover:bg-zinc-800"}`}
+                >
+                  自動（推奨）
+                </button>
+                {QUALITY_OPTIONS.map(q => {
+                  const unlocked = streamPrice >= q.minPrice;
+                  return (
+                    <button
+                      key={q.value}
+                      onClick={() => { if (unlocked) { setSelectedQuality(q.value); setShowQualityMenu(false); } }}
+                      disabled={!unlocked}
+                      className={`w-full text-left px-3 py-2 text-xs transition-colors ${
+                        selectedQuality === q.value ? "text-primary font-black" :
+                        unlocked ? "text-white hover:bg-zinc-800" : "text-zinc-600 cursor-not-allowed"
+                      }`}
+                    >
+                      <span className={`font-bold ${q.color}`}>{q.label}</span>
+                      <span className="text-zinc-500 ml-1">{q.desc}</span>
+                      {!unlocked && <span className="text-zinc-600 ml-1 text-[10px]">🔒{q.minPrice}円〜</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* ミュートボタン */}
           <button
             onClick={() => setMuted(!muted)}
