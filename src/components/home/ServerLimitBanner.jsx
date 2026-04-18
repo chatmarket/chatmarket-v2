@@ -56,5 +56,13 @@ export default function ServerLimitBanner() {
       `}</style>
       <div className="server-limit-banner absolute inset-0 rounded-xl pointer-events-none" />
     </div>
+
+    {/* サンプルチャンネル掲載中 ネオン白文字 */}
+    <p className="text-center mt-3 text-xs sm:text-sm font-black" style={{
+      color: "#ffffff",
+      textShadow: "0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #0ff, 0 0 82px #0ff",
+    }}>
+      ✦ 現在サンプルチャンネルを掲載中 ✦
+    </p>
   );
 }
