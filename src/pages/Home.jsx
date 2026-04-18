@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap } from "lucide-react";
 import { isBefore } from "date-fns";
 import { t } from "@/lib/i18n";
+import { useInViewTrigger } from "@/hooks/useInViewTrigger";
 
 const _RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
 const _now = new Date();
@@ -32,7 +33,16 @@ export default function Home() {
   const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [renderDelay, setRenderDelay] = useState({ ranking: false, call: false, million: false });
+  const [enabledSections, setEnabledSections] = useState({
+    callWaiting: false,
+    liveStreams: false,
+    featuredVideos: false,
+    freeVideos: false,
+    recentVideos: false,
+    crowdfunding: false,
+    ranking: false,
+    millionaire: false,
+  });
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -40,13 +50,19 @@ export default function Home() {
     });
   }, []);
 
-  // セクションの遅延ロード（2秒後）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRenderDelay({ ranking: true, call: true, million: true });
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+  // セクションのIntersection Observer トリガー
+  const triggerSection = (key) => {
+    setEnabledSections(prev => ({ ...prev, [key]: true }));
+  };
+
+  const { ref: callRef } = useInViewTrigger(() => triggerSection('callWaiting'));
+  const { ref: liveRef } = useInViewTrigger(() => triggerSection('liveStreams'));
+  const { ref: featuredRef } = useInViewTrigger(() => triggerSection('featuredVideos'));
+  const { ref: freeRef } = useInViewTrigger(() => triggerSection('freeVideos'));
+  const { ref: recentRef } = useInViewTrigger(() => triggerSection('recentVideos'));
+  const { ref: cfRef } = useInViewTrigger(() => triggerSection('crowdfunding'));
+  const { ref: rankingRef } = useInViewTrigger(() => triggerSection('ranking'));
+  const { ref: millionaireRef } = useInViewTrigger(() => triggerSection('millionaire'));
 
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
@@ -67,7 +83,7 @@ export default function Home() {
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["livestreams-home"],
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6),
-    enabled: false,
+    enabled: enabledSections.liveStreams,
     staleTime: 300000,
     refetchInterval: 120000,
     gcTime: 600000,
@@ -76,7 +92,7 @@ export default function Home() {
   const { data: crowdfundings = [] } = useQuery({
     queryKey: ["crowdfunding-active"],
     queryFn: () => base44.entities.CrowdfundingProject.filter({ status: "active" }, "-created_date", 8),
-    enabled: false,
+    enabled: enabledSections.crowdfunding,
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -281,153 +297,169 @@ export default function Home() {
       </div>
 
       {/* 1on1 待機中 */}
-      {renderDelay.call && (
-        <section className="px-0">
-          <CallWaitingRow user={user} />
-        </section>
-      )}
+      <div ref={callRef}>
+        {enabledSections.callWaiting && (
+          <section className="px-0">
+            <CallWaitingRow user={user} />
+          </section>
+        )}
+      </div>
 
       {/* ライブ配信中 */}
-       {liveStreams.length > 0 && (
-         <section className="space-y-3">
-           <div className="flex items-center gap-2">
-             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-             <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
-             <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
-           </div>
-          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-            {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
-          </ScrollRow>
-        </section>
-      )}
+      <div ref={liveRef}>
+        {enabledSections.liveStreams && liveStreams.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+              <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
+              <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
+            </div>
+            <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+              {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
+            </ScrollRow>
+          </section>
+        )}
+      </div>
 
       {/* おすすめ有料動画 */}
-       {featuredVideos.length > 0 && (
-         <section className="space-y-3 px-0">
-           <div className="flex items-center gap-2">
-             <span className="w-1 h-5 rounded-full bg-yellow-400 shrink-0" />
-             <h2 className="text-base sm:text-lg font-bold">{t("recommendedPaidVideos")}</h2>
-             <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-2 py-0.5 font-semibold">PPV</span>
-           </div>
-          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-            {featuredVideos.map((v) => (
-              <div key={v.id} className="relative group">
-                <VideoCard video={v} />
-                <button
-                   onClick={() => handleMessage(v)}
-                   className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
-                 >
-                   <MessageCircle className="w-3.5 h-3.5" />{t("message")}
-                 </button>
-              </div>
-            ))}
-          </ScrollRow>
-        </section>
-      )}
+      <div ref={featuredRef}>
+        {enabledSections.featuredVideos && featuredVideos.length > 0 && (
+          <section className="space-y-3 px-0">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-5 rounded-full bg-yellow-400 shrink-0" />
+              <h2 className="text-base sm:text-lg font-bold">{t("recommendedPaidVideos")}</h2>
+              <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-2 py-0.5 font-semibold">PPV</span>
+            </div>
+            <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+              {featuredVideos.map((v) => (
+                <div key={v.id} className="relative group">
+                  <VideoCard video={v} />
+                  <button
+                    onClick={() => handleMessage(v)}
+                    className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />{t("message")}
+                  </button>
+                </div>
+              ))}
+            </ScrollRow>
+          </section>
+        )}
+      </div>
 
       {/* 無料動画 */}
-       {freeVideos.length > 0 && (
-         <section className="space-y-3 px-0">
-           <div className="flex items-center gap-2">
-             <span className="w-1 h-5 rounded-full bg-primary shrink-0" />
-             <h2 className="text-base sm:text-lg font-bold">{t("freeVideos")}</h2>
-             <span className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-full px-2 py-0.5 font-semibold">FREE</span>
-           </div>
-          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-            {freeVideos.map((v) => (
-              <div key={v.id} className="relative group">
-                <VideoCard video={v} />
-              </div>
-            ))}
-          </ScrollRow>
-        </section>
-      )}
+      <div ref={freeRef}>
+        {enabledSections.freeVideos && freeVideos.length > 0 && (
+          <section className="space-y-3 px-0">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-5 rounded-full bg-primary shrink-0" />
+              <h2 className="text-base sm:text-lg font-bold">{t("freeVideos")}</h2>
+              <span className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-full px-2 py-0.5 font-semibold">FREE</span>
+            </div>
+            <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+              {freeVideos.map((v) => (
+                <div key={v.id} className="relative group">
+                  <VideoCard video={v} />
+                </div>
+              ))}
+            </ScrollRow>
+          </section>
+        )}
+      </div>
 
       {/* 新着動画 */}
-       {recentVideos.length > 0 && (
-         <section className="space-y-3 px-0">
-           <div className="flex items-center gap-2">
-             <span className="w-1 h-5 rounded-full bg-blue-400 shrink-0" />
-             <h2 className="text-base sm:text-lg font-bold">{t("latestVideos")}</h2>
-             <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5 font-semibold">NEW</span>
-           </div>
-          <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-            {recentVideos.map((v) => (
-              <div key={v.id} className="relative group">
-                <VideoCard video={v} />
-                <button
-                   onClick={() => handleMessage(v)}
-                   className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
-                 >
-                   <MessageCircle className="w-3.5 h-3.5" />{t("message")}
-                 </button>
-              </div>
-            ))}
-          </ScrollRow>
-        </section>
-      )}
+      <div ref={recentRef}>
+        {enabledSections.recentVideos && recentVideos.length > 0 && (
+          <section className="space-y-3 px-0">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-5 rounded-full bg-blue-400 shrink-0" />
+              <h2 className="text-base sm:text-lg font-bold">{t("latestVideos")}</h2>
+              <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5 font-semibold">NEW</span>
+            </div>
+            <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+              {recentVideos.map((v) => (
+                <div key={v.id} className="relative group">
+                  <VideoCard video={v} />
+                  <button
+                    onClick={() => handleMessage(v)}
+                    className="absolute bottom-14 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 hover:bg-primary text-primary-foreground text-xs rounded-full px-3 py-1.5 flex items-center gap-1 shadow-lg"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />{t("message")}
+                  </button>
+                </div>
+              ))}
+            </ScrollRow>
+          </section>
+        )}
+      </div>
 
       {/* クラウドファンディング */}
-      {crowdfundings.length > 0 && (
-        <section className="px-0">
-          <div
-            className="bg-gradient-to-br from-red-900/30 to-red-800/10 border border-red-500/30 rounded-2xl overflow-hidden cursor-pointer"
-            onClick={() => setCfExpanded((v) => !v)}
-          >
-            <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-lg sm:rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-                   <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
-                 </div>
-                 <div className="min-w-0 flex-1">
-                   <h2 className="font-bold text-xs sm:text-sm md:text-base flex items-center gap-1 sm:gap-2">
-                     {t("crowdfunding")}
-                     <span className="text-[10px] sm:text-xs font-bold bg-red-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full">{crowdfundings.length}件</span>
-                   </h2>
-                   <p className="text-[10px] sm:text-xs text-red-300/70 hidden sm:block">NPO・社会課題プロジェクトを支援</p>
-                 </div>
-              </div>
-              {cfExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />}
-            </div>
-          </div>
-          {cfExpanded && (
-            <div className="border border-t-0 border-red-500/20 rounded-b-lg sm:rounded-b-2xl bg-red-950/10 divide-y divide-red-500/10">
-              {crowdfundings.map((cf) => {
-                const goalPct = cf.goal_amount > 0 ? Math.min(100, Math.round((cf.total_raised / cf.goal_amount) * 100)) : null;
-                return (
-                  <div key={cf.id} className="px-3 sm:px-4 md:px-5 py-2 sm:py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1">
-                      <p className="font-bold text-xs sm:text-sm line-clamp-1">{cf.title}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">{cf.organization_name}</p>
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-red-300">
-                        <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {cf.supporter_count || 0}人</span>
-                        <span>¥{(cf.total_raised || 0).toLocaleString()}</span>
-                        {goalPct !== null && <span>{goalPct}%達成</span>}
-                      </div>
-                    </div>
-                    <Link to={`/crowdfunding/${cf.id}`} onClick={(e) => e.stopPropagation()} className="w-full sm:w-auto">
-                      <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-1 shrink-0 text-xs px-3 w-full sm:w-auto">
-                         {t("supportProject")} <ExternalLink className="w-3 h-3" />
-                       </Button>
-                    </Link>
+      <div ref={cfRef}>
+        {enabledSections.crowdfunding && crowdfundings.length > 0 && (
+          <section className="px-0">
+            <div
+              className="bg-gradient-to-br from-red-900/30 to-red-800/10 border border-red-500/30 rounded-2xl overflow-hidden cursor-pointer"
+              onClick={() => setCfExpanded((v) => !v)}
+            >
+              <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-lg sm:rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
                   </div>
-                );
-              })}
-              <div className="px-3 sm:px-4 md:px-5 py-2 sm:py-3 text-center">
-                <Link to="/crowdfunding">
-                   <button className="text-xs text-red-400 hover:text-red-300 underline">{t("viewAll")}</button>
-                 </Link>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-bold text-xs sm:text-sm md:text-base flex items-center gap-1 sm:gap-2">
+                      {t("crowdfunding")}
+                      <span className="text-[10px] sm:text-xs font-bold bg-red-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full">{crowdfundings.length}件</span>
+                    </h2>
+                    <p className="text-[10px] sm:text-xs text-red-300/70 hidden sm:block">NPO・社会課題プロジェクトを支援</p>
+                  </div>
+                </div>
+                {cfExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />}
               </div>
             </div>
-          )}
-        </section>
-      )}
+            {cfExpanded && (
+              <div className="border border-t-0 border-red-500/20 rounded-b-lg sm:rounded-b-2xl bg-red-950/10 divide-y divide-red-500/10">
+                {crowdfundings.map((cf) => {
+                  const goalPct = cf.goal_amount > 0 ? Math.min(100, Math.round((cf.total_raised / cf.goal_amount) * 100)) : null;
+                  return (
+                    <div key={cf.id} className="px-3 sm:px-4 md:px-5 py-2 sm:py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                      <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1">
+                        <p className="font-bold text-xs sm:text-sm line-clamp-1">{cf.title}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{cf.organization_name}</p>
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-red-300">
+                          <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {cf.supporter_count || 0}人</span>
+                          <span>¥{(cf.total_raised || 0).toLocaleString()}</span>
+                          {goalPct !== null && <span>{goalPct}%達成</span>}
+                        </div>
+                      </div>
+                      <Link to={`/crowdfunding/${cf.id}`} onClick={(e) => e.stopPropagation()} className="w-full sm:w-auto">
+                        <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-1 shrink-0 text-xs px-3 w-full sm:w-auto">
+                          {t("supportProject")} <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })}
+                <div className="px-3 sm:px-4 md:px-5 py-2 sm:py-3 text-center">
+                  <Link to="/crowdfunding">
+                    <button className="text-xs text-red-400 hover:text-red-300 underline">{t("viewAll")}</button>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
 
       {/* クリエイターランキング */}
-      {renderDelay.ranking && <CreatorRanking />}
+      <div ref={rankingRef}>
+        {enabledSections.ranking && <CreatorRanking />}
+      </div>
 
       {/* ミリオネア・サポーター */}
-      {renderDelay.million && <MillionaireSupporters />}
+      <div ref={millionaireRef}>
+        {enabledSections.millionaire && <MillionaireSupporters />}
+      </div>
 
       {/* 空の状態 */}
        {isEmpty && (
