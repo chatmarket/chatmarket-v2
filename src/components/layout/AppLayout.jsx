@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { path: "/community", icon: Users, label: "コミュニティ" },
   { path: "/fanclub", icon: Crown, label: "ファンクラブ" },
   { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
-  { path: "/blog", icon: BookOpen, label: "ブログ" },
+  { path: "/blog", icon: BookOpen, label: "運営ブログ", showNew: true },
   { path: "/recruit", icon: Zap, label: "ライバー募集" },
 ];
 
@@ -58,6 +58,14 @@ export default function AppLayout() {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
   }, []);
+
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ["sidebar-blog-posts"],
+    queryFn: () => base44.entities.BlogPost.filter({ status: "published" }, "-published_at", 1),
+  });
+  const hasNewBlog = blogPosts.length > 0 && blogPosts[0]?.published_at
+    ? new Date(blogPosts[0].published_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    : false;
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet-layout", user?.email],
@@ -86,7 +94,7 @@ export default function AppLayout() {
 
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map(({ path, icon: Icon, label }) => (
+        {NAV_ITEMS.map(({ path, icon: Icon, label, showNew }) => (
           <Link key={path} to={path} onClick={onClose}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
@@ -95,7 +103,10 @@ export default function AppLayout() {
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}>
               <Icon className="w-4 h-4 shrink-0" />
-              {label}
+              <span className="flex-1">{label}</span>
+              {showNew && hasNewBlog && (
+                <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">NEW</span>
+              )}
             </div>
           </Link>
         ))}

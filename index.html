@@ -97,49 +97,46 @@
 
     <link rel="manifest" href="/manifest.json" />
     <style>
+      /* Hide Edit with Base44 button - all variants */
       #edit-with-base44,
-      [id*="base44"],
-      [class*="base44"],
+      [id*="base44-edit"],
+      [id*="edit-with-base44"],
+      [class*="base44-edit"],
+      [class*="edit-with-base44"],
       [data-base44],
-      iframe[src*="base44"],
-      button:has(svg + span:contains("Edit with Base44")),
-      [role="button"]:has(svg + span:contains("Edit with Base44")) { display: none !important; }
-      
-      /* Catch all Edit with Base44 variants */
-      button[aria-label*="Edit"], button:contains("Edit with Base44"),
-      div:contains("Edit with Base44") { display: none !important; }
+      iframe[src*="base44"] { display: none !important; }
+
+      /* Target the floating button by fixed positioning at bottom-right */
+      body > div[style*="position: fixed"][style*="bottom"][style*="right"],
+      body > div[style*="position:fixed"][style*="bottom"][style*="right"] { display: none !important; }
     </style>
     <script>
       function hideEditButton() {
-        // Try multiple selectors
-        const selectors = [
-          '#edit-with-base44',
-          '[id*="base44"]',
-          '[class*="base44"]',
-          'button:has(svg)',
-          'div:has(svg)'
-        ];
-        
-        selectors.forEach(sel => {
+        document.querySelectorAll('*').forEach(el => {
           try {
-            document.querySelectorAll(sel).forEach(el => {
-              if (el.textContent.includes('Edit with Base44') || 
-                  el.textContent.includes('Edit') && el.textContent.includes('Base44')) {
-                el.style.display = 'none';
-                el.remove();
-              }
-            });
+            const text = el.textContent || '';
+            const isFixed = el.style && (el.style.position === 'fixed' || el.style.position === 'sticky');
+            if (
+              (text.includes('Edit with Base44') || text.includes('Edit with base44')) &&
+              el.children.length < 5
+            ) {
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('visibility', 'hidden', 'important');
+              el.style.setProperty('opacity', '0', 'important');
+              el.style.setProperty('pointer-events', 'none', 'important');
+            }
           } catch (e) {}
         });
       }
       
-      const observer = new MutationObserver(() => {
+      const observer = new MutationObserver(() => hideEditButton());
+      document.addEventListener('DOMContentLoaded', () => {
         hideEditButton();
+        observer.observe(document.body, { childList: true, subtree: true });
       });
-      
-      hideEditButton();
-      observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
       window.addEventListener('load', hideEditButton);
+      setTimeout(hideEditButton, 500);
+      setTimeout(hideEditButton, 1500);
     </script>
   </head>
   <body>
