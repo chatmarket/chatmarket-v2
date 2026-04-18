@@ -18,6 +18,7 @@ export default function CallWaitingRow({ user }) {
   const { data: callChannels = [] } = useQuery({
     queryKey: ["call-waiting-channels"],
     queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 12),
+    enabled: false,
     staleTime: 300000,
     gcTime: 600000,
   });
@@ -33,6 +34,7 @@ export default function CallWaitingRow({ user }) {
       );
       return channels.filter(Boolean);
     },
+    enabled: false,
     staleTime: 300000,
     gcTime: 600000,
   });
@@ -41,6 +43,7 @@ export default function CallWaitingRow({ user }) {
   const { data: waitingCalls = [] } = useQuery({
     queryKey: ["waiting-video-calls"],
     queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 20),
+    enabled: false,
     staleTime: 30000,
     gcTime: 60000,
     refetchInterval: 60000,
@@ -59,7 +62,7 @@ export default function CallWaitingRow({ user }) {
       );
       return channels.filter(Boolean);
     },
-    enabled: waitingCalls.length > 0,
+    enabled: false,
     staleTime: 30000,
     gcTime: 60000,
   });

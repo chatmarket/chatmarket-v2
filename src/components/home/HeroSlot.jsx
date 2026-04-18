@@ -13,6 +13,7 @@ export default function HeroSlot() {
   const { data: channels = [] } = useQuery({
     queryKey: ["hero-slot-channels"],
     queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 5),
+    enabled: false,
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -20,6 +21,7 @@ export default function HeroSlot() {
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["hero-slot-lives"],
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-viewer_count", 3),
+    enabled: false,
     staleTime: 120000,
     gcTime: 240000,
   });

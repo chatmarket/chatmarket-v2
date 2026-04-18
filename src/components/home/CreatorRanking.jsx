@@ -24,6 +24,7 @@ export default function CreatorRanking() {
   const { data: channels = [] } = useQuery({
     queryKey: ["ranking-channels"],
     queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 30),
+    enabled: false,
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -31,6 +32,7 @@ export default function CreatorRanking() {
   const { data: follows = [] } = useQuery({
     queryKey: ["ranking-follows"],
     queryFn: () => base44.entities.ChannelFollow.list("-created_date", 200),
+    enabled: false,
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -38,6 +40,7 @@ export default function CreatorRanking() {
   const { data: videos = [] } = useQuery({
     queryKey: ["ranking-videos"],
     queryFn: () => base44.entities.Video.list("-created_date", 100),
+    enabled: false,
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -45,6 +48,7 @@ export default function CreatorRanking() {
   const { data: purchases = [] } = useQuery({
     queryKey: ["ranking-purchases"],
     queryFn: () => base44.entities.Purchase.list("-created_date", 100),
+    enabled: false,
     staleTime: 600000,
     gcTime: 1200000,
   });
