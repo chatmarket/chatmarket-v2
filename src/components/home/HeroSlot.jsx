@@ -13,13 +13,15 @@ export default function HeroSlot() {
   const { data: channels = [] } = useQuery({
     queryKey: ["hero-slot-channels"],
     queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 5),
-    refetchInterval: 60000,
+    staleTime: 300000,
+    refetchInterval: 120000,
   });
 
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["hero-slot-lives"],
     queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-viewer_count", 3),
-    refetchInterval: 30000,
+    staleTime: 60000,
+    refetchInterval: 60000,
   });
 
   // 優先度: 当月売上1位でLIVE中 > 当月売上1位 > LIVE中で視聴者最多

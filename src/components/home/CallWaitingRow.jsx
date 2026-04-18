@@ -18,6 +18,8 @@ export default function CallWaitingRow({ user }) {
   const { data: callChannels = [] } = useQuery({
     queryKey: ["call-waiting-channels"],
     queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 12),
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
   // フリートライアルメールのチャンネル取得
@@ -31,13 +33,16 @@ export default function CallWaitingRow({ user }) {
       );
       return channels.filter(Boolean);
     },
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
   // 待機中のVideoCall取得（status="waiting"）
   const { data: waitingCalls = [] } = useQuery({
     queryKey: ["waiting-video-calls"],
     queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 50),
-    refetchInterval: 3000, // 3秒ごとに更新
+    refetchInterval: 30000, // 30秒ごとに更新
+    staleTime: 30000,
   });
 
   // 待機中のチャンネルを取得（VideoCallのcallee_emailから）

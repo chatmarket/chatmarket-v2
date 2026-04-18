@@ -23,22 +23,30 @@ export default function CreatorRanking() {
 
   const { data: channels = [] } = useQuery({
     queryKey: ["ranking-channels"],
-    queryFn: () => base44.entities.Channel.list(),
+    queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 50),
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   const { data: follows = [] } = useQuery({
     queryKey: ["ranking-follows"],
-    queryFn: () => base44.entities.ChannelFollow.list(),
+    queryFn: () => base44.entities.ChannelFollow.list("-created_date", 500),
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   const { data: videos = [] } = useQuery({
     queryKey: ["ranking-videos"],
-    queryFn: () => base44.entities.Video.list(),
+    queryFn: () => base44.entities.Video.list("-created_date", 200),
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   const { data: purchases = [] } = useQuery({
     queryKey: ["ranking-purchases"],
-    queryFn: () => base44.entities.Purchase.list(),
+    queryFn: () => base44.entities.Purchase.list("-created_date", 200),
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   // フォロワー数を集計

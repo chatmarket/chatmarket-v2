@@ -14,6 +14,8 @@ export default function MillionaireSupporters() {
   const { data: channels = [] } = useQuery({
     queryKey: ["millionaire-channels"],
     queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 10),
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   // 2,000万超のチャンネル
@@ -33,6 +35,8 @@ export default function MillionaireSupporters() {
     queryFn: () =>
       base44.entities.YellCoinTransaction.filter({ type: "send" }, "-created_date", 500),
     enabled: millionaireChannels.length > 0 || candidateChannels.length > 0,
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   // 当月絞り込み
