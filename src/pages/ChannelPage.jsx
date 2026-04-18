@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -6,17 +7,19 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag, Users as UsersIcon } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag, Users as UsersIcon, Gem, Shield } from "lucide-react";
 import ReportChannelDialog from "../components/channel/ReportChannelDialog";
 import CategoryBadge from "../components/channel/CategoryBadge";
 import FanCommunityTab from "../components/community/FanCommunityTab";
+import VaultTab from "../components/vault/VaultTab";
+import SanctumTab from "../components/vault/SanctumTab";
 
 export default function ChannelPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [showReport, setShowReport] = useState(false);
-  const [activeTab, setActiveTab] = useState("videos"); // "videos" | "community"
+  const [activeTab, setActiveTab] = useState("videos"); // "videos" | "vault" | "sanctum" | "community"
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -210,30 +213,27 @@ export default function ChannelPage() {
       />
 
       {/* Tab navigation */}
-      <div className="border-b border-border/50 mb-6 sm:mb-8 flex gap-4">
-        <button
-          onClick={() => setActiveTab("videos")}
-          className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
-            activeTab === "videos"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Video className="w-4 h-4" />
-          動画 ({videos.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("community")}
-          className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
-            activeTab === "community"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <UsersIcon className="w-4 h-4" />
-          ファンコミュニティ
-          <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold">準備中</span>
-        </button>
+      <div className="border-b border-border/50 mb-6 sm:mb-8 flex gap-1 overflow-x-auto scrollbar-hide">
+        {[
+          { key: "videos", icon: Video, label: `動画 (${videos.length})` },
+          { key: "vault", icon: Gem, label: "宝物庫", badge: "NEW", badgeColor: "bg-amber-500/20 text-amber-400" },
+          { key: "sanctum", icon: Shield, label: "The Sanctum", badge: "FC", badgeColor: "bg-purple-500/20 text-purple-400" },
+          { key: "community", icon: UsersIcon, label: "コミュニティ" },
+        ].map(({ key, icon: Icon, label, badge, badgeColor }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-3 font-semibold text-sm border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === key
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+            {badge && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${badgeColor}`}>{badge}</span>}
+          </button>
+        ))}
       </div>
 
       {/* Live streams */}
@@ -269,6 +269,16 @@ export default function ChannelPage() {
             </div>
           )}
         </section>
+      )}
+
+      {/* Vault tab */}
+      {activeTab === "vault" && (
+        <VaultTab channel={channel} currentUser={currentUser} />
+      )}
+
+      {/* Sanctum tab */}
+      {activeTab === "sanctum" && (
+        <SanctumTab channel={channel} currentUser={currentUser} />
       )}
 
       {/* Community tab */}
