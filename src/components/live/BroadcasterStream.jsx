@@ -3,6 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Radio, MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Monitor, Settings, X, AlertTriangle, Zap, Copy, Check, Maximize, Minimize } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import LiveTimer from "./LiveTimer";
+import LiveCostTracker from "./LiveCostTracker";
 
 // amazon-ivs-web-broadcast is loaded via CDN script tag approach via dynamic import
 let IVSBroadcastClient = null;
@@ -52,6 +54,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [showQualityModal, setShowQualityModal] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
+  const [liveStartedAt, setLiveStartedAt] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [rankupPopup, setRankupPopup] = useState(null); // { message, color }
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -154,7 +157,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
       await client.startBroadcast(ivsStreamKey);
 
-      await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint });
+      const now = new Date().toISOString();
+      await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
+      setLiveStartedAt(now);
       setStatus("live");
       toast.success("AWS IVS 配信を開始しました！");
     } catch (err) {
@@ -216,7 +221,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         )}
 
         {/* ステータスバッジ */}
-        <div className="absolute top-3 left-3 flex items-center gap-2">
+        <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap">
           {isLive ? (
             <>
               <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
@@ -225,6 +230,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
               <span className="flex items-center gap-1.5 bg-black/70 text-white font-black px-3 py-1 rounded-full text-sm">
                 <Eye className="w-4 h-4" />{viewerCount}
               </span>
+              <LiveTimer startedAt={liveStartedAt} />
             </>
           ) : (
             <span className="flex items-center gap-1.5 bg-zinc-700/80 text-zinc-300 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -232,6 +238,12 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </span>
           )}
         </div>
+        {/* コスト概算（右上） */}
+        {isLive && (
+          <div className="absolute top-3 right-3">
+            <LiveCostTracker startedAt={liveStartedAt} viewerCount={viewerCount} />
+          </div>
+        )}
 
         {/* GoLive オーバーレイ（プレビュー中） */}
         {!isLive && (

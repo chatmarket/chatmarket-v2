@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Radio, Volume2, VolumeX } from "lucide-react";
+import { Radio, Volume2, VolumeX, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ViewerStream({ streamId, stream }) {
@@ -8,6 +8,7 @@ export default function ViewerStream({ streamId, stream }) {
   const [ready, setReady] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState(null);
+  const [quality, setQuality] = useState(null); // "good" | "poor" | null
 
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
   const isWebRTC = stream?.stream_type === "webrtc";
@@ -41,7 +42,8 @@ export default function ViewerStream({ streamId, stream }) {
 
         player.addEventListener(PlayerEventType.STATE_CHANGED, (state) => {
           if (!isMounted) return;
-          if (state === PlayerState.PLAYING) setReady(true);
+          if (state === PlayerState.PLAYING) { setReady(true); setQuality("good"); }
+          if (state === PlayerState.BUFFERING) setQuality("poor");
         });
 
         player.addEventListener(PlayerEventType.ERROR, (err) => {
@@ -106,12 +108,20 @@ export default function ViewerStream({ streamId, stream }) {
       )}
 
       {ready && (
-        <button
-          onClick={() => setMuted(!muted)}
-          className="absolute bottom-16 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-        >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
+        <div className="absolute bottom-4 right-4 flex items-center gap-2">
+          {/* 接続品質インジケーター */}
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${quality === "poor" ? "bg-yellow-500/80 text-black" : "bg-black/50 text-green-400"}`}>
+            {quality === "poor" ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+            {quality === "poor" ? "低品質" : "良好"}
+          </div>
+          {/* ミュートボタン */}
+          <button
+            onClick={() => setMuted(!muted)}
+            className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+        </div>
       )}
     </div>
   );

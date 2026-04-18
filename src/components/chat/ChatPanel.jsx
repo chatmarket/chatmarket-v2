@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, DollarSign, Smile, Pin, PinOff, Shield, MoreVertical, X } from "lucide-react";
+import { Send, DollarSign, Smile, Pin, PinOff, Shield, MoreVertical, X, ChevronsDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
@@ -37,6 +37,8 @@ export default function ChatPanel({ targetType, targetId }) {
   const [latestSuperChatId, setLatestSuperChatId] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [aiBlocked, setAiBlocked] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const scrollBottomRef = useRef(null);
   const queryClient = useQueryClient();
   const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
 
@@ -150,6 +152,13 @@ export default function ChatPanel({ targetType, targetId }) {
     if (comments.length > 0) scanMessages(comments);
   }, [comments]);
 
+  // 自動スクロール
+  useEffect(() => {
+    if (autoScroll) {
+      scrollBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [allMessages.length, autoScroll]);
+
   const allMessages = [
     ...filterMessages(comments.filter((c) => filterNg(c.content || ""))).map((c) => ({ ...c, type: "comment" })),
     ...superChats.map((s) => ({ ...s, type: "superchat" })),
@@ -163,6 +172,14 @@ export default function ChatPanel({ targetType, targetId }) {
           <h3 className="font-semibold text-sm">チャット</h3>
           <span className="text-[10px] text-green-400/70 flex items-center gap-1"><Shield className="w-3 h-3" />AIモデレーション中</span>
         </div>
+        <button
+          onClick={() => setAutoScroll((v) => !v)}
+          title={autoScroll ? "自動スクロールON" : "自動スクロールOFF"}
+          className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all ${autoScroll ? "bg-primary/20 border-primary/40 text-primary" : "bg-secondary border-border text-muted-foreground"}`}
+        >
+          <ChevronsDown className="w-3 h-3" />
+          {autoScroll ? "自動↓" : "停止"}
+        </button>
         {isOwner && (
           <button
             onClick={() => setShowNgSettings(true)}
@@ -194,7 +211,7 @@ export default function ChatPanel({ targetType, targetId }) {
 
       {/* メッセージ一覧 */}
       <ScrollArea className="flex-1 p-3">
-        <div className="space-y-2">
+        <div className="space-y-2" onWheel={() => setAutoScroll(false)}>
           {allMessages.map((msg) =>
             msg.type === "superchat" ? (
               <div
@@ -244,6 +261,7 @@ export default function ChatPanel({ targetType, targetId }) {
               </div>
             )
           )}
+          <div ref={scrollBottomRef} />
         </div>
       </ScrollArea>
 
