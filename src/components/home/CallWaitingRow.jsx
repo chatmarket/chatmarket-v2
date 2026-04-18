@@ -37,20 +37,21 @@ export default function CallWaitingRow({ user }) {
     gcTime: 600000,
   });
 
-  // 待機中のVideoCall取得（status="waiting"）
+  // 待機中のVideoCall取得（ポーリング少なめ）
   const { data: waitingCalls = [] } = useQuery({
     queryKey: ["waiting-video-calls"],
-    queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 50),
-    refetchInterval: 30000, // 30秒ごとに更新
+    queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 20),
     staleTime: 30000,
+    gcTime: 60000,
+    refetchInterval: 60000,
   });
 
   // 待機中のチャンネルを取得（VideoCallのcallee_emailから）
   const { data: waitingChannels = [] } = useQuery({
-    queryKey: ["waiting-channels", waitingCalls],
+    queryKey: ["waiting-channels", waitingCalls.length],
     queryFn: async () => {
       if (waitingCalls.length === 0) return [];
-      const uniqueEmails = [...new Set(waitingCalls.map((c) => c.callee_email))];
+      const uniqueEmails = [...new Set(waitingCalls.map((c) => c.callee_email))].slice(0, 10);
       const channels = await Promise.all(
         uniqueEmails.map((email) =>
           base44.entities.Channel.filter({ owner_email: email }).then((r) => r[0])
@@ -59,6 +60,8 @@ export default function CallWaitingRow({ user }) {
       return channels.filter(Boolean);
     },
     enabled: waitingCalls.length > 0,
+    staleTime: 30000,
+    gcTime: 60000,
   });
 
   // 待機中のチャンネルと通常のチャンネルとフリートライアルをマージ（重複排除）
