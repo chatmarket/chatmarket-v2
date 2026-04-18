@@ -75,18 +75,18 @@ export default function AppLayout() {
 
   const isActive = (path) => path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  const SidebarContent = ({ onClose }) => (
+  const renderSidebar = (onCloseFn) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-border/50">
-        <Link to="/" onClick={onClose} className="flex items-center gap-2.5">
+        <Link to="/" onClick={onCloseFn} className="flex items-center gap-2.5">
           <img src={LOGO_URL} alt="ChatMarket" className="w-9 h-9 object-contain" />
           <span className="font-black text-lg tracking-tight">
             Chat<span className="text-primary">Market</span>
           </span>
         </Link>
-        {onClose && (
-          <Button variant="ghost" size="icon" className="ml-auto" onClick={onClose}>
+        {onCloseFn && (
+          <Button variant="ghost" size="icon" className="ml-auto" onClick={onCloseFn}>
             <X className="w-4 h-4" />
           </Button>
         )}
@@ -95,7 +95,7 @@ export default function AppLayout() {
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map(({ path, icon: Icon, label, showNew }) => (
-          <Link key={path} to={path} onClick={onClose}>
+          <Link key={path} to={path} onClick={onCloseFn}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
               isActive(path)
@@ -117,7 +117,7 @@ export default function AppLayout() {
               <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者メニュー</p>
             </div>
             {CREATOR_ITEMS.map(({ path, icon: Icon, label }) => (
-              <Link key={path} to={path} onClick={onClose}>
+              <Link key={path} to={path} onClick={onCloseFn}>
                 <div className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                   isActive(path)
@@ -136,7 +136,7 @@ export default function AppLayout() {
                   <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ スーパー管理者</p>
                 </div>
                 {ADMIN_NAV_ITEMS.map(({ path, icon: Icon, label }) => (
-                  <Link key={path} to={path} onClick={onClose}>
+                  <Link key={path} to={path} onClick={onCloseFn}>
                     <div className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                       isActive(path)
@@ -164,18 +164,18 @@ export default function AppLayout() {
                 <span className="text-xs text-yellow-400 font-bold">{wallet.balance || 0} コイン</span>
               </div>
             )}
-            <Link to="/my-channel" onClick={onClose}>
+            <Link to="/my-channel" onClick={onCloseFn}>
               <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground")}>
                 <User className="w-4 h-4 shrink-0" />マイチャンネル
               </div>
             </Link>
-            <Link to="/settings" onClick={onClose}>
+            <Link to="/settings" onClick={onCloseFn}>
               <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground")}>
                 <Settings className="w-4 h-4 shrink-0" />設定
               </div>
             </Link>
             {SUPER_ADMIN_EMAILS.includes(user.email) && (
-              <Link to="/admin/dashboard" onClick={onClose}>
+              <Link to="/admin/dashboard" onClick={onCloseFn}>
                 <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-400 hover:bg-purple-500/10 transition-all">
                   <BarChart3 className="w-4 h-4 shrink-0" />管理者
                 </div>
@@ -203,7 +203,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-60 shrink-0 flex-col fixed left-0 top-0 h-screen bg-sidebar border-r border-border/50 z-40">
-        <SidebarContent onClose={null} />
+        {renderSidebar(null)}
       </aside>
 
       {/* Mobile overlay sidebar */}
@@ -211,7 +211,7 @@ export default function AppLayout() {
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-72 bg-sidebar h-full shadow-2xl">
-            <SidebarContent onClose={() => setSidebarOpen(false)} />
+            {renderSidebar(() => setSidebarOpen(false))}
           </aside>
         </div>
       )}
