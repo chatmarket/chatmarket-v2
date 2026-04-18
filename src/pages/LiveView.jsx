@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,7 @@ import GiftRankingWidget from "../components/live/GiftRankingWidget";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
-import { Users, Radio, Lock, CreditCard, Zap } from "lucide-react";
+import { Users, Radio, Lock, CreditCard, Zap, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -165,6 +165,25 @@ export default function LiveView() {
     );
   }
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const playerContainerRef = useRef(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      playerContainerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
   const isPaid = stream.price > 0;
   const needsPayment = isPaid && !hasPurchased;
   // プレビュー中かどうか（30秒以内は見せる）
@@ -175,7 +194,7 @@ export default function LiveView() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-0 xl:gap-4 h-screen">
         {/* Stream Player */}
         <div className="space-y-3 sm:space-y-4 xl:col-span-3 flex flex-col overflow-y-auto p-3 sm:p-4 xl:p-6">
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+          <div ref={playerContainerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden">
             {showPaywall && !hasPurchased ? (
               /* ペイウォールオーバーレイ */
               <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
@@ -281,10 +300,17 @@ export default function LiveView() {
               </Link>
             )}
 
-            {/* Video controls */}
+            {/* Video controls + Fullscreen */}
             {stream.status === "live" && !needsPayment && (
-              <div className="absolute bottom-4 right-3">
+              <div className="absolute bottom-4 right-3 flex items-center gap-2">
                 <VideoControls videoRef={null} showQuality={true} />
+                <button
+                  onClick={toggleFullscreen}
+                  className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+                  title={isFullscreen ? "全画面解除" : "全画面表示"}
+                >
+                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </button>
               </div>
             )}
           </div>

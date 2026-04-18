@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Radio, MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Monitor, Settings, X, AlertTriangle, Zap, Copy, Check } from "lucide-react";
+import { Radio, MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Monitor, Settings, X, AlertTriangle, Zap, Copy, Check, Maximize, Minimize } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -54,8 +54,26 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [viewerCount, setViewerCount] = useState(0);
   const [copiedKey, setCopiedKey] = useState(false);
   const [rankupPopup, setRankupPopup] = useState(null); // { message, color }
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoContainerRef = useRef(null);
 
   const isLive = status === "live";
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      videoContainerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   // カメラをプレビューに表示
   useEffect(() => {
@@ -188,7 +206,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   return (
     <div className="w-full flex flex-col lg:flex-row gap-4 bg-zinc-950 rounded-xl overflow-hidden">
       {/* 左側: 映像プレビュー（大きく表示） */}
-      <div className="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800">
+      <div ref={videoContainerRef} className="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800">
         {/* 映像プレビュー (16:9) */}
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
         <video
@@ -262,13 +280,22 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           <p className="text-[11px] text-zinc-600 text-center">🔒 配信中はロックされています</p>
         )}
 
-        {/* 右: 配信終了 */}
-        <button
-          onClick={() => setShowEndConfirm(true)}
-          className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors shrink-0"
-        >
-          <PhoneOff className="w-3.5 h-3.5" /> 配信終了
-        </button>
+        {/* 右: 全画面 + 配信終了 */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+            title={isFullscreen ? "全画面解除" : "全画面表示"}
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setShowEndConfirm(true)}
+            className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors shrink-0"
+          >
+            <PhoneOff className="w-3.5 h-3.5" /> 配信終了
+          </button>
+        </div>
         </div>
 
         {/* IVSストリームキー表示（プレビュー中のみ・OBS用） */}
