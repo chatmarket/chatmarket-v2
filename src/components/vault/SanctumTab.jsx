@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Shield, Star, Crown, Gem, Sparkles, Lock } from "lucide-react";
+import { Shield, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 import SanctumTierCard from "./SanctumTierCard";
 
 const TIERS = [
@@ -59,10 +58,8 @@ function MemberBadge({ months, tier }) {
 }
 
 export default function SanctumTab({ channel, currentUser }) {
-  const queryClient = useQueryClient();
-  const [joining, setJoining] = useState(null);
+  const { data: subscription } = useQuery({  // eslint-disable-line
 
-  const { data: subscription } = useQuery({
     queryKey: ["sanctum-sub", channel?.id, currentUser?.email],
     queryFn: () =>
       base44.entities.PlanSubscription.filter({
@@ -80,29 +77,7 @@ export default function SanctumTab({ channel, currentUser }) {
     ? Math.floor((Date.now() - new Date(subscription.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))
     : 0;
 
-  const handleJoin = async (tier) => {
-    if (!currentUser) { base44.auth.redirectToLogin(); return; }
-    setJoining(tier.tier);
-    try {
-      // 既存サブスクをキャンセル
-      if (subscription) {
-        await base44.entities.PlanSubscription.update(subscription.id, { status: "cancelled" });
-      }
-      await base44.entities.PlanSubscription.create({
-        user_email: currentUser.email,
-        plan_id: `sanctum_${channel.id}`,
-        plan_name: `sanctum_${tier.tier}`,
-        status: "active",
-        start_date: new Date().toISOString(),
-      });
-      queryClient.invalidateQueries({ queryKey: ["sanctum-sub", channel?.id, currentUser?.email] });
-      toast.success(`${tier.tier.toUpperCase()} メンバーシップへようこそ！`);
-    } catch (err) {
-      toast.error("加入に失敗しました: " + err.message);
-    } finally {
-      setJoining(null);
-    }
-  };
+
 
   return (
     <div className="space-y-8">
@@ -143,9 +118,10 @@ export default function SanctumTab({ channel, currentUser }) {
           >
             <SanctumTierCard
               {...tier}
+              channelId={channel?.id}
               isCurrentTier={currentTierName === tier.tier}
-              onJoin={() => handleJoin(tier)}
-              disabled={joining !== null}
+              hasAnyTier={!!currentTierName}
+              disabled={false}
             />
           </motion.div>
         ))}

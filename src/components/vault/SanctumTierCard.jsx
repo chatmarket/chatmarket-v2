@@ -1,6 +1,6 @@
 import React from "react";
-import { Star, Crown, Gem, Check, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, Crown, Gem, Check } from "lucide-react";
+import FanclubSubscribeButton from "./FanclubSubscribeButton";
 
 const TIER_CONFIG = {
   standard: {
@@ -32,7 +32,7 @@ const TIER_CONFIG = {
   },
 };
 
-export default function SanctumTierCard({ tier, price, perks, isCurrentTier, onJoin, disabled }) {
+export default function SanctumTierCard({ tier, price, perks, isCurrentTier, hasAnyTier, channelId, disabled }) {
   const cfg = TIER_CONFIG[tier] || TIER_CONFIG.standard;
   const Icon = cfg.icon;
 
@@ -72,21 +72,13 @@ export default function SanctumTierCard({ tier, price, perks, isCurrentTier, onJ
           ))}
         </ul>
 
-        <Button
-          onClick={onJoin}
-          disabled={disabled || isCurrentTier}
-          className={`w-full font-bold ${
-            isCurrentTier
-              ? "bg-amber-500/20 text-amber-300 cursor-default"
-              : tier === "diamond"
-              ? "bg-amber-500 hover:bg-amber-400 text-black"
-              : tier === "premium"
-              ? "bg-blue-600 hover:bg-blue-500 text-white"
-              : "bg-zinc-600 hover:bg-zinc-500 text-white"
-          }`}
-        >
-          {isCurrentTier ? "✓ 加入中" : "加入する"}
-        </Button>
+        <FanclubSubscribeButton
+          tier={tier}
+          channelId={channelId}
+          isCurrentTier={isCurrentTier}
+          hasAnyTier={hasAnyTier}
+          disabled={disabled}
+        />
       </div>
     </div>
   );
