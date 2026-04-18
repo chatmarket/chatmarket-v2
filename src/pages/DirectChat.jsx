@@ -17,25 +17,18 @@ function makeThreadId(emailA, emailB) {
 function formatTime(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  const now = new Date();
-  const today = new Date(now.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }));
-  const msgDate = new Date(d.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }));
-  
-  // 同じ日付なら時刻のみ、異なる場合は日付も含める
-  if (today.toDateString() === msgDate.toDateString()) {
-    return d.toLocaleTimeString("ja-JP", { 
-      hour: "2-digit", 
-      minute: "2-digit",
-      timeZone: "Asia/Tokyo"
-    });
+  const JST = { timeZone: "Asia/Tokyo" };
+
+  // 日本時間での今日の日付文字列（YYYY/M/D形式）
+  const todayJST = new Date().toLocaleDateString("ja-JP", JST);
+  const msgDayJST = d.toLocaleDateString("ja-JP", JST);
+
+  if (todayJST === msgDayJST) {
+    // 同日：時刻のみ（HH:MM）
+    return d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", ...JST });
   } else {
-    return d.toLocaleString("ja-JP", {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Asia/Tokyo"
-    });
+    // 別日：月/日 HH:MM
+    return d.toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", ...JST });
   }
 }
 
