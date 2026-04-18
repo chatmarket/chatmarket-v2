@@ -1,13 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Radio, Volume2, VolumeX, Wifi, WifiOff, Settings } from "lucide-react";
-import { toast } from "sonner";
+import { Radio, Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
 
-// 価格帯→解放画質マップ
+// 価格帯 → 画質定義
 const QUALITY_OPTIONS = [
-  { label: "SD", value: "480p", minPrice: 0, color: "text-zinc-400", desc: "480p" },
-  { label: "HD", value: "720p", minPrice: 55, color: "text-blue-400", desc: "720p" },
-  { label: "FHD", value: "1080p", minPrice: 150, color: "text-yellow-400", desc: "1080p" },
+  { label: "SD", value: "480p", minPrice: 0,   color: "text-zinc-300", badgeColor: "bg-zinc-600",    desc: "480p / 標準画質" },
+  { label: "HD", value: "720p", minPrice: 55,  color: "text-blue-300", badgeColor: "bg-blue-600",    desc: "720p / 高画質" },
+  { label: "FHD",value: "1080p",minPrice: 150, color: "text-yellow-300",badgeColor:"bg-yellow-500",  desc: "1080p / フルHD" },
 ];
+
+// 価格から「デフォルト（最高）画質」を決定
+function getDefaultQuality(price) {
+  const available = QUALITY_OPTIONS.filter(q => price >= q.minPrice);
+  return available[available.length - 1]?.value ?? "480p";
+}
+
+// アップグレード誘導メッセージ
+function getUpsellMessage(price) {
+  if (price < 55)  return "高画質（HD以上）は55円以上の配信で体験できます ✨";
+  if (price < 150) return "最高画質（FHD）は150円以上の配信でご利用いただけます 🌟";
+  return null;
+}
 
 export default function ViewerStream({ streamId, stream }) {
   const videoRef = useRef(null);
@@ -15,19 +27,25 @@ export default function ViewerStream({ streamId, stream }) {
   const [ready, setReady] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState(null);
-  const [quality, setQuality] = useState(null); // "good" | "poor" | null
+  const [connQuality, setConnQuality] = useState(null); // "good" | "poor"
   const [showQualityMenu, setShowQualityMenu] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState("auto");
 
-  // 価格から解放可能な画質を判定
   const streamPrice = stream?.price || 0;
   const availableQualities = QUALITY_OPTIONS.filter(q => streamPrice >= q.minPrice);
+  const defaultQuality = getDefaultQuality(streamPrice);
+  const upsellMsg = getUpsellMessage(streamPrice);
+
+  const [selectedQuality, setSelectedQuality] = useState(defaultQuality);
+
+  // 価格が変わったらデフォルト画質をリセット
+  useEffect(() => {
+    setSelectedQuality(getDefaultQuality(streamPrice));
+  }, [streamPrice]);
 
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
   const isWebRTC = stream?.stream_type === "webrtc";
 
   useEffect(() => {
-    // WebRTC の場合はスキップ（Amazon IVS で別途処理）
     if (isWebRTC) return;
     if (!playbackUrl || stream?.status !== "live") return;
 
@@ -35,13 +53,8 @@ export default function ViewerStream({ streamId, stream }) {
 
     (async () => {
       try {
-        // Amazon IVS Player SDK (loaded from CDN script in index.html or dynamic import)
         const { create, isPlayerSupported } = await import("amazon-ivs-player");
-
-        if (!isPlayerSupported) {
-          setError("このブラウザはIVS Playerに対応していません");
-          return;
-        }
+        if (!isPlayerSupported) { setError("このブラウザはIVS Playerに対応していません"); return; }
 
         const { PlayerState, PlayerEventType } = await import("amazon-ivs-player");
 
@@ -55,13 +68,12 @@ export default function ViewerStream({ streamId, stream }) {
 
         player.addEventListener(PlayerEventType.STATE_CHANGED, (state) => {
           if (!isMounted) return;
-          if (state === PlayerState.PLAYING) { setReady(true); setQuality("good"); }
-          if (state === PlayerState.BUFFERING) setQuality("poor");
+          if (state === PlayerState.PLAYING) { setReady(true); setConnQuality("good"); }
+          if (state === PlayerState.BUFFERING) setConnQuality("poor");
         });
 
-        player.addEventListener(PlayerEventType.ERROR, (err) => {
+        player.addEventListener(PlayerEventType.ERROR, () => {
           if (!isMounted) return;
-          console.error("IVS Player error:", err);
           setError("映像の読み込みに失敗しました。再試行してください。");
         });
 
@@ -82,10 +94,12 @@ export default function ViewerStream({ streamId, stream }) {
     };
   }, [playbackUrl, stream?.status]);
 
-  // ミュート同期
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted]);
+
+  // 現在選択中の画質オブジェクト
+  const currentQ = QUALITY_OPTIONS.find(q => q.value === selectedQuality) ?? QUALITY_OPTIONS[0];
 
   return (
     <div className="relative w-full h-full bg-black">
@@ -104,17 +118,16 @@ export default function ViewerStream({ streamId, stream }) {
           <p className="text-lg font-semibold text-white">
             {stream?.status === "live" ? "接続中..." : "配信者の接続を待っています..."}
           </p>
-          <p className="text-sm text-white/50">{isWebRTC ? "Amazon IVS WebRTC ストリーミング" : "Amazon IVS 超低遅延ストリーミング"}</p>
+          <p className="text-sm text-white/50">
+            {isWebRTC ? "Amazon IVS WebRTC ストリーミング" : "Amazon IVS 超低遅延ストリーミング"}
+          </p>
         </div>
       )}
 
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
           <p className="text-red-400 font-bold">{error}</p>
-          <button
-            onClick={() => { setError(null); setReady(false); }}
-            className="text-sm text-white/60 underline"
-          >
+          <button onClick={() => { setError(null); setReady(false); }} className="text-sm text-white/60 underline">
             再試行
           </button>
         </div>
@@ -122,47 +135,90 @@ export default function ViewerStream({ streamId, stream }) {
 
       {ready && (
         <div className="absolute bottom-4 right-4 flex items-center gap-2">
-          {/* 接続品質インジケーター */}
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${quality === "poor" ? "bg-yellow-500/80 text-black" : "bg-black/50 text-green-400"}`}>
-            {quality === "poor" ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
-            {quality === "poor" ? "低品質" : "良好"}
+          {/* 接続品質 */}
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${connQuality === "poor" ? "bg-yellow-500/80 text-black" : "bg-black/50 text-green-400"}`}>
+            {connQuality === "poor" ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+            {connQuality === "poor" ? "低品質" : "良好"}
           </div>
 
           {/* 画質選択ボタン */}
           <div className="relative">
             <button
               onClick={() => setShowQualityMenu(v => !v)}
-              className="flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-bold hover:bg-black/80 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-xs font-bold hover:bg-black/90 transition-colors border border-white/10"
             >
               <Settings className="w-3 h-3" />
-              {selectedQuality === "auto" ? "自動" : selectedQuality}
+              <span className={currentQ.color}>{currentQ.label}</span>
             </button>
+
             {showQualityMenu && (
-              <div className="absolute bottom-8 right-0 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl py-1 min-w-[130px] z-50">
-                <button
-                  onClick={() => { setSelectedQuality("auto"); setShowQualityMenu(false); }}
-                  className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors ${selectedQuality === "auto" ? "text-primary" : "text-white hover:bg-zinc-800"}`}
-                >
-                  自動（推奨）
-                </button>
-                {QUALITY_OPTIONS.map(q => {
-                  const unlocked = streamPrice >= q.minPrice;
-                  return (
-                    <button
-                      key={q.value}
-                      onClick={() => { if (unlocked) { setSelectedQuality(q.value); setShowQualityMenu(false); } }}
-                      disabled={!unlocked}
-                      className={`w-full text-left px-3 py-2 text-xs transition-colors ${
-                        selectedQuality === q.value ? "text-primary font-black" :
-                        unlocked ? "text-white hover:bg-zinc-800" : "text-zinc-600 cursor-not-allowed"
-                      }`}
-                    >
-                      <span className={`font-bold ${q.color}`}>{q.label}</span>
-                      <span className="text-zinc-500 ml-1">{q.desc}</span>
-                      {!unlocked && <span className="text-zinc-600 ml-1 text-[10px]">🔒{q.minPrice}円〜</span>}
-                    </button>
-                  );
-                })}
+              <div className="absolute bottom-9 right-0 bg-zinc-950 border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden z-50 w-64">
+                {/* ヘッダー */}
+                <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-900">
+                  <p className="text-xs font-black text-white">画質設定</p>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">
+                    現在の配信価格: <span className="text-primary font-bold">¥{streamPrice}</span>
+                  </p>
+                </div>
+
+                {/* アップグレード誘導 */}
+                {upsellMsg && (
+                  <div className="px-4 py-2.5 bg-primary/10 border-b border-zinc-800 flex items-start gap-2">
+                    <ChevronRight className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-primary leading-relaxed">{upsellMsg}</p>
+                  </div>
+                )}
+
+                {/* 画質選択肢 */}
+                <div className="py-1">
+                  {QUALITY_OPTIONS.map(q => {
+                    const unlocked = streamPrice >= q.minPrice;
+                    const isSelected = selectedQuality === q.value;
+                    return (
+                      <button
+                        key={q.value}
+                        onClick={() => {
+                          if (!unlocked) return;
+                          setSelectedQuality(q.value);
+                          setShowQualityMenu(false);
+                        }}
+                        disabled={!unlocked}
+                        className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
+                          isSelected ? "bg-primary/15" :
+                          unlocked ? "hover:bg-zinc-800" : "opacity-40 cursor-not-allowed"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          {/* バッジ */}
+                          <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${q.badgeColor} text-white`}>
+                            {q.label}
+                          </span>
+                          <div className="text-left">
+                            <p className={`text-xs font-bold ${isSelected ? "text-primary" : unlocked ? "text-white" : "text-zinc-600"}`}>
+                              {q.desc}
+                            </p>
+                            <p className="text-[10px] text-zinc-500">
+                              {q.minPrice === 0 ? "すべての配信で利用可能" : `¥${q.minPrice}以上の配信`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0">
+                          {isSelected && <span className="text-primary text-xs font-black">✓</span>}
+                          {!unlocked && <Lock className="w-3.5 h-3.5 text-zinc-600" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* SD固定の場合のメッセージ */}
+                {availableQualities.length === 1 && (
+                  <div className="px-4 py-2.5 bg-zinc-900 border-t border-zinc-800">
+                    <p className="text-[10px] text-zinc-500 text-center">
+                      この価格帯ではSD画質となります
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
