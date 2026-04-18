@@ -91,15 +91,48 @@ export default function Navbar() {
                料金プラン
              </Button>
            </Link>
-          <Link to="/blog" className="relative">
-            <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
-              <BookOpen className="w-3.5 h-3.5" />
-              運営ブログ
-            </Button>
-            {hasNewBlog && (
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <div className="relative group">
+            <Link to="/blog">
+              <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
+                <BookOpen className="w-3.5 h-3.5" />
+                運営ブログ
+                {hasNewBlog && (
+                  <span className="ml-0.5 text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">NEW</span>
+                )}
+              </Button>
+            </Link>
+            {/* 新着プレビュードロップダウン */}
+            {blogPosts.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-72 bg-card border border-border/60 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+                <div className="px-3 py-2 border-b border-border/50">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">最新記事</p>
+                </div>
+                {blogPosts.slice(0, 3).map((post) => (
+                  <Link to={`/blog/${post.id}`} key={post.id}>
+                    <div className="px-3 py-2.5 hover:bg-secondary/60 transition-colors flex items-start gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate">{post.title}</p>
+                        {post.published_at && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {new Date(post.published_at).toLocaleDateString("ja-JP")}
+                          </p>
+                        )}
+                      </div>
+                      {post.published_at && new Date(post.published_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                        <span className="shrink-0 text-[8px] bg-red-500 text-white px-1 py-0.5 rounded font-black">NEW</span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+                <Link to="/blog">
+                  <div className="px-3 py-2 border-t border-border/50 text-center text-[10px] text-primary hover:text-primary/80 font-bold transition-colors">
+                    すべての記事を見る →
+                  </div>
+                </Link>
+              </div>
             )}
-          </Link>
+          </div>
         </div>
 
         {/* Actions */}
