@@ -32,11 +32,20 @@ export default function Home() {
   const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [renderDelay, setRenderDelay] = useState({ ranking: false, call: false, million: false });
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
+  }, []);
+
+  // セクションの遅延ロード（2秒後）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRenderDelay({ ranking: true, call: true, million: true });
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   const { data: videos = [] } = useQuery({
@@ -267,9 +276,11 @@ export default function Home() {
       </div>
 
       {/* 1on1 待機中 */}
-      <section className="px-0">
-        <CallWaitingRow user={user} />
-      </section>
+      {renderDelay.call && (
+        <section className="px-0">
+          <CallWaitingRow user={user} />
+        </section>
+      )}
 
       {/* ライブ配信中 */}
        {liveStreams.length > 0 && (
@@ -408,10 +419,10 @@ export default function Home() {
       )}
 
       {/* クリエイターランキング */}
-      <CreatorRanking />
+      {renderDelay.ranking && <CreatorRanking />}
 
       {/* ミリオネア・サポーター */}
-      <MillionaireSupporters />
+      {renderDelay.million && <MillionaireSupporters />}
 
       {/* 空の状態 */}
        {isEmpty && (
