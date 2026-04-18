@@ -2,22 +2,13 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Globe, Users, Eye, TrendingUp, MapPin, Calendar, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Globe, Users, Eye, TrendingUp, Calendar } from "lucide-react";
 
 const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com", "unei@chatmarket.info"];
 
-// 日本の都道府県（簡易版 — 実装の為のダミー）
-const REGIONS = [
-  "東京", "大阪", "愛知", "福岡", "京都", "埼玉", "神奈川", "兵庫", "その他"
-];
-
 export default function AdminAnalytics() {
   const [user, setUser] = useState(null);
-  const [period, setPeriod] = useState("week"); // week, month, year
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -25,7 +16,6 @@ export default function AdminAnalytics() {
         base44.auth.me().then((u) => {
           setUser(u);
           if (!SUPER_ADMIN_EMAILS.includes(u.email)) {
-            // リダイレクトまたはエラー表示
             window.location.href = "/";
           }
         });
@@ -35,42 +25,37 @@ export default function AdminAnalytics() {
     });
   }, []);
 
-  // ビデオアクセス数
   const { data: videos = [] } = useQuery({
     queryKey: ["admin-analytics-videos"],
     queryFn: () => base44.entities.Video.list("-view_count", 100),
     enabled: !!user,
   });
 
-  // ライブストリーム統計
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["admin-analytics-streams"],
-    queryFn: () => base44.entities.LiveStream.filter({ status: "ended" }, "-live_ended_at", 50),
+    queryFn: () => base44.entities.LiveStream.filter({ status: "ended" }, "-live_ended_at", 200),
     enabled: !!user,
   });
 
-  // 購入レコード
   const { data: purchases = [] } = useQuery({
     queryKey: ["admin-analytics-purchases"],
-    queryFn: () => base44.entities.Purchase.list("-created_date", 200),
+    queryFn: () => base44.entities.Purchase.list("-created_date", 500),
     enabled: !!user,
   });
 
-  // ユーザー統計
   const { data: users = [] } = useQuery({
     queryKey: ["admin-analytics-users"],
-    queryFn: () => base44.entities.User.list("-created_date", 100),
+    queryFn: () => base44.entities.User.list("-created_date", 500),
     enabled: !!user,
   });
 
-  // チャンネル統計
   const { data: channels = [] } = useQuery({
     queryKey: ["admin-analytics-channels"],
     queryFn: () => base44.entities.Channel.list("-subscriber_count", 100),
     enabled: !!user,
   });
 
-  // データ処理
+  // KPI集計（実データのみ）
   const totalVideoViews = videos.reduce((sum, v) => sum + (v.view_count || 0), 0);
   const totalPurchases = purchases.length;
   const totalPurchaseAmount = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -79,30 +64,42 @@ export default function AdminAnalytics() {
   const totalUsers = users.length;
   const totalCreators = channels.length;
 
-  // 地域別ビューアー数（ダミー）
-  const regionData = REGIONS.map((region) => ({
-    name: region,
-    viewers: Math.floor(Math.random() * 50000) + 5000,
-  }));
+  // 日別購入数（実データから集計）
+  const purchaseByDay = purchases.reduce((acc, p) => {
+    if (!p.created_date) return acc;
+    const d = new Date(p.created_date);
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
-  // 日別アクセス数（過去7日 — ダミー）
-  const dailyData = Array.from({ length: 7 }, (_, i) => {
+  // 過去30日のみ表示
+  const dailyPurchaseData = Array.from({ length: 30 }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return {
-      date: d.toLocaleDateString("ja-JP", { month: "short", day: "numeric" }),
-      views: Math.floor(Math.random() * 100000) + 10000,
-      purchases: Math.floor(Math.random() * 500) + 50,
-    };
+    d.setDate(d.getDate() - (29 - i));
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    return { date: key, purchases: purchaseByDay[key] || 0 };
   });
 
-  // トップビデオ
+  // 日別ユーザー登録数（実データから集計）
+  const userByDay = users.reduce((acc, u) => {
+    if (!u.created_date) return acc;
+    const d = new Date(u.created_date);
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const dailyUserData = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    return { date: key, registrations: userByDay[key] || 0 };
+  });
+
+  // トップビデオ・クリエイター
   const topVideos = videos.slice(0, 5);
-
-  // トップクリエイター
   const topCreators = channels.slice(0, 5);
-
-  const COLORS = ["#00ff9d", "#00d4ff", "#f59e0b", "#ef4444", "#a855f7", "#ec4899"];
 
   if (!user || !SUPER_ADMIN_EMAILS.includes(user.email)) {
     return (
@@ -114,25 +111,13 @@ export default function AdminAnalytics() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-full overflow-x-hidden">
-      {/* ===== ヘッダー ===== */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black">📊 プラットフォーム分析</h1>
-          <p className="text-sm text-muted-foreground mt-1">リアルタイム統計とインサイト</p>
-        </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40 bg-secondary border-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="week">過去7日間</SelectItem>
-            <SelectItem value="month">過去30日間</SelectItem>
-            <SelectItem value="year">過去1年</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* ヘッダー */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-black">📊 プラットフォーム分析</h1>
+        <p className="text-sm text-muted-foreground mt-1">実稼働データのみ表示（過去30日）</p>
       </div>
 
-      {/* ===== KPI カード ===== */}
+      {/* KPIカード */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: "総ビデオ再生数", value: totalVideoViews.toLocaleString(), icon: Eye, color: "text-blue-400" },
@@ -140,7 +125,7 @@ export default function AdminAnalytics() {
           { label: "登録クリエイター数", value: totalCreators.toLocaleString(), icon: Globe, color: "text-primary" },
           { label: "総購入数", value: totalPurchases.toLocaleString(), icon: TrendingUp, color: "text-yellow-400" },
           { label: "購入総額（¥）", value: `¥${totalPurchaseAmount.toLocaleString()}`, icon: TrendingUp, color: "text-amber-400" },
-          { label: "ライブ配信数", value: totalLiveStreams.toLocaleString(), icon: Globe, color: "text-red-400" },
+          { label: "ライブ配信数（終了済）", value: totalLiveStreams.toLocaleString(), icon: Globe, color: "text-red-400" },
         ].map((kpi, i) => {
           const Icon = kpi.icon;
           return (
@@ -157,98 +142,60 @@ export default function AdminAnalytics() {
         })}
       </div>
 
-      {/* ===== グラフ類 ===== */}
+      {/* グラフ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 日別アクセス数 */}
+        {/* 日別購入数 */}
         <Card className="bg-card border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Calendar className="w-5 h-5 text-primary" />
-              日別アクセス数
+              日別購入数（過去30日）
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="date" stroke="#888" style={{ fontSize: "12px" }} />
-                <YAxis stroke="#888" style={{ fontSize: "12px" }} />
-                <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00ff9d" }} />
-                <Legend />
-                <Line type="monotone" dataKey="views" stroke="#00ff9d" strokeWidth={2} dot={false} name="再生数" />
-              </LineChart>
-            </ResponsiveContainer>
+            {totalPurchases === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-12">購入データなし</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailyPurchaseData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="date" stroke="#888" style={{ fontSize: "10px" }} tick={false} />
+                  <YAxis stroke="#888" style={{ fontSize: "12px" }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00ff9d" }} />
+                  <Bar dataKey="purchases" fill="#f59e0b" radius={4} name="購入数" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* 地域別ビューアー分布 */}
-        <Card className="bg-card border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <MapPin className="w-5 h-5 text-primary" />
-              地域別ビューアー分布
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={regionData} cx="50%" cy="50%" labelLine={false} label={({ name }) => name} outerRadius={100} fill="#8884d8" dataKey="viewers">
-                  {regionData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00ff9d" }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* 購入トレンド */}
-        <Card className="bg-card border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              日別購入数
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="date" stroke="#888" style={{ fontSize: "12px" }} />
-                <YAxis stroke="#888" style={{ fontSize: "12px" }} />
-                <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00ff9d" }} />
-                <Legend />
-                <Bar dataKey="purchases" fill="#f59e0b" radius={4} name="購入数" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* ユーザー登録トレンド */}
+        {/* 日別ユーザー登録数 */}
         <Card className="bg-card border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Users className="w-5 h-5 text-primary" />
-              ユーザー登録数（日別）
+              日別ユーザー登録数（過去30日）
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="date" stroke="#888" style={{ fontSize: "12px" }} />
-                <YAxis stroke="#888" style={{ fontSize: "12px" }} />
-                <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00ff9d" }} />
-                <Legend />
-                <Bar dataKey="views" fill="#00d4ff" radius={4} name="登録数" />
-              </BarChart>
-            </ResponsiveContainer>
+            {totalUsers === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-12">登録データなし</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailyUserData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="date" stroke="#888" style={{ fontSize: "10px" }} tick={false} />
+                  <YAxis stroke="#888" style={{ fontSize: "12px" }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00ff9d" }} />
+                  <Bar dataKey="registrations" fill="#00d4ff" radius={4} name="登録数" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ===== トップコンテンツ ===== */}
+      {/* トップコンテンツ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* トップビデオ */}
         <Card className="bg-card border-border/50">
@@ -265,7 +212,7 @@ export default function AdminAnalytics() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-semibold truncate">{video.title}</p>
-                      <p className="text-[10px] text-muted-foreground">チャンネル: {video.channel_name}</p>
+                      <p className="text-[10px] text-muted-foreground">{video.channel_name}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs font-black text-primary">{video.view_count?.toLocaleString() || 0}</p>
@@ -311,7 +258,7 @@ export default function AdminAnalytics() {
         </Card>
       </div>
 
-      {/* ===== サマリー ===== */}
+      {/* サマリー */}
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
         <CardHeader>
           <CardTitle className="text-lg">📈 プラットフォーム総括</CardTitle>
