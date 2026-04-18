@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Globe, Users, Eye, TrendingUp, Calendar } from "lucide-react";
+import { Globe, Users, Eye, TrendingUp, Calendar, Activity, MessageSquare, Video, Radio, Coins } from "lucide-react";
 
 const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com", "unei@chatmarket.info"];
 
@@ -55,6 +55,36 @@ export default function AdminAnalytics() {
     enabled: !!user,
   });
 
+  const { data: watchHistory = [] } = useQuery({
+    queryKey: ["admin-analytics-watch-history"],
+    queryFn: () => base44.entities.WatchHistory.list("-created_date", 1000),
+    enabled: !!user,
+  });
+
+  const { data: comments = [] } = useQuery({
+    queryKey: ["admin-analytics-comments"],
+    queryFn: () => base44.entities.Comment.list("-created_date", 500),
+    enabled: !!user,
+  });
+
+  const { data: videoCalls = [] } = useQuery({
+    queryKey: ["admin-analytics-video-calls"],
+    queryFn: () => base44.entities.VideoCall.list("-created_date", 500),
+    enabled: !!user,
+  });
+
+  const { data: superChats = [] } = useQuery({
+    queryKey: ["admin-analytics-superchats"],
+    queryFn: () => base44.entities.SuperChat.list("-created_date", 500),
+    enabled: !!user,
+  });
+
+  const { data: allLiveStreams = [] } = useQuery({
+    queryKey: ["admin-analytics-all-streams"],
+    queryFn: () => base44.entities.LiveStream.list("-created_date", 500),
+    enabled: !!user,
+  });
+
   // KPI集計（実データのみ）
   const totalVideoViews = videos.reduce((sum, v) => sum + (v.view_count || 0), 0);
   const totalPurchases = purchases.length;
@@ -63,6 +93,39 @@ export default function AdminAnalytics() {
   const totalLiveRevenue = liveStreams.reduce((sum, s) => sum + (s.revenue_coins || 0), 0);
   const totalUsers = users.length;
   const totalCreators = channels.length;
+
+  // アクセス・エンゲージメント指標
+  const totalPageViews = watchHistory.length; // 動画視聴アクセス数
+  const totalComments = comments.length;
+  const totalVideoCalls = videoCalls.length;
+  const completedCalls = videoCalls.filter(c => c.status === "ended").length;
+  const totalSuperChatAmount = superChats.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const totalLiveSessions = allLiveStreams.length;
+
+  // 過去30日アクセス数（WatchHistory）
+  const viewsByDay = watchHistory.reduce((acc, w) => {
+    if (!w.created_date) return acc;
+    const d = new Date(w.created_date);
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const dailyViewData = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    return { date: key, views: viewsByDay[key] || 0 };
+  });
+
+  // 過去30日コメント数
+  const commentsByDay = comments.reduce((acc, c) => {
+    if (!c.created_date) return acc;
+    const d = new Date(c.created_date);
+    const key = d.toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" });
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
   // 日別購入数（実データから集計）
   const purchaseByDay = purchases.reduce((acc, p) => {
@@ -117,15 +180,45 @@ export default function AdminAnalytics() {
         <p className="text-sm text-muted-foreground mt-1">実稼働データのみ表示（過去30日）</p>
       </div>
 
-      {/* KPIカード */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* アクセス・エンゲージメントKPI */}
+      <div>
+        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3">📡 アクセス・エンゲージメント</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[
+            { label: "動画視聴アクセス数", value: totalPageViews.toLocaleString(), icon: Activity, color: "text-cyan-400", sub: "WatchHistory累計" },
+            { label: "総ビデオ再生数", value: totalVideoViews.toLocaleString(), icon: Eye, color: "text-blue-400", sub: "view_count合計" },
+            { label: "コメント総数", value: totalComments.toLocaleString(), icon: MessageSquare, color: "text-purple-400", sub: "全コメント" },
+            { label: "ライブ配信総数", value: totalLiveSessions.toLocaleString(), icon: Radio, color: "text-red-400", sub: "全ステータス" },
+            { label: "ビデオ通話総数", value: totalVideoCalls.toLocaleString(), icon: Video, color: "text-orange-400", sub: `完了: ${completedCalls}件` },
+            { label: "スパチャ総額（¥）", value: `¥${totalSuperChatAmount.toLocaleString()}`, icon: Coins, color: "text-yellow-400", sub: "エールコイン換算" },
+            { label: "総ユーザー数", value: totalUsers.toLocaleString(), icon: Users, color: "text-green-400", sub: "登録ユーザー" },
+            { label: "クリエイター数", value: totalCreators.toLocaleString(), icon: Globe, color: "text-primary", sub: "チャンネル登録" },
+          ].map((kpi, i) => {
+            const Icon = kpi.icon;
+            return (
+              <Card key={i} className="bg-card border-border/50 hover:border-primary/30 transition-all">
+                <CardContent className="p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-muted-foreground font-semibold">{kpi.label}</p>
+                    <Icon className={`w-4 h-4 ${kpi.color}`} />
+                  </div>
+                  <p className="text-xl font-black">{kpi.value}</p>
+                  <p className="text-[10px] text-muted-foreground">{kpi.sub}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 収益KPI */}
+      <div>
+        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3">💰 収益・購入</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          { label: "総ビデオ再生数", value: totalVideoViews.toLocaleString(), icon: Eye, color: "text-blue-400" },
-          { label: "総ユーザー数", value: totalUsers.toLocaleString(), icon: Users, color: "text-green-400" },
-          { label: "登録クリエイター数", value: totalCreators.toLocaleString(), icon: Globe, color: "text-primary" },
           { label: "総購入数", value: totalPurchases.toLocaleString(), icon: TrendingUp, color: "text-yellow-400" },
           { label: "購入総額（¥）", value: `¥${totalPurchaseAmount.toLocaleString()}`, icon: TrendingUp, color: "text-amber-400" },
-          { label: "ライブ配信数（終了済）", value: totalLiveStreams.toLocaleString(), icon: Globe, color: "text-red-400" },
+          { label: "ライブ配信収益（コイン）", value: totalLiveRevenue.toLocaleString(), icon: Coins, color: "text-red-400" },
         ].map((kpi, i) => {
           const Icon = kpi.icon;
           return (
@@ -140,7 +233,33 @@ export default function AdminAnalytics() {
             </Card>
           );
         })}
+        </div>
       </div>
+
+      {/* アクセス数グラフ */}
+      <Card className="bg-card border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Activity className="w-5 h-5 text-cyan-400" />
+            日別動画視聴アクセス数（過去30日）
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {totalPageViews === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-12">アクセスデータなし</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={dailyViewData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="date" stroke="#888" style={{ fontSize: "10px" }} tick={false} />
+                <YAxis stroke="#888" style={{ fontSize: "12px" }} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #00d4ff" }} />
+                <Bar dataKey="views" fill="#00d4ff" radius={4} name="視聴アクセス数" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* グラフ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -263,27 +382,15 @@ export default function AdminAnalytics() {
         <CardHeader>
           <CardTitle className="text-lg">📈 プラットフォーム総括</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>
-            <span className="font-semibold text-foreground">総ビデオ再生数:</span>{" "}
-            <span className="text-primary font-bold">{totalVideoViews.toLocaleString()}</span>
-          </p>
-          <p>
-            <span className="font-semibold text-foreground">平均購入額:</span>{" "}
-            <span className="text-primary font-bold">
-              ¥{totalPurchases > 0 ? Math.round(totalPurchaseAmount / totalPurchases).toLocaleString() : 0}
-            </span>
-          </p>
-          <p>
-            <span className="font-semibold text-foreground">ユーザーあたり平均購入数:</span>{" "}
-            <span className="text-primary font-bold">
-              {totalUsers > 0 ? (totalPurchases / totalUsers).toFixed(2) : 0}
-            </span>
-          </p>
-          <p>
-            <span className="font-semibold text-foreground">ライブ配信総収益（コイン）:</span>{" "}
-            <span className="text-primary font-bold">{totalLiveRevenue.toLocaleString()}</span>
-          </p>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+          <p><span className="font-semibold text-foreground">動画視聴アクセス数:</span>{" "}<span className="text-cyan-400 font-bold">{totalPageViews.toLocaleString()}</span></p>
+          <p><span className="font-semibold text-foreground">総ビデオ再生数:</span>{" "}<span className="text-primary font-bold">{totalVideoViews.toLocaleString()}</span></p>
+          <p><span className="font-semibold text-foreground">コメント総数:</span>{" "}<span className="text-purple-400 font-bold">{totalComments.toLocaleString()}</span></p>
+          <p><span className="font-semibold text-foreground">ビデオ通話総数:</span>{" "}<span className="text-orange-400 font-bold">{totalVideoCalls.toLocaleString()}件（完了: {completedCalls}件）</span></p>
+          <p><span className="font-semibold text-foreground">スパチャ総額:</span>{" "}<span className="text-yellow-400 font-bold">¥{totalSuperChatAmount.toLocaleString()}</span></p>
+          <p><span className="font-semibold text-foreground">ライブ配信総収益（コイン）:</span>{" "}<span className="text-red-400 font-bold">{totalLiveRevenue.toLocaleString()}</span></p>
+          <p><span className="font-semibold text-foreground">平均購入額:</span>{" "}<span className="text-primary font-bold">¥{totalPurchases > 0 ? Math.round(totalPurchaseAmount / totalPurchases).toLocaleString() : 0}</span></p>
+          <p><span className="font-semibold text-foreground">ユーザーあたり平均購入数:</span>{" "}<span className="text-primary font-bold">{totalUsers > 0 ? (totalPurchases / totalUsers).toFixed(2) : 0}</span></p>
         </CardContent>
       </Card>
     </div>
