@@ -60,20 +60,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const isLive = status === "live";
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      videoContainerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+    setIsFullscreen((prev) => !prev);
   };
-
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
 
   // カメラをプレビューに表示
   useEffect(() => {
@@ -206,7 +194,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   return (
     <div className="w-full flex flex-col lg:flex-row gap-4 bg-zinc-950 rounded-xl overflow-hidden">
       {/* 左側: 映像プレビュー（大きく表示） */}
-      <div ref={videoContainerRef} className="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800">
+      <div
+        ref={videoContainerRef}
+        className="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800"
+        style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
+      >
         {/* 映像プレビュー (16:9) */}
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
         <video

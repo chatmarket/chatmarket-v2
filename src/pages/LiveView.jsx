@@ -124,20 +124,8 @@ export default function LiveView() {
   const playerContainerRef = useRef(null);
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      playerContainerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+    setIsFullscreen((prev) => !prev);
   };
-
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
 
   // id が未定義の場合は loader を表示
   if (!id) {
@@ -194,7 +182,9 @@ export default function LiveView() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-0 xl:gap-4 h-screen">
         {/* Stream Player */}
         <div className="space-y-3 sm:space-y-4 xl:col-span-3 flex flex-col overflow-y-auto p-3 sm:p-4 xl:p-6">
-          <div ref={playerContainerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden">
+          <div ref={playerContainerRef} className={`relative bg-black rounded-xl overflow-hidden ${isFullscreen ? "aspect-video" : "aspect-video"}`}
+            style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
+          >
             {showPaywall && !hasPurchased ? (
               /* ペイウォールオーバーレイ */
               <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
