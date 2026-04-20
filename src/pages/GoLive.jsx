@@ -253,14 +253,13 @@ export default function GoLive() {
   const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 15);
   const livePriceError = mode === MODE_LIVE && form.price < liveMinPrice;
 
-  // 価格から実効画質を導出
-  const pricePerBlock = Math.floor(form.price / Math.ceil(form.duration / 15));
+  // 価格から実効画質を導出（総価格で判定）
   const getQualityForPrice = (price) => {
     if (price >= 150) return "1080p";
     if (price >= 55)  return "720p";
     return "480p";
   };
-  const effectiveQuality = getQualityForPrice(pricePerBlock);
+  const effectiveQuality = getQualityForPrice(form.price);
 
   const qualityOptions = [
     { label: "SD 480p", value: "480p",  minPrice: 15,  desc: "低コスト・入門向け" },
