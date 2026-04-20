@@ -7,6 +7,7 @@ import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
 import RadioModeToggle from "./RadioModeToggle";
+import MicLevelMeter from "./MicLevelMeter";
 
 // amazon-ivs-web-broadcast is loaded via CDN script tag approach via dynamic import
 let IVSBroadcastClient = null;
@@ -314,19 +315,25 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
         {/* コントロールバー */}
         <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
-        {/* 左: マイク/カメラ/設定 */}
-        <div className={`flex gap-2 ${isLive && !isRadioMode ? "opacity-30 pointer-events-none select-none" : ""}`}>
-          <CtrlBtn
-            icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-            onClick={toggleMic}
-            danger={!micOn}
-          />
-          <CtrlBtn
-            icon={camOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
-            onClick={toggleCam}
-            danger={!camOn}
-          />
-          <CtrlBtn icon={<Settings className="w-4 h-4" />} onClick={() => setShowQualityModal(true)} />
+        {/* 左: マイク/カメラ/設定 + マイクレベルメーター */}
+        <div className={`flex items-center gap-3 ${isLive && !isRadioMode ? "opacity-30 pointer-events-none select-none" : ""}`}>
+          <div className="flex gap-2">
+            <CtrlBtn
+              icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+              onClick={toggleMic}
+              danger={!micOn}
+            />
+            <CtrlBtn
+              icon={camOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+              onClick={toggleCam}
+              danger={!camOn}
+            />
+            <CtrlBtn icon={<Settings className="w-4 h-4" />} onClick={() => setShowQualityModal(true)} />
+          </div>
+          {/* マイクレベルメーター */}
+          {micOn && localStreamRef.current && (
+            <MicLevelMeter audioStream={localStreamRef.current} />
+          )}
         </div>
 
         {/* 中央: ロック表示 */}
