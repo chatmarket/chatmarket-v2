@@ -83,6 +83,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         if (previewVideoRef.current) {
           previewVideoRef.current.srcObject = stream;
         }
+        // ラジオモードの場合、カメラを即座にOFFにする
+        if (initialRadioMode) {
+          setCamOn(false);
+        }
       } catch (err) {
         toast.error("カメラ/マイクにアクセスできません: " + err.message);
       }
@@ -92,7 +96,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       clientRef.current?.stopBroadcast?.();
     };
-  }, []);
+  }, [initialRadioMode]);
 
   // 視聴者数ポーリング + ランクアップ推奨チェック
   useEffect(() => {
