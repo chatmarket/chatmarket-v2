@@ -1035,4 +1035,3 @@ export default function GoLive() {
         </div>
         );
         }
-        }
