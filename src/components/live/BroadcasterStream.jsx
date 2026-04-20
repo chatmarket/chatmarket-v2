@@ -57,7 +57,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const clientRef = useRef(null);
   const localStreamRef = useRef(null);
   const rankupShownRef = useRef(false);
-  const dummyCanvasStreamRef = useRef(null); // ラジオモード用ダミー映像ストリーム
+  const radioDummyVideoRef = useRef(null); // ラジオモード用ダミー動画 <video> 要素
 
   const [status, setStatus] = useState("preview"); // "preview" | "live" | "ended"
   const [micOn, setMicOn] = useState(true);
@@ -81,45 +81,57 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setIsFullscreen((prev) => !prev);
   };
 
-  // ダミー映像を事前生成（ラジオモード用）
+  // ダミー MP4 動画をループ再生し、ストリームを取得（ラジオモード用）
   useEffect(() => {
     if (!isRadioMode) return;
 
     try {
-      // RADIO_MODE_PRESET に完全統一
-      const dummyCanvas = document.createElement("canvas");
-      dummyCanvas.width = RADIO_MODE_PRESET.width;   // 160px
-      dummyCanvas.height = RADIO_MODE_PRESET.height; // 90px
-      const ctx = dummyCanvas.getContext("2d");
-
-      // 背景描画
-      ctx.fillStyle = "#1a1a1a";
+      // Canvas で黒い 1 フレーム画像を生成
+      const canvas = document.createElement("canvas");
+      canvas.width = RADIO_MODE_PRESET.width;
+      canvas.height = RADIO_MODE_PRESET.height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height);
 
-      // ラジオアイコン（小さいサイズ対応）
-      ctx.fillStyle = "#ff4444";
-      ctx.beginPath();
-      ctx.arc(RADIO_MODE_PRESET.width / 2, RADIO_MODE_PRESET.height / 2, 15, 0, Math.PI * 2);
-      ctx.fill();
+      // Canvas から WebM blob を生成（1フレーム黒画面）
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error("Canvas blob 生成失敗");
+          return;
+        }
 
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "10px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("🎙️", RADIO_MODE_PRESET.width / 2, RADIO_MODE_PRESET.height / 2);
+        const blobUrl = URL.createObjectURL(blob);
 
-      // ダミー映像ストリーム生成（1fps で継続ループ）
-      const canvasStream = dummyCanvas.captureStream(RADIO_MODE_PRESET.framerate);
-      dummyCanvasStreamRef.current = canvasStream;
-      
-      console.log("✓ ラジオモード Canvas 生成完了:", {
-        width: RADIO_MODE_PRESET.width,
-        height: RADIO_MODE_PRESET.height,
-        fps: RADIO_MODE_PRESET.framerate,
-      });
+        // Video 要素を生成
+        const videoEl = document.createElement("video");
+        videoEl.src = blobUrl;
+        videoEl.loop = true;
+        videoEl.muted = true;
+        videoEl.playsInline = true;
+        videoEl.style.display = "none";
+
+        document.body.appendChild(videoEl);
+        radioDummyVideoRef.current = videoEl;
+
+        // 動画再生開始
+        videoEl.play().then(() => {
+          console.log("✓ ラジオモード ダミー動画再生開始");
+        }).catch((err) => {
+          console.error("ダミー動画再生エラー:", err);
+        });
+      }, "video/webm");
     } catch (err) {
-      console.error("ダミー映像事前生成エラー:", err);
+      console.error("ダミー動画生成エラー:", err);
     }
+
+    return () => {
+      if (radioDummyVideoRef.current) {
+        radioDummyVideoRef.current.pause();
+        document.body.removeChild(radioDummyVideoRef.current);
+        radioDummyVideoRef.current = null;
+      }
+    };
   }, [isRadioMode]);
 
   // ラジオモード時は音声のみ、通常時はカメラ+マイクを取得
@@ -233,24 +245,21 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       let videoAdded = false;
       
       if (isRadioMode) {
-        // ラジオモード: 事前生成されたダミー映像を使用
-        if (dummyCanvasStreamRef.current && dummyCanvasStreamRef.current.getVideoTracks().length > 0) {
+        // ラジオモード: Video 要素のダミー動画ストリームを使用
+        if (radioDummyVideoRef.current) {
           try {
-            console.log("Canvas ストリーム確認:", {
-              videoTracks: dummyCanvasStreamRef.current.getVideoTracks().length,
-              audioTracks: dummyCanvasStreamRef.current.getAudioTracks().length,
-            });
-            await client.addVideoInputDevice(dummyCanvasStreamRef.current, "canvas", { index: 0 });
-            videoAdded = true;
-            console.log("✓ Canvas ダミー映像追加完了");
-          } catch (canvasErr) {
-            console.error("事前生成ダミー映像追加失敗、フォールバック:", canvasErr);
+            const stream = radioDummyVideoRef.current.captureStream(RADIO_MODE_PRESET.framerate);
+            if (stream && stream.getVideoTracks().length > 0) {
+              await client.addVideoInputDevice(stream, "video", { index: 0 });
+              videoAdded = true;
+              console.log("✓ ダミー動画ストリーム追加完了");
+            }
+          } catch (videoErr) {
+            console.error("ダミー動画ストリーム追加失敗、フォールバック:", videoErr);
           }
-        } else {
-          console.warn("Canvas ストリームが無効、フォールバック開始");
         }
 
-        // フォールバック: Canvas 生成失敗時は 1x1 カメラを強制起動
+        // フォールバック: 1x1 カメラを強制起動
         if (!videoAdded) {
           try {
             console.log("1x1 フォールバックカメラ起動中...");
@@ -284,8 +293,37 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         throw new Error("映像トラックが確保できませんでした");
       }
 
-      // IVS SDK の映像トラック完全初期化を待機（1500ms以上）
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 映像トラックの readyState が "live" になり、実データが流下したことを検知
+      const videoTrack = isRadioMode 
+        ? radioDummyVideoRef.current?.captureStream(RADIO_MODE_PRESET.framerate).getVideoTracks()[0]
+        : previewVideoRef.current?.videoTracks?.[0];
+
+      if (videoTrack) {
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            console.warn("映像トラック ready タイムアウト、配信開始");
+            resolve();
+          }, 3000);
+
+          const onReadyStateChange = () => {
+            if (videoTrack.readyState === "live") {
+              console.log("✓ 映像トラック live 状態確認、配信開始");
+              clearTimeout(timeout);
+              videoTrack.removeEventListener("readystatechange", onReadyStateChange);
+              resolve();
+            }
+          };
+
+          videoTrack.addEventListener("readystatechange", onReadyStateChange);
+
+          // フォールバック: 初期状態が live の場合
+          if (videoTrack.readyState === "live") {
+            clearTimeout(timeout);
+            videoTrack.removeEventListener("readystatechange", onReadyStateChange);
+            resolve();
+          }
+        });
+      }
 
       await client.startBroadcast(ivsStreamKey);
 
