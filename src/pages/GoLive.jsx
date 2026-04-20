@@ -1031,7 +1031,7 @@ export default function GoLive() {
             </>
           )}
         </Button>
-        </form>
-        </div>
-        );
-        }
+      </form>
+    </div>
+  );
+}
