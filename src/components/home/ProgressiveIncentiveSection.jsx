@@ -45,8 +45,8 @@ export default function ProgressiveIncentiveSection() {
                   <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center">
                     <TrendingUp className="w-4 h-4 text-primary" />
                   </div>
-                  <p className="font-black text-sm text-primary">最大95%還元</p>
-                  <p className="text-xs text-muted-foreground leading-snug">業界最高水準。月間売上でプログレッシブに自動UP</p>
+                  <p className="font-black text-sm text-primary">収益還元率70%~最大95％</p>
+                  <p className="text-xs text-muted-foreground leading-snug">頑張った翌月に還元率が変わる制度を導入でやりがいMAX!</p>
                 </div>
                 <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4 space-y-2 hover:border-cyan-500/40 transition-all">
                   <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center">
