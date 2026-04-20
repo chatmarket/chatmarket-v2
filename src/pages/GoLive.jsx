@@ -50,9 +50,9 @@ export default function GoLive() {
     archivePrice: 150,
     archiveConsentConfirmed: false,
     musicUsageMode: "no",
-    manualStreamKey: "",
-    manualIngestEndpoint: "",
   });
+  const [manualStreamKey, setManualStreamKey] = useState("");
+  const [manualIngestEndpoint, setManualIngestEndpoint] = useState("");
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -265,8 +265,8 @@ export default function GoLive() {
         </div>
         <BroadcasterStream
           streamId={liveStreamId}
-          ivsStreamKey={ivsStream?.streamKey}
-          ivsIngestEndpoint={ivsStream?.ingestEndpoint}
+          ivsStreamKey={manualStreamKey || ivsStream?.streamKey}
+          ivsIngestEndpoint={manualIngestEndpoint || ivsStream?.ingestEndpoint}
           onEnd={() => navigate("/")}
           streamQuality={effectiveQuality}
           initialRadioMode={form.startAsRadioMode}
@@ -963,8 +963,8 @@ export default function GoLive() {
                 <label className="block text-xs font-semibold text-foreground">Ingest Endpoint</label>
                 <input
                   type="text"
-                  value={form.manualIngestEndpoint}
-                  onChange={(e) => setForm({ ...form, manualIngestEndpoint: e.target.value })}
+                  value={manualIngestEndpoint}
+                  onChange={(e) => setManualIngestEndpoint(e.target.value)}
                   placeholder="rtmps://xxxxx.ivs.aws.com"
                   className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
@@ -975,15 +975,15 @@ export default function GoLive() {
                 <label className="block text-xs font-semibold text-foreground">Stream Key</label>
                 <input
                   type="text"
-                  value={form.manualStreamKey}
-                  onChange={(e) => setForm({ ...form, manualStreamKey: e.target.value })}
+                  value={manualStreamKey}
+                  onChange={(e) => setManualStreamKey(e.target.value)}
                   placeholder="arn:aws:ivs:ap-northeast-1:xxxxx:stream-key/xxxxx"
                   className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
                 <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Stream Key」をコピーしてください</p>
               </div>
 
-              {(form.manualIngestEndpoint || form.manualStreamKey) && (
+              {(manualIngestEndpoint || manualStreamKey) && (
                 <div className="bg-green-500/15 border border-green-500/40 rounded-lg px-3 py-2.5 text-[10px] text-green-300 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>✅ 入力値が優先されます。自動取得を上書きします。</span>
