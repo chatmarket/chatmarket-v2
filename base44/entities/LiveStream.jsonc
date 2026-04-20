@@ -147,6 +147,11 @@
       ],
       "default": "1080p",
       "description": "\u3010\u65bd\u7b563\u3011\u753b\u8cea\u5236\u9650: 150\u5186\u8a2d\u5b9a\u306f720p\u3001300\u5186\u4ee5\u4e0a\u306f1080p\u3092\u8a31\u53ef"
+    },
+    "has_music_usage": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u97f3\u697d\u3092\u5229\u7528\u3059\u308b\uff08\u6b4c\u5531\u30fb\u6f14\u594f\u30fbBGM\u7b49\uff09JASRAC\u5305\u62ec\u5951\u7d04\u5bfe\u8c61"
     }
   },
   "required": [

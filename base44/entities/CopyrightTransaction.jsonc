@@ -1,0 +1,51 @@
+{
+  "name": "CopyrightTransaction",
+  "type": "object",
+  "properties": {
+    "stream_id": {
+      "type": "string",
+      "description": "\u914d\u4fe1ID"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_owner_email": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u8005\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9"
+    },
+    "revenue_amount": {
+      "type": "number",
+      "description": "\u58f2\u4e0a\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "copyright_fee_amount": {
+      "type": "number",
+      "description": "\u8457\u4f5c\u6a29\u6599\uff083%\uff09"
+    },
+    "is_music_related": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u97f3\u697d\u5229\u7528\u30d5\u30e9\u30b0\u304c\u7acb\u3063\u3066\u3044\u305f\u914d\u4fe1\u306e\u58f2\u4e0a\u304b\u3069\u3046\u304b"
+    },
+    "transaction_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6c7a\u6e08\u65e5\u6642"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recorded",
+        "settled"
+      ],
+      "default": "recorded",
+      "description": "\u8a18\u9332\u6e08\u307f / \u6708\u672b\u7cbe\u7b97\u6e08\u307f"
+    }
+  },
+  "required": [
+    "stream_id",
+    "channel_id",
+    "revenue_amount",
+    "copyright_fee_amount"
+  ]
+}

@@ -49,6 +49,8 @@ export default function GoLive() {
     archiveIsPaid: false,
     archivePrice: 150,
     archiveConsentConfirmed: false,
+    // JASRAC著作権料
+    hasMusicUsage: false,
   });
 
   useEffect(() => {
@@ -196,6 +198,8 @@ export default function GoLive() {
       cost_output_yen: 0,
       total_viewer_minutes: 0,
       revenue_coins: 0,
+      // JASRAC著作権料フラグ
+      has_music_usage: form.hasMusicUsage,
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -719,6 +723,39 @@ export default function GoLive() {
                 <p className="text-xs text-muted-foreground">
                   最低価格: ¥{minPrice.toLocaleString()} / {form.duration}分
                 </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* JASRAC著作権料セクション */}
+        <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="flex items-center gap-1.5">
+                🎵 音楽を利用する（歌唱・演奏・BGM等）
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">JASRAC包括契約に基づき著作権料を徴収します</p>
+            </div>
+            <Switch
+              checked={form.hasMusicUsage}
+              onCheckedChange={(v) => setForm({ ...form, hasMusicUsage: v })}
+            />
+          </div>
+
+          {form.hasMusicUsage && (
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3 pt-3">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-purple-300">著作権料について</p>
+                <p className="text-xs text-purple-200/80 leading-relaxed">
+                  JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
+                </p>
+                <div className="bg-purple-500/20 rounded-lg p-2.5 text-xs text-purple-200 space-y-1">
+                  <p><strong>売上：</strong> ¥100の場合</p>
+                  <p className="text-purple-300">→ あなたの報酬: ¥{Math.round(100 * liveRevenueRate * 0.97)}円（報酬率 {Math.round(liveRevenueRate * 97)}%）</p>
+                  <p>→ 運営手数料: {Math.round(platformFeeRate * 100)}%</p>
+                  <p>→ 著作権料: ¥3（3%）</p>
+                </div>
               </div>
             </div>
           )}

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -29,6 +29,7 @@ import TestUserCreationForm from "../components/admin/TestUserCreationForm";
 import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList";
 import RecruitApplicationManagement from "../components/admin/RecruitApplicationManagement";
 import PurchaseReportTab from "../components/admin/PurchaseReportTab";
+import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -445,6 +446,13 @@ export default function AdminDashboard() {
                 </TabsTrigger>
                 <TabsTrigger value="call-limit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Phone className="w-4 h-4" /> 制限
+                </TabsTrigger>
+              </div>
+
+              {/* 🎵 著作権 */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="copyright" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Music className="w-4 h-4" /> 著作権料
                 </TabsTrigger>
               </div>
 
@@ -871,6 +879,11 @@ export default function AdminDashboard() {
         {/* 決済レポートタブ */}
         <TabsContent value="purchases" className="space-y-6">
           <PurchaseReportTab purchases={allPurchases} />
+        </TabsContent>
+
+        {/* 著作権料レポートタブ */}
+        <TabsContent value="copyright" className="space-y-6">
+          <CopyrightReportManager />
         </TabsContent>
 
         {/* ユーザー管理タブ */}
