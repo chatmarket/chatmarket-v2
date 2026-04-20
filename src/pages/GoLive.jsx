@@ -795,7 +795,6 @@ export default function GoLive() {
               </div>
               </>
               )}
-              </div>
 
               {mode === MODE_CALL && (
               <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
