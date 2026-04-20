@@ -46,6 +46,7 @@ export default function GoLive() {
     quality: "720p", // デフォルト: 720p
     // ラジオモード
     startAsRadioMode: false,
+    radioBackgroundFile: null,
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
@@ -177,6 +178,12 @@ export default function GoLive() {
       thumbnail_url = res.file_url;
     }
 
+    let radio_background_url = "";
+    if (form.radioBackgroundFile) {
+      const res = await base44.integrations.Core.UploadFile({ file: form.radioBackgroundFile });
+      radio_background_url = res.file_url;
+    }
+
     const isLiveNow = !form.scheduled_at;
     const stream = await base44.entities.LiveStream.create({
       title: form.title,
@@ -196,6 +203,7 @@ export default function GoLive() {
       max_bitrate_restriction: effectiveQuality,
       // ラジオモード
       is_radio_mode: form.startAsRadioMode,
+      radio_background_url,
       // コスト計算起点
       live_started_at: isLiveNow ? new Date().toISOString() : null,
       cost_input_yen: 0,
@@ -464,8 +472,35 @@ export default function GoLive() {
                 </div>
               </label>
               {form.startAsRadioMode && (
-                <div className="text-xs text-amber-200/80 bg-black/20 rounded-lg p-2.5 ml-8 border border-amber-500/20">
-                  ✓ 配信開始時に映像が停止されます。配信中いつでも「ゲーム配信モード」に切り替え可能です。
+                <div className="space-y-3 ml-8">
+                  <div className="text-xs text-amber-200/80 bg-black/20 rounded-lg p-2.5 border border-amber-500/20">
+                    ✓ 配信開始時に映像が停止されます。配信中いつでも「ゲーム配信モード」に切り替え可能です。
+                  </div>
+
+                  {/* ラジオモード背景画像 */}
+                  <div className="space-y-2">
+                    <Label className="text-amber-300">📸 ラジオモード背景画像（任意）</Label>
+                    <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-amber-500/40 rounded-lg cursor-pointer hover:border-amber-500/60 bg-black/20 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => setForm({ ...form, radioBackgroundFile: e.target.files[0] })}
+                      />
+                      {form.radioBackgroundFile ? (
+                        <div className="text-center">
+                          <Image className="w-4 h-4 text-amber-400 mx-auto mb-1" />
+                          <p className="text-xs text-amber-300">{form.radioBackgroundFile.name}</p>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Image className="w-5 h-5 text-amber-500/50 mx-auto mb-1" />
+                          <p className="text-xs text-amber-300/70">プロフ画像など背景を選択</p>
+                        </div>
+                      )}
+                    </label>
+                    <p className="text-xs text-amber-200/60">推奨: 1280×720px 以上、10MB以下</p>
+                  </div>
                 </div>
               )}
             </div>

@@ -157,6 +157,10 @@
       "type": "boolean",
       "default": false,
       "description": "\u30e9\u30b8\u30aa\u30e2\u30fc\u30c9\u4e2d\u30d5\u30e9\u30b0\uff08\u6620\u50cf\u505c\u6b62\u3001\u97f3\u58f0\u7279\u5316\uff09"
+    },
+    "radio_background_url": {
+      "type": "string",
+      "description": "\u30e9\u30b8\u30aa\u30e2\u30fc\u30c9\u6642\u306e\u80cc\u666f\u753b\u50cfURL"
     }
   },
   "required": [

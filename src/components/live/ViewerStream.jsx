@@ -110,6 +110,15 @@ export default function ViewerStream({ streamId, stream }) {
         <RadioModeBanner isRadioMode={stream?.is_radio_mode} />
       </AnimatePresence>
 
+      {/* ラジオモード背景画像 */}
+      {stream?.is_radio_mode && stream?.radio_background_url && (
+        <img
+          src={stream.radio_background_url}
+          alt="ラジオモード背景"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+
       <video
         ref={videoRef}
         autoPlay
