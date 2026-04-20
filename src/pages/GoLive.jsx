@@ -795,248 +795,251 @@ export default function GoLive() {
               </div>
               </>
               )}
+              </div>
+              )}
 
               {mode === MODE_CALL && (
-              <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
+              <div className="space-y-4">
               <div className="space-y-2">
-              <Label>時間（15分単位）</Label>
-              <Select
-                value={String(form.duration)}
-                onValueChange={(v) => setForm({ ...form, duration: parseInt(v), price: (parseInt(v) / 15) * 150 })}
-              >
-                <SelectTrigger className="bg-secondary border-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
-                    <SelectItem key={min} value={String(min)}>
-                      {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Label>時間（15分単位）</Label>
+               <Select
+                 value={String(form.duration)}
+                 onValueChange={(v) => setForm({ ...form, duration: parseInt(v), price: (parseInt(v) / 15) * 150 })}
+               >
+                 <SelectTrigger className="bg-secondary border-0">
+                   <SelectValue />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
+                     <SelectItem key={min} value={String(min)}>
+                       {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
               </div>
 
               <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                💰 販売単価（15分単位）
-                <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * 0.85)}〜{Math.round(form.price * 0.95)}円</span>
-              </Label>
-              <p className="text-xs text-muted-foreground">ファンが支払う金額。最大85%があなたの報酬になります。</p>
-              <Input
-                type="number"
-                min={minPrice}
-                max={1000000}
-                step={1}
-                value={form.price}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || minPrice;
-                  setForm({ ...form, price: Math.max(Math.min(val, 1000000), minPrice) });
-                }}
-                className="bg-secondary border-0"
-                placeholder={String(minPrice)}
-              />
-              <p className="text-xs text-muted-foreground">
-                最低価格: ¥{minPrice.toLocaleString()} / {form.duration}分
-              </p>
+               <Label className="flex items-center gap-2">
+                 💰 販売単価（15分単位）
+                 <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * 0.85)}〜{Math.round(form.price * 0.95)}円</span>
+               </Label>
+               <p className="text-xs text-muted-foreground">ファンが支払う金額。最大85%があなたの報酬になります。</p>
+               <Input
+                 type="number"
+                 min={minPrice}
+                 max={1000000}
+                 step={1}
+                 value={form.price}
+                 onChange={(e) => {
+                   const val = parseInt(e.target.value) || minPrice;
+                   setForm({ ...form, price: Math.max(Math.min(val, 1000000), minPrice) });
+                 }}
+                 className="bg-secondary border-0"
+                 placeholder={String(minPrice)}
+               />
+               <p className="text-xs text-muted-foreground">
+                 最低価格: ¥{minPrice.toLocaleString()} / {form.duration}分
+               </p>
               </div>
               </div>
               )}
 
               {/* JASRAC著作権料セクション - 必須選択 */}
               <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
-          <div className="space-y-3">
-            <Label className="text-sm font-bold">🎵 音楽の利用について</Label>
-            <p className="text-xs text-muted-foreground">JASRAC包括契約に基づき著作権料を徴収します</p>
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold">🎵 音楽の利用について</Label>
+                  <p className="text-xs text-muted-foreground">JASRAC包括契約に基づき著作権料を徴収します</p>
 
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "yes" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "yes" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
-                <input
-                  type="radio"
-                  name="musicUsage"
-                  value="yes"
-                  checked={form.musicUsageMode === "yes"}
-                  onChange={() => setForm({ ...form, musicUsageMode: "yes" })}
-                  className="w-5 h-5 accent-primary"
-                />
-                <div>
-                  <p className="font-semibold text-sm">音楽を利用する</p>
-                  <p className="text-xs text-muted-foreground">歌唱・演奏・BGMなど音楽コンテンツを含みます</p>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "no" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "no" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
-                <input
-                  type="radio"
-                  name="musicUsage"
-                  value="no"
-                  checked={form.musicUsageMode === "no"}
-                  onChange={() => setForm({ ...form, musicUsageMode: "no" })}
-                  className="w-5 h-5 accent-primary"
-                />
-                <div>
-                  <p className="font-semibold text-sm">音楽を利用しない</p>
-                  <p className="text-xs text-muted-foreground">音楽コンテンツは含みません</p>
-                </div>
-              </label>
-            </div>
-
-            {/* 著作権料詳細 */}
-            {form.musicUsageMode === "yes" && (
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
-                  <p className="text-xs text-purple-200/80 leading-relaxed">
-                    JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
-                  </p>
-                  <div className="bg-purple-500/20 rounded-lg p-2.5 text-xs text-purple-200 space-y-1">
-                    <p><strong>売上：</strong> ¥100の場合</p>
-                    <p className="text-purple-300">→ あなたの報酬: ¥{Math.round(100 * liveRevenueRate * 0.97)}円（報酬率 {Math.round(liveRevenueRate * 97)}%）</p>
-                    <p>→ 運営手数料: {Math.round(platformFeeRate * 100)}%</p>
-                    <p>→ 著作権料: ¥3（3%）</p>
-                  </div>
-                </div>
-
-                {/* 虚偽申告時の請求金額 */}
-                <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 space-y-1">
-                  <p className="text-xs font-bold text-red-400">⚠️ 虚偽申告について</p>
-                  <p className="text-xs text-red-300/90 leading-relaxed">
-                    音楽を利用していないのに「利用する」とチェックした場合、または音楽を利用しているのに「利用しない」と申告した場合、実際の著作権料との差額を<span className="font-bold">別途請求</span>します。最大<span className="font-bold text-red-400">月額 ¥500,000</span>の罰金が科される場合があります。
-                  </p>
-                </div>
-
-                {/* 選択が必須であることの警告 */}
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-orange-300">
-                    音楽利用の選択は<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
-                  </p>
-                </div>
-              </div>
-            )}
-            </div>
-
-            {/* Archive Settings */}
-            <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="flex items-center gap-1.5">
-                <Video className="w-4 h-4 text-primary" /> アーカイブを保存する
-              </Label>
-              <p className="text-xs text-muted-foreground mt-0.5">配信・通話終了後に録画を記録します</p>
-            </div>
-            <Switch
-              checked={form.saveArchive}
-              onCheckedChange={(v) => setForm({ ...form, saveArchive: v, archiveIsPaid: false, archiveConsentConfirmed: false })}
-            />
-          </div>
-
-          {form.saveArchive && (
-            <div className="space-y-4 pt-2 border-t border-border/50">
-              {(() => {
-                const canSellArchive = ["basic","standard","premium"].includes(user?.plan) || user?.role === "admin";
-                return (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>アーカイブを有料公開する</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">¥150〜自由設定で動画として販売できます</p>
-                    {!canSellArchive && (
-                      <p className="text-xs text-yellow-400 mt-1">⚠️ BASICプラン以上で利用可能</p>
-                    )}
-                  </div>
-                  <Switch
-                     checked={form.archiveIsPaid}
-                     disabled={!canSellArchive}
-                     onCheckedChange={(v) => {
-                       if (!canSellArchive) { toast.error("アーカイブ販売はBASICプラン以上でご利用いただけます。"); return; }
-                       if (v && !hasVodPlan) {
-                         toast.error("アーカイブを有料販売するにはVODプランへの加入が必要です。", { duration: 5000 });
-                         navigate("/plan-select");
-                         return;
-                       }
-                       setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false });
-                     }}
-                   />
-                </div>
-                );
-              })()}
-
-              {form.archiveIsPaid && (
-                <>
                   <div className="space-y-2">
-                    <Label>アーカイブ販売価格（円）</Label>
-                    <Input
-                     type="number"
-                     min={150}
-                     step={1}
-                     value={form.archivePrice}
-                     onChange={(e) => setForm({ ...form, archivePrice: Math.max(150, parseInt(e.target.value) || 150) })}
-                     className="bg-secondary border-0"
-                     placeholder="150"
-                    />
-                    <p className="text-xs text-muted-foreground">¥150〜自由に設定できます</p>
-                  </div>
-
-                  {/* Consent notice */}
-                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 space-y-3">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-orange-400">肖像権・同意について（重要）</p>
-                        <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                          <li>通話・配信に映り込む相手（第三者）の肖像権を尊重してください。</li>
-                          <li>アーカイブを有料公開する場合、映り込んだすべての方から<span className="text-orange-300 font-semibold">事前に書面または口頭による明示的な同意</span>を得る必要があります。</li>
-                          <li>同意を得ていないアーカイブの公開は肖像権侵害となり、法的責任を負う可能性があります。</li>
-                          <li>当プラットフォームは同意の有無を確認する義務を負わず、投稿者が全責任を負うものとします。</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    <label className="flex items-start gap-3 cursor-pointer group">
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "yes" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "yes" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
                       <input
-                        type="checkbox"
-                        checked={form.archiveConsentConfirmed}
-                        onChange={(e) => setForm({ ...form, archiveConsentConfirmed: e.target.checked })}
-                        className="mt-0.5 accent-orange-400 w-4 h-4"
+                        type="radio"
+                        name="musicUsage"
+                        value="yes"
+                        checked={form.musicUsageMode === "yes"}
+                        onChange={() => setForm({ ...form, musicUsageMode: "yes" })}
+                        className="w-5 h-5 accent-primary"
                       />
-                      <span className="text-xs text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
-                        映り込む全員から肖像権に関する同意を得ており、本規約に同意してアーカイブを有料公開します。
-                      </span>
+                      <div>
+                        <p className="font-semibold text-sm">音楽を利用する</p>
+                        <p className="text-xs text-muted-foreground">歌唱・演奏・BGMなど音楽コンテンツを含みます</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "no" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "no" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
+                      <input
+                        type="radio"
+                        name="musicUsage"
+                        value="no"
+                        checked={form.musicUsageMode === "no"}
+                        onChange={() => setForm({ ...form, musicUsageMode: "no" })}
+                        className="w-5 h-5 accent-primary"
+                      />
+                      <div>
+                        <p className="font-semibold text-sm">音楽を利用しない</p>
+                        <p className="text-xs text-muted-foreground">音楽コンテンツは含みません</p>
+                      </div>
                     </label>
                   </div>
-                </>
-              )}
 
-              {form.saveArchive && form.archiveIsPaid && (
-               <>
-               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-300 space-y-1">
-               <p className="font-semibold">💾 アーカイブ販売価格（自動設定）</p>
-               <p>
-                 {effectiveQuality === "1080p"
-                   ? `1080p高画質配信のため、販売価格は自動的に ¥${autoArchivePrice}/15分 に設定されます。`
-                   : `720p標準画質のため、販売価格は ¥${autoArchivePrice}/15分 に設定可能です。`}
-               </p>
-               <p className="text-[10px] text-blue-400 border-t border-blue-500/30 pt-1">
-                 ※ 高画質ソースの維持コストを考慮した設定です
-               </p>
-               </div>
+                  {/* 著作権料詳細 */}
+                  {form.musicUsageMode === "yes" && (
+                    <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
+                        <p className="text-xs text-purple-200/80 leading-relaxed">
+                          JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
+                        </p>
+                        <div className="bg-purple-500/20 rounded-lg p-2.5 text-xs text-purple-200 space-y-1">
+                          <p><strong>売上：</strong> ¥100の場合</p>
+                          <p className="text-purple-300">→ あなたの報酬: ¥{Math.round(100 * liveRevenueRate * 0.97)}円（報酬率 {Math.round(liveRevenueRate * 97)}%）</p>
+                          <p>→ 運営手数料: {Math.round(platformFeeRate * 100)}%</p>
+                          <p>→ 著作権料: ¥3（3%）</p>
+                        </div>
+                      </div>
 
-               {/* 【新機能】Stripe手数料・運営利益の透明性表示 */}
-               <StripeFeeProfitBreakdown 
-                 price={form.price} 
-                 duration={form.duration}
-                 quality={effectiveQuality}
-               />
-               </>
-               )}
-              {form.saveArchive && !form.archiveIsPaid && (
-              <p className="text-xs text-muted-foreground">
-              ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
-              </p>
-              )}
-            </div>
-          )}
-        </div>
+                      {/* 虚偽申告時の請求金額 */}
+                      <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 space-y-1">
+                        <p className="text-xs font-bold text-red-400">⚠️ 虚偽申告について</p>
+                        <p className="text-xs text-red-300/90 leading-relaxed">
+                          音楽を利用していないのに「利用する」とチェックした場合、または音楽を利用しているのに「利用しない」と申告した場合、実際の著作権料との差額を<span className="font-bold">別途請求</span>します。最大<span className="font-bold text-red-400">月額 ¥500,000</span>の罰金が科される場合があります。
+                        </p>
+                      </div>
+
+                      {/* 選択が必須であることの警告 */}
+                      <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-orange-300">
+                          音楽利用の選択は<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Archive Settings */}
+              <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="flex items-center gap-1.5">
+                      <Video className="w-4 h-4 text-primary" /> アーカイブを保存する
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">配信・通話終了後に録画を記録します</p>
+                  </div>
+                  <Switch
+                    checked={form.saveArchive}
+                    onCheckedChange={(v) => setForm({ ...form, saveArchive: v, archiveIsPaid: false, archiveConsentConfirmed: false })}
+                  />
+                </div>
+
+                {form.saveArchive && (
+                  <div className="space-y-4 pt-2 border-t border-border/50">
+                    {(() => {
+                      const canSellArchive = ["basic","standard","premium"].includes(user?.plan) || user?.role === "admin";
+                      return (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label>アーカイブを有料公開する</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">¥150〜自由設定で動画として販売できます</p>
+                            {!canSellArchive && (
+                              <p className="text-xs text-yellow-400 mt-1">⚠️ BASICプラン以上で利用可能</p>
+                            )}
+                          </div>
+                          <Switch
+                            checked={form.archiveIsPaid}
+                            disabled={!canSellArchive}
+                            onCheckedChange={(v) => {
+                              if (!canSellArchive) { toast.error("アーカイブ販売はBASICプラン以上でご利用いただけます。"); return; }
+                              if (v && !hasVodPlan) {
+                                toast.error("アーカイブを有料販売するにはVODプランへの加入が必要です。", { duration: 5000 });
+                                navigate("/plan-select");
+                                return;
+                              }
+                              setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false });
+                            }}
+                          />
+                        </div>
+                      );
+                    })()}
+
+                    {form.archiveIsPaid && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>アーカイブ販売価格（円）</Label>
+                          <Input
+                            type="number"
+                            min={150}
+                            step={1}
+                            value={form.archivePrice}
+                            onChange={(e) => setForm({ ...form, archivePrice: Math.max(150, parseInt(e.target.value) || 150) })}
+                            className="bg-secondary border-0"
+                            placeholder="150"
+                          />
+                          <p className="text-xs text-muted-foreground">¥150〜自由に設定できます</p>
+                        </div>
+
+                        {/* Consent notice */}
+                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 space-y-3">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-orange-400">肖像権・同意について（重要）</p>
+                              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                                <li>通話・配信に映り込む相手（第三者）の肖像権を尊重してください。</li>
+                                <li>アーカイブを有料公開する場合、映り込んだすべての方から<span className="text-orange-300 font-semibold">事前に書面または口頭による明示的な同意</span>を得る必要があります。</li>
+                                <li>同意を得ていないアーカイブの公開は肖像権侵害となり、法的責任を負う可能性があります。</li>
+                                <li>当プラットフォームは同意の有無を確認する義務を負わず、投稿者が全責任を負うものとします。</li>
+                              </ul>
+                            </div>
+                          </div>
+
+                          <label className="flex items-start gap-3 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              checked={form.archiveConsentConfirmed}
+                              onChange={(e) => setForm({ ...form, archiveConsentConfirmed: e.target.checked })}
+                              className="mt-0.5 accent-orange-400 w-4 h-4"
+                            />
+                            <span className="text-xs text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
+                              映り込む全員から肖像権に関する同意を得ており、本規約に同意してアーカイブを有料公開します。
+                            </span>
+                          </label>
+                        </div>
+                      </>
+                    )}
+
+                    {form.saveArchive && form.archiveIsPaid && (
+                      <>
+                        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-300 space-y-1">
+                          <p className="font-semibold">💾 アーカイブ販売価格（自動設定）</p>
+                          <p>
+                            {effectiveQuality === "1080p"
+                              ? `1080p高画質配信のため、販売価格は自動的に ¥${autoArchivePrice}/15分 に設定されます。`
+                              : `720p標準画質のため、販売価格は ¥${autoArchivePrice}/15分 に設定可能です。`}
+                          </p>
+                          <p className="text-[10px] text-blue-400 border-t border-blue-500/30 pt-1">
+                            ※ 高画質ソースの維持コストを考慮した設定です
+                          </p>
+                        </div>
+
+                        {/* 【新機能】Stripe手数料・運営利益の透明性表示 */}
+                        <StripeFeeProfitBreakdown 
+                          price={form.price} 
+                          duration={form.duration}
+                          quality={effectiveQuality}
+                        />
+                      </>
+                    )}
+                    {form.saveArchive && !form.archiveIsPaid && (
+                      <p className="text-xs text-muted-foreground">
+                        ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
 
         <Button
           type="submit"
