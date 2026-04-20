@@ -190,18 +190,12 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
 
-        // ラジオモード：streamConfig で品質設定（映像なし・音声のみ）
+        // ラジオモード：Basic チャンネル（音声のみ・設定なし）
         console.log(`📻 ラジオモード：Basic チャンネル（音声のみ）`);
+        console.log(`IVS SDK create() 呼び出し（シンプル初期化）`);
 
-        const streamConfig = {
-          maxBitrate: 600000,  // 600kbps 固定
-          targetPhysicalBitrate: 600000,
-        };
-
-        console.log(`IVS SDK create() 呼び出し:`);
-        console.log(`  streamConfig:`, streamConfig);
-
-        const client = IVSClient.create({ streamConfig });
+        // Basic チャンネル：設定なしで初期化（SDK が自動調整）
+        const client = IVSClient.create({});
         clientRef.current = client;
         console.log("✓ IVS クライアント作成成功");
 
