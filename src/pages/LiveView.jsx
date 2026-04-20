@@ -14,6 +14,7 @@ import GiftRankingWidget from "../components/live/GiftRankingWidget";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
+import ExtensionNotification from "../components/live/ExtensionNotification";
 import { Users, Radio, Lock, CreditCard, Zap, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,8 @@ export default function LiveView() {
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
   const [streamTimeSeconds, setStreamTimeSeconds] = useState(0);
   const [showExtensionWarning, setShowExtensionWarning] = useState(false);
+  const [showExtensionNotification, setShowExtensionNotification] = useState(false);
+  const [extensionUserName, setExtensionUserName] = useState("");
   const extensionNotifiedRef = useRef(false);
 
   // すべてのフックを最上部に配置（条件分岐の前に）
@@ -234,10 +237,14 @@ export default function LiveView() {
       status: "completed",
     });
     
+    // 派手なテロップ表示
+    setExtensionUserName(user.full_name || user.email.split("@")[0]);
+    setShowExtensionNotification(true);
+    
     setWallet({ ...wallet, balance: wallet.balance - extensionCost });
     setShowExtensionWarning(false);
-    extensionNotifiedRef.current = false; // 次回延長時に警告を再表示可能に
-    setStreamTimeSeconds(0); // タイマーリセット
+    extensionNotifiedRef.current = false;
+    setStreamTimeSeconds(0);
     
     toast.success("✨ 配信を50コインで延長しました！");
   };
@@ -404,8 +411,15 @@ export default function LiveView() {
           {/* PPV事前チケット販売 */}
           <PpvPreSale stream={stream} user={user} />
 
-          {/* 延長警告モーダル */}
-          {showExtensionWarning && hasPurchased && (
+          {/* 延長テロップ演出 */}
+           <ExtensionNotification 
+             userName={extensionUserName}
+             isVisible={showExtensionNotification}
+             duration={5000}
+           />
+
+           {/* 延長警告モーダル */}
+           {showExtensionWarning && hasPurchased && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
               <div className="bg-card border border-primary/40 rounded-2xl max-w-sm p-6 space-y-4 shadow-2xl">
                 <div className="text-center space-y-2">
