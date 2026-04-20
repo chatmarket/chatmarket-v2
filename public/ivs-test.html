@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IVS ラジオモード - シンプルテスト</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: #fff; }
+    .container { max-width: 500px; margin: 60px auto; padding: 30px; background: #1a1a1a; border-radius: 12px; }
+    h1 { font-size: 24px; margin-bottom: 30px; text-align: center; color: #00d4ff; }
+    .section { margin-bottom: 20px; }
+    label { display: block; font-size: 12px; margin-bottom: 6px; color: #888; text-transform: uppercase; font-weight: bold; }
+    input { width: 100%; padding: 10px; background: #262626; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 12px; font-family: monospace; }
+    input:focus { outline: none; border-color: #00d4ff; box-shadow: 0 0 8px rgba(0, 212, 255, 0.3); }
+    button { width: 100%; padding: 14px; background: #ff2500; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #cc1f00; }
+    button:disabled { background: #666; cursor: not-allowed; opacity: 0.6; }
+    .status { margin-top: 20px; padding: 15px; background: #1a2a2a; border: 1px solid #00d4ff; border-radius: 6px; font-size: 12px; line-height: 1.6; }
+    .status.error { background: #2a1a1a; border-color: #ff2500; color: #ff6b5b; }
+    .status.success { background: #1a2a1a; border-color: #00ff00; color: #66ff66; }
+    .log { max-height: 200px; overflow-y: auto; background: #0a0a0a; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 11px; font-family: monospace; color: #0f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📻 IVS ラジオモード テスト</h1>
+    
+    <div class="section">
+      <label>Ingest Endpoint</label>
+      <input id="endpoint" type="text" placeholder="rtmps://xxxx.live-video.net:443/app/" value="rtmps://27b83d82b8a7.global-contribute.live-video.net:443/app/">
+    </div>
+    
+    <div class="section">
+      <label>Stream Key</label>
+      <input id="streamKey" type="text" placeholder="sk_ap-northeast-1_xxxxx">
+    </div>
+    
+    <button id="startBtn" onclick="startBroadcast()">配信開始</button>
+    <button id="stopBtn" onclick="stopBroadcast()" disabled style="background: #666;">配信終了</button>
+    
+    <div id="status" class="status"></div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    let client = null;
+    let localStream = null;
+
+    const log = (msg, type = 'info') => {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString('ja-JP');
+      logEl.innerHTML += `[${time}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(msg);
+    };
+
+    const updateStatus = (msg, type = 'info') => {
+      const statusEl = document.getElementById('status');
+      statusEl.innerHTML = msg;
+      statusEl.className = 'status ' + type;
+    };
+
+    async function startBroadcast() {
+      try {
+        const endpoint = document.getElementById('endpoint').value.trim();
+        const streamKey = document.getElementById('streamKey').value.trim();
+
+        if (!endpoint || !streamKey) {
+          updateStatus('❌ エンドポイント と ストリームキー を入力してください', 'error');
+          return;
+        }
+
+        log('🔄 準備中...');
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+
+        // マイク取得
+        log('📢 マイク取得...');
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        log('✓ マイク取得成功');
+
+        // IVS SDK 読み込み
+        log('📡 IVS SDK 初期化...');
+        const { IVSBroadcastClient } = await import('https://cdn.jsdelivr.net/npm/amazon-ivs-web-broadcast@1.34.0/dist/esm/index.js');
+        
+        // 最小限の設定
+        const config = {
+          audioBitrate: 96000,
+          audioSampleRate: 44100,
+          audioChannels: 1,
+        };
+
+        client = IVSBroadcastClient.create({ streamConfig: config });
+        log('✓ SDK 初期化成功');
+
+        // 音声追加
+        log('🎤 音声トラック追加...');
+        const audioTrack = localStream.getAudioTracks()[0];
+        await client.addAudioInputDevice(localStream, 'mic');
+        log('✓ 音声トラック追加成功');
+
+        // 配信開始
+        log(`🚀 配信開始: ${streamKey}`);
+        await client.startBroadcast(streamKey);
+        
+        log('✅ 配信開始成功！');
+        updateStatus('✅ LIVE ON AIR | マイク → AWS IVS 接続中', 'success');
+      } catch (err) {
+        log(`❌ エラー: ${err.message}`, 'error');
+        updateStatus(`❌ ${err.message}`, 'error');
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+      }
+    }
+
+    async function stopBroadcast() {
+      try {
+        log('⏹️ 配信終了...');
+        if (client) await client.stopBroadcast();
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        
+        log('✓ 配信終了');
+        updateStatus('配信終了', 'info');
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+      } catch (err) {
+        log(`❌ 終了エラー: ${err.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
