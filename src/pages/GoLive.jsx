@@ -794,25 +794,29 @@ export default function GoLive() {
           )}
         </div>
 
-        {/* JASRAC著作権料セクション */}
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="flex items-center gap-1.5">
-                🎵 音楽を利用する（歌唱・演奏・BGM等）
-              </Label>
-              <p className="text-xs text-muted-foreground mt-0.5">JASRAC包括契約に基づき著作権料を徴収します</p>
+        {/* JASRAC著作権料セクション - 必須チェック */}
+        <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="musicUsageDeclaration"
+                checked={form.hasMusicUsage}
+                onChange={(e) => setForm({ ...form, hasMusicUsage: e.target.checked })}
+                className="w-5 h-5 mt-0.5 accent-destructive rounded"
+              />
+              <div className="flex-1">
+                <Label htmlFor="musicUsageDeclaration" className="text-sm font-bold cursor-pointer flex items-center gap-1.5">
+                  🎵 音楽を利用する（歌唱・演奏・BGM等）
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">JASRAC包括契約に基づき著作権料を徴収します</p>
+              </div>
             </div>
-            <Switch
-              checked={form.hasMusicUsage}
-              onCheckedChange={(v) => setForm({ ...form, hasMusicUsage: v })}
-            />
-          </div>
 
-          {form.hasMusicUsage && (
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3 pt-3">
+            {/* 著作権料詳細 */}
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
               <div className="space-y-2">
-                <p className="text-xs font-bold text-purple-300">著作権料について</p>
+                <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
                 <p className="text-xs text-purple-200/80 leading-relaxed">
                   JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
                 </p>
@@ -823,8 +827,24 @@ export default function GoLive() {
                   <p>→ 著作権料: ¥3（3%）</p>
                 </div>
               </div>
+
+              {/* 虚偽申告時の請求金額 */}
+              <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 space-y-1">
+                <p className="text-xs font-bold text-red-400">⚠️ 虚偽申告について</p>
+                <p className="text-xs text-red-300/90 leading-relaxed">
+                  音楽を利用していないのに「利用する」とチェックした場合、または音楽を利用しているのに「利用しない」と申告した場合、実際の著作権料との差額を<span className="font-bold">別途請求</span>します。最大<span className="font-bold text-red-400">月額 ¥500,000</span>の罰金が科される場合があります。
+                </p>
+              </div>
             </div>
-          )}
+
+            {/* チェックが必須であることの警告 */}
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-orange-300">
+                このチェックは<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Archive Settings */}
@@ -951,8 +971,9 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
+          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed) || !form.hasMusicUsage}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+          title={!form.hasMusicUsage ? "音楽利用について必ずチェックしてください" : ""}
         >
           {creating ? (
             <>
