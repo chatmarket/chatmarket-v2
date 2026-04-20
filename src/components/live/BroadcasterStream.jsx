@@ -146,9 +146,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       
       let streamConfig;
       if (isRadioMode) {
-        // ラジオモード: 低ビットレート設定（音声特化）
+        // ラジオモード: 音声のみ（ダミー映像を使用）
         streamConfig = {
-          maxBitrate: 64000, // 64kbps
+          maxResolution: { width: 640, height: 360 },
+          maxFramerate: 1, // 1fps: 超低負荷ダミー映像
+          maxBitrate: 100000, // 100kbps（音声 + 最小映像）
         };
       } else {
         // 通常配信: 画質に応じた設定
@@ -166,9 +168,37 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       });
       clientRef.current = client;
 
-      // ビデオを描画（ラジオモード時はスキップ）
-      if (!isRadioMode && previewVideoRef.current) {
-        await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+      // ビデオ処理
+      if (isRadioMode) {
+        // ラジオモード: ダミー映像（Canvas）を1fpsで生成
+        const dummyCanvas = document.createElement("canvas");
+        dummyCanvas.width = 640;
+        dummyCanvas.height = 360;
+        const ctx = dummyCanvas.getContext("2d");
+        
+        // 背景描画
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, 640, 360);
+        
+        // ラジオアイコンっぽい円を描画
+        ctx.fillStyle = "#ff4444";
+        ctx.beginPath();
+        ctx.arc(320, 180, 80, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "48px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("🎙️", 320, 180);
+        
+        const canvasStream = dummyCanvas.captureStream(1); // 1fps
+        await client.addVideoInputDevice(canvasStream, "canvas", { index: 0 });
+      } else {
+        // 通常配信: カメラからキャプチャ
+        if (previewVideoRef.current) {
+          await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+        }
       }
       
       // 音声トラックを追加

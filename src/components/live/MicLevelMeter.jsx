@@ -14,17 +14,25 @@ export default function MicLevelMeter({ audioStream }) {
   useEffect(() => {
     if (!audioStream) return;
 
+    let audioContext = null;
+    let source = null;
+
     try {
-      // AudioContext を初期化（既に存在していれば再利用）
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      // AudioContext を初期化
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
 
       // マイクのオーディオトラックを取得
       const audioTracks = audioStream.getAudioTracks();
-      if (audioTracks.length === 0) return;
+      if (audioTracks.length === 0) {
+        console.warn("オーディオトラックが見つかりません");
+        return;
+      }
 
-      const source = audioContext.createMediaStreamAudioSource(audioStream);
+      // MediaStreamAudioSource を接続
+      source = audioContext.createMediaStreamAudioSource(audioStream);
       source.connect(analyser);
 
       analyserRef.current = analyser;
@@ -33,14 +41,18 @@ export default function MicLevelMeter({ audioStream }) {
       // フレームごとにレベルを更新
       const updateLevel = () => {
         if (analyserRef.current && dataArrayRef.current) {
-          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-          
-          // 平均レベルを計算（0-255）
-          const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
-          const average = sum / dataArrayRef.current.length;
-          
-          // 0-100% にスケーリング
-          setLevel(Math.min(100, (average / 255) * 150));
+          try {
+            analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+            
+            // 平均レベルを計算（0-255）
+            const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
+            const average = sum / dataArrayRef.current.length;
+            
+            // 0-100% にスケーリング
+            setLevel(Math.min(100, (average / 255) * 150));
+          } catch (e) {
+            console.error("周波数データ取得エラー:", e);
+          }
         }
         animationRef.current = requestAnimationFrame(updateLevel);
       };
@@ -51,9 +63,16 @@ export default function MicLevelMeter({ audioStream }) {
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current);
         }
+        // AudioContext を停止
+        if (audioContext && audioContext.state !== "closed") {
+          audioContext.close().catch(() => {});
+        }
       };
     } catch (err) {
       console.error("マイクレベルメーター初期化エラー:", err);
+      if (audioContext && audioContext.state !== "closed") {
+        audioContext.close().catch(() => {});
+      }
     }
   }, [audioStream]);
 
