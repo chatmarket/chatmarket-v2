@@ -27,13 +27,13 @@ const QUALITY_PRESETS = [
   { label: "低帯域 (360p 15fps)", width: 640, height: 360, framerate: 15, bitrate: 500000 },
 ];
 
-// ラジオモード専用：超低帯域プロファイル（Audio Only）
+// ラジオモード専用：安定低帯域プロファイル（Audio + Visualizer）
 const RADIO_MODE_PRESET = {
-  label: "📻 ラジオ (Audio Only - 160x90 1fps)",
-  width: 160,
-  height: 90,
-  framerate: 1,
-  bitrate: 64000, // 64kbps
+  label: "📻 ラジオ (Audio + Visualizer - 320x180 15fps)",
+  width: 320,
+  height: 180,
+  framerate: 15,
+  bitrate: 256000, // 256kbps (128 audio + 128 visualizer)
 };
 
 // 視聴者数ランクアップ推奨ポップアップの定義
@@ -207,82 +207,171 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       return;
     }
     setGoingLive(true);
-    try {
-      const IVSClient = await loadIVSBroadcast();
-      
-      let streamConfig;
-      if (isRadioMode) {
-        streamConfig = {
-          maxResolution: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height },
-          maxFramerate: RADIO_MODE_PRESET.framerate,
-          maxBitrate: RADIO_MODE_PRESET.bitrate,
-        };
-      } else {
-        const preset = QUALITY_PRESETS[selectedQuality];
-        streamConfig = {
-          maxResolution: { width: preset.width, height: preset.height },
-          maxFramerate: preset.framerate,
-          maxBitrate: preset.bitrate,
-        };
-      }
 
-      const client = IVSClient.create({ streamConfig, ingestEndpoint: ivsIngestEndpoint });
-      clientRef.current = client;
-
-      // 音声トラック追加
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        try {
-          await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
-        } catch (audioErr) {
-          console.warn("音声追加失敗（無視）:", audioErr);
-        }
-      }
-
-      // ビデオ追加（ラジオモード でも通常のカメラを使用し、後で停止）
-      if (previewVideoRef.current) {
-        try {
-          await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
-          console.log("✓ カメラ映像追加");
-        } catch (videoErr) {
-          console.warn("ビデオ追加失敗（無視して続行）:", videoErr);
-        }
-      }
-
-      // 配信開始（エラー無視で強制実行）
+    // 3回までリトライ
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        await client.startBroadcast(ivsStreamKey);
-        console.log("✓ IVS startBroadcast 成功");
-      } catch (broadcastErr) {
-        console.warn("startBroadcast エラー（無視して続行）:", broadcastErr);
-      }
+        console.log(`🔄 配信開始試行 ${attempt}/3`);
+        const IVSClient = await loadIVSBroadcast();
+        
+        let streamConfig;
+        if (isRadioMode) {
+          streamConfig = {
+            maxResolution: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height },
+            maxFramerate: RADIO_MODE_PRESET.framerate,
+            maxBitrate: RADIO_MODE_PRESET.bitrate,
+          };
+        } else {
+          const preset = QUALITY_PRESETS[selectedQuality];
+          streamConfig = {
+            maxResolution: { width: preset.width, height: preset.height },
+            maxFramerate: preset.framerate,
+            maxBitrate: preset.bitrate,
+          };
+        }
 
-      // ラジオモード時: 配信開始後に映像トラックを停止
-      if (isRadioMode) {
-        const videoTracks = localStreamRef.current.getVideoTracks();
-        videoTracks.forEach(track => {
+        const client = IVSClient.create({ streamConfig, ingestEndpoint: ivsIngestEndpoint });
+        clientRef.current = client;
+
+        // 音声トラック追加
+        const audioTrack = localStreamRef.current.getAudioTracks()[0];
+        if (audioTrack) {
           try {
-            track.enabled = false;
-            console.log("✓ 映像トラック無効化完了");
-          } catch (err) {
-            console.warn("映像トラック無効化失敗:", err);
+            await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
+            console.log("✓ 音声トラック追加");
+          } catch (audioErr) {
+            console.warn("音声追加失敗（無視）:", audioErr);
           }
-        });
-        setCamOn(false);
-      }
+        }
 
-      const now = new Date().toISOString();
-      await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
-      setLiveStartedAt(now);
-      setStatus("live");
-      toast.success("🔴 AWS IVS 配信を開始しました！");
-    } catch (err) {
-      console.error("配信開始フロー エラー:", err);
-      toast.error("配信に失敗しました");
-    } finally {
-      setGoingLive(false);
+        // ビデオ追加（ラジオモード時は動的マイクレベルメーター映像、通常モードはカメラ）
+        if (isRadioMode) {
+          try {
+            const vizCanvas = await createAudioVisualizerCanvas(audioTrack, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height, RADIO_MODE_PRESET.framerate);
+            await client.addVideoInputDevice(vizCanvas, "visualizer", { index: 0 });
+            console.log("✓ マイクレベルメーター映像追加");
+          } catch (vizErr) {
+            console.warn("ビジュアライザー失敗、カメラでフォールバック:", vizErr);
+            if (previewVideoRef.current) {
+              try {
+                await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+              } catch (camErr) {
+                console.warn("カメラもフォールバック失敗:", camErr);
+              }
+            }
+          }
+        } else {
+          try {
+            if (previewVideoRef.current) {
+              await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+              console.log("✓ カメラ映像追加");
+            }
+          } catch (videoErr) {
+            console.warn("ビデオ追加失敗（無視して続行）:", videoErr);
+          }
+        }
+
+        // 配信開始（リトライ含むエラーハンドリング）
+        try {
+          await client.startBroadcast(ivsStreamKey);
+          console.log("✓ IVS startBroadcast 成功");
+        } catch (broadcastErr) {
+          console.warn(`startBroadcast エラー試行${attempt}（リトライ中）:`, broadcastErr);
+          if (attempt < 3) {
+            await new Promise(r => setTimeout(r, 2000 * attempt)); // 指数バックオフ
+            continue;
+          }
+          throw broadcastErr;
+        }
+
+        // ラジオモード時: 配信開始後にカメラ映像トラックを停止（ビジュアライザーは継続）
+        if (isRadioMode) {
+          const videoTracks = localStreamRef.current.getVideoTracks();
+          videoTracks.forEach(track => {
+            try {
+              track.enabled = false;
+              console.log("✓ カメラ映像トラック無効化（ビジュアライザー継続）");
+            } catch (err) {
+              console.warn("カメラトラック無効化失敗:", err);
+            }
+          });
+          setCamOn(false);
+        }
+
+        const now = new Date().toISOString();
+        await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
+        setLiveStartedAt(now);
+        setStatus("live");
+        toast.success("🔴 AWS IVS 配信を開始しました！");
+        break; // 成功したら抜ける
+
+      } catch (err) {
+        console.error(`配信開始フロー エラー（試行${attempt}）:`, err);
+        if (attempt === 3) {
+          toast.error("配信に失敗しました。もう一度お試しください。");
+        }
+      }
     }
+
+    setGoingLive(false);
   }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
+
+  // マイクレベルメーター Canvas ビジュアライザー
+  const createAudioVisualizerCanvas = async (audioTrack, width, height, fps) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+
+      const mediaSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack.clone()]));
+      mediaSource.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const draw = () => {
+        analyser.getByteFrequencyData(dataArray);
+
+        // 背景: グラデーション（黒→濃紫）
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, "#0a0a1a");
+        grad.addColorStop(1, "#1a0a3a");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // マイクレベルメーター描画
+        const barWidth = (width / dataArray.length) * 2.5;
+        let x = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+          const barHeight = (dataArray[i] / 255) * height;
+
+          // グラデーション色（低音: 青→高音: 赤）
+          const hue = (i / dataArray.length) * 360;
+          ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+          ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+
+          x += barWidth + 1;
+        }
+
+        // 中央にマイクアイコン的テキスト
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("🎙️ LIVE", width / 2, height / 2);
+
+        requestAnimationFrame(draw);
+      };
+
+      draw();
+      const stream = canvas.captureStream(fps);
+      resolve(stream);
+    });
+  };
 
   const toggleMic = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !micOn));
