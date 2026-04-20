@@ -276,7 +276,7 @@ export default function GoLive() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12 h-screen overflow-y-auto">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
           <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
@@ -406,7 +406,7 @@ export default function GoLive() {
         </div>
       )}
 
-      <form onSubmit={handleStart} className="space-y-4 sm:space-y-6">
+      <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
         {mode === MODE_LIVE && (
           <div className="space-y-3">
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300">
