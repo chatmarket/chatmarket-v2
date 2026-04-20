@@ -87,58 +87,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setIsFullscreen((prev) => !prev);
   };
 
-  // ダミー Canvas 動画をループ再生し、ストリームを取得（ラジオモード用）
-  // 640x360 (16:9) AWS IVS Basic チャンネル準拠
+  // ラジオモード時の初期化（ビジュアライザー準備）
   useEffect(() => {
     if (!isRadioMode) return;
-
-    try {
-      // Canvas で黒い 1 フレーム画像を生成（640x360 - AWS IVS Basic 推奨）
-      const canvas = document.createElement("canvas");
-      canvas.width = RADIO_MODE_PRESET.width; // 640
-      canvas.height = RADIO_MODE_PRESET.height; // 360
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height);
-
-      // Canvas から WebM blob を生成（1フレーム黒画面）
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          console.error("Canvas blob 生成失敗");
-          return;
-        }
-
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Video 要素を生成
-        const videoEl = document.createElement("video");
-        videoEl.src = blobUrl;
-        videoEl.loop = true;
-        videoEl.muted = true;
-        videoEl.playsInline = true;
-        videoEl.style.display = "none";
-
-        document.body.appendChild(videoEl);
-        radioDummyVideoRef.current = videoEl;
-
-        // 動画再生開始
-        videoEl.play().then(() => {
-          console.log("✓ ラジオモード ダミー動画再生開始");
-        }).catch((err) => {
-          console.error("ダミー動画再生エラー:", err);
-        });
-      }, "video/webm");
-    } catch (err) {
-      console.error("ダミー動画生成エラー:", err);
-    }
-
-    return () => {
-      if (radioDummyVideoRef.current) {
-        radioDummyVideoRef.current.pause();
-        document.body.removeChild(radioDummyVideoRef.current);
-        radioDummyVideoRef.current = null;
-      }
-    };
+    console.log("📻 ラジオモード初期化完了");
   }, [isRadioMode]);
 
   // ラジオモード時は音声のみ、通常時はカメラ+マイクを取得
@@ -224,16 +176,21 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         
         if (isRadioMode) {
           streamConfig = {
-            maxResolution: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height },
+            maxResolution: { 
+              width: RADIO_MODE_PRESET.width, 
+              height: RADIO_MODE_PRESET.height 
+            },
             maxFramerate: RADIO_MODE_PRESET.framerate,
             maxBitrate: RADIO_MODE_PRESET.bitrate,
-            audioBitrate: RADIO_MODE_PRESET.audioBitrate, // 96kbps 音声専用
           };
-          console.log(`📻 ラジオモード設定: ${streamConfig.maxResolution.width}x${streamConfig.maxResolution.height}, ${streamConfig.maxFramerate}fps, ${streamConfig.maxBitrate / 1000}kbps（音声 ${streamConfig.audioBitrate / 1000}kbps）`);
+          console.log(`📻 ラジオモード設定: ${RADIO_MODE_PRESET.width}x${RADIO_MODE_PRESET.height}, ${RADIO_MODE_PRESET.framerate}fps, ${RADIO_MODE_PRESET.bitrate / 1000}kbps`);
         } else {
           const preset = QUALITY_PRESETS[selectedQuality];
           streamConfig = {
-            maxResolution: { width: preset.width, height: preset.height },
+            maxResolution: { 
+              width: preset.width, 
+              height: preset.height 
+            },
             maxFramerate: preset.framerate,
             maxBitrate: preset.bitrate,
           };
@@ -351,103 +308,40 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     }
   };
 
-  // マイクレベルメーター Canvas ビジュアライザー（640x360 - AWS IVS Basic 対応）
+  // シンプルな Canvas ビジュアライザー（IVS Basic 互換）
   const createAudioVisualizerCanvas = async (audioTrack, width, height, fps) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = width; // 640
-      canvas.height = height; // 360
-      const ctx = canvas.getContext("2d");
+    const canvas = document.createElement("canvas");
+    canvas.width = width; // 640
+    canvas.height = height; // 360
+    const ctx = canvas.getContext("2d");
 
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
+    // 背景: 黒
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, width, height);
 
-      try {
-        const mediaSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack.clone()]));
-        mediaSource.connect(analyser);
-      } catch (connErr) {
-        console.warn("Audio Analyzer 接続失敗、黒画面フォールバック:", connErr);
-      }
+    // 中央にマイク LIVE インジケータ
+    ctx.fillStyle = "rgba(255, 100, 100, 0.9)";
+    ctx.font = "bold 48px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🎙️", width / 2, height / 2 - 40);
+    
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = "bold 24px Arial";
+    ctx.fillText("LIVE ラジオ配信中", width / 2, height / 2 + 30);
 
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    // 右下にビットレート表示
+    ctx.fillStyle = "rgba(0, 255, 100, 0.7)";
+    ctx.font = "14px monospace";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("600 kbps", width - 15, height - 15);
 
-      // FPS30 固定フレーム描画（16.67ms = 1000/60）
-      const frameInterval = 1000 / 30;
-      let lastFrameTime = Date.now();
-      let frameCount = 0; // フレームカウント
-
-      const draw = () => {
-        const now = Date.now();
-        if (now - lastFrameTime >= frameInterval) {
-          lastFrameTime = now;
-          frameCount++;
-
-          try {
-            analyser.getByteFrequencyData(dataArray);
-          } catch (e) {
-            // Analyser エラーは無視して描画続行
-          }
-
-          // 背景: グラデーション（黒→濃紫）
-          const grad = ctx.createLinearGradient(0, 0, 0, height);
-          grad.addColorStop(0, "#0a0a1a");
-          grad.addColorStop(1, "#1a0a3a");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
-
-          // マイクレベルメーター描画（周波数バー）
-          const barWidth = Math.max(1, (width / dataArray.length) * 2.5);
-          let x = 0;
-
-          for (let i = 0; i < dataArray.length; i += 2) {
-            const barHeight = (dataArray[i] / 255) * (height * 0.8);
-
-            // グラデーション色（低音: 青→高音: 赤）
-            const hue = (i / dataArray.length) * 360;
-            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-
-            // 反射効果
-            ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.3)`;
-            ctx.fillRect(x, height - barHeight - 5, barWidth, 5);
-
-            x += barWidth + 1;
-          }
-
-          // 中央にマイク LIVE インジケータ
-          ctx.fillStyle = "rgba(255, 100, 100, 0.8)";
-          ctx.font = "bold 32px Arial";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText("🎙️", width / 2, 40);
-          
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.font = "bold 18px Arial";
-          ctx.fillText("LIVE ラジオ配信中", width / 2, height - 30);
-
-          // 右下にビットレート表示
-          ctx.fillStyle = "rgba(0, 255, 100, 0.6)";
-          ctx.font = "12px monospace";
-          ctx.textAlign = "right";
-          ctx.textBaseline = "bottom";
-          ctx.fillText("600 kbps", width - 10, height - 10);
-
-          // 1フレーム描画完了で フラグを立てて即座に resolve
-          if (frameCount === 1) {
-            canvasDrawnRef.current = true;
-            const stream = canvas.captureStream(30);
-            console.log("✓ Canvas ストリーム作成（640x360, 30fps, 600kbps）- 描画完了フラグ立下");
-            resolve(stream);
-            return; // 1フレーム後は描画ループを打ち切り
-          }
-        }
-
-        requestAnimationFrame(draw);
-      };
-
-      draw();
-    });
+    // Canvas ストリーム取得
+    const stream = canvas.captureStream(fps);
+    canvasDrawnRef.current = true;
+    console.log(`✓ Canvas ストリーム作成（${width}x${height}, ${fps}fps, 600kbps）`);
+    return stream;
   };
 
   const toggleMic = () => {
