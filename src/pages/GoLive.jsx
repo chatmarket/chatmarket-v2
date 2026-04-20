@@ -38,12 +38,12 @@ export default function GoLive() {
     description: "",
     scheduled_at: "",
     availableTime: "",
-    duration: mode === MODE_LIVE ? 60 : 15,
-    price: mode === MODE_LIVE ? 150 : 150,
+    duration: 60,
+    price: 50,
     isPaid: true,
     streamType: STREAM_TYPE_WEBRTC,
-    quality: "720p",
-    startAsRadioMode: false,
+    quality: "basic",
+    startAsRadioMode: true, // ラジオモード強制
     radioBackgroundFile: null,
     saveArchive: false,
     archiveIsPaid: false,
@@ -294,227 +294,96 @@ export default function GoLive() {
         />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 sm:mb-8">
-        <button
-          type="button"
-          onClick={() => {
-            const plan = user?.plan;
-            const isEligible = plan === "basic" || plan === "standard" || plan === "premium" || user?.role === "admin";
-            if (!isEligible) {
-              toast.error("1対多ライブ配信はBASICプラン以上でご利用いただけます。");
-              navigate("/plan-select");
-              return;
-            }
-            setMode(MODE_LIVE);
-            setShowStreamStyleModal(true);
-          }}
-          className={`flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all ${
-            mode === MODE_LIVE
-              ? "border-red-500 bg-red-500/10"
-              : "border-border bg-card hover:border-border/70"
-          }`}
-        >
-          <Radio className={`w-7 h-7 ${mode === MODE_LIVE ? "text-red-400" : "text-muted-foreground"}`} />
-          <span className={`font-bold text-sm ${mode === MODE_LIVE ? "text-red-400" : "text-muted-foreground"}`}>
-            1対多 ライブ配信
-          </span>
-          <span className="text-xs text-muted-foreground text-center">多数の視聴者に向けた有料ライブ配信（PPV）</span>
-          {user && !["basic","standard","premium"].includes(user?.plan) && user?.role !== "admin" && (
-            <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full">BASICプラン以上</span>
-          )}
-        </button>
+      {/* ラジオモード固定 */}
+      {!mode && setMode(MODE_LIVE)}
 
-        <button
-          type="button"
-          onClick={() => setMode(MODE_CALL)}
-          className={`flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all ${
-            mode === MODE_CALL
-              ? "border-primary bg-primary/10"
-              : "border-border bg-card hover:border-border/70"
-          }`}
-        >
-          <PhoneCall className={`w-7 h-7 ${mode === MODE_CALL ? "text-primary" : "text-muted-foreground"}`} />
-          <span className={`font-bold text-sm ${mode === MODE_CALL ? "text-primary" : "text-muted-foreground"}`}>
-            1対1 ビデオ通話
-          </span>
-          <span className="text-xs text-muted-foreground text-center">特定の相手と双方向ビデオ通話（有料対応）</span>
-        </button>
-      </div>
 
-      {mode === MODE_CALL && (
-        <div className="mb-6">
-          {!waiting ? (
-            <button
-              type="button"
-              onClick={handleStartWaiting}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 transition-all text-primary font-bold"
-            >
-              <Users className="w-5 h-5" />
-              待機して通話希望者を募る
-            </button>
-          ) : (
-            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="font-bold text-sm text-green-400">待機中 — 通話希望者を待っています</span>
-                </div>
-                <button onClick={handleStopWaiting} className="text-xs text-muted-foreground hover:text-destructive underline">
-                  待機終了
-                </button>
-              </div>
 
-              {pendingCalls.length === 0 ? (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  まだ通話申請がありません
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">通話申請 ({pendingCalls.length}件)</p>
-                  {pendingCalls.map((call) => (
-                    <div key={call.id} className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                        <UserCheck className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm truncate">{call.caller_name || call.caller_email}</p>
-                        <p className="text-xs text-muted-foreground truncate">{call.caller_email}</p>
-                        {call.message && (
-                          <p className="text-xs text-foreground/70 mt-1 line-clamp-2 bg-secondary px-2 py-1 rounded">💬 {call.message}</p>
-                        )}
-                        <div className="flex gap-2 text-xs text-muted-foreground mt-1">
-                          {call.duration_minutes && <span>⏱ {call.duration_minutes}分</span>}
-                          {call.price > 0 && <span className="text-primary font-bold">¥{call.price.toLocaleString()}</span>}
-                          {call.is_free_call && <span className="text-green-400">無料枠</span>}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2 shrink-0">
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1 h-8 text-xs" onClick={() => handleAcceptCall(call)}>
-                          <CheckCircle2 className="w-3.5 h-3.5" /> 承認
-                        </Button>
-                        <Button size="sm" variant="outline" className="gap-1 h-8 text-xs" onClick={() => handleDeclineCall(call)}>
-                          <XCircle className="w-3.5 h-3.5" /> 断る
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* === IVS 手動入力セクション（ライブ配信のみ） ===*/}
+      {/* === AWS IVS 手動認証（必須） ===*/}
       {mode === MODE_LIVE && (
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-green-500/30 bg-green-500/5 mb-6">
-          <p className="text-xs font-bold text-green-400 uppercase tracking-widest">🔑 AWS IVS 手動認証情報</p>
-          <p className="text-xs text-muted-foreground">自動取得が機能していない場合、AWSコンソールから直接値をコピペしてください。</p>
+        <div className="space-y-4 bg-green-500/10 rounded-2xl p-6 border-2 border-green-500/60 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-green-500/30 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-lg">🔑</span>
+            </div>
+            <div className="flex-1">
+              <p className="font-black text-green-400 text-sm">AWS IVS ストリーム情報（手動入力）</p>
+              <p className="text-xs text-green-300/80 mt-0.5">AWSコンソール → IVS → チャンネル詳細から、以下をコピーしてください</p>
+            </div>
+          </div>
 
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-foreground">Ingest Endpoint</label>
+          <div className="space-y-3 bg-black/20 rounded-xl p-4">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-green-300 uppercase tracking-widest">Ingest Endpoint</label>
               <input
                 type="text"
                 value={manualIngestEndpoint}
                 onChange={(e) => setManualIngestEndpoint(e.target.value)}
-                placeholder="rtmps://xxxxx.ivs.aws.com"
-                className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
+                placeholder="例: rtmps://a1b2c3d4.ivs.ap-northeast-1.amazonaws.com:443/app/"
+                className="w-full bg-secondary border border-green-500/40 rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-green-400"
                 autoComplete="off"
+                spellCheck="false"
               />
-              <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Ingest Server」をコピーしてください</p>
+              <p className="text-[10px] text-muted-foreground">AWS IVS チャンネル詳細の「Server」欄をコピー</p>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-foreground">Stream Key</label>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-green-300 uppercase tracking-widest">Stream Key</label>
               <input
                 type="text"
                 value={manualStreamKey}
                 onChange={(e) => setManualStreamKey(e.target.value)}
-                placeholder="arn:aws:ivs:ap-northeast-1:xxxxx:stream-key/xxxxx"
-                className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
+                placeholder="例: arn:aws:ivs:ap-northeast-1:123456789012:stream-key/abcDefGhIjK"
+                className="w-full bg-secondary border border-green-500/40 rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-green-400"
                 autoComplete="off"
+                spellCheck="false"
               />
-              <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Stream Key」をコピーしてください</p>
+              <p className="text-[10px] text-muted-foreground">AWS IVS チャンネル詳細の「Key」欄をコピー</p>
             </div>
-
-            {(manualIngestEndpoint || manualStreamKey) && (
-              <div className="bg-green-500/15 border border-green-500/40 rounded-lg px-3 py-2.5 text-[10px] text-green-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>✅ 入力値が優先されます。自動取得を上書きします。</span>
-              </div>
-            )}
           </div>
+
+          {manualIngestEndpoint && manualStreamKey && (
+            <div className="bg-green-500/20 border border-green-400/60 rounded-lg px-4 py-3 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+              <span className="text-xs font-bold text-green-300">✅ 認証情報が入力されました</span>
+            </div>
+          )}
         </div>
       )}
 
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
-        {mode === MODE_LIVE && (
-          <div className="space-y-3">
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-300">
-              <p className="font-bold">配信方式</p>
-              <p className="mt-1">ブラウザから直接配信します。カメラが必要です。</p>
-            </div>
-
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={form.startAsRadioMode}
-                  onChange={(e) => setForm({ ...form, startAsRadioMode: e.target.checked })}
-                  className="w-5 h-5 accent-amber-400 rounded"
-                />
-                <div className="flex-1">
-                  <p className="font-bold text-amber-300 group-hover:text-amber-200 transition-colors">
-                    📻 ラジオモードで配信開始
-                  </p>
-                  <p className="text-xs text-amber-200/70 mt-0.5">
-                    映像を停止し、音声に特化した低帯域配信（64kbps）で開始します
-                  </p>
+        {/* ラジオモード情報 */}
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📻</span>
+            <h3 className="font-bold text-amber-300">ラジオモード配信</h3>
+          </div>
+          <p className="text-xs text-amber-200/80">
+            静止画＋音声のみ。AWS IVS Basic チャンネル（640×360 30fps 600kbps）で安定配信します。
+          </p>
+          <div className="space-y-2">
+            <Label className="text-amber-300 text-xs">背景画像（任意）</Label>
+            <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-amber-500/40 rounded-lg cursor-pointer hover:border-amber-500/60 bg-black/20 transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setForm({ ...form, radioBackgroundFile: e.target.files[0] })}
+              />
+              {form.radioBackgroundFile ? (
+                <div className="text-center">
+                  <Image className="w-4 h-4 text-amber-400 mx-auto mb-1" />
+                  <p className="text-xs text-amber-300">{form.radioBackgroundFile.name}</p>
                 </div>
-              </label>
-              {form.startAsRadioMode && (
-                <div className="space-y-3 ml-8">
-                  <div className="text-xs text-amber-200/80 bg-black/20 rounded-lg p-2.5 border border-amber-500/20">
-                    ✓ 配信開始時に映像が停止されます。配信中いつでも「ゲーム配信モード」に切り替え可能です。
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-amber-300">📸 ラジオモード背景画像（任意）</Label>
-                    <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-amber-500/40 rounded-lg cursor-pointer hover:border-amber-500/60 bg-black/20 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => setForm({ ...form, radioBackgroundFile: e.target.files[0] })}
-                      />
-                      {form.radioBackgroundFile ? (
-                        <div className="text-center">
-                          <Image className="w-4 h-4 text-amber-400 mx-auto mb-1" />
-                          <p className="text-xs text-amber-300">{form.radioBackgroundFile.name}</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <Image className="w-5 h-5 text-amber-500/50 mx-auto mb-1" />
-                          <p className="text-xs text-amber-300/70">プロフ画像など背景を選択</p>
-                        </div>
-                      )}
-                    </label>
-                    <p className="text-xs text-amber-200/60">推奨: 1280×720px 以上、10MB以下</p>
-                  </div>
+              ) : (
+                <div className="text-center">
+                  <Image className="w-5 h-5 text-amber-500/50 mx-auto mb-1" />
+                  <p className="text-xs text-amber-300/70">プロフ画像など背景を選択</p>
                 </div>
               )}
-            </div>
-
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-orange-300 leading-relaxed">
-                <strong>自動強制終了について：</strong>配信開始後、視聴者が0人の状態が<strong>5分間継続</strong>した場合、サーバー負荷を避けるためシステムが自動的に配信を強制終了します。
-              </p>
-            </div>
+            </label>
           </div>
-        )}
+        </div>
 
         <div className="space-y-2">
           <Label>サムネイル画像</Label>
@@ -598,402 +467,21 @@ export default function GoLive() {
           />
         </div>
 
-        {/* === PRICING SECTION === */}
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
-          <div className="flex items-center gap-2">
-            <Label>販売単価</Label>
-            <span className="text-xs text-muted-foreground">
-              {mode === MODE_LIVE ? "ライブ配信は必ず有料設定が必要です" : "1対1通話は必ず有料設定が必要です"}
-            </span>
-          </div>
-
-          {mode === MODE_LIVE && (
-            <div className="space-y-4">
-              {form.startAsRadioMode && (
-                <div className="rounded-xl p-4 border bg-amber-500/10 border-amber-500/30 space-y-2">
-                  <p className="text-xs font-bold text-amber-400">📻 ラジオモード専用料金体系</p>
-                  <p className="text-lg font-black text-amber-300">📻 ラジオ延長：50コイン / 60分</p>
-                  <p className="text-xs text-amber-200/70">ラジオモード配信は、視聴者が50コインを支払うことで60分間連続視聴可能な固定価格体系です。配信者側での価格変更はできません。</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>配信時間（最大120分）</Label>
-                <Select
-                  value={String(form.duration)}
-                  onValueChange={(v) => setForm({ ...form, duration: parseInt(v) })}
-                >
-                  <SelectTrigger className="bg-secondary border-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
-                      <SelectItem key={min} value={String(min)}>
-                        {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
-              </div>
-
-              {form.startAsRadioMode && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    💰 視聴価格（固定）
-                    <span className="text-[10px] text-amber-400 font-bold">50コイン = 60分</span>
-                  </Label>
-                  <div className="bg-secondary rounded-lg p-3 border border-amber-500/20">
-                    <p className="text-lg font-black text-amber-300">50 コイン</p>
-                    <p className="text-xs text-muted-foreground mt-1">ラジオモード配信の固定価格です。変更することはできません。</p>
-                  </div>
-                </div>
-              )}
-
-              {!form.startAsRadioMode && (
-                <>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-1.5">
-                      📺 配信品質（AWS IVS Basic 固定）
-                    </Label>
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 space-y-1">
-                      <p className="text-sm font-bold text-blue-400">Basic チャンネル対応</p>
-                      <p className="text-xs text-blue-300">640×360 / 30fps / 600kbps</p>
-                      <p className="text-[10px] text-blue-200/60 mt-2">AWS IVS Basic チャンネルに最適化された設定です。この仕様以外は送信されません。</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      💰 販売単価（15分単位）
-                      <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * liveRevenueRate)}〜{Math.round(form.price * 0.95)}円</span>
-                    </Label>
-                    <p className="text-xs text-muted-foreground">ファンが支払う金額。最大{Math.round(liveRevenueRate * 100)}%があなたの報酬になります。</p>
-                    <Input
-                      type="number"
-                      min={liveMinPrice}
-                      max={1000000}
-                      step={1}
-                      value={form.price}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setForm({ ...form, price: Math.min(val, 1000000) });
-                      }}
-                      className={`bg-secondary border-0 ${livePriceError ? "ring-1 ring-destructive" : ""}`}
-                      placeholder={String(liveMinPrice)}
-                    />
-                    {livePriceError ? (
-                      <p className="text-xs text-destructive font-semibold">
-                        ⛔ 最低{liveMinPrice}コイン必須（{form.duration}分）
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        最低: {liveMinPrice}コイン / {form.duration}分
-                      </p>
-                    )}
-
-                    {form.price > 0 && form.price <= 55 && !livePriceError && (
-                      <div className="rounded-xl p-4 space-y-2 border"
-                        style={{
-                          background: "linear-gradient(135deg, rgba(168,85,247,0.08), rgba(99,102,241,0.06))",
-                          borderColor: "rgba(168,85,247,0.35)",
-                        }}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-purple-400 text-sm">💎</span>
-                          <p className="text-xs font-black text-purple-300 tracking-wide">セルフブランディングのアドバイス</p>
-                        </div>
-                        <p className="text-xs text-purple-200/80 leading-relaxed">
-                          極端な低価格設定は、あなたの素晴らしいスキルや魅力の価値を、自分自身で低く見積もってしまっていませんか？<br /><br />
-                          初回のファン獲得には有効ですが、あなたの価値はもっと高いはずです。<br />
-                          <span className="text-purple-300 font-bold">55円（HD）や150円（FHD）</span> といった適切な価格設定は、あなたを大切にしてくれる「質の高いファン」を惹きつける鍵となります。
-                        </p>
-                        <p className="text-[10px] text-purple-400/60 italic border-t border-purple-500/20 pt-2">
-                          EN: Don't undersell yourself. Your talent deserves a premium audience. Consider a price that reflects your true value.
-                        </p>
-                      </div>
-                    )}
-
-                    {form.price > 0 && !livePriceError && (
-                      <RevenueSimulator 
-                        price={form.price} 
-                        duration={form.duration} 
-                        revenueRate={liveRevenueRate}
-                      />
-                    )}
-
-                    {form.price > 0 && !livePriceError && (() => {
-                      if (effectiveQuality === "480p") return (
-                        <div className="rounded-lg p-3 text-xs bg-green-500/10 border border-green-500/30 space-y-0.5">
-                          <p className="font-bold text-green-400">🌱 エコノミープラン：標準画質（480p）での配信となります。</p>
-                          <p className="text-green-300/80">※ 初めてのファン獲得に最適！</p>
-                        </div>
-                      );
-                      if (effectiveQuality === "720p") return (
-                        <div className="rounded-lg p-3 text-xs bg-blue-500/10 border border-blue-500/30 space-y-0.5">
-                          <p className="font-bold text-blue-400">⭐ スタンダードプラン：高画質（720p）での配信となります。</p>
-                          <p className="text-blue-300/80">※ 一番人気の設定です。</p>
-                        </div>
-                      );
-                      return (
-                        <div className="rounded-lg p-3 text-xs bg-amber-500/10 border border-amber-500/30 space-y-0.5">
-                          <p className="font-bold text-amber-400">👑 プレミアムプラン：最高画質（1080p）での配信となります。</p>
-                          <p className="text-amber-300/80">※ プロフェッショナルな表現に。</p>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="rounded-lg p-3 text-xs space-y-1.5 bg-secondary/60">
-                      <p className="text-muted-foreground">
-                        ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * liveRevenueRate)}コイン（{Math.round(liveRevenueRate * 100)}%）</span>
-                      </p>
-                      <p className="text-muted-foreground">
-                        運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}%）
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {mode === MODE_CALL && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>時間（15分単位）</Label>
-                <Select
-                  value={String(form.duration)}
-                  onValueChange={(v) => setForm({ ...form, duration: parseInt(v), price: (parseInt(v) / 15) * 150 })}
-                >
-                  <SelectTrigger className="bg-secondary border-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
-                      <SelectItem key={min} value={String(min)}>
-                        {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  💰 販売単価（15分単位）
-                  <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * 0.85)}〜{Math.round(form.price * 0.95)}円</span>
-                </Label>
-                <p className="text-xs text-muted-foreground">ファンが支払う金額。最大85%があなたの報酬になります。</p>
-                <Input
-                  type="number"
-                  min={minPrice}
-                  max={1000000}
-                  step={1}
-                  value={form.price}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || minPrice;
-                    setForm({ ...form, price: Math.max(Math.min(val, 1000000), minPrice) });
-                  }}
-                  className="bg-secondary border-0"
-                  placeholder={String(minPrice)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  最低価格: ¥{minPrice.toLocaleString()} / {form.duration}分
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* === JASRAC SECTION === */}
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
+        {/* === 固定価格（ラジオモード専用） === */}
+        <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-5">
           <div className="space-y-3">
-            <Label className="text-sm font-bold">🎵 音楽の利用について</Label>
-            <p className="text-xs text-muted-foreground">JASRAC包括契約に基づき著作権料を徴収します</p>
-
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "yes" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "yes" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
-                <input
-                  type="radio"
-                  name="musicUsage"
-                  value="yes"
-                  checked={form.musicUsageMode === "yes"}
-                  onChange={() => setForm({ ...form, musicUsageMode: "yes" })}
-                  className="w-5 h-5 accent-primary"
-                />
-                <div>
-                  <p className="font-semibold text-sm">音楽を利用する</p>
-                  <p className="text-xs text-muted-foreground">歌唱・演奏・BGMなど音楽コンテンツを含みます</p>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "no" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "no" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
-                <input
-                  type="radio"
-                  name="musicUsage"
-                  value="no"
-                  checked={form.musicUsageMode === "no"}
-                  onChange={() => setForm({ ...form, musicUsageMode: "no" })}
-                  className="w-5 h-5 accent-primary"
-                />
-                <div>
-                  <p className="font-semibold text-sm">音楽を利用しない</p>
-                  <p className="text-xs text-muted-foreground">音楽コンテンツは含みません</p>
-                </div>
-              </label>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">💰</span>
+              <Label className="text-sm font-bold">視聴価格（固定）</Label>
             </div>
-
-            {form.musicUsageMode === "yes" && (
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
-                  <p className="text-xs text-purple-200/80 leading-relaxed">
-                    JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
-                  </p>
-                  <div className="bg-purple-500/20 rounded-lg p-2.5 text-xs text-purple-200 space-y-1">
-                    <p><strong>売上：</strong> ¥100の場合</p>
-                    <p className="text-purple-300">→ あなたの報酬: ¥{Math.round(100 * liveRevenueRate * 0.97)}円（報酬率 {Math.round(liveRevenueRate * 97)}%）</p>
-                    <p>→ 運営手数料: {Math.round(platformFeeRate * 100)}%</p>
-                    <p>→ 著作権料: ¥3（3%）</p>
-                  </div>
-                </div>
-
-                <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 space-y-1">
-                  <p className="text-xs font-bold text-red-400">⚠️ 虚偽申告について</p>
-                  <p className="text-xs text-red-300/90 leading-relaxed">
-                    音楽を利用していないのに「利用する」とチェックした場合、または音楽を利用しているのに「利用しない」と申告した場合、実際の著作権料との差額を<span className="font-bold">別途請求</span>します。最大<span className="font-bold text-red-400">月額 ¥500,000</span>の罰金が科される場合があります。
-                  </p>
-                </div>
-
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-orange-300">
-                    音楽利用の選択は<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="bg-secondary rounded-lg p-4 border border-green-500/20">
+              <p className="text-2xl font-black text-green-400">50 コイン</p>
+              <p className="text-xs text-muted-foreground mt-2">ラジオモード配信の固定価格。60分間の連続視聴が可能です。</p>
+            </div>
           </div>
         </div>
 
-        {/* === ARCHIVE SECTION === */}
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="flex items-center gap-1.5">
-                <Video className="w-4 h-4 text-primary" /> アーカイブを保存する
-              </Label>
-              <p className="text-xs text-muted-foreground mt-0.5">配信・通話終了後に録画を記録します</p>
-            </div>
-            <Switch
-              checked={form.saveArchive}
-              onCheckedChange={(v) => setForm({ ...form, saveArchive: v, archiveIsPaid: false, archiveConsentConfirmed: false })}
-            />
-          </div>
 
-          {form.saveArchive && (
-            <div className="space-y-4 pt-2 border-t border-border/50">
-              {(() => {
-                const canSellArchive = ["basic","standard","premium"].includes(user?.plan) || user?.role === "admin";
-                return (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>アーカイブを有料公開する</Label>
-                      <p className="text-xs text-muted-foreground mt-0.5">¥150〜自由設定で動画として販売できます</p>
-                      {!canSellArchive && (
-                        <p className="text-xs text-yellow-400 mt-1">⚠️ BASICプラン以上で利用可能</p>
-                      )}
-                    </div>
-                    <Switch
-                      checked={form.archiveIsPaid}
-                      disabled={!canSellArchive}
-                      onCheckedChange={(v) => {
-                        if (!canSellArchive) { toast.error("アーカイブ販売はBASICプラン以上でご利用いただけます。"); return; }
-                        if (v && !hasVodPlan) {
-                          toast.error("アーカイブを有料販売するにはVODプランへの加入が必要です。", { duration: 5000 });
-                          navigate("/plan-select");
-                          return;
-                        }
-                        setForm({ ...form, archiveIsPaid: v, archiveConsentConfirmed: false });
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-
-              {form.archiveIsPaid && (
-                <>
-                  <div className="space-y-2">
-                    <Label>アーカイブ販売価格（円）</Label>
-                    <Input
-                      type="number"
-                      min={150}
-                      step={1}
-                      value={form.archivePrice}
-                      onChange={(e) => setForm({ ...form, archivePrice: Math.max(150, parseInt(e.target.value) || 150) })}
-                      className="bg-secondary border-0"
-                      placeholder="150"
-                    />
-                    <p className="text-xs text-muted-foreground">¥150〜自由に設定できます</p>
-                  </div>
-
-                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 space-y-3">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-orange-400">肖像権・同意について（重要）</p>
-                        <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                          <li>通話・配信に映り込む相手（第三者）の肖像権を尊重してください。</li>
-                          <li>アーカイブを有料公開する場合、映り込んだすべての方から<span className="text-orange-300 font-semibold">事前に書面または口頭による明示的な同意</span>を得る必要があります。</li>
-                          <li>同意を得ていないアーカイブの公開は肖像権侵害となり、法的責任を負う可能性があります。</li>
-                          <li>当プラットフォームは同意の有無を確認する義務を負わず、投稿者が全責任を負うものとします。</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    <label className="flex items-start gap-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={form.archiveConsentConfirmed}
-                        onChange={(e) => setForm({ ...form, archiveConsentConfirmed: e.target.checked })}
-                        className="mt-0.5 accent-orange-400 w-4 h-4"
-                      />
-                      <span className="text-xs text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
-                        映り込む全員から肖像権に関する同意を得ており、本規約に同意してアーカイブを有料公開します。
-                      </span>
-                    </label>
-                  </div>
-                </>
-              )}
-
-              {form.saveArchive && form.archiveIsPaid && (
-                <>
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-300 space-y-1">
-                    <p className="font-semibold">💾 アーカイブ販売価格（自動設定）</p>
-                    <p>
-                      {effectiveQuality === "1080p"
-                        ? `1080p高画質配信のため、販売価格は自動的に ¥${autoArchivePrice}/15分 に設定されます。`
-                        : `720p標準画質のため、販売価格は ¥${autoArchivePrice}/15分 に設定可能です。`}
-                    </p>
-                    <p className="text-[10px] text-blue-400 border-t border-blue-500/30 pt-1">
-                      ※ 高画質ソースの維持コストを考慮した設定です
-                    </p>
-                  </div>
-
-                  <StripeFeeProfitBreakdown 
-                    price={form.price} 
-                    duration={form.duration}
-                    quality={effectiveQuality}
-                  />
-                </>
-              )}
-              {form.saveArchive && !form.archiveIsPaid && (
-                <p className="text-xs text-muted-foreground">
-                  ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
-                </p>
-              )}
-            </div>
-          )}
-        </div>
 
 
 
