@@ -67,7 +67,7 @@ export default function ProgressiveIncentiveSection() {
                     <Radio className="w-4 h-4 text-red-400" />
                   </div>
                   <p className="font-black text-sm text-red-400">有料ライブ（PPV）</p>
-                  <p className="text-xs text-muted-foreground leading-snug">チケット制のライブ配信。ファンと直接繋がる</p>
+                  <p className="text-xs text-muted-foreground leading-snug">チケット金額15分15円〜（有料配信の最低設定金額です、上限はありません）ファンと直接繋がる</p>
                 </div>
               </div>
             </div>
