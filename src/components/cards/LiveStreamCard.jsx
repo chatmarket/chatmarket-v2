@@ -11,6 +11,7 @@ export default function LiveStreamCard({ stream }) {
           <img
             src={stream.thumbnail_url}
             alt={stream.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (

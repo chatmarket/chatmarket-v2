@@ -28,8 +28,9 @@ export default function VideoCard({ video, size = "default" }) {
       <div className="relative overflow-hidden rounded-lg sm:rounded-xl aspect-video bg-secondary">
         {video.thumbnail_url ? (
           <img
-            src={video.thumbnail_url}
-            alt={video.title}
+                src={video.thumbnail_url}
+                alt={video.title}
+                loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
