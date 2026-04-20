@@ -33,6 +33,9 @@ export default function LiveView() {
   const [activeGifts, setActiveGifts] = useState([]);
   const [wallet, setWallet] = useState(null);
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
+  const [streamTimeSeconds, setStreamTimeSeconds] = useState(0);
+  const [showExtensionWarning, setShowExtensionWarning] = useState(false);
+  const extensionNotifiedRef = useRef(false);
 
   // すべてのフックを最上部に配置（条件分岐の前に）
   useEffect(() => {
@@ -105,6 +108,43 @@ export default function LiveView() {
     return () => clearInterval(timer);
   }, [stream?.id, stream?.status, hasPurchased]);
 
+  // ストリーム時間カウント + 3分前警告
+  useEffect(() => {
+    if (stream?.status !== "live" || !hasPurchased) return;
+    if (!stream?.duration) return;
+    
+    const totalSeconds = stream.duration * 60;
+    const warningThreshold = totalSeconds - 180; // 3分前 = 180秒前
+    
+    const timer = setInterval(() => {
+      setStreamTimeSeconds(prev => {
+        const newTime = prev + 1;
+        
+        // 3分前に一度だけ警告を表示
+        if (newTime >= warningThreshold && !extensionNotifiedRef.current) {
+          extensionNotifiedRef.current = true;
+          setShowExtensionWarning(true);
+          
+          // プッシュ通知を送信
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('⏰ ライブ配信について', {
+              body: `あと3分で配信が終了します。50コインで延長しますか？`,
+              icon: 'https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png',
+              tag: `stream-${id}`,
+              requireInteraction: true,
+            });
+          }
+          
+          toast.info('⏰ あと3分で配信が終了します。50コインで延長可能です！', { duration: 10000 });
+        }
+        
+        return newTime;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [stream?.status, stream?.duration, hasPurchased, id]);
+
   useEffect(() => {
     if (!user || !stream) return;
     if (!stream.price || stream.price === 0) {
@@ -155,6 +195,51 @@ export default function LiveView() {
     setHasPurchased(true);
     setShowPaywall(false);
     toast.success("チケット購入完了！配信を視聴します🎉");
+  };
+
+  const handleExtendStream = async () => {
+    if (!user || !wallet) return;
+    const extensionCost = 50;
+    
+    if (wallet.balance < extensionCost) {
+      toast.error(`残高不足です。あと${extensionCost - wallet.balance}コイン必要です。`);
+      return;
+    }
+    
+    // コイン消費記録
+    await base44.entities.YellCoinTransaction.create({
+      user_email: user.email,
+      type: "send",
+      amount: extensionCost,
+      target_name: stream.channel_name,
+      target_id: stream.channel_id,
+      message: "ライブ配信延長（50コイン）",
+      service_type: "superchat",
+      service_id: id,
+      channel_id: stream.channel_id,
+      channel_owner_email: channelOwnerEmail,
+    });
+    
+    // ウォレット更新
+    await base44.entities.YellCoinWallet.update(wallet.id, {
+      balance: wallet.balance - extensionCost,
+    });
+    
+    // 再購入として記録
+    await base44.entities.Purchase.create({
+      item_type: "livestream",
+      item_id: id,
+      amount: extensionCost,
+      buyer_email: user.email,
+      status: "completed",
+    });
+    
+    setWallet({ ...wallet, balance: wallet.balance - extensionCost });
+    setShowExtensionWarning(false);
+    extensionNotifiedRef.current = false; // 次回延長時に警告を再表示可能に
+    setStreamTimeSeconds(0); // タイマーリセット
+    
+    toast.success("✨ 配信を50コインで延長しました！");
   };
 
   if (isLoading) {
@@ -318,6 +403,40 @@ export default function LiveView() {
 
           {/* PPV事前チケット販売 */}
           <PpvPreSale stream={stream} user={user} />
+
+          {/* 延長警告モーダル */}
+          {showExtensionWarning && hasPurchased && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-card border border-primary/40 rounded-2xl max-w-sm p-6 space-y-4 shadow-2xl">
+                <div className="text-center space-y-2">
+                  <div className="text-4xl">⏰</div>
+                  <h2 className="text-xl font-black">あと3分で配信終了</h2>
+                  <p className="text-sm text-muted-foreground">配信を続けたい方は、今すぐ50コインで延長しましょう</p>
+                </div>
+
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">現在のコイン残高</p>
+                  <p className="text-3xl font-black text-primary">{wallet?.balance || 0}</p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowExtensionWarning(false)}
+                    className="flex-1 px-4 py-3 rounded-xl border border-border text-sm font-bold hover:bg-secondary transition-colors"
+                  >
+                    後で
+                  </button>
+                  <button
+                    onClick={handleExtendStream}
+                    disabled={!wallet || wallet.balance < 50}
+                    className="flex-1 px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
+                  >
+                    ✨ 50コインで延長
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tip & Gift パネル */}
           {!needsPayment && (
