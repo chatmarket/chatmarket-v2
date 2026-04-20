@@ -48,6 +48,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const clientRef = useRef(null);
   const localStreamRef = useRef(null);
   const rankupShownRef = useRef(false);
+  const dummyCanvasStreamRef = useRef(null); // ラジオモード用ダミー映像ストリーム
 
   const [status, setStatus] = useState("preview"); // "preview" | "live" | "ended"
   const [micOn, setMicOn] = useState(true);
@@ -71,13 +72,47 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setIsFullscreen((prev) => !prev);
   };
 
+  // ダミー映像を事前生成（ラジオモード用）
+  useEffect(() => {
+    if (!isRadioMode) return;
+
+    try {
+      const dummyCanvas = document.createElement("canvas");
+      dummyCanvas.width = 640;
+      dummyCanvas.height = 360;
+      const ctx = dummyCanvas.getContext("2d");
+
+      // 背景描画
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(0, 0, 640, 360);
+
+      // ラジオアイコン
+      ctx.fillStyle = "#ff4444";
+      ctx.beginPath();
+      ctx.arc(320, 180, 80, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "48px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎙️", 320, 180);
+
+      // ダミー映像ストリーム生成（1fps で継続ループ）
+      const canvasStream = dummyCanvas.captureStream(1);
+      dummyCanvasStreamRef.current = canvasStream;
+    } catch (err) {
+      console.error("ダミー映像事前生成エラー:", err);
+    }
+  }, [isRadioMode]);
+
   // ラジオモード時は音声のみ、通常時はカメラ+マイクを取得
   useEffect(() => {
     (async () => {
       try {
         let stream;
         
-        if (initialRadioMode) {
+        if (isRadioMode) {
           // ラジオモード: 音声のみをキャプチャ（カメラランプ一切点灯しない）
           stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
@@ -106,7 +141,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       clientRef.current?.stopBroadcast?.();
     };
-  }, [initialRadioMode]);
+  }, [isRadioMode]);
 
   // 視聴者数ポーリング + ランクアップ推奨チェック
   useEffect(() => {
@@ -177,43 +212,54 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         );
       }
 
-      // ビデオ処理
+      // ビデオ処理（映像トラック確実確保）
+      let videoAdded = false;
+      
       if (isRadioMode) {
-        // ラジオモード: ダミー映像（Canvas）を1fpsで生成
-        try {
-          const dummyCanvas = document.createElement("canvas");
-          dummyCanvas.width = 640;
-          dummyCanvas.height = 360;
-          const ctx = dummyCanvas.getContext("2d");
-          
-          // 背景描画
-          ctx.fillStyle = "#1a1a1a";
-          ctx.fillRect(0, 0, 640, 360);
-          
-          // ラジオアイコンっぽい円を描画
-          ctx.fillStyle = "#ff4444";
-          ctx.beginPath();
-          ctx.arc(320, 180, 80, 0, Math.PI * 2);
-          ctx.fill();
-          
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "48px Arial";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText("🎙️", 320, 180);
-          
-          const canvasStream = dummyCanvas.captureStream(1); // 1fps
-          await client.addVideoInputDevice(canvasStream, "canvas", { index: 0 });
-        } catch (canvasErr) {
-          console.error("Canvas ダミー映像生成エラー:", canvasErr);
-          throw new Error("ラジオモード映像の初期化に失敗しました");
+        // ラジオモード: 事前生成されたダミー映像を使用
+        if (dummyCanvasStreamRef.current) {
+          try {
+            await client.addVideoInputDevice(dummyCanvasStreamRef.current, "canvas", { index: 0 });
+            videoAdded = true;
+          } catch (canvasErr) {
+            console.error("事前生成ダミー映像追加失敗、フォールバック:", canvasErr);
+          }
+        }
+
+        // フォールバック: Canvas 生成失敗時は 1x1 カメラを強制起動
+        if (!videoAdded) {
+          try {
+            const fallbackStream = await navigator.mediaDevices.getUserMedia({
+              video: { width: 1, height: 1, frameRate: 1 },
+              audio: false,
+            });
+            await client.addVideoInputDevice(fallbackStream, "camera", { index: 0 });
+            videoAdded = true;
+            console.warn("1x1フォールバックカメラを起動しました");
+          } catch (fallbackErr) {
+            console.error("フォールバック失敗:", fallbackErr);
+            throw new Error("映像トラックの確保に失敗しました");
+          }
         }
       } else {
         // 通常配信: カメラからキャプチャ
         if (previewVideoRef.current) {
-          await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+          try {
+            await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+            videoAdded = true;
+          } catch (camErr) {
+            console.error("カメラ追加失敗:", camErr);
+            throw new Error("カメラの初期化に失敗しました");
+          }
         }
       }
+
+      if (!videoAdded) {
+        throw new Error("映像トラックが確保できませんでした");
+      }
+
+      // 映像トラックが完全に準備される間、短い遅延を入れる
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       await client.startBroadcast(ivsStreamKey);
 
