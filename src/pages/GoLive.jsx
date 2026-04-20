@@ -812,9 +812,8 @@ export default function GoLive() {
               </div>
             </div>
           )}
-        </div>
 
-        {/* JASRAC著作権料セクション - 必須選択 */}
+          {/* JASRAC著作権料セクション - 必須選択 */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
           <div className="space-y-3">
             <Label className="text-sm font-bold">🎵 音楽の利用について</Label>
