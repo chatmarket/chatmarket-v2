@@ -762,9 +762,9 @@ export default function GoLive() {
                     運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}%）
                   </p>
                 </div>
-                </div>
-                </>
-                )}
+              </div>
+              </>
+              )}
 
                 {mode === MODE_CALL && (
             <div className="space-y-4">
