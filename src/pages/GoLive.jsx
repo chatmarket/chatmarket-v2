@@ -796,8 +796,8 @@ export default function GoLive() {
               </>
               )}
 
-                {mode === MODE_CALL && (
-            <div className="space-y-4">
+              {mode === MODE_CALL && (
+                <div className="space-y-4">
               <div className="space-y-2">
                 <Label>時間（15分単位）</Label>
                 <Select
