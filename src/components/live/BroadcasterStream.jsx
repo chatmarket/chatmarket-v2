@@ -143,133 +143,149 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return () => clearInterval(interval);
   }, [streamId, isLive, streamQuality]);
 
+  // エンドポイントをフルURL形式に整形
+  const normalizeIngestEndpoint = (endpoint) => {
+   if (!endpoint) return "";
+
+   // すでに rtmps:// で始まっている場合はそのまま返す
+   if (endpoint.startsWith("rtmps://")) {
+     // 末尾に :443/app/ がなければ追加
+     if (!endpoint.endsWith(":443/app/")) {
+       return endpoint.endsWith("/") ? endpoint.slice(0, -1) + ":443/app/" : endpoint + ":443/app/";
+     }
+     return endpoint;
+   }
+
+   // ドメインのみの場合は rtmps:// と :443/app/ を追加
+   return `rtmps://${endpoint}:443/app/`;
+  };
+
   const handleGoLive = useCallback(async () => {
-    if (!ivsStreamKey || !ivsIngestEndpoint) {
-      toast.error("IVSのストリーム情報がありません");
-      console.error("❌ ストリーム情報が不足:");
-      console.error("  ivsStreamKey:", ivsStreamKey);
-      console.error("  ivsIngestEndpoint:", ivsIngestEndpoint);
-      return;
-    }
-    if (!localStreamRef.current) {
-      toast.error("カメラ/マイクが取得できていません");
-      return;
-    }
+   if (!ivsStreamKey || !ivsIngestEndpoint) {
+     toast.error("IVSのストリーム情報がありません");
+     console.error("❌ ストリーム情報が不足:");
+     console.error("  ivsStreamKey:", ivsStreamKey);
+     console.error("  ivsIngestEndpoint:", ivsIngestEndpoint);
+     return;
+   }
+   if (!localStreamRef.current) {
+     toast.error("マイクが取得できていません");
+     return;
+   }
 
-    // ストリーム情報を詳細ログ出力（社長の「一文字ずつ照合」対応）
-    console.log("=".repeat(60));
-    console.log("📡 IVS ストリーム情報（設定画面と照合してください）");
-    console.log("=".repeat(60));
-    console.log(`ストリームキー: ${ivsStreamKey}`);
-    console.log(`エンドポイント: ${ivsIngestEndpoint}`);
-    console.log("=".repeat(60));
+   // エンドポイントをフルURL形式に正規化
+   const normalizedEndpoint = normalizeIngestEndpoint(ivsIngestEndpoint);
 
-    setGoingLive(true);
+   // ストリーム情報を詳細ログ出力
+   console.log("=".repeat(60));
+   console.log("📡 IVS ストリーム情報（正規化後）");
+   console.log("=".repeat(60));
+   console.log(`ストリームキー: ${ivsStreamKey}`);
+   console.log(`エンドポイント（正規化前）: ${ivsIngestEndpoint}`);
+   console.log(`エンドポイント（正規化後）: ${normalizedEndpoint}`);
+   console.log("=".repeat(60));
 
-    // 3回までリトライ
-    let streamConfig = {}; // スコープを確保
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        console.log(`🔄 配信開始試行 ${attempt}/3`);
-        const IVSClient = await loadIVSBroadcast();
+   setGoingLive(true);
 
-        // Basic チャンネルは品質設定を適用しない（SDK側で自動調整）
-        if (isRadioMode) {
-          console.log(`📻 ラジオモード開始（Basic チャンネル）`);
-        } else {
-          console.log(`📹 通常モード開始（Basic チャンネル）`);
-        }
+   for (let attempt = 1; attempt <= 3; attempt++) {
+     try {
+       console.log(`🔄 配信開始試行 ${attempt}/3`);
+       const IVSClient = await loadIVSBroadcast();
 
-        console.log(`IVS SDK create() 呼び出し (Basic チャンネル専用):`);
-            console.log(`  ingestEndpoint: "${ivsIngestEndpoint}"`);
+       if (isRadioMode) {
+         console.log(`📻 ラジオモード開始（Basic チャンネル・音声のみ）`);
+       } else {
+         console.log(`📹 通常モード開始（Basic チャンネル）`);
+       }
 
-            // Basic チャンネル用：最小限の初期化のみ
-            const client = IVSClient.create({ 
-              ingestEndpoint: ivsIngestEndpoint 
-            });
-            clientRef.current = client;
-            console.log("✓ IVS クライアント作成成功");
+       console.log(`IVS SDK create() 呼び出し:`);
+       console.log(`  ingestEndpoint: "${normalizedEndpoint}"`);
 
-        // 音声トラック追加
-        try {
-          const audioTrack = localStreamRef.current.getAudioTracks()[0];
-          if (audioTrack) {
-            await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
-            console.log("✓ 音声トラック追加");
-          }
-        } catch (audioErr) {
-          console.warn("⚠️ 音声追加失敗（無視）:", audioErr.message);
-        }
+       // IVS クライアント作成（フルURL形式のエンドポイントを使用）
+       const client = IVSClient.create({ 
+         ingestEndpoint: normalizedEndpoint 
+       });
+       clientRef.current = client;
+       console.log("✓ IVS クライアント作成成功");
 
-        // ビデオ追加：Basic チャンネル用（通常モードのみ）
-        try {
-          if (!isRadioMode && previewVideoRef.current && previewVideoRef.current.srcObject) {
-            // 通常モード：カメラをビデオデバイスとして追加
-            const videoStream = previewVideoRef.current.srcObject;
-            await client.addVideoInputDevice(videoStream, "camera");
-            console.log("✓ カメラをビデオデバイスとして追加");
-          } else if (isRadioMode) {
-            console.log("✓ ラジオモード：ビデオなし（マイクのみ配信）");
-          }
-        } catch (videoErr) {
-          console.warn("⚠️ ビデオ追加失敗（ラジオモードまたは配信は音声のみで続行）:", videoErr.message);
-        }
+       // 音声トラック追加
+       try {
+         const audioTrack = localStreamRef.current.getAudioTracks()[0];
+         if (audioTrack) {
+           await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
+           console.log("✓ 音声トラック追加");
+         } else {
+           console.warn("⚠️ 音声トラックが見つかりません");
+         }
+       } catch (audioErr) {
+         console.warn("⚠️ 音声追加失敗:", audioErr.message);
+       }
 
-        // 配信開始（リトライ含むエラーハンドリング）
-        try {
-          console.log(`startBroadcast() 呼び出し:`);
-          console.log(`  streamKey: "${ivsStreamKey}"`);
-          console.log(`  streamKey 型: ${typeof ivsStreamKey}`);
-          console.log(`  streamKey 長さ: ${ivsStreamKey?.length}`);
+       // ビデオ追加：通常モードのみ（ラジオモードは映像なし）
+       if (!isRadioMode) {
+         try {
+           if (previewVideoRef.current && previewVideoRef.current.srcObject) {
+             const videoStream = previewVideoRef.current.srcObject;
+             await client.addVideoInputDevice(videoStream, "camera");
+             console.log("✓ カメラをビデオデバイスとして追加");
+           }
+         } catch (videoErr) {
+           console.warn("⚠️ ビデオ追加失敗（音声のみで続行）:", videoErr.message);
+         }
+       } else {
+         console.log("✓ ラジオモード：映像なし（マイクのみ配信）");
+       }
 
-          await client.startBroadcast(ivsStreamKey);
-          console.log("✅ IVS startBroadcast 成功 - LIVE オンエアー！");
-        } catch (broadcastErr) {
-          console.warn(`⚠️ startBroadcast エラー試行${attempt}（リトライ中）:`, broadcastErr.message);
-          if (attempt < 3) {
-            await new Promise(r => setTimeout(r, 2000 * attempt)); // 指数バックオフ
-            continue;
-          }
-          throw broadcastErr;
-        }
+       // 配信開始
+       try {
+         console.log(`startBroadcast() 呼び出し:`);
+         console.log(`  streamKey: "${ivsStreamKey}"`);
 
-        // ラジオモード時は最初からビデオなし（何もしない）
+         await client.startBroadcast(ivsStreamKey);
+         console.log("✅ IVS startBroadcast 成功 - LIVE オンエアー！");
+       } catch (broadcastErr) {
+         console.warn(`⚠️ startBroadcast エラー試行${attempt}:`, broadcastErr.message);
+         if (attempt < 3) {
+           await new Promise(r => setTimeout(r, 2000 * attempt));
+           continue;
+         }
+         throw broadcastErr;
+       }
 
-        const now = new Date().toISOString();
-        await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
-        setLiveStartedAt(now);
-        setStatus("live");
-        
-        console.log("✅ 配信開始成功！");
-        
-        toast.success("✅ 配信開始成功！AWS で状況を監視してください。");
-        break; // 成功したら抜ける
+       const now = new Date().toISOString();
+       await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: normalizedEndpoint, live_started_at: now });
+       setLiveStartedAt(now);
+       setStatus("live");
 
-      } catch (err) {
-        console.error(`❌ 試行${attempt} エラー:`, err.message);
-        console.error(`エラー詳細:`, err);
-        
-        if (err.message?.includes("StreamConfiguration")) {
-          console.error("💡 StreamConfigurationError の原因：");
-          console.error("  → ストリームキーまたはエンドポイントが間違っている可能性");
-          console.error("  → 設定画面で確認してください");
-        }
-        
-        if (attempt < 3) {
-          console.log(`⏳ ${2000 * attempt}ms 待機後、リトライします...`);
-          await new Promise(r => setTimeout(r, 2000 * attempt));
-        } else {
-          console.error("🚨 配信開始に失敗（3回リトライ完了）");
-          console.error("次の項目を設定画面で確認してください：");
-          console.error(`  1. ストリームキー: ${ivsStreamKey}`);
-          console.error(`  2. エンドポイント: ${ivsIngestEndpoint}`);
-          toast.error("配信に失敗しました。設定を確認してください。");
-        }
-      }
-    }
+       console.log("✅ 配信開始成功！");
+       toast.success("✅ 配信開始成功！");
+       break;
 
-    setGoingLive(false);
-  }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
+     } catch (err) {
+       console.error(`❌ 試行${attempt} エラー:`, err.message);
+       console.error(`エラー詳細:`, err);
+
+       if (err.message?.includes("StreamConfiguration")) {
+         console.error("💡 StreamConfigurationError の原因：");
+         console.error("  → エンドポイント形式を確認してください");
+         console.error("  → 形式: rtmps://[ドメイン]:443/app/");
+       }
+
+       if (attempt < 3) {
+         console.log(`⏳ ${2000 * attempt}ms 待機後、リトライします...`);
+         await new Promise(r => setTimeout(r, 2000 * attempt));
+       } else {
+         console.error("🚨 配信開始に失敗（3回リトライ完了）");
+         console.error("確認項目：");
+         console.error(`  1. エンドポイント: ${normalizedEndpoint}`);
+         console.error(`  2. ストリームキー: ${ivsStreamKey}`);
+         toast.error("配信に失敗しました。エンドポイントとキーを確認してください。");
+       }
+     }
+   }
+
+   setGoingLive(false);
+  }, [ivsStreamKey, ivsIngestEndpoint, streamId, isRadioMode]);
 
 
 
