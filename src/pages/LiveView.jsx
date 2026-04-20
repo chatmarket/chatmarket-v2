@@ -111,34 +111,40 @@ export default function LiveView() {
     return () => clearInterval(timer);
   }, [stream?.id, stream?.status, hasPurchased]);
 
-  // ストリーム時間カウント + 3分前警告
+  // ラジオ配信向け：視聴権利時間のカウント + 3分前警告
   useEffect(() => {
     if (stream?.status !== "live" || !hasPurchased) return;
-    if (!stream?.duration) return;
-    
-    const totalSeconds = stream.duration * 60;
-    const warningThreshold = totalSeconds - 180; // 3分前 = 180秒前
+    if (!stream?.is_radio_mode) return; // ラジオモード時のみ実行
     
     const timer = setInterval(() => {
       setStreamTimeSeconds(prev => {
         const newTime = prev + 1;
         
+        // 初回（無料15分）: 15分 * 60 = 900秒
+        // 延長後: 60分 * 60 = 3600秒ごとに警告
+        const isFreePhase = newTime <= 900; // 初期無料15分
+        const secondsInCurrentPhase = isFreePhase ? newTime : (newTime - 900) % 3600;
+        const phaseTarget = isFreePhase ? 900 : 3600;
+        const warningPoint = phaseTarget - 180; // 各フェーズの3分前
+        
         // 3分前に一度だけ警告を表示
-        if (newTime >= warningThreshold && !extensionNotifiedRef.current) {
+        if (secondsInCurrentPhase >= warningPoint && !extensionNotifiedRef.current) {
           extensionNotifiedRef.current = true;
           setShowExtensionWarning(true);
           
-          // プッシュ通知を送信
+          const remainingTime = isFreePhase ? "無料視聴終了" : "配信終了";
+          const costText = isFreePhase ? "50コインで60分延長" : "50コインで60分延長";
+          
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('⏰ ライブ配信について', {
-              body: `あと3分で配信が終了します。50コインで延長しますか？`,
+            new Notification('⏰ ラジオ配信について', {
+              body: `あと3分で${remainingTime}します。${costText}しますか？`,
               icon: 'https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png',
               tag: `stream-${id}`,
               requireInteraction: true,
             });
           }
           
-          toast.info('⏰ あと3分で配信が終了します。50コインで延長可能です！', { duration: 10000 });
+          toast.info(`⏰ あと3分で${remainingTime}します。${costText}可能です！`, { duration: 10000 });
         }
         
         return newTime;
@@ -146,7 +152,7 @@ export default function LiveView() {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [stream?.status, stream?.duration, hasPurchased, id]);
+  }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
   useEffect(() => {
     if (!user || !stream) return;
@@ -203,11 +209,19 @@ export default function LiveView() {
   const handleExtendStream = async () => {
     if (!user || !wallet) return;
     const extensionCost = 50;
+    const extensionDuration = 60; // 分
     
     if (wallet.balance < extensionCost) {
       toast.error(`残高不足です。あと${extensionCost - wallet.balance}コイン必要です。`);
       return;
     }
+    
+    // 手数料計算（枠単位）
+    // 50コイン（₹） → JASRAC 3%, プラットフォーム手数料適用 → 社長とライバーで分配
+    const jasracFee = Math.ceil(extensionCost * 0.03); // 1.5円 ≈ 2円
+    const netAmount = extensionCost - jasracFee; // 48コイン
+    const liverShare = Math.round(netAmount * 0.85); // ライバー85%
+    const platformShare = netAmount - liverShare; // プラットフォーム15%
     
     // コイン消費記録
     await base44.entities.YellCoinTransaction.create({
@@ -216,7 +230,7 @@ export default function LiveView() {
       amount: extensionCost,
       target_name: stream.channel_name,
       target_id: stream.channel_id,
-      message: "ライブ配信延長（50コイン）",
+      message: `ラジオ配信延長（50コイン→60分）`,
       service_type: "superchat",
       service_id: id,
       channel_id: stream.channel_id,
@@ -226,6 +240,7 @@ export default function LiveView() {
     // ウォレット更新
     await base44.entities.YellCoinWallet.update(wallet.id, {
       balance: wallet.balance - extensionCost,
+      total_sent: (wallet.total_sent || 0) + extensionCost,
     });
     
     // 再購入として記録
@@ -246,7 +261,7 @@ export default function LiveView() {
     extensionNotifiedRef.current = false;
     setStreamTimeSeconds(0);
     
-    toast.success("✨ 配信を50コインで延長しました！");
+    toast.success(`✨ 配信を50コイン（60分）で延長しました！\n💰 収益：ライバー ${liverShare}コイン | プラットフォーム ${platformShare}コイン | JASRAC ${jasracFee}円`);
   };
 
   if (isLoading) {
@@ -424,13 +439,25 @@ export default function LiveView() {
               <div className="bg-card border border-primary/40 rounded-2xl max-w-sm p-6 space-y-4 shadow-2xl">
                 <div className="text-center space-y-2">
                   <div className="text-4xl">⏰</div>
-                  <h2 className="text-xl font-black">あと3分で配信終了</h2>
-                  <p className="text-sm text-muted-foreground">配信を続けたい方は、今すぐ50コインで延長しましょう</p>
+                  <h2 className="text-xl font-black">あと3分で視聴終了</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {streamTimeSeconds <= 900 
+                      ? "無料15分が終了します。" 
+                      : "現在の視聴枠が終了します。"}
+                  </p>
+                  <p className="text-xs text-green-400 font-semibold mt-2">
+                    🎁 50コイン = 60分延長
+                  </p>
                 </div>
 
-                <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-center">
-                  <p className="text-xs text-muted-foreground mb-1">現在のコイン残高</p>
-                  <p className="text-3xl font-black text-primary">{wallet?.balance || 0}</p>
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-center space-y-2">
+                  <p className="text-xs text-muted-foreground">現在のコイン残高</p>
+                  <p className="text-3xl font-black text-primary">{wallet?.balance || 0}コイン</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {wallet && wallet.balance >= 50 
+                      ? "✓ 延長可能です" 
+                      : `あと${50 - (wallet?.balance || 0)}コイン必要`}
+                  </p>
                 </div>
 
                 <div className="flex gap-3">
@@ -445,7 +472,7 @@ export default function LiveView() {
                     disabled={!wallet || wallet.balance < 50}
                     className="flex-1 px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
                   >
-                    ✨ 50コインで延長
+                    ✨ 延長する
                   </button>
                 </div>
               </div>
