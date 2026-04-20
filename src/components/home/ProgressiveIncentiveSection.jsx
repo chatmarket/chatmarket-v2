@@ -27,7 +27,7 @@ export default function ProgressiveIncentiveSection() {
               <div className="flex items-center gap-3 text-left">
                 <TrendingUp className="w-6 h-6 text-primary shrink-0" />
                 <span className="text-lg font-black" style={{ textShadow: "0 0 8px hsl(var(--primary)/0.5)" }}>
-                  収益還元・決済ロジック（詳細）
+                  収益還元率UPの仕組み
                 </span>
               </div>
             </AccordionTrigger>
