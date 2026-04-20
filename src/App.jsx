@@ -72,6 +72,7 @@ import PlanDetail from '@/pages/PlanDetail';
 import TestPayment from '@/pages/TestPayment';
 import VideoEngineComparison from '@/pages/VideoEngineComparison';
 import LandingPage from '@/pages/LandingPage';
+import VodAnalytics from '@/pages/VodAnalytics';
 
 export default function App() {
   return (
@@ -134,6 +135,7 @@ export default function App() {
             <Route path="/my-tickets" element={<MyTickets />} />
             <Route path="/my-library" element={<MyLibrary />} />
             <Route path="/content-analytics" element={<ContentAnalytics />} />
+            <Route path="/vod-analytics" element={<VodAnalytics />} />
             <Route path="/revenue-dashboard" element={<CreatorRevenueDashboard />} />
             <Route path="/millionaire" element={<MillionaireChallenge />} />
             <Route path="/influencer-campaign" element={<InfluencerCampaign />} />
