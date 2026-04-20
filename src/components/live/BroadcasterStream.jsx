@@ -168,46 +168,51 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       });
       clientRef.current = client;
 
-      // ビデオ処理
-      if (isRadioMode) {
-        // ラジオモード: ダミー映像（Canvas）を1fpsで生成
-        const dummyCanvas = document.createElement("canvas");
-        dummyCanvas.width = 640;
-        dummyCanvas.height = 360;
-        const ctx = dummyCanvas.getContext("2d");
-        
-        // 背景描画
-        ctx.fillStyle = "#1a1a1a";
-        ctx.fillRect(0, 0, 640, 360);
-        
-        // ラジオアイコンっぽい円を描画
-        ctx.fillStyle = "#ff4444";
-        ctx.beginPath();
-        ctx.arc(320, 180, 80, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "48px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("🎙️", 320, 180);
-        
-        const canvasStream = dummyCanvas.captureStream(1); // 1fps
-        await client.addVideoInputDevice(canvasStream, "canvas", { index: 0 });
-      } else {
-        // 通常配信: カメラからキャプチャ
-        if (previewVideoRef.current) {
-          await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
-        }
-      }
-      
-      // 音声トラックを追加
+      // 音声トラックを先に追加（重要：ビデオより先に）
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
         await client.addAudioInputDevice(
           new MediaStream([audioTrack]),
           "mic"
         );
+      }
+
+      // ビデオ処理
+      if (isRadioMode) {
+        // ラジオモード: ダミー映像（Canvas）を1fpsで生成
+        try {
+          const dummyCanvas = document.createElement("canvas");
+          dummyCanvas.width = 640;
+          dummyCanvas.height = 360;
+          const ctx = dummyCanvas.getContext("2d");
+          
+          // 背景描画
+          ctx.fillStyle = "#1a1a1a";
+          ctx.fillRect(0, 0, 640, 360);
+          
+          // ラジオアイコンっぽい円を描画
+          ctx.fillStyle = "#ff4444";
+          ctx.beginPath();
+          ctx.arc(320, 180, 80, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "48px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("🎙️", 320, 180);
+          
+          const canvasStream = dummyCanvas.captureStream(1); // 1fps
+          await client.addVideoInputDevice(canvasStream, "canvas", { index: 0 });
+        } catch (canvasErr) {
+          console.error("Canvas ダミー映像生成エラー:", canvasErr);
+          throw new Error("ラジオモード映像の初期化に失敗しました");
+        }
+      } else {
+        // 通常配信: カメラからキャプチャ
+        if (previewVideoRef.current) {
+          await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+        }
       }
 
       await client.startBroadcast(ivsStreamKey);
