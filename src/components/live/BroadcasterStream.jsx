@@ -221,7 +221,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     console.log("4. 『推奨エンコーダー設定』を確認:");
     console.log("   Standard: 最大解像度 1920x1080、最大ビットレート 8.5 Mbps");
     console.log("   Basic: 最大解像度 1280x720、最大ビットレート 4.5 Mbps");
-    console.log("5. 現在のコード設定（ラジオ: 480x360, 400kbps）が範囲内か確認");
+    console.log("5. 現在のコード設定（ラジオ: 640x360 30fps, 1200kbps）が範囲内か確認");
     console.log("════════════════════════════════════════════════════════════");
 
     // 3回までリトライ
@@ -326,9 +326,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log("✅ 配信開始成功！AWS リアルタイム監視");
         console.log("════════════════════════════════════════════════════════════");
         console.log("📈 現在の配信設定:");
-        console.log(`   - 解像度: ${isRadioMode ? "480x360 (ラジオメーター)" : QUALITY_PRESETS[selectedQuality].width + "x" + QUALITY_PRESETS[selectedQuality].height}`);
+        console.log(`   - 解像度: ${isRadioMode ? "640x360 (ラジオメーター)" : QUALITY_PRESETS[selectedQuality].width + "x" + QUALITY_PRESETS[selectedQuality].height}`);
         console.log(`   - FPS: ${isRadioMode ? "30" : QUALITY_PRESETS[selectedQuality].framerate}`);
-        console.log(`   - ビットレート: ${isRadioMode ? "400" : Math.round(QUALITY_PRESETS[selectedQuality].bitrate / 1000)} kbps`);
+        console.log(`   - ビットレート: ${isRadioMode ? "1200" : Math.round(QUALITY_PRESETS[selectedQuality].bitrate / 1000)} kbps`);
         console.log(`   - Ingest Endpoint: ${ivsIngestEndpoint}`);
         console.log("");
         console.log("🔍 AWS でリアルタイム監視:");
@@ -479,7 +479,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           ctx.font = "12px monospace";
           ctx.textAlign = "right";
           ctx.textBaseline = "bottom";
-          ctx.fillText("400 kbps", width - 10, height - 10);
+          ctx.fillText("1200 kbps", width - 10, height - 10);
         }
 
         requestAnimationFrame(draw);
