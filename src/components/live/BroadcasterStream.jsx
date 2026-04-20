@@ -85,31 +85,32 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
 
 
-  // ラジオモード時は音声のみ、通常時はカメラ+マイクを取得
+  // ラジオモード時は「マイクのみ」を取得、通常時はカメラ+マイクを取得
   useEffect(() => {
     (async () => {
       try {
-        let stream;
-        
-        // Basic チャンネル専用：常に 640x360 30fps で固定
-        // ラジオ/通常モード切り替えに関わらず同じ仕様
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: BASIC_CHANNEL_PRESET.width, height: BASIC_CHANNEL_PRESET.height, frameRate: BASIC_CHANNEL_PRESET.framerate },
-          audio: true,
-        });
-        
         if (isRadioMode) {
+          // ✅ ラジオモード：マイクのみ（カメラリソース不要）
+          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          localStreamRef.current = audioStream;
           setCamOn(false);
+          console.log("✓ ラジオモード：マイクのみ取得（カメラ不要）");
         } else {
+          // 通常モード：カメラ + マイク
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: BASIC_CHANNEL_PRESET.width, height: BASIC_CHANNEL_PRESET.height, frameRate: BASIC_CHANNEL_PRESET.framerate },
+            audio: true,
+          });
+          localStreamRef.current = stream;
           setCamOn(true);
           if (previewVideoRef.current) {
             previewVideoRef.current.srcObject = stream;
           }
+          console.log("✓ 通常モード：カメラ+マイク取得");
         }
-        
-        localStreamRef.current = stream;
       } catch (err) {
-        toast.error("カメラ/マイクにアクセスできません: " + err.message);
+        toast.error("マイクにアクセスできません: " + err.message);
+        console.error("❌ メディアアクセスエラー:", err);
       }
     })();
 
@@ -200,18 +201,18 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           console.warn("⚠️ 音声追加失敗（無視）:", audioErr.message);
         }
 
-        // ビデオ追加：Basic チャンネル用（SDK側で640x360に自動調整）
+        // ビデオ追加：Basic チャンネル用（通常モードのみ）
         try {
           if (!isRadioMode && previewVideoRef.current && previewVideoRef.current.srcObject) {
-            // 通常モード：MediaStreamをそのまま追加
+            // 通常モード：カメラをビデオデバイスとして追加
             const videoStream = previewVideoRef.current.srcObject;
             await client.addVideoInputDevice(videoStream, "camera");
-            console.log("✓ ビデオストリーム追加");
+            console.log("✓ カメラをビデオデバイスとして追加");
           } else if (isRadioMode) {
-            console.log("✓ ラジオモード：音声のみ (640x360背景表示)");
+            console.log("✓ ラジオモード：ビデオなし（マイクのみ配信）");
           }
         } catch (videoErr) {
-          console.warn("⚠️ ビデオ追加失敗（配信は音声のみで続行）:", videoErr.message);
+          console.warn("⚠️ ビデオ追加失敗（ラジオモードまたは配信は音声のみで続行）:", videoErr.message);
         }
 
         // 配信開始（リトライ含むエラーハンドリング）
@@ -232,19 +233,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           throw broadcastErr;
         }
 
-        // ラジオモード時: 配信開始後にカメラ映像トラックを停止（ビジュアライザーは継続）
-        if (isRadioMode) {
-          const videoTracks = localStreamRef.current.getVideoTracks();
-          videoTracks.forEach(track => {
-            try {
-              track.enabled = false;
-              console.log("✓ カメラ映像トラック無効化（ビジュアライザー継続）");
-            } catch (err) {
-              console.warn("カメラトラック無効化失敗:", err);
-            }
-          });
-          setCamOn(false);
-        }
+        // ラジオモード時は最初からビデオなし（何もしない）
 
         const now = new Date().toISOString();
         await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
