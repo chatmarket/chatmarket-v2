@@ -11,6 +11,7 @@ import {
   Coins, ChevronDown, Flame, Gift, Crown
 } from "lucide-react";
 import RevenueModel from "@/components/recruit/RevenueModel";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import BusinessModelShowcase from "@/components/recruit/BusinessModelShowcase";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -144,6 +145,7 @@ export default function Recruit() {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <MetaHelmet page="recruit" />
 
       {/* ===== HERO ===== */}
       <section className="relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 py-16 overflow-hidden">

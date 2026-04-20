@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -190,6 +191,11 @@ export default function WatchVideo() {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <MetaHelmet
+        title={`${video.title} | ChatMarket`}
+        description={video.description || `${video.channel_name}の動画「${video.title}」を視聴する。ChatMarketで有料・無料動画を楽しもう。`}
+        image={video.thumbnail_url}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Video Player */}
         <div className="space-y-3 sm:space-y-4 lg:col-span-2">

@@ -13,6 +13,7 @@ const _now = new Date();
 const SHOW_RECRUIT_BANNER = isBefore(_now, _RECRUIT_DEADLINE);
 console.log('[RecruitBanner/Home] now:', _now.toISOString(), '| show:', SHOW_RECRUIT_BANNER);
 import VideoCard from "../components/cards/VideoCard";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import ScrollRow from "../components/home/ScrollRow";
@@ -114,6 +115,7 @@ export default function Home() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 md:px-4 lg:px-8 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-12 lg:space-y-14 overflow-x-hidden">
+      <MetaHelmet page="home" />
 
       {/* ジャイアント・キリング速報バナー（グローバル固定） */}
       <GiantKillingBanner />

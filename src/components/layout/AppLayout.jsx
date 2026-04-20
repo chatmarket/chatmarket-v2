@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PushNotificationPrompt from "@/components/notifications/PushNotificationPrompt";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -277,6 +278,9 @@ export default function AppLayout() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* Push Notification Prompt */}
+      <PushNotificationPrompt />
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center justify-around h-16 px-2">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -179,6 +180,11 @@ export default function LiveView() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <MetaHelmet
+        title={`🔴 ${stream.title} | ChatMarket LIVE`}
+        description={stream.description || `${stream.channel_name}がライブ配信中！ChatMarketで今すぐ視聴。`}
+        image={stream.thumbnail_url}
+      />
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-0 xl:gap-4 h-screen">
         {/* Stream Player */}
         <div className="space-y-3 sm:space-y-4 xl:col-span-3 flex flex-col overflow-y-auto p-3 sm:p-4 xl:p-6">
