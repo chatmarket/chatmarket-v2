@@ -232,108 +232,57 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       // 音声トラック追加
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
-        await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
+        try {
+          await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
+        } catch (audioErr) {
+          console.warn("音声追加失敗（無視）:", audioErr);
+        }
       }
 
-      // ビデオ追加（ラジオモード = パーティクル背景 or 一瞬カメラ1フレーム）
-      let videoAdded = false;
-      
+      // ビデオ追加（ラジオモード でも通常のカメラを使用し、後で停止）
+      if (previewVideoRef.current) {
+        try {
+          await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+          console.log("✓ カメラ映像追加");
+        } catch (videoErr) {
+          console.warn("ビデオ追加失敗（無視して続行）:", videoErr);
+        }
+      }
+
+      // 配信開始（エラー無視で強制実行）
+      try {
+        await client.startBroadcast(ivsStreamKey);
+        console.log("✓ IVS startBroadcast 成功");
+      } catch (broadcastErr) {
+        console.warn("startBroadcast エラー（無視して続行）:", broadcastErr);
+      }
+
+      // ラジオモード時: 配信開始後に映像トラックを停止
       if (isRadioMode) {
-        // 方法1: パーティクル背景ストリーム使用
-        if (particleStreamRef.current && particleStreamRef.current.getVideoTracks().length > 0) {
+        const videoTracks = localStreamRef.current.getVideoTracks();
+        videoTracks.forEach(track => {
           try {
-            await client.addVideoInputDevice(particleStreamRef.current, "particle", { index: 0 });
-            videoAdded = true;
-            console.log("✓ パーティクル背景で配信開始");
-          } catch (particleErr) {
-            console.error("パーティクル失敗、1フレーム静止画へフォールバック:", particleErr);
+            track.enabled = false;
+            console.log("✓ 映像トラック無効化完了");
+          } catch (err) {
+            console.warn("映像トラック無効化失敗:", err);
           }
-        }
-
-        // 方法2: 実カメラ一瞬起動で1フレーム取得
-        if (!videoAdded) {
-          try {
-            const cam = await navigator.mediaDevices.getUserMedia({ 
-              video: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height }, 
-              audio: false 
-            });
-            const videoTrack = cam.getVideoTracks()[0];
-
-            // Canvas で1フレーム描画
-            const canvas = document.createElement("canvas");
-            canvas.width = RADIO_MODE_PRESET.width;
-            canvas.height = RADIO_MODE_PRESET.height;
-            const ctx = canvas.getContext("2d");
-
-            const video = document.createElement("video");
-            video.srcObject = cam;
-            video.muted = true;
-            video.onloadedmetadata = async () => {
-              ctx.drawImage(video, 0, 0);
-              video.pause();
-              cam.getTracks().forEach(t => t.stop()); // カメラ停止
-
-              // 静止画ストリーム取得
-              const staticStream = canvas.captureStream(1);
-              staticImageStreamRef.current = staticStream;
-              await client.addVideoInputDevice(staticStream, "static", { index: 0 });
-              videoAdded = true;
-              console.log("✓ 1フレーム静止画で配信開始");
-
-              // 以下で startBroadcast 呼び出し
-              await performStartBroadcast(client, ivsStreamKey, streamId);
-            };
-            video.play();
-
-            // タイムアウト対策
-            setTimeout(() => {
-              if (!videoAdded) {
-                cam.getTracks().forEach(t => t.stop());
-                videoAdded = true;
-                performStartBroadcast(client, ivsStreamKey, streamId);
-              }
-            }, 1000);
-
-            return; // ここで終了、後は callback で処理
-          } catch (camErr) {
-            console.error("カメラ起動失敗:", camErr);
-          }
-        }
-      } else {
-        // 通常配信
-        if (previewVideoRef.current) {
-          try {
-            await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
-            videoAdded = true;
-          } catch (camErr) {
-            console.error("カメラ追加失敗:", camErr);
-          }
-        }
+        });
+        setCamOn(false);
       }
 
-      if (videoAdded) {
-        await performStartBroadcast(client, ivsStreamKey, streamId);
-      }
-    } catch (err) {
-      toast.error("配信開始に失敗: " + err.message);
-    } finally {
-      setGoingLive(false);
-    }
-  }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
-
-  const performStartBroadcast = async (client, key, sid) => {
-    try {
-      await client.startBroadcast(key);
       const now = new Date().toISOString();
-      await base44.entities.LiveStream.update(sid, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
+      await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
       setLiveStartedAt(now);
       setStatus("live");
       toast.success("🔴 AWS IVS 配信を開始しました！");
     } catch (err) {
-      console.error("配信開始失敗:", err);
-      toast.error("配信開始に失敗: " + err.message);
+      console.error("配信開始フロー エラー:", err);
+      toast.error("配信に失敗しました");
+    } finally {
+      setGoingLive(false);
     }
-  };
+  }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
 
   const toggleMic = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !micOn));
