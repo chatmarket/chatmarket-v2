@@ -29,16 +29,16 @@ export default function StreamStyleModal({ onSelect, onClose }) {
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full mb-1">
                   <Zap className="w-3 h-3" /> かんたん
                 </span>
-                <h3 className="font-black text-white text-base leading-tight">ブラウザから手軽に配信<br /><span className="text-zinc-400 text-sm font-normal">（Webカメラ）</span></h3>
+                <h3 className="font-black text-white text-base leading-tight">ブラウザから手軽に配信<br /><span className="text-zinc-400 text-sm font-normal">（映像 or ラジオモード）</span></h3>
               </div>
             </div>
 
             <p className="text-zinc-400 text-sm leading-relaxed flex-1">
-              専用ソフト不要。スマホやPCのカメラを使って、今すぐ簡単にライブ配信をスタートできます。雑談やちょっとした配信に最適です。
+              専用ソフト不要。スマホやPCのカメラを使った映像配信、または映像を停止したラジオ配信（低帯域音声特化）をスタートできます。
             </p>
 
             <ul className="space-y-1.5 text-xs text-zinc-500">
-              {["アプリ・ソフト不要", "スマホ・PCどちらでもOK", "すぐに配信スタート"].map((t) => (
+              {["📹 映像配信 or 📻 ラジオモード選択可", "アプリ・ソフト不要", "スマホ・PCどちらでもOK"].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />{t}
                 </li>
