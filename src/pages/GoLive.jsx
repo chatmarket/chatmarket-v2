@@ -53,7 +53,7 @@ export default function GoLive() {
     archivePrice: 150,
     archiveConsentConfirmed: false,
     // JASRAC著作権料
-    hasMusicUsage: false,
+    musicUsageMode: "no", // "yes" | "no"
   });
 
   useEffect(() => {
@@ -211,7 +211,7 @@ export default function GoLive() {
       total_viewer_minutes: 0,
       revenue_coins: 0,
       // JASRAC著作権料フラグ
-      has_music_usage: form.hasMusicUsage,
+      has_music_usage: form.musicUsageMode === "yes",
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -810,26 +810,46 @@ export default function GoLive() {
           )}
         </div>
 
-        {/* JASRAC著作権料セクション - 必須チェック */}
+        {/* JASRAC著作権料セクション - 必須選択 */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="musicUsageDeclaration"
-                checked={form.hasMusicUsage}
-                onChange={(e) => setForm({ ...form, hasMusicUsage: e.target.checked })}
-                className="w-5 h-5 mt-0.5 accent-destructive rounded"
-              />
-              <div className="flex-1">
-                <Label htmlFor="musicUsageDeclaration" className="text-sm font-bold cursor-pointer flex items-center gap-1.5">
-                  🎵 音楽を利用する（歌唱・演奏・BGM等）
-                </Label>
-                <p className="text-xs text-muted-foreground mt-1">JASRAC包括契約に基づき著作権料を徴収します</p>
-              </div>
+            <Label className="text-sm font-bold">🎵 音楽の利用について</Label>
+            <p className="text-xs text-muted-foreground">JASRAC包括契約に基づき著作権料を徴収します</p>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "yes" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "yes" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
+                <input
+                  type="radio"
+                  name="musicUsage"
+                  value="yes"
+                  checked={form.musicUsageMode === "yes"}
+                  onChange={() => setForm({ ...form, musicUsageMode: "yes" })}
+                  className="w-5 h-5 accent-primary"
+                />
+                <div>
+                  <p className="font-semibold text-sm">音楽を利用する</p>
+                  <p className="text-xs text-muted-foreground">歌唱・演奏・BGMなど音楽コンテンツを含みます</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors" style={{ borderColor: form.musicUsageMode === "no" ? "var(--color-primary)" : undefined, backgroundColor: form.musicUsageMode === "no" ? "rgba(160, 84, 39, 0.1)" : undefined }}>
+                <input
+                  type="radio"
+                  name="musicUsage"
+                  value="no"
+                  checked={form.musicUsageMode === "no"}
+                  onChange={() => setForm({ ...form, musicUsageMode: "no" })}
+                  className="w-5 h-5 accent-primary"
+                />
+                <div>
+                  <p className="font-semibold text-sm">音楽を利用しない</p>
+                  <p className="text-xs text-muted-foreground">音楽コンテンツは含みません</p>
+                </div>
+              </label>
             </div>
 
             {/* 著作権料詳細 */}
+            {form.musicUsageMode === "yes" && (
             <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
               <div className="space-y-2">
                 <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
@@ -853,15 +873,16 @@ export default function GoLive() {
               </div>
             </div>
 
-            {/* チェックが必須であることの警告 */}
+            {/* 選択が必須であることの警告 */}
             <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
               <p className="text-xs text-orange-300">
-                このチェックは<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
+                音楽利用の選択は<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
               </p>
             </div>
-          </div>
-        </div>
+            )}
+            </div>
+            </div>
 
         {/* Archive Settings */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
@@ -987,9 +1008,8 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed) || !form.hasMusicUsage}
+          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
-          title={!form.hasMusicUsage ? "音楽利用について必ずチェックしてください" : ""}
         >
           {creating ? (
             <>
