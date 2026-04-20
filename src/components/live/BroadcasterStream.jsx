@@ -192,10 +192,16 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         const IVSClient = await loadIVSBroadcast();
 
         // ラジオモード：Basic チャンネル（音声のみ）
-        // 設定なしで初期化（SDK が音声を自動判定）
-        console.log(`📻 ラジオモード：Basic チャンネル（音声のみ・設定なし初期化）`);
+        console.log(`📻 ラジオモード：Basic チャンネル（音声のみ）`);
+        
+        // 最小限のオーディオ設定のみ
+        const streamConfig = {
+          audioBitrate: 96000,  // 96kbps
+          audioSampleRate: 44100,
+          audioChannels: 1,
+        };
 
-        const client = IVSClient.create({});
+        const client = IVSClient.create({ streamConfig });
         clientRef.current = client;
         console.log("✓ IVS クライアント作成成功");
 
