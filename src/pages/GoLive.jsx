@@ -795,56 +795,57 @@ export default function GoLive() {
               </div>
               </>
               )}
+              </div>
 
               {mode === MODE_CALL && (
-                <div className="space-y-4">
+              <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
               <div className="space-y-2">
-                <Label>時間（15分単位）</Label>
-                <Select
-                  value={String(form.duration)}
-                  onValueChange={(v) => setForm({ ...form, duration: parseInt(v), price: (parseInt(v) / 15) * 150 })}
-                >
-                  <SelectTrigger className="bg-secondary border-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
-                      <SelectItem key={min} value={String(min)}>
-                        {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Label>時間（15分単位）</Label>
+              <Select
+                value={String(form.duration)}
+                onValueChange={(v) => setForm({ ...form, duration: parseInt(v), price: (parseInt(v) / 15) * 150 })}
+              >
+                <SelectTrigger className="bg-secondary border-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 8 }, (_, i) => (i + 1) * 15).map((min) => (
+                    <SelectItem key={min} value={String(min)}>
+                      {Math.floor(min / 60) > 0 ? `${Math.floor(min / 60)}時間` : ""}{min % 60 > 0 ? `${min % 60}分` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               </div>
 
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  💰 販売単価（15分単位）
-                  <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * 0.85)}〜{Math.round(form.price * 0.95)}円</span>
-                </Label>
-                <p className="text-xs text-muted-foreground">ファンが支払う金額。最大85%があなたの報酬になります。</p>
-                <Input
-                  type="number"
-                  min={minPrice}
-                  max={1000000}
-                  step={1}
-                  value={form.price}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || minPrice;
-                    setForm({ ...form, price: Math.max(Math.min(val, 1000000), minPrice) });
-                  }}
-                  className="bg-secondary border-0"
-                  placeholder={String(minPrice)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  最低価格: ¥{minPrice.toLocaleString()} / {form.duration}分
-                </p>
+              <Label className="flex items-center gap-2">
+                💰 販売単価（15分単位）
+                <span className="text-[10px] text-green-400 font-bold">あなたの手取り {Math.round(form.price * 0.85)}〜{Math.round(form.price * 0.95)}円</span>
+              </Label>
+              <p className="text-xs text-muted-foreground">ファンが支払う金額。最大85%があなたの報酬になります。</p>
+              <Input
+                type="number"
+                min={minPrice}
+                max={1000000}
+                step={1}
+                value={form.price}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || minPrice;
+                  setForm({ ...form, price: Math.max(Math.min(val, 1000000), minPrice) });
+                }}
+                className="bg-secondary border-0"
+                placeholder={String(minPrice)}
+              />
+              <p className="text-xs text-muted-foreground">
+                最低価格: ¥{minPrice.toLocaleString()} / {form.duration}分
+              </p>
               </div>
-            </div>
-          )}
+              </div>
+              )}
 
-          {/* JASRAC著作権料セクション - 必須選択 */}
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
+              {/* JASRAC著作権料セクション - 必須選択 */}
+              <div className="space-y-4 bg-card rounded-xl p-5 border border-destructive/30">
           <div className="space-y-3">
             <Label className="text-sm font-bold">🎵 音楽の利用について</Label>
             <p className="text-xs text-muted-foreground">JASRAC包括契約に基づき著作権料を徴収します</p>
@@ -914,7 +915,6 @@ export default function GoLive() {
                 </div>
               </div>
             )}
-            </div>
             </div>
 
             {/* Archive Settings */}
