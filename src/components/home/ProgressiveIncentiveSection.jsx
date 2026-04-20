@@ -26,9 +26,14 @@ export default function ProgressiveIncentiveSection() {
             <AccordionTrigger className="hover:no-underline px-5 py-5">
               <div className="flex items-center gap-3 text-left">
                 <TrendingUp className="w-6 h-6 text-primary shrink-0" />
-                <span className="text-lg font-black" style={{ textShadow: "0 0 8px hsl(var(--primary)/0.5)" }}>
-                  収益還元率UPの仕組み
-                </span>
+                <div className="space-y-0.5">
+                  <div className="text-base font-black text-primary" style={{ textShadow: "0 0 10px hsl(var(--primary)/0.6)" }}>
+                    配信者の収益還元率UPの仕組み（70%〜最大95％）
+                  </div>
+                  <div className="text-xs font-semibold text-muted-foreground">
+                    視聴者の決済内訳詳細
+                  </div>
+                </div>
               </div>
             </AccordionTrigger>
 
