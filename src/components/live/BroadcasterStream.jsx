@@ -172,9 +172,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
 
-        // streamConfig を最小限に（IVS SDK は詳細設定でエラーが出やすい）
-        streamConfig = {};
-
         if (isRadioMode) {
           console.log(`📻 ラジオモード: ${BASIC_CHANNEL_PRESET.width}x${BASIC_CHANNEL_PRESET.height}, ${BASIC_CHANNEL_PRESET.framerate}fps, ${BASIC_CHANNEL_PRESET.maxBitrate / 1000}kbps`);
         } else {
@@ -185,12 +182,12 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log(`IVS SDK create() 呼び出し (Basic チャンネル専用):`);
             console.log(`  ingestEndpoint: "${ivsIngestEndpoint}"`);
 
-            // Basic チャンネル用：最小構成のみ
+            // Basic チャンネル用：最小構成のみ（streamConfig 設定なし）
             const client = IVSClient.create({ 
               ingestEndpoint: ivsIngestEndpoint 
             });
             clientRef.current = client;
-            console.log("✓ IVS クライアント作成成功 (Basic 準拠)");
+            console.log("✓ IVS クライアント作成成功");
 
         // 音声トラック追加
         const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -494,8 +491,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           onStreamReady={(stream) => {
             particleStreamRef.current = stream;
           }}
-          width={RADIO_MODE_PRESET.width}
-          height={RADIO_MODE_PRESET.height}
+          width={BASIC_CHANNEL_PRESET.width}
+          height={BASIC_CHANNEL_PRESET.height}
         />
       )}
 
