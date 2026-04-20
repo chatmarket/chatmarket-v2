@@ -635,7 +635,7 @@ export default function GoLive() {
                 </Label>
                 <div className="grid grid-cols-3 gap-2">
                   {qualityOptions.map((opt) => {
-                    const isAvailable = pricePerBlock >= opt.minPrice;
+                    const isAvailable = form.price >= opt.minPrice;
                     const isActive = form.quality === opt.value;
                     return (
                       <button
