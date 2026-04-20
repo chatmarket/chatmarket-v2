@@ -8,15 +8,15 @@ import { DollarSign, TrendingUp, AlertCircle } from "lucide-react";
  * の流れを可視化し、社長の「1円の赤字も出さない」利益ガードを表現
  */
 export default function StripeFeeProfitBreakdown({ price, duration, quality }) {
-  // Stripe処理料金: 3.6% + ¥0.4
+  // Stripe処理料金: 3.6%のみ（Stripe Japan 国内カード、固定手数料なし）
   const STRIPE_RATE = 0.036;
-  const STRIPE_FIXED = 40; // 40円
+  const STRIPE_FIXED = 0; // ¥0（Stripe Japan 国内カード）
   
-  // リバナー還元率（Fixed: 95%）
-  const LIVER_RATE = 0.95;
+  // ライバー還元率（BASIC/PPVプラン: 85%）
+  const LIVER_RATE = 0.85;
   
-  // 運営手数料率（Fixed: 5%）
-  const PLATFORM_RATE = 0.05;
+  // 運営手数料率: 15%
+  const PLATFORM_RATE = 0.15;
   
   // AWS IVS実費（高画質 1080p: 15分あたり約7円）
   const AWS_COST_PER_15MIN = quality === "1080p" ? 7 : 5;
@@ -50,13 +50,13 @@ export default function StripeFeeProfitBreakdown({ price, duration, quality }) {
             ¥{listenerPayment.toLocaleString()}
           </p>
           <p className="text-muted-foreground text-[10px]">
-            = 配信料金 ¥{price} + Stripe手数料 ¥{stripeFee}
-          </p>
+              = 配信料金 ¥{price} + Stripeプラットフォーム手数料 ¥{stripeFee}（3.6%外乗せ）
+            </p>
         </div>
         
         {/* Row 2: Stripe後 */}
         <div className="flex items-center justify-between">
-          <div className="text-muted-foreground text-[10px]">Stripe処理 (-3.6% + ¥40)</div>
+          <div className="text-muted-foreground text-[10px]">Stripeプラットフォーム手数料 (-3.6%、固定費なし)</div>
           <div className="text-muted-foreground text-[10px]">↓</div>
         </div>
         
@@ -68,7 +68,7 @@ export default function StripeFeeProfitBreakdown({ price, duration, quality }) {
               ¥{liverRevenue.toLocaleString()}
             </p>
             <p className="text-[10px] text-green-300/70">
-              {afterStripe} × 95%
+              {afterStripe} × 85%
             </p>
           </div>
           
@@ -84,7 +84,7 @@ export default function StripeFeeProfitBreakdown({ price, duration, quality }) {
               ¥{platformProfit.toLocaleString()}
             </p>
             <p className="text-[10px] text-muted-foreground/70">
-              {afterStripe} × 5% - AWS ¥{awsCostTotal}
+              {afterStripe} × 15% - AWS ¥{awsCostTotal}
             </p>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function StripeFeeProfitBreakdown({ price, duration, quality }) {
               <td className="font-semibold text-foreground">¥{price}</td>
             </tr>
             <tr className="border-b border-border/30 flex justify-between py-1">
-              <td>Stripe手数料（3.6% + ¥40）</td>
+              <td>Stripeプラットフォーム手数料（3.6%外乗せ）</td>
               <td className="font-semibold text-red-400">-¥{stripeFee}</td>
             </tr>
             <tr className="border-b border-border/30 flex justify-between py-1 bg-secondary/50">
@@ -138,7 +138,7 @@ export default function StripeFeeProfitBreakdown({ price, duration, quality }) {
       
       {/* 注記 */}
       <p className="text-[10px] text-muted-foreground border-t border-border/30 pt-2">
-        ※ Stripe手数料は「3.6% + ¥0.40 / 件」固定。AWS実費は{quality === "1080p" ? "1080p（高画質）" : "720p（標準）"}に応じた目安値です。
+        ※ Stripeプラットフォーム手数料は「3.6%」外乗せ（Stripe Japan 国内カード・固定費なし）。AWS実費は{quality === "1080p" ? "1080p（高画質）" : "720p（標準）"}に応じた目安値です。
       </p>
     </div>
   );

@@ -13,8 +13,8 @@ export default function RevenueSimulator({ price, duration, revenueRate = 0.85 }
   const revenuePerViewer = price * revenueRate;
   
   // 総報酬（視聴者数 × コインあたりの報酬円換算）
-  // 1コイン = 1.1円（実際の換算）
-  const coinToYen = 1.1;
+  // 1コイン = 1円（確定仕様）
+  const coinToYen = 1;
   const totalRevenue = viewerCount * revenuePerViewer * coinToYen;
   
   return (

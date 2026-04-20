@@ -4,8 +4,8 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 // IVS コスト概算
 const INPUT_COST_PER_HOUR_YEN = 30;
 const OUTPUT_COST_PER_VIEWER_HOUR_YEN = 5;
-// コイン→円換算（1コイン=1.1円）
-const COIN_TO_YEN = 1.1;
+// コイン→円換算（1コイン=1円・確定仕様）
+const COIN_TO_YEN = 1;
 // ライバー還元率（デフォルト85%）
 const REVENUE_RATE = 0.85;
 
