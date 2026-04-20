@@ -41,7 +41,7 @@ const RANKUP_THRESHOLDS = [
   },
 ];
 
-export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, streamQuality }) {
+export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, streamQuality, initialRadioMode = false }) {
   const navigate = useNavigate();
   const previewVideoRef = useRef(null);
   const clientRef = useRef(null);
@@ -50,7 +50,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
   const [status, setStatus] = useState("preview"); // "preview" | "live" | "ended"
   const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [camOn, setCamOn] = useState(!initialRadioMode);
   const [goingLive, setGoingLive] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState(1);
   const [showQualityModal, setShowQualityModal] = useState(false);
@@ -61,7 +61,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [rankupPopup, setRankupPopup] = useState(null); // { message, color }
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoContainerRef = useRef(null);
-  const [isRadioMode, setIsRadioMode] = useState(false);
+  const [isRadioMode, setIsRadioMode] = useState(initialRadioMode);
   const [radioModeProcessing, setRadioModeProcessing] = useState(false);
 
   const isLive = status === "live";

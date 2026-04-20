@@ -44,6 +44,8 @@ export default function GoLive() {
     streamType: STREAM_TYPE_WEBRTC,
     // 【施策3】画質制限
     quality: "720p", // デフォルト: 720p
+    // ラジオモード
+    startAsRadioMode: false,
     // Archive settings
     saveArchive: false,
     archiveIsPaid: false,
@@ -192,6 +194,8 @@ export default function GoLive() {
       ivs_playback_url: ivsData ? ivsData.playbackUrl : "",
       // 【施策3】実効画質: 価格に応じた画質を保存
       max_bitrate_restriction: effectiveQuality,
+      // ラジオモード
+      is_radio_mode: form.startAsRadioMode,
       // コスト計算起点
       live_started_at: isLiveNow ? new Date().toISOString() : null,
       cost_input_yen: 0,
@@ -293,6 +297,7 @@ export default function GoLive() {
           ivsIngestEndpoint={ivsStream?.ingestEndpoint}
           onEnd={() => navigate("/")}
           streamQuality={effectiveQuality}
+          initialRadioMode={form.startAsRadioMode}
         />
       </div>
     );
@@ -439,6 +444,32 @@ export default function GoLive() {
               <p className="font-bold">配信方式</p>
               <p className="mt-1">ブラウザから直接配信します。カメラが必要です。</p>
             </div>
+
+            {/* ラジオモード選択 */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={form.startAsRadioMode}
+                  onChange={(e) => setForm({ ...form, startAsRadioMode: e.target.checked })}
+                  className="w-5 h-5 accent-amber-400 rounded"
+                />
+                <div className="flex-1">
+                  <p className="font-bold text-amber-300 group-hover:text-amber-200 transition-colors">
+                    📻 ラジオモードで配信開始
+                  </p>
+                  <p className="text-xs text-amber-200/70 mt-0.5">
+                    映像を停止し、音声に特化した低帯域配信（64kbps）で開始します
+                  </p>
+                </div>
+              </label>
+              {form.startAsRadioMode && (
+                <div className="text-xs text-amber-200/80 bg-black/20 rounded-lg p-2.5 ml-8 border border-amber-500/20">
+                  ✓ 配信開始時に映像が停止されます。配信中いつでも「ゲーム配信モード」に切り替え可能です。
+                </div>
+              )}
+            </div>
+
             <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
               <p className="text-xs text-orange-300 leading-relaxed">
