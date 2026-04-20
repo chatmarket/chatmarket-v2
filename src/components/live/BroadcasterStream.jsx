@@ -27,13 +27,14 @@ const QUALITY_PRESETS = [
   { label: "低帯域 (360p 15fps)", width: 640, height: 360, framerate: 15, bitrate: 500000 },
 ];
 
-// ラジオモード専用：安定帯域プロファイル（Audio + Visualizer）
+// ラジオモード専用：AWS IVS Basic チャンネル対応（Audio + Visualizer）
+// 640x360 (16:9) / 30fps / 1500kbps 以下 で IVS Basic 公式推奨設定に準拠
 const RADIO_MODE_PRESET = {
-  label: "📻 ラジオ (Audio + Visualizer - 480x360 30fps)",
-  width: 480,
+  label: "📻 ラジオ (Audio + Visualizer - 640x360 30fps)",
+  width: 640,
   height: 360,
   framerate: 30,
-  bitrate: 400000, // 400kbps (健全な通信帯域)
+  bitrate: 1200000, // 1200kbps (Basic チャンネル推奨上限)
 };
 
 // 視聴者数ランクアップ推奨ポップアップの定義
@@ -84,15 +85,16 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setIsFullscreen((prev) => !prev);
   };
 
-  // ダミー MP4 動画をループ再生し、ストリームを取得（ラジオモード用）
+  // ダミー Canvas 動画をループ再生し、ストリームを取得（ラジオモード用）
+  // 640x360 (16:9) AWS IVS Basic チャンネル準拠
   useEffect(() => {
     if (!isRadioMode) return;
 
     try {
-      // Canvas で黒い 1 フレーム画像を生成
+      // Canvas で黒い 1 フレーム画像を生成（640x360 - AWS IVS Basic 推奨）
       const canvas = document.createElement("canvas");
-      canvas.width = RADIO_MODE_PRESET.width;
-      canvas.height = RADIO_MODE_PRESET.height;
+      canvas.width = RADIO_MODE_PRESET.width; // 640
+      canvas.height = RADIO_MODE_PRESET.height; // 360
       const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height);
@@ -399,12 +401,12 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     console.groupEnd();
   };
 
-  // マイクレベルメーター Canvas ビジュアライザー（FPS30固定フレーム描画）
+  // マイクレベルメーター Canvas ビジュアライザー（640x360 - AWS IVS Basic 対応）
   const createAudioVisualizerCanvas = async (audioTrack, width, height, fps) => {
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = width; // 640
+      canvas.height = height; // 360
       const ctx = canvas.getContext("2d");
 
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
