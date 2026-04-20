@@ -122,6 +122,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       toast.error("IVSのストリーム情報がありません");
       return;
     }
+    if (!localStreamRef.current) {
+      toast.error("カメラ/マイクが取得できていません");
+      return;
+    }
     setGoingLive(true);
     try {
       const IVSClient = await loadIVSBroadcast();
@@ -137,26 +141,16 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       });
       clientRef.current = client;
 
-      // プレビュー映像から映像・音声を追加
-      if (localStreamRef.current) {
-        const videoTrack = localStreamRef.current.getVideoTracks()[0];
-        const audioTrack = localStreamRef.current.getAudioTracks()[0];
-        if (videoTrack) {
-          const videoDevice = await IVSClient.LocalStageStream
-            ? null
-            : videoTrack;
-          await client.addVideoInputDevice(
-            new MediaStream([videoTrack]),
-            "camera",
-            { index: 0 }
-          );
-        }
-        if (audioTrack) {
-          await client.addAudioInputDevice(
-            new MediaStream([audioTrack]),
-            "mic"
-          );
-        }
+      // ビデオを描画
+      await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+      
+      // 音声トラックを追加
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        await client.addAudioInputDevice(
+          new MediaStream([audioTrack]),
+          "mic"
+        );
       }
 
       await client.startBroadcast(ivsStreamKey);
