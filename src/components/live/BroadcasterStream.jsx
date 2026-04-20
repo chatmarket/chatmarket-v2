@@ -20,10 +20,11 @@ async function loadIVSBroadcast() {
   return IVSBroadcastClient;
 }
 
-// AWS IVS Basic チャンネル専用
-// 他の設定は一切使用禁止
+// AWS IVS Basic チャンネル専用（ラジオモード）
+// 音声のみ配信：96kbps モノラル 44.1kHz
+// 静止画（ダミービデオ）: 426x240 最大
 const QUALITY_PRESETS = [
-  { label: "Basic チャンネル (640x360 30fps 600kbps)", width: 640, height: 360, framerate: 30, bitrate: 600000 },
+  { label: "Basic チャンネル (426x240)", width: 426, height: 240, framerate: 30, bitrate: 600000 },
 ];
 
 // ===== AWS IVS Basic チャンネル専用設定 =====
@@ -190,12 +191,19 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
 
-        // ラジオモード：Basic チャンネル（音声のみ・設定なし）
-        console.log(`📻 ラジオモード：Basic チャンネル（音声のみ）`);
-        console.log(`IVS SDK create() 呼び出し（シンプル初期化）`);
+        // ラジオモード：Basic チャンネル（音声のみ・厳格制限）
+        console.log(`📻 ラジオモード：Basic チャンネル（音声: 96kbps モノラル 44.1kHz）`);
+        
+        const streamConfig = {
+          audioBitrate: 96000,  // 96kbps（Basic 上限は 128kbps）
+          audioSampleRate: 44100,  // 44.1kHz 固定
+          audioChannels: 1,  // モノラル
+        };
+        
+        console.log(`IVS SDK create() 呼び出し:`);
+        console.log(`  streamConfig:`, streamConfig);
 
-        // Basic チャンネル：設定なしで初期化（SDK が自動調整）
-        const client = IVSClient.create({});
+        const client = IVSClient.create({ streamConfig });
         clientRef.current = client;
         console.log("✓ IVS クライアント作成成功");
 
