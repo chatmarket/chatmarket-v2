@@ -208,19 +208,34 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     }
     setGoingLive(true);
 
+    // AWS チャンネル設定確認ガイドをコンソールに出力
+    console.log("════════════════════════════════════════════════════════════");
+    console.log("⚠️ AWS IVS チャンネル設定確認（必須）");
+    console.log("════════════════════════════════════════════════════════════");
+    console.log("以下の手順で AWS コンソール設定を確認してください:");
+    console.log("1. AWS マネジメントコンソール → IVS → チャンネル");
+    console.log("2. 対象チャンネルをクリック → 『チャンネル詳細』を確認");
+    console.log("3. 『チャンネルタイプ』を記録（Standard または Basic）");
+    console.log("4. 『推奨エンコーダー設定』を確認:");
+    console.log("   Standard: 最大解像度 1920x1080、最大ビットレート 8.5 Mbps");
+    console.log("   Basic: 最大解像度 1280x720、最大ビットレート 4.5 Mbps");
+    console.log("5. 現在のコード設定（ラジオ: 480x360, 400kbps）が範囲内か確認");
+    console.log("════════════════════════════════════════════════════════════");
+
     // 3回までリトライ
+    let streamConfig = {}; // スコープを確保
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
         
-        let streamConfig;
         if (isRadioMode) {
           streamConfig = {
             maxResolution: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height },
             maxFramerate: RADIO_MODE_PRESET.framerate,
             maxBitrate: RADIO_MODE_PRESET.bitrate,
           };
+          console.log(`📻 ラジオモード設定: ${streamConfig.maxResolution.width}x${streamConfig.maxResolution.height}, ${streamConfig.maxFramerate}fps, ${streamConfig.maxBitrate / 1000}kbps`);
         } else {
           const preset = QUALITY_PRESETS[selectedQuality];
           streamConfig = {
@@ -228,6 +243,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             maxFramerate: preset.framerate,
             maxBitrate: preset.bitrate,
           };
+          console.log(`📹 通常モード設定: ${preset.label}`);
         }
 
         const client = IVSClient.create({ streamConfig, ingestEndpoint: ivsIngestEndpoint });
@@ -303,37 +319,85 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         setLiveStartedAt(now);
         setStatus("live");
         
-        // AWS CloudWatch Logs確認ガイドを出力
+        // AWS リアルタイム監視ガイドを出力
         console.log("════════════════════════════════════════════════════════════");
-        console.log("🔴 AWS IVS 配信を開始しました！");
-        console.log("════════════════════════════════════════════════════════════");
-        console.log("📊 AWS CloudWatch Logs で実況況を確認してください:");
-        console.log("1. AWS マネジメントコンソール → IVS → チャンネル → 対象チャンネル");
-        console.log("2. 『Ingest Server』タブで 『Health Events』を確認");
-        console.log("3. エラーコード: 'StreamClosed', 'IngestError', 'BitrateExceeded' 等を記録");
-        console.log("4. CloudWatch Logs → ロググループ: /aws/ivs");
-        console.log("5. ストリームキー が含まれるログを検索");
+        console.log("✅ 配信開始成功！AWS リアルタイム監視");
         console.log("════════════════════════════════════════════════════════════");
         console.log("📈 現在の配信設定:");
         console.log(`   - 解像度: ${isRadioMode ? "480x360 (ラジオメーター)" : QUALITY_PRESETS[selectedQuality].width + "x" + QUALITY_PRESETS[selectedQuality].height}`);
         console.log(`   - FPS: ${isRadioMode ? "30" : QUALITY_PRESETS[selectedQuality].framerate}`);
-        console.log(`   - ビットレート: ${isRadioMode ? "400" : QUALITY_PRESETS[selectedQuality].bitrate / 1000000} kbps`);
+        console.log(`   - ビットレート: ${isRadioMode ? "400" : Math.round(QUALITY_PRESETS[selectedQuality].bitrate / 1000)} kbps`);
         console.log(`   - Ingest Endpoint: ${ivsIngestEndpoint}`);
+        console.log("");
+        console.log("🔍 AWS でリアルタイム監視:");
+        console.log("1. AWS マネジメントコンソール → IVS → チャンネル");
+        console.log("2. 対象チャンネル → 『Ingest Server』タブ");
+        console.log("3. 『Health Events』でストリーム品質を確認");
+        console.log("4. 『Network』セクションで実時間のビットレート・フレームレートを監視");
+        console.log("");
+        console.log("⚠️ もし切断された場合:");
+        console.log("1. CloudWatch Logs → ロググループ: /aws/ivs");
+        console.log("2. ストリームキー（上記 Endpoint）で検索");
+        console.log("3. エラーコード・メッセージを記録");
         console.log("════════════════════════════════════════════════════════════");
         
-        toast.success("🔴 AWS IVS 配信を開始しました！");
+        toast.success("✅ 配信開始成功！AWS で状況を監視してください。");
         break; // 成功したら抜ける
 
       } catch (err) {
-        console.error(`配信開始フロー エラー（試行${attempt}）:`, err);
-        if (attempt === 3) {
-          toast.error("配信に失敗しました。もう一度お試しください。");
+        console.error(`❌ 配信開始フロー エラー（試行${attempt}）:`, err);
+        logDetailedError(err, attempt, streamConfig, ivsIngestEndpoint);
+        
+        if (attempt < 3) {
+          console.log(`⏳ ${2000 * attempt}ms 待機後、リトライします...`);
+          await new Promise(r => setTimeout(r, 2000 * attempt));
+        } else {
+          console.error("════════════════════════════════════════════════════════════");
+          console.error("🚨 3回のリトライ後も配信開始に失敗しました");
+          console.error("════════════════════════════════════════════════════════════");
+          console.error("次の項目をエンジニアに報告してください:");
+          console.error("1. エラーメッセージ（上記 error.message）");
+          console.error("2. AWS チャンネルタイプ（Standard / Basic）");
+          console.error("3. AWS CloudWatch Logs でこのストリームキーを検索");
+          console.error("4. エラーコード（StreamClosed, IngestError, BitrateExceeded 等）");
+          console.error("════════════════════════════════════════════════════════════");
+          toast.error("配信に失敗しました。コンソールを確認して、エンジニアに報告してください。");
         }
       }
     }
 
     setGoingLive(false);
   }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
+
+  // 詳細エラーログ出力関数
+  const logDetailedError = (error, attempt, streamConfig, endpoint) => {
+    console.group(`📋 詳細エラーログ（試行${attempt}）`);
+    
+    // エラーオブジェクト詳細
+    console.log("Error Name:", error.name || "unknown");
+    console.log("Error Message:", error.message || "no message");
+    console.log("Error Code:", error.code || "no code");
+    console.log("Full Error:", error);
+    
+    // 設定値の確認
+    if (streamConfig) {
+      console.log("━━━ 送信設定 ━━━");
+      console.log("解像度:", `${streamConfig.maxResolution.width}x${streamConfig.maxResolution.height}`);
+      console.log("FPS:", streamConfig.maxFramerate);
+      console.log("ビットレート:", `${streamConfig.maxBitrate / 1000}kbps`);
+      console.log("Ingest Endpoint:", endpoint);
+    }
+    
+    // AWS CloudWatch Logs への誘導
+    console.log("━━━ AWS CloudWatch Logs 確認手順 ━━━");
+    console.log("1. AWS マネジメントコンソール → CloudWatch → ロググループ");
+    console.log("2. 検索: /aws/ivs");
+    console.log("3. ストリームキー（上記 Endpoint に含まれる）で検索");
+    console.log("4. 最新のエラーログを確認");
+    console.log("5. エラーコード・メッセージをコピーしてエンジニアに報告");
+    
+    console.groupEnd();
+  };
 
   // マイクレベルメーター Canvas ビジュアライザー（FPS30固定フレーム描画）
   const createAudioVisualizerCanvas = async (audioTrack, width, height, fps) => {
