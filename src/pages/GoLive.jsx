@@ -1009,31 +1009,31 @@ export default function GoLive() {
               )}
 
               {form.saveArchive && form.archiveIsPaid && (
-               <>
-               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-300 space-y-1">
-               <p className="font-semibold">💾 アーカイブ販売価格（自動設定）</p>
-               <p>
-                 {effectiveQuality === "1080p"
-                   ? `1080p高画質配信のため、販売価格は自動的に ¥${autoArchivePrice}/15分 に設定されます。`
-                   : `720p標準画質のため、販売価格は ¥${autoArchivePrice}/15分 に設定可能です。`}
-               </p>
-               <p className="text-[10px] text-blue-400 border-t border-blue-500/30 pt-1">
-                 ※ 高画質ソースの維持コストを考慮した設定です
-               </p>
-               </div>
+                <>
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-300 space-y-1">
+                    <p className="font-semibold">💾 アーカイブ販売価格（自動設定）</p>
+                    <p>
+                      {effectiveQuality === "1080p"
+                        ? `1080p高画質配信のため、販売価格は自動的に ¥${autoArchivePrice}/15分 に設定されます。`
+                        : `720p標準画質のため、販売価格は ¥${autoArchivePrice}/15分 に設定可能です。`}
+                    </p>
+                    <p className="text-[10px] text-blue-400 border-t border-blue-500/30 pt-1">
+                      ※ 高画質ソースの維持コストを考慮した設定です
+                    </p>
+                  </div>
 
-               {/* 【新機能】Stripe手数料・運営利益の透明性表示 */}
-               <StripeFeeProfitBreakdown 
-                 price={form.price} 
-                 duration={form.duration}
-                 quality={effectiveQuality}
-               />
-               </>
-               )}
+                  {/* 【新機能】Stripe手数料・運営利益の透明性表示 */}
+                  <StripeFeeProfitBreakdown 
+                    price={form.price} 
+                    duration={form.duration}
+                    quality={effectiveQuality}
+                  />
+                </>
+              )}
               {form.saveArchive && !form.archiveIsPaid && (
-              <p className="text-xs text-muted-foreground">
-              ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
-              </p>
+                <p className="text-xs text-muted-foreground">
+                  ※ 有料公開しない場合、アーカイブはあなたの記録用として非公開で保存されます。
+                </p>
               )}
             </div>
           )}
