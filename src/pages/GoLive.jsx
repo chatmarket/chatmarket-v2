@@ -627,7 +627,8 @@ export default function GoLive() {
                 <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
               </div>
 
-              {/* 画質選択（価格に応じた制限あり） */}
+              {/* 画質選択（価格に応じた制限あり・ラジオモードでは非表示） */}
+              {!form.startAsRadioMode && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   📺 配信画質
@@ -761,10 +762,11 @@ export default function GoLive() {
                   </p>
                 </div>
               </div>
-            </div>
-          )}
+              )}
+              </div>
+              )}
 
-          {mode === MODE_CALL && (
+              {mode === MODE_CALL && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>時間（15分単位）</Label>
