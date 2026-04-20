@@ -172,17 +172,17 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
 
+        // Basic チャンネルは品質設定を適用しない（SDK側で自動調整）
         if (isRadioMode) {
-          console.log(`📻 ラジオモード: ${BASIC_CHANNEL_PRESET.width}x${BASIC_CHANNEL_PRESET.height}, ${BASIC_CHANNEL_PRESET.framerate}fps, ${BASIC_CHANNEL_PRESET.maxBitrate / 1000}kbps`);
+          console.log(`📻 ラジオモード開始（Basic チャンネル）`);
         } else {
-          const preset = QUALITY_PRESETS[selectedQuality];
-          console.log(`📹 通常モード: ${preset.label}`);
+          console.log(`📹 通常モード開始（Basic チャンネル）`);
         }
 
         console.log(`IVS SDK create() 呼び出し (Basic チャンネル専用):`);
             console.log(`  ingestEndpoint: "${ivsIngestEndpoint}"`);
 
-            // Basic チャンネル用：最小構成のみ（streamConfig 設定なし）
+            // Basic チャンネル用：最小限の初期化のみ
             const client = IVSClient.create({ 
               ingestEndpoint: ivsIngestEndpoint 
             });
