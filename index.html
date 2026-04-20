@@ -68,6 +68,34 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="app-loader" style="
+      position:fixed;inset:0;z-index:9999;
+      background:#0a0f0a;
+      display:flex;align-items:center;justify-content:center;
+      flex-direction:column;gap:16px;
+      transition:opacity 0.4s ease;
+    ">
+      <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png"
+        style="width:56px;height:56px;object-fit:contain;" alt="ChatMarket" />
+      <span style="
+        font-family:'Inter',sans-serif;font-weight:900;font-size:22px;letter-spacing:-0.5px;color:#fff;
+      ">Chat<span style="color:#10b981;">Market</span></span>
+      <div style="
+        width:40px;height:3px;border-radius:99px;background:#1a2e1a;overflow:hidden;margin-top:4px;
+      ">
+        <div style="
+          width:40px;height:3px;border-radius:99px;background:#10b981;
+          animation:cm-bar 1.2s ease-in-out infinite;
+        "></div>
+      </div>
+    </div>
+    <style>
+      @keyframes cm-bar {
+        0%{transform:translateX(-100%)}
+        50%{transform:translateX(0%)}
+        100%{transform:translateX(100%)}
+      }
+    </style>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
