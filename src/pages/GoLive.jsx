@@ -889,7 +889,7 @@ export default function GoLive() {
             </div>
 
             {/* Archive Settings */}
-        <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
+            <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
           <div className="flex items-center justify-between">
             <div>
               <Label className="flex items-center gap-1.5">
