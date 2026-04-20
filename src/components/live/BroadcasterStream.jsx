@@ -169,25 +169,18 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       try {
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
-        
+
+        // streamConfig を最小限に（IVS SDK は詳細設定でエラーが出やすい）
+        streamConfig = {};
+
         if (isRadioMode) {
-          streamConfig = {
-            maxResolution: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height },
-            maxFramerate: RADIO_MODE_PRESET.framerate,
-            maxBitrate: RADIO_MODE_PRESET.bitrate,
-          };
-          console.log(`📻 ラジオモード設定: ${RADIO_MODE_PRESET.width}x${RADIO_MODE_PRESET.height}, ${RADIO_MODE_PRESET.framerate}fps, ${RADIO_MODE_PRESET.bitrate / 1000}kbps`);
+          console.log(`📻 ラジオモード: ${RADIO_MODE_PRESET.width}x${RADIO_MODE_PRESET.height}, ${RADIO_MODE_PRESET.framerate}fps, ${RADIO_MODE_PRESET.bitrate / 1000}kbps`);
         } else {
           const preset = QUALITY_PRESETS[selectedQuality];
-          streamConfig = {
-            maxResolution: { width: preset.width, height: preset.height },
-            maxFramerate: preset.framerate,
-            maxBitrate: preset.bitrate,
-          };
-          console.log(`📹 通常モード設定: ${preset.label}`);
+          console.log(`📹 通常モード: ${preset.label}`);
         }
 
-        const client = IVSClient.create({ streamConfig, ingestEndpoint: ivsIngestEndpoint });
+        const client = IVSClient.create({ ingestEndpoint: ivsIngestEndpoint });
         clientRef.current = client;
 
         // 音声トラック追加
@@ -201,29 +194,17 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           }
         }
 
-        // ビデオ追加（ラジオモード時は動的マイクレベルメーター映像、通常モードはカメラ）
+        // ビデオ追加（ラジオモード時はマイクメーター、通常モードはカメラ）
         if (isRadioMode) {
+          // マイクメーター初期化を独立した try-catch で完全に分離（失敗しても配信は続行）
           try {
-            // Canvas 描画完了を待機（streamConfig 設定済み）
             canvasDrawnRef.current = false;
             const vizCanvas = await createAudioVisualizerCanvas(audioTrack, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height, RADIO_MODE_PRESET.framerate);
-            
-            // Canvas 描画フレーム確認
-            if (canvasDrawnRef.current) {
-              console.log("✓ Canvas 1フレーム描画完了確認");
-            }
-            
             await client.addVideoInputDevice(vizCanvas, "visualizer", { index: 0 });
-            console.log("✓ マイクレベルメーター映像追加（640x360, 600kbps）");
+            console.log("✓ マイクレベルメーター映像追加");
           } catch (vizErr) {
-            console.warn("ビジュアライザー失敗、カメラでフォールバック:", vizErr);
-            if (previewVideoRef.current) {
-              try {
-                await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
-              } catch (camErr) {
-                console.warn("カメラもフォールバック失敗:", camErr);
-              }
-            }
+            console.warn("⚠️ マイクメーター初期化エラー（配信は続行）:", vizErr.message);
+            // 失敗しても配信開始は止めない
           }
         } else {
           try {
@@ -232,7 +213,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
               console.log("✓ カメラ映像追加");
             }
           } catch (videoErr) {
-            console.warn("ビデオ追加失敗（無視して続行）:", videoErr);
+            console.warn("⚠️ ビデオ追加失敗（配信は続行）:", videoErr.message);
           }
         }
 
@@ -306,18 +287,42 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       canvas.height = height; // 360
       const ctx = canvas.getContext("2d");
 
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
+      let audioContext = null;
+      let analyser = null;
+      let dataArray = null;
 
       try {
-        const mediaSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack.clone()]));
-        mediaSource.connect(analyser);
-      } catch (connErr) {
-        console.warn("Audio Analyzer 接続失敗、黒画面フォールバック:", connErr);
-      }
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioContext) {
+          throw new Error("AudioContext 作成失敗");
+        }
+        
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const clonedTrack = audioTrack.clone();
+        if (!clonedTrack) {
+          throw new Error("オーディオトラッククローン失敗");
+        }
+
+        const mediaStream = new MediaStream([clonedTrack]);
+        if (!mediaStream) {
+          throw new Error("MediaStream 作成失敗");
+        }
+
+        const mediaSource = audioContext.createMediaStreamSource(mediaStream);
+        if (!mediaSource) {
+          throw new Error("MediaStreamAudioSource 作成失敗");
+        }
+
+        mediaSource.connect(analyser);
+        console.log("✓ AudioContext 初期化成功");
+      } catch (audioErr) {
+        console.warn("⚠️ AudioContext 初期化エラー:", audioErr.message);
+        audioContext = null;
+        analyser = null;
+      }
 
       // FPS30 固定フレーム描画（16.67ms = 1000/60）
       const frameInterval = 1000 / 30;
@@ -330,12 +335,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           lastFrameTime = now;
           frameCount++;
 
-          try {
-            analyser.getByteFrequencyData(dataArray);
-          } catch (e) {
-            // Analyser エラーは無視して描画続行
-          }
-
           // 背景: グラデーション（黒→濃紫）
           const grad = ctx.createLinearGradient(0, 0, 0, height);
           grad.addColorStop(0, "#0a0a1a");
@@ -343,23 +342,31 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           ctx.fillStyle = grad;
           ctx.fillRect(0, 0, width, height);
 
-          // マイクレベルメーター描画（周波数バー）
-          const barWidth = Math.max(1, (width / dataArray.length) * 2.5);
-          let x = 0;
+          // マイクレベルメーター描画（分析器が有効な場合のみ）
+          if (analyser && dataArray) {
+            try {
+              analyser.getByteFrequencyData(dataArray);
+            } catch (e) {
+              // 無視
+            }
 
-          for (let i = 0; i < dataArray.length; i += 2) {
-            const barHeight = (dataArray[i] / 255) * (height * 0.8);
+            const barWidth = Math.max(1, (width / dataArray.length) * 2.5);
+            let x = 0;
 
-            // グラデーション色（低音: 青→高音: 赤）
-            const hue = (i / dataArray.length) * 360;
-            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+            for (let i = 0; i < dataArray.length; i += 2) {
+              const barHeight = (dataArray[i] / 255) * (height * 0.8);
 
-            // 反射効果
-            ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.3)`;
-            ctx.fillRect(x, height - barHeight - 5, barWidth, 5);
+              // グラデーション色（低音: 青→高音: 赤）
+              const hue = (i / dataArray.length) * 360;
+              ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+              ctx.fillRect(x, height - barHeight, barWidth, barHeight);
 
-            x += barWidth + 1;
+              // 反射効果
+              ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.3)`;
+              ctx.fillRect(x, height - barHeight - 5, barWidth, 5);
+
+              x += barWidth + 1;
+            }
           }
 
           // 中央にマイク LIVE インジケータ
