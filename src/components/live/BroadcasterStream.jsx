@@ -70,23 +70,32 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setIsFullscreen((prev) => !prev);
   };
 
-  // カメラをプレビューに表示
+  // ラジオモード時は音声のみ、通常時はカメラ+マイクを取得
   useEffect(() => {
     (async () => {
       try {
-        const preset = QUALITY_PRESETS[selectedQuality];
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: preset.width, height: preset.height, frameRate: preset.framerate },
-          audio: true,
-        });
-        localStreamRef.current = stream;
-        if (previewVideoRef.current) {
-          previewVideoRef.current.srcObject = stream;
-        }
-        // ラジオモードの場合、カメラを即座にOFFにする
+        let stream;
+        
         if (initialRadioMode) {
+          // ラジオモード: 音声のみをキャプチャ（カメラランプ一切点灯しない）
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          });
           setCamOn(false);
+        } else {
+          // 通常配信: カメラ + マイクをキャプチャ
+          const preset = QUALITY_PRESETS[selectedQuality];
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: preset.width, height: preset.height, frameRate: preset.framerate },
+            audio: true,
+          });
+          if (previewVideoRef.current) {
+            previewVideoRef.current.srcObject = stream;
+          }
         }
+        
+        localStreamRef.current = stream;
       } catch (err) {
         toast.error("カメラ/マイクにアクセスできません: " + err.message);
       }
@@ -133,20 +142,33 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setGoingLive(true);
     try {
       const IVSClient = await loadIVSBroadcast();
-      const preset = QUALITY_PRESETS[selectedQuality];
-
-      const client = IVSClient.create({
-        streamConfig: {
+      
+      let streamConfig;
+      if (isRadioMode) {
+        // ラジオモード: 低ビットレート設定（音声特化）
+        streamConfig = {
+          maxBitrate: 64000, // 64kbps
+        };
+      } else {
+        // 通常配信: 画質に応じた設定
+        const preset = QUALITY_PRESETS[selectedQuality];
+        streamConfig = {
           maxResolution: { width: preset.width, height: preset.height },
           maxFramerate: preset.framerate,
           maxBitrate: preset.bitrate,
-        },
+        };
+      }
+
+      const client = IVSClient.create({
+        streamConfig,
         ingestEndpoint: ivsIngestEndpoint,
       });
       clientRef.current = client;
 
-      // ビデオを描画
-      await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+      // ビデオを描画（ラジオモード時はスキップ）
+      if (!isRadioMode && previewVideoRef.current) {
+        await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
+      }
       
       // 音声トラックを追加
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -169,7 +191,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     } finally {
       setGoingLive(false);
     }
-  }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId]);
+  }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
 
   const toggleMic = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !micOn));
