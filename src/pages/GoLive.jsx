@@ -228,21 +228,16 @@ export default function GoLive() {
   const minPrice = mode === MODE_LIVE ? liveMinPrice : Math.ceil((form.duration / 15) * 15);
   const livePriceError = mode === MODE_LIVE && form.price < liveMinPrice;
 
-  const getQualityForPrice = (price) => {
-    if (price >= 150) return "1080p";
-    if (price >= 55)  return "720p";
-    return "480p";
-  };
-  const effectiveQuality = getQualityForPrice(form.price);
+  // AWS IVS Basic チャンネル：品質固定
+  const effectiveQuality = "basic"; // 常に 640x360 30fps 600kbps
 
+  // Basic チャンネル専用（他の選択肢なし）
   const qualityOptions = [
-    { label: "SD 480p", value: "480p",  minPrice: 15,  desc: "低コスト・入門向け" },
-    { label: "HD 720p", value: "720p",  minPrice: 55,  desc: "標準・推奨" },
-    { label: "FHD 1080p", value: "1080p", minPrice: 150, desc: "高画質・プロ向け" },
+    { label: "Basic チャンネル (640x360 30fps)", value: "basic", minPrice: 15, desc: "AWS IVS Basic 準拠" },
   ];
 
-  const selectedQualityOption = qualityOptions.find(q => q.value === effectiveQuality) || qualityOptions[0];
-  const autoArchivePrice = Math.ceil((form.duration / 15) * (effectiveQuality === "1080p" ? 100 : effectiveQuality === "720p" ? 75 : 50));
+  const selectedQualityOption = qualityOptions[0];
+  const autoArchivePrice = Math.ceil((form.duration / 15) * 50); // Basic = 50円/15分固定
 
   useEffect(() => {
     if (form.saveArchive && form.archiveIsPaid) {
@@ -250,9 +245,10 @@ export default function GoLive() {
     }
   }, [effectiveQuality, form.duration, form.saveArchive, form.archiveIsPaid]);
 
+  // ラジオモード時は 50 コイン/60分 固定（Basic チャンネル仕様）
   useEffect(() => {
     if (form.startAsRadioMode) {
-      setForm(f => ({ ...f, price: 50 }));
+      setForm(f => ({ ...f, price: 50, quality: "basic" }));
     }
   }, [form.startAsRadioMode]);
 
@@ -613,43 +609,13 @@ export default function GoLive() {
                 <>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-1.5">
-                      📺 配信画質
-                      <span className="text-[10px] text-muted-foreground font-normal">（価格に応じて選択可）</span>
+                      📺 配信品質（AWS IVS Basic 固定）
                     </Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {qualityOptions.map((opt) => {
-                        const isAvailable = form.price >= opt.minPrice;
-                        const isActive = form.quality === opt.value;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            disabled={!isAvailable}
-                            onClick={() => isAvailable && setForm({ ...form, quality: opt.value })}
-                            className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                              isActive
-                                ? "border-primary bg-primary/10 cursor-pointer"
-                                : isAvailable
-                                ? "border-border bg-secondary hover:border-primary/50 cursor-pointer"
-                                : "border-border bg-secondary opacity-30 cursor-not-allowed"
-                            }`}
-                          >
-                            <span className={`font-bold text-sm ${isActive ? "text-primary" : isAvailable ? "text-foreground" : "text-muted-foreground"}`}>{opt.label}</span>
-                            <span className="text-xs text-muted-foreground">{opt.minPrice}円〜/15分</span>
-                            {!isAvailable && <span className="text-[10px] text-destructive/70">🔒 価格不足</span>}
-                            {isActive && <span className="text-[10px] text-primary font-bold">✓ 選択中</span>}
-                          </button>
-                        );
-                      })}
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 space-y-1">
+                      <p className="text-sm font-bold text-blue-400">Basic チャンネル対応</p>
+                      <p className="text-xs text-blue-300">640×360 / 30fps / 600kbps</p>
+                      <p className="text-[10px] text-blue-200/60 mt-2">AWS IVS Basic チャンネルに最適化された設定です。この仕様以外は送信されません。</p>
                     </div>
-                    <details className="text-xs">
-                      <summary className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none">
-                        💡 なぜ価格で画質が制限されるの？
-                      </summary>
-                      <p className="mt-1.5 text-muted-foreground bg-secondary/60 rounded-lg px-3 py-2 leading-relaxed">
-                        世界一安価な価格設定（15円〜）を実現するため、価格帯に応じたインフラ最適化を行っています。低価格ではSD品質のサーバーを使用してコストを抑え、より多くのファンと繋がれる環境を提供しています。価格を上げることで高品質なインフラが確保され、HD・FHD配信が可能になります。
-                      </p>
-                    </details>
                   </div>
 
                   <div className="space-y-2">

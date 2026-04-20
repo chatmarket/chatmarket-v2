@@ -20,22 +20,21 @@ async function loadIVSBroadcast() {
   return IVSBroadcastClient;
 }
 
+// AWS IVS Basic チャンネル専用
+// 他の設定は一切使用禁止
 const QUALITY_PRESETS = [
-  { label: "高画質 (1080p 30fps)", width: 1920, height: 1080, framerate: 30, bitrate: 4500000 },
-  { label: "標準 (720p 30fps)", width: 1280, height: 720, framerate: 30, bitrate: 2500000 },
-  { label: "軽量 (480p 30fps)", width: 854, height: 480, framerate: 30, bitrate: 1000000 },
-  { label: "低帯域 (360p 15fps)", width: 640, height: 360, framerate: 15, bitrate: 500000 },
+  { label: "Basic チャンネル (640x360 30fps 600kbps)", width: 640, height: 360, framerate: 30, bitrate: 600000 },
 ];
 
-// ラジオモード専用：AWS IVS Basic チャンネル対応（Audio + Visualizer）
-// 640x360 (16:9) / 30fps / 600kbps で IVS Basic 安全圏設定
-const RADIO_MODE_PRESET = {
-  label: "📻 ラジオ (Audio + Visualizer - 640x360 30fps)",
+// ===== AWS IVS Basic チャンネル専用設定 =====
+// Basic チャンネルは以下の仕様に完全固定：
+// 解像度: 640x360 / フレームレート: 30fps / ビットレート: 600kbps 以下
+// これ以外を送った瞬間に 12000 エラーで接続切断
+const BASIC_CHANNEL_PRESET = {
   width: 640,
   height: 360,
   framerate: 30,
-  bitrate: 600000, // 600kbps (Basic チャンネル安全圏)
-  audioBitrate: 96000, // 96kbps 音声専用
+  maxBitrate: 600000, // 600kbps 絶対厳守
 };
 
 // 視聴者数ランクアップ推奨ポップアップの定義
@@ -60,7 +59,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const clientRef = useRef(null);
   const localStreamRef = useRef(null);
   const rankupShownRef = useRef(false);
-  const radioDummyVideoRef = useRef(null); // ラジオモード用ダミー動画 <video> 要素
 
   const [status, setStatus] = useState("preview"); // "preview" | "live" | "ended"
   const [micOn, setMicOn] = useState(true);
@@ -78,8 +76,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [isRadioMode, setIsRadioMode] = useState(initialRadioMode);
   const [radioModeProcessing, setRadioModeProcessing] = useState(false);
   const particleStreamRef = useRef(null);
-  const staticImageStreamRef = useRef(null);
-  const canvasDrawnRef = useRef(false); // Canvas 描画完了フラグ
 
   const isLive = status === "live";
 
@@ -95,20 +91,17 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       try {
         let stream;
         
+        // Basic チャンネル専用：常に 640x360 30fps で固定
+        // ラジオ/通常モード切り替えに関わらず同じ仕様
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: BASIC_CHANNEL_PRESET.width, height: BASIC_CHANNEL_PRESET.height, frameRate: BASIC_CHANNEL_PRESET.framerate },
+          audio: true,
+        });
+        
         if (isRadioMode) {
-          // ラジオモード: 音声のみをキャプチャ（カメラランプ一切点灯しない）
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: false,
-          });
           setCamOn(false);
         } else {
-          // 通常配信: カメラ + マイクをキャプチャ
-          const preset = QUALITY_PRESETS[selectedQuality];
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: preset.width, height: preset.height, frameRate: preset.framerate },
-            audio: true,
-          });
+          setCamOn(true);
           if (previewVideoRef.current) {
             previewVideoRef.current.srcObject = stream;
           }
@@ -183,20 +176,21 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         streamConfig = {};
 
         if (isRadioMode) {
-          console.log(`📻 ラジオモード: ${RADIO_MODE_PRESET.width}x${RADIO_MODE_PRESET.height}, ${RADIO_MODE_PRESET.framerate}fps, ${RADIO_MODE_PRESET.bitrate / 1000}kbps`);
+          console.log(`📻 ラジオモード: ${BASIC_CHANNEL_PRESET.width}x${BASIC_CHANNEL_PRESET.height}, ${BASIC_CHANNEL_PRESET.framerate}fps, ${BASIC_CHANNEL_PRESET.maxBitrate / 1000}kbps`);
         } else {
           const preset = QUALITY_PRESETS[selectedQuality];
           console.log(`📹 通常モード: ${preset.label}`);
         }
 
-        console.log(`IVS SDK create() 呼び出し:`);
-        console.log(`  ingestEndpoint: "${ivsIngestEndpoint}"`);
-        console.log(`  ingestEndpoint 型: ${typeof ivsIngestEndpoint}`);
-        console.log(`  ingestEndpoint 長さ: ${ivsIngestEndpoint?.length}`);
+        console.log(`IVS SDK create() 呼び出し (Basic チャンネル専用):`);
+            console.log(`  ingestEndpoint: "${ivsIngestEndpoint}"`);
 
-        const client = IVSClient.create({ ingestEndpoint: ivsIngestEndpoint });
-        clientRef.current = client;
-        console.log("✓ IVS クライアント作成成功");
+            // Basic チャンネル用：最小構成のみ
+            const client = IVSClient.create({ 
+              ingestEndpoint: ivsIngestEndpoint 
+            });
+            clientRef.current = client;
+            console.log("✓ IVS クライアント作成成功 (Basic 準拠)");
 
         // 音声トラック追加
         const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -209,27 +203,22 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         }
         }
 
-        // ビデオ追加（ラジオモード時はマイクメーター、通常モードはカメラ）
-        if (isRadioMode) {
-          // マイクメーター初期化を独立した try-catch で完全に分離（失敗しても配信は続行）
-          try {
-            canvasDrawnRef.current = false;
-            const vizCanvas = await createAudioVisualizerCanvas(audioTrack, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height, RADIO_MODE_PRESET.framerate);
-            await client.addVideoInputDevice(vizCanvas, "visualizer", { index: 0 });
-            console.log("✓ マイクレベルメーター映像追加");
-          } catch (vizErr) {
-            console.warn("⚠️ マイクメーター初期化エラー（配信は続行）:", vizErr.message);
-            // 失敗しても配信開始は止めない
-          }
-        } else {
-          try {
+        // ビデオ追加：Basic チャンネル用にシンプル化
+        // ラジオモード時は静止画（背景）のみ、通常モードはカメラ映像
+        try {
+          if (isRadioMode) {
+              // ラジオモード：音声のみ（Basic チャンネル対応）
+            // 映像は静止画または背景に固定
+            console.log("✓ ラジオモード：音声のみで配信 (640x360 固定)");
+          } else {
+            // 通常モード：カメラ映像
             if (previewVideoRef.current) {
               await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
               console.log("✓ カメラ映像追加");
             }
-          } catch (videoErr) {
-            console.warn("⚠️ ビデオ追加失敗（配信は続行）:", videoErr.message);
           }
+        } catch (videoErr) {
+          console.warn("⚠️ ビデオ追加失敗（配信は続行）:", videoErr.message);
         }
 
         // 配信開始（リトライ含むエラーハンドリング）
@@ -302,130 +291,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
 
 
-  // マイクレベルメーター Canvas ビジュアライザー（640x360 - AWS IVS Basic 対応）
-  const createAudioVisualizerCanvas = async (audioTrack, width, height, fps) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = width; // 640
-      canvas.height = height; // 360
-      const ctx = canvas.getContext("2d");
 
-      let audioContext = null;
-      let analyser = null;
-      let dataArray = null;
-
-      try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        if (!audioContext) {
-          throw new Error("AudioContext 作成失敗");
-        }
-        
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-        const clonedTrack = audioTrack.clone();
-        if (!clonedTrack) {
-          throw new Error("オーディオトラッククローン失敗");
-        }
-
-        const mediaStream = new MediaStream([clonedTrack]);
-        if (!mediaStream) {
-          throw new Error("MediaStream 作成失敗");
-        }
-
-        const mediaSource = audioContext.createMediaStreamSource(mediaStream);
-        if (!mediaSource) {
-          throw new Error("MediaStreamAudioSource 作成失敗");
-        }
-
-        mediaSource.connect(analyser);
-        console.log("✓ AudioContext 初期化成功");
-      } catch (audioErr) {
-        console.warn("⚠️ AudioContext 初期化エラー:", audioErr.message);
-        audioContext = null;
-        analyser = null;
-      }
-
-      // FPS30 固定フレーム描画（16.67ms = 1000/60）
-      const frameInterval = 1000 / 30;
-      let lastFrameTime = Date.now();
-      let frameCount = 0; // フレームカウント
-
-      const draw = () => {
-        const now = Date.now();
-        if (now - lastFrameTime >= frameInterval) {
-          lastFrameTime = now;
-          frameCount++;
-
-          // 背景: グラデーション（黒→濃紫）
-          const grad = ctx.createLinearGradient(0, 0, 0, height);
-          grad.addColorStop(0, "#0a0a1a");
-          grad.addColorStop(1, "#1a0a3a");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
-
-          // マイクレベルメーター描画（分析器が有効な場合のみ）
-          if (analyser && dataArray) {
-            try {
-              analyser.getByteFrequencyData(dataArray);
-            } catch (e) {
-              // 無視
-            }
-
-            const barWidth = Math.max(1, (width / dataArray.length) * 2.5);
-            let x = 0;
-
-            for (let i = 0; i < dataArray.length; i += 2) {
-              const barHeight = (dataArray[i] / 255) * (height * 0.8);
-
-              // グラデーション色（低音: 青→高音: 赤）
-              const hue = (i / dataArray.length) * 360;
-              ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-              ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-
-              // 反射効果
-              ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.3)`;
-              ctx.fillRect(x, height - barHeight - 5, barWidth, 5);
-
-              x += barWidth + 1;
-            }
-          }
-
-          // 中央にマイク LIVE インジケータ
-          ctx.fillStyle = "rgba(255, 100, 100, 0.8)";
-          ctx.font = "bold 32px Arial";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText("🎙️", width / 2, 40);
-          
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.font = "bold 18px Arial";
-          ctx.fillText("LIVE ラジオ配信中", width / 2, height - 30);
-
-          // 右下にビットレート表示
-          ctx.fillStyle = "rgba(0, 255, 100, 0.6)";
-          ctx.font = "12px monospace";
-          ctx.textAlign = "right";
-          ctx.textBaseline = "bottom";
-          ctx.fillText("600 kbps", width - 10, height - 10);
-
-          // 1フレーム描画完了で フラグを立てて即座に resolve
-          if (frameCount === 1) {
-            canvasDrawnRef.current = true;
-            const stream = canvas.captureStream(30);
-            console.log("✓ Canvas ストリーム作成（640x360, 30fps, 600kbps）- 描画完了フラグ立下");
-            resolve(stream);
-            return; // 1フレーム後は描画ループを打ち切り
-          }
-        }
-
-        requestAnimationFrame(draw);
-      };
-
-      draw();
-    });
-  };
 
   const toggleMic = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !micOn));
