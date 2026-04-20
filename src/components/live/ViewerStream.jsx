@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Radio, Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import RadioModeBanner from "./RadioModeBanner";
 
 // 価格帯 → 画質定義
 const QUALITY_OPTIONS = [
@@ -103,6 +105,11 @@ export default function ViewerStream({ streamId, stream }) {
 
   return (
     <div className="relative w-full h-full bg-black">
+      {/* ラジオモードバナー */}
+      <AnimatePresence>
+        <RadioModeBanner isRadioMode={stream?.is_radio_mode} />
+      </AnimatePresence>
+
       <video
         ref={videoRef}
         autoPlay

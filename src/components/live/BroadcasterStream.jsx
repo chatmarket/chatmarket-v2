@@ -206,7 +206,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       const newRadioMode = !isRadioMode;
       setIsRadioMode(newRadioMode);
 
-      // TODO: 実装詳細
       // ①映像停止：camOnを自動的にfalseに切り替え
       if (newRadioMode && camOn) {
         toggleCam();
@@ -214,15 +213,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         toggleCam();
       }
 
-      // ②音声ビットレート最適化：配信中であれば、フロントから信号を送る
-      // （バックエンド側で quality パラメータを動的に調整）
-      if (isLive) {
-        // 配信中の場合、後処理（次期実装）で OBS 経由のビットレート調整を想定
-      }
+      // ②LiveStreamを更新（視聴者側に通知）
+      await base44.entities.LiveStream.update(streamId, { is_radio_mode: newRadioMode });
 
       // ③15分タイマーリセット
       // これはラジオモード中の購入フローで自動的に新規リセットされる
-      // （拡張ダイアログで自動的に有効化）
     } catch (err) {
       toast.error("ラジオモード切り替えに失敗: " + err.message);
       setIsRadioMode(!isRadioMode); // ロールバック

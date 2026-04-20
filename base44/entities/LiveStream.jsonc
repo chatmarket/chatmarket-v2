@@ -152,6 +152,11 @@
       "type": "boolean",
       "default": false,
       "description": "\u97f3\u697d\u3092\u5229\u7528\u3059\u308b\uff08\u6b4c\u5531\u30fb\u6f14\u594f\u30fbBGM\u7b49\uff09JASRAC\u5305\u62ec\u5951\u7d04\u5bfe\u8c61"
+    },
+    "is_radio_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30e9\u30b8\u30aa\u30e2\u30fc\u30c9\u4e2d\u30d5\u30e9\u30b0\uff08\u6620\u50cf\u505c\u6b62\u3001\u97f3\u58f0\u7279\u5316\uff09"
     }
   },
   "required": [
