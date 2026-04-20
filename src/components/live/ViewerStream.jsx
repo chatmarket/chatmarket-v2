@@ -110,13 +110,24 @@ export default function ViewerStream({ streamId, stream }) {
         <RadioModeBanner isRadioMode={stream?.is_radio_mode} />
       </AnimatePresence>
 
-      {/* ラジオモード背景画像 */}
-      {stream?.is_radio_mode && stream?.radio_background_url && (
-        <img
-          src={stream.radio_background_url}
-          alt="ラジオモード背景"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+      {/* ラジオモード背景画像 or デフォルト */}
+      {stream?.is_radio_mode && (
+        <>
+          {stream?.radio_background_url ? (
+            <img
+              src={stream.radio_background_url}
+              alt="ラジオモード背景"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+              <div className="text-center space-y-3">
+                <Radio className="w-20 h-20 text-zinc-700 mx-auto" />
+                <p className="text-sm text-zinc-500 font-semibold">ラジオモード配信中</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <video
