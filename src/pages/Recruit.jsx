@@ -425,7 +425,7 @@ export default function Recruit() {
                 <p className="text-4xl font-black text-cyan-400">15分で150円〜</p>
                 <p className="font-bold text-lg mt-1">通話で稼ぐ（CALL&ANSER）</p>
                 </div>
-                <p className="text-sm text-muted-foreground">1対1ビデオ通話で 15分150円以上。1日60分の無料枠でテストしてから有料化できます。</p>
+                <p className="text-sm text-muted-foreground">1対1ビデオ通話で 15分150円〜（配信最低設定金額、上限なし）。1日60分の無料枠でテストしてから有料化できます。</p>
             </div>
             <div className="bg-card border border-amber-400/30 rounded-2xl p-7 space-y-4 hover:border-amber-400/50 transition-all">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center">

@@ -53,7 +53,7 @@ export default function ProgressiveIncentiveSection() {
                     <PhoneCall className="w-4 h-4 text-cyan-400" />
                   </div>
                   <p className="font-black text-sm text-cyan-400">1対1通話</p>
-                  <p className="text-xs text-muted-foreground leading-snug">15分150円〜。スキルを時間単位で販売できる</p>
+                  <p className="text-xs text-muted-foreground leading-snug">15分150円〜（配信最低設定金額、上限なし）。スキルを時間単位で販売できる</p>
                 </div>
                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-2 hover:border-amber-500/40 transition-all">
                   <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
