@@ -1,6 +1,6 @@
 import React from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { TrendingUp, CreditCard, Percent, CalendarClock, Calculator } from "lucide-react";
+import { TrendingUp, CreditCard, Percent, CalendarClock, Calculator, PhoneCall, Video, Radio, Crown } from "lucide-react";
 import { PROGRESSIVE_TIERS, PLAN_REVENUE_SHARE, STRIPE_FEE_RATE } from "@/lib/pricing";
 
 const PLAN_ROWS = [
@@ -36,6 +36,41 @@ export default function ProgressiveIncentiveSection() {
                 </div>
               </div>
             </AccordionTrigger>
+
+            {/* ChatMarketで何ができる？4機能 */}
+            <div className="px-5 pb-5 pt-0">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">ChatMarketで何ができる？</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-2 hover:border-primary/40 transition-all">
+                  <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                  </div>
+                  <p className="font-black text-sm text-primary">最大95%還元</p>
+                  <p className="text-xs text-muted-foreground leading-snug">業界最高水準。月間売上でプログレッシブに自動UP</p>
+                </div>
+                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4 space-y-2 hover:border-cyan-500/40 transition-all">
+                  <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                    <PhoneCall className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <p className="font-black text-sm text-cyan-400">1対1通話</p>
+                  <p className="text-xs text-muted-foreground leading-snug">15分150円〜。スキルを時間単位で販売できる</p>
+                </div>
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-2 hover:border-amber-500/40 transition-all">
+                  <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <Video className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <p className="font-black text-sm text-amber-400">動画販売（VOD）</p>
+                  <p className="text-xs text-muted-foreground leading-snug">一度アップで何度でも売れる。寝ながら収益化</p>
+                </div>
+                <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 space-y-2 hover:border-red-500/40 transition-all">
+                  <div className="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center">
+                    <Radio className="w-4 h-4 text-red-400" />
+                  </div>
+                  <p className="font-black text-sm text-red-400">有料ライブ（PPV）</p>
+                  <p className="text-xs text-muted-foreground leading-snug">チケット制のライブ配信。ファンと直接繋がる</p>
+                </div>
+              </div>
+            </div>
 
             <AccordionContent className="px-5 pb-6 space-y-6 text-sm">
 
