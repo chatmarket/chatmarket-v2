@@ -488,7 +488,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       draw();
       // Canvas ストリーム取得（FPS30 キャプチャ）
       const stream = canvas.captureStream(30);
-      console.log("✓ Canvas ストリーム作成（30fps, 400kbps）");
+      console.log("✓ Canvas ストリーム作成（640x360, 30fps, 1200kbps）");
       resolve(stream);
     });
   };
