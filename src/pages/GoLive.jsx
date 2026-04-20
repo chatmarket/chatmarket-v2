@@ -406,6 +406,49 @@ export default function GoLive() {
         </div>
       )}
 
+      {/* === IVS 手動入力セクション（ライブ配信のみ） ===*/}
+      {mode === MODE_LIVE && (
+        <div className="space-y-4 bg-card rounded-xl p-5 border border-green-500/30 bg-green-500/5 mb-6">
+          <p className="text-xs font-bold text-green-400 uppercase tracking-widest">🔑 AWS IVS 手動認証情報</p>
+          <p className="text-xs text-muted-foreground">自動取得が機能していない場合、AWSコンソールから直接値をコピペしてください。</p>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">Ingest Endpoint</label>
+              <input
+                type="text"
+                value={manualIngestEndpoint}
+                onChange={(e) => setManualIngestEndpoint(e.target.value)}
+                placeholder="rtmps://xxxxx.ivs.aws.com"
+                className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
+                autoComplete="off"
+              />
+              <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Ingest Server」をコピーしてください</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">Stream Key</label>
+              <input
+                type="text"
+                value={manualStreamKey}
+                onChange={(e) => setManualStreamKey(e.target.value)}
+                placeholder="arn:aws:ivs:ap-northeast-1:xxxxx:stream-key/xxxxx"
+                className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
+                autoComplete="off"
+              />
+              <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Stream Key」をコピーしてください</p>
+            </div>
+
+            {(manualIngestEndpoint || manualStreamKey) && (
+              <div className="bg-green-500/15 border border-green-500/40 rounded-lg px-3 py-2.5 text-[10px] text-green-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>✅ 入力値が優先されます。自動取得を上書きします。</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
         {mode === MODE_LIVE && (
           <div className="space-y-3">
@@ -952,46 +995,7 @@ export default function GoLive() {
           )}
         </div>
 
-        {/* === IVS 手動入力セクション（ライブ配信のみ） === */}
-        {mode === MODE_LIVE && (
-          <div className="space-y-4 bg-card rounded-xl p-5 border border-green-500/30 bg-green-500/5">
-            <p className="text-xs font-bold text-green-400 uppercase tracking-widest">🔑 AWS IVS 手動認証情報</p>
-            <p className="text-xs text-muted-foreground">自動取得が機能していない場合、AWSコンソールから直接値をコピペしてください。</p>
 
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-foreground">Ingest Endpoint</label>
-                <input
-                  type="text"
-                  value={manualIngestEndpoint}
-                  onChange={(e) => setManualIngestEndpoint(e.target.value)}
-                  placeholder="rtmps://xxxxx.ivs.aws.com"
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
-                />
-                <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Ingest Server」をコピーしてください</p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-foreground">Stream Key</label>
-                <input
-                  type="text"
-                  value={manualStreamKey}
-                  onChange={(e) => setManualStreamKey(e.target.value)}
-                  placeholder="arn:aws:ivs:ap-northeast-1:xxxxx:stream-key/xxxxx"
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-green-500"
-                />
-                <p className="text-[10px] text-muted-foreground">AWS コンソール → IVS → チャンネル詳細 → 「Stream Key」をコピーしてください</p>
-              </div>
-
-              {(manualIngestEndpoint || manualStreamKey) && (
-                <div className="bg-green-500/15 border border-green-500/40 rounded-lg px-3 py-2.5 text-[10px] text-green-300 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>✅ 入力値が優先されます。自動取得を上書きします。</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* === SUBMIT BUTTON === */}
         <Button
