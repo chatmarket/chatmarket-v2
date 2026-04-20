@@ -761,12 +761,10 @@ export default function GoLive() {
                     運営手数料: {Math.floor(form.price * platformFeeRate)}コイン（{Math.round(platformFeeRate * 100)}%）
                   </p>
                 </div>
-              </div>
-              )}
-              </div>
-              )}
+                </div>
+                )}
 
-              {mode === MODE_CALL && (
+                {mode === MODE_CALL && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>時間（15分単位）</Label>
