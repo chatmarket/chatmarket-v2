@@ -191,19 +191,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         console.log(`🔄 配信開始試行 ${attempt}/3`);
         const IVSClient = await loadIVSBroadcast();
 
-        // ラジオモード：Basic チャンネル（音声のみ・厳格制限）
-        console.log(`📻 ラジオモード：Basic チャンネル（音声: 96kbps モノラル 44.1kHz）`);
-        
-        const streamConfig = {
-          audioBitrate: 96000,  // 96kbps（Basic 上限は 128kbps）
-          audioSampleRate: 44100,  // 44.1kHz 固定
-          audioChannels: 1,  // モノラル
-        };
-        
-        console.log(`IVS SDK create() 呼び出し:`);
-        console.log(`  streamConfig:`, streamConfig);
+        // ラジオモード：Basic チャンネル（音声のみ）
+        // 設定なしで初期化（SDK が音声を自動判定）
+        console.log(`📻 ラジオモード：Basic チャンネル（音声のみ・設定なし初期化）`);
 
-        const client = IVSClient.create({ streamConfig });
+        const client = IVSClient.create({});
         clientRef.current = client;
         console.log("✓ IVS クライアント作成成功");
 
@@ -414,7 +406,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             <CtrlBtn icon={<Settings className="w-4 h-4" />} onClick={() => setShowQualityModal(true)} />
           </div>
           {/* マイクレベルメーター */}
-          {micOn && localStreamRef.current && (
+          {micOn && localStreamRef.current?.getAudioTracks().length > 0 && (
             <MicLevelMeter audioStream={localStreamRef.current} />
           )}
         </div>
