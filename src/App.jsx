@@ -5,6 +5,7 @@ import { queryClientInstance } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/components/layout/AppLayout';
 import PageNotFound from '@/lib/PageNotFound';
+import ErrorHandler from '@/components/ErrorHandler';
 
 // Add page imports here
 import Home from '@/pages/Home';
@@ -147,6 +148,7 @@ export default function App() {
             <Route path="*" element={<PageNotFound />} />
           </Route>
         </Routes>
+        <ErrorHandler />
         <Toaster />
       </Router>
     </QueryClientProvider>
