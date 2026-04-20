@@ -26,6 +26,15 @@ const QUALITY_PRESETS = [
   { label: "低帯域 (360p 15fps)", width: 640, height: 360, framerate: 15, bitrate: 500000 },
 ];
 
+// ラジオモード専用：超低帯域プロファイル（Audio Only）
+const RADIO_MODE_PRESET = {
+  label: "📻 ラジオ (Audio Only - 160x90 1fps)",
+  width: 160,
+  height: 90,
+  framerate: 1,
+  bitrate: 64000, // 64kbps
+};
+
 // 視聴者数ランクアップ推奨ポップアップの定義
 const RANKUP_THRESHOLDS = [
   {
@@ -77,30 +86,37 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     if (!isRadioMode) return;
 
     try {
+      // RADIO_MODE_PRESET に完全統一
       const dummyCanvas = document.createElement("canvas");
-      dummyCanvas.width = 640;
-      dummyCanvas.height = 360;
+      dummyCanvas.width = RADIO_MODE_PRESET.width;   // 160px
+      dummyCanvas.height = RADIO_MODE_PRESET.height; // 90px
       const ctx = dummyCanvas.getContext("2d");
 
       // 背景描画
       ctx.fillStyle = "#1a1a1a";
-      ctx.fillRect(0, 0, 640, 360);
+      ctx.fillRect(0, 0, RADIO_MODE_PRESET.width, RADIO_MODE_PRESET.height);
 
-      // ラジオアイコン
+      // ラジオアイコン（小さいサイズ対応）
       ctx.fillStyle = "#ff4444";
       ctx.beginPath();
-      ctx.arc(320, 180, 80, 0, Math.PI * 2);
+      ctx.arc(RADIO_MODE_PRESET.width / 2, RADIO_MODE_PRESET.height / 2, 15, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "48px Arial";
+      ctx.font = "10px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("🎙️", 320, 180);
+      ctx.fillText("🎙️", RADIO_MODE_PRESET.width / 2, RADIO_MODE_PRESET.height / 2);
 
       // ダミー映像ストリーム生成（1fps で継続ループ）
-      const canvasStream = dummyCanvas.captureStream(1);
+      const canvasStream = dummyCanvas.captureStream(RADIO_MODE_PRESET.framerate);
       dummyCanvasStreamRef.current = canvasStream;
+      
+      console.log("✓ ラジオモード Canvas 生成完了:", {
+        width: RADIO_MODE_PRESET.width,
+        height: RADIO_MODE_PRESET.height,
+        fps: RADIO_MODE_PRESET.framerate,
+      });
     } catch (err) {
       console.error("ダミー映像事前生成エラー:", err);
     }
@@ -181,12 +197,13 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       
       let streamConfig;
       if (isRadioMode) {
-        // ラジオモード: 音声のみ（ダミー映像を使用）
+        // ラジオモード: 強制的に超低帯域プロファイルを適用
         streamConfig = {
-          maxResolution: { width: 640, height: 360 },
-          maxFramerate: 1, // 1fps: 超低負荷ダミー映像
-          maxBitrate: 100000, // 100kbps（音声 + 最小映像）
+          maxResolution: { width: RADIO_MODE_PRESET.width, height: RADIO_MODE_PRESET.height },
+          maxFramerate: RADIO_MODE_PRESET.framerate,
+          maxBitrate: RADIO_MODE_PRESET.bitrate, // 64kbps（Audio Only）
         };
+        console.log("✓ ラジオモード IVS プロファイル適用:", streamConfig);
       } else {
         // 通常配信: 画質に応じた設定
         const preset = QUALITY_PRESETS[selectedQuality];
