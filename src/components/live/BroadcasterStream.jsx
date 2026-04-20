@@ -217,25 +217,33 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       
       if (isRadioMode) {
         // ラジオモード: 事前生成されたダミー映像を使用
-        if (dummyCanvasStreamRef.current) {
+        if (dummyCanvasStreamRef.current && dummyCanvasStreamRef.current.getVideoTracks().length > 0) {
           try {
+            console.log("Canvas ストリーム確認:", {
+              videoTracks: dummyCanvasStreamRef.current.getVideoTracks().length,
+              audioTracks: dummyCanvasStreamRef.current.getAudioTracks().length,
+            });
             await client.addVideoInputDevice(dummyCanvasStreamRef.current, "canvas", { index: 0 });
             videoAdded = true;
+            console.log("✓ Canvas ダミー映像追加完了");
           } catch (canvasErr) {
             console.error("事前生成ダミー映像追加失敗、フォールバック:", canvasErr);
           }
+        } else {
+          console.warn("Canvas ストリームが無効、フォールバック開始");
         }
 
         // フォールバック: Canvas 生成失敗時は 1x1 カメラを強制起動
         if (!videoAdded) {
           try {
+            console.log("1x1 フォールバックカメラ起動中...");
             const fallbackStream = await navigator.mediaDevices.getUserMedia({
               video: { width: 1, height: 1, frameRate: 1 },
               audio: false,
             });
             await client.addVideoInputDevice(fallbackStream, "camera", { index: 0 });
             videoAdded = true;
-            console.warn("1x1フォールバックカメラを起動しました");
+            console.warn("✓ 1x1フォールバックカメラで起動しました");
           } catch (fallbackErr) {
             console.error("フォールバック失敗:", fallbackErr);
             throw new Error("映像トラックの確保に失敗しました");
@@ -247,6 +255,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           try {
             await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
             videoAdded = true;
+            console.log("✓ カメラ映像追加完了");
           } catch (camErr) {
             console.error("カメラ追加失敗:", camErr);
             throw new Error("カメラの初期化に失敗しました");
@@ -258,8 +267,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         throw new Error("映像トラックが確保できませんでした");
       }
 
-      // 映像トラックが完全に準備される間、短い遅延を入れる
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // IVS SDK の映像トラック完全初期化を待機（1500ms以上）
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       await client.startBroadcast(ivsStreamKey);
 
