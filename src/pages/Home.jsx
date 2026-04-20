@@ -196,7 +196,7 @@ export default function Home() {
           {/* メインキャッチコピー */}
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight"
-              style={{ fontFamily: "'Georgia', 'Noto Serif JP', serif", color: "#fff" }}>
+              style={{ color: "#fff" }}>
               あなたの15分を、<br />
               <span style={{
                 background: "linear-gradient(135deg, #00ff9d, #60a5fa, #a78bfa)",
@@ -204,7 +204,7 @@ export default function Home() {
                 WebkitTextFillColor: "transparent",
               }}>いくらで売りますか？</span>
             </h1>
-            <p className="text-sm sm:text-base text-white/40 italic" style={{ fontFamily: "'Georgia', serif", letterSpacing: "0.05em" }}>
+            <p className="text-sm sm:text-base text-white/40 italic" style={{ letterSpacing: "0.05em" }}>
               "What price for your 15 minutes of skill?"
             </p>
           </div>
@@ -213,7 +213,7 @@ export default function Home() {
           <div className="mx-auto max-w-xl space-y-3">
             <div className="rounded-2xl px-6 py-5 text-left space-y-3"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
-              <p className="text-sm sm:text-base leading-relaxed text-white/80" style={{ fontFamily: "'Georgia', 'Noto Serif JP', serif" }}>
+              <p className="text-sm sm:text-base leading-relaxed text-white/80">
                 「<span className="text-white font-bold">私なんかが稼げるの？</span>」そう思う必要はありません。
               </p>
               <p className="text-xs sm:text-sm leading-relaxed text-white/60">
