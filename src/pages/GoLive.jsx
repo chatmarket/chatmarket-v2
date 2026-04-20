@@ -1062,6 +1062,7 @@ export default function GoLive() {
           )}
         </Button>
       </form>
+        </div>
     </div>
   );
 }
