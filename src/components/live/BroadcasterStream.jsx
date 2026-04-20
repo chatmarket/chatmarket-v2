@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
+import RadioModeToggle from "./RadioModeToggle";
 
 // amazon-ivs-web-broadcast is loaded via CDN script tag approach via dynamic import
 let IVSBroadcastClient = null;
@@ -60,6 +61,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [rankupPopup, setRankupPopup] = useState(null); // { message, color }
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoContainerRef = useRef(null);
+  const [isRadioMode, setIsRadioMode] = useState(false);
+  const [radioModeProcessing, setRadioModeProcessing] = useState(false);
 
   const isLive = status === "live";
 
@@ -197,6 +200,37 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     toast.success("ストリームキーをコピーしました");
   };
 
+  const handleToggleRadioMode = async () => {
+    setRadioModeProcessing(true);
+    try {
+      const newRadioMode = !isRadioMode;
+      setIsRadioMode(newRadioMode);
+
+      // TODO: 実装詳細
+      // ①映像停止：camOnを自動的にfalseに切り替え
+      if (newRadioMode && camOn) {
+        toggleCam();
+      } else if (!newRadioMode && !camOn) {
+        toggleCam();
+      }
+
+      // ②音声ビットレート最適化：配信中であれば、フロントから信号を送る
+      // （バックエンド側で quality パラメータを動的に調整）
+      if (isLive) {
+        // 配信中の場合、後処理（次期実装）で OBS 経由のビットレート調整を想定
+      }
+
+      // ③15分タイマーリセット
+      // これはラジオモード中の購入フローで自動的に新規リセットされる
+      // （拡張ダイアログで自動的に有効化）
+    } catch (err) {
+      toast.error("ラジオモード切り替えに失敗: " + err.message);
+      setIsRadioMode(!isRadioMode); // ロールバック
+    } finally {
+      setRadioModeProcessing(false);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col lg:flex-row gap-4 bg-zinc-950 rounded-xl overflow-hidden">
       {/* 左側: 映像プレビュー（大きく表示） */}
@@ -266,7 +300,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         {/* コントロールバー */}
         <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
         {/* 左: マイク/カメラ/設定 */}
-        <div className={`flex gap-2 ${isLive ? "opacity-30 pointer-events-none select-none" : ""}`}>
+        <div className={`flex gap-2 ${isLive && !isRadioMode ? "opacity-30 pointer-events-none select-none" : ""}`}>
           <CtrlBtn
             icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
             onClick={toggleMic}
@@ -285,8 +319,15 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           <p className="text-[11px] text-zinc-600 text-center">🔒 配信中はロックされています</p>
         )}
 
-        {/* 右: 全画面 + 配信終了 */}
+        {/* 右: ラジオモード + 全画面 + 配信終了 */}
         <div className="flex items-center gap-2">
+          {isLive && (
+            <RadioModeToggle
+              isRadioMode={isRadioMode}
+              onToggle={handleToggleRadioMode}
+              isProcessing={radioModeProcessing}
+            />
+          )}
           <button
             onClick={toggleFullscreen}
             className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"

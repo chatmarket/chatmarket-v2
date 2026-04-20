@@ -26,6 +26,10 @@ const STEPS = [
     desc: "メイン画面に戻り、「ソース」の「＋」ボタンから「映像キャプチャデバイス（カメラ）」や「音声入力キャプチャ（マイク）」を追加します。",
     imgAlt: "OBSソース追加のスクリーンショット",
     tip: "カメラとマイクが認識されない場合はOSのプライバシー設定でアクセスを許可してください。",
+    subtips: [
+      "📷 カメラ：デバイスが複数ある場合は「デバイス」のドロップダウンで正しいカメラを選択",
+      "🎤 マイク：「デバイス」から使用するマイク（USB接続推奨）を選択、音量バーが反応するか確認",
+    ],
   },
   {
     num: 4,
@@ -145,7 +149,16 @@ export default function ObsGuide() {
                   {/* Tip */}
                   <div className="flex items-start gap-2 bg-zinc-800 rounded-xl px-4 py-3">
                     <span className="text-primary text-sm shrink-0">💡</span>
-                    <p className="text-zinc-400 text-xs leading-relaxed">{step.tip}</p>
+                    <div>
+                      <p className="text-zinc-400 text-xs leading-relaxed">{step.tip}</p>
+                      {step.subtips && (
+                        <ul className="text-zinc-500 text-xs mt-2 space-y-1 ml-2 border-l border-zinc-600 pl-2">
+                          {step.subtips.map((subtip, i) => (
+                            <li key={i} className="leading-relaxed">{subtip}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -169,6 +182,81 @@ export default function ObsGuide() {
         >
           配信作成画面に戻る →
         </a>
+      </div>
+
+      {/* オーディオ設定セクション */}
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 space-y-4">
+        <h3 className="font-black text-white text-sm flex items-center gap-2">
+          🎤 マイク・オーディオ設定（推奨値）
+        </h3>
+        <div className="space-y-3 text-xs text-zinc-300">
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-zinc-100">サンプリングレート</p>
+            <p>48kHz（推奨） - ほぼすべてのマイク対応</p>
+          </div>
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-zinc-100">マイク入力レベル</p>
+            <p>-10dB 〜 -3dB（ピークが赤くならないが、緑ランプが反応する高さ）</p>
+          </div>
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-zinc-100">ノイズ抑制（オプション）</p>
+            <p>フィルタを追加 → 「ノイズサプレッション」で環境ノイズ軽減</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 品質設定セクション */}
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 space-y-4">
+        <h3 className="font-black text-white text-sm flex items-center gap-2">
+          📊 映像・音声品質設定（ゲーム配信向け）
+        </h3>
+        <div className="space-y-3 text-xs text-zinc-300">
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-zinc-100">フレームレート</p>
+            <p>60fps（ゲーム重視） または 30fps（安定重視）</p>
+          </div>
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-zinc-100">ビットレート（ゲーム画面）</p>
+            <p>4500kbps以上（通信速度20Mbps以上推奨）</p>
+          </div>
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-zinc-100">音声ビットレート</p>
+            <p>128kbps（ステレオ） - ゲーム配信ではこれで十分</p>
+          </div>
+        </div>
+      </div>
+
+      {/* トラブルシューティング */}
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 space-y-4">
+        <h3 className="font-black text-white text-sm flex items-center gap-2">
+          ⚠️ トラブルシューティング
+        </h3>
+        <div className="space-y-2 text-xs text-zinc-300">
+          <div className="bg-zinc-800 rounded-lg p-3">
+            <p className="font-bold text-zinc-100 mb-1">❌ 映像が映らない</p>
+            <ul className="ml-3 space-y-0.5 text-zinc-400">
+              <li>• RTMP URLとストリームキーを再確認</li>
+              <li>• OSプライバシー設定でOBSのカメラアクセスを許可</li>
+              <li>• 他アプリがカメラを占有していないか確認</li>
+            </ul>
+          </div>
+          <div className="bg-zinc-800 rounded-lg p-3">
+            <p className="font-bold text-zinc-100 mb-1">❌ マイクから音が出ない</p>
+            <ul className="ml-3 space-y-0.5 text-zinc-400">
+              <li>• OBS「オーディオミキサー」で音量バーが反応するか確認</li>
+              <li>• 音声ソースのデバイスが正しいマイクか確認</li>
+              <li>• Windowsシステム音量でマイクがミュートされていないか確認</li>
+            </ul>
+          </div>
+          <div className="bg-zinc-800 rounded-lg p-3">
+            <p className="font-bold text-zinc-100 mb-1">❌ 配信が遅延する・カクつく</p>
+            <ul className="ml-3 space-y-0.5 text-zinc-400">
+              <li>• インターネット速度を測定（20Mbps以上推奨）</li>
+              <li>• OBS「設定」→「映像」でフレームレート下げる</li>
+              <li>• バックグラウンドアプリを終了</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Footer note */}
