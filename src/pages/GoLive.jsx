@@ -629,7 +629,8 @@ export default function GoLive() {
 
               {/* 画質選択（価格に応じた制限あり・ラジオモードでは非表示） */}
               {!form.startAsRadioMode && (
-              <div className="space-y-2">
+               <>
+               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   📺 配信画質
                   <span className="text-[10px] text-muted-foreground font-normal">（価格に応じて選択可）</span>
@@ -762,6 +763,7 @@ export default function GoLive() {
                   </p>
                 </div>
                 </div>
+                </>
                 )}
 
                 {mode === MODE_CALL && (
