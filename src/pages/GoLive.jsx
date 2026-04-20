@@ -850,36 +850,36 @@ export default function GoLive() {
 
             {/* 著作権料詳細 */}
             {form.musicUsageMode === "yes" && (
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
-                <p className="text-xs text-purple-200/80 leading-relaxed">
-                  JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
-                </p>
-                <div className="bg-purple-500/20 rounded-lg p-2.5 text-xs text-purple-200 space-y-1">
-                  <p><strong>売上：</strong> ¥100の場合</p>
-                  <p className="text-purple-300">→ あなたの報酬: ¥{Math.round(100 * liveRevenueRate * 0.97)}円（報酬率 {Math.round(liveRevenueRate * 97)}%）</p>
-                  <p>→ 運営手数料: {Math.round(platformFeeRate * 100)}%</p>
-                  <p>→ 著作権料: ¥3（3%）</p>
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-purple-300">📋 著作権料について</p>
+                  <p className="text-xs text-purple-200/80 leading-relaxed">
+                    JASRAC包括契約に基づき、この配信の売上から<span className="font-bold text-purple-300">3%</span>が著作権料として自動的に徴収されます。
+                  </p>
+                  <div className="bg-purple-500/20 rounded-lg p-2.5 text-xs text-purple-200 space-y-1">
+                    <p><strong>売上：</strong> ¥100の場合</p>
+                    <p className="text-purple-300">→ あなたの報酬: ¥{Math.round(100 * liveRevenueRate * 0.97)}円（報酬率 {Math.round(liveRevenueRate * 97)}%）</p>
+                    <p>→ 運営手数料: {Math.round(platformFeeRate * 100)}%</p>
+                    <p>→ 著作権料: ¥3（3%）</p>
+                  </div>
+                </div>
+
+                {/* 虚偽申告時の請求金額 */}
+                <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-bold text-red-400">⚠️ 虚偽申告について</p>
+                  <p className="text-xs text-red-300/90 leading-relaxed">
+                    音楽を利用していないのに「利用する」とチェックした場合、または音楽を利用しているのに「利用しない」と申告した場合、実際の著作権料との差額を<span className="font-bold">別途請求</span>します。最大<span className="font-bold text-red-400">月額 ¥500,000</span>の罰金が科される場合があります。
+                  </p>
+                </div>
+
+                {/* 選択が必須であることの警告 */}
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-orange-300">
+                    音楽利用の選択は<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
+                  </p>
                 </div>
               </div>
-
-              {/* 虚偽申告時の請求金額 */}
-              <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-3 space-y-1">
-                <p className="text-xs font-bold text-red-400">⚠️ 虚偽申告について</p>
-                <p className="text-xs text-red-300/90 leading-relaxed">
-                  音楽を利用していないのに「利用する」とチェックした場合、または音楽を利用しているのに「利用しない」と申告した場合、実際の著作権料との差額を<span className="font-bold">別途請求</span>します。最大<span className="font-bold text-red-400">月額 ¥500,000</span>の罰金が科される場合があります。
-                </p>
-              </div>
-            </div>
-
-            {/* 選択が必須であることの警告 */}
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-orange-300">
-                音楽利用の選択は<span className="font-bold">必須</span>です。正確に申告しない場合、配信を開始することができません。
-              </p>
-            </div>
             )}
             </div>
             </div>
