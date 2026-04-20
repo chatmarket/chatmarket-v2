@@ -561,13 +561,29 @@ export default function GoLive() {
         </div>
 
         <div className="space-y-2">
-          <Label>予定日時（任意）</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label>予定日時（任意）</Label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!form.scheduled_at}
+                onChange={(e) => setForm({ ...form, scheduled_at: e.target.checked ? "" : form.scheduled_at })}
+                className="w-4 h-4 accent-primary rounded"
+              />
+              <span className="text-sm text-primary font-semibold">即配信</span>
+            </label>
+          </div>
           <Input
             type="datetime-local"
             value={form.scheduled_at}
             onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
-            className="bg-secondary border-0"
+            disabled={!form.scheduled_at}
+            className="bg-secondary border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            placeholder="予定日時を指定する場合はここに入力"
           />
+          {!form.scheduled_at && (
+            <p className="text-xs text-primary font-semibold">⚡ 即配信モード：チェック外すと予定日時を設定できます</p>
+          )}
         </div>
 
         <div className="space-y-2">
