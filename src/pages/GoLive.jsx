@@ -286,6 +286,13 @@ export default function GoLive() {
     }
   }, [effectiveQuality, form.duration, form.saveArchive, form.archiveIsPaid]);
 
+  // ラジオモード切り替え時に価格を固定値50に設定
+  useEffect(() => {
+    if (form.startAsRadioMode) {
+      setForm(f => ({ ...f, price: 50 }));
+    }
+  }, [form.startAsRadioMode]);
+
 
 
   // 配信中の場合はBroadcasterStreamを表示
@@ -607,6 +614,15 @@ export default function GoLive() {
 
           {mode === MODE_LIVE && (
             <div className="space-y-4">
+              {/* ラジオモード時の固定価格案内 */}
+              {form.startAsRadioMode && (
+                <div className="rounded-xl p-4 border bg-amber-500/10 border-amber-500/30 space-y-2">
+                  <p className="text-xs font-bold text-amber-400">📻 ラジオモード固定価格</p>
+                  <p className="text-sm text-amber-300 font-black">50コイン = 60分延長</p>
+                  <p className="text-xs text-amber-200/70">ラジオモードでは、配信者側の価格設定は固定されます。視聴者は50コインで60分間視聴可能です。</p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>配信時間（最大120分）</Label>
                 <Select
@@ -626,6 +642,20 @@ export default function GoLive() {
                 </Select>
                 <p className="text-xs text-muted-foreground">1配信あたり最大120分まで設定可能です。</p>
               </div>
+
+              {/* ラジオモード時の価格フィールドを非表示・固定値50を設定 */}
+              {form.startAsRadioMode && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    💰 視聴価格（固定）
+                    <span className="text-[10px] text-amber-400 font-bold">50コイン = 60分</span>
+                  </Label>
+                  <div className="bg-secondary rounded-lg p-3 border border-amber-500/20">
+                    <p className="text-lg font-black text-amber-300">50 コイン</p>
+                    <p className="text-xs text-muted-foreground mt-1">ラジオモード配信の固定価格です。変更することはできません。</p>
+                  </div>
+                </div>
+              )}
 
               {/* 画質選択（価格に応じた制限あり・ラジオモードでは非表示） */}
               {!form.startAsRadioMode && (
@@ -1011,7 +1041,7 @@ export default function GoLive() {
 
         <Button
           type="submit"
-          disabled={creating || !form.title || livePriceError || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
+          disabled={creating || !form.title || (mode === MODE_LIVE && !form.startAsRadioMode && livePriceError) || form.price <= 0 || (form.saveArchive && form.archiveIsPaid && !form.archiveConsentConfirmed)}
           className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${mode === MODE_LIVE ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
         >
           {creating ? (
