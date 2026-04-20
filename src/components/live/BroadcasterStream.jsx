@@ -27,13 +27,13 @@ const QUALITY_PRESETS = [
   { label: "低帯域 (360p 15fps)", width: 640, height: 360, framerate: 15, bitrate: 500000 },
 ];
 
-// ラジオモード専用：安定低帯域プロファイル（Audio + Visualizer）
+// ラジオモード専用：安定帯域プロファイル（Audio + Visualizer）
 const RADIO_MODE_PRESET = {
-  label: "📻 ラジオ (Audio + Visualizer - 320x180 15fps)",
-  width: 320,
-  height: 180,
-  framerate: 15,
-  bitrate: 256000, // 256kbps (128 audio + 128 visualizer)
+  label: "📻 ラジオ (Audio + Visualizer - 480x360 30fps)",
+  width: 480,
+  height: 360,
+  framerate: 30,
+  bitrate: 400000, // 400kbps (健全な通信帯域)
 };
 
 // 視聴者数ランクアップ推奨ポップアップの定義
@@ -302,6 +302,25 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         await base44.entities.LiveStream.update(streamId, { status: "live", ivs_playback_url: ivsIngestEndpoint, live_started_at: now });
         setLiveStartedAt(now);
         setStatus("live");
+        
+        // AWS CloudWatch Logs確認ガイドを出力
+        console.log("════════════════════════════════════════════════════════════");
+        console.log("🔴 AWS IVS 配信を開始しました！");
+        console.log("════════════════════════════════════════════════════════════");
+        console.log("📊 AWS CloudWatch Logs で実況況を確認してください:");
+        console.log("1. AWS マネジメントコンソール → IVS → チャンネル → 対象チャンネル");
+        console.log("2. 『Ingest Server』タブで 『Health Events』を確認");
+        console.log("3. エラーコード: 'StreamClosed', 'IngestError', 'BitrateExceeded' 等を記録");
+        console.log("4. CloudWatch Logs → ロググループ: /aws/ivs");
+        console.log("5. ストリームキー が含まれるログを検索");
+        console.log("════════════════════════════════════════════════════════════");
+        console.log("📈 現在の配信設定:");
+        console.log(`   - 解像度: ${isRadioMode ? "480x360 (ラジオメーター)" : QUALITY_PRESETS[selectedQuality].width + "x" + QUALITY_PRESETS[selectedQuality].height}`);
+        console.log(`   - FPS: ${isRadioMode ? "30" : QUALITY_PRESETS[selectedQuality].framerate}`);
+        console.log(`   - ビットレート: ${isRadioMode ? "400" : QUALITY_PRESETS[selectedQuality].bitrate / 1000000} kbps`);
+        console.log(`   - Ingest Endpoint: ${ivsIngestEndpoint}`);
+        console.log("════════════════════════════════════════════════════════════");
+        
         toast.success("🔴 AWS IVS 配信を開始しました！");
         break; // 成功したら抜ける
 
@@ -316,7 +335,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setGoingLive(false);
   }, [ivsStreamKey, ivsIngestEndpoint, selectedQuality, streamId, isRadioMode]);
 
-  // マイクレベルメーター Canvas ビジュアライザー
+  // マイクレベルメーター Canvas ビジュアライザー（FPS30固定フレーム描画）
   const createAudioVisualizerCanvas = async (audioTrack, width, height, fps) => {
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
@@ -328,47 +347,82 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
 
-      const mediaSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack.clone()]));
-      mediaSource.connect(analyser);
+      try {
+        const mediaSource = audioContext.createMediaStreamSource(new MediaStream([audioTrack.clone()]));
+        mediaSource.connect(analyser);
+      } catch (connErr) {
+        console.warn("Audio Analyzer 接続失敗、黒画面フォールバック:", connErr);
+      }
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
+      // FPS30 固定フレーム描画（16.67ms = 1000/60）
+      const frameInterval = 1000 / 30;
+      let lastFrameTime = Date.now();
+
       const draw = () => {
-        analyser.getByteFrequencyData(dataArray);
+        const now = Date.now();
+        if (now - lastFrameTime >= frameInterval) {
+          lastFrameTime = now;
 
-        // 背景: グラデーション（黒→濃紫）
-        const grad = ctx.createLinearGradient(0, 0, 0, height);
-        grad.addColorStop(0, "#0a0a1a");
-        grad.addColorStop(1, "#1a0a3a");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
+          try {
+            analyser.getByteFrequencyData(dataArray);
+          } catch (e) {
+            // Analyser エラーは無視して描画続行
+          }
 
-        // マイクレベルメーター描画
-        const barWidth = (width / dataArray.length) * 2.5;
-        let x = 0;
+          // 背景: グラデーション（黒→濃紫）
+          const grad = ctx.createLinearGradient(0, 0, 0, height);
+          grad.addColorStop(0, "#0a0a1a");
+          grad.addColorStop(1, "#1a0a3a");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
 
-        for (let i = 0; i < dataArray.length; i++) {
-          const barHeight = (dataArray[i] / 255) * height;
+          // マイクレベルメーター描画（周波数バー）
+          const barWidth = Math.max(1, (width / dataArray.length) * 2.5);
+          let x = 0;
 
-          // グラデーション色（低音: 青→高音: 赤）
-          const hue = (i / dataArray.length) * 360;
-          ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-          ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+          for (let i = 0; i < dataArray.length; i += 2) {
+            const barHeight = (dataArray[i] / 255) * (height * 0.8);
 
-          x += barWidth + 1;
+            // グラデーション色（低音: 青→高音: 赤）
+            const hue = (i / dataArray.length) * 360;
+            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+
+            // 反射効果
+            ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.3)`;
+            ctx.fillRect(x, height - barHeight - 5, barWidth, 5);
+
+            x += barWidth + 1;
+          }
+
+          // 中央にマイク LIVE インジケータ
+          ctx.fillStyle = "rgba(255, 100, 100, 0.8)";
+          ctx.font = "bold 32px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("🎙️", width / 2, 40);
+          
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.font = "bold 18px Arial";
+          ctx.fillText("LIVE ラジオ配信中", width / 2, height - 30);
+
+          // 右下にビットレート表示
+          ctx.fillStyle = "rgba(0, 255, 100, 0.6)";
+          ctx.font = "12px monospace";
+          ctx.textAlign = "right";
+          ctx.textBaseline = "bottom";
+          ctx.fillText("400 kbps", width - 10, height - 10);
         }
-
-        // 中央にマイクアイコン的テキスト
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.font = "bold 14px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("🎙️ LIVE", width / 2, height / 2);
 
         requestAnimationFrame(draw);
       };
 
       draw();
-      const stream = canvas.captureStream(fps);
+      // Canvas ストリーム取得（FPS30 キャプチャ）
+      const stream = canvas.captureStream(30);
+      console.log("✓ Canvas ストリーム作成（30fps, 400kbps）");
       resolve(stream);
     });
   };
