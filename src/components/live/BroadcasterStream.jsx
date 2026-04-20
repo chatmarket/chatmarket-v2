@@ -190,32 +190,28 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             console.log("✓ IVS クライアント作成成功");
 
         // 音声トラック追加
-        const audioTrack = localStreamRef.current.getAudioTracks()[0];
-        if (audioTrack) {
         try {
-        await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
-        console.log("✓ 音声トラック追加");
+          const audioTrack = localStreamRef.current.getAudioTracks()[0];
+          if (audioTrack) {
+            await client.addAudioInputDevice(new MediaStream([audioTrack]), "mic");
+            console.log("✓ 音声トラック追加");
+          }
         } catch (audioErr) {
-        console.warn("⚠️ 音声追加失敗（無視）:", audioErr.message);
-        }
+          console.warn("⚠️ 音声追加失敗（無視）:", audioErr.message);
         }
 
-        // ビデオ追加：Basic チャンネル用にシンプル化
-        // ラジオモード時は静止画（背景）のみ、通常モードはカメラ映像
+        // ビデオ追加：Basic チャンネル用（SDK側で640x360に自動調整）
         try {
-          if (isRadioMode) {
-              // ラジオモード：音声のみ（Basic チャンネル対応）
-            // 映像は静止画または背景に固定
-            console.log("✓ ラジオモード：音声のみで配信 (640x360 固定)");
-          } else {
-            // 通常モード：カメラ映像
-            if (previewVideoRef.current) {
-              await client.addVideoInputDevice(previewVideoRef.current, "camera", { index: 0 });
-              console.log("✓ カメラ映像追加");
-            }
+          if (!isRadioMode && previewVideoRef.current && previewVideoRef.current.srcObject) {
+            // 通常モード：MediaStreamをそのまま追加
+            const videoStream = previewVideoRef.current.srcObject;
+            await client.addVideoInputDevice(videoStream, "camera");
+            console.log("✓ ビデオストリーム追加");
+          } else if (isRadioMode) {
+            console.log("✓ ラジオモード：音声のみ (640x360背景表示)");
           }
         } catch (videoErr) {
-          console.warn("⚠️ ビデオ追加失敗（配信は続行）:", videoErr.message);
+          console.warn("⚠️ ビデオ追加失敗（配信は音声のみで続行）:", videoErr.message);
         }
 
         // 配信開始（リトライ含むエラーハンドリング）
