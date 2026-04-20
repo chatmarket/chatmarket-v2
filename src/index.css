@@ -1,4 +1,4 @@
-/* Interフォントはindex.htmlのpreloadで読み込み済み */
+/* M PLUS Rounded 1cフォントはindex.htmlのpreloadで読み込み済み */
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --font-inter: 'Inter', sans-serif;
+    --font-inter: 'M PLUS Rounded 1c', sans-serif;
     --background: 120 5% 4%;
     --foreground: 0 0% 95%;
     --card: 120 5% 7%;
