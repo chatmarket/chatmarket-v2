@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { Coins, CreditCard, Gift, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle, Zap, ExternalLink, ShieldCheck } from "lucide-react";
 
 const CHARGE_PLANS = [
-  { coins: 100, yen: 110, bonus: 0, popular: false },
-  { coins: 500, yen: 550, bonus: 0, popular: false },
-  { coins: 1000, yen: 1100, bonus: 0, popular: true },
-  { coins: 3000, yen: 3300, bonus: 0, popular: false },
-  { coins: 5000, yen: 5500, bonus: 0, popular: false },
-  { coins: 10000, yen: 11000, bonus: 0, popular: false },
+  { coins: 100, yen: 104, bonus: 0, popular: false },
+  { coins: 500, yen: 518, bonus: 0, popular: false },
+  { coins: 1000, yen: 1036, bonus: 0, popular: true },
+  { coins: 3000, yen: 3108, bonus: 0, popular: false },
+  { coins: 5000, yen: 5180, bonus: 0, popular: false },
+  { coins: 10000, yen: 10360, bonus: 0, popular: false },
 ];
 
 const STEPS_CREDIT = [
