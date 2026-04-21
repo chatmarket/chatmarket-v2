@@ -40,11 +40,17 @@ export default function GoLive() {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
         base44.auth.me().then(setUser).catch(() => {});
-      } else {
-        base44.auth.redirectToLogin();
       }
+      // 選択画面は未ログインでも表示し、アクション時にリダイレクト
     });
   }, []);
+
+  const requireAuth = (fn) => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (!isAuth) { base44.auth.redirectToLogin(); return; }
+      fn();
+    });
+  };
 
   const { data: channels = [] } = useQuery({
     queryKey: ["my-channels", user?.email],
@@ -159,7 +165,7 @@ export default function GoLive() {
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 1対多ライブ配信 */}
           <button
-            onClick={() => setMode(MODE_LIVE)}
+            onClick={() => requireAuth(() => setMode(MODE_LIVE))}
             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
@@ -176,7 +182,7 @@ export default function GoLive() {
 
           {/* 1対1ビデオ通話 */}
           <button
-            onClick={() => navigate("/call-slots")}
+            onClick={() => requireAuth(() => navigate("/call-slots"))}
             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group text-left"
           >
             <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
