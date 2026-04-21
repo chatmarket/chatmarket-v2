@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
+import MicLevelMeter from "./MicLevelMeter";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd }) {
   const navigate = useNavigate();
@@ -164,7 +165,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
         {/* コントロールバー */}
         <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <CtrlBtn
               icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
               onClick={toggleMic}
@@ -175,6 +176,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
               onClick={toggleCam}
               danger={!camOn}
             />
+            <MicLevelMeter micOn={micOn} />
           </div>
 
           <div className="flex items-center gap-2">
