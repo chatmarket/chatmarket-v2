@@ -16,7 +16,10 @@ if (typeof window !== 'undefined') {
     
     if (url.includes('/app-logs/')) {
       console.log('[FETCH_INTERCEPT] Blocked /app-logs/ request');
-      return Promise.resolve(new Response('', { status: 204 }));
+      return Promise.resolve(new Response(JSON.stringify({}), { 
+        status: 200, 
+        headers: { 'Content-Type': 'application/json' } 
+      }));
     }
     return originalFetch.apply(this, args);
   };
@@ -39,7 +42,10 @@ if (typeof window !== 'undefined') {
       const [url] = args;
       if (typeof url === 'string' && url.includes('/app-logs/')) {
         console.log('[METHOD_OVERRIDE] Blocked /app-logs/ via method override');
-        return Promise.resolve({ status: 204 });
+        return Promise.resolve(new Response(JSON.stringify({}), { 
+          status: 200, 
+          headers: { 'Content-Type': 'application/json' } 
+        }));
       }
       return originalMethod.apply(this, args);
     };
