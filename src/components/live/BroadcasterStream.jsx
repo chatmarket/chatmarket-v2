@@ -62,19 +62,33 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
   }, []);
 
-  // 視聴者数ポーリング（配信中のみ）
+  // ストリーム情報取得（配信開始時と定期ポーリング）
   useEffect(() => {
-    if (!isLive) return;
-    // 初回即座に画質も取得
-    base44.entities.LiveStream.filter({ id: streamId }).then((streams) => {
-      if (streams[0]?.viewer_count !== undefined) setViewerCount(streams[0].viewer_count);
-      if (streams[0]?.max_bitrate_restriction) setStreamQuality(streams[0].max_bitrate_restriction);
-    });
-    const interval = setInterval(async () => {
-      const streams = await base44.entities.LiveStream.filter({ id: streamId });
-      if (streams[0]?.viewer_count !== undefined) setViewerCount(streams[0].viewer_count);
-      if (streams[0]?.max_bitrate_restriction) setStreamQuality(streams[0].max_bitrate_restriction);
-    }, 10000);
+    if (!isLive || !streamId) return;
+    
+    const fetchStreamInfo = async () => {
+      try {
+        const streams = await base44.entities.LiveStream.filter({ id: streamId });
+        if (streams[0]) {
+          const stream = streams[0];
+          if (stream.viewer_count !== undefined) setViewerCount(stream.viewer_count);
+          if (stream.max_bitrate_restriction) {
+            console.log('StreamQuality set to:', stream.max_bitrate_restriction);
+            setStreamQuality(stream.max_bitrate_restriction);
+          } else {
+            console.warn('max_bitrate_restriction not found in stream:', stream);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch stream info:', err);
+      }
+    };
+
+    // 初回即座に取得
+    fetchStreamInfo();
+    
+    // 定期ポーリング
+    const interval = setInterval(fetchStreamInfo, 10000);
     return () => clearInterval(interval);
   }, [streamId, isLive]);
 

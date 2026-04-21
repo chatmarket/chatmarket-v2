@@ -134,6 +134,7 @@ export default function GoLive() {
       return "480p";                    // SD
     };
     const autoQuality = getQualityFromPrice(form.price);
+    console.log(`[GoLive] Price: ${form.price}, Auto Quality: ${autoQuality}`);
 
     const isLiveNow = !form.scheduled_at;
     const newStream = await base44.entities.LiveStream.create({
