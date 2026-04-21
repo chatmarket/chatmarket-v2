@@ -93,49 +93,59 @@ export default function Upload() {
     let video_url = "";
     let thumbnail_url = "";
 
-    if (videoFile) {
-      // Get S3 presigned upload URL
-      const s3Res = await base44.functions.invoke('uploadToS3', {
-        fileName: videoFile.name,
-        fileType: videoFile.type,
-        duration_seconds: videoDuration,
-      });
-      if (!s3Res.data?.presignedUrl) {
-        alert(s3Res.data?.error || 'アップロードURLの取得に失敗しました');
-        setUploading(false);
-        return;
+    try {
+      if (videoFile) {
+        // Get S3 presigned upload URL
+        const s3Res = await base44.functions.invoke('uploadToS3', {
+          fileName: videoFile.name,
+          fileType: videoFile.type,
+          duration_seconds: videoDuration,
+        });
+        if (!s3Res.data?.presignedUrl) {
+          alert(s3Res.data?.error || 'アップロードURLの取得に失敗しました');
+          setUploading(false);
+          return;
+        }
+        // Upload directly to S3
+        const uploadRes = await fetch(s3Res.data.presignedUrl, {
+          method: 'PUT',
+          body: videoFile,
+          headers: { 'Content-Type': videoFile.type || 'video/mp4' },
+        });
+        if (!uploadRes.ok) {
+          const errorText = await uploadRes.text();
+          console.error('S3 upload error:', uploadRes.status, errorText);
+          alert(`S3へのアップロードに失敗しました (${uploadRes.status})`);
+          setUploading(false);
+          return;
+        }
+        video_url = s3Res.data.cloudFrontUrl;
       }
-      // Upload directly to S3
-      const uploadRes = await fetch(s3Res.data.presignedUrl, {
-        method: 'PUT',
-        body: videoFile,
-        headers: { 'Content-Type': videoFile.type },
-      });
-      if (!uploadRes.ok) {
-        alert('S3へのアップロードに失敗しました');
-        setUploading(false);
-        return;
+      if (thumbnailFile) {
+        const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
+        thumbnail_url = res.file_url;
       }
-      video_url = s3Res.data.cloudFrontUrl;
-    }
-    if (thumbnailFile) {
-      const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
-      thumbnail_url = res.file_url;
-    }
 
-    const newVideo = await base44.entities.Video.create({
-      ...form,
-      video_url,
-      thumbnail_url,
-      channel_id: channel.id,
-      channel_name: channel.name,
-      channel_avatar: channel.avatar_url || "",
-      price: form.is_free ? 0 : form.price,
-      moderation_status: "pending", // 管理者審査待ち
-    });
+      // DB保存処理
+      const newVideo = await base44.entities.Video.create({
+        ...form,
+        video_url,
+        thumbnail_url,
+        channel_id: channel.id,
+        channel_name: channel.name,
+        channel_avatar: channel.avatar_url || "",
+        price: form.is_free ? 0 : form.price,
+        is_free: form.is_free,
+        moderation_status: "pending",
+      });
 
-    setUploading(false);
-    navigate("/my-channel");
+      setUploading(false);
+      navigate("/my-channel");
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`アップロード処理に失敗しました: ${error.message}`);
+      setUploading(false);
+    }
   };
 
   return (
