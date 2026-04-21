@@ -855,7 +855,7 @@ export default function VideoCallPage() {
             </div>
           )}
           <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">You</span>
+            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">視聴者には見えていません</span>
           </div>
         </div>
         )}

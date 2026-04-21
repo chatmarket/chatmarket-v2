@@ -148,7 +148,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           {isChecking && (
             <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-zinc-900/90 border border-yellow-500/50 text-yellow-400 text-xs font-bold px-3 py-1.5 rounded-full">
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-              プレビュー確認中（あなただけに表示）
+              視聴者には見えていません
             </div>
           )}
 
