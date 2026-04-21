@@ -107,6 +107,7 @@ export default function Upload() {
           return;
         }
         // Upload directly to S3
+        console.log('[UPLOAD] S3 upload starting...');
         const uploadRes = await fetch(s3Res.data.presignedUrl, {
           method: 'PUT',
           body: videoFile,
@@ -114,12 +115,14 @@ export default function Upload() {
         });
         if (!uploadRes.ok) {
           const errorText = await uploadRes.text();
-          console.error('S3 upload error:', uploadRes.status, errorText);
+          console.error('[UPLOAD] S3 upload error:', uploadRes.status, errorText);
           alert(`S3へのアップロードに失敗しました (${uploadRes.status})`);
           setUploading(false);
           return;
         }
+        console.log('[UPLOAD] S3 upload completed. Status:', uploadRes.status);
         video_url = s3Res.data.cloudFrontUrl;
+        console.log('[UPLOAD] CloudFront URL set:', video_url);
       }
       if (thumbnailFile) {
         const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
@@ -127,6 +130,7 @@ export default function Upload() {
       }
 
       // DB保存処理
+      console.log('[UPLOAD] Creating video record in DB...');
       const newVideo = await base44.entities.Video.create({
         ...form,
         video_url,
@@ -138,6 +142,7 @@ export default function Upload() {
         is_free: form.is_free,
         moderation_status: "pending",
       });
+      console.log('[UPLOAD] Video created successfully:', newVideo.id);
 
       setUploading(false);
       navigate("/my-channel");

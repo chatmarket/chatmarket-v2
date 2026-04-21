@@ -26,12 +26,24 @@ export const base44 = createClient({
 });
 
 // ページビュー・アプリログ送信を全て無効化
-const noop = () => Promise.resolve();
+const noop = () => {
+  console.log('[BASE44_NOOP] Analytics method called but disabled');
+  return Promise.resolve();
+};
+
 if (base44) {
-  if (typeof base44.trackPageView === 'function') base44.trackPageView = noop;
-  if (typeof base44.analytics === 'object') {
-    if (typeof base44.analytics.trackPageView === 'function') base44.analytics.trackPageView = noop;
-    if (typeof base44.analytics.logUserInApp === 'function') base44.analytics.logUserInApp = noop;
-    if (typeof base44.analytics.track === 'function') base44.analytics.track = noop;
+  if (typeof base44.trackPageView === 'function') {
+    base44.trackPageView = noop;
+  }
+  if (typeof base44.analytics === 'object' && base44.analytics) {
+    if (typeof base44.analytics.trackPageView === 'function') {
+      base44.analytics.trackPageView = noop;
+    }
+    if (typeof base44.analytics.logUserInApp === 'function') {
+      base44.analytics.logUserInApp = noop;
+    }
+    if (typeof base44.analytics.track === 'function') {
+      base44.analytics.track = noop;
+    }
   }
 }

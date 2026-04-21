@@ -8,8 +8,15 @@ import { registerServiceWorker } from './lib/pushNotifications.js'
 if (typeof window !== 'undefined') {
   const originalFetch = window.fetch;
   window.fetch = function(...args) {
-    const url = String(args[0] || '');
+    let url = String(args[0] || '');
+    
+    // Request オブジェクトにも対応
+    if (args[0] instanceof Request) {
+      url = args[0].url;
+    }
+    
     if (url.includes('/app-logs/')) {
+      console.log('[FETCH_INTERCEPT] Blocked /app-logs/ request:', url);
       return Promise.resolve(new Response('', { status: 204 }));
     }
     return originalFetch.apply(this, args);
