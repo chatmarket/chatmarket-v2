@@ -319,6 +319,14 @@ export default function ObsGuide() {
         >
           <Zap className="w-5 h-5" /> 今すぐライブ配信を開始
         </Link>
+        <a
+          href="https://amzn.to/3OCjTzA"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 underline underline-offset-2 transition-colors"
+        >
+          🎁 クレジットカードがなくてもAmazonギフトカードで購入できます
+        </a>
         <p className="text-[10px] text-muted-foreground">※商品リンクはAmazonアソシエイト（chatmarket-22）を使用しています</p>
       </div>
     </div>
