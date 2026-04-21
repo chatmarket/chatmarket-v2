@@ -49,6 +49,10 @@ export default function CallSlotManage() {
       toast.error("日付と開始時刻を入力してください");
       return;
     }
+    if (form.price < 150) {
+      toast.error("料金は150円以上で設定してください（15分毎に150円）");
+      return;
+    }
     setAdding(true);
     const startParts = form.start_time.split(":");
     const endMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]) + parseInt(form.duration_minutes);
