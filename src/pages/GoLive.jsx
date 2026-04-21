@@ -384,7 +384,7 @@ export default function GoLive() {
             const activeQuality = p >= 150 ? "FHD 1080p" : p >= 55 ? "HD 720p" : "SD 480p";
             return (
               <div className="bg-secondary/60 border border-border/50 rounded-xl p-4 space-y-3 mt-2">
-                <p className="text-xs font-black text-foreground">📊 設定価格で画質が自動決定されます</p>
+                <p className="text-xs font-black text-foreground">📊 設定価格で画質が自動決定されます（視聴者1人の場合）</p>
                 <div className="space-y-2">
                   {[
                     { quality: "SD 480p", minCoins: 15, maxCoins: 54, badge: "bg-zinc-500/20 text-zinc-300", activeBadge: "bg-zinc-500 text-white" },
