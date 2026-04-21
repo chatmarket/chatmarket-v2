@@ -5,10 +5,10 @@ import { Coins, CreditCard, Gift, ChevronDown, ChevronUp, CheckCircle2, AlertTri
 const CHARGE_PLANS = [
   { coins: 100, yen: 110, bonus: 0, popular: false },
   { coins: 500, yen: 550, bonus: 0, popular: false },
-  { coins: 1000, yen: 1100, bonus: 50, popular: true },
-  { coins: 3000, yen: 3300, bonus: 200, popular: false },
-  { coins: 5000, yen: 5500, bonus: 500, popular: false },
-  { coins: 10000, yen: 11000, bonus: 1500, popular: false },
+  { coins: 1000, yen: 1100, bonus: 0, popular: true },
+  { coins: 3000, yen: 3300, bonus: 0, popular: false },
+  { coins: 5000, yen: 5500, bonus: 0, popular: false },
+  { coins: 10000, yen: 11000, bonus: 0, popular: false },
 ];
 
 const STEPS_CREDIT = [
