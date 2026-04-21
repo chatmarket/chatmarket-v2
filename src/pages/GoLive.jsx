@@ -116,7 +116,7 @@ export default function GoLive() {
     }
 
     const isLiveNow = !form.scheduled_at;
-    await base44.entities.LiveStream.create({
+    const newStream = await base44.entities.LiveStream.create({
       title: form.title,
       description: form.description,
       channel_id: channel.id,
@@ -141,7 +141,8 @@ export default function GoLive() {
     await base44.entities.Channel.update(channel.id, { is_live: true });
 
     setCreating(false);
-    setLiveStreamId(ivsData.streamId);
+    // Base44エンティティのIDを使う（IVS ARNではない）
+    setLiveStreamId(newStream.id);
   };
 
   // 配信中画面
