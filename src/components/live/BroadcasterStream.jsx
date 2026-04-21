@@ -91,7 +91,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     setStatus("ended");
     toast.success("配信を終了しました");
     if (onEnd) onEnd();
-    else navigate(-1);
+    else navigate("/creator-dashboard");
   };
 
   const copyStreamKey = () => {

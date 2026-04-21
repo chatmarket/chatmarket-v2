@@ -159,7 +159,7 @@ export default function GoLive() {
           streamId={liveStreamId}
           ivsStreamKey={manualStreamKey || ivsStream?.streamKey}
           ivsIngestEndpoint={manualIngestEndpoint || ivsStream?.ingestEndpoint}
-          onEnd={() => navigate("/")}
+          onEnd={() => navigate("/creator-dashboard")}
         />
       </div>
     );
