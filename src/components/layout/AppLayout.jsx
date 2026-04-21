@@ -18,13 +18,13 @@ const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124a
 const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com", "unei@chatmarket.info"];
 
 const ADMIN_NAV_ITEMS = [
-  { path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },
-  { path: "/admin/dashboard?tab=recruit", icon: Zap, label: "ライバー申込一覧" },
-  { path: "/admin/analytics", icon: Globe, label: "プラットフォーム分析" },
-  { path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
-  { path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
-  { path: "/influencer-campaign", icon: Zap, label: "爆撃テンプレート" },
-  { path: "/admin/affiliate", icon: TrendingUp, label: "アフィリエイト分析" },
+  { key: "admin-dashboard", path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },
+  { key: "admin-recruit", path: "/admin/dashboard?tab=recruit", icon: Zap, label: "ライバー申込一覧" },
+  { key: "admin-analytics", path: "/admin/analytics", icon: Globe, label: "プラットフォーム分析" },
+  { key: "admin-moderation", path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
+  { key: "admin-ngword", path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
+  { key: "influencer", path: "/influencer-campaign", icon: Zap, label: "爆撃テンプレート" },
+  { key: "admin-affiliate", path: "/admin/affiliate", icon: TrendingUp, label: "アフィリエイト分析" },
 ];
 
 const NAV_ITEMS = [
@@ -140,8 +140,8 @@ export default function AppLayout() {
                 <div className="pt-3 pb-1 px-3">
                   <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ スーパー管理者</p>
                 </div>
-                {ADMIN_NAV_ITEMS.map(({ path, icon: Icon, label }) => (
-                  <Link key={path} to={path} onClick={onCloseFn}>
+                {ADMIN_NAV_ITEMS.map(({ key, path, icon: Icon, label }) => (
+                  <Link key={key} to={path} onClick={onCloseFn}>
                     <div className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                       isActive(path)
