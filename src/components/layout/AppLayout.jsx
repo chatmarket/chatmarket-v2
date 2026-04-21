@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
   { path: "/blog", icon: BookOpen, label: "運営ブログ", showNew: true },
   { path: "/recruit", icon: Zap, label: "ライバー募集" },
+  { path: "/obs-guide", icon: Radio, label: "OBS配信ガイド" },
 ];
 
 const CREATOR_ITEMS = [
