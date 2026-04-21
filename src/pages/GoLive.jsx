@@ -359,6 +359,38 @@ export default function GoLive() {
             className="bg-secondary border-0"
           />
           <p className="text-xs text-muted-foreground">0 = 無料配信</p>
+
+          {/* 画質別料金ガイド */}
+          <div className="bg-secondary/60 border border-border/50 rounded-xl p-4 space-y-3 mt-2">
+            <p className="text-xs font-black text-foreground">📊 画質別・推奨価格と配信者収益の目安</p>
+            <div className="space-y-2">
+              {[
+                { quality: "SD 480p", minCoins: 15, badge: "bg-zinc-500/20 text-zinc-300" },
+                { quality: "HD 720p", minCoins: 55, badge: "bg-blue-500/20 text-blue-300" },
+                { quality: "FHD 1080p", minCoins: 150, badge: "bg-primary/20 text-primary" },
+              ].map(({ quality, minCoins, badge }) => {
+                const price = form.price || minCoins;
+                const creatorYen = Math.floor(price * 0.85);
+                const isMin = form.price === 0 || form.price < minCoins;
+                return (
+                  <div key={quality} className="flex items-center gap-3 bg-background/40 rounded-lg px-3 py-2">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${badge}`}>{quality}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">
+                        最低 <span className="font-bold text-foreground">{minCoins}コイン</span>（¥{minCoins}）〜
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        設定価格{isMin ? minCoins : price}コイン時 → 配信者収益 <span className="text-green-400 font-bold">¥{Math.floor((isMin ? minCoins : price) * 0.85)}</span>（85%）
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              ※ 設定価格により配信画質が自動決定されます。視聴者が支払うコイン数＝円換算額です。配信者への還元は視聴者支払額の85%（BASICプラン加入者）です。
+            </p>
+          </div>
         </div>
 
         {/* 送信 */}
