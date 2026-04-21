@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Plus, Trash2, Clock, ArrowLeft } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Clock, ArrowLeft, PhoneCall, PhoneOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -72,6 +72,14 @@ export default function CallSlotManage() {
     setAdding(false);
   };
 
+  const handleToggleWaiting = async () => {
+    if (!channel) return;
+    const newState = !channel.call_enabled;
+    await base44.entities.Channel.update(channel.id, { call_enabled: newState });
+    setChannel({ ...channel, call_enabled: newState });
+    toast.success(newState ? "✅ 待機を開始しました。TOPページに表示されます。" : "待機を停止しました。");
+  };
+
   const handleDelete = async (slot) => {
     if (slot.status === "reserved") {
       toast.error("予約済みの枠は削除できません");
@@ -97,6 +105,32 @@ export default function CallSlotManage() {
           <CalendarDays className="w-5 h-5 text-primary" /> 通話予約枠管理
         </h1>
       </div>
+
+      {/* 待機中トグルボタン */}
+      {channel && (
+        <div className={`rounded-2xl p-5 mb-6 border flex items-center justify-between gap-4 ${channel.call_enabled ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
+          <div>
+            <p className="font-bold text-sm flex items-center gap-2">
+              {channel.call_enabled
+                ? <><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" /> 現在待機中（TOPページに表示されています）</>
+                : <><span className="w-2 h-2 rounded-full bg-zinc-500 inline-block" /> 現在オフライン</>
+              }
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              待機中にするとTOPページの「1対1ビデオ通話 待機中」に表示されます
+            </p>
+          </div>
+          <Button
+            onClick={handleToggleWaiting}
+            className={`shrink-0 gap-2 ${channel.call_enabled ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+          >
+            {channel.call_enabled
+              ? <><PhoneOff className="w-4 h-4" /> 待機停止</>
+              : <><PhoneCall className="w-4 h-4" /> 今すぐ待機開始</>
+            }
+          </Button>
+        </div>
+      )}
 
       {!channel && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-sm text-yellow-400">

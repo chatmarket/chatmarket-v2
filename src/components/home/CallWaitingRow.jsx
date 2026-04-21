@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PhoneCall, MessageCircle, Phone, Radio } from "lucide-react";
+import { PhoneCall, MessageCircle, Radio } from "lucide-react";
 import ScrollRow from "./ScrollRow";
 import MessageModal from "../chat/MessageModal";
 
@@ -17,10 +17,10 @@ export default function CallWaitingRow({ user }) {
   // call_enabled=true のチャンネル一覧取得
   const { data: callChannels = [] } = useQuery({
     queryKey: ["call-waiting-channels"],
-    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 12),
-    enabled: false,
-    staleTime: 300000,
-    gcTime: 600000,
+    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 20),
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchInterval: 30000,
   });
 
   // フリートライアルメールのチャンネル取得
@@ -34,19 +34,17 @@ export default function CallWaitingRow({ user }) {
       );
       return channels.filter(Boolean);
     },
-    enabled: false,
     staleTime: 300000,
     gcTime: 600000,
   });
 
-  // 待機中のVideoCall取得（ポーリング少なめ）
+  // 待機中のVideoCall取得
   const { data: waitingCalls = [] } = useQuery({
     queryKey: ["waiting-video-calls"],
     queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 20),
-    enabled: false,
     staleTime: 30000,
     gcTime: 60000,
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   // 待機中のチャンネルを取得（VideoCallのcallee_emailから）
@@ -62,7 +60,6 @@ export default function CallWaitingRow({ user }) {
       );
       return channels.filter(Boolean);
     },
-    enabled: false,
     staleTime: 30000,
     gcTime: 60000,
   });
@@ -73,7 +70,24 @@ export default function CallWaitingRow({ user }) {
     new Map(allChannels.map((c) => [c.id, c])).values()
   );
 
-  if (uniqueChannels.length === 0) return null;
+  if (uniqueChannels.length === 0) return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="w-2.5 h-2.5 rounded-full bg-green-400/40 shrink-0" />
+        <h2 className="text-xl font-bold">1対1ビデオ通話　待機中</h2>
+      </div>
+      <div className="bg-card border border-border/50 rounded-xl p-5 text-center space-y-3">
+        <p className="text-sm text-muted-foreground">現在待機中のライバーはいません</p>
+        {user && (
+          <Link to="/call-slots">
+            <Button size="sm" className="bg-primary hover:bg-primary/90 gap-2">
+              <PhoneCall className="w-4 h-4" /> 待機を開始する
+            </Button>
+          </Link>
+        )}
+      </div>
+    </section>
+  );
 
   const handleMessage = (channel) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
