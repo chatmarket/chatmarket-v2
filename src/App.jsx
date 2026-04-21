@@ -73,6 +73,7 @@ import VideoEngineComparison from '@/pages/VideoEngineComparison';
 import LandingPage from '@/pages/LandingPage';
 import VodAnalytics from '@/pages/VodAnalytics';
 import ObsGuide from '@/pages/ObsGuide';
+import CoinCharge from '@/pages/CoinCharge';
 
 export default function App() {
   return (
@@ -146,6 +147,7 @@ export default function App() {
             <Route path="/video-engine" element={<VideoEngineComparison />} />
             <Route path="/landing" element={<LandingPage />} />
             <Route path="/obs-guide" element={<ObsGuide />} />
+            <Route path="/coin-charge" element={<CoinCharge />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
