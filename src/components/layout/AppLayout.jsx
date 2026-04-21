@@ -24,6 +24,7 @@ const ADMIN_NAV_ITEMS = [
   { path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
   { path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
   { path: "/influencer-campaign", icon: Zap, label: "爆撃テンプレート" },
+  { path: "/admin/affiliate", icon: TrendingUp, label: "アフィリエイト分析" },
 ];
 
 const NAV_ITEMS = [
