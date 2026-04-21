@@ -20,6 +20,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [viewerCount, setViewerCount] = useState(0);
   const [liveStartedAt, setLiveStartedAt] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [streamQuality, setStreamQuality] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoContainerRef = useRef(null);
 
@@ -64,11 +65,15 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   // 視聴者数ポーリング（配信中のみ）
   useEffect(() => {
     if (!isLive) return;
+    // 初回即座に画質も取得
+    base44.entities.LiveStream.filter({ id: streamId }).then((streams) => {
+      if (streams[0]?.viewer_count !== undefined) setViewerCount(streams[0].viewer_count);
+      if (streams[0]?.max_bitrate_restriction) setStreamQuality(streams[0].max_bitrate_restriction);
+    });
     const interval = setInterval(async () => {
       const streams = await base44.entities.LiveStream.filter({ id: streamId });
-      if (streams[0]?.viewer_count !== undefined) {
-        setViewerCount(streams[0].viewer_count);
-      }
+      if (streams[0]?.viewer_count !== undefined) setViewerCount(streams[0].viewer_count);
+      if (streams[0]?.max_bitrate_restriction) setStreamQuality(streams[0].max_bitrate_restriction);
     }, 10000);
     return () => clearInterval(interval);
   }, [streamId, isLive]);
@@ -177,6 +182,21 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
                 <Eye className="w-4 h-4" />{viewerCount}
               </span>
               <LiveTimer startedAt={liveStartedAt} />
+              {/* 画質バッジ */}
+              {streamQuality && (() => {
+                const qualityMap = {
+                  "480p":  { label: "SD 配信中", cls: "bg-zinc-600/90 text-zinc-100" },
+                  "720p":  { label: "HD 配信中", cls: "bg-blue-600/90 text-white" },
+                  "1080p": { label: "FHD 配信中", cls: "bg-primary/90 text-primary-foreground" },
+                  "1080p+":{ label: "FHD+ 配信中", cls: "bg-primary/90 text-primary-foreground" },
+                };
+                const q = qualityMap[streamQuality] || { label: streamQuality + " 配信中", cls: "bg-zinc-600/90 text-zinc-100" };
+                return (
+                  <span className={`text-xs font-black px-2.5 py-1 rounded-full ${q.cls}`}>
+                    📡 {q.label}
+                  </span>
+                );
+              })()}
             </div>
           )}
 

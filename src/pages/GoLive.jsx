@@ -126,6 +126,15 @@ export default function GoLive() {
       setThumbnailUrl(thumbnail_url);
     }
 
+    // 価格から画質を自動決定
+    const getQualityFromPrice = (price) => {
+      if (price === 0) return "1080p"; // 無料は最高画質
+      if (price >= 150) return "1080p"; // FHD
+      if (price >= 55) return "720p";   // HD
+      return "480p";                    // SD
+    };
+    const autoQuality = getQualityFromPrice(form.price);
+
     const isLiveNow = !form.scheduled_at;
     const newStream = await base44.entities.LiveStream.create({
       title: form.title,
@@ -141,7 +150,7 @@ export default function GoLive() {
       viewer_count: 0,
       stream_type: "webrtc",
       ivs_playback_url: ivsData.playbackUrl || "",
-      max_bitrate_restriction: "1080p",
+      max_bitrate_restriction: autoQuality,
       live_started_at: isLiveNow ? new Date().toISOString() : null,
       cost_input_yen: 0,
       cost_output_yen: 0,
@@ -367,36 +376,39 @@ export default function GoLive() {
           <p className="text-xs text-muted-foreground">0 = 無料配信</p>
 
           {/* 画質別料金ガイド */}
-          <div className="bg-secondary/60 border border-border/50 rounded-xl p-4 space-y-3 mt-2">
-            <p className="text-xs font-black text-foreground">📊 画質別・推奨価格と配信者収益の目安</p>
-            <div className="space-y-2">
-              {[
-                { quality: "SD 480p", minCoins: 15, badge: "bg-zinc-500/20 text-zinc-300" },
-                { quality: "HD 720p", minCoins: 55, badge: "bg-blue-500/20 text-blue-300" },
-                { quality: "FHD 1080p", minCoins: 150, badge: "bg-primary/20 text-primary" },
-              ].map(({ quality, minCoins, badge }) => {
-                const price = form.price || minCoins;
-                const creatorYen = Math.floor(price * 0.85);
-                const isMin = form.price === 0 || form.price < minCoins;
-                return (
-                  <div key={quality} className="flex items-center gap-3 bg-background/40 rounded-lg px-3 py-2">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${badge}`}>{quality}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">
-                        最低 <span className="font-bold text-foreground">{minCoins}コイン</span>（¥{minCoins}）〜
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        設定価格{isMin ? minCoins : price}コイン時 → 配信者収益 <span className="text-green-400 font-bold">¥{Math.floor((isMin ? minCoins : price) * 0.85)}</span>（85%）
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              ※ 設定価格により配信画質が自動決定されます。視聴者が支払うコイン数＝円換算額です。配信者への還元は視聴者支払額の85%（BASICプラン加入者）です。
-            </p>
-          </div>
+          {(() => {
+            const p = form.price;
+            const activeQuality = p >= 150 ? "FHD 1080p" : p >= 55 ? "HD 720p" : "SD 480p";
+            return (
+              <div className="bg-secondary/60 border border-border/50 rounded-xl p-4 space-y-3 mt-2">
+                <p className="text-xs font-black text-foreground">📊 設定価格で画質が自動決定されます</p>
+                <div className="space-y-2">
+                  {[
+                    { quality: "SD 480p", minCoins: 15, maxCoins: 54, badge: "bg-zinc-500/20 text-zinc-300", activeBadge: "bg-zinc-500 text-white" },
+                    { quality: "HD 720p", minCoins: 55, maxCoins: 149, badge: "bg-blue-500/20 text-blue-300", activeBadge: "bg-blue-500 text-white" },
+                    { quality: "FHD 1080p", minCoins: 150, maxCoins: null, badge: "bg-primary/20 text-primary", activeBadge: "bg-primary text-primary-foreground" },
+                  ].map(({ quality, minCoins, maxCoins, badge, activeBadge }) => {
+                    const isActive = quality === activeQuality;
+                    return (
+                      <div key={quality} className={`flex items-center gap-3 rounded-lg px-3 py-2 border transition-all ${isActive ? "bg-background border-primary/50 ring-1 ring-primary/30" : "bg-background/40 border-transparent"}`}>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${isActive ? activeBadge : badge}`}>{quality}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            {maxCoins ? `${minCoins}〜${maxCoins}コイン` : `${minCoins}コイン以上`}
+                            {" → "}配信者収益 <span className="text-green-400 font-bold">¥{Math.floor((isActive ? (p || minCoins) : minCoins) * 0.85)}</span>（85%）
+                          </p>
+                        </div>
+                        {isActive && <span className="text-[10px] font-black text-primary shrink-0">← 現在</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  ※ 無料配信（0コイン）はFHD 1080pで配信されます。配信者への還元は視聴者支払額の85%（BASICプラン加入者）です。
+                </p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* 送信 */}
