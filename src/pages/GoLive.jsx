@@ -25,6 +25,7 @@ export default function GoLive() {
   const [liveStreamId, setLiveStreamId] = useState(null);
   const [ivsStream, setIvsStream] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [manualStreamKey, setManualStreamKey] = useState("");
   const [manualIngestEndpoint, setManualIngestEndpoint] = useState("");
 
@@ -122,6 +123,7 @@ export default function GoLive() {
     if (thumbnailFile) {
       const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
       thumbnail_url = res.file_url;
+      setThumbnailUrl(thumbnail_url);
     }
 
     const isLiveNow = !form.scheduled_at;
@@ -216,6 +218,7 @@ export default function GoLive() {
           ivsStreamKey={manualStreamKey || ivsStream?.streamKey}
           ivsIngestEndpoint={manualIngestEndpoint || ivsStream?.ingestEndpoint}
           onEnd={() => navigate("/creator-dashboard")}
+          thumbnailUrl={thumbnailUrl}
         />
       </div>
     );

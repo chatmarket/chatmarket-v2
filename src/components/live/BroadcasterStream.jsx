@@ -8,7 +8,7 @@ import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
 import MicLevelMeter from "./MicLevelMeter";
 
-export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd }) {
+export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
   const previewVideoRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -25,8 +25,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
   const isLive = status === "live";
 
-  // カメラ・マイク取得
+  // カメラ・マイクは配信開始後のみ起動
   useEffect(() => {
+    if (!isLive) return;
+
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -35,7 +37,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           previewVideoRef.current.srcObject = stream;
         }
       } catch (err) {
-        // カメラなしでもマイクだけ試みる
         try {
           const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true });
           localStreamRef.current = audioOnly;
@@ -49,7 +50,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return () => {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, [isLive]);
 
   // 視聴者数ポーリング（配信中のみ）
   useEffect(() => {
@@ -110,15 +111,36 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
       >
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
+          {/* 配信開始前: サムネイル or 待機画面 */}
+          {!isLive && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950">
+              {thumbnailUrl ? (
+                <img src={thumbnailUrl} alt="thumbnail" className="w-full h-full object-cover opacity-50" />
+              ) : (
+                <div className="flex flex-col items-center gap-3 text-zinc-600">
+                  <Camera className="w-16 h-16" />
+                  <p className="text-sm font-semibold">配信開始ボタンを押すとカメラが起動します</p>
+                </div>
+              )}
+              {thumbnailUrl && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                  <Camera className="w-10 h-10 text-zinc-400" />
+                  <p className="text-sm font-semibold text-zinc-300">配信開始ボタンを押すとカメラが起動します</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 配信中: カメラ映像 */}
           <video
             ref={previewVideoRef}
             autoPlay
             muted
             playsInline
             className="w-full h-full object-contain bg-black"
-            style={{ display: camOn ? "block" : "none" }}
+            style={{ display: isLive && camOn ? "block" : "none" }}
           />
-          {!camOn && (
+          {isLive && !camOn && (
             <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
               <CameraOff className="w-14 h-14 text-zinc-600" />
             </div>
