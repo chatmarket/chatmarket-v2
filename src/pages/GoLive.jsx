@@ -397,7 +397,9 @@ export default function GoLive() {
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${isActive ? activeBadge : badge}`}>{quality}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            {maxCoins ? `${minCoins}〜${maxCoins}コイン` : `${minCoins}コイン以上`}
+                            {maxCoins ? `${minCoins}〜${maxCoins}コイン` : `${minCoins}コイン以上`}（視聴者価格15分毎）
+                          </p>
+                          <p className="text-xs text-muted-foreground">
                             {" → "}配信者収益 <span className="text-green-400 font-bold">¥{Math.floor((isActive ? (p || minCoins) : minCoins) * 0.85)}</span>（85%）
                           </p>
                         </div>
