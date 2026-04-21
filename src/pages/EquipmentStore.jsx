@@ -32,24 +32,28 @@ const TIERS = [
         name: "Audio-Technica AT2020USB+",
         reason: "USBで繋ぐだけ。ドライバ不要で即使えるコンデンサーマイク。とりあえずこれを買えば間違いなし！",
         url: "https://www.amazon.co.jp/s?k=AT2020USB",
+        image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80",
       },
       {
         category: "カメラ",
         name: "Logicool C920n HDウェブカメラ",
         reason: "1080p対応で価格帯最強。ほとんどのPCでプラグ＆プレイ。初配信にピッタリ。",
         url: "https://www.amazon.co.jp/s?k=C920n",
+        image: "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=400&q=80",
       },
       {
         category: "照明",
         name: "Elgato Key Light Mini",
         reason: "顔に均一な光を当てるリングライト。暗い部屋でも一気にプロっぽく見える。",
         url: "https://www.amazon.co.jp/s?k=Elgato+Key+Light+Mini",
+        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
       },
       {
         category: "その他",
         name: "マイクアーム（汎用）",
         reason: "デスクに固定してマイクを口元に近づける。音質が劇的に改善するコスパ最強アクセサリ。",
         url: "https://www.amazon.co.jp/s?k=%E3%83%9E%E3%82%A4%E3%82%AF%E3%82%A2%E3%83%BC%E3%83%A0",
+        image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400&q=80",
       },
     ],
   },
@@ -66,24 +70,28 @@ const TIERS = [
         name: "Shure SM7dB",
         reason: "YouTuberやポッドキャスターが愛用するダイナミックマイク。声の質感が圧倒的に変わる。",
         url: "https://www.amazon.co.jp/s?k=Shure+SM7dB",
+        image: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&q=80",
       },
       {
         category: "カメラ",
         name: "Sony ZV-E10 ミラーレス",
         reason: "ボケ感と画質でウェブカメラを圧倒。外部マイク端子つきで音声も安心。",
         url: "https://www.amazon.co.jp/s?k=Sony+ZV-E10",
+        image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400&q=80",
       },
       {
         category: "ミキサー",
         name: "Focusrite Scarlett Solo",
         reason: "コンデンサーマイクをPCに繋ぐための定番オーディオインターフェース。音の入口を本格化。",
         url: "https://www.amazon.co.jp/s?k=Focusrite+Scarlett+Solo",
+        image: "https://images.unsplash.com/photo-1493676304819-0d7a77d2de12?w=400&q=80",
       },
       {
         category: "照明",
         name: "Elgato Key Light（デスク用）",
         reason: "スマホアプリで色温度・輝度を調整できるプロ向けパネルライト。顔の映り方が段違い。",
         url: "https://www.amazon.co.jp/s?k=Elgato+Key+Light",
+        image: "https://images.unsplash.com/photo-1518756131217-31eb79b20e8f?w=400&q=80",
       },
     ],
   },
@@ -100,24 +108,28 @@ const TIERS = [
         name: "Yamaha AG06MK2",
         reason: "ギターや楽器を繋げる6chミキサー。音楽ライブ・弾き語り配信の定番中の定番。",
         url: "https://www.amazon.co.jp/s?k=Yamaha+AG06MK2",
+        image: "https://images.unsplash.com/photo-1598653222000-6b7b7a552625?w=400&q=80",
       },
       {
         category: "カメラ",
         name: "Blackmagic Pocket Cinema Camera",
         reason: "シネマルックで最高峰の映像美を配信。OBSとの連携も完璧なプロ機材。",
         url: "https://www.amazon.co.jp/s?k=Blackmagic+Pocket+Cinema",
+        image: "https://images.unsplash.com/photo-1551817958-d9d86fb29431?w=400&q=80",
       },
       {
         category: "その他",
         name: "Elgato Stream Deck MK.2",
         reason: "ワンボタンでシーン切り替え・音量調整・配信開始。操作性が別次元になる必須ツール。",
         url: "https://www.amazon.co.jp/s?k=Elgato+Stream+Deck",
+        image: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&q=80",
       },
       {
         category: "マイク",
         name: "Shure BETA 87A",
         reason: "音楽ライブ向けのスーパーカーディオイド。ステージでも圧倒的な存在感を放つ。",
         url: "https://www.amazon.co.jp/s?k=Shure+BETA+87A",
+        image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400&q=80",
       },
     ],
   },
@@ -129,9 +141,13 @@ function ProductCard({ product }) {
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-zinc-600 transition-all group flex flex-col">
-      {/* Image placeholder */}
+      {/* Product image */}
       <div className="aspect-square bg-zinc-800 flex items-center justify-center relative overflow-hidden">
-        <CatIcon className="w-14 h-14 text-zinc-600 group-hover:text-zinc-500 transition-colors" />
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : (
+          <CatIcon className="w-14 h-14 text-zinc-600 group-hover:text-zinc-500 transition-colors" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-700/0 to-zinc-900/40" />
       </div>
 
