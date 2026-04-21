@@ -25,6 +25,29 @@ export const base44 = createClient({
   appBaseUrl
 });
 
+// SDK 初期化直後に logUserInApp が呼び出されるのを防ぐため、
+// 内部メソッドを全て無効化
+if (base44 && typeof base44 === 'object') {
+  // すべての内部メソッドをスキャンして /app-logs/ に関連するものを無効化
+  for (const key in base44) {
+    try {
+      if (typeof base44[key] === 'function') {
+        const original = base44[key];
+        base44[key] = function(...args) {
+          const argStr = JSON.stringify(args).toLowerCase();
+          if (argStr.includes('app-logs') || argStr.includes('log')) {
+            console.log(`[SDK_OVERRIDE] Method ${key} blocked`);
+            return Promise.resolve();
+          }
+          return original.apply(this, args);
+        };
+      }
+    } catch (e) {
+      // silent
+    }
+  }
+}
+
 // ページビュー・アプリログ送信を全て無効化
 const noop = () => {
   console.log('[BASE44_NOOP] Analytics method called but disabled');

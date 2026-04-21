@@ -4,22 +4,45 @@ import App from './App.jsx'
 import './index.css'
 import { registerServiceWorker } from './lib/pushNotifications.js'
 
-// グローバルレベルで /app-logs/ へのフェッチリクエストを遮断（SDKのログ機能を無効化）
+// グローバルレベルで /app-logs/ へのリクエストを遮断（fetch と axios 両方）
 if (typeof window !== 'undefined') {
+  // === fetch インターセプション ===
   const originalFetch = window.fetch;
   window.fetch = function(...args) {
     let url = String(args[0] || '');
-    
-    // Request オブジェクトにも対応
     if (args[0] instanceof Request) {
       url = args[0].url;
     }
     
     if (url.includes('/app-logs/')) {
-      console.log('[FETCH_INTERCEPT] Blocked /app-logs/ request:', url);
+      console.log('[FETCH_INTERCEPT] Blocked /app-logs/ request');
       return Promise.resolve(new Response('', { status: 204 }));
     }
     return originalFetch.apply(this, args);
+  };
+
+  // === axios インターセプション（SDK が axios を使う場合）===
+  // window.axios が存在する場合の対応
+  if (window.axios) {
+    window.axios.interceptors.request.use((config) => {
+      if (config.url && config.url.includes('/app-logs/')) {
+        console.log('[AXIOS_INTERCEPT] Blocked /app-logs/ request');
+        return Promise.reject(new Error('Blocked'));
+      }
+      return config;
+    }, (error) => Promise.reject(error));
+  }
+
+  // SDK のいかなるリクエストメソッドも /app-logs/ をターゲットにさせない
+  const blockAppLogs = (originalMethod) => {
+    return function(...args) {
+      const [url] = args;
+      if (typeof url === 'string' && url.includes('/app-logs/')) {
+        console.log('[METHOD_OVERRIDE] Blocked /app-logs/ via method override');
+        return Promise.resolve({ status: 204 });
+      }
+      return originalMethod.apply(this, args);
+    };
   };
 }
 
