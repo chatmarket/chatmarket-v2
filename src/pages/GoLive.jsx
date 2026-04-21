@@ -339,13 +339,19 @@ export default function GoLive() {
 
         {/* 対応可能時間 */}
         <div className="space-y-2">
-          <Label>対応可能時間</Label>
-          <Input
+          <Label>配信予定時間</Label>
+          <select
             value={form.availableTime}
             onChange={(e) => setForm({ ...form, availableTime: e.target.value })}
-            placeholder="例: 14:00〜18:00"
-            className="bg-secondary border-0"
-          />
+            className="w-full h-9 rounded-md bg-secondary border-0 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">選択してください</option>
+            <option value="30分">30分</option>
+            <option value="1時間">1時間</option>
+            <option value="1時間30分">1時間30分</option>
+            <option value="2時間">2時間（最大）</option>
+          </select>
+          <p className="text-xs text-muted-foreground">最大2時間まで設定できます</p>
         </div>
 
         {/* 価格 */}
