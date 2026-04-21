@@ -34,7 +34,7 @@ export default function GoLive() {
     description: "",
     scheduled_at: "",
     availableTime: "",
-    price: 150,
+    price: "",
   });
 
   useEffect(() => {
