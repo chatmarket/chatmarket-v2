@@ -5,17 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Radio, Loader2, Image, PhoneCall, CheckCircle2, Users, Clock } from "lucide-react";
+import { Radio, Loader2, Image, PhoneCall, CheckCircle2, Users, Clock, Video } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 
+const MODE_SELECT = "select";
 const MODE_LIVE = "live";
+const MODE_CALL = "call";
 
 export default function GoLive() {
   const navigate = useNavigate();
   const prevCallCountRef = useRef(null);
   const [user, setUser] = useState(null);
+  const [mode, setMode] = useState(MODE_SELECT);
   const [creating, setCreating] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const queryClient = useQueryClient();
@@ -145,6 +148,53 @@ export default function GoLive() {
     setLiveStreamId(newStream.id);
   };
 
+  // モード選択画面
+  if (mode === MODE_SELECT) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center gap-6">
+        <div className="text-center mb-2">
+          <h1 className="text-2xl font-black text-white mb-1">配信・通話モードを選択</h1>
+          <p className="text-muted-foreground text-sm">用途に合わせて選んでください</p>
+        </div>
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 1対多ライブ配信 */}
+          <button
+            onClick={() => setMode(MODE_LIVE)}
+            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
+              <Radio className="w-8 h-8 text-red-400" />
+            </div>
+            <div>
+              <p className="font-black text-white text-lg mb-1">1対多 ライブ配信</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">複数の視聴者に向けてリアルタイムで配信。スーパーチャットやギフトを受け取れます。</p>
+            </div>
+            <span className="mt-auto w-full py-2.5 rounded-xl bg-red-500 text-white text-sm font-black text-center group-hover:bg-red-600 transition-colors">
+              ライブ配信を開始
+            </span>
+          </button>
+
+          {/* 1対1ビデオ通話 */}
+          <button
+            onClick={() => navigate("/call-slots")}
+            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group text-left"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
+              <Video className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <p className="font-black text-white text-lg mb-1">1対1 ビデオ通話</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">ファンと1対1でプライベートな通話。通話スロットの管理や着信待機ができます。</p>
+            </div>
+            <span className="mt-auto w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black text-center group-hover:bg-primary/90 transition-colors">
+              通話管理ページへ
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // 配信中画面
   if (liveStreamId) {
     return (
@@ -168,6 +218,7 @@ export default function GoLive() {
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12 h-screen overflow-y-auto">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
+        <button onClick={() => setMode(MODE_SELECT)} className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-2 mr-1">← 戻る</button>
         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
           <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
         </div>
