@@ -72,6 +72,7 @@ import TestPayment from '@/pages/TestPayment';
 import VideoEngineComparison from '@/pages/VideoEngineComparison';
 import LandingPage from '@/pages/LandingPage';
 import VodAnalytics from '@/pages/VodAnalytics';
+import ObsGuide from '@/pages/ObsGuide';
 
 export default function App() {
   return (
@@ -144,6 +145,7 @@ export default function App() {
             <Route path="/test-payment" element={<TestPayment />} />
             <Route path="/video-engine" element={<VideoEngineComparison />} />
             <Route path="/landing" element={<LandingPage />} />
+            <Route path="/obs-guide" element={<ObsGuide />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
