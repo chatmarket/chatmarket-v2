@@ -4,6 +4,18 @@ import App from './App.jsx'
 import './index.css'
 import { registerServiceWorker } from './lib/pushNotifications.js'
 
+// グローバルレベルで /app-logs/ へのフェッチリクエストを遮断（SDKのログ機能を無効化）
+if (typeof window !== 'undefined') {
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    const url = String(args[0] || '');
+    if (url.includes('/app-logs/')) {
+      return Promise.resolve(new Response('', { status: 204 }));
+    }
+    return originalFetch.apply(this, args);
+  };
+}
+
 // Service Worker登録（PWAプッシュ通知用）
 registerServiceWorker();
 
