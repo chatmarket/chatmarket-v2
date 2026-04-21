@@ -66,7 +66,6 @@ import InfluencerCampaign from '@/pages/InfluencerCampaign';
 import NgWordAnalytics from '@/pages/NgWordAnalytics';
 import EnterpriseDashboard from '@/pages/EnterpriseDashboard';
 import MuxVideoPage from '@/pages/MuxVideoPage';
-import ObsGuide from '@/pages/ObsGuide';
 import InfraSlide from '@/pages/InfraSlide';
 import PlanDetail from '@/pages/PlanDetail';
 import TestPayment from '@/pages/TestPayment';
@@ -141,7 +140,6 @@ export default function App() {
             <Route path="/influencer-campaign" element={<InfluencerCampaign />} />
             <Route path="/enterprise" element={<EnterpriseDashboard />} />
             <Route path="/mux-video/:videoId" element={<MuxVideoPage />} />
-            <Route path="/obs-guide" element={<ObsGuide />} />
             <Route path="/infra" element={<InfraSlide />} />
             <Route path="/test-payment" element={<TestPayment />} />
             <Route path="/video-engine" element={<VideoEngineComparison />} />
