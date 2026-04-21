@@ -89,7 +89,7 @@ export default function CoinCharge() {
               {plan.bonus > 0 && (
                 <p className="text-xs text-green-400 font-bold">+{plan.bonus}コイン ボーナス</p>
               )}
-              <p className="text-[10px] text-muted-foreground">1コイン = 約1.1円</p>
+              <p className="text-[10px] text-muted-foreground">コイン購入金額 + 3.6% プラットフォーム手数料</p>
             </div>
           ))}
         </div>
