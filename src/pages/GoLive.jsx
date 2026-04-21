@@ -302,12 +302,12 @@ export default function GoLive() {
 
         {/* タイトル */}
         <div className="space-y-2">
-          <Label>配信タイトル *</Label>
+          <Label className="text-red-400 font-bold">配信タイトル *</Label>
           <Input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="配信タイトルを入力"
-            className="bg-secondary border-0"
+            className="bg-secondary border-2 border-red-500/50 focus:border-red-500"
             required
           />
         </div>
@@ -367,13 +367,14 @@ export default function GoLive() {
 
         {/* 価格 */}
         <div className="space-y-2">
-          <Label>視聴価格（コイン）</Label>
+          <Label className="text-red-400 font-bold">視聴価格（コイン）*</Label>
           <Input
             type="number"
             min={0}
             value={form.price}
             onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-            className="bg-secondary border-0"
+            className="bg-secondary border-2 border-red-500/50 focus:border-red-500"
+            required
           />
           <p className="text-xs text-muted-foreground">0 = 無料配信</p>
 
