@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Radio, Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
-import RadioModeBanner from "./RadioModeBanner";
+import { Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
+
 
 // 価格帯 → 画質定義
 const QUALITY_OPTIONS = [
@@ -105,31 +104,6 @@ export default function ViewerStream({ streamId, stream }) {
 
   return (
     <div className="relative w-full h-full bg-black">
-      {/* ラジオモードバナー */}
-      <AnimatePresence>
-        <RadioModeBanner isRadioMode={stream?.is_radio_mode} />
-      </AnimatePresence>
-
-      {/* ラジオモード背景画像 or デフォルト */}
-      {stream?.is_radio_mode && (
-        <>
-          {stream?.radio_background_url ? (
-            <img
-              src={stream.radio_background_url}
-              alt="ラジオモード背景"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-              <div className="text-center space-y-3">
-                <Radio className="w-20 h-20 text-zinc-700 mx-auto" />
-                <p className="text-sm text-zinc-500 font-semibold">ラジオモード配信中</p>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
       <video
         ref={videoRef}
         autoPlay
@@ -141,13 +115,13 @@ export default function ViewerStream({ streamId, stream }) {
 
       {!ready && !error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-          <Radio className="w-16 h-16 text-red-400 animate-pulse" />
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+            <span className="w-4 h-4 rounded-full bg-red-400 animate-pulse" />
+          </div>
           <p className="text-lg font-semibold text-white">
             {stream?.status === "live" ? "接続中..." : "配信者の接続を待っています..."}
           </p>
-          <p className="text-sm text-white/50">
-            {isWebRTC ? "Amazon IVS WebRTC ストリーミング" : "Amazon IVS 超低遅延ストリーミング"}
-          </p>
+          <p className="text-sm text-white/50">Amazon IVS 超低遅延ストリーミング</p>
         </div>
       )}
 
