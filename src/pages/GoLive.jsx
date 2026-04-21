@@ -163,6 +163,7 @@ export default function GoLive() {
 
     setCreating(false);
     // Base44エンティティのIDを使う（IVS ARNではない）
+    console.log(`[GoLive] Created stream with quality: ${autoQuality}`);
     setLiveStreamId(newStream.id);
   };
 
