@@ -13,7 +13,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const previewVideoRef = useRef(null);
   const localStreamRef = useRef(null);
 
-  const [status, setStatus] = useState("preview");
+  const [status, setStatus] = useState("preview"); // "preview" | "checking" | "live"
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
@@ -24,33 +24,42 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const videoContainerRef = useRef(null);
 
   const isLive = status === "live";
+  const isChecking = status === "checking"; // カメラプレビュー中
 
-  // カメラ・マイクは配信開始後のみ起動
-  useEffect(() => {
-    if (!isLive) return;
-
-    (async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        localStreamRef.current = stream;
-        if (previewVideoRef.current) {
-          previewVideoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        try {
-          const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true });
-          localStreamRef.current = audioOnly;
-          setCamOn(false);
-        } catch (audioErr) {
-          toast.error("マイク・カメラにアクセスできません: " + audioErr.message);
-        }
+  // カメラ・マイク起動（プレビュー確認時 or 配信開始時）
+  const startCamera = async () => {
+    if (localStreamRef.current) return; // 既に起動済み
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStreamRef.current = stream;
+      if (previewVideoRef.current) {
+        previewVideoRef.current.srcObject = stream;
       }
-    })();
+    } catch (err) {
+      try {
+        const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStreamRef.current = audioOnly;
+        setCamOn(false);
+      } catch (audioErr) {
+        toast.error("マイク・カメラにアクセスできません: " + audioErr.message);
+      }
+    }
+  };
 
+  // カメラプレビュー確認モードに入る
+  const handleStartChecking = async () => {
+    setStatus("checking");
+    await startCamera();
+    if (previewVideoRef.current && localStreamRef.current) {
+      previewVideoRef.current.srcObject = localStreamRef.current;
+    }
+  };
+
+  useEffect(() => {
     return () => {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [isLive]);
+  }, []);
 
   // 視聴者数ポーリング（配信中のみ）
   useEffect(() => {
@@ -64,8 +73,12 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return () => clearInterval(interval);
   }, [streamId, isLive]);
 
-  // 配信開始（OBSで配信する前提 — ステータスのみ更新）
+  // 配信開始（カメラが既に起動済みならそのまま使う）
   const handleGoLive = async () => {
+    await startCamera(); // 未起動なら起動、起動済みならno-op
+    if (previewVideoRef.current && localStreamRef.current) {
+      previewVideoRef.current.srcObject = localStreamRef.current;
+    }
     const now = new Date().toISOString();
     await base44.entities.LiveStream.update(streamId, {
       status: "live",
@@ -111,59 +124,61 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
       >
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
-          {/* 配信開始前: サムネイル or 待機画面 */}
-          {!isLive && (
+          {/* ── 配信前・サムネイル待機画面 ── */}
+          {status === "preview" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950">
-              {thumbnailUrl ? (
-                <img src={thumbnailUrl} alt="thumbnail" className="w-full h-full object-cover opacity-50" />
-              ) : (
-                <div className="flex flex-col items-center gap-3 text-zinc-600">
-                  <Camera className="w-16 h-16" />
-                  <p className="text-sm font-semibold">配信開始ボタンを押すとカメラが起動します</p>
-                </div>
-              )}
               {thumbnailUrl && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <Camera className="w-10 h-10 text-zinc-400" />
-                  <p className="text-sm font-semibold text-zinc-300">配信開始ボタンを押すとカメラが起動します</p>
-                </div>
+                <img src={thumbnailUrl} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-40" />
               )}
+              <div className="relative z-10 flex flex-col items-center gap-4 text-center px-6">
+                <Camera className="w-12 h-12 text-zinc-400" />
+                <p className="text-sm font-semibold text-zinc-300">カメラはまだ起動していません</p>
+                <button
+                  onClick={handleStartChecking}
+                  className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
+                >
+                  <Camera className="w-4 h-4" />
+                  カメラ・マイクを確認する（自分だけ見える）
+                </button>
+              </div>
             </div>
           )}
 
-          {/* 配信中: カメラ映像 */}
+          {/* ── プレビュー確認中バナー ── */}
+          {isChecking && (
+            <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-zinc-900/90 border border-yellow-500/50 text-yellow-400 text-xs font-bold px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+              プレビュー確認中（あなただけに表示）
+            </div>
+          )}
+
+          {/* ── カメラ映像（確認中 or 配信中） ── */}
           <video
             ref={previewVideoRef}
             autoPlay
             muted
             playsInline
             className="w-full h-full object-contain bg-black"
-            style={{ display: isLive && camOn ? "block" : "none" }}
+            style={{ display: (isChecking || isLive) && camOn ? "block" : "none" }}
           />
-          {isLive && !camOn && (
+          {(isChecking || isLive) && !camOn && (
             <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
               <CameraOff className="w-14 h-14 text-zinc-600" />
             </div>
           )}
 
-          {/* ステータスバッジ */}
-          <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap">
-            {isLive ? (
-              <>
-                <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
-                </span>
-                <span className="flex items-center gap-1.5 bg-black/70 text-white font-black px-3 py-1 rounded-full text-sm">
-                  <Eye className="w-4 h-4" />{viewerCount}
-                </span>
-                <LiveTimer startedAt={liveStartedAt} />
-              </>
-            ) : (
-              <span className="flex items-center gap-1.5 bg-zinc-700/80 text-zinc-300 text-xs font-bold px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" /> PREVIEW
+          {/* ステータスバッジ（配信中のみ表示） */}
+          {isLive && (
+            <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap z-10">
+              <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
               </span>
-            )}
-          </div>
+              <span className="flex items-center gap-1.5 bg-black/70 text-white font-black px-3 py-1 rounded-full text-sm">
+                <Eye className="w-4 h-4" />{viewerCount}
+              </span>
+              <LiveTimer startedAt={liveStartedAt} />
+            </div>
+          )}
 
           {isLive && (
             <div className="absolute top-3 right-3">
@@ -171,7 +186,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </div>
           )}
 
-          {/* GoLive ボタン */}
+          {/* GoLive ボタン（配信前 & 確認中に表示） */}
           {!isLive && (
             <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
               <button
@@ -188,17 +203,21 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         {/* コントロールバー */}
         <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <CtrlBtn
-              icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-              onClick={toggleMic}
-              danger={!micOn}
-            />
-            <CtrlBtn
-              icon={camOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
-              onClick={toggleCam}
-              danger={!camOn}
-            />
-            <MicLevelMeter micOn={micOn} />
+            {(isChecking || isLive) && (
+              <>
+                <CtrlBtn
+                  icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                  onClick={toggleMic}
+                  danger={!micOn}
+                />
+                <CtrlBtn
+                  icon={camOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+                  onClick={toggleCam}
+                  danger={!camOn}
+                />
+                <MicLevelMeter micOn={micOn} />
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
