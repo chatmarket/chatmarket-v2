@@ -199,6 +199,10 @@ export default function VideoCallPage() {
   // Standby state
   const [isWaiting, setIsWaiting] = useState(false);
 
+  // カウントダウン（accepted → active）
+  const [countdown, setCountdown] = useState(null); // 3,2,1 or null
+  const countdownStartedRef = useRef(false);
+
   // Message modal
   const [showMessageModal, setShowMessageModal] = useState(false);
 
@@ -327,6 +331,21 @@ export default function VideoCallPage() {
     () => getEffectiveDuration(calleeChannel, user),
     [calleeChannel, user]
   );
+
+  // accepted 状態で両者が画面到達 → 3秒カウントダウン → active に自動変更
+  useEffect(() => {
+    if (!call || !user || call.status !== 'accepted' || countdownStartedRef.current) return;
+    countdownStartedRef.current = true;
+    setCountdown(3);
+    const t1 = setTimeout(() => setCountdown(2), 1000);
+    const t2 = setTimeout(() => setCountdown(1), 2000);
+    const t3 = setTimeout(async () => {
+      setCountdown(null);
+      await base44.entities.VideoCall.update(call.id, { status: 'active' });
+      refetchCall();
+    }, 3000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [call?.status, call?.id, user?.email]);
 
   // 通話開始時刻をセット
   // AUTO_ACCEPT 自動承諾ロジック
@@ -826,7 +845,17 @@ export default function VideoCallPage() {
         /* 相手映像（フルスクリーン） - ChimeがここにRemoteVideoをbindする */
         <div className="absolute inset-0 w-full h-full bg-black">
           <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-          {!chimeConnected && (
+          {countdown !== null && (
+            <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/70 backdrop-blur-sm">
+              <div className="text-center space-y-4">
+                <p className="text-white text-xl font-bold">通話を開始します...</p>
+                <p className="text-primary font-black" style={{ fontSize: "80px", lineHeight: 1, textShadow: "0 0 30px rgba(0,255,157,0.8)" }}>
+                  {countdown}
+                </p>
+              </div>
+            </div>
+          )}
+          {!chimeConnected && countdown === null && (
             <div className="absolute inset-0 flex items-center justify-center">
               <p className="text-white/40 text-sm">
                 {call?.status === "active" ? "相手の映像を待っています..." : "通話開始をお待ちください"}
