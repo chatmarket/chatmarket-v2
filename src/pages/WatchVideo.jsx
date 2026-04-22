@@ -60,6 +60,20 @@ export default function WatchVideo() {
     },
   });
 
+  // video が未定義の間は isPaid=false として扱う（Hook はトップレベルで常に呼ぶ必要がある）
+  const isPaidForHook = video ? (!video.is_free && video.price > 0) : false;
+
+  // ---- 【鉄壁実装】30秒プレビューロック + 完全DOM操作ブロック ----
+  const { unlock } = usePreview30SecLock({
+    videoRef,
+    enabled: isPaidForHook && !hasPurchased,
+    onLimitReached: () => {
+      setPreviewEnded(true);
+      setShowPaywall(true);
+    },
+    previewSeconds: FREE_PREVIEW_SECONDS,
+  });
+
   // Check if user already purchased
   useEffect(() => {
     if (!user || !video) return;
@@ -153,18 +167,6 @@ export default function WatchVideo() {
   }
 
   const isPaid = !video.is_free && video.price > 0;
-
-  // ---- 【鉄壁実装】30秒プレビューロック + 完全DOM操作ブロック ----
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { unlock } = usePreview30SecLock({
-    videoRef,
-    enabled: isPaid && !hasPurchased,
-    onLimitReached: () => {
-      setPreviewEnded(true);
-      setShowPaywall(true);
-    },
-    previewSeconds: FREE_PREVIEW_SECONDS,
-  });
 
   const toggleFavorite = async () => {
     if (!user) { toast.error("ログインが必要です"); return; }
