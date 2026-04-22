@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, CalendarDays, ShoppingBag, MessageSquare, Users, Zap, Globe, TrendingUp
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, ShoppingBag, MessageSquare, Users, Zap, Globe, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,7 @@ const CREATOR_ITEMS = [
   { path: "/vod-analytics", icon: TrendingUp, label: "VOD分析" },
   { path: "/revenue", icon: Wallet, label: "収益管理" },
   { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
+  { path: "/call-waiting", icon: PhoneCall, label: "通話待機画面", highlight: true },
   { path: "/call-slots", icon: Phone, label: "通話枠設定" },
   { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
   { path: "/equipment", icon: ShoppingBag, label: "機材ガイド" },
@@ -121,16 +122,21 @@ export default function AppLayout() {
             <div className="pt-3 pb-1 px-3">
               <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者メニュー</p>
             </div>
-            {CREATOR_ITEMS.map(({ path, icon: Icon, label }) => (
+            {CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => (
               <Link key={path} to={path} onClick={onCloseFn}>
                 <div className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                  isActive(path)
+                  highlight && !isActive(path)
+                    ? "bg-primary/20 text-primary border border-primary/40 animate-pulse"
+                    : isActive(path)
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}>
                   <Icon className="w-4 h-4 shrink-0" />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {highlight && !isActive(path) && (
+                    <span className="text-[9px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">待機</span>
+                  )}
                 </div>
               </Link>
             ))}

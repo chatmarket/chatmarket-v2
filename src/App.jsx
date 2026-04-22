@@ -35,6 +35,7 @@ import VideoCallPage from '@/pages/VideoCallPage';
 import VideoCallRequest from '@/pages/VideoCallRequest';
 import CallHistory from '@/pages/CallHistory';
 import CallSlotManage from '@/pages/CallSlotManage';
+import CallWaitingRoom from '@/pages/CallWaitingRoom';
 import WithdrawalRequest from '@/pages/WithdrawalRequest';
 import MyReservations from '@/pages/MyReservations';
 import CallCalendar from '@/pages/CallCalendar';
@@ -112,6 +113,7 @@ export default function App() {
             <Route path="/call-request/:channelId" element={<VideoCallRequest />} />
             <Route path="/call-history" element={<CallHistory />} />
             <Route path="/call-slots" element={<CallSlotManage />} />
+            <Route path="/call-waiting" element={<CallWaitingRoom />} />
             <Route path="/withdrawal-request" element={<WithdrawalRequest />} />
             <Route path="/my-reservations" element={<MyReservations />} />
             <Route path="/call-calendar/:channelId" element={<CallCalendar />} />
