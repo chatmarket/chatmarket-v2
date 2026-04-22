@@ -16,6 +16,7 @@ import EventNotificationPanel from "../components/dashboard/EventNotificationPan
 import ProgressiveRateCard from "../components/dashboard/ProgressiveRateCard";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import CallWaitingWidget from "../components/dashboard/CallWaitingWidget";
+import IncomingMessagesWidget from "../components/dashboard/IncomingMessagesWidget";
 import SkillRankCard from "../components/dashboard/SkillRankCard";
 import ArchiveAssetCard from "../components/dashboard/ArchiveAssetCard";
 import ThanksLetterCard from "../components/dashboard/ThanksLetterCard";
@@ -149,6 +150,9 @@ export default function CreatorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* メインコンテンツ（左2/3） */}
         <div className="lg:col-span-2 space-y-6">
+          {/* 受信メッセージ（DM）一覧 */}
+          <IncomingMessagesWidget userEmail={user?.email} />
+
           {/* 通話待機ウィジェット（固定配置・常時表示） */}
           <CallWaitingWidget user={user} channel={channel} />
 
