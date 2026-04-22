@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import CallWaitingWidget from "../components/dashboard/CallWaitingWidget";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
+import IncomingMessagesWidget from "../components/dashboard/IncomingMessagesWidget";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 import { PhoneCall, Info, Radio, Loader2, Image, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,9 @@ export default function CallWaitingRoom() {
 
       {/* 承認済み通話入室 */}
       <AcceptedCallsList userEmail={user?.email} />
+
+      {/* 受信メッセージ（DM）一覧 */}
+      <IncomingMessagesWidget userEmail={user?.email} />
 
       {/* ─── ライブ配信セクション ─── */}
       <div className="bg-card border border-border/50 rounded-2xl overflow-hidden">

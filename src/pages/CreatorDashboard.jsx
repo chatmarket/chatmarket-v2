@@ -134,7 +134,7 @@ export default function CreatorDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/analytics">
+          <Link to="/content-analytics">
             <Button variant="outline" size="sm" className="gap-2">
               <TrendingUp className="w-4 h-4" /> 詳細分析
             </Button>
