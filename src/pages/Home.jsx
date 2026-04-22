@@ -353,7 +353,7 @@ export default function Home() {
       </div>
 
       {/* クリエイター向け: 待機中にするボタン */}
-      {user && myChannel && (
+      {user && myChannel && ( /* テスト中：条件コメントアウト: user.email === myChannel.owner_email && */
         <div className={`rounded-2xl p-4 border flex items-center justify-between gap-4 ${myChannel.call_enabled ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
           <div>
             <p className="font-bold text-sm flex items-center gap-2">
