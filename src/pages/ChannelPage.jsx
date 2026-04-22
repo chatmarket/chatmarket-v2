@@ -14,7 +14,7 @@ import VaultTab from "../components/vault/VaultTab";
 import SanctumTab from "../components/vault/SanctumTab";
 
 export default function ChannelPage() {
-  const { id } = useParams();
+  const { channelId } = useParams();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [showReport, setShowReport] = useState(false);
@@ -28,34 +28,34 @@ export default function ChannelPage() {
   }, []);
 
   const { data: channel, isLoading } = useQuery({
-    queryKey: ["channel", id],
+    queryKey: ["channel", channelId],
     queryFn: async () => {
-      const channels = await base44.entities.Channel.filter({ id });
+      const channels = await base44.entities.Channel.filter({ id: channelId });
       return channels[0];
     },
   });
 
   const { data: videos = [] } = useQuery({
-    queryKey: ["channel-videos", id],
-    queryFn: () => base44.entities.Video.filter({ channel_id: id }, "-created_date"),
-    enabled: !!id,
+    queryKey: ["channel-videos", channelId],
+    queryFn: () => base44.entities.Video.filter({ channel_id: channelId }, "-created_date"),
+    enabled: !!channelId,
   });
 
   const { data: liveStreams = [] } = useQuery({
-    queryKey: ["channel-streams", id],
-    queryFn: () => base44.entities.LiveStream.filter({ channel_id: id, status: "live" }),
-    enabled: !!id,
+    queryKey: ["channel-streams", channelId],
+    queryFn: () => base44.entities.LiveStream.filter({ channel_id: channelId, status: "live" }),
+    enabled: !!channelId,
   });
 
   const { data: followData = [] } = useQuery({
-    queryKey: ["channel-follow", id, currentUser?.email],
-    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: id, follower_email: currentUser.email }),
+    queryKey: ["channel-follow", channelId, currentUser?.email],
+    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: channelId, follower_email: currentUser.email }),
     enabled: !!currentUser,
   });
 
   const { data: followerCount = [] } = useQuery({
-    queryKey: ["channel-follower-count", id],
-    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: id }),
+    queryKey: ["channel-follower-count", channelId],
+    queryFn: () => base44.entities.ChannelFollow.filter({ channel_id: channelId }),
   });
 
   const isFollowing = followData.length > 0;
@@ -66,15 +66,15 @@ export default function ChannelPage() {
         await base44.entities.ChannelFollow.delete(followData[0].id);
       } else {
         await base44.entities.ChannelFollow.create({
-          channel_id: id,
+          channel_id: channelId,
           channel_name: channel?.name || "",
           follower_email: currentUser.email,
         });
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["channel-follow", id, currentUser?.email] });
-      queryClient.invalidateQueries({ queryKey: ["channel-follower-count", id] });
+      queryClient.invalidateQueries({ queryKey: ["channel-follow", channelId, currentUser?.email] });
+      queryClient.invalidateQueries({ queryKey: ["channel-follower-count", channelId] });
     },
   });
 
@@ -177,13 +177,13 @@ export default function ChannelPage() {
                   size="sm"
                   variant="secondary"
                   className="gap-2 w-full"
-                  onClick={() => navigate(`/chat/${id}`)}
+                  onClick={() => navigate(`/chat/${channelId}`)}
                 >
                   <MessageCircle className="w-4 h-4" />
                   チャットで問い合わせ
                 </Button>
                 {channel.call_enabled && (
-                  <Link to={`/call-calendar/${id}`}>
+                  <Link to={`/call-calendar/${channelId}`}>
                     <Button size="sm" className="gap-2 w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30">
                       <CalendarDays className="w-4 h-4" />
                       通話を予約する
