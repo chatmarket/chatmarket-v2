@@ -40,13 +40,13 @@ const NAV_ITEMS = [
 ];
 
 const CREATOR_ITEMS = [
-  { path: "/go-live", icon: Radio, label: "ライブ配信" },
+  { path: "/go-live", icon: Radio, label: "ライブ配信（PPV）" },
+  { path: "/call-waiting", icon: Phone, label: "1対1ビデオ通話", highlight: true },
   { path: "/upload", icon: Upload, label: "動画アップ" },
   { path: "/creator-dashboard", icon: BarChart3, label: "ダッシュボード" },
   { path: "/vod-analytics", icon: TrendingUp, label: "VOD分析" },
   { path: "/revenue", icon: Wallet, label: "収益管理" },
   { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
-  { path: "/call-waiting", icon: Phone, label: "1対1ビデオ通話", highlight: true },
   { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
   { path: "/equipment", icon: ShoppingBag, label: "機材ガイド" },
   { path: "/forum", icon: MessageSquare, label: "掲示板" },
