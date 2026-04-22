@@ -7,8 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ja } from "date-fns/locale";
+
 
 export default function IncomingMessagesWidget({ userEmail }) {
   const queryClient = useQueryClient();
@@ -88,7 +87,15 @@ export default function IncomingMessagesWidget({ userEmail }) {
                     </p>
                     <span className="text-[10px] text-muted-foreground shrink-0">
                       {msg.created_date
-                        ? formatDistanceToNow(new Date(msg.created_date), { addSuffix: true, locale: ja })
+                        ? (() => {
+                            const d = new Date(msg.created_date);
+                            const JST = { timeZone: "Asia/Tokyo" };
+                            const today = new Date().toLocaleDateString("ja-JP", JST);
+                            const msgDay = d.toLocaleDateString("ja-JP", JST);
+                            return today === msgDay
+                              ? d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", ...JST })
+                              : d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", ...JST });
+                          })()
                         : ""}
                     </span>
                   </div>
