@@ -1,15 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PhoneCall, MessageCircle, Radio } from "lucide-react";
+import { PhoneCall, MessageCircle } from "lucide-react";
 import ScrollRow from "./ScrollRow";
-import MessageModal from "../chat/MessageModal";
 
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
-  const [messageTarget, setMessageTarget] = useState(null);
 
   // フリートライアルメール
   const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
@@ -78,43 +76,25 @@ export default function CallWaitingRow({ user }) {
       </div>
       <div className="bg-card border border-border/50 rounded-xl p-5 text-center space-y-3">
         <p className="text-sm text-muted-foreground">現在待機中のライバーはいません</p>
-        {user && (
-          <Link to="/call-slots">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 gap-2">
-              <PhoneCall className="w-4 h-4" /> 待機を開始する
-            </Button>
-          </Link>
-        )}
       </div>
     </section>
   );
 
-  const handleMessage = (channel) => {
+  const handleChat = (channelId) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
-    setMessageTarget({ channel, video: null });
-  };
-
-  const handleCallRequest = (channelId) => {
-    if (!user) { base44.auth.redirectToLogin(); return; }
-    navigate(`/call-request/${channelId}`);
-  };
-
-  const handleGoLive = () => {
-    navigate("/go-live");
+    navigate(`/chat/${channelId}`);
   };
 
   // 待機中のVideoCallマップを作成（channel_idで検索可能に）
   const waitingCallMap = new Map(waitingCalls.map((c) => [c.callee_channel_id, c]));
 
-  // 全件を最大2段に分割して表示
   const half = Math.ceil(uniqueChannels.length / 2);
   const rows = uniqueChannels.length > 0
     ? [uniqueChannels.slice(0, half), uniqueChannels.slice(half)].filter(r => r.length > 0)
     : [];
+  const isOwnChannel = (channel) => user && channel.owner_email === user.email;
 
-    const isOwnChannel = (channel) => user && channel.owner_email === user.email;
-
-    return (
+  return (
     <section className="space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shrink-0" />
@@ -133,37 +113,23 @@ export default function CallWaitingRow({ user }) {
       {/* 複数段の横スクロール（6列×2段） */}
       {rows.map((row, idx) => (
         <ScrollRow key={idx} cardWidth={200}>
-          {row.map((channel) => {
-            const isWaiting = waitingCallMap.has(channel.id);
-            return (
-              <CallWaitingCard
-                key={channel.id}
-                channel={channel}
-                onMessage={() => handleMessage(channel)}
-                onCallRequest={() => handleCallRequest(channel.id)}
-                onGoLive={isOwnChannel(channel) ? handleGoLive : null}
-                isWaiting={isWaiting}
-              />
-            );
-          })}
+          {row.map((channel) => (
+            <CallWaitingCard
+              key={channel.id}
+              channel={channel}
+              onChat={() => handleChat(channel.id)}
+              isOwnChannel={isOwnChannel(channel)}
+            />
+          ))}
         </ScrollRow>
       ))}
-
-      {messageTarget && (
-        <MessageModal
-          channel={messageTarget.channel}
-          video={null}
-          user={user}
-          onClose={() => setMessageTarget(null)}
-        />
-      )}
     </section>
   );
 }
 
-function CallWaitingCard({ channel, onMessage, onCallRequest, onGoLive, isWaiting = false }) {
+function CallWaitingCard({ channel, onChat, isOwnChannel }) {
   return (
-    <div className={`w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border ${isWaiting ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
+    <div className="w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border bg-green-500/10 border-green-500/40">
       {/* Avatar */}
       <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary flex items-center justify-center">
         {channel.avatar_url ? (
@@ -173,10 +139,9 @@ function CallWaitingCard({ channel, onMessage, onCallRequest, onGoLive, isWaitin
             <span className="text-xl font-bold text-muted-foreground">{channel.name?.[0]}</span>
           </div>
         )}
-        {/* バッジ */}
-        <div className={`absolute top-2 left-2 flex items-center gap-1 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isWaiting ? "bg-green-600/90" : "bg-green-500/90"}`}>
+        <div className="absolute top-2 left-2 flex items-center gap-1 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/90">
           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-          {isWaiting ? "📹 配信待機中" : "待機中"}
+          今すぐ通話可能
         </div>
       </div>
 
@@ -185,54 +150,19 @@ function CallWaitingCard({ channel, onMessage, onCallRequest, onGoLive, isWaitin
         <Link to={`/channel/${channel.id}`}>
           <p className="font-bold text-xs truncate hover:text-primary transition-colors">{channel.name}</p>
         </Link>
-
-        {/* Theme */}
         {channel.call_theme && (
           <p className="text-[11px] text-primary bg-primary/10 px-2 py-1 rounded line-clamp-2">
             {channel.call_theme}
           </p>
         )}
-
-        <div className="text-[11px] text-muted-foreground space-y-0.5">
-          {channel.call_price_30min > 0 && (
-            <p>30分 ¥{channel.call_price_30min.toLocaleString()}</p>
-          )}
-          {channel.call_price_60min > 0 && (
-            <p>60分 ¥{channel.call_price_60min.toLocaleString()}</p>
-          )}
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-1 pt-1">
-          {onGoLive ? (
-            <Button
-              size="sm"
-              className="flex-1 h-6 text-[11px] bg-red-500 hover:bg-red-600 gap-0.5 px-2"
-              onClick={onGoLive}
-            >
-              <Radio className="w-2.5 h-2.5" />
-              配信開始
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="flex-1 h-6 text-[11px] bg-primary hover:bg-primary/90 gap-0.5 px-2"
-              onClick={onCallRequest}
-            >
-              <PhoneCall className="w-2.5 h-2.5" />
-              申し込む
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 w-6 p-0"
-            onClick={onMessage}
-            title="メッセージを送る"
-          >
-            <MessageCircle className="w-3 h-3" />
+        {!isOwnChannel && (
+          <Button size="sm" className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1" onClick={onChat}>
+            <MessageCircle className="w-3 h-3" /> チャットで声をかける
           </Button>
-        </div>
+        )}
+        {isOwnChannel && (
+          <p className="text-[11px] text-green-400 text-center font-semibold">待機中（自分）</p>
+        )}
       </div>
     </div>
   );

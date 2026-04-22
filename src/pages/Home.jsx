@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap } from "lucide-react";
+import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap, PhoneCall, PhoneOff } from "lucide-react";
 import { isBefore } from "date-fns";
+import { toast } from "sonner";
 import { t } from "@/lib/i18n";
 import { useInViewTrigger } from "@/hooks/useInViewTrigger";
 
@@ -31,6 +32,8 @@ import QualityRevolutionBanner from "../components/home/QualityRevolutionBanner"
 export default function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [myChannel, setMyChannel] = useState(null);
+  const [togglingWait, setTogglingWait] = useState(false);
   const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,9 +50,26 @@ export default function Home() {
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) base44.auth.me().then(async (u) => {
+        setUser(u);
+        const channels = await base44.entities.Channel.filter({ owner_email: u.email });
+        if (channels[0]) setMyChannel(channels[0]);
+      }).catch(() => {});
     });
   }, []);
+
+  const handleToggleWaiting = async () => {
+    if (!myChannel) {
+      toast.error("チャンネルを先に作成してください");
+      return;
+    }
+    setTogglingWait(true);
+    const newState = !myChannel.call_enabled;
+    await base44.entities.Channel.update(myChannel.id, { call_enabled: newState });
+    setMyChannel({ ...myChannel, call_enabled: newState });
+    toast.success(newState ? "✅ 待機中にしました。ファンに「今すぐ通話可能」と表示されます。" : "待機を停止しました。");
+    setTogglingWait(false);
+  };
 
   // セクションのIntersection Observer トリガー
   const triggerSection = (key) => {
@@ -297,6 +317,31 @@ export default function Home() {
       <div className="px-0">
         <ServerLimitBanner />
       </div>
+
+      {/* クリエイター向け: 待機中にするボタン */}
+      {user && myChannel && (
+        <div className={`rounded-2xl p-4 border flex items-center justify-between gap-4 ${myChannel.call_enabled ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
+          <div>
+            <p className="font-bold text-sm flex items-center gap-2">
+              {myChannel.call_enabled
+                ? <><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />今すぐ通話可能（待機中）</>
+                : <><span className="w-2 h-2 rounded-full bg-zinc-500 inline-block" />通話待機 オフ</>}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {myChannel.call_enabled ? "ファンに「今すぐ通話可能」と表示中" : "ONにするとファンからチャットで声がかかります"}
+            </p>
+          </div>
+          <Button
+            onClick={handleToggleWaiting}
+            disabled={togglingWait}
+            className={`shrink-0 gap-2 ${myChannel.call_enabled ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+          >
+            {myChannel.call_enabled
+              ? <><PhoneOff className="w-4 h-4" />待機を停止</>
+              : <><PhoneCall className="w-4 h-4" />待機中にする</>}
+          </Button>
+        </div>
+      )}
 
       {/* 1on1 待機中 */}
       <div ref={callRef}>

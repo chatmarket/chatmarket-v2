@@ -3,13 +3,13 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Coins, PhoneCall, Video } from "lucide-react";
+import { ArrowLeft, Send, Coins, Video, X } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import YellCoinSendModal from "../components/chat/YellCoinSendModal";
 
-const MAX_CHARS = 50;
+const MAX_CHARS = 200;
 
-// threadIdを一意に生成（2メールをソートして結合）
 function makeThreadId(emailA, emailB) {
   return [emailA, emailB].sort().join("__");
 }
@@ -18,16 +18,11 @@ function formatTime(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   const JST = { timeZone: "Asia/Tokyo" };
-
-  // 日本時間での今日の日付文字列（YYYY/M/D形式）
   const todayJST = new Date().toLocaleDateString("ja-JP", JST);
   const msgDayJST = d.toLocaleDateString("ja-JP", JST);
-
   if (todayJST === msgDayJST) {
-    // 同日：時刻のみ（HH:MM）
     return d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", ...JST });
   } else {
-    // 別日：月/日 HH:MM
     return d.toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", ...JST });
   }
 }
@@ -41,7 +36,10 @@ export default function DirectChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showYellModal, setShowYellModal] = useState(false);
+  const [callModal, setCallModal] = useState(null); // { callId, otherName }
+  const [startingCall, setStartingCall] = useState(false);
   const bottomRef = useRef(null);
+  const lastMsgCountRef = useRef(0);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -53,30 +51,73 @@ export default function DirectChat() {
   }, [channelId]);
 
   const threadId = user && channel ? makeThreadId(user.email, channel.owner_email) : null;
+  const isCreator = user && channel && user.email === channel.owner_email;
 
   const { data: messages = [] } = useQuery({
     queryKey: ["direct-chat", threadId],
     queryFn: () => base44.entities.DirectChat.filter({ thread_id: threadId }, "created_date"),
     enabled: !!threadId,
-    refetchInterval: 3000,
-  });
-
-  // アクティブな通話をチェック
-  const { data: activeCall } = useQuery({
-    queryKey: ["active-call", user?.email, channel?.owner_email],
-    queryFn: async () => {
-      const calls = await base44.entities.VideoCall.filter({
-        status: "active"
-      });
-      return calls.find(
-        (c) =>
-          (c.caller_email === user?.email && c.callee_email === channel?.owner_email) ||
-          (c.caller_email === channel?.owner_email && c.callee_email === user?.email)
-      ) || null;
-    },
-    enabled: !!user && !!channel,
     refetchInterval: 2000,
   });
+
+  // アクティブ/承認済み通話チェック
+  const { data: pendingCall } = useQuery({
+    queryKey: ["chat-pending-call", threadId],
+    queryFn: async () => {
+      if (!threadId) return null;
+      const calls = await base44.entities.VideoCall.filter({ thread_id: threadId });
+      return calls.find((c) => ["pending_both", "creator_ready", "fan_ready"].includes(c.status)) || null;
+    },
+    enabled: !!threadId,
+    refetchInterval: 2000,
+  });
+
+  // クリエイターが返信したら通話モーダルを自動表示
+  useEffect(() => {
+    if (!messages.length || !user || !channel) return;
+    const prev = lastMsgCountRef.current;
+    const curr = messages.length;
+    if (curr <= prev) { lastMsgCountRef.current = curr; return; }
+
+    const newMsgs = messages.slice(prev);
+    lastMsgCountRef.current = curr;
+
+    // クリエイターからのメッセージが新しく届いたか確認
+    const creatorReplied = newMsgs.some((m) => m.from_email === channel.owner_email);
+    if (creatorReplied && !isCreator && !callModal) {
+      // 通話レコード作成（pending_both）
+      createCallRecord();
+    }
+  }, [messages.length]);
+
+  // pending_both のコールが存在したら双方にモーダル表示
+  useEffect(() => {
+    if (!pendingCall || callModal) return;
+    const otherName = isCreator
+      ? (pendingCall.caller_name || pendingCall.caller_email)
+      : (pendingCall.callee_name || channel?.name);
+    setCallModal({ callId: pendingCall.id, otherName });
+  }, [pendingCall?.id]);
+
+  const createCallRecord = async () => {
+    if (!user || !channel || !threadId) return;
+    // 既存のpending_bothコールを確認
+    const existing = await base44.entities.VideoCall.filter({ thread_id: threadId, status: "pending_both" });
+    if (existing.length > 0) return;
+    const call = await base44.entities.VideoCall.create({
+      caller_email: user.email,
+      caller_name: user.full_name || user.email,
+      callee_email: channel.owner_email,
+      callee_name: channel.name,
+      callee_channel_id: channel.id,
+      status: "pending_both",
+      duration_minutes: 30,
+      is_paid: false,
+      price: 0,
+      thread_id: threadId,
+    });
+    setCallModal({ callId: call.id, otherName: channel.name });
+  };
 
   // リアルタイム購読
   useEffect(() => {
@@ -103,7 +144,6 @@ export default function DirectChat() {
 
   const handleSend = async () => {
     if (!input.trim() || !user || !channel || sending) return;
-    if (input.length > MAX_CHARS) return;
     setSending(true);
     await base44.entities.DirectChat.create({
       from_email: user.email,
@@ -118,18 +158,30 @@ export default function DirectChat() {
     setInput("");
     setSending(false);
     queryClient.invalidateQueries({ queryKey: ["direct-chat", threadId] });
+
+    // クリエイターが返信したら通話モーダルを表示
+    if (isCreator && !callModal) {
+      createCallRecord();
+    }
+  };
+
+  const handleAcceptCall = async () => {
+    if (!callModal) return;
+    setStartingCall(true);
+    await base44.entities.VideoCall.update(callModal.callId, { status: "accepted" });
+    navigate(`/video-call/${callModal.callId}`);
+  };
+
+  const handleDeclineCall = async () => {
+    if (!callModal) return;
+    await base44.entities.VideoCall.update(callModal.callId, { status: "declined" });
+    setCallModal(null);
+    queryClient.invalidateQueries({ queryKey: ["chat-pending-call", threadId] });
   };
 
   const handleYellSent = () => {
     queryClient.invalidateQueries({ queryKey: ["direct-chat", threadId] });
     setShowYellModal(false);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
   };
 
   if (!channel) {
@@ -156,26 +208,12 @@ export default function DirectChat() {
         </div>
         <div className="flex-1">
           <p className="font-bold text-sm">{channel.name}</p>
-          <p className="text-xs text-muted-foreground">1対1ビデオ通話前のお問い合わせチャット</p>
+          <p className="text-xs text-muted-foreground">
+            {channel.call_enabled
+              ? <span className="text-green-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />今すぐ通話可能</span>
+              : "メッセージでやりとりできます"}
+          </p>
         </div>
-        {/* アクティブな通話中 */}
-        {activeCall && (
-          <Link to={`/call/${activeCall.id}`}>
-            <Button size="sm" className="gap-1.5 bg-green-500 hover:bg-green-600 text-xs animate-pulse shadow-lg shadow-green-500/50">
-              <Video className="w-3.5 h-3.5" />
-              通話中をクリック
-            </Button>
-          </Link>
-        )}
-        {/* ビデオ通話申し込みボタン */}
-        {!activeCall && (
-          <Link to={`/call-request/${channelId}`}>
-            <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-xs">
-              <PhoneCall className="w-3.5 h-3.5" />
-              通話申し込み
-            </Button>
-          </Link>
-        )}
       </div>
 
       {/* Messages */}
@@ -184,7 +222,7 @@ export default function DirectChat() {
           <div className="text-center py-12 space-y-2 text-muted-foreground">
             <Video className="w-10 h-10 mx-auto opacity-30" />
             <p className="text-sm font-semibold">まだメッセージがありません</p>
-            <p className="text-xs">1対1ビデオ通話の前に質問してみましょう！</p>
+            <p className="text-xs">気軽に声をかけてみましょう！</p>
           </div>
         )}
         {messages.map((msg) => {
@@ -223,8 +261,8 @@ export default function DirectChat() {
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
-              onKeyDown={handleKeyDown}
-              placeholder="今から対応可能でしょうか？（最大50文字）"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder="メッセージを入力..."
               rows={2}
               className="w-full resize-none rounded-xl bg-secondary border-0 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
@@ -233,40 +271,56 @@ export default function DirectChat() {
             </span>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Button
-              size="icon"
-              variant="outline"
-              className="w-9 h-9 text-yellow-400 border-yellow-400/30 hover:bg-yellow-400/10"
-              onClick={() => setShowYellModal(true)}
-              title="エールコインを送る"
-            >
+            <Button size="icon" variant="outline" className="w-9 h-9 text-yellow-400 border-yellow-400/30 hover:bg-yellow-400/10" onClick={() => setShowYellModal(true)} title="エールコインを送る">
               <Coins className="w-4 h-4" />
             </Button>
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!input.trim() || sending}
-              className="w-9 h-9 bg-primary hover:bg-primary/90"
-            >
+            <Button size="icon" onClick={handleSend} disabled={!input.trim() || sending} className="w-9 h-9 bg-primary hover:bg-primary/90">
               <Send className="w-4 h-4" />
             </Button>
           </div>
         </div>
-        <p className="text-[10px] text-muted-foreground text-center">
-          ビデオ通話をご希望の場合は上部の「通話申し込み」ボタンからお進みください
-        </p>
+        {!isCreator && channel.call_enabled && (
+          <p className="text-[10px] text-green-400 text-center font-semibold">
+            ✅ {channel.name}は今すぐ通話可能です。メッセージを送って声をかけましょう！
+          </p>
+        )}
       </div>
 
       {/* Yell Coin Modal */}
       {showYellModal && user && channel && (
-        <YellCoinSendModal
-          user={user}
-          channel={channel}
-          threadId={threadId}
-          onSent={handleYellSent}
-          onClose={() => setShowYellModal(false)}
-        />
+        <YellCoinSendModal user={user} channel={channel} threadId={threadId} onSent={handleYellSent} onClose={() => setShowYellModal(false)} />
       )}
+
+      {/* 通話確認モーダル */}
+      <AnimatePresence>
+        {callModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.85, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85 }}
+              className="bg-card border-2 border-primary/50 rounded-2xl p-7 max-w-sm w-full mx-4 text-center space-y-5 shadow-2xl"
+              style={{ boxShadow: "0 0 50px rgba(0,255,157,0.25)" }}>
+              <div className="relative w-16 h-16 mx-auto">
+                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                <div className="relative w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
+                  <Video className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <div>
+                <p className="font-black text-xl">{callModal.otherName} さんと</p>
+                <p className="text-muted-foreground text-sm mt-1">ビデオ通話を開始しますか？</p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10" onClick={handleDeclineCall}>
+                  <X className="w-4 h-4 mr-1" /> キャンセル
+                </Button>
+                <Button onClick={handleAcceptCall} disabled={startingCall} className="flex-1 bg-primary hover:bg-primary/90 font-black">
+                  {startingCall ? "接続中..." : <><Video className="w-4 h-4 mr-1" />通話を開始</>}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
