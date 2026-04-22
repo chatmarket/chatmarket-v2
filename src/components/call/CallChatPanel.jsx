@@ -35,8 +35,8 @@ export default function CallChatPanel({ call, user }) {
         // accepted → VideoCallPageへリダイレクト
         if (updatedCall.status === "accepted" && !redirectedRef.current) {
           redirectedRef.current = true;
-          console.log(`✅ Call accepted! Redirecting to /call/${call.id}`);
-          setTimeout(() => navigate(`/call/${call.id}`), 300);
+          console.log(`✅ Call accepted! Redirecting to /video-call/${call.id}`);
+          setTimeout(() => navigate(`/video-call/${call.id}`), 300);
         }
       } catch (err) {
         console.error('Failed to poll call status:', err);
@@ -121,7 +121,7 @@ export default function CallChatPanel({ call, user }) {
         </div>
         {currentCall?.status === "active" && (
           <button
-            onClick={() => navigate(`/call/${currentCall.id}`)}
+            onClick={() => navigate(`/video-call/${currentCall.id}`)}
             className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/30 text-xs font-bold transition-all"
           >
             <Phone className="w-3 h-3" /> 通話画面
