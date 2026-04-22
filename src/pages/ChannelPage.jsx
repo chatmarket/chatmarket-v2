@@ -30,12 +30,8 @@ export default function ChannelPage() {
   const { data: channel, isLoading } = useQuery({
     queryKey: ["channel", id],
     queryFn: async () => {
-      console.log(`[ChannelPage DEBUG] URL param id=${id}`);
       const channels = await base44.entities.Channel.filter({ id });
-      console.log(`[ChannelPage DEBUG] fetched channels for id=${id}:`, channels.map(c => ({ id: c.id, name: c.name, owner_email: c.owner_email })));
-      const result = channels[0];
-      console.log(`[ChannelPage DEBUG] selected channel: id=${result?.id}, name=${result?.name}, owner_email=${result?.owner_email}`);
-      return result;
+      return channels[0];
     },
   });
 

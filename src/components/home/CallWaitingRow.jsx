@@ -38,11 +38,7 @@ export default function CallWaitingRow({ user }) {
   // 待機中のVideoCall取得
   const { data: waitingCalls = [] } = useQuery({
     queryKey: ["waiting-video-calls"],
-    queryFn: async () => {
-      const result = await base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 20);
-      console.log("[CallWaitingRow DEBUG] waitingCalls response:", result.map(c => ({ id: c.id, callee_channel_id: c.callee_channel_id, callee_email: c.callee_email, callee_name: c.callee_name })));
-      return result;
-    },
+    queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 20),
     staleTime: 30000,
     gcTime: 60000,
     refetchInterval: 30000,
@@ -50,32 +46,23 @@ export default function CallWaitingRow({ user }) {
 
   // 待機中のチャンネルを取得（VideoCallのcallee_channel_idから）
   const { data: waitingChannels = [] } = useQuery({
-    // ★ queryKeyを実際のcallee_channel_idで生成（同じ数でも異なるVideoCallセットはキャッシュ分離）
     queryKey: ["waiting-channels", [...new Set(waitingCalls.map(c => c.callee_channel_id).filter(Boolean))].sort().join(",")],
     queryFn: async () => {
       if (waitingCalls.length === 0) return [];
-      // ★ callee_channel_id が設定されている場合はそれを優先、未設定の場合はcallee_emailから検索
       const uniqueChannelIds = [...new Set(
         waitingCalls
           .map((c) => c.callee_channel_id)
           .filter(Boolean)
       )].slice(0, 10);
       
-      console.log("[CallWaitingRow DEBUG] uniqueChannelIds to fetch:", uniqueChannelIds);
-      
       if (uniqueChannelIds.length === 0) return [];
       
       const channels = await Promise.all(
         uniqueChannelIds.map((channelId) =>
-          base44.entities.Channel.filter({ id: channelId }).then((r) => {
-            console.log(`[CallWaitingRow DEBUG] fetched channel for id ${channelId}:`, r[0]?.name, r[0]?.id);
-            return r[0];
-          })
+          base44.entities.Channel.filter({ id: channelId }).then((r) => r[0])
         )
       );
-      const filtered = channels.filter(Boolean);
-      console.log("[CallWaitingRow DEBUG] final waitingChannels:", filtered.map(c => ({ id: c.id, name: c.name })));
-      return filtered;
+      return channels.filter(Boolean);
     },
     staleTime: 30000,
     gcTime: 60000,
@@ -149,12 +136,8 @@ export default function CallWaitingRow({ user }) {
 }
 
 function CallWaitingCard({ channel, onChat, isOwnChannel }) {
-  // ★ channel.id を確実に保持（クロージャ確認）
   const cardChannelId = channel.id;
   const cardChannelName = channel.name;
-  
-  // ★ リアルタイムレンダリングログ：各カード単位でIDを記録
-  console.log(`[CallWaitingCard RENDER] rendering card for channel_id=${cardChannelId}, name=${cardChannelName}, will link to /channel/${cardChannelId}`);
   
   return (
     <div className="w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border bg-green-500/10 border-green-500/40">
@@ -175,7 +158,7 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-2">
-        <Link to={`/channel/${cardChannelId}`} onClick={() => console.log(`[CallWaitingCard CLICK] clicked channel_id=${cardChannelId}, navigating to /channel/${cardChannelId}`)}>
+        <Link to={`/channel/${cardChannelId}`}>
           <p className="font-bold text-xs truncate hover:text-primary transition-colors">{cardChannelName}</p>
         </Link>
         {channel.call_theme && (
