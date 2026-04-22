@@ -92,7 +92,7 @@ export default function CreatorChat() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !user || !myChannel || sending || !fromEmail) return;
+    if (!input.trim() || !user || sending || !fromEmail) return;
     setSending(true);
     await base44.entities.DirectChat.create({
       from_email: user.email,

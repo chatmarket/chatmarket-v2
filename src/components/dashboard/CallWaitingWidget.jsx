@@ -15,9 +15,19 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function CallWaitingWidget({ user, channel }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [waiting, setWaiting] = useState(false);
+  // channel.call_enabled をDBから初期値として使う
+  const [waiting, setWaiting] = useState(!!channel?.call_enabled);
   const [incomingCall, setIncomingCall] = useState(null); // 着信中のコール
   const prevIdsRef = useRef(new Set());
+
+  // channelが後から読み込まれたときに同期（初回のみ）
+  const syncedRef = useRef(false);
+  React.useEffect(() => {
+    if (!syncedRef.current && channel?.call_enabled !== undefined) {
+      setWaiting(!!channel.call_enabled);
+      syncedRef.current = true;
+    }
+  }, [channel?.call_enabled]);
 
   // pendingコールをポーリング（waiting中のみ）
   const { data: pendingCalls = [] } = useQuery({
