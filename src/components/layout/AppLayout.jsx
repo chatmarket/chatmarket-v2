@@ -126,7 +126,7 @@ export default function AppLayout() {
                 <div className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                   highlight && !isActive(path)
-                    ? "bg-primary/20 text-primary border border-primary/40 animate-pulse"
+                    ? "bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse"
                     : isActive(path)
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -134,7 +134,7 @@ export default function AppLayout() {
                   <Icon className="w-4 h-4 shrink-0" />
                   <span className="flex-1">{label}</span>
                   {highlight && !isActive(path) && (
-                    <span className="text-[9px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">待機</span>
+                    <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">待機</span>
                   )}
                 </div>
               </Link>
