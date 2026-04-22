@@ -46,7 +46,8 @@ export default function CallWaitingRow({ user }) {
 
   // 待機中のチャンネルを取得（VideoCallのcallee_channel_idから）
   const { data: waitingChannels = [] } = useQuery({
-    queryKey: ["waiting-channels", waitingCalls.length],
+    // ★ queryKeyを実際のcallee_channel_idで生成（同じ数でも異なるVideoCallセットはキャッシュ分離）
+    queryKey: ["waiting-channels", [...new Set(waitingCalls.map(c => c.callee_channel_id).filter(Boolean))].sort().join(",")],
     queryFn: async () => {
       if (waitingCalls.length === 0) return [];
       // ★ callee_channel_id が設定されている場合はそれを優先、未設定の場合はcallee_emailから検索
@@ -137,8 +138,9 @@ export default function CallWaitingRow({ user }) {
 }
 
 function CallWaitingCard({ channel, onChat, isOwnChannel }) {
-  // ★ DEBUG: チャンネルIDが正しいことを確認
-  console.log(`[CallWaitingCard] channel.id: ${channel.id}, channel.name: ${channel.name}, channel.owner_email: ${channel.owner_email}`);
+  // ★ channel.id を確実に保持（クロージャ確認）
+  const cardChannelId = channel.id;
+  const cardChannelName = channel.name;
   
   return (
     <div className="w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border bg-green-500/10 border-green-500/40">
@@ -159,8 +161,8 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-2">
-        <Link to={`/channel/${channel.id}`} onClick={() => console.log(`[Link Click] channel.id: ${channel.id}`)}>
-          <p className="font-bold text-xs truncate hover:text-primary transition-colors">{channel.name}</p>
+        <Link to={`/channel/${cardChannelId}`}>
+          <p className="font-bold text-xs truncate hover:text-primary transition-colors">{cardChannelName}</p>
         </Link>
         {channel.call_theme && (
           <p className="text-[11px] text-primary bg-primary/10 px-2 py-1 rounded line-clamp-2">
