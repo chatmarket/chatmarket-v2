@@ -687,17 +687,24 @@ export default function VideoCallPage() {
 
   // Chimeミーティング情報をバックエンドから取得
   useEffect(() => {
+    console.log(`[VideoCallPage] Chime trigger check: call=${!!call}, user=${!!user}, status=${call?.status}, chimeMeeting=${!!chimeMeeting}`);
     if (!call || !user || call.status !== 'active' || chimeMeeting) return;
+    
     const fetchMeeting = async () => {
       try {
+        console.log(`[VideoCallPage] Calling createChimeMeeting for callId=${call.id}`);
         const res = await base44.functions.invoke('createChimeMeeting', { callId: call.id });
+        console.log(`[VideoCallPage] Response:`, res.data);
         if (res?.data?.Meeting) {
+          console.log(`[Chime] ✓ Meeting created: ${res.data.Meeting.MeetingId}`);
+          console.log(`[Chime] ✓ Attendee: ${res.data.Attendee.AttendeeId}`);
           setChimeMeeting(res.data.Meeting);
           setChimeAttendee(res.data.Attendee);
-          console.log('[Chime] Meeting info received');
+        } else {
+          console.error('[Chime] No Meeting in response:', res);
         }
       } catch (e) {
-        console.warn('[Chime] meeting fetch failed:', e);
+        console.error('[Chime] meeting fetch failed:', e.message);
       }
     };
     fetchMeeting();
