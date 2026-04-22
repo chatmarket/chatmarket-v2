@@ -5,23 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Radio, Loader2, Image, PhoneCall, CheckCircle2, Users, Clock, Video } from "lucide-react";
+import { Radio, Loader2, Image, CheckCircle2, Users, Clock } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
-const MODE_CALL = "call";
 
 export default function GoLive() {
   const navigate = useNavigate();
-  const prevCallCountRef = useRef(null);
+
   const [user, setUser] = useState(null);
   const [mode, setMode] = useState(MODE_SELECT);
   const [creating, setCreating] = useState(false);
-  const [waiting, setWaiting] = useState(false);
-  const queryClient = useQueryClient();
   const [liveStreamId, setLiveStreamId] = useState(null);
   const [ivsStream, setIvsStream] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -59,41 +56,7 @@ export default function GoLive() {
     enabled: !!user,
   });
 
-  const { data: pendingCalls = [] } = useQuery({
-    queryKey: ["pending-calls", channels[0]?.id],
-    queryFn: () => base44.entities.VideoCall.filter({ callee_channel_id: channels[0].id, status: "pending" }, "-created_date", 20),
-    enabled: !!channels[0]?.id && waiting,
-    refetchInterval: waiting ? 4000 : false,
-  });
 
-  const handleAcceptCall = (call) => navigate(`/call/${call.id}`);
-
-  const handleDeclineCall = async (call) => {
-    await base44.entities.VideoCall.update(call.id, { status: "declined" });
-    queryClient.invalidateQueries({ queryKey: ["pending-calls", channels[0]?.id] });
-    toast.info("通話申請を断りました。");
-  };
-
-  useEffect(() => {
-    if (!waiting) return;
-    if (prevCallCountRef.current === null) {
-      prevCallCountRef.current = pendingCalls.length;
-      return;
-    }
-    if (pendingCalls.length > prevCallCountRef.current) {
-      pendingCalls.slice(prevCallCountRef.current).forEach((call) => {
-        toast.success(
-          <div onClick={() => handleAcceptCall(call)} className="cursor-pointer hover:opacity-80 transition-opacity">
-            <p className="font-bold">📞 通話申し込みが届きました</p>
-            <p className="text-sm">{call.caller_name || call.caller_email}</p>
-            <p className="text-xs opacity-70 mt-1">クリックして通話を開始</p>
-          </div>,
-          { duration: 10000 }
-        );
-      });
-    }
-    prevCallCountRef.current = pendingCalls.length;
-  }, [pendingCalls.length, waiting]);
 
   const handleStart = async (e) => {
     e.preventDefault();
@@ -175,7 +138,7 @@ export default function GoLive() {
           <h1 className="text-2xl font-black text-white mb-1">配信・通話モードを選択</h1>
           <p className="text-muted-foreground text-sm">用途に合わせて選んでください</p>
         </div>
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="w-full grid grid-cols-1 gap-4">
           {/* 1対多ライブ配信 */}
           <button
             onClick={() => requireAuth(() => setMode(MODE_LIVE))}
@@ -193,22 +156,7 @@ export default function GoLive() {
             </span>
           </button>
 
-          {/* 1対1ビデオ通話 */}
-          <button
-            onClick={() => requireAuth(() => navigate("/call-slots"))}
-            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group text-left"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
-              <Video className="w-8 h-8 text-primary" />
-            </div>
-            <div>
-              <p className="font-black text-white text-lg mb-1">1対1 ビデオ通話</p>
-              <p className="text-muted-foreground text-sm leading-relaxed">ファンと1対1でプライベートな通話。通話スロットの管理や着信待機ができます。</p>
-            </div>
-            <span className="mt-auto w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black text-center group-hover:bg-primary/90 transition-colors">
-              通話管理ページへ
-            </span>
-          </button>
+
         </div>
       </div>
     );
