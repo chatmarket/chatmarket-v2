@@ -234,7 +234,14 @@ export default function AppLayout() {
           </Link>
           <div className="flex items-center gap-1">
             <LangSwitcher />
-            {user && <NotificationBell user={user} />}
+            {user && (
+              <>
+                <span className="text-sm font-medium text-foreground max-w-[80px] truncate">
+                  {user.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                </span>
+                <NotificationBell user={user} />
+              </>
+            )}
             {!user && (
               <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs" onClick={() => base44.auth.redirectToLogin()}>
                 ログイン
