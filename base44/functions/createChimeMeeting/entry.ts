@@ -29,7 +29,7 @@ function toHex(bytes) {
 }
 
 async function chimeRequest(method, path, body, accessKeyId, secretAccessKey, region = 'ap-northeast-1') {
-  const service = 'chime-sdk-meetings';
+  const service = 'chime';
   const host = `meetings-chime.${region}.amazonaws.com`;
   const endpoint = `https://${host}${path}`;
 
@@ -99,18 +99,18 @@ Deno.serve(async (req) => {
 
     if (!meetingId) {
       // 新規ミーティング作成
-      const createResult = await chimeRequest(
-        'POST',
-        '/meetings',
-        { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
-        accessKeyId,
-        secretAccessKey
-      );
-      Meeting = createResult.Meeting;
-      meetingId = Meeting.MeetingId;
+        const createResult = await chimeRequest(
+          'POST',
+          '/meetings',
+          { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
+          accessKeyId,
+          secretAccessKey
+        );
+        Meeting = createResult.Meeting;
+        meetingId = Meeting.MeetingId;
 
-      await base44.entities.VideoCall.update(callId, { chime_meeting_id: meetingId });
-      console.log('[Chime] Created meeting:', meetingId);
+        await base44.entities.VideoCall.update(callId, { chime_meeting_id: meetingId });
+        console.log('[Chime] ✓ Created meeting:', meetingId);
     } else {
       // 既存ミーティング取得
       const getResult = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey);
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     );
     const Attendee = attendeeResult.Attendee;
 
-    console.log(`[Chime] Attendee created for ${user.email}`);
+    console.log(`[Chime] ✓ Attendee created for ${user.email} (ID: ${Attendee.AttendeeId})`);
     return Response.json({ Meeting, Attendee });
 
   } catch (error) {
