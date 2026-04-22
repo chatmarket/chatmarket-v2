@@ -7,7 +7,6 @@ import ChatPanel from "../components/chat/ChatPanel.jsx";
 import PaywallModal from "../components/video/PaywallModal";
 import PaywallOverlay from "../components/video/PaywallOverlay";
 import Preview30SecPaywallModal from "../components/video/Preview30SecPaywallModal";
-import { usePreview30SecLock } from "../hooks/usePreview30SecLock";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import { Eye, Calendar, Heart, Maximize, Minimize } from "lucide-react";
@@ -60,19 +59,43 @@ export default function WatchVideo() {
     },
   });
 
-  // video が未定義の間は isPaid=false として扱う（Hook はトップレベルで常に呼ぶ必要がある）
+  // ---- 【鉄壁実装】30秒プレビューロック（インライン）----
+  const lockStateRef = useRef({ isLocked: false });
   const isPaidForHook = video ? (!video.is_free && video.price > 0) : false;
+  const previewLockEnabled = isPaidForHook && !hasPurchased;
 
-  // ---- 【鉄壁実装】30秒プレビューロック + 完全DOM操作ブロック ----
-  const { unlock } = usePreview30SecLock({
-    videoRef,
-    enabled: isPaidForHook && !hasPurchased,
-    onLimitReached: () => {
-      setPreviewEnded(true);
-      setShowPaywall(true);
-    },
-    previewSeconds: FREE_PREVIEW_SECONDS,
-  });
+  useEffect(() => {
+    if (!previewLockEnabled || !videoRef?.current) return;
+    const v = videoRef.current;
+    const handleTimeUpdate = () => {
+      if (v.currentTime >= FREE_PREVIEW_SECONDS) {
+        if (!lockStateRef.current.isLocked) {
+          v.pause();
+          lockStateRef.current.isLocked = true;
+          setPreviewEnded(true);
+          setShowPaywall(true);
+        }
+        v.currentTime = FREE_PREVIEW_SECONDS - 0.01;
+      }
+    };
+    v.addEventListener("timeupdate", handleTimeUpdate);
+    return () => v.removeEventListener("timeupdate", handleTimeUpdate);
+  }, [previewLockEnabled]);
+
+  useEffect(() => {
+    if (!previewLockEnabled || !videoRef?.current) return;
+    const v = videoRef.current;
+    const handleSeeking = () => {
+      if (lockStateRef.current.isLocked && v.currentTime >= FREE_PREVIEW_SECONDS) {
+        v.currentTime = FREE_PREVIEW_SECONDS - 0.01;
+        v.pause();
+      }
+    };
+    v.addEventListener("seeking", handleSeeking);
+    return () => v.removeEventListener("seeking", handleSeeking);
+  }, [previewLockEnabled]);
+
+  const unlock = () => { lockStateRef.current.isLocked = false; };
 
   // Check if user already purchased
   useEffect(() => {
