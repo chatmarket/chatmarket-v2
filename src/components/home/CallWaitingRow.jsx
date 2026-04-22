@@ -70,11 +70,13 @@ export default function CallWaitingRow({ user }) {
     gcTime: 60000,
   });
 
-  // 待機中のチャンネルと通常のチャンネルとフリートライアルをマージ（重複排除）
-  const allChannels = [...waitingChannels, ...trialChannels, ...callChannels];
-  const uniqueChannels = Array.from(
-    new Map(allChannels.map((c) => [c.id, c])).values()
-  );
+  // 待機中のチャンネルと通常のチャンネルとフリートライアルをマージ（重複排除・待機中を優先）
+  const channelMap = new Map();
+  // 優先順位: 待機中 > トライアル > 通常
+  callChannels.forEach((c) => channelMap.set(c.id, c));
+  trialChannels.forEach((c) => channelMap.set(c.id, c));
+  waitingChannels.forEach((c) => channelMap.set(c.id, c));
+  const uniqueChannels = Array.from(channelMap.values());
 
   if (uniqueChannels.length === 0) return (
     <section className="space-y-4">
