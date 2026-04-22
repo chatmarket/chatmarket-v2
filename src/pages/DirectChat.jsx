@@ -138,6 +138,7 @@ export default function DirectChat() {
       is_paid: false,
       price: 0,
       thread_id: threadId,
+      message: "",
     });
     setCallModal({ callId: call.id, otherName: channel.name });
   };
