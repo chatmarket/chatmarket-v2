@@ -30,7 +30,7 @@ function toHex(bytes) {
 
 async function chimeRequest(method, path, body, accessKeyId, secretAccessKey, region = 'ap-northeast-1') {
   const service = 'chime';
-  const host = `meetings-chime.${region}.amazonaws.com`;
+  const host = `chime.${region}.amazonaws.com`;
   const endpoint = `https://${host}${path}`;
 
   const now = new Date();
@@ -93,6 +93,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'AWS credentials not configured' }, { status: 500 });
     }
 
+    // ★ CRITICAL: 通話ステータスを 'active' に強制更新（シグナリング開始前）
+    console.log(`[Chime] Force status update: ${callId} -> active`);
+    await base44.entities.VideoCall.update(callId, { status: 'active', billing_started_at: new Date().toISOString() });
+
     // ★ CRITICAL: DB から最新の chime_meeting_id を必ず取得（race condition 防止）
     const freshCall = await base44.entities.VideoCall.filter({ id: callId });
     let meetingId = freshCall[0]?.chime_meeting_id;
@@ -105,17 +109,18 @@ Deno.serve(async (req) => {
         '/meetings',
         { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
         accessKeyId,
-        secretAccessKey
+        secretAccessKey,
+        'ap-northeast-1'
       );
       Meeting = createResult.Meeting;
       meetingId = Meeting.MeetingId;
 
       // ★ DB に保存
       await base44.entities.VideoCall.update(callId, { chime_meeting_id: meetingId });
-      console.log('[Chime] ✓ Created meeting:', meetingId);
+      console.log('[Chime] ✓ Created meeting:', meetingId, '| ICE Server Region: ap-northeast-1');
     } else {
       // ★ 既に作成済みのミーティングに参加（2番目に到着した側）
-      const getResult = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey);
+      const getResult = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey, 'ap-northeast-1');
       Meeting = getResult.Meeting;
       console.log('[Chime] ✓ Joined existing meeting:', meetingId);
     }
