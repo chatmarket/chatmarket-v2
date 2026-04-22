@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
 import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 import VideoEditPanel from "../components/channel/VideoEditPanel";
@@ -80,6 +81,14 @@ export default function MyChannel() {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     await base44.entities.Channel.update(channel.id, { avatar_url: file_url });
     queryClient.invalidateQueries({ queryKey: ["my-channels"] });
+  };
+
+  const handleToggleCallEnabled = async (newValue) => {
+    if (!channel) return;
+    await base44.entities.Channel.update(channel.id, { call_enabled: newValue });
+    queryClient.invalidateQueries({ queryKey: ["my-channels"] });
+    // ★ Home の待機チャンネル一覧をリアルタイムで更新
+    queryClient.invalidateQueries({ queryKey: ["call-waiting-channels"] });
   };
 
   if (!user) return null;
@@ -180,6 +189,19 @@ export default function MyChannel() {
               </Button>
             </Link>
           </div>
+        </div>
+
+        {/* 通話受付スイッチ */}
+        <div className="mt-6 bg-secondary/50 rounded-xl border border-border/30 p-4 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-sm flex items-center gap-2">
+              <PhoneCall className="w-4 h-4 text-primary" /> 1対1ビデオ通話
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {channel.call_enabled ? "受付中" : "受付停止中"}
+            </p>
+          </div>
+          <Switch checked={channel.call_enabled || false} onCheckedChange={handleToggleCallEnabled} />
         </div>
 
         {/* Stats */}

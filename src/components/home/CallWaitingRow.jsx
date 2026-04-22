@@ -18,7 +18,6 @@ export default function CallWaitingRow({ user }) {
     queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 20),
     staleTime: 60000,
     gcTime: 120000,
-    refetchInterval: 30000,
   });
 
   // フリートライアルメールのチャンネル取得
