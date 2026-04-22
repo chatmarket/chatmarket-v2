@@ -48,21 +48,29 @@ export default function CallWaitingRow({ user }) {
   const { data: waitingChannels = [] } = useQuery({
     queryKey: ["waiting-channels", [...new Set(waitingCalls.map(c => c.callee_channel_id).filter(Boolean))].sort().join(",")],
     queryFn: async () => {
-      if (waitingCalls.length === 0) return [];
+      if (waitingCalls.length === 0) { console.log("[CallWaitingRow] No waiting calls"); return []; }
       const uniqueChannelIds = [...new Set(
         waitingCalls
           .map((c) => c.callee_channel_id)
           .filter(Boolean)
       )].slice(0, 10);
       
+      console.log("[CallWaitingRow] Fetching channels for IDs:", uniqueChannelIds);
+      
       if (uniqueChannelIds.length === 0) return [];
       
       const channels = await Promise.all(
-        uniqueChannelIds.map((channelId) =>
-          base44.entities.Channel.filter({ id: channelId }).then((r) => r[0])
-        )
+        uniqueChannelIds.map((channelId) => {
+          console.log(`[CallWaitingRow] Fetching channel ID: ${channelId}`);
+          return base44.entities.Channel.filter({ id: channelId }).then((r) => {
+            console.log(`[CallWaitingRow] Filter result for ${channelId}:`, r);
+            return r[0];
+          });
+        })
       );
-      return channels.filter(Boolean);
+      const filtered = channels.filter(Boolean);
+      console.log("[CallWaitingRow] Final waitingChannels after filter:", filtered);
+      return filtered;
     },
     staleTime: 30000,
     gcTime: 60000,
@@ -75,6 +83,10 @@ export default function CallWaitingRow({ user }) {
   trialChannels.forEach((c) => channelMap.set(c.id, c));
   waitingChannels.forEach((c) => channelMap.set(c.id, c));
   const uniqueChannels = Array.from(channelMap.values());
+  console.log("[CallWaitingRow] callChannels:", callChannels.map(c => ({ id: c.id, name: c.name })));
+  console.log("[CallWaitingRow] trialChannels:", trialChannels.map(c => ({ id: c.id, name: c.name })));
+  console.log("[CallWaitingRow] waitingChannels:", waitingChannels.map(c => ({ id: c.id, name: c.name })));
+  console.log("[CallWaitingRow] Final uniqueChannels:", uniqueChannels.map(c => ({ id: c.id, name: c.name })));
 
   if (uniqueChannels.length === 0) return (
     <section className="space-y-4">

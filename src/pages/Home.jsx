@@ -125,7 +125,11 @@ export default function Home() {
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels-all"],
-    queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 30),
+    queryFn: async () => {
+      const result = await base44.entities.Channel.list("-monthly_revenue_coins", 30);
+      console.log("[Home] Channels API response:", result);
+      return result;
+    },
     enabled: true,
     staleTime: 600000,
     gcTime: 1200000,
