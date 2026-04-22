@@ -251,6 +251,14 @@ export default function AppLayout() {
             {user ? (
               <>
                 <NotificationBell user={user} />
+                <Link to="/my-channel" className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground max-w-[100px] truncate">
+                    {user.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                  </span>
+                </Link>
                 <Link to="/upload">
                   <Button size="sm" variant="ghost" className="gap-2 text-sm">
                     <Upload className="w-4 h-4" />アップロード
@@ -261,9 +269,6 @@ export default function AppLayout() {
                     <Radio className="w-4 h-4" />ライブ配信
                   </Button>
                 </Link>
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary" />
-                </div>
               </>
             ) : (
               <>
