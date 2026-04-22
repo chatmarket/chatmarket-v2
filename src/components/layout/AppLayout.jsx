@@ -47,7 +47,7 @@ const CREATOR_ITEMS = [
   { path: "/revenue", icon: Wallet, label: "収益管理" },
   { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
   { path: "/call-waiting", icon: PhoneCall, label: "通話待機画面", highlight: true },
-  { path: "/call-slots", icon: Phone, label: "通話枠設定" },
+
   { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
   { path: "/equipment", icon: ShoppingBag, label: "機材ガイド" },
   { path: "/forum", icon: MessageSquare, label: "掲示板" },

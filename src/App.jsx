@@ -34,7 +34,6 @@ import Recruit from '@/pages/Recruit';
 import VideoCallPage from '@/pages/VideoCallPage';
 import VideoCallRequest from '@/pages/VideoCallRequest';
 import CallHistory from '@/pages/CallHistory';
-import CallSlotManage from '@/pages/CallSlotManage';
 import CallWaitingRoom from '@/pages/CallWaitingRoom';
 import CreatorChat from '@/pages/CreatorChat';
 import WithdrawalRequest from '@/pages/WithdrawalRequest';
@@ -113,7 +112,6 @@ export default function App() {
             <Route path="/video-call/:callId" element={<VideoCallPage />} />
             <Route path="/call-request/:channelId" element={<VideoCallRequest />} />
             <Route path="/call-history" element={<CallHistory />} />
-            <Route path="/call-slots" element={<CallSlotManage />} />
             <Route path="/call-waiting" element={<CallWaitingRoom />} />
             <Route path="/creator-chat" element={<CreatorChat />} />
             <Route path="/withdrawal-request" element={<WithdrawalRequest />} />

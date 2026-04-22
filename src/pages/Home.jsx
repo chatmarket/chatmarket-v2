@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap, PhoneCall, PhoneOff } from "lucide-react";
+import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap, PhoneCall, PhoneOff, Settings, X } from "lucide-react";
 import { isBefore } from "date-fns";
 import { toast } from "sonner";
 import { t } from "@/lib/i18n";
@@ -34,6 +34,9 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [myChannel, setMyChannel] = useState(null);
   const [togglingWait, setTogglingWait] = useState(false);
+  const [showCallSettings, setShowCallSettings] = useState(false);
+  const [callSettingsForm, setCallSettingsForm] = useState({ duration: 30, price: 150 });
+  const [savingSettings, setSavingSettings] = useState(false);
   const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,6 +60,33 @@ export default function Home() {
       }).catch(() => {});
     });
   }, []);
+
+  const openCallSettings = () => {
+    setCallSettingsForm({
+      duration: myChannel?.default_call_duration_minutes || 30,
+      price: myChannel?.call_price_30min || 150,
+    });
+    setShowCallSettings(true);
+  };
+
+  const handleSaveCallSettings = async () => {
+    if (!myChannel) return;
+    const { duration, price } = callSettingsForm;
+    const minPrice = Math.ceil((duration / 15) * 150);
+    if (price < minPrice) {
+      toast.error(`${duration}分の最低料金は¥${minPrice}です（150円/15分）`);
+      return;
+    }
+    setSavingSettings(true);
+    const update = { default_call_duration_minutes: duration };
+    [15, 30, 45, 60].forEach((m) => { update[`call_price_${m}min`] = Math.round((price / duration) * m); });
+    update[`call_price_${duration}min`] = price;
+    await base44.entities.Channel.update(myChannel.id, update);
+    setMyChannel({ ...myChannel, ...update });
+    setSavingSettings(false);
+    setShowCallSettings(false);
+    toast.success("通話設定を保存しました");
+  };
 
   const handleToggleWaiting = async () => {
     if (!myChannel) {
@@ -331,15 +361,91 @@ export default function Home() {
               {myChannel.call_enabled ? "ファンに「今すぐ通話可能」と表示中" : "ONにするとファンからチャットで声がかかります"}
             </p>
           </div>
-          <Button
-            onClick={handleToggleWaiting}
-            disabled={togglingWait}
-            className={`shrink-0 gap-2 ${myChannel.call_enabled ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
-          >
-            {myChannel.call_enabled
-              ? <><PhoneOff className="w-4 h-4" />待機を停止</>
-              : <><PhoneCall className="w-4 h-4" />待機中にする</>}
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={openCallSettings}
+              className="w-9 h-9 rounded-xl border border-border/50 bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+              title="通話設定"
+            >
+              <Settings className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <Button
+              onClick={handleToggleWaiting}
+              disabled={togglingWait}
+              className={`gap-2 ${myChannel.call_enabled ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+            >
+              {myChannel.call_enabled
+                ? <><PhoneOff className="w-4 h-4" />待機を停止</>
+                : <><PhoneCall className="w-4 h-4" />待機中にする</>}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 通話設定モーダル */}
+      {showCallSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-card border border-border/50 rounded-2xl p-6 max-w-sm w-full mx-4 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-black text-base flex items-center gap-2">
+                <Settings className="w-4 h-4 text-primary" /> 通話設定
+              </h3>
+              <button onClick={() => setShowCallSettings(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">通話時間</label>
+                <select
+                  value={callSettingsForm.duration}
+                  onChange={(e) => {
+                    const d = parseInt(e.target.value);
+                    setCallSettingsForm((f) => ({ ...f, duration: d, price: Math.max(f.price, Math.ceil((d / 15) * 150)) }));
+                  }}
+                  className="w-full rounded-xl bg-secondary border-0 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  <option value={15}>15分</option>
+                  <option value={30}>30分</option>
+                  <option value={60}>60分</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  料金（円）
+                  <span className="ml-2 text-muted-foreground font-normal">
+                    最低 ¥{Math.ceil((callSettingsForm.duration / 15) * 150)}
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={Math.ceil((callSettingsForm.duration / 15) * 150)}
+                  step={10}
+                  value={callSettingsForm.price}
+                  onChange={(e) => setCallSettingsForm((f) => ({ ...f, price: parseInt(e.target.value) || 0 }))}
+                  className="w-full rounded-xl bg-secondary border-0 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setShowCallSettings(false)}
+                className="flex-1 py-2.5 rounded-xl border border-border/50 text-sm font-semibold hover:bg-secondary transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveCallSettings}
+                disabled={savingSettings}
+                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-black transition-colors disabled:opacity-50"
+              >
+                {savingSettings ? "保存中..." : "保存"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
