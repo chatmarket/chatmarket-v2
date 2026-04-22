@@ -310,14 +310,62 @@ export default function VideoCallPage() {
     });
   }, []);
 
+  // 着信イベント受信フラグ + 自動応答
+  const [incomingCallDetected, setIncomingCallDetected] = useState(false);
+  const autoAcceptTimeoutRef = useRef(null);
+
   const { data: call, refetch: refetchCall } = useQuery({
     queryKey: ["videocall", callId],
     queryFn: async () => {
       const calls = await base44.entities.VideoCall.filter({ id: callId });
       return calls[0];
     },
-    refetchInterval: 3000,
+    refetchInterval: 2000,
   });
+
+  // ★ CRITICAL: ライバー側が pending 着信を受け取ったら自動応答
+  useEffect(() => {
+    if (!call || !user || call.status !== 'pending') return;
+    
+    // callee（ライバー）が pending を見たら
+    if (call.callee_email === user.email && !incomingCallDetected) {
+      setIncomingCallDetected(true);
+      console.log('[VideoCallPage] 🔔 INCOMING CALL DETECTED (pending):', {
+        callId: call.id,
+        caller: call.caller_email,
+        callee: call.callee_email,
+      });
+      
+      // 1秒後に自動 accept
+      autoAcceptTimeoutRef.current = setTimeout(async () => {
+        console.log('[VideoCallPage] ⚡ AUTO ACCEPTING in 1 second...');
+        try {
+          await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
+          console.log('[VideoCallPage] ✅ Call auto-accepted -> status: accepted');
+          setTimeout(() => refetchCall(), 300);
+        } catch (err) {
+          console.error('[VideoCallPage] ❌ Auto-accept failed:', err);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
+    };
+  }, [call?.id, call?.status, user?.email, call?.callee_email, incomingCallDetected]);
+
+  // ★ VideoCall リアルタイム購読
+  useEffect(() => {
+    if (!callId) return;
+    console.log('[VideoCallPage] 📡 Subscribing to VideoCall events for:', callId);
+    const unsub = base44.entities.VideoCall.subscribe((event) => {
+      if (event.id === callId) {
+        console.log('[VideoCallPage] 📬 VideoCall event:', { type: event.type, status: event.data?.status });
+        refetchCall();
+      }
+    });
+    return unsub;
+  }, [callId]);
 
   // calleeのchannelを取得（延長料金設定用）
   const { data: calleeChannel } = useQuery({
@@ -788,14 +836,78 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* ★ CRITICAL: pending 着信 → 自動応答ボタン（ライバーのみ） */}
+      {call?.status === 'pending' && user?.email === call?.callee_email && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-card border-2 border-primary rounded-3xl p-8 max-w-sm w-full mx-4 text-center space-y-6"
+          >
+            <div className="flex justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center"
+              >
+                <PhoneCall className="w-10 h-10 text-primary" />
+              </motion.div>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-2xl font-black text-white">着信！</p>
+              <p className="text-lg text-primary font-bold">{call?.caller_name || call?.caller_email}</p>
+              <p className="text-sm text-muted-foreground">からの通話リクエストです</p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+              className="text-xs text-muted-foreground"
+            >
+              自動で受け付けます...
+            </motion.div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={async () => {
+                  if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
+                  navigate(-1);
+                }}
+              >
+                <PhoneOff className="w-4 h-4" /> 拒否
+              </Button>
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90 gap-2 font-black"
+                onClick={async () => {
+                  if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
+                  try {
+                    await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
+                    console.log('[VideoCallPage] ✅ Manually accepted');
+                    setTimeout(() => refetchCall(), 300);
+                  } catch (err) {
+                    console.error('[VideoCallPage] ❌ Accept failed:', err);
+                  }
+                }}
+              >
+                <Phone className="w-4 h-4" /> 通話開始
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* ABR Manager */}
       <AdaptiveBitrateManager
         enabled={abrEnabled && call?.status === "active"}
         currentQuality={videoQuality}
         onQualityChange={(newQuality) => {
           setVideoQuality(newQuality);
-          setAbrEnabled(false); // 自動切り替え後、一時的に無効化して手動操作を優先
-          setTimeout(() => setAbrEnabled(true), 5000); // 5秒後に再有効化
+          setAbrEnabled(false);
+          setTimeout(() => setAbrEnabled(true), 5000);
         }}
         measureInterval={3000}
       />
