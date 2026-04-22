@@ -45,15 +45,23 @@ export default function CallWaitingRow({ user }) {
     refetchInterval: 30000,
   });
 
-  // 待機中のチャンネルを取得（VideoCallのcallee_emailから）
+  // 待機中のチャンネルを取得（VideoCallのcallee_channel_idから）
   const { data: waitingChannels = [] } = useQuery({
     queryKey: ["waiting-channels", waitingCalls.length],
     queryFn: async () => {
       if (waitingCalls.length === 0) return [];
-      const uniqueEmails = [...new Set(waitingCalls.map((c) => c.callee_email))].slice(0, 10);
+      // ★ callee_channel_id が設定されている場合はそれを優先、未設定の場合はcallee_emailから検索
+      const uniqueChannelIds = [...new Set(
+        waitingCalls
+          .map((c) => c.callee_channel_id)
+          .filter(Boolean)
+      )].slice(0, 10);
+      
+      if (uniqueChannelIds.length === 0) return [];
+      
       const channels = await Promise.all(
-        uniqueEmails.map((email) =>
-          base44.entities.Channel.filter({ owner_email: email }).then((r) => r[0])
+        uniqueChannelIds.map((channelId) =>
+          base44.entities.Channel.filter({ id: channelId }).then((r) => r[0])
         )
       );
       return channels.filter(Boolean);
