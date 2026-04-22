@@ -81,7 +81,7 @@ export default function CallWaitingWidget({ user, channel }) {
     await base44.entities.VideoCall.update(call.id, { status: "accepted" });
     setIncomingCall(null);
     queryClient.invalidateQueries({ queryKey: ["widget-pending-calls", channel?.id] });
-    navigate(`/call/${call.id}`);
+    navigate(`/video-call/${call.id}`);
   };
 
   const handleDecline = async (call) => {

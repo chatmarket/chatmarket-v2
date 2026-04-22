@@ -220,7 +220,7 @@ export default function VideoCallRequest() {
       if (updated?.status === "accepted" || updated?.status === "calling" || updated?.status === "active") {
         clearInterval(poll);
         toast.success("承諾されました！通話ルームへ移動します…");
-        navigate(`/call/${callId}`);
+        navigate(`/video-call/${callId}`);
       } else if (updated?.status === "declined" || updated?.status === "cancelled" || attempts >= MAX_ATTEMPTS) {
         clearInterval(poll);
         if (updated?.status === "declined") toast.error("通話が断られました。");

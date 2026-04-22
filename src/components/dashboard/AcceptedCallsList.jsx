@@ -48,7 +48,7 @@ export default function AcceptedCallsList({ userEmail }) {
               </div>
             </div>
             <Button
-              onClick={() => navigate(`/call/${call.id}`)}
+              onClick={() => navigate(`/video-call/${call.id}`)}
               className="bg-green-600 hover:bg-green-700 text-white font-bold gap-2 h-10"
             >
               <PhoneCall className="w-4 h-4" />
