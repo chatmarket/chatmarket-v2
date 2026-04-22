@@ -323,35 +323,18 @@ export default function VideoCallPage() {
     refetchInterval: 2000,
   });
 
-  // ★ CRITICAL: ライバー側が pending 着信を受け取ったら自動応答
+  // ★ pending 状態では何もしない。ライバーが手動で「通話開始」を押すまで待機
   useEffect(() => {
     if (!call || !user || call.status !== 'pending') return;
     
-    // callee（ライバー）が pending を見たら
     if (call.callee_email === user.email && !incomingCallDetected) {
       setIncomingCallDetected(true);
-      console.log('[VideoCallPage] 🔔 INCOMING CALL DETECTED (pending):', {
+      console.log('[VideoCallPage] 🔔 INCOMING CALL DETECTED:', {
         callId: call.id,
         caller: call.caller_email,
         callee: call.callee_email,
       });
-      
-      // 1秒後に自動 accept
-      autoAcceptTimeoutRef.current = setTimeout(async () => {
-        console.log('[VideoCallPage] ⚡ AUTO ACCEPTING in 1 second...');
-        try {
-          await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
-          console.log('[VideoCallPage] ✅ Call auto-accepted -> status: accepted');
-          setTimeout(() => refetchCall(), 300);
-        } catch (err) {
-          console.error('[VideoCallPage] ❌ Auto-accept failed:', err);
-        }
-      }, 1000);
     }
-
-    return () => {
-      if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
-    };
   }, [call?.id, call?.status, user?.email, call?.callee_email, incomingCallDetected]);
 
   // ★ VideoCall リアルタイム購読
@@ -883,13 +866,14 @@ export default function VideoCallPage() {
               <Button
                 className="flex-1 bg-primary hover:bg-primary/90 gap-2 font-black"
                 onClick={async () => {
-                  if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
                   try {
+                    console.log('[VideoCallPage] ⚡ Streamer accepting call...');
                     await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
-                    console.log('[VideoCallPage] ✅ Manually accepted');
-                    setTimeout(() => refetchCall(), 300);
+                    console.log('[VideoCallPage] ✅ Call accepted -> status: accepted');
+                    setTimeout(() => refetchCall(), 500);
                   } catch (err) {
                     console.error('[VideoCallPage] ❌ Accept failed:', err);
+                    toast.error('承認に失敗しました');
                   }
                 }}
               >
