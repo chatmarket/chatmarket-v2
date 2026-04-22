@@ -7,10 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-  PhoneCall, ArrowLeft, Info, AlertCircle, Lock, Calendar, Clock, Coins, CheckCircle2, Phone, MessageCircle
+  PhoneCall, ArrowLeft, Info, AlertCircle, Calendar, Clock, Coins, CheckCircle2, Phone
 } from "lucide-react";
 import { toast } from "sonner";
-import MessageModal from "../components/chat/MessageModal";
 
 function makeThreadId(emailA, emailB) {
   return [emailA, emailB].sort().join("__");
@@ -85,7 +84,6 @@ export default function VideoCallRequest() {
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [preferredDate, setPreferredDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -288,14 +286,7 @@ export default function VideoCallRequest() {
             <CheckCircle2 className="w-3 h-3 text-primary" /> 通話受付中
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowMessageModal(true)}>
-            <MessageCircle className="w-3 h-3 mr-1" /> メッセージ
-          </Button>
-          <Link to={`/chat/${channelId}`}>
-            <Button size="sm" variant="outline" className="text-xs">チャットへ</Button>
-          </Link>
-        </div>
+
       </div>
 
       {/* 配信者スケジュール */}
@@ -611,15 +602,7 @@ export default function VideoCallRequest() {
         )}
       </form>
 
-      {/* Message Modal */}
-      {showMessageModal && user && channel && (
-        <MessageModal
-          channel={{ id: channel.id, name: channel.name, owner_email: channel.owner_email }}
-          video={null}
-          user={user}
-          onClose={() => setShowMessageModal(false)}
-        />
-      )}
+
     </div>
   );
 }
