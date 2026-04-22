@@ -53,11 +53,18 @@ export default function Home() {
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(async (u) => {
-        setUser(u);
-        const channels = await base44.entities.Channel.filter({ owner_email: u.email });
-        if (channels[0]) setMyChannel(channels[0]);
-      }).catch(() => {});
+      if (isAuth) {
+        base44.auth.me().then(async (u) => {
+          setUser(u);
+          const channels = await base44.entities.Channel.filter({ owner_email: u.email });
+          if (channels[0]) {
+            setMyChannel(channels[0]);
+            console.log("[Home] myChannel loaded:", channels[0].name);
+          } else {
+            console.log("[Home] No channel found for", u.email);
+          }
+        }).catch((err) => console.error("[Home] Auth error:", err));
+      }
     });
   }, []);
 
@@ -90,7 +97,21 @@ export default function Home() {
 
   const handleToggleWaiting = async () => {
     if (!myChannel) {
-      toast.error("チャンネルを先に作成してください");
+      // 自動的にチャンネルを再取得
+      try {
+        const channels = await base44.entities.Channel.filter({ owner_email: user.email });
+        if (!channels[0]) {
+          toast.error("チャンネルを先に作成してください");
+          return;
+        }
+        setMyChannel(channels[0]);
+        await base44.entities.Channel.update(channels[0].id, { call_enabled: true });
+        setMyChannel({ ...channels[0], call_enabled: true });
+        toast.success("✅ 待機中にしました。ファンに「今すぐ通話可能」と表示されます。");
+      } catch (err) {
+        toast.error("エラー: " + err.message);
+      }
+      setTogglingWait(false);
       return;
     }
     setTogglingWait(true);
@@ -353,7 +374,7 @@ export default function Home() {
       </div>
 
       {/* クリエイター向け: 待機中にするボタン */}
-      {user && myChannel && ( /* テスト中：条件コメントアウト: user.email === myChannel.owner_email && */
+      {user && (myChannel || true) && ( /* テスト中：条件コメントアウト: user.email === myChannel.owner_email && */
         <div className={`rounded-2xl p-4 border flex items-center justify-between gap-4 ${myChannel.call_enabled ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
           <div>
             <p className="font-bold text-sm flex items-center gap-2">
