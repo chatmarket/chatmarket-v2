@@ -332,11 +332,10 @@ export default function CallWaitingRoom() {
       {/* ヘッダー */}
       <div className="flex items-center gap-3">
         <PhoneCall className="w-6 h-6 text-primary" />
-        <h1 className="text-xl font-black">通話予約枠管理</h1>
+        <h1 className="text-xl font-black">1対1ビデオ通話</h1>
       </div>
 
-      {/* 待機ウィジェット + 承認済み通話 */}
-      <CallWaitingWidget user={user} channel={channel} />
+      {/* 承認済み通話のみ表示（待機ウィジェット削除） */}
       <AcceptedCallsList userEmail={user?.email} />
 
       {/* メインエリア: カメラ + チャット */}

@@ -46,8 +46,7 @@ const CREATOR_ITEMS = [
   { path: "/vod-analytics", icon: TrendingUp, label: "VOD分析" },
   { path: "/revenue", icon: Wallet, label: "収益管理" },
   { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
-  { path: "/call-waiting", icon: PhoneCall, label: "通話待機画面", highlight: true },
-
+  { path: "/call-waiting", icon: Phone, label: "1対1ビデオ通話", highlight: true },
   { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
   { path: "/equipment", icon: ShoppingBag, label: "機材ガイド" },
   { path: "/forum", icon: MessageSquare, label: "掲示板" },
