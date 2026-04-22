@@ -9,15 +9,17 @@ import ScrollRow from "./ScrollRow";
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
 
-  // 全チャンネル一覧取得（フィルタなし）
+  // 全チャンネル一覧取得（フィルタなし、全チャンネルを待機リストとして表示）
   const { data: allChannels = [] } = useQuery({
     queryKey: ["all-channels-no-filter"],
-    queryFn: () => base44.entities.Channel.list("-updated_date", 50),
+    queryFn: async () => {
+      const channels = await base44.entities.Channel.list("-updated_date", 100);
+      console.log("[CallWaitingRow] All channels fetched:", channels.map(c => ({ id: c.id, name: c.name, owner_email: c.owner_email, call_enabled: c.call_enabled })));
+      return channels;
+    },
     staleTime: 60000,
     gcTime: 120000,
   });
-
-  console.log("[CallWaitingRow] All channels fetched:", allChannels.map(c => ({ id: c.id, name: c.name, owner_email: c.owner_email })));
 
   if (allChannels.length === 0) return (
     <section className="space-y-4">
