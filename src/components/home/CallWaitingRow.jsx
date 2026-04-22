@@ -128,6 +128,9 @@ export default function CallWaitingRow({ user }) {
 }
 
 function CallWaitingCard({ channel, onChat, isOwnChannel }) {
+  // ★ DEBUG: チャンネルIDが正しいことを確認
+  console.log(`[CallWaitingCard] channel.id: ${channel.id}, channel.name: ${channel.name}, channel.owner_email: ${channel.owner_email}`);
+  
   return (
     <div className="w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border bg-green-500/10 border-green-500/40">
       {/* Avatar */}
@@ -147,7 +150,7 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-2">
-        <Link to={`/channel/${channel.id}`}>
+        <Link to={`/channel/${channel.id}`} onClick={() => console.log(`[Link Click] channel.id: ${channel.id}`)}>
           <p className="font-bold text-xs truncate hover:text-primary transition-colors">{channel.name}</p>
         </Link>
         {channel.call_theme && (
