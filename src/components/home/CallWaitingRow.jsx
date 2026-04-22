@@ -76,19 +76,14 @@ export default function CallWaitingRow({ user }) {
     gcTime: 60000,
   });
 
-  // 待機中のチャンネルと通常のチャンネルとフリートライアルをマージ（重複排除・待機中を優先）
-  const channelMap = new Map();
-  // 優先順位: 待機中 > トライアル > 通常
-  callChannels.forEach((c) => channelMap.set(c.id, c));
-  trialChannels.forEach((c) => channelMap.set(c.id, c));
-  waitingChannels.forEach((c) => channelMap.set(c.id, c));
-  const uniqueChannels = Array.from(channelMap.values());
-  console.log("[CallWaitingRow] callChannels:", callChannels.map(c => ({ id: c.id, name: c.name })));
-  console.log("[CallWaitingRow] trialChannels:", trialChannels.map(c => ({ id: c.id, name: c.name })));
-  console.log("[CallWaitingRow] waitingChannels:", waitingChannels.map(c => ({ id: c.id, name: c.name })));
-  console.log("[CallWaitingRow] Final uniqueChannels:", uniqueChannels.map(c => ({ id: c.id, name: c.name })));
+  // 待機中のチャンネル = 実際にVideoCall.statusが"waiting"のチャンネル
+  // trialChannelsは補足的に表示（待機中がない場合のみ）
+  const displayChannels = waitingChannels.length > 0 ? waitingChannels : trialChannels;
+  console.log("[CallWaitingRow] waitingChannels count:", waitingChannels.length, waitingChannels.map(c => ({ id: c.id, name: c.name })));
+  console.log("[CallWaitingRow] trialChannels count:", trialChannels.length, trialChannels.map(c => ({ id: c.id, name: c.name })));
+  console.log("[CallWaitingRow] displayChannels (final):", displayChannels.map(c => ({ id: c.id, name: c.name })));
 
-  if (uniqueChannels.length === 0) return (
+  if (displayChannels.length === 0) return (
     <section className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="w-2.5 h-2.5 rounded-full bg-green-400/40 shrink-0" />
@@ -108,9 +103,9 @@ export default function CallWaitingRow({ user }) {
   // 待機中のVideoCallマップを作成（channel_idで検索可能に）
   const waitingCallMap = new Map(waitingCalls.map((c) => [c.callee_channel_id, c]));
 
-  const half = Math.ceil(uniqueChannels.length / 2);
-  const rows = uniqueChannels.length > 0
-    ? [uniqueChannels.slice(0, half), uniqueChannels.slice(half)].filter(r => r.length > 0)
+  const half = Math.ceil(displayChannels.length / 2);
+  const rows = displayChannels.length > 0
+    ? [displayChannels.slice(0, half), displayChannels.slice(half)].filter(r => r.length > 0)
     : [];
   const isOwnChannel = (channel) => user && channel.owner_email === user.email;
 
