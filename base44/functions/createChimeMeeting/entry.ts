@@ -93,28 +93,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'AWS credentials not configured' }, { status: 500 });
     }
 
-    // 既存ミーティングIDがあれば参加者追加のみ
-    let meetingId = call.chime_meeting_id;
+    // ★ CRITICAL: DB から最新の chime_meeting_id を必ず取得（race condition 防止）
+    const freshCall = await base44.entities.VideoCall.filter({ id: callId });
+    let meetingId = freshCall[0]?.chime_meeting_id;
     let Meeting;
 
     if (!meetingId) {
-      // 新規ミーティング作成
-        const createResult = await chimeRequest(
-          'POST',
-          '/meetings',
-          { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
-          accessKeyId,
-          secretAccessKey
-        );
-        Meeting = createResult.Meeting;
-        meetingId = Meeting.MeetingId;
+      // 新規ミーティング作成（最初に到着した側のみ）
+      const createResult = await chimeRequest(
+        'POST',
+        '/meetings',
+        { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
+        accessKeyId,
+        secretAccessKey
+      );
+      Meeting = createResult.Meeting;
+      meetingId = Meeting.MeetingId;
 
-        await base44.entities.VideoCall.update(callId, { chime_meeting_id: meetingId });
-        console.log('[Chime] ✓ Created meeting:', meetingId);
+      // ★ DB に保存
+      await base44.entities.VideoCall.update(callId, { chime_meeting_id: meetingId });
+      console.log('[Chime] ✓ Created meeting:', meetingId);
     } else {
-      // 既存ミーティング取得
+      // ★ 既に作成済みのミーティングに参加（2番目に到着した側）
       const getResult = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey);
       Meeting = getResult.Meeting;
+      console.log('[Chime] ✓ Joined existing meeting:', meetingId);
     }
 
     // 参加者追加
