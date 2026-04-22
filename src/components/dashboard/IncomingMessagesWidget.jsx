@@ -6,7 +6,7 @@ import React, { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { MessageCircle, ExternalLink } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -75,7 +75,7 @@ export default function IncomingMessagesWidget({ userEmail }) {
             return (
               <Link
                 key={msg.id}
-                to={`/chat/${msg.to_channel_id}`}
+                to={`/creator-chat?fromEmail=${encodeURIComponent(msg.from_email)}`}
                 className={`flex items-start gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors ${isUnread ? "bg-primary/5" : ""}`}
               >
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold text-muted-foreground">
