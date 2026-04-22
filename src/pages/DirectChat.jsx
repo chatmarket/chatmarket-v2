@@ -60,7 +60,7 @@ export default function DirectChat() {
     refetchInterval: 2000,
   });
 
-  // アクティブ/承認済み通話チェック
+  // アクティブ/承認済み通話チェック（モーダル表示用）
   const { data: pendingCall } = useQuery({
     queryKey: ["chat-pending-call", threadId],
     queryFn: async () => {
@@ -71,6 +71,25 @@ export default function DirectChat() {
     enabled: !!threadId,
     refetchInterval: 2000,
   });
+
+  // accepted / active になったら両者を自動リダイレクト
+  const redirectedRef = useRef(false);
+  const { data: acceptedCall } = useQuery({
+    queryKey: ["chat-accepted-call", threadId],
+    queryFn: async () => {
+      if (!threadId) return null;
+      const calls = await base44.entities.VideoCall.filter({ thread_id: threadId });
+      return calls.find((c) => ["accepted", "active"].includes(c.status)) || null;
+    },
+    enabled: !!threadId,
+    refetchInterval: 2000,
+  });
+
+  useEffect(() => {
+    if (!acceptedCall || redirectedRef.current) return;
+    redirectedRef.current = true;
+    navigate(`/video-call/${acceptedCall.id}`);
+  }, [acceptedCall?.id, acceptedCall?.status]);
 
   // クリエイターが返信したら通話モーダルを自動表示
   useEffect(() => {

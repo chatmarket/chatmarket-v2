@@ -32,10 +32,10 @@ export default function CallChatPanel({ call, user }) {
         console.log(`📞 Polled call status: ${updatedCall.status}`);
         setCurrentCall(updatedCall);
 
-        // accepted → VideoCallPageへリダイレクト
-        if (updatedCall.status === "accepted" && !redirectedRef.current) {
+        // accepted / active → VideoCallPageへリダイレクト（caller・callee両者）
+        if (["accepted", "active"].includes(updatedCall.status) && !redirectedRef.current) {
           redirectedRef.current = true;
-          console.log(`✅ Call accepted! Redirecting to /video-call/${call.id}`);
+          console.log(`✅ Call ${updatedCall.status}! Redirecting to /video-call/${call.id}`);
           setTimeout(() => navigate(`/video-call/${call.id}`), 300);
         }
       } catch (err) {
