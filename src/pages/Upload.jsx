@@ -107,11 +107,12 @@ export default function Upload() {
           return;
         }
         // Upload directly to S3
-        console.log('[UPLOAD] S3 upload starting...');
+        const uploadContentType = videoFile.type || 'video/mp4';
+        console.log('[UPLOAD] S3 upload starting... Content-Type:', uploadContentType);
         const uploadRes = await fetch(s3Res.data.presignedUrl, {
           method: 'PUT',
           body: videoFile,
-          headers: { 'Content-Type': videoFile.type || 'video/mp4' },
+          headers: { 'Content-Type': uploadContentType },
         });
         if (!uploadRes.ok) {
           const errorText = await uploadRes.text();

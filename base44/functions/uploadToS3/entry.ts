@@ -77,17 +77,18 @@ Deno.serve(async (req) => {
 
     const algorithm = 'AWS4-HMAC-SHA256';
     const credential = `${accessKeyId}/${dateStamp}/${region}/s3/aws4_request`;
-    const signedHeaders = 'host';
+    const contentType = fileType || 'video/mp4';
+    const signedHeaders = 'content-type;host';
 
     const canonicalQueryString = [
       `X-Amz-Algorithm=${encodeURIComponent(algorithm)}`,
       `X-Amz-Credential=${encodeURIComponent(credential)}`,
       `X-Amz-Date=${amzDate}`,
       `X-Amz-Expires=${expiry}`,
-      `X-Amz-SignedHeaders=${signedHeaders}`,
+      `X-Amz-SignedHeaders=${encodeURIComponent(signedHeaders)}`,
     ].join('&');
 
-    const canonicalHeaders = `host:${host}\n`;
+    const canonicalHeaders = `content-type:${contentType}\nhost:${host}\n`;
     const payloadHash = 'UNSIGNED-PAYLOAD';
     const canonicalRequest = ['PUT', `/${key}`, canonicalQueryString, canonicalHeaders, signedHeaders, payloadHash].join('\n');
 
