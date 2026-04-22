@@ -28,9 +28,9 @@ function toHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function chimeRequest(method, path, body, accessKeyId, secretAccessKey, region = 'us-east-1') {
-  const service = 'chime';
-  const host = `service.chime.aws.amazon.com`;
+async function chimeRequest(method, path, body, accessKeyId, secretAccessKey, region = 'ap-northeast-1') {
+  const service = 'chime-sdk-meetings';
+  const host = `meetings-chime.${region}.amazonaws.com`;
   const endpoint = `https://${host}${path}`;
 
   const now = new Date();
