@@ -22,6 +22,8 @@ export default function ChimeVideoCall({
 }) {
   const sessionRef = useRef(null);
   const [error, setError] = useState(null);
+  const streamRef = useRef(null);
+  const iceLoggedRef = useRef(false);
 
   useEffect(() => {
     if (!meetingResponse || !attendeeResponse) return;
@@ -40,35 +42,108 @@ export default function ChimeVideoCall({
         if (!tileState.localTile && !tileState.isContent && remoteVideoRef?.current) {
           audioVideo.bindVideoElement(tileState.tileId, remoteVideoRef.current);
           console.log('[Chime] ✓ Remote video bound to DOM');
+          
+          // ★ iOS対策: リモート接続後、ローカルストリームを再アクティベーション
+          if (streamRef.current) {
+            console.log('[Chime] 🔄 Re-activating local stream (iOS workaround)');
+            streamRef.current.getTracks().forEach(track => {
+              track.enabled = true;
+              console.log(`[Chime]   → Track ${track.kind} re-enabled`);
+            });
+          }
+          
           onConnected?.();
+        }
+      },
+      connectionDidBecomePoor: () => {
+        console.warn('[Chime] ⚠️ Connection degraded - attempting stream reactivation');
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => {
+            track.enabled = false;
+            setTimeout(() => { track.enabled = true; }, 100);
+          });
         }
       },
     });
 
+    // ★ ICE Candidate ログ（iOSデバッグ）
+    const pcObserver = {
+      onicecandidate: (event) => {
+        if (event.candidate) {
+          console.log('[Chime] 🌐 ICE Candidate:', {
+            type: event.candidate.type,
+            address: event.candidate.address?.substring(0, 10) + '***',
+            port: event.candidate.port,
+            protocol: event.candidate.protocol,
+          });
+        }
+      },
+      oniceconnectionstatechange: (event) => {
+        console.log('[Chime] 🔗 ICE Connection State:', event.target?.iceConnectionState);
+      },
+      onconnectionstatechange: (event) => {
+        console.log('[Chime] 📡 RTCPeerConnection State:', event.target?.connectionState);
+      },
+    };
+    // iOS対応: PeerConnectionのhookは Chime SDK内部で管理されているため、
+    // ここでは ログレベルを上げてデバッグ情報を捕捉
+    if (logger) logger.setLogLevel(LogLevel.INFO);
+
     const start = async () => {
       try {
+        console.log('[Chime] 🚀 Starting session (getUserMedia in progress)');
+        
+        // ★ iOS対策: User Gesture内で明示的にgetUserMediaを呼び出す
+        try {
+          streamRef.current = await navigator.mediaDevices.getUserMedia({ 
+            audio: true, 
+            video: { 
+              width: { ideal: 1280 }, 
+              height: { ideal: 720 }
+            } 
+          });
+          console.log('[Chime] ✓ getUserMedia success - Tracks acquired:', {
+            audio: streamRef.current.getAudioTracks().length > 0,
+            video: streamRef.current.getVideoTracks().length > 0,
+          });
+        } catch (gumErr) {
+          console.warn('[Chime] ⚠️ getUserMedia denied (iOS may require user approval):', gumErr.message);
+          // フォールバック: Chimeの自動デバイス検出に委ねる
+        }
+        
         // マイク
         const audioInputs = await audioVideo.listAudioInputDevices();
         if (audioInputs.length > 0) {
           await audioVideo.startAudioInput(audioInputs[0].deviceId);
+          console.log('[Chime] ✓ Audio input started');
         }
         // カメラ
         const videoInputs = await audioVideo.listVideoInputDevices();
         if (videoInputs.length > 0) {
           await audioVideo.startVideoInput(videoInputs[0].deviceId);
+          console.log('[Chime] ✓ Video input started');
         }
 
         // ローカルプレビュー
         audioVideo.startVideoPreviewForVideoInput(localVideoRef?.current);
+        console.log('[Chime] ✓ Video preview bound');
 
         // 音声出力
         audioVideo.bindAudioElement(document.createElement('audio'));
 
         audioVideo.start();
         audioVideo.startLocalVideoTile();
-        console.log('[Chime] ✓ Session started');
+        
+        // ★ ストリーム確認ログ
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track, i) => {
+            console.log(`[Chime] ✓ Track ${i} (${track.kind}): enabled=${track.enabled}, readyState=${track.readyState}`);
+          });
+        }
+        
+        console.log('[Chime] ✓ Session started - Ready to send/receive');
       } catch (err) {
-        console.error('[Chime] Error:', err);
+        console.error('[Chime] ❌ Session start error:', err);
         setError(err.message);
       }
     };
@@ -76,6 +151,14 @@ export default function ChimeVideoCall({
     start();
 
     return () => {
+      // ★ ストリーム停止時のクリーンアップ
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+          console.log(`[Chime] ✓ Track ${track.kind} stopped`);
+        });
+        streamRef.current = null;
+      }
       audioVideo.stopLocalVideoTile();
       audioVideo.stop();
       sessionRef.current = null;
