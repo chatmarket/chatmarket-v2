@@ -30,9 +30,15 @@ export default function ChannelPage() {
   const { data: channel, isLoading } = useQuery({
     queryKey: ["channel", channelId],
     queryFn: async () => {
+      console.log(`[ChannelPage] Fetching channel with ID: ${channelId}`);
       const channels = await base44.entities.Channel.filter({ id: channelId });
+      console.log(`[ChannelPage] Filter result:`, channels);
+      if (channels.length === 0) {
+        console.error(`[ChannelPage] No channel found for ID: ${channelId}`);
+      }
       return channels[0];
     },
+    enabled: !!channelId,
   });
 
   const { data: videos = [] } = useQuery({

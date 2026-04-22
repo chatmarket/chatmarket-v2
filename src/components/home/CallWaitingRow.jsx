@@ -9,88 +9,24 @@ import ScrollRow from "./ScrollRow";
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
 
-  // フリートライアルメール
-  const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
-
-  // call_enabled=true のチャンネル一覧取得
-  const { data: callChannels = [] } = useQuery({
-    queryKey: ["call-waiting-channels"],
-    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 20),
+  // 全チャンネル一覧取得（フィルタなし）
+  const { data: allChannels = [] } = useQuery({
+    queryKey: ["all-channels-no-filter"],
+    queryFn: () => base44.entities.Channel.list("-updated_date", 50),
     staleTime: 60000,
     gcTime: 120000,
   });
 
-  // フリートライアルメールのチャンネル取得
-  const { data: trialChannels = [] } = useQuery({
-    queryKey: ["trial-channels"],
-    queryFn: async () => {
-      const channels = await Promise.all(
-        FREE_TRIAL_EMAILS.map((email) =>
-          base44.entities.Channel.filter({ owner_email: email }).then((r) => r[0])
-        )
-      );
-      return channels.filter(Boolean);
-    },
-    staleTime: 300000,
-    gcTime: 600000,
-  });
+  console.log("[CallWaitingRow] All channels fetched:", allChannels.map(c => ({ id: c.id, name: c.name, owner_email: c.owner_email })));
 
-  // 待機中のVideoCall取得
-  const { data: waitingCalls = [] } = useQuery({
-    queryKey: ["waiting-video-calls"],
-    queryFn: () => base44.entities.VideoCall.filter({ status: "waiting" }, "-created_date", 20),
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchInterval: 30000,
-  });
-
-  // 待機中のチャンネルを取得（VideoCallのcallee_channel_idから）
-  const { data: waitingChannels = [] } = useQuery({
-    queryKey: ["waiting-channels", [...new Set(waitingCalls.map(c => c.callee_channel_id).filter(Boolean))].sort().join(",")],
-    queryFn: async () => {
-      if (waitingCalls.length === 0) { console.log("[CallWaitingRow] No waiting calls"); return []; }
-      const uniqueChannelIds = [...new Set(
-        waitingCalls
-          .map((c) => c.callee_channel_id)
-          .filter(Boolean)
-      )].slice(0, 10);
-      
-      console.log("[CallWaitingRow] Fetching channels for IDs:", uniqueChannelIds);
-      
-      if (uniqueChannelIds.length === 0) return [];
-      
-      const channels = await Promise.all(
-        uniqueChannelIds.map((channelId) => {
-          console.log(`[CallWaitingRow] Fetching channel ID: ${channelId}`);
-          return base44.entities.Channel.filter({ id: channelId }).then((r) => {
-            console.log(`[CallWaitingRow] Filter result for ${channelId}:`, r);
-            return r[0];
-          });
-        })
-      );
-      const filtered = channels.filter(Boolean);
-      console.log("[CallWaitingRow] Final waitingChannels after filter:", filtered);
-      return filtered;
-    },
-    staleTime: 30000,
-    gcTime: 60000,
-  });
-
-  // 待機中のチャンネル = 実際にVideoCall.statusが"waiting"のチャンネル
-  // trialChannelsは補足的に表示（待機中がない場合のみ）
-  const displayChannels = waitingChannels.length > 0 ? waitingChannels : trialChannels;
-  console.log("[CallWaitingRow] waitingChannels count:", waitingChannels.length, waitingChannels.map(c => ({ id: c.id, name: c.name })));
-  console.log("[CallWaitingRow] trialChannels count:", trialChannels.length, trialChannels.map(c => ({ id: c.id, name: c.name })));
-  console.log("[CallWaitingRow] displayChannels (final):", displayChannels.map(c => ({ id: c.id, name: c.name })));
-
-  if (displayChannels.length === 0) return (
+  if (allChannels.length === 0) return (
     <section className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="w-2.5 h-2.5 rounded-full bg-green-400/40 shrink-0" />
         <h2 className="text-xl font-bold">1対1ビデオ通話　待機中</h2>
       </div>
       <div className="bg-card border border-border/50 rounded-xl p-5 text-center space-y-3">
-        <p className="text-sm text-muted-foreground">現在待機中のライバーはいません</p>
+        <p className="text-sm text-muted-foreground">チャンネルデータを読み込み中...</p>
       </div>
     </section>
   );
@@ -100,12 +36,9 @@ export default function CallWaitingRow({ user }) {
     navigate(`/chat/${channelId}`);
   };
 
-  // 待機中のVideoCallマップを作成（channel_idで検索可能に）
-  const waitingCallMap = new Map(waitingCalls.map((c) => [c.callee_channel_id, c]));
-
-  const half = Math.ceil(displayChannels.length / 2);
-  const rows = displayChannels.length > 0
-    ? [displayChannels.slice(0, half), displayChannels.slice(half)].filter(r => r.length > 0)
+  const half = Math.ceil(allChannels.length / 2);
+  const rows = allChannels.length > 0
+    ? [allChannels.slice(0, half), allChannels.slice(half)].filter(r => r.length > 0)
     : [];
   const isOwnChannel = (channel) => user && channel.owner_email === user.email;
 
@@ -125,17 +58,20 @@ export default function CallWaitingRow({ user }) {
         <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
       </p>
 
-      {/* 複数段の横スクロール（6列×2段） */}
+      {/* 全チャンネル表示（フィルタなし） */}
       {rows.map((row, idx) => (
         <ScrollRow key={idx} cardWidth={200}>
-          {row.map((channel) => (
-            <CallWaitingCard
-              key={channel.id}
-              channel={channel}
-              onChat={() => handleChat(channel.id)}
-              isOwnChannel={isOwnChannel(channel)}
-            />
-          ))}
+          {row.map((channel) => {
+            console.log(`[CallWaitingCard RENDER] id=${channel.id}, name=${channel.name}`);
+            return (
+              <CallWaitingCard
+                key={channel.id}
+                channel={channel}
+                onChat={() => handleChat(channel.id)}
+                isOwnChannel={isOwnChannel(channel)}
+              />
+            );
+          })}
         </ScrollRow>
       ))}
     </section>
