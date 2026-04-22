@@ -14,7 +14,7 @@ export default function CallWaitingRow({ user }) {
     queryKey: ["all-channels-no-filter"],
     queryFn: async () => {
       const channels = await base44.entities.Channel.list("-updated_date", 100);
-      console.log("[CallWaitingRow] All channels fetched:", channels.map(c => ({ id: c.id, name: c.name, owner_email: c.owner_email, call_enabled: c.call_enabled })));
+      // console.log("[CallWaitingRow] All channels fetched:", channels.map(c => ({ id: c.id, name: c.name, owner_email: c.owner_email, call_enabled: c?.call_enabled })));
       return channels;
     },
     staleTime: 60000,
@@ -64,7 +64,7 @@ export default function CallWaitingRow({ user }) {
       {rows.map((row, idx) => (
         <ScrollRow key={idx} cardWidth={200}>
           {row.map((channel) => {
-            console.log(`[CallWaitingCard RENDER] id=${channel.id}, name=${channel.name}`);
+            // console.log(`[CallWaitingCard RENDER] id=${channel.id}, name=${channel.name}`);
             return (
               <CallWaitingCard
                 key={channel.id}
@@ -106,7 +106,7 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
         <Link to={`/channel/${cardChannelId}`}>
           <p className="font-bold text-xs truncate hover:text-primary transition-colors">{cardChannelName}</p>
         </Link>
-        {channel.call_theme && (
+        {channel?.call_theme && (
           <p className="text-[11px] text-primary bg-primary/10 px-2 py-1 rounded line-clamp-2">
             {channel.call_theme}
           </p>

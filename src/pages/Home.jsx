@@ -56,11 +56,11 @@ export default function Home() {
       if (isAuth) {
         base44.auth.me().then(async (u) => {
           setUser(u);
-          console.log("Current User:", u.email);
+          // console.log("Current User:", u.email);
           const channels = await base44.entities.Channel.list("-updated_date", 100);
           if (channels[0]) {
             setMyChannel(channels[0]);
-            console.log("My Channel ID:", channels[0].id);
+            // console.log("My Channel ID:", channels[0].id);
           }
         }).catch((err) => console.error("[Home] Auth error:", err));
       }
@@ -68,6 +68,7 @@ export default function Home() {
   }, []);
 
   const openCallSettings = () => {
+    if (!myChannel) return;
     setCallSettingsForm({
       duration: myChannel?.default_call_duration_minutes || 30,
       price: myChannel?.call_price_30min || 150,
@@ -374,15 +375,15 @@ export default function Home() {
 
       {/* クリエイター向け: 待機中にするボタン */}
       {user && myChannel && (
-        <div className={`rounded-2xl p-4 border flex items-center justify-between gap-4 ${myChannel.call_enabled ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
+        <div className={`rounded-2xl p-4 border flex items-center justify-between gap-4 ${myChannel?.call_enabled ? "bg-green-500/10 border-green-500/40" : "bg-card border-border/50"}`}>
           <div>
             <p className="font-bold text-sm flex items-center gap-2">
-              {myChannel.call_enabled
+              {myChannel?.call_enabled
                 ? <><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />今すぐ通話可能（待機中）</>
                 : <><span className="w-2 h-2 rounded-full bg-zinc-500 inline-block" />通話待機 オフ</>}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {myChannel.call_enabled ? "ファンに「今すぐ通話可能」と表示中" : "ONにするとファンからチャットで声がかかります"}
+              {myChannel?.call_enabled ? "ファンに「今すぐ通話可能」と表示中" : "ONにするとファンからチャットで声がかかります"}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -396,9 +397,9 @@ export default function Home() {
             <Button
               onClick={handleToggleWaiting}
               disabled={togglingWait}
-              className={`gap-2 ${myChannel.call_enabled ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+              className={`gap-2 ${myChannel?.call_enabled ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
             >
-              {myChannel.call_enabled
+              {myChannel?.call_enabled
                 ? <><PhoneOff className="w-4 h-4" />待機を停止</>
                 : <><PhoneCall className="w-4 h-4" />待機中にする</>}
             </Button>
