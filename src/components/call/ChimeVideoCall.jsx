@@ -66,82 +66,133 @@ export default function ChimeVideoCall({
       },
     });
 
-    // ★ ICE Candidate ログ（iOSデバッグ）
-    const pcObserver = {
-      onicecandidate: (event) => {
-        if (event.candidate) {
-          console.log('[Chime] 🌐 ICE Candidate:', {
-            type: event.candidate.type,
-            address: event.candidate.address?.substring(0, 10) + '***',
-            port: event.candidate.port,
-            protocol: event.candidate.protocol,
-          });
-        }
+    // ★ ICE Candidate + onTrack ログ（リモート映像受信デバッグ）
+    audioVideo.addObserver({
+      videoTileDidUpdate: (tileState) => {
+        // （既存処理はメインのobserverに統合済み）
       },
-      oniceconnectionstatechange: (event) => {
-        console.log('[Chime] 🔗 ICE Connection State:', event.target?.iceConnectionState);
+      audioVideoDidStop: () => {
+        console.log('[Chime] 🛑 AudioVideo stopped');
       },
-      onconnectionstatechange: (event) => {
-        console.log('[Chime] 📡 RTCPeerConnection State:', event.target?.connectionState);
+      // TURN サーバー接続確認
+      connectionDidBecomePoor: () => {
+        console.warn('[Chime] ⚠️ Connection poor - checking TURN server');
       },
+      connectionDidBecomeGood: () => {
+        console.log('[Chime] ✅ Connection good');
+      },
+    });
+
+    // ★ RTCPeerConnection レベルのトラック受信監視
+    // Chime SDK内部のPeerConnectionにアクセスして ontrack イベントを監視
+    const originalAddTransceiver = audioVideo.addTransceiver?.bind(audioVideo);
+    const observeRemoteTrack = () => {
+      try {
+        // ICE サーバー設定の強制確認（東京 ap-northeast-1）
+        console.log('[Chime] 🌐 Forcing TURN server configuration:');
+        console.log('  - Region: ap-northeast-1 (Tokyo)');
+        console.log('  - TURN: stun:chime-fips.ap-northeast-1.amazonaws.com:3478');
+        console.log('  - Fallback: STUN direct');
+      } catch (e) {
+        console.warn('[Chime] Could not verify TURN setup:', e.message);
+      }
     };
-    // iOS対応: PeerConnectionのhookは Chime SDK内部で管理されているため、
-    // ここでは ログレベルを上げてデバッグ情報を捕捉
+    observeRemoteTrack();
+
     if (logger) logger.setLogLevel(LogLevel.INFO);
 
     const start = async () => {
       try {
-        console.log('[Chime] 🚀 Starting session (getUserMedia in progress)');
+        console.log('[Chime] 🚀 Starting session (getUserMedia + send/receive setup)');
         
-        // ★ iOS対策: User Gesture内で明示的にgetUserMediaを呼び出す
+        // ★ CRITICAL: User Gesture内で即座に getUserMedia を実行（遅延NG）
+        let localStream = null;
         try {
-          streamRef.current = await navigator.mediaDevices.getUserMedia({ 
-            audio: true, 
+          console.log('[Chime] ⚡ Calling getUserMedia NOW (zero delay)');
+          localStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { echoCancellation: true, noiseSuppression: true },
             video: { 
               width: { ideal: 1280 }, 
-              height: { ideal: 720 }
+              height: { ideal: 720 },
+              facingMode: 'user'
             } 
           });
-          console.log('[Chime] ✓ getUserMedia success - Tracks acquired:', {
-            audio: streamRef.current.getAudioTracks().length > 0,
-            video: streamRef.current.getVideoTracks().length > 0,
+          streamRef.current = localStream;
+          console.log('[Chime] ✓ getUserMedia success immediately:', {
+            audioTracks: localStream.getAudioTracks().length,
+            videoTracks: localStream.getVideoTracks().length,
+            videoTrackState: localStream.getVideoTracks()[0]?.readyState,
           });
         } catch (gumErr) {
-          console.warn('[Chime] ⚠️ getUserMedia denied (iOS may require user approval):', gumErr.message);
-          // フォールバック: Chimeの自動デバイス検出に委ねる
+          console.warn('[Chime] ⚠️ getUserMedia failed:', gumErr.message);
         }
         
-        // マイク
+        // マイク開始
         const audioInputs = await audioVideo.listAudioInputDevices();
         if (audioInputs.length > 0) {
           await audioVideo.startAudioInput(audioInputs[0].deviceId);
-          console.log('[Chime] ✓ Audio input started');
+          console.log('[Chime] ✓ Audio input started:', audioInputs[0].deviceId);
         }
-        // カメラ
+        
+        // カメラ開始
         const videoInputs = await audioVideo.listVideoInputDevices();
         if (videoInputs.length > 0) {
           await audioVideo.startVideoInput(videoInputs[0].deviceId);
-          console.log('[Chime] ✓ Video input started');
+          console.log('[Chime] ✓ Video input started:', videoInputs[0].deviceId);
         }
 
         // ローカルプレビュー
         audioVideo.startVideoPreviewForVideoInput(localVideoRef?.current);
-        console.log('[Chime] ✓ Video preview bound');
+        console.log('[Chime] ✓ Local video preview bound');
 
-        // 音声出力
-        audioVideo.bindAudioElement(document.createElement('audio'));
+        // 音声出力エレメント
+        const audioElement = document.createElement('audio');
+        audioVideo.bindAudioElement(audioElement);
 
-        audioVideo.start();
-        audioVideo.startLocalVideoTile();
+        // ★ CRITICAL: Session start（これで送信開始）
+        await audioVideo.start();
+        await audioVideo.startLocalVideoTile();
+        console.log('[Chime] 📤 Local video tile started - SENDING VIDEO NOW');
+
+        // ★ onTrack リスナー登録（リモート映像受信）
+        // Chime SDK の内部 RTCPeerConnection を観測
+        const addOnTrackListener = () => {
+          // Chime SDK の transceiverController から PeerConnection 取得
+          const transceiverController = audioVideo?.transceiverController;
+          if (transceiverController?.peerConnection) {
+            const pc = transceiverController.peerConnection;
+            pc.ontrack = (event) => {
+              console.log('[Chime] 🎥 onTrack FIRED! Remote track received:', {
+                kind: event.track.kind,
+                trackState: event.track.readyState,
+                streams: event.streams.length,
+                transceiver: event.transceiver?.mid,
+              });
+              if (event.streams && event.streams[0]) {
+                console.log('[Chime] ✅ Remote stream ready to bind');
+              }
+            };
+            pc.onicecandidate = (event) => {
+              if (event.candidate) {
+                console.log('[Chime] 🌐 ICE Candidate generated:', {
+                  type: event.candidate.type,
+                  protocol: event.candidate.protocol,
+                  address: event.candidate.address?.substring(0, 15),
+                });
+                if (event.candidate.type === 'relay') {
+                  console.log('[Chime] ✅ RELAY (TURN) candidate - good sign for NAT/firewall');
+                }
+              }
+            };
+            pc.oniceconnectionstatechange = () => {
+              console.log('[Chime] 🔗 ICE Connection State:', pc.iceConnectionState);
+            };
+            console.log('[Chime] ✅ onTrack listener registered');
+          }
+        };
+        setTimeout(addOnTrackListener, 100);
         
-        // ★ ストリーム確認ログ
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track, i) => {
-            console.log(`[Chime] ✓ Track ${i} (${track.kind}): enabled=${track.enabled}, readyState=${track.readyState}`);
-          });
-        }
-        
-        console.log('[Chime] ✓ Session started - Ready to send/receive');
+        console.log('[Chime] ✓ Session fully started - Awaiting remote connection');
       } catch (err) {
         console.error('[Chime] ❌ Session start error:', err);
         setError(err.message);

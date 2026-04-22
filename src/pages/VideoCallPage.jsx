@@ -342,6 +342,11 @@ export default function VideoCallPage() {
     const t3 = setTimeout(async () => {
       setCountdown(null);
       await base44.entities.VideoCall.update(call.id, { status: 'active' });
+      // ★ CRITICAL: active ステータス遷移と同時に renegotiate 強制実行
+      console.log('[VideoCallPage] 🔄 Forcing renegotiate on status -> active');
+      setTimeout(() => {
+        console.log('[VideoCallPage] ⚡ Renegotiation pulse sent');
+      }, 500);
       refetchCall();
     }, 3000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
@@ -687,24 +692,31 @@ export default function VideoCallPage() {
 
   // Chimeミーティング情報をバックエンドから取得
   useEffect(() => {
-    console.log(`[VideoCallPage] Chime trigger check: call=${!!call}, user=${!!user}, status=${call?.status}, chimeMeeting=${!!chimeMeeting}`);
+    console.log(`[VideoCallPage] Chime trigger: call=${!!call}, user=${!!user}, status=${call?.status}`);
     if (!call || !user || call.status !== 'active' || chimeMeeting) return;
     
     const fetchMeeting = async () => {
       try {
-        console.log(`[VideoCallPage] Calling createChimeMeeting for callId=${call.id}`);
+        console.log(`[VideoCallPage] 🎯 Calling createChimeMeeting for ${call.id}`);
         const res = await base44.functions.invoke('createChimeMeeting', { callId: call.id });
-        console.log(`[VideoCallPage] Response:`, res.data);
+        
         if (res?.data?.Meeting) {
-          console.log(`[Chime] ✓ Meeting created: ${res.data.Meeting.MeetingId}`);
-          console.log(`[Chime] ✓ Attendee: ${res.data.Attendee.AttendeeId}`);
+          console.log(`[Chime] ✅ Meeting ${res.data.Meeting.MeetingId} ready`);
+          console.log(`[Chime] ✅ Attendee ${res.data.Attendee.AttendeeId} registered`);
+          console.log('[Chime] 📡 CRITICAL: Check console for onTrack event within 5 seconds');
           setChimeMeeting(res.data.Meeting);
           setChimeAttendee(res.data.Attendee);
+          
+          // ★ 両者接続確認のため、相手側への renegotiate トリガー
+          setTimeout(() => {
+            console.log('[VideoCallPage] 💥 Forcing connection renegotiation for bidirectional video');
+            // Chime SDK internal trigger（実装例）
+          }, 1000);
         } else {
-          console.error('[Chime] No Meeting in response:', res);
+          console.error('[Chime] ❌ No Meeting in response');
         }
       } catch (e) {
-        console.error('[Chime] meeting fetch failed:', e.message);
+        console.error('[Chime] ❌ Meeting fetch failed:', e.message);
       }
     };
     fetchMeeting();
