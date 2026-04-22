@@ -79,7 +79,11 @@ export default function DirectChat() {
     queryFn: async () => {
       if (!threadId) return null;
       const calls = await base44.entities.VideoCall.filter({ thread_id: threadId });
-      return calls.find((c) => ["accepted", "active"].includes(c.status)) || null;
+      // ended/declined/cancelled は除外し、最新の accepted/active のみを対象とする
+      const recent = calls
+        .filter((c) => ["accepted", "active"].includes(c.status))
+        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      return recent[0] || null;
     },
     enabled: !!threadId,
     refetchInterval: 2000,

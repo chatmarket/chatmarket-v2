@@ -613,12 +613,14 @@ export default function VideoCallPage() {
       await handleStopRecording();
     }
 
-    // 精算
+    // 精算（active 状態のみ ended に変更）
     if (call && call.status === "active" && user && call.caller_email === user.email) {
       await base44.functions.invoke("videoCallBilling", { call_id: call.id, action: "end" });
-    } else if (call) {
+    } else if (call && call.status === "active") {
+      // callee側が終了した場合
       await base44.entities.VideoCall.update(call.id, { status: "ended" });
     }
+    // active 以外（accepted, pending など）では ended に変更しない
     localStream?.getTracks().forEach((t) => t.stop());
     toast.success("通話を終了しました");
     navigate(-1);

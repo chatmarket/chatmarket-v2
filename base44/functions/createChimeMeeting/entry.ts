@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       const createResult = await chimeRequest(
         'POST',
         '/meetings',
-        { ClientRequestToken: callId, MediaRegion: 'ap-northeast-1' },
+        { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
         accessKeyId,
         secretAccessKey
       );
