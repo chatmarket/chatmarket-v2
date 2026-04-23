@@ -43,7 +43,9 @@ export default function ChimeVideoCall({
         console.log('[Chime] videoTileDidUpdate:', {
           tileId: tileState.tileId,
           localTile: tileState.localTile,
+          isContent: tileState.isContent,
           boundAttendeeId: tileState.boundAttendeeId,
+          active: tileState.active,
         });
 
         if (tileState.localTile) {
@@ -51,15 +53,24 @@ export default function ChimeVideoCall({
           localTileIdRef.current = tileState.tileId;
           if (localVideoRef?.current) {
             audioVideo.bindVideoElement(tileState.tileId, localVideoRef.current);
-            console.log('[Chime] ✓ Local video bound');
+            console.log('[Chime] ✓ Local video bound to tileId:', tileState.tileId);
+          } else {
+            console.warn('[Chime] ⚠️ localVideoRef is null!');
           }
         } else if (!tileState.isContent) {
-          // リモート映像
-          if (remoteVideoRef?.current) {
-            audioVideo.bindVideoElement(tileState.tileId, remoteVideoRef.current);
-            console.log('[Chime] ✓ Remote video bound! Calling onConnected.');
-            onConnected?.();
-          }
+          // リモート映像 - 遅延バインドで確実に実行
+          console.log('[Chime] 🎯 Remote tile detected, binding...');
+          const bindRemote = () => {
+            if (remoteVideoRef?.current) {
+              audioVideo.bindVideoElement(tileState.tileId, remoteVideoRef.current);
+              console.log('[Chime] ✓ Remote video bound to tileId:', tileState.tileId);
+              onConnected?.();
+            } else {
+              console.warn('[Chime] ⚠️ remoteVideoRef is null, retrying in 500ms...');
+              setTimeout(bindRemote, 500);
+            }
+          };
+          bindRemote();
         }
       },
       videoTileWasRemoved: (tileId) => {

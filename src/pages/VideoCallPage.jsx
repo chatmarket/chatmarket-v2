@@ -768,11 +768,16 @@ export default function VideoCallPage() {
   };
 
   // Chimeミーティング情報をバックエンドから取得
-  // accepted/active になるたびに、まだ未接続なら呼ぶ（両者が確実に参加できるよう）
+  // caller: active になったら呼ぶ / callee: accepted or active になったら呼ぶ
   const fetchingMeetingRef = useRef(false);
   useEffect(() => {
-    // active になってから1回だけ呼ぶ（accepted では呼ばない）
-    if (!call || !user || call.status !== 'active') return;
+    if (!call || !user) return;
+    // caller: active のみ / callee: accepted or active
+    const isCaller = user.email === call.caller_email;
+    const shouldFetch = isCaller
+      ? call.status === 'active'
+      : ['accepted', 'active'].includes(call.status);
+    if (!shouldFetch) return;
     if (chimeMeeting || fetchingMeetingRef.current) return;
     fetchingMeetingRef.current = true;
 
