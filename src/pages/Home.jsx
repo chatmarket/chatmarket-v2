@@ -27,6 +27,7 @@ import HeroSlot from "../components/home/HeroSlot";
 import GiantKillingBanner from "../components/home/GiantKillingBanner";
 import MillionaireSupporters from "../components/home/MillionaireSupporters";
 import QualityRevolutionBanner from "../components/home/QualityRevolutionBanner";
+import PpvPricingTable from "../components/home/PpvPricingTable";
 
 
 export default function Home() {
@@ -362,6 +363,11 @@ export default function Home() {
 
         </div>
       </section>
+
+      {/* PPV料金表 */}
+      <div className="px-0">
+        <PpvPricingTable />
+      </div>
 
       {/* 55円革命バナー */}
       <div className="px-0">
