@@ -2,14 +2,71 @@ import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
-import { PhoneCall, Send, Camera, CameraOff, MessageCircle, X, Radio } from "lucide-react";
+import {
+  PhoneCall, PhoneOff, Camera, CameraOff, MessageCircle, X,
+  CheckCircle2, XCircle, Settings, Play, Clock, Coins,
+  ChevronRight, Info, Lock, Send
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-function makeThreadId(emailA, emailB) {
-  return [emailA, emailB].sort().join("__");
-}
+// プラン別機能マトリクス
+const PLAN_FEATURES = {
+  free: {
+    label: "無料プラン",
+    color: "text-muted-foreground",
+    bg: "bg-secondary",
+    border: "border-border",
+    maxDuration: 15,        // 最大15分のみ
+    minPrice: 150,          // 最低150円/15分
+    canSetPrice: false,     // 料金設定不可（固定150円）
+    canSetTitle: true,
+    canSetDescription: false,
+    recordingAllowed: false,
+  },
+  basic: {
+    label: "Basicプラン",
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/30",
+    maxDuration: 60,        // 最大60分
+    minPrice: 150,
+    canSetPrice: true,
+    canSetTitle: true,
+    canSetDescription: true,
+    recordingAllowed: false,
+  },
+  "call-anser": {
+    label: "CALL&ANSERプラン",
+    color: "text-primary",
+    bg: "bg-primary/10",
+    border: "border-primary/30",
+    maxDuration: 120,       // 最大120分（2時間）
+    minPrice: 150,
+    canSetPrice: true,
+    canSetTitle: true,
+    canSetDescription: true,
+    recordingAllowed: true,
+  },
+};
+
+// 15分刻みの時間オプション（最大2時間）
+const DURATION_OPTIONS = [
+  { minutes: 15, label: "15分" },
+  { minutes: 30, label: "30分" },
+  { minutes: 45, label: "45分" },
+  { minutes: 60, label: "1時間" },
+  { minutes: 75, label: "1時間15分" },
+  { minutes: 90, label: "1時間30分" },
+  { minutes: 105, label: "1時間45分" },
+  { minutes: 120, label: "2時間" },
+];
+
+// 料金プリセット（15分あたり）
+const PRICE_PRESETS_PER_15MIN = [150, 300, 500, 1000, 2000, 3000, 5000];
+
+function makeThreadId(a, b) { return [a, b].sort().join("__"); }
 
 function formatTime(dateStr) {
   if (!dateStr) return "";
@@ -23,7 +80,7 @@ function formatTime(dateStr) {
 }
 
 // インラインチャットパネル
-function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
+function InlineChatPanel({ user, fromEmail, fromName }) {
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -45,12 +102,6 @@ function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
     return unsub;
   }, [threadId, queryClient]);
 
-  useEffect(() => {
-    if (!user || !messages.length) return;
-    messages.filter((m) => m.to_channel_owner_email === user.email && !m.is_read)
-      .forEach((m) => base44.entities.DirectChat.update(m.id, { is_read: true }));
-  }, [messages, user]);
-
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const handleSend = async () => {
@@ -62,7 +113,7 @@ function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
       to_channel_owner_email: fromEmail,
       to_channel_id: "",
       to_channel_name: fromName || fromEmail,
-      content: input.trim().slice(0, 50),
+      content: input.trim().slice(0, 200),
       yell_coin: 0,
       thread_id: threadId,
     });
@@ -73,13 +124,8 @@ function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
-            {(fromName || fromEmail || "?")[0].toUpperCase()}
-          </div>
-          <p className="font-bold text-sm">{fromName || fromEmail}</p>
-        </div>
+      <div className="px-3 py-2.5 border-b border-border/50 shrink-0">
+        <p className="font-bold text-sm">{fromName || fromEmail}</p>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 min-h-0">
         {messages.length === 0 && (
@@ -88,8 +134,8 @@ function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
         {messages.map((msg) => {
           const mine = msg.from_email === user.email;
           return (
-            <div key={msg.id} className={`flex gap-1.5 ${mine ? "flex-row-reverse" : "flex-row"}`}>
-              <div className={`max-w-[80%] px-3 py-1.5 rounded-2xl text-sm ${mine ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-secondary text-foreground rounded-tl-sm"}`}>
+            <div key={msg.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] px-3 py-1.5 rounded-2xl text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}>
                 {msg.content}
               </div>
             </div>
@@ -97,14 +143,13 @@ function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
         })}
         <div ref={bottomRef} />
       </div>
-      <div className="px-3 py-2 border-t border-border/50 flex gap-2 items-end shrink-0">
-        <textarea
+      <div className="px-3 py-2 border-t border-border/50 flex gap-2 shrink-0">
+        <input
           value={input}
-          onChange={(e) => setInput(e.target.value.slice(0, 50))}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="メッセージを入力..."
-          rows={1}
-          className="flex-1 resize-none rounded-lg bg-secondary border-0 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+          onChange={(e) => setInput(e.target.value.slice(0, 200))}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+          placeholder="返信..."
+          className="flex-1 rounded-lg bg-secondary border-0 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
         />
         <Button size="icon" onClick={handleSend} disabled={!input.trim() || sending} className="w-8 h-8 shrink-0 bg-primary hover:bg-primary/90">
           <Send className="w-3.5 h-3.5" />
@@ -116,62 +161,70 @@ function InlineChatPanel({ user, fromEmail, fromName, onStartCall }) {
 
 export default function CallWaitingRoom() {
   const [user, setUser] = useState(null);
-  const [selectedThread, setSelectedThread] = useState(null);
-  const [showCameraWipe, setShowCameraWipe] = useState(false);
-  const [camStream, setCamStream] = useState(null);
-  const [incomingCall, setIncomingCall] = useState(null);
-  const [accepting, setAccepting] = useState(false);
-  const wipeVideoRef = useRef(null);
+  const [userPlan, setUserPlan] = useState("free");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // 設定フォーム
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [pricePerUnit, setPricePerUnit] = useState(150); // 15分あたりの料金
+  const [maxDuration, setMaxDuration] = useState(30);    // 最大通話時間（分）
+  const [isWaiting, setIsWaiting] = useState(false);
+
+  // 着信関連
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [accepting, setAccepting] = useState(false);
   const seenCallIds = useRef(new Set());
+  const initialDoneRef = useRef(false);
+
+  // チャット
+  const [selectedThread, setSelectedThread] = useState(null);
+
+  // カメラプレビュー
+  const [camStream, setCamStream] = useState(null);
+  const [showCam, setShowCam] = useState(false);
+  const camRef = useRef(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) base44.auth.me().then((u) => {
+        setUser(u);
+        const plan = u?.plan || (u?.role === "admin" ? "call-anser" : "free");
+        setUserPlan(plan);
+        // プラン別デフォルト設定
+        const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
+        setMaxDuration(Math.min(30, features.maxDuration));
+      }).catch(() => {});
       else base44.auth.redirectToLogin();
     });
   }, []);
 
-  const { data: channel } = useQuery({
-    queryKey: ["waiting-room-channel", user?.email],
-    queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }).then((r) => r[0]),
-    enabled: !!user,
-  });
+  const features = PLAN_FEATURES[userPlan] || PLAN_FEATURES.free;
 
-  // ★ pending コールを3秒ごとにポーリング（callee_email ベース、常時監視）
-  const initialDoneRef = useRef(false);
+  // 着信ポーリング（待機中のみ）
   const { data: pendingCalls = [] } = useQuery({
-    queryKey: ["waiting-room-pending-calls-v2", user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const results = await base44.entities.VideoCall.filter(
-        { callee_email: user.email, status: "pending" },
-        "-created_date",
-        5
-      );
-      console.log(`[CallWaitingRoom] 📞 Polled:`, results.length, 'pending calls for', user.email);
-      return results;
-    },
-    enabled: !!user?.email,
+    queryKey: ["waiting-room-pending-v3", user?.email],
+    queryFn: () => base44.entities.VideoCall.filter(
+      { callee_email: user.email, status: "pending" },
+      "-created_date", 5
+    ),
+    enabled: !!user?.email && isWaiting,
     refetchInterval: 3000,
     refetchIntervalInBackground: true,
   });
 
-  // ★ リアルタイム購読も併用
   useEffect(() => {
     if (!user?.email) return;
     const unsub = base44.entities.VideoCall.subscribe((event) => {
-      const data = event.data;
-      if (data?.callee_email === user.email && data?.status === 'pending') {
-        console.log('[CallWaitingRoom] 🔔 Real-time incoming call:', data.id);
-        queryClient.invalidateQueries({ queryKey: ["waiting-room-pending-calls-v2", user.email] });
+      const d = event.data;
+      if (d?.callee_email === user.email && d?.status === "pending") {
+        queryClient.invalidateQueries({ queryKey: ["waiting-room-pending-v3", user.email] });
       }
     });
-    return () => unsub();
+    return unsub;
   }, [user?.email, queryClient]);
 
-  // ★ 新着着信検出（初回ロード後の新着のみ表示）
   useEffect(() => {
     if (!initialDoneRef.current) {
       pendingCalls.forEach((c) => seenCallIds.current.add(c.id));
@@ -180,53 +233,59 @@ export default function CallWaitingRoom() {
     }
     const newCalls = pendingCalls.filter((c) => !seenCallIds.current.has(c.id));
     if (newCalls.length > 0 && !incomingCall) {
-      console.log('[CallWaitingRoom] 🚨 Showing incoming call modal for:', newCalls[0].id);
       setIncomingCall(newCalls[0]);
       newCalls.forEach((c) => seenCallIds.current.add(c.id));
+      playRingtone();
     }
   }, [pendingCalls]);
 
-  // 受信DM一覧
+  // 受信DM
   const { data: allMessages = [] } = useQuery({
-    queryKey: ["waiting-room-dms", user?.email],
+    queryKey: ["waiting-room-dms-v2", user?.email],
     queryFn: () => base44.entities.DirectChat.filter({ to_channel_owner_email: user.email }, "-created_date", 100),
-    enabled: !!user,
+    enabled: !!user?.email && isWaiting,
     refetchInterval: 5000,
   });
 
-  useEffect(() => {
-    if (!user) return;
-    const unsub = base44.entities.DirectChat.subscribe((e) => {
-      if (e.data?.to_channel_owner_email === user.email) {
-        queryClient.invalidateQueries({ queryKey: ["waiting-room-dms", user.email] });
-      }
-    });
-    return unsub;
-  }, [user, queryClient]);
+  const threadMap = new Map();
+  for (const msg of allMessages) {
+    const tid = msg.thread_id || msg.from_email;
+    if (!threadMap.has(tid)) threadMap.set(tid, msg);
+  }
+  const threads = Array.from(threadMap.values());
+  const unreadCount = allMessages.filter((m) => !m.is_read).length;
 
-  // カメラワイプ開始/停止
-  const toggleCameraWipe = async () => {
-    if (showCameraWipe) {
-      camStream?.getTracks().forEach((t) => t.stop());
-      setCamStream(null);
-      setShowCameraWipe(false);
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        setCamStream(stream);
-        setShowCameraWipe(true);
-        setTimeout(() => {
-          if (wipeVideoRef.current) wipeVideoRef.current.srcObject = stream;
-        }, 100);
-      } catch {
-        toast.error("カメラにアクセスできません");
-      }
-    }
+  const playRingtone = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const beep = (t, f) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = "sine"; o.frequency.setValueAtTime(f, t);
+        g.gain.setValueAtTime(0.4, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        o.start(t); o.stop(t + 0.4);
+      };
+      beep(ctx.currentTime, 880); beep(ctx.currentTime + 0.5, 1100);
+      beep(ctx.currentTime + 1.0, 880); beep(ctx.currentTime + 1.5, 1100);
+    } catch {}
   };
 
-  useEffect(() => () => camStream?.getTracks().forEach((t) => t.stop()), [camStream]);
+  const handleStartWaiting = () => {
+    if (!title.trim()) { toast.error("タイトルを入力してください"); return; }
+    setIsWaiting(true);
+    initialDoneRef.current = false;
+    seenCallIds.current = new Set();
+    toast.success("通話受付を開始しました！着信をお待ちください");
+  };
 
-  // 着信承認
+  const handleStopWaiting = () => {
+    setIsWaiting(false);
+    setIncomingCall(null);
+    stopCam();
+    toast.info("通話受付を終了しました");
+  };
+
   const handleAccept = async () => {
     if (!incomingCall) return;
     setAccepting(true);
@@ -243,201 +302,411 @@ export default function CallWaitingRoom() {
     toast.info("通話を断りました");
   };
 
-  const threadMap = new Map();
-  for (const msg of allMessages) {
-    const tid = msg.thread_id || msg.from_email;
-    if (!threadMap.has(tid)) threadMap.set(tid, msg);
-  }
-  const threads = Array.from(threadMap.values());
-  const unreadCount = allMessages.filter((m) => !m.is_read).length;
+  const toggleCam = async () => {
+    if (showCam) { stopCam(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      setCamStream(stream);
+      setShowCam(true);
+      setTimeout(() => { if (camRef.current) camRef.current.srcObject = stream; }, 100);
+    } catch { toast.error("カメラにアクセスできません"); }
+  };
+  const stopCam = () => {
+    camStream?.getTracks().forEach((t) => t.stop());
+    setCamStream(null); setShowCam(false);
+  };
+  useEffect(() => () => stopCam(), []);
 
-  if (!user) return null;
+  if (!user) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+    </div>
+  );
 
-  const avatarUrl = channel?.avatar_url;
+  const totalPrice = Math.round((pricePerUnit / 15) * maxDuration);
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-      {/* ヘッダー */}
-      <div className="flex items-center gap-3">
-        <PhoneCall className="w-6 h-6 text-primary" />
-        <h1 className="text-xl font-black">1対1ビデオ通話 待機室</h1>
-        <span className="flex items-center gap-1 text-xs bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded-full font-semibold">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" /> 待機中
-        </span>
-      </div>
+  // ===== 設定画面 =====
+  if (!isWaiting) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* ヘッダー */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <PhoneCall className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-black">1対1ビデオ通話を受け付ける</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">設定を確認して「受付開始」を押すと着信待機状態になります</p>
+        </div>
 
-      {/* メインエリア */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* 左: サムネイル表示エリア */}
-        <div className="space-y-3">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">待機中の表示（ファンには見えません）</p>
-          <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
-            {/* プロフィール画像サムネイル（デフォルト） */}
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="プロフィール" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card">
-                <Radio className="w-16 h-16 text-primary/30" />
-              </div>
-            )}
-            {/* 待機中オーバーレイ */}
-            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3">
-              {avatarUrl && (
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-primary/60 shadow-2xl">
-                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
-              <div className="flex items-center gap-2 bg-black/70 rounded-full px-4 py-2 border border-primary/40">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
-                <span className="text-white font-bold text-sm">待機中 — ファンからの着信を待っています</span>
-              </div>
+        {/* 現在のプラン表示 */}
+        <div className={`rounded-2xl border p-4 ${features.bg} ${features.border}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`font-black text-sm ${features.color}`}>{features.label}</span>
+              <span className="text-xs text-muted-foreground">でご利用中</span>
             </div>
-
-            {/* カメラワイプ（右下） */}
-            {showCameraWipe && (
-              <div className="absolute bottom-3 right-3 w-28 h-20 rounded-xl overflow-hidden border-2 border-white/40 shadow-2xl bg-black">
-                <video ref={wipeVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                <div className="absolute top-1 left-1 text-[9px] text-white/70 bg-black/50 px-1 rounded">自分</div>
-              </div>
-            )}
-
-            {/* カメラ確認ボタン（右下コーナー） */}
-            <button
-              onClick={toggleCameraWipe}
-              className={`absolute bottom-3 ${showCameraWipe ? "right-36" : "right-3"} flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
-                showCameraWipe
-                  ? "bg-red-500/20 border-red-500/60 text-red-300 hover:bg-red-500/30"
-                  : "bg-black/60 border-white/20 text-white/70 hover:border-white/40 hover:text-white"
-              }`}
-            >
-              {showCameraWipe ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
-              {showCameraWipe ? "カメラOFF" : "自分を確認"}
+            <button onClick={() => navigate("/plan-select")} className="text-xs text-primary hover:underline flex items-center gap-1">
+              プランを変更 <ChevronRight className="w-3 h-3" />
             </button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span className={features.maxDuration >= 120 ? "text-primary font-semibold" : ""}>
+              最大 {features.maxDuration}分
+            </span>
+            <span className={features.canSetPrice ? "text-primary font-semibold" : "line-through opacity-50"}>
+              料金カスタマイズ
+            </span>
+            <span className={features.canSetDescription ? "text-primary font-semibold" : "line-through opacity-50"}>
+              説明文
+            </span>
+            <span className={features.recordingAllowed ? "text-primary font-semibold" : "line-through opacity-50"}>
+              録画オプション
+            </span>
           </div>
         </div>
 
-        {/* 右: チャット */}
+        {/* 設定フォーム */}
+        <div className="space-y-4">
+          {/* タイトル */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold flex items-center gap-1.5">
+              タイトル <span className="text-red-400 text-xs">必須</span>
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value.slice(0, 50))}
+              placeholder="例：相談・雑談・悩み聞きます"
+              className="w-full rounded-xl bg-secondary border-0 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            <p className="text-xs text-muted-foreground text-right">{title.length}/50</p>
+          </div>
+
+          {/* 説明 */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold flex items-center gap-1.5">
+              説明文
+              {!features.canSetDescription && (
+                <span className="flex items-center gap-1 text-xs text-orange-400">
+                  <Lock className="w-3 h-3" /> Basicプラン以上
+                </span>
+              )}
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, 200))}
+              placeholder={features.canSetDescription ? "通話の内容・ルール・注意事項などを入力..." : "Basicプラン以上で利用できます"}
+              rows={3}
+              disabled={!features.canSetDescription}
+              className="w-full rounded-xl bg-secondary border-0 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {features.canSetDescription && <p className="text-xs text-muted-foreground text-right">{description.length}/200</p>}
+          </div>
+
+          {/* 最大通話時間 */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold flex items-center gap-1.5">
+              <Clock className="w-4 h-4" /> 最大通話時間
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {DURATION_OPTIONS.filter((d) => d.minutes <= features.maxDuration).map((opt) => (
+                <button
+                  key={opt.minutes}
+                  onClick={() => setMaxDuration(opt.minutes)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                    maxDuration === opt.minutes
+                      ? "bg-primary text-black border-primary"
+                      : "bg-secondary border-border hover:border-primary/40"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              {/* ロックされた選択肢 */}
+              {DURATION_OPTIONS.filter((d) => d.minutes > features.maxDuration).map((opt) => (
+                <button
+                  key={opt.minutes}
+                  onClick={() => navigate("/plan-select")}
+                  className="px-4 py-2 rounded-xl text-sm font-bold border-2 border-border bg-secondary opacity-40 cursor-not-allowed flex items-center gap-1"
+                >
+                  <Lock className="w-3 h-3" /> {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 料金設定（15分あたり） */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold flex items-center gap-1.5">
+              <Coins className="w-4 h-4 text-yellow-400" /> 料金（15分あたり）
+              {!features.canSetPrice && (
+                <span className="flex items-center gap-1 text-xs text-orange-400">
+                  <Lock className="w-3 h-3" /> 固定150円
+                </span>
+              )}
+            </label>
+            {features.canSetPrice ? (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {PRICE_PRESETS_PER_15MIN.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPricePerUnit(p)}
+                      className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                        pricePerUnit === p
+                          ? "bg-yellow-500/20 text-yellow-400 border-yellow-500"
+                          : "bg-secondary border-border hover:border-yellow-500/40"
+                      }`}
+                    >
+                      ¥{p.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">カスタム：</span>
+                  <input
+                    type="number"
+                    value={pricePerUnit}
+                    min={150}
+                    onChange={(e) => setPricePerUnit(Math.max(150, Number(e.target.value)))}
+                    className="w-28 rounded-lg bg-secondary border-0 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                  <span className="text-xs text-muted-foreground">円/15分</span>
+                </div>
+              </>
+            ) : (
+              <div className="bg-secondary rounded-xl px-4 py-3 text-sm font-bold text-yellow-400">
+                ¥150 / 15分（固定）
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 料金サマリー */}
+        <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">料金プレビュー</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-primary">¥{totalPrice.toLocaleString()}</span>
+            <span className="text-sm text-muted-foreground">/ {maxDuration}分（最大）</span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {DURATION_OPTIONS.filter((d) => d.minutes <= maxDuration).map((d) => (
+              <span key={d.minutes}>{d.label} → ¥{Math.round((pricePerUnit / 15) * d.minutes).toLocaleString()}</span>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 bg-secondary rounded-xl p-3 text-xs text-muted-foreground mt-2">
+            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <span>料金は通話終了後に自動精算されます。ライバーへの還元率はプランにより85%〜です。</span>
+          </div>
+        </div>
+
+        {/* カメラ確認 */}
+        <div className="rounded-2xl border border-border/50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-card">
+            <p className="text-sm font-bold">カメラ確認（任意）</p>
+            <button
+              onClick={toggleCam}
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
+                showCam
+                  ? "bg-red-500/20 border-red-500/60 text-red-300"
+                  : "bg-secondary border-border text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              {showCam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+              {showCam ? "カメラOFF" : "カメラ確認"}
+            </button>
+          </div>
+          {showCam && (
+            <div className="aspect-video bg-black">
+              <video ref={camRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
+
+        {/* 開始ボタン */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={handleStartWaiting}
+          disabled={!title.trim()}
+          className="w-full py-5 rounded-2xl font-black text-lg text-black flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          style={{
+            background: title.trim() ? "linear-gradient(135deg, #00ff9d, #00d4aa)" : undefined,
+            backgroundColor: title.trim() ? undefined : "hsl(var(--secondary))",
+            boxShadow: title.trim() ? "0 0 40px rgba(0,255,157,0.5)" : "none",
+          }}
+        >
+          <Play className="w-6 h-6" />
+          通話受付を開始する
+        </motion.button>
+      </div>
+    );
+  }
+
+  // ===== 待機中画面 =====
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <PhoneCall className="w-6 h-6 text-primary" />
+          <div>
+            <h1 className="text-xl font-black">{title}</h1>
+            <p className="text-xs text-muted-foreground">
+              ¥{pricePerUnit}/15分 · 最大{maxDuration}分 · 合計最大¥{totalPrice.toLocaleString()}
+            </p>
+          </div>
+          <span className="flex items-center gap-1 text-xs bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded-full font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" /> 受付中
+          </span>
+        </div>
+        <Button
+          onClick={handleStopWaiting}
+          variant="outline"
+          size="sm"
+          className="gap-1.5 border-red-500/40 text-red-400 hover:bg-red-500/10"
+        >
+          <PhoneOff className="w-4 h-4" /> 受付終了
+        </Button>
+      </div>
+
+      {description && (
+        <div className="bg-secondary rounded-xl px-4 py-3 text-sm text-muted-foreground">
+          {description}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 待機中表示 */}
+        <div className="space-y-3">
+          <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
+            {showCam ? (
+              <video ref={camRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card">
+                <PhoneCall className="w-16 h-16 text-primary/30" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3 pointer-events-none">
+              <div className="flex items-center gap-2 bg-black/70 rounded-full px-4 py-2 border border-primary/40">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
+                <span className="text-white font-bold text-sm">着信待機中...</span>
+              </div>
+              <p className="text-white/50 text-xs">リクエストが届くと着信します</p>
+            </div>
+            <button
+              onClick={toggleCam}
+              className={`absolute bottom-3 right-3 pointer-events-auto flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
+                showCam ? "bg-red-500/20 border-red-500/60 text-red-300" : "bg-black/60 border-white/20 text-white/70"
+              }`}
+            >
+              {showCam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+              {showCam ? "カメラOFF" : "カメラ確認"}
+            </button>
+          </div>
+          <div className="bg-card border border-border/50 rounded-xl p-3 text-xs space-y-1 text-muted-foreground">
+            <p className="font-bold text-foreground text-sm">通話設定</p>
+            <p>⏱ 最大通話時間：{maxDuration}分</p>
+            <p>💰 料金：¥{pricePerUnit}/15分（最大¥{totalPrice.toLocaleString()}）</p>
+            {description && <p>📝 {description}</p>}
+          </div>
+        </div>
+
+        {/* 受信チャット */}
         <div className="bg-card border border-border/50 rounded-2xl overflow-hidden flex flex-col" style={{ minHeight: "400px" }}>
           {!selectedThread ? (
             <>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-primary" />
-                  <h3 className="font-bold text-sm">受信チャット</h3>
-                  {unreadCount > 0 && (
-                    <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">{unreadCount}</span>
-                  )}
-                </div>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 shrink-0">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-sm">受信メッセージ</h3>
+                {unreadCount > 0 && (
+                  <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">{unreadCount}</span>
+                )}
               </div>
               {threads.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-center py-12 text-muted-foreground">
-                  <div>
+                <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                  <div className="text-center">
                     <MessageCircle className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">まだメッセージがありません</p>
-                    <p className="text-xs mt-1 opacity-60">ファンからの連絡が届くとここに表示されます</p>
+                    <p>まだメッセージがありません</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto divide-y divide-border/30">
-                  {threads.map((msg) => {
-                    const isUnread = !msg.is_read;
-                    return (
-                      <button
-                        key={msg.id}
-                        onClick={() => setSelectedThread({ fromEmail: msg.from_email, fromName: msg.from_name })}
-                        className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left ${isUnread ? "bg-primary/5" : ""}`}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold">
-                          {(msg.from_name || msg.from_email || "?")[0].toUpperCase()}
+                  {threads.map((msg) => (
+                    <button
+                      key={msg.id}
+                      onClick={() => setSelectedThread({ fromEmail: msg.from_email, fromName: msg.from_name })}
+                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-secondary/50 text-left ${!msg.is_read ? "bg-primary/5" : ""}`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold">
+                        {(msg.from_name || msg.from_email || "?")[0].toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold truncate">{msg.from_name || msg.from_email}</p>
+                          <span className="text-[10px] text-muted-foreground shrink-0">{formatTime(msg.created_date)}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className={`text-xs font-semibold truncate ${isUnread ? "text-foreground" : "text-muted-foreground"}`}>
-                              {msg.from_name || msg.from_email}
-                            </p>
-                            <span className="text-[10px] text-muted-foreground shrink-0">{formatTime(msg.created_date)}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">{msg.content}</p>
-                        </div>
-                        {isUnread && <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1" />}
-                      </button>
-                    );
-                  })}
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{msg.content}</p>
+                      </div>
+                      {!msg.is_read && <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1" />}
+                    </button>
+                  ))}
                 </div>
               )}
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 shrink-0">
-                <button onClick={() => setSelectedThread(null)} className="text-muted-foreground hover:text-foreground text-xs flex items-center gap-1">
+              <div className="px-4 py-2 border-b border-border/50 shrink-0">
+                <button onClick={() => setSelectedThread(null)} className="text-xs text-muted-foreground hover:text-foreground">
                   ← 一覧に戻る
                 </button>
               </div>
               <div className="flex-1 min-h-0">
-                <InlineChatPanel
-                  user={user}
-                  fromEmail={selectedThread.fromEmail}
-                  fromName={selectedThread.fromName}
-                  onStartCall={(callId) => navigate(`/video-call/${callId}`)}
-                />
+                <InlineChatPanel user={user} fromEmail={selectedThread.fromEmail} fromName={selectedThread.fromName} />
               </div>
             </>
           )}
         </div>
       </div>
 
-      {/* ★ 着信モーダル — ライバーが承認するまで通話は始まらない */}
+      {/* 着信モーダル */}
       <AnimatePresence>
         {incomingCall && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
           >
             <motion.div
-              initial={{ scale: 0.8, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 30 }}
-              className="bg-card border-2 border-primary rounded-3xl p-10 max-w-md w-full mx-4 text-center space-y-6 shadow-2xl"
+              initial={{ scale: 0.8, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 30 }}
+              className="bg-card border-2 border-primary rounded-3xl p-10 max-w-sm w-full mx-4 text-center space-y-6 shadow-2xl"
               style={{ boxShadow: "0 0 80px rgba(0,255,157,0.4)" }}
             >
-              {/* アニメーションアイコン */}
               <div className="relative mx-auto w-24 h-24">
                 <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
                 <div className="relative w-24 h-24 rounded-full bg-primary/30 flex items-center justify-center border-2 border-primary">
                   <PhoneCall className="w-11 h-11 text-primary" />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <p className="text-xs font-bold text-primary uppercase tracking-widest">着信！</p>
                 <p className="text-2xl font-black text-white">{incomingCall.caller_name || incomingCall.caller_email}</p>
-                <p className="text-base text-white/70">さんからの通話リクエスト</p>
+                <p className="text-base text-white/60">さんがビデオ通話を希望しています</p>
                 {incomingCall.message && (
-                  <p className="text-sm text-white/50 bg-secondary rounded-xl px-4 py-2 mt-2 text-left">
+                  <p className="text-sm text-white/50 bg-secondary rounded-xl px-4 py-2 text-left">
                     {incomingCall.message}
                   </p>
                 )}
               </div>
-
               <div className="flex gap-4">
-                <Button
-                  onClick={handleDecline}
-                  variant="outline"
-                  className="flex-1 h-14 text-base gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10"
-                >
-                  <X className="w-5 h-5" /> 断る
+                <Button onClick={handleDecline} variant="outline" className="flex-1 h-14 gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10">
+                  <XCircle className="w-5 h-5" /> 断る
                 </Button>
                 <Button
                   onClick={handleAccept}
                   disabled={accepting}
-                  className="flex-1 h-14 text-base font-black gap-2 bg-primary hover:bg-primary/90 text-black"
+                  className="flex-1 h-14 font-black gap-2 bg-primary hover:bg-primary/90 text-black"
                   style={{ boxShadow: "0 0 30px rgba(0,255,157,0.5)" }}
                 >
-                  <PhoneCall className="w-5 h-5" />
-                  {accepting ? "接続中..." : "通話を開始する"}
+                  <CheckCircle2 className="w-5 h-5" />
+                  {accepting ? "接続中..." : "承認する"}
                 </Button>
               </div>
             </motion.div>
