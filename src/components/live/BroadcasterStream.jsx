@@ -62,9 +62,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
   }, []);
 
-  // ストリーム情報取得（配信開始時と定期ポーリング）
+  // ストリーム情報取得（配信前 & 配信開始時と定期ポーリング）
   useEffect(() => {
-    if (!isLive || !streamId) return;
+    if (!streamId) return;
     
     const fetchStreamInfo = async () => {
       try {
@@ -87,10 +87,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     // 初回即座に取得
     fetchStreamInfo();
     
-    // 定期ポーリング
-    const interval = setInterval(fetchStreamInfo, 10000);
+    // 定期ポーリング（配信前も含めて常時実行）
+    const interval = setInterval(fetchStreamInfo, 5000);
     return () => clearInterval(interval);
-  }, [streamId, isLive]);
+  }, [streamId]);
 
   // 配信開始（カメラが既に起動済みならそのまま使う）
   const handleGoLive = async () => {
@@ -149,6 +149,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
               {thumbnailUrl && (
                 <img src={thumbnailUrl} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-40" />
               )}
+              {/* 視聴者数バッジ（配信前）*/}
+              <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-black/70 border border-cyan-500/40 rounded-full px-4 py-2">
+                <Eye className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm font-bold text-cyan-300">{viewerCount}人が待機中</span>
+              </div>
               <div className="relative z-10 flex flex-col items-center gap-4 text-center px-6">
                 <Camera className="w-12 h-12 text-zinc-400" />
                 <p className="text-sm font-semibold text-zinc-300">カメラはまだ起動していません</p>
