@@ -91,11 +91,21 @@ const PLANS = [
     badgeColor: "bg-red-500/20 text-red-300",
     description: "1対多数の有料ライブ配信でファンから直接収益化。BASICプランとの組み合わせでご利用いただけます。",
     features: [
-      "1対多数の有料ライブ配信",
-      "配信料金（15分あたり）：SD 480p 15円〜 / HD 720p 55円〜 / FHD 1080p 150円〜",
-      "視聴者からエールコイン受取",
-      "ライブ配信アーカイブ配信画質：720p (HD)",
-      "1日の合計視聴時間：最大60分まで"
+      "1対多数の有料ライブ配信（視聴者数無制限）",
+      "【施策①】最低配信料金：SD 480p 150円〜 / HD 720p 300円〜 / FHD 1080p 1,500円〜（15分あたり）",
+      "【施策②】画質制限：150円設定は720p / 300円以上設定は1080p許可",
+      "【施策③】プログレッシブ・インセンティブ：月間売上に応じて還元率が最大95%まで自動アップ",
+      "視聴者からエールコイン（投げ銭）受取",
+      "ライブ配信アーカイブをVOD販売可（BASICプラン+VODプラン加入で可）",
+      "アーカイブ配信画質：720p (HD)",
+      "1日の合計視聴時間：最大60分まで（視聴者側）",
+      "音楽利用（歌唱・演奏・BGM）は追加でJASRAC包括契約対応",
+      "コスト内訳：場所代30円/時間（入力）＋ 送料5円/視聴者/時間（出力）",
+    ],
+    priceDetail: [
+      { quality: "SD 480p", minPrice: "¥150〜", icon: "📺" },
+      { quality: "HD 720p", minPrice: "¥300〜", icon: "🖥️" },
+      { quality: "FHD 1080p", minPrice: "¥1,500〜", icon: "✨" },
     ],
   },
   {
@@ -424,6 +434,31 @@ export default function PlanSelect() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* PPV 料金テーブル */}
+                  {plan.priceDetail && (
+                    <div className="rounded-xl border border-red-500/20 overflow-hidden">
+                      <div className="bg-red-500/10 px-4 py-2 text-xs font-bold text-red-300 uppercase tracking-wider">
+                        📡 1対多数ライブ配信 料金（15分あたり・視聴者1人）
+                      </div>
+                      <div className="divide-y divide-border/30">
+                        {plan.priceDetail.map((row) => (
+                          <div key={row.quality} className="flex items-center justify-between px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{row.icon}</span>
+                              <span className="font-bold text-sm">{row.quality}</span>
+                            </div>
+                            <span className="text-primary font-black text-sm">{row.minPrice}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="bg-secondary/50 px-4 py-3 text-xs text-muted-foreground space-y-1">
+                        <p>📌 収益還元率 <span className="text-primary font-bold">85%</span>（月間売上に応じて最大95%まで自動アップ）</p>
+                        <p>📌 150円設定 → 最大720p / 300円以上 → 最大1080p配信許可</p>
+                        <p>📌 コスト：場所代30円/時間 ＋ 送料5円/視聴者/時間</p>
+                      </div>
+                    </div>
+                  )}
                   <Button 
                     onClick={async (e) => {
                       e.stopPropagation();
