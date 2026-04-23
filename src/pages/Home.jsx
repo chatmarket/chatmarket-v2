@@ -44,6 +44,7 @@ export default function Home() {
   const [enabledSections, setEnabledSections] = useState({
     callWaiting: false,
     liveStreams: false,
+    popularVideos: false,
     featuredVideos: false,
     freeVideos: false,
     recentVideos: false,
@@ -130,6 +131,7 @@ export default function Home() {
 
   const { ref: callRef } = useInViewTrigger(() => triggerSection('callWaiting'));
   const { ref: liveRef } = useInViewTrigger(() => triggerSection('liveStreams'));
+  const { ref: popularRef } = useInViewTrigger(() => triggerSection('popularVideos'));
   const { ref: featuredRef } = useInViewTrigger(() => triggerSection('featuredVideos'));
   const { ref: freeRef } = useInViewTrigger(() => triggerSection('freeVideos'));
   const { ref: recentRef } = useInViewTrigger(() => triggerSection('recentVideos'));
@@ -164,6 +166,14 @@ export default function Home() {
     staleTime: 300000,
     refetchInterval: 120000,
     gcTime: 600000,
+  });
+
+  const { data: popularVideos = [] } = useQuery({
+    queryKey: ["videos-popular"],
+    queryFn: () => base44.entities.Video.list("-view_count", 30),
+    enabled: enabledSections.popularVideos,
+    staleTime: 600000,
+    gcTime: 1200000,
   });
 
   const { data: crowdfundings = [] } = useQuery({
@@ -501,6 +511,44 @@ export default function Home() {
             <ScrollRow cardWidth={280} mobileCardWidth="72vw">
               {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
             </ScrollRow>
+          </section>
+        )}
+      </div>
+
+      {/* 人気の動画 (liveセクション直後に表示) */}
+      <div ref={popularRef}>
+        {enabledSections.popularVideos && (
+          <section className="space-y-3 px-0">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-5 rounded-full bg-orange-400 shrink-0" />
+              <h2 className="text-base sm:text-lg font-bold">人気の動画</h2>
+              <span className="text-xs text-orange-400 bg-orange-400/10 border border-orange-400/30 rounded-full px-2 py-0.5 font-semibold">HOT</span>
+            </div>
+            {popularVideos.filter(v => !v.moderation_status || v.moderation_status === "approved").length > 0 ? (
+              <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+                {popularVideos
+                  .filter(v => !v.moderation_status || v.moderation_status === "approved")
+                  .map((v) => (
+                    <div key={v.id} className="relative group">
+                      <VideoCard video={v} />
+                    </div>
+                  ))}
+              </ScrollRow>
+            ) : (
+              <p className="text-sm text-muted-foreground py-4">動画がまだありません</p>
+            )}
+            {/* カテゴリハッシュタグ */}
+            <div className="pt-2 flex flex-wrap gap-2">
+              {["エンタメ","音楽","ゲーム","教育","スポーツ","テクノロジー","ニュース","その他"].map((cat) => (
+                <Link
+                  key={cat}
+                  to={`/search?q=${encodeURIComponent(cat)}`}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+                >
+                  #{cat}
+                </Link>
+              ))}
+            </div>
           </section>
         )}
       </div>
