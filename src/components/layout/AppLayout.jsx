@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import NotificationBell from "./NotificationBell";
 import LangSwitcher from "./LangSwitcher";
 import Footer from "./Footer";
+import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -302,6 +303,9 @@ export default function AppLayout() {
 
       {/* Push Notification Prompt */}
       <PushNotificationPrompt />
+
+      {/* グローバル着信・承認通知（全ログインユーザー対象） */}
+      {user && <GlobalCallNotifier user={user} />}
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center justify-around h-16 px-2">
