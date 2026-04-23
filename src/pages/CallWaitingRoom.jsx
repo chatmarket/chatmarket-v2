@@ -139,21 +139,50 @@ export default function CallWaitingRoom() {
     enabled: !!user,
   });
 
-  // pending コールを3秒ごとにポーリング
+  // ★ pending コールを3秒ごとにポーリング（callee_email ベース、常時監視）
+  const initialDoneRef = useRef(false);
   const { data: pendingCalls = [] } = useQuery({
-    queryKey: ["waiting-room-pending-calls", user?.email],
-    queryFn: () => base44.entities.VideoCall.filter({ callee_email: user.email, status: "pending" }, "-created_date", 5),
-    enabled: !!user,
+    queryKey: ["waiting-room-pending-calls-v2", user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const results = await base44.entities.VideoCall.filter(
+        { callee_email: user.email, status: "pending" },
+        "-created_date",
+        5
+      );
+      console.log(`[CallWaitingRoom] 📞 Polled:`, results.length, 'pending calls for', user.email);
+      return results;
+    },
+    enabled: !!user?.email,
     refetchInterval: 3000,
+    refetchIntervalInBackground: true,
   });
 
-  // 新着着信検出
+  // ★ リアルタイム購読も併用
   useEffect(() => {
-    if (!pendingCalls.length) return;
-    const latest = pendingCalls[0];
-    if (!seenCallIds.current.has(latest.id)) {
-      seenCallIds.current.add(latest.id);
-      setIncomingCall(latest);
+    if (!user?.email) return;
+    const unsub = base44.entities.VideoCall.subscribe((event) => {
+      const data = event.data;
+      if (data?.callee_email === user.email && data?.status === 'pending') {
+        console.log('[CallWaitingRoom] 🔔 Real-time incoming call:', data.id);
+        queryClient.invalidateQueries({ queryKey: ["waiting-room-pending-calls-v2", user.email] });
+      }
+    });
+    return () => unsub();
+  }, [user?.email, queryClient]);
+
+  // ★ 新着着信検出（初回ロード後の新着のみ表示）
+  useEffect(() => {
+    if (!initialDoneRef.current) {
+      pendingCalls.forEach((c) => seenCallIds.current.add(c.id));
+      initialDoneRef.current = true;
+      return;
+    }
+    const newCalls = pendingCalls.filter((c) => !seenCallIds.current.has(c.id));
+    if (newCalls.length > 0 && !incomingCall) {
+      console.log('[CallWaitingRoom] 🚨 Showing incoming call modal for:', newCalls[0].id);
+      setIncomingCall(newCalls[0]);
+      newCalls.forEach((c) => seenCallIds.current.add(c.id));
     }
   }, [pendingCalls]);
 
