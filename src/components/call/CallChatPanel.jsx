@@ -19,36 +19,20 @@ export default function CallChatPanel({ call, user }) {
 
   const threadId = call && user ? makeThreadId(call.caller_email, call.callee_email) : null;
 
-  // 3秒ごとにステータスポーリング
+  // リアルタイム購読でステータス変化を検知（ポーリング廃止 → 429対策）
   useEffect(() => {
     if (!call?.id) return;
-
-    const pollStatus = async () => {
-      try {
-        const calls = await base44.entities.VideoCall.filter({ id: call.id });
-        const updatedCall = calls[0];
-        if (!updatedCall) return;
-
-        console.log(`📞 Polled call status: ${updatedCall.status}`);
-        setCurrentCall(updatedCall);
-
-        // accepted / active → VideoCallPageへリダイレクト（caller・callee両者）
-        if (["accepted", "active"].includes(updatedCall.status) && !redirectedRef.current) {
+    const unsub = base44.entities.VideoCall.subscribe((event) => {
+      const d = event.data;
+      if ((event.id === call.id || d?.id === call.id) && d) {
+        setCurrentCall(d);
+        if (["accepted", "active"].includes(d.status) && !redirectedRef.current) {
           redirectedRef.current = true;
-          console.log(`✅ Call ${updatedCall.status}! Redirecting to /video-call/${call.id}`);
           setTimeout(() => navigate(`/video-call/${call.id}`), 300);
         }
-      } catch (err) {
-        console.error('Failed to poll call status:', err);
       }
-    };
-
-    pollStatus();
-    pollingIntervalRef.current = setInterval(pollStatus, 3000);
-
-    return () => {
-      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-    };
+    });
+    return () => unsub();
   }, [call?.id, navigate]);
 
   useEffect(() => {
