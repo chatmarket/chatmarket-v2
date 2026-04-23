@@ -674,23 +674,54 @@ export default function VideoCallPage() {
   };
 
   const handleSendYell = async () => {
-    if (!selectedYell || !call) return;
+    if (!selectedYell || !call || !user) return;
     setYellSending(true);
+
+    // 視聴者のウォレットから減算
+    const senderWallets = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
+    const senderWallet = senderWallets[0];
+    if (!senderWallet || senderWallet.balance < selectedYell) {
+      toast.error("エールコインが不足しています。チャージしてください。");
+      setYellSending(false);
+      return;
+    }
+    await base44.entities.YellCoinWallet.update(senderWallet.id, {
+      balance: senderWallet.balance - selectedYell,
+      total_sent: (senderWallet.total_sent || 0) + selectedYell,
+    });
+
+    // ライバーのウォレットへ加算（85%相当）
+    const creatorCoins = Math.floor(selectedYell * 0.85);
+    const calleeWallets = await base44.entities.YellCoinWallet.filter({ user_email: call.callee_email });
+    if (calleeWallets[0]) {
+      await base44.entities.YellCoinWallet.update(calleeWallets[0].id, {
+        balance: (calleeWallets[0].balance || 0) + creatorCoins,
+      });
+    }
+
+    // 通話レコードにエールコイン合計を記録
     await base44.entities.VideoCall.update(call.id, {
       yell_coin_amount: (call.yell_coin_amount || 0) + selectedYell,
     });
-    await base44.entities.SuperChat.create({
+
+    // トランザクション記録
+    await base44.entities.YellCoinTransaction.create({
+      user_email: user.email,
+      type: "send",
       amount: selectedYell,
-      message: "📹 ビデオ通話中のエールコイン",
-      livestream_id: call.id,
-      user_name: user?.full_name || "匿名",
-      user_email: user?.email,
-      color: YELL_AMOUNTS.find((a) => a.value === selectedYell)?.color || "green",
+      target_name: call.callee_name,
+      target_id: call.id,
+      service_type: "direct_chat",
+      service_id: call.id,
+      channel_id: call.callee_channel_id || "",
+      channel_owner_email: call.callee_email,
     });
+
+    setCoinBalance(prev => Math.max(0, (prev || 0) - selectedYell));
     setYellSending(false);
     setShowYellModal(false);
     setSelectedYell(null);
-    toast.success(`¥${selectedYell.toLocaleString()} のエールコインを送りました！`);
+    toast.success(`${selectedYell.toLocaleString()} コインのエールを送りました！`);
     addFloating("💰");
   };
 
@@ -1501,13 +1532,16 @@ export default function VideoCallPage() {
                 {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
               </button>
 
-              <button
-                onClick={() => setShowYellModal(true)}
-                className="flex items-center gap-1 md:gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-10 md:h-12 px-3 md:px-5 rounded-full font-bold text-xs md:text-sm transition-all"
-              >
-                <Coins className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">エール</span>
-              </button>
+              {/* エールコインボタン（視聴者＝callerのみ） */}
+              {user?.email === call?.caller_email && (
+                <button
+                  onClick={() => setShowYellModal(true)}
+                  className="flex items-center gap-1 md:gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-10 md:h-12 px-3 md:px-5 rounded-full font-bold text-xs md:text-sm transition-all"
+                >
+                  <Coins className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">エール</span>
+                </button>
+              )}
 
               <button
                 onClick={handleStartWaiting}
