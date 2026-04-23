@@ -376,24 +376,21 @@ export default function VideoCallPage() {
     [calleeChannel, user]
   );
 
-  // accepted 状態で両者が画面到達 → 3秒カウントダウン → active に自動変更
+  // accepted 状態で両者が画面到達 → 5秒カウントダウン → active に自動変更
   useEffect(() => {
     if (!call || !user || call.status !== 'accepted' || countdownStartedRef.current) return;
     countdownStartedRef.current = true;
-    setCountdown(3);
-    const t1 = setTimeout(() => setCountdown(2), 1000);
-    const t2 = setTimeout(() => setCountdown(1), 2000);
-    const t3 = setTimeout(async () => {
+    setCountdown(5);
+    const t1 = setTimeout(() => setCountdown(4), 1000);
+    const t2 = setTimeout(() => setCountdown(3), 2000);
+    const t3 = setTimeout(() => setCountdown(2), 3000);
+    const t4 = setTimeout(() => setCountdown(1), 4000);
+    const t5 = setTimeout(async () => {
       setCountdown(null);
       await base44.entities.VideoCall.update(call.id, { status: 'active' });
-      // ★ CRITICAL: active ステータス遷移と同時に renegotiate 強制実行
-      console.log('[VideoCallPage] 🔄 Forcing renegotiate on status -> active');
-      setTimeout(() => {
-        console.log('[VideoCallPage] ⚡ Renegotiation pulse sent');
-      }, 500);
       refetchCall();
-    }, 3000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }, 5000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearTimeout(t5); };
   }, [call?.status, call?.id, user?.email]);
 
   // 通話開始時刻をセット
@@ -833,6 +830,44 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* ★ 視聴者側（caller）pending 待機画面 — ライバーの承認を待っている */}
+      {call?.status === 'pending' && user?.email === call?.caller_email && (
+        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black gap-6 px-6">
+          {/* 自分のカメラプレビュー（PiP） */}
+          <div className="w-40 h-56 rounded-2xl overflow-hidden border-2 border-primary/50 bg-black shadow-2xl relative">
+            <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            <div className="absolute bottom-1 left-0 right-0 text-center">
+              <span className="text-[9px] text-white/70 bg-black/60 px-2 py-0.5 rounded-full">あなたのカメラ</span>
+            </div>
+          </div>
+
+          {/* 待機メッセージ */}
+          <div className="text-center space-y-3">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              <div className="relative w-16 h-16 rounded-full bg-primary/30 border-2 border-primary flex items-center justify-center">
+                <PhoneCall className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+            <p className="text-white font-black text-xl">{call?.callee_name || "ライバー"} さんに着信中...</p>
+            <p className="text-white/50 text-sm">承認されると通話が始まります</p>
+            <div className="flex items-center justify-center gap-1.5">
+              {[0,1,2].map(i => (
+                <span key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
+              ))}
+            </div>
+          </div>
+
+          {/* キャンセルボタン */}
+          <button
+            onClick={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
+            className="flex items-center gap-2 text-red-400 border border-red-500/40 px-6 py-2.5 rounded-full text-sm hover:bg-red-500/10 transition-all"
+          >
+            <PhoneOff className="w-4 h-4" /> キャンセル
+          </button>
+        </div>
+      )}
+
       {/* ★ CRITICAL: pending 着信 → 承認ボタン（ライバーのみ）。ended でも pending に戻った直後は表示 */}
       {(call?.status === 'pending') && user?.email === call?.callee_email && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
@@ -1015,7 +1050,7 @@ export default function VideoCallPage() {
             </div>
           )}
           <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">視聴者には見えていません</span>
+            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">自分</span>
           </div>
         </div>
         )}
