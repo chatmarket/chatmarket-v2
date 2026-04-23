@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
+// キャンペーン枠（初回登録300名限定・4ヶ月間全機能無料）
+const CAMPAIGN_LIMIT = 300;
+
 // プラン別機能マトリクス
 const PLAN_FEATURES = {
   free: {
@@ -18,24 +21,37 @@ const PLAN_FEATURES = {
     color: "text-muted-foreground",
     bg: "bg-secondary",
     border: "border-border",
-    maxDuration: 15,        // 最大15分のみ
-    minPrice: 150,          // 最低150円/15分
-    canSetPrice: false,     // 料金設定不可（固定150円）
+    maxDuration: 60,        // 最大1時間
+    minPrice: 150,          // 最低150円/15分・上限なし
+    canSetPrice: true,      // 料金設定可（150円以上）
     canSetTitle: true,
-    canSetDescription: false,
-    recordingAllowed: false,
+    canSetDescription: true,
+    recordingAllowed: false, // 録画はVODプラン加入が必要
+    recordingRequiresPlan: "vod",
   },
-  basic: {
-    label: "Basicプラン",
+  vod: {
+    label: "VODプラン",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
     border: "border-blue-500/30",
-    maxDuration: 60,        // 最大60分
+    maxDuration: 60,
     minPrice: 150,
     canSetPrice: true,
     canSetTitle: true,
     canSetDescription: true,
-    recordingAllowed: false,
+    recordingAllowed: true,
+  },
+  basic: {
+    label: "Basicプラン",
+    color: "text-purple-400",
+    bg: "bg-purple-500/10",
+    border: "border-purple-500/30",
+    maxDuration: 120,
+    minPrice: 150,
+    canSetPrice: true,
+    canSetTitle: true,
+    canSetDescription: true,
+    recordingAllowed: true,
   },
   "call-anser": {
     label: "CALL&ANSERプラン",
@@ -186,13 +202,37 @@ export default function CallWaitingRoom() {
   const [showCam, setShowCam] = useState(false);
   const camRef = useRef(null);
 
+  const [isCampaignUser, setIsCampaignUser] = useState(false);
+  const [campaignMonthsLeft, setCampaignMonthsLeft] = useState(null);
+  const [totalUserCount, setTotalUserCount] = useState(null);
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then((u) => {
+      if (isAuth) base44.auth.me().then(async (u) => {
         setUser(u);
-        const plan = u?.plan || (u?.role === "admin" ? "call-anser" : "free");
+        let plan = u?.plan || (u?.role === "admin" ? "call-anser" : "free");
+
+        // キャンペーン判定：登録から4ヶ月以内 かつ 全ユーザー数が300名以内
+        try {
+          const allUsers = await base44.entities.User.list("-created_date", 300);
+          const count = allUsers.length;
+          setTotalUserCount(count);
+          if (count <= CAMPAIGN_LIMIT && u?.created_date) {
+            const registeredAt = new Date(u.created_date);
+            const campaignEnd = new Date(registeredAt);
+            campaignEnd.setMonth(campaignEnd.getMonth() + 4);
+            const now = new Date();
+            if (now < campaignEnd) {
+              setIsCampaignUser(true);
+              const msLeft = campaignEnd - now;
+              const monthsLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24 * 30));
+              setCampaignMonthsLeft(monthsLeft);
+              plan = "call-anser"; // 全機能開放
+            }
+          }
+        } catch {}
+
         setUserPlan(plan);
-        // プラン別デフォルト設定
         const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
         setMaxDuration(Math.min(30, features.maxDuration));
       }).catch(() => {});
@@ -338,32 +378,44 @@ export default function CallWaitingRoom() {
           <p className="text-sm text-muted-foreground">設定を確認して「受付開始」を押すと着信待機状態になります</p>
         </div>
 
-        {/* 現在のプラン表示 */}
-        <div className={`rounded-2xl border p-4 ${features.bg} ${features.border}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`font-black text-sm ${features.color}`}>{features.label}</span>
-              <span className="text-xs text-muted-foreground">でご利用中</span>
+        {/* キャンペーンバナー */}
+        {isCampaignUser && (
+          <div className="rounded-2xl border-2 border-yellow-500/60 bg-yellow-500/10 p-4 flex items-start gap-3">
+            <span className="text-2xl">🎉</span>
+            <div className="flex-1">
+              <p className="font-black text-yellow-400 text-sm">初回登録キャンペーン適用中！</p>
+              <p className="text-xs text-yellow-300/80 mt-0.5">
+                300名限定・登録から4ヶ月間、全プランの機能が無料で使えます。
+                {campaignMonthsLeft !== null && (
+                  <span className="font-bold"> あと約{campaignMonthsLeft}ヶ月で通常課金に切り替わります。</span>
+                )}
+              </p>
             </div>
-            <button onClick={() => navigate("/plan-select")} className="text-xs text-primary hover:underline flex items-center gap-1">
-              プランを変更 <ChevronRight className="w-3 h-3" />
-            </button>
           </div>
-          <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-            <span className={features.maxDuration >= 120 ? "text-primary font-semibold" : ""}>
-              最大 {features.maxDuration}分
-            </span>
-            <span className={features.canSetPrice ? "text-primary font-semibold" : "line-through opacity-50"}>
-              料金カスタマイズ
-            </span>
-            <span className={features.canSetDescription ? "text-primary font-semibold" : "line-through opacity-50"}>
-              説明文
-            </span>
-            <span className={features.recordingAllowed ? "text-primary font-semibold" : "line-through opacity-50"}>
-              録画オプション
-            </span>
+        )}
+
+        {/* 通常プラン表示（キャンペーン外のみ） */}
+        {!isCampaignUser && (
+          <div className={`rounded-2xl border p-4 ${features.bg} ${features.border}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`font-black text-sm ${features.color}`}>{features.label}</span>
+                <span className="text-xs text-muted-foreground">でご利用中</span>
+              </div>
+              <button onClick={() => navigate("/plan-select")} className="text-xs text-primary hover:underline flex items-center gap-1">
+                プランを変更 <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span className="text-primary font-semibold">最大 {features.maxDuration}分</span>
+              <span className="text-primary font-semibold">料金カスタマイズ（¥150〜）</span>
+              <span className="text-primary font-semibold">説明文</span>
+              <span className={features.recordingAllowed ? "text-primary font-semibold" : "text-orange-400"}>
+                {features.recordingAllowed ? "録画オプション" : "録画：VODプラン加入で利用可"}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 設定フォーム */}
         <div className="space-y-4">
@@ -383,14 +435,7 @@ export default function CallWaitingRoom() {
 
           {/* 説明 */}
           <div className="space-y-1.5">
-            <label className="text-sm font-bold flex items-center gap-1.5">
-              説明文
-              {!features.canSetDescription && (
-                <span className="flex items-center gap-1 text-xs text-orange-400">
-                  <Lock className="w-3 h-3" /> Basicプラン以上
-                </span>
-              )}
-            </label>
+            <label className="text-sm font-bold">説明文</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value.slice(0, 200))}
@@ -479,6 +524,33 @@ export default function CallWaitingRoom() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* 録画オプション */}
+        <div className="space-y-2">
+          <label className="text-sm font-bold flex items-center gap-1.5">
+            🎥 録画オプション
+          </label>
+          {features.recordingAllowed ? (
+            <div className="flex gap-3">
+              {[{ val: false, label: "録画なし" }, { val: true, label: "録画あり（別途料金）" }].map(({ val, label }) => (
+                <button key={String(val)} className="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all bg-secondary border-border hover:border-primary/40">
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div
+              onClick={() => navigate("/plan-select")}
+              className="flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 cursor-pointer hover:bg-orange-500/20 transition-all"
+            >
+              <Lock className="w-4 h-4 text-orange-400 shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-orange-400">録画にはVODプランへの加入が必要です</p>
+                <p className="text-xs text-orange-300/70">タップしてプランを確認する →</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 料金サマリー */}
