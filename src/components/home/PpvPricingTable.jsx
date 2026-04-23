@@ -31,7 +31,7 @@ export default function PpvPricingTable() {
     <section className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
-        <h2 className="text-xl font-bold">1対多数 有料ライブ配信（PPV）料金</h2>
+        <h2 className="text-xl font-bold">1対多数 有料ライブ配信 視聴者支払い最低設定料金</h2>
         <span className="text-xs bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full font-semibold">PPVプラン</span>
       </div>
 
