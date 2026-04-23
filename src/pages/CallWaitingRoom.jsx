@@ -139,7 +139,7 @@ function InlineChatPanel({ user, fromEmail, fromName }) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ minHeight: "400px" }}>
       <div className="px-3 py-2.5 border-b border-border/50 shrink-0">
         <p className="font-bold text-sm">{fromName || fromEmail}</p>
       </div>
@@ -683,7 +683,7 @@ export default function CallWaitingRoom() {
         </div>
 
         {/* 受信チャット */}
-        <div className="bg-card border border-border/50 rounded-2xl overflow-hidden flex flex-col" style={{ minHeight: "400px" }}>
+        <div className="bg-card border border-border/50 rounded-2xl overflow-hidden flex flex-col" style={{ minHeight: "500px" }}>
           {!selectedThread ? (
             <>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 shrink-0">
