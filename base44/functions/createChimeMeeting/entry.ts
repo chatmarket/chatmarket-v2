@@ -82,11 +82,13 @@ Deno.serve(async (req) => {
     const { callId } = await req.json();
     if (!callId) return Response.json({ error: 'Missing callId' }, { status: 400 });
 
-    const calls = await base44.entities.VideoCall.filter({ id: callId });
+    // asServiceRole を使ってレートリミット回避
+    const calls = await base44.asServiceRole.entities.VideoCall.filter({ id: callId });
     const call = calls[0];
     if (!call) return Response.json({ error: 'Call not found' }, { status: 404 });
 
     if (user.email !== call.caller_email && user.email !== call.callee_email) {
+      console.error(`[Chime] Forbidden: user=${user.email}, caller=${call.caller_email}, callee=${call.callee_email}`);
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -115,17 +117,32 @@ Deno.serve(async (req) => {
       Meeting = res.Meeting;
       meetingId = Meeting.MeetingId;
 
-      await base44.entities.VideoCall.update(callId, {
+      // asServiceRole で更新（レートリミット回避）
+      await base44.asServiceRole.entities.VideoCall.update(callId, {
         chime_meeting_id: meetingId,
         status: 'active',
         billing_started_at: new Date().toISOString(),
       });
       console.log('[Chime] ✓ Meeting created:', meetingId);
     } else {
-      // 既存ミーティング取得
+      // 既存ミーティング取得（削除済みの場合は再作成）
       console.log(`[Chime] Getting existing meeting ${meetingId}`);
-      const res = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey);
-      Meeting = res.Meeting;
+      try {
+        const res = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey);
+        Meeting = res.Meeting;
+      } catch (e) {
+        // ミーティングが期限切れ/削除済み → 再作成
+        console.log(`[Chime] Meeting expired, recreating...`);
+        const res = await chimeRequest('POST', '/meetings', {
+          ClientRequestToken: callId + '-' + Date.now(),
+          ExternalMeetingId: callId.slice(0, 64),
+          MediaRegion: 'us-east-1',
+        }, accessKeyId, secretAccessKey);
+        Meeting = res.Meeting;
+        meetingId = Meeting.MeetingId;
+        await base44.asServiceRole.entities.VideoCall.update(callId, { chime_meeting_id: meetingId });
+        console.log('[Chime] ✓ Meeting recreated:', meetingId);
+      }
     }
 
     // 参加者追加（同じExternalUserIdで複数回呼んでも安全）

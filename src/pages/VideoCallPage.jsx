@@ -376,21 +376,25 @@ export default function VideoCallPage() {
     [calleeChannel, user]
   );
 
-  // accepted 状態で両者が画面到達 → 5秒カウントダウン → active に自動変更
+  // accepted → callerのみが active に変更（callee は待つだけ）
+  // active になったら3秒カウントダウン表示
   useEffect(() => {
-    if (!call || !user || call.status !== 'accepted' || countdownStartedRef.current) return;
-    countdownStartedRef.current = true;
-    setCountdown(5);
-    const t1 = setTimeout(() => setCountdown(4), 1000);
-    const t2 = setTimeout(() => setCountdown(3), 2000);
-    const t3 = setTimeout(() => setCountdown(2), 3000);
-    const t4 = setTimeout(() => setCountdown(1), 4000);
-    const t5 = setTimeout(async () => {
-      setCountdown(null);
-      await base44.entities.VideoCall.update(call.id, { status: 'active' });
-      refetchCall();
-    }, 5000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearTimeout(t5); };
+    if (!call || !user) return;
+
+    // callerのみ: accepted → active に更新
+    if (call.status === 'accepted' && user.email === call.caller_email && !countdownStartedRef.current) {
+      countdownStartedRef.current = true;
+      base44.entities.VideoCall.update(call.id, { status: 'active' }).then(() => refetchCall()).catch(() => {});
+    }
+
+    // active になったらカウントダウン表示
+    if (call.status === 'active' && countdown === null && chimeConnected === false) {
+      setCountdown(3);
+      const t1 = setTimeout(() => setCountdown(2), 1000);
+      const t2 = setTimeout(() => setCountdown(1), 2000);
+      const t3 = setTimeout(() => setCountdown(null), 3000);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
   }, [call?.status, call?.id, user?.email]);
 
   // 通話開始時刻をセット
@@ -767,7 +771,8 @@ export default function VideoCallPage() {
   // accepted/active になるたびに、まだ未接続なら呼ぶ（両者が確実に参加できるよう）
   const fetchingMeetingRef = useRef(false);
   useEffect(() => {
-    if (!call || !user || !['accepted', 'active'].includes(call.status)) return;
+    // active になってから1回だけ呼ぶ（accepted では呼ばない）
+    if (!call || !user || call.status !== 'active') return;
     if (chimeMeeting || fetchingMeetingRef.current) return;
     fetchingMeetingRef.current = true;
 
@@ -781,11 +786,13 @@ export default function VideoCallPage() {
           setChimeAttendee(res.data.Attendee);
         } else {
           console.error('[Chime] ❌ No Meeting in response:', res?.data);
-          fetchingMeetingRef.current = false; // 再試行可能にする
+          fetchingMeetingRef.current = false;
         }
       } catch (e) {
         console.error('[Chime] ❌ Meeting fetch failed:', e.message);
         fetchingMeetingRef.current = false;
+        // 3秒後に再試行
+        setTimeout(() => { fetchingMeetingRef.current = false; }, 3000);
       }
     };
     fetchMeeting();
