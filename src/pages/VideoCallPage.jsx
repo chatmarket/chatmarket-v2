@@ -735,9 +735,10 @@ export default function VideoCallPage() {
   };
 
   // Chimeミーティング情報をバックエンドから取得
+  // accepted または active どちらのタイミングでも確実に1回だけ呼ぶ
   useEffect(() => {
     console.log(`[VideoCallPage] Chime trigger: call=${!!call}, user=${!!user}, status=${call?.status}`);
-    if (!call || !user || call.status !== 'active' || chimeMeeting) return;
+    if (!call || !user || !['accepted', 'active'].includes(call.status) || chimeMeeting) return;
     
     const fetchMeeting = async () => {
       try {

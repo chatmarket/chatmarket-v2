@@ -93,10 +93,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'AWS credentials not configured' }, { status: 500 });
     }
 
-    // ★ CRITICAL: DB から最新の chime_meeting_id を取得（race condition 防止）
+    // ★ CRITICAL: DB から最新の通話レコードを取得
     const freshCall = await base44.entities.VideoCall.filter({ id: callId });
-    if (freshCall[0]?.status !== 'accepted') {
-      return Response.json({ error: 'Call not accepted yet. Streamer must accept first.' }, { status: 400 });
+    if (!freshCall[0]) {
+      console.error('[Chime] ❌ Call not found in DB:', callId);
+      return Response.json({ error: 'Call not found.' }, { status: 404 });
+    }
+
+    const freshStatus = freshCall[0]?.status;
+    console.log('[Chime] 📋 Call status at meeting creation time:', freshStatus);
+
+    // accepted または active の両方を許可（タイミングの競合を吸収）
+    if (!['accepted', 'active'].includes(freshStatus)) {
+      console.error('[Chime] ❌ Invalid call status for meeting creation:', freshStatus);
+      return Response.json({ error: `Call status is '${freshStatus}'. Must be 'accepted' or 'active'.` }, { status: 400 });
     }
 
     let meetingId = freshCall[0]?.chime_meeting_id;
@@ -104,43 +114,61 @@ Deno.serve(async (req) => {
 
     if (!meetingId) {
       // 新規ミーティング作成（最初に到着した側のみ）
-      console.log(`[Chime] Creating meeting for call ${callId} (Region: ap-northeast-1)`);
-      const createResult = await chimeRequest(
-        'POST',
-        '/meetings',
-        { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
-        accessKeyId,
-        secretAccessKey,
-        'ap-northeast-1'
-      );
+      console.log(`[Chime] Creating NEW meeting for call ${callId} (Region: ap-northeast-1)`);
+      let createResult;
+      try {
+        createResult = await chimeRequest(
+          'POST',
+          '/meetings',
+          { ClientRequestToken: callId, ExternalMeetingId: callId, MediaRegion: 'ap-northeast-1' },
+          accessKeyId,
+          secretAccessKey,
+          'ap-northeast-1'
+        );
+      } catch (awsErr) {
+        console.error('[Chime] ❌ AWS CreateMeeting failed:', awsErr.message);
+        return Response.json({ error: 'AWS CreateMeeting failed: ' + awsErr.message }, { status: 500 });
+      }
       Meeting = createResult.Meeting;
       meetingId = Meeting.MeetingId;
 
-      // ★ DB に保存 + 課金開始
-      await base44.entities.VideoCall.update(callId, { 
+      // DB に保存 + 課金開始（statusは既にactiveの可能性があるので上書きしない）
+      await base44.entities.VideoCall.update(callId, {
         chime_meeting_id: meetingId,
         status: 'active',
         billing_started_at: new Date().toISOString()
       });
-      console.log('[Chime] ✓ Created meeting:', meetingId, '| ICE Server Region: ap-northeast-1');
+      console.log('[Chime] ✓ Created meeting:', meetingId);
     } else {
-      // ★ 既に作成済みのミーティングに参加（2番目に到着した側）
+      // 既に作成済みのミーティングに参加（2番目に到着した側）
       console.log(`[Chime] Joining existing meeting ${meetingId}`);
-      const getResult = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey, 'ap-northeast-1');
+      let getResult;
+      try {
+        getResult = await chimeRequest('GET', `/meetings/${meetingId}`, null, accessKeyId, secretAccessKey, 'ap-northeast-1');
+      } catch (awsErr) {
+        console.error('[Chime] ❌ AWS GetMeeting failed:', awsErr.message);
+        return Response.json({ error: 'AWS GetMeeting failed: ' + awsErr.message }, { status: 500 });
+      }
       Meeting = getResult.Meeting;
       console.log('[Chime] ✓ Joined existing meeting:', meetingId);
     }
 
-    // 参加者追加（リージョン指定必須）
+    // 参加者追加
     console.log(`[Chime] Adding attendee ${user.email} to meeting ${meetingId}`);
-    const attendeeResult = await chimeRequest(
-      'POST',
-      `/meetings/${meetingId}/attendees`,
-      { ExternalUserId: user.email },
-      accessKeyId,
-      secretAccessKey,
-      'ap-northeast-1'
-    );
+    let attendeeResult;
+    try {
+      attendeeResult = await chimeRequest(
+        'POST',
+        `/meetings/${meetingId}/attendees`,
+        { ExternalUserId: user.email },
+        accessKeyId,
+        secretAccessKey,
+        'ap-northeast-1'
+      );
+    } catch (awsErr) {
+      console.error('[Chime] ❌ AWS CreateAttendee failed:', awsErr.message);
+      return Response.json({ error: 'AWS CreateAttendee failed: ' + awsErr.message }, { status: 500 });
+    }
     const Attendee = attendeeResult.Attendee;
 
     console.log(`[Chime] ✓ Attendee created for ${user.email} (ID: ${Attendee.AttendeeId})`);
