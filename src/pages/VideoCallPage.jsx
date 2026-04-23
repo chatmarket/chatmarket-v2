@@ -17,6 +17,10 @@ import MessageModal from "../components/chat/MessageModal";
 import CallChatPanel from "../components/call/CallChatPanel";
 import AdaptiveBitrateManager from "../components/call/AdaptiveBitrateManager";
 import WaitingScreenDisplay from "../components/call/WaitingScreenDisplay";
+import ExtensionRequestModal from "../components/call/ExtensionRequestModal";
+import ExtensionAcceptanceModal from "../components/call/ExtensionAcceptanceModal";
+import ExtensionConfirmationModal from "../components/call/ExtensionConfirmationModal";
+import ReconnectionNotification from "../components/call/ReconnectionNotification";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -206,6 +210,12 @@ export default function VideoCallPage() {
   // Message modal
   const [showMessageModal, setShowMessageModal] = useState(false);
 
+  // 延長システム
+  const [showExtensionRequest, setShowExtensionRequest] = useState(false);
+  const [showExtensionAcceptance, setShowExtensionAcceptance] = useState(false);
+  const [showExtensionConfirmation, setShowExtensionConfirmation] = useState(false);
+  const [showReconnectionNotification, setShowReconnectionNotification] = useState(false);
+
   // フルスクリーン
   const videoContainerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -362,6 +372,32 @@ export default function VideoCallPage() {
     // アンマウント時のみ解除（status変化では解除しない）
     return () => unsub();
   }, [callId]); // callId のみ依存（refetchCall は安定参照）
+
+  // ★ 延長リクエスト監視（視聴者側が申請を受け取る）
+  useEffect(() => {
+    if (!call || !user || call.extension_request_status !== 'pending' || user.email !== call.caller_email) return;
+    
+    // 視聴者（caller）が申請を受け取ったら、モーダルを表示
+    if (!showExtensionAcceptance) {
+      setShowExtensionAcceptance(true);
+      console.log('[Extension] Caller received extension request:', {
+        minutes: call.extension_request_minutes,
+        coins: call.extension_request_coins,
+      });
+    }
+  }, [call?.extension_request_status, call?.extension_request_minutes, user?.email]);
+
+  // ★ 延長決済完了監視（ライバー側が確定を促される）
+  useEffect(() => {
+    if (!call || !user || call.extension_request_status !== 'accepted' || user.email !== call.callee_email) return;
+    
+    // ライバー（callee）が決済完了通知を受け取ったら、確定モーダルを表示
+    if (!showExtensionConfirmation) {
+      setShowExtensionConfirmation(true);
+      toast.info("相手が決済を完了しました！延長を確定してください");
+      console.log('[Extension] Streamer received acceptance notification');
+    }
+  }, [call?.extension_request_status, user?.email]);
 
   // calleeのchannelを取得（延長料金設定用）
   const { data: calleeChannel } = useQuery({
@@ -577,8 +613,19 @@ export default function VideoCallPage() {
         setShowExtendBanner(true);
       }
 
-      // 時間切れ
+      // 時間切れ ★ ロスタイムバッファをチェック
       if (remaining === 0 && !extendPaid) {
+        // ロスタイムバッファが有効かチェック（決済完了待機中の時間猶予）
+        if (call?.loss_time_buffer_until) {
+          const bufferUntil = new Date(call.loss_time_buffer_until).getTime();
+          if (Date.now() < bufferUntil) {
+            // バッファ期間内：時間切れを遅延、待機続行
+            console.log('[Extension] Loss-time buffer active, holding call...');
+            return;
+          }
+        }
+        
+        // バッファなし or バッファ期限切れ → 通話終了
         clearInterval(timer);
         handleEndCall();
       }
@@ -670,6 +717,13 @@ export default function VideoCallPage() {
     } else if (call && call.status === "active") {
       // callee側が終了した場合
       await base44.entities.VideoCall.update(call.id, { status: "ended" });
+      
+      // ★ ライバー（callee）側が終了する場合、再接続通知を表示
+      if (call.extension_request_status === 'accepted') {
+        // 延長待機中だった → 相手にメッセージ送信提案
+        setShowReconnectionNotification(true);
+        return; // ここではナビゲートしない
+      }
     }
     // active 以外（accepted, pending など）では ended に変更しない
     localStream?.getTracks().forEach((t) => t.stop());
@@ -1495,6 +1549,17 @@ export default function VideoCallPage() {
 
       {/* Feature row */}
       <div className="flex items-center justify-center gap-2 mb-4">
+          {/* 延長リクエスト（ライバーのみ・通話中） */}
+          {call?.status === "active" && user?.email === call?.callee_email && !call?.extension_request_status && (
+            <button
+              onClick={() => setShowExtensionRequest(true)}
+              className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/60 hover:bg-purple-500/30 transition-all"
+            >
+              <Clock className="w-5 h-5 text-purple-400" />
+              <span className="text-[10px] text-purple-400">延長</span>
+            </button>
+          )}
+
           {/* 録画ボタン（calleeのみ・通話中） */}
           {call?.status === "active" && user?.email === call?.callee_email && (
             <button
@@ -1819,6 +1884,71 @@ export default function VideoCallPage() {
           video={null}
           user={user}
           onClose={() => setShowMessageModal(false)}
+        />
+      )}
+
+      {/* Extension Request Modal (Streamer) */}
+      {showExtensionRequest && call && user && user.email === call.callee_email && (
+        <ExtensionRequestModal
+          call={call}
+          onClose={() => setShowExtensionRequest(false)}
+          onRequestSent={() => {
+            refetchCall();
+          }}
+        />
+      )}
+
+      {/* Extension Acceptance Modal (Viewer) */}
+      {showExtensionAcceptance && call && user && user.email === call.caller_email && call.extension_request_status === 'pending' && (
+        <ExtensionAcceptanceModal
+          call={call}
+          user={user}
+          onClose={() => setShowExtensionAcceptance(false)}
+          onAccepted={(data) => {
+            setShowExtensionAcceptance(false);
+            setShowExtensionConfirmation(true);
+            // ロスタイムバッファをセット
+            if (data.lossTimeBufferUntil) {
+              setRemainingSeconds(null); // タイマーを一度リセット
+            }
+            refetchCall();
+          }}
+        />
+      )}
+
+      {/* Extension Confirmation Modal (Streamer) */}
+      {showExtensionConfirmation && call && user && user.email === call.callee_email && call.extension_request_status === 'accepted' && (
+        <ExtensionConfirmationModal
+          call={call}
+          onClose={() => setShowExtensionConfirmation(false)}
+          onConfirmed={(data) => {
+            if (data.newTotalDurationMinutes) {
+              // タイマーをリセット（新しい総時間で再カウント）
+              setCallStartTime(Date.now());
+              setRemainingSeconds(data.newTotalDurationMinutes * 60);
+            }
+            refetchCall();
+          }}
+        />
+      )}
+
+      {/* Reconnection Notification (After call ended while extension pending) */}
+      {showReconnectionNotification && call && (
+        <ReconnectionNotification
+          call={call}
+          streamerName={call.callee_name}
+          onClose={() => {
+            setShowReconnectionNotification(false);
+            localStream?.getTracks().forEach((t) => t.stop());
+            navigate(-1);
+          }}
+          onReconnect={() => {
+            // 通話を再度 pending にリセット（再接続用）
+            base44.entities.VideoCall.update(call.id, {
+              status: 'pending',
+              extension_request_status: null,
+            });
+          }}
         />
       )}
 

@@ -179,6 +179,44 @@
       "type": "number",
       "default": 0,
       "description": "\u9332\u753b\u306b\u4f7f\u3063\u305fAWS\u5b9f\u8cbb\uff08Media Capture\uff09\u8a08\u4e0a\u7528"
+    },
+    "extension_request_minutes": {
+      "type": "number",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u304c\u7533\u8acb\u3057\u305f\u5ef6\u9577\u5206\u6570"
+    },
+    "extension_request_coins": {
+      "type": "number",
+      "description": "\u5ef6\u9577\u306b\u5fc5\u8981\u306a\u30b3\u30a4\u30f3\u6570"
+    },
+    "extension_request_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "confirmed",
+        "rejected"
+      ],
+      "description": "\u5ef6\u9577\u7533\u8acb\u306e\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "extension_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u5ef6\u9577\u7533\u8acb\u6642\u523b"
+    },
+    "extension_accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u8996\u8074\u8005\u304c\u5ef6\u9577\u53d7\u8afe\u30fb\u6c7a\u6e08\u5b8c\u4e86\u6642\u523b"
+    },
+    "extension_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u304c\u5ef6\u9577\u78ba\u5b9a\u6642\u523b"
+    },
+    "loss_time_buffer_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30ed\u30b9\u30bf\u30a4\u30e0\u30d0\u30c3\u30d5\u30a1\u306e\u7d42\u4e86\u6642\u523b\uff08\u6c7a\u6e08\u5b8c\u4e86\u307e\u3067\u6642\u9593\u5207\u308c\u3092\u9045\u5ef6\uff09"
     }
   },
   "required": [
