@@ -118,6 +118,10 @@ export default function ChimeVideoCall({
         await audioVideo.start();
         console.log('[Chime] ✓ Session started');
 
+        // マイクを強制ON（ライバー側でミュートになる問題を防止）
+        audioVideo.realtimeUnmuteLocalAudio();
+        console.log('[Chime] ✓ Mic force-unmuted');
+
         // ローカルビデオタイル開始
         audioVideo.startLocalVideoTile();
         console.log('[Chime] ✓ Local video tile started');

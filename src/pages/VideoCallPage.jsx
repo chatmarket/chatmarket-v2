@@ -1039,7 +1039,11 @@ export default function VideoCallPage() {
             localVideoRef={localVideoRef}
             micEnabled={micOn}
             camEnabled={camOn}
-            onConnected={() => setChimeConnected(true)}
+            onConnected={() => {
+              setChimeConnected(true);
+              // 接続完了時にマイクを強制ON
+              setMicOn(true);
+            }}
           />
         )}
 
@@ -1200,44 +1204,7 @@ export default function VideoCallPage() {
 
 
 
-        {/* Call Progress HUD (経過時間 / 残り時間) */}
-         {callStartTime && effectiveDuration && (
-           <div className="absolute bottom-48 md:bottom-52 left-2 md:left-4 right-2 md:right-4 z-10 bg-black/70 border border-cyan-500/40 rounded-lg md:rounded-xl p-2 md:p-4 backdrop-blur">
-             <div className="space-y-2">
-               {/* Progress bar */}
-               <div className="w-full bg-black/50 rounded-full h-2 border border-cyan-500/20">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${Math.min(100, (remainingSeconds === null ? 0 : (effectiveDuration * 60 - remainingSeconds) / (effectiveDuration * 60)) * 100)}%` }}
-                  transition={{ duration: 1 }}
-                  style={{
-                    boxShadow: "0 0 10px rgba(0,229,255,0.5)",
-                  }}
-                />
-              </div>
-              
-              {/* Time display */}
-              <div className="flex justify-between items-center text-[10px] md:text-xs gap-1">
-                <div className="min-w-max">
-                  <p className="text-cyan-400 font-bold text-sm md:text-base">
-                    {callStartTime ? `${Math.floor((Date.now() - callStartTime) / 1000 / 60)}:${String(Math.floor(((Date.now() - callStartTime) / 1000) % 60)).padStart(2, '0')}` : "0:00"}
-                  </p>
-                  <p className="text-cyan-300/60 text-[8px] md:text-[10px]">経過</p>
-                </div>
-                <div className="text-center hidden md:block">
-                  <p className="text-white/40 text-[9px]">/ {effectiveDuration}分{isMillionaireChallengePeriod() ? " (固定)" : ""}</p>
-                </div>
-                <div className="min-w-max">
-                  <p className={`font-bold text-sm md:text-base ${remainingSeconds <= 60 ? "text-red-400" : "text-cyan-400"}`}>
-                    {remainingSeconds !== null ? `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}` : "-"}
-                  </p>
-                  <p className={`text-[8px] md:text-[10px] ${remainingSeconds <= 60 ? "text-red-300/60" : "text-cyan-300/60"}`}>残り</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Call Progress HUD は下部コントロールエリアに移動 */}
 
         {/* ---- Neon Countdown Timer (30秒前から表示) - 右上隅 ---- */}
          <AnimatePresence>
@@ -1487,6 +1454,31 @@ export default function VideoCallPage() {
       {/* Bottom controls */}
       </div>
       <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20">
+
+      {/* ▼ Progress bar - 最下部コントロールエリア最上部に配置 */}
+      {callStartTime && effectiveDuration && (
+        <div className="mb-3">
+          <div className="flex justify-between items-center mb-1 text-[10px]">
+            <span className="text-cyan-400 font-bold">
+              {`${Math.floor((Date.now() - callStartTime) / 1000 / 60)}:${String(Math.floor(((Date.now() - callStartTime) / 1000) % 60)).padStart(2, '0')}`} 経過
+            </span>
+            <span className="text-white/40">/ {effectiveDuration}分</span>
+            <span className={`font-bold ${remainingSeconds <= 60 ? "text-red-400" : "text-cyan-400"}`}>
+              {remainingSeconds !== null ? `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}` : "-"} 残り
+            </span>
+          </div>
+          <div className="w-full bg-black/50 rounded-full h-1.5 border border-cyan-500/20">
+            <motion.div
+              className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
+              initial={{ width: "0%" }}
+              animate={{ width: `${Math.min(100, (remainingSeconds === null ? 0 : (effectiveDuration * 60 - remainingSeconds) / (effectiveDuration * 60)) * 100)}%` }}
+              transition={{ duration: 1 }}
+              style={{ boxShadow: "0 0 8px rgba(0,229,255,0.5)" }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Feature row */}
       <div className="flex items-center justify-center gap-2 mb-4">
           {/* 録画ボタン（calleeのみ・通話中） */}
@@ -1631,9 +1623,9 @@ export default function VideoCallPage() {
               )}
               </div>
 
-              {/* Chat section - Below video */}
+              {/* Chat section - Below video (スマホ: 映像4:チャット6の比率) */}
               {user && (
-                <div className="w-full h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
+                <div className="w-full h-48 sm:h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
                   {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
                 </div>
               )}
