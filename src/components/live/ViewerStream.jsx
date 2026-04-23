@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
 import { base44 } from "@/api/base44Client";
 import { Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
-
 
 // 価格帯 → 画質定義
 const QUALITY_OPTIONS = [
@@ -28,12 +26,21 @@ export default function ViewerStream({ streamId, stream }) {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const chimeSessionRef = useRef(null);
+  const retryRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState(null);
-  const [connQuality, setConnQuality] = useState(null); // "good" | "poor"
+  const [connQuality, setConnQuality] = useState(null);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [chimeReady, setChimeReady] = useState(false);
+  
+  // デバッグ情報
+  const [debugInfo, setDebugInfo] = useState({
+    meetingId: null,
+    attendeeId: null,
+    tileCount: 0,
+    status: "初期化待機中..."
+  });
 
   const streamPrice = stream?.price || 0;
   const availableQualities = QUALITY_OPTIONS.filter(q => streamPrice >= q.minPrice);
@@ -42,7 +49,6 @@ export default function ViewerStream({ streamId, stream }) {
 
   const [selectedQuality, setSelectedQuality] = useState(defaultQuality);
 
-  // 価格が変わったらデフォルト画質をリセット
   useEffect(() => {
     setSelectedQuality(getDefaultQuality(streamPrice));
   }, [streamPrice]);
@@ -50,62 +56,139 @@ export default function ViewerStream({ streamId, stream }) {
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
   const isWebRTC = stream?.stream_type === "webrtc";
 
-  // ★ Chime Meeting接続（WebRTC配信用） - Socket.io stream_started イベント待機（パッシブ）
+  // ★ 強制開通ロジック: Socket.io イベント待たずに3秒後に強制接続
   useEffect(() => {
     if (!isWebRTC || !streamId || !stream?.chime_meeting_id) return;
 
     let isMounted = true;
-    const socket = io(); // Socket.io インスタンス（app-wide configured）
-    
-    // stream_started イベント受信時のみ Chime 初期化（パッシブ）
-    const handleStreamStarted = async (data) => {
-      if (data.stream_id !== streamId || !isMounted) return;
-      console.log('[ViewerStream] 📡 stream_started event received, initializing Chime...');
+    let retryCount = 0;
 
+    const initChime = async () => {
       try {
+        console.log('[ViewerStream] 🚀 強制Chime初期化開始...');
+        setDebugInfo(prev => ({ ...prev, status: "Chime初期化中..." }));
+
         const res = await base44.functions.invoke('createLiveStreamChimeMeeting', {
           streamId,
-          role: 'viewer',  // ★ 視聴者は受信専用ロール
+          role: 'viewer',
         });
 
         if (!isMounted) return;
 
         const { Meeting, Attendee } = res.data;
-        console.log('[ViewerStream] ✅ Chime session created:', { 
-          meetingId: Meeting.MeetingId, 
-          attendeeId: Attendee.AttendeeId,
-          broadcasterAttendeeId: data.broadcaster_attendee_id 
+        console.log('[ViewerStream] ✅ Chime接続成功:', {
+          meetingId: Meeting.MeetingId,
+          attendeeId: Attendee.AttendeeId
         });
 
-        // ★ Attendeeマネージャーで入室を記録
-        await base44.functions.invoke('liveStreamAttendeeManager', {
-          stream_id: streamId,
-          action: 'join',
-          attendee_id: Attendee.AttendeeId,
-        });
+        // Attendee記録
+        try {
+          await base44.functions.invoke('liveStreamAttendeeManager', {
+            stream_id: streamId,
+            action: 'join',
+            attendee_id: Attendee.AttendeeId,
+          });
+        } catch (e) {
+          console.warn('[ViewerStream] Attendee記録失敗（非致命的）:', e.message);
+        }
 
-        chimeSessionRef.current = { 
-          Meeting, 
-          Attendee, 
-          broadcasterAttendeeId: data.broadcaster_attendee_id // ★ 配信者 ID を保存（バインド判定用）
+        chimeSessionRef.current = {
+          Meeting,
+          Attendee,
+          audioVideo: null // 後から設定
         };
-        // ★ 配信者 ID を sessionStorage に保存（ChimeVideoCall 側で使用）
-        sessionStorage.setItem('broadcasterAttendeeId', data.broadcaster_attendee_id);
-        setChimeReady(true);
+
+        setDebugInfo(prev => ({
+          ...prev,
+          meetingId: Meeting.MeetingId.substring(0, 8),
+          attendeeId: Attendee.AttendeeId.substring(0, 8),
+          status: "接続待機中..."
+        }));
+
+        // Chime SDK初期化（簡易版）
+        try {
+          const { DefaultMeetingSession, MeetingSessionConfiguration, ConsoleLogger, LogLevel } = await import('amazon-chime-sdk-js');
+          
+          const configuration = new MeetingSessionConfiguration(Meeting, Attendee);
+          const logger = new ConsoleLogger('Chime', LogLevel.INFO);
+          const session = new DefaultMeetingSession(configuration, logger);
+          const audioVideo = session.audioVideo;
+
+          // ★ videoTileDidUpdate: 自分以外の映像を即座に bind
+          const observer = {
+            videoTileDidUpdate: (tileState) => {
+              if (!isMounted || !videoRef.current) return;
+
+              console.log('[Chime] videoTileDidUpdate:', {
+                tileId: tileState.tileId,
+                localTile: tileState.localTile,
+                isContent: tileState.isContent,
+                active: tileState.active
+              });
+
+              // ローカル映像（自分）
+              if (tileState.localTile) {
+                console.log('[Chime] ✓ ローカルタイル: ', tileState.tileId);
+                return;
+              }
+
+              // ★ 脳筋ロジック: 自分以外の映像 = 配信者 → 即座に bind
+              if (!tileState.isContent && tileState.active) {
+                console.log('[Chime] 🎯 リモート映像検知! tileId:', tileState.tileId, ' → 即座にバインド');
+                audioVideo.bindVideoElement(tileState.tileId, videoRef.current);
+                setChimeReady(true);
+                setReady(true);
+                setDebugInfo(prev => ({ ...prev, status: "📡 映像配信中" }));
+                
+                // リトライをクリア
+                if (retryRef.current) clearInterval(retryRef.current);
+              }
+            },
+            videoTileWasRemoved: (tileId) => {
+              console.log('[Chime] videoTileWasRemoved:', tileId);
+            }
+          };
+
+          audioVideo.addObserver(observer);
+          chimeSessionRef.current.audioVideo = audioVideo;
+
+          // Session開始
+          await audioVideo.start();
+          console.log('[Chime] ✓ Session started');
+          audioVideo.startLocalVideoTile();
+
+        } catch (sdkErr) {
+          console.warn('[ViewerStream] Chime SDK初期化失敗（非致命的）:', sdkErr.message);
+          // SDK失敗でも socket イベント待たずに表示を継続
+        }
+
       } catch (err) {
+        retryCount++;
         if (!isMounted) return;
-        console.error('[ViewerStream] Chime init failed:', err.message);
+        console.error(`[ViewerStream] ❌ Chime初期化失敗 (試行${retryCount}):`, err.message);
+        setDebugInfo(prev => ({ ...prev, status: `接続失敗（${retryCount}回目）、リトライ中...` }));
+
+        // ★ 無限リトライ: 映像が出るまで5秒ごとに永遠に試行
+        if (retryRef.current) clearInterval(retryRef.current);
+        retryRef.current = setInterval(() => {
+          if (isMounted) initChime();
+        }, 5000);
       }
     };
 
-    socket.on('stream_started', handleStreamStarted);
-    
+    // ★ 3秒後に強制開通
+    const timeoutId = setTimeout(() => {
+      if (isMounted) initChime();
+    }, 3000);
+
     return () => {
       isMounted = false;
-      socket.off('stream_started', handleStreamStarted);
+      clearTimeout(timeoutId);
+      if (retryRef.current) clearInterval(retryRef.current);
     };
   }, [isWebRTC, streamId, stream?.chime_meeting_id]);
 
+  // IVS プレイヤー（WebRTC でない場合）
   useEffect(() => {
     if (isWebRTC) return;
     if (!playbackUrl || stream?.status !== "live") return;
@@ -115,7 +198,10 @@ export default function ViewerStream({ streamId, stream }) {
     (async () => {
       try {
         const { create, isPlayerSupported } = await import("amazon-ivs-player");
-        if (!isPlayerSupported) { setError("このブラウザはIVS Playerに対応していません"); return; }
+        if (!isPlayerSupported) {
+          setError("このブラウザはIVS Playerに対応していません");
+          return;
+        }
 
         const { PlayerState, PlayerEventType } = await import("amazon-ivs-player");
 
@@ -129,7 +215,10 @@ export default function ViewerStream({ streamId, stream }) {
 
         player.addEventListener(PlayerEventType.STATE_CHANGED, (state) => {
           if (!isMounted) return;
-          if (state === PlayerState.PLAYING) { setReady(true); setConnQuality("good"); }
+          if (state === PlayerState.PLAYING) {
+            setReady(true);
+            setConnQuality("good");
+          }
           if (state === PlayerState.BUFFERING) setConnQuality("poor");
         });
 
@@ -159,7 +248,6 @@ export default function ViewerStream({ streamId, stream }) {
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted]);
 
-  // 現在選択中の画質オブジェクト
   const currentQ = QUALITY_OPTIONS.find(q => q.value === selectedQuality) ?? QUALITY_OPTIONS[0];
 
   return (
@@ -181,14 +269,20 @@ export default function ViewerStream({ streamId, stream }) {
           <p className="text-lg font-semibold text-white">
             {stream?.status === "live" ? "接続中..." : "配信者の接続を待っています..."}
           </p>
-          <p className="text-sm text-white/50">Amazon IVS 超低遅延ストリーミング</p>
+          <p className="text-sm text-white/50">Amazon IVS / Chime 強制開通中</p>
         </div>
       )}
 
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
           <p className="text-red-400 font-bold">{error}</p>
-          <button onClick={() => { setError(null); setReady(false); }} className="text-sm text-white/60 underline">
+          <button
+            onClick={() => {
+              setError(null);
+              setReady(false);
+            }}
+            className="text-sm text-white/60 underline"
+          >
             再試行
           </button>
         </div>
@@ -197,15 +291,23 @@ export default function ViewerStream({ streamId, stream }) {
       {ready && (
         <div className="absolute bottom-4 right-4 flex items-center gap-2">
           {/* 接続品質 */}
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${connQuality === "poor" ? "bg-yellow-500/80 text-black" : "bg-black/50 text-green-400"}`}>
-            {connQuality === "poor" ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+          <div
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
+              connQuality === "poor" ? "bg-yellow-500/80 text-black" : "bg-black/50 text-green-400"
+            }`}
+          >
+            {connQuality === "poor" ? (
+              <WifiOff className="w-3.5 h-3.5" />
+            ) : (
+              <Wifi className="w-3.5 h-3.5" />
+            )}
             {connQuality === "poor" ? "低品質" : "良好"}
           </div>
 
           {/* 画質選択ボタン */}
           <div className="relative">
             <button
-              onClick={() => setShowQualityMenu(v => !v)}
+              onClick={() => setShowQualityMenu((v) => !v)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-xs font-bold hover:bg-black/90 transition-colors border border-white/10"
             >
               <Settings className="w-3 h-3" />
@@ -232,7 +334,7 @@ export default function ViewerStream({ streamId, stream }) {
 
                 {/* 画質選択肢 */}
                 <div className="py-1">
-                  {QUALITY_OPTIONS.map(q => {
+                  {QUALITY_OPTIONS.map((q) => {
                     const unlocked = streamPrice >= q.minPrice;
                     const isSelected = selectedQuality === q.value;
                     return (
@@ -245,27 +347,45 @@ export default function ViewerStream({ streamId, stream }) {
                         }}
                         disabled={!unlocked}
                         className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
-                          isSelected ? "bg-primary/15" :
-                          unlocked ? "hover:bg-zinc-800" : "opacity-40 cursor-not-allowed"
+                          isSelected
+                            ? "bg-primary/15"
+                            : unlocked
+                            ? "hover:bg-zinc-800"
+                            : "opacity-40 cursor-not-allowed"
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          {/* バッジ */}
-                          <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${q.badgeColor} text-white`}>
+                          <span
+                            className={`text-[10px] font-black px-1.5 py-0.5 rounded ${q.badgeColor} text-white`}
+                          >
                             {q.label}
                           </span>
                           <div className="text-left">
-                            <p className={`text-xs font-bold ${isSelected ? "text-primary" : unlocked ? "text-white" : "text-zinc-600"}`}>
+                            <p
+                              className={`text-xs font-bold ${
+                                isSelected
+                                  ? "text-primary"
+                                  : unlocked
+                                  ? "text-white"
+                                  : "text-zinc-600"
+                              }`}
+                            >
                               {q.desc}
                             </p>
                             <p className="text-[10px] text-zinc-500">
-                              {q.minPrice === 0 ? "すべての配信で利用可能" : `¥${q.minPrice}以上の配信`}
+                              {q.minPrice === 0
+                                ? "すべての配信で利用可能"
+                                : `¥${q.minPrice}以上の配信`}
                             </p>
                           </div>
                         </div>
                         <div className="shrink-0">
-                          {isSelected && <span className="text-primary text-xs font-black">✓</span>}
-                          {!unlocked && <Lock className="w-3.5 h-3.5 text-zinc-600" />}
+                          {isSelected && (
+                            <span className="text-primary text-xs font-black">✓</span>
+                          )}
+                          {!unlocked && (
+                            <Lock className="w-3.5 h-3.5 text-zinc-600" />
+                          )}
                         </div>
                       </button>
                     );
@@ -289,10 +409,21 @@ export default function ViewerStream({ streamId, stream }) {
             onClick={() => setMuted(!muted)}
             className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
           >
-            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {muted ? (
+              <VolumeX className="w-4 h-4" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
           </button>
         </div>
       )}
+
+      {/* ★ デバッグ情報表示 */}
+      <div className="absolute top-4 left-4 bg-black/70 border border-cyan-500/40 rounded-lg px-3 py-2 text-[10px] font-mono text-cyan-300 space-y-0.5 pointer-events-none">
+        <div>🎯 Meeting: {debugInfo.meetingId || "---"}</div>
+        <div>👤 Attendee: {debugInfo.attendeeId || "---"}</div>
+        <div>📊 Status: {debugInfo.status}</div>
+      </div>
     </div>
   );
 }
