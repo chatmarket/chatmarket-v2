@@ -137,18 +137,17 @@ function FloatingItem({ item, onDone, type = "emoji" }) {
 
   return (
     <motion.div
-      className="pointer-events-none fixed z-50 select-none"
-      initial={{ opacity: 1, y: 0, x: Math.random() * 80 + 20 + "%" }}
-      animate={{ opacity: 0, y: -200 }}
+      className="pointer-events-none fixed z-50 select-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      initial={{ opacity: 1, y: 0, scale: 0.8 }}
+      animate={{ opacity: 0, y: -150, scale: 1.2 }}
       transition={{ duration: 2, ease: "easeOut" }}
-      style={{ bottom: "200px" }}
     >
       {type === "coin" ? (
-        <div className="text-3xl font-black text-yellow-400 drop-shadow-lg" style={{ textShadow: "0 0 12px rgba(255,215,0,0.8)" }}>
+        <div className="text-5xl font-black text-yellow-400 drop-shadow-2xl animate-bounce" style={{ textShadow: "0 0 20px rgba(255,215,0,1)" }}>
           💰 {item}
         </div>
       ) : (
-        <div className="text-4xl">{item}</div>
+        <div className="text-6xl animate-bounce">{item}</div>
       )}
     </motion.div>
   );
@@ -1368,7 +1367,8 @@ export default function VideoCallPage() {
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-white font-bold text-sm">
                     {activePanel === "emoji" && "😊 絵文字を送る"}
-                    {activePanel === "throw" && "🎁 投げマーク"}
+                    {activePanel === "throw" && "✨ 投げマーク"}
+                    {activePanel === "yell" && "💰 エールコイン"}
                     {activePanel === "filter" && "✨ 加工フィルター"}
                     {activePanel === "bg" && "🖼️ 背景"}
                     {activePanel === "settings" && "⚙️ 音声・画質設定"}
@@ -1394,6 +1394,7 @@ export default function VideoCallPage() {
 
                 {activePanel === "throw" && (
                    <div className="space-y-3">
+                     <p className="text-xs text-white/50 font-semibold">✨ 投げマーク</p>
                      <div className="grid grid-cols-4 gap-2">
                        {THROW_MARKS.map((mark) => (
                          <button
@@ -1406,23 +1407,26 @@ export default function VideoCallPage() {
                          </button>
                        ))}
                      </div>
-                     <div className="border-t border-white/10 pt-3">
-                       <p className="text-xs text-white/40 mb-2">💰 エールコイン</p>
-                       <div className="grid grid-cols-3 gap-2">
-                         {YELL_AMOUNTS.map((amt) => (
-                           <button
-                             key={amt.value}
-                             onClick={() => { addFloating(`¥${amt.value}`, "coin"); toast.success(`¥${amt.value}を投げました！`); }}
-                             className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-all border ${colorStyles[amt.color].includes("border") ? colorStyles[amt.color].split(" ").filter(c => c.includes("border")).join(" ") : "border-white/10"} bg-white/5 hover:bg-white/10`}
-                           >
-                             <span className="text-lg font-bold">💰</span>
-                             <span className="text-[9px] text-white/60">{amt.label}</span>
-                           </button>
-                         ))}
-                       </div>
-                     </div>
                    </div>
                  )}
+
+                {activePanel === "yell" && (
+                  <div className="space-y-3">
+                    <p className="text-xs text-white/50 font-semibold">💰 エールコイン</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {YELL_AMOUNTS.map((amt) => (
+                        <button
+                          key={amt.value}
+                          onClick={() => { addFloating(`¥${amt.value}`, "coin"); toast.success(`¥${amt.value}を投げました！`); }}
+                          className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-all border ${colorStyles[amt.color].includes("border") ? colorStyles[amt.color].split(" ").filter(c => c.includes("border")).join(" ") : "border-white/10"} bg-white/5 hover:bg-white/10`}
+                        >
+                          <span className="text-lg font-bold">💰</span>
+                          <span className="text-[9px] text-white/60">{amt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {activePanel === "filter" && (
                   <div className="flex gap-2 overflow-x-auto pb-1">
@@ -1574,7 +1578,8 @@ export default function VideoCallPage() {
           )}
           {[
             { key: "emoji", icon: Smile, label: "絵文字" },
-            { key: "throw", icon: Sparkles, label: "投げ" },
+            { key: "throw", icon: Sparkles, label: "投げマーク" },
+            { key: "yell", icon: Coins, label: "エール" },
             { key: "filter", icon: Camera, label: "フィルター" },
             { key: "bg", icon: Image, label: "背景" },
             { key: "settings", icon: Settings, label: "設定" },
