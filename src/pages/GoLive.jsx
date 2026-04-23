@@ -226,6 +226,14 @@ export default function GoLive() {
             <CheckCircle2 className="w-4 h-4" /> OBS 情報が入力されました
           </div>
         )}
+        <a
+          href="https://live-chat-market.com/obs-guide"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-semibold underline underline-offset-2 transition-colors"
+        >
+          → 高画質、高音質配信の詳細はこちら
+        </a>
       </div>
 
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
