@@ -77,10 +77,15 @@ Deno.serve(async (req) => {
       await base44.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
     }
 
-    // Attendee登録（ロール付き）
+    // Attendee登録（ロール付き）★視聴者は受信専用に制限
     const attendeeRes = await chimeRequest('POST', 'chime.ap-northeast-1.amazonaws.com', `/meetings/${meetingId}/attendees`, {
       ExternalUserId: `${role}-${user.email}-${Date.now()}`,
+      Capabilities: role === 'viewer' 
+        ? { Audio: 'None', Video: 'None' }  // 受信専用（マイク・カメラ不可）
+        : { Audio: 'SendReceive', Video: 'SendReceive' }  // 配信者は双方向
     });
+
+    console.log(`[Chime] Attendee created: role=${role}, capabilities=${role === 'viewer' ? 'Receiver-Only' : 'Broadcaster'}, attendeeId=${attendeeRes.Attendee.AttendeeId}`);
 
     return new Response(JSON.stringify({
       Meeting: { MeetingId: meetingId },

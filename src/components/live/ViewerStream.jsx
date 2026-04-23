@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
 
 
@@ -25,11 +26,13 @@ function getUpsellMessage(price) {
 export default function ViewerStream({ streamId, stream }) {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
+  const chimeSessionRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState(null);
   const [connQuality, setConnQuality] = useState(null); // "good" | "poor"
   const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [chimeReady, setChimeReady] = useState(false);
 
   const streamPrice = stream?.price || 0;
   const availableQualities = QUALITY_OPTIONS.filter(q => streamPrice >= q.minPrice);
@@ -45,6 +48,48 @@ export default function ViewerStream({ streamId, stream }) {
 
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
   const isWebRTC = stream?.stream_type === "webrtc";
+
+  // ★ Chime Meeting接続（WebRTC配信用）
+  useEffect(() => {
+    if (!isWebRTC || !streamId || !stream?.chime_meeting_id) return;
+
+    let isMounted = true;
+    const initChime = async () => {
+      try {
+        const res = await base44.functions.invoke('createLiveStreamChimeMeeting', {
+          streamId,
+          role: 'viewer',  // ★ 視聴者は受信専用ロール
+        });
+
+        if (!isMounted) return;
+
+        const { Meeting, Attendee } = res.data;
+        console.log('[ViewerStream] ✅ Chime session created:', { meetingId: Meeting.MeetingId, attendeeId: Attendee.AttendeeId });
+
+        // ★ Attendeeマネージャーで入室を記録
+        await base44.functions.invoke('liveStreamAttendeeManager', {
+          stream_id: streamId,
+          action: 'join',
+          attendee_id: Attendee.AttendeeId,
+        });
+
+        chimeSessionRef.current = { Meeting, Attendee };
+        setChimeReady(true);
+
+        // 15秒後に配信者の映像タイルを探索開始
+        setTimeout(() => {
+          if (!isMounted) return;
+          console.log('[ViewerStream] 🎯 Searching for broadcaster tile...');
+        }, 15000);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('[ViewerStream] Chime init failed:', err.message);
+      }
+    };
+
+    initChime();
+    return () => { isMounted = false; };
+  }, [isWebRTC, streamId, stream?.chime_meeting_id]);
 
   useEffect(() => {
     if (isWebRTC) return;

@@ -79,7 +79,11 @@ export default function ChatPanel({ targetType, targetId }) {
 
   const { data: superChats = [] } = useQuery({
     queryKey: ["superchats", targetId],
-    queryFn: () => base44.entities.SuperChat.filter({ livestream_id: targetId }, "-created_date", 50),
+    queryFn: async () => {
+      const res = await base44.entities.SuperChat.filter({ livestream_id: targetId }, "-created_date", 50);
+      console.log(`[ChatPanel] 🎯 SuperChat sync: ${res.length} items fetched (interval: 3s)`);
+      return res;
+    },
     refetchInterval: 3000,
     enabled: targetType === "livestream",
   });
@@ -89,11 +93,12 @@ export default function ChatPanel({ targetType, targetId }) {
     const latest = superChats[0];
     if (latest.id !== latestSuperChatId) {
       if (latestSuperChatId !== null) {
+        console.log(`[ChatPanel] 💰 SuperChat burst: ¥${latest.amount} from ${latest.user_name}`);
         setBurst({ amount: latest.amount, userName: latest.user_name || "匿名" });
       }
       setLatestSuperChatId(latest.id);
     }
-  }, [superChats]);
+  }, [superChats, latestSuperChatId]);
 
   const filterNg = useCallback((text) => {
     if (!ngWords.length) return true;
