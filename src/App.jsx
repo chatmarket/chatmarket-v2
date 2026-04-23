@@ -13,6 +13,7 @@ import Search from '@/pages/Search';
 import ChannelPage from '@/pages/ChannelPage';
 import GoLive from '@/pages/GoLive';
 import LiveView from '@/pages/LiveView';
+import LiveStreamTest from '@/pages/LiveStreamTest';
 import WatchVideo from '@/pages/WatchVideo';
 import Upload from '@/pages/Upload';
 import Settings from '@/pages/Settings';
@@ -88,6 +89,7 @@ export default function App() {
             <Route path="/channel/:channelId" element={<ChannelPage />} />
             <Route path="/go-live" element={<GoLive />} />
             <Route path="/live/:streamId" element={<LiveView />} />
+            <Route path="/live-test/:streamId" element={<LiveStreamTest />} />
             <Route path="/watch/:videoId" element={<WatchVideo />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/settings" element={<Settings />} />

@@ -97,6 +97,40 @@
       "type": "string",
       "description": "\u8996\u8074\u8005\u306eICE candidates (JSON\u914d\u5217\u6587\u5b57\u5217)"
     },
+    "chime_meeting_id": {
+      "type": "string",
+      "description": "Amazon Chime Meeting ID\uff081\u5bfe\u591a\u914d\u4fe1\u7528\uff09"
+    },
+    "broadcaster_attendee_id": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u8005\u306eChime Attendee ID"
+    },
+    "viewer_attendee_ids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "attendee_id": {
+            "type": "string"
+          },
+          "user_email": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "left_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "\u8996\u8074\u8005\u306eAttendee\u60c5\u5831\uff08\u5165\u9000\u5ba4\u8ffd\u8de1\u7528\uff09"
+    },
     "live_started_at": {
       "type": "string",
       "format": "date-time",
