@@ -274,21 +274,8 @@ export default function DirectChat() {
             </Button>
           </div>
         </div>
-        {/* ビデオ通話ボタン（視聴者のみ・ライバー本人には非表示） */}
-        {/* channel.call_enabled なら即座に表示（activeCallのロード待ち不要） */}
-        {!isCreator && channel.call_enabled && (!activeCallFetched || !activeCall) && (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setCallModal({ otherName: channel.name })}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm text-black"
-            style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 20px rgba(0,255,157,0.5)" }}
-          >
-            <PhoneCall className="w-5 h-5" />
-            {channel.name} さんにビデオ通話を申し込む
-          </motion.button>
-        )}
-        {/* call_enabled でない場合は従来通りロード後に表示 */}
-        {!isCreator && !channel.call_enabled && activeCallFetched && !activeCall && (
+        {/* ビデオ通話ボタン（視聴者のみ・ライバー本人には非表示・即時表示） */}
+        {!isCreator && !activeCall && (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setCallModal({ otherName: channel.name })}
