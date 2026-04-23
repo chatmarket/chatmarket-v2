@@ -274,7 +274,8 @@ export default function DirectChat() {
             </Button>
           </div>
         </div>
-        {!isCreator && channel.call_enabled && !activeCall && (
+        {/* ビデオ通話ボタン（視聴者のみ・ライバー本人には非表示） */}
+        {!isCreator && !activeCall && (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setCallModal({ otherName: channel.name })}
