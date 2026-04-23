@@ -320,35 +320,48 @@ export default function VideoCallPage() {
       const calls = await base44.entities.VideoCall.filter({ id: callId });
       return calls[0];
     },
-    refetchInterval: 2000,
+    refetchInterval: 3000,
+    // ended でも refetch を止めない
+    refetchIntervalInBackground: true,
   });
 
-  // ★ pending 状態では何もしない。ライバーが手動で「通話開始」を押すまで待機
+  // ★ pending 状態ではライバーに着信モーダルを表示。ended でも再接続可能にリセット
   useEffect(() => {
-    if (!call || !user || call.status !== 'pending') return;
-    
-    if (call.callee_email === user.email && !incomingCallDetected) {
-      setIncomingCallDetected(true);
-      console.log('[VideoCallPage] 🔔 INCOMING CALL DETECTED:', {
-        callId: call.id,
-        caller: call.caller_email,
-        callee: call.callee_email,
-      });
+    if (!call || !user) return;
+
+    // ended → pending に戻った場合（または新規着信）でも確実に検出
+    if (call.status === 'pending' && call.callee_email === user.email) {
+      if (!incomingCallDetected) {
+        setIncomingCallDetected(true);
+        console.log('[VideoCallPage] 🔔 INCOMING CALL DETECTED:', {
+          callId: call.id,
+          caller: call.caller_email,
+          callee: call.callee_email,
+        });
+      }
+    }
+
+    // ended になったらリセット（次の着信に備える）
+    if (call.status === 'ended') {
+      setIncomingCallDetected(false);
+      countdownStartedRef.current = false;
     }
   }, [call?.id, call?.status, user?.email, call?.callee_email, incomingCallDetected]);
 
-  // ★ VideoCall リアルタイム購読
+  // ★ VideoCall リアルタイム購読（マウント時1回のみ登録、ended後も維持）
   useEffect(() => {
     if (!callId) return;
     console.log('[VideoCallPage] 📡 Subscribing to VideoCall events for:', callId);
     const unsub = base44.entities.VideoCall.subscribe((event) => {
-      if (event.id === callId) {
+      // callId が一致すれば常に refetch（ended → pending の変化も拾う）
+      if (event.id === callId || event.data?.id === callId) {
         console.log('[VideoCallPage] 📬 VideoCall event:', { type: event.type, status: event.data?.status });
         refetchCall();
       }
     });
-    return unsub;
-  }, [callId]);
+    // アンマウント時のみ解除（status変化では解除しない）
+    return () => unsub();
+  }, [callId]); // callId のみ依存（refetchCall は安定参照）
 
   // calleeのchannelを取得（延長料金設定用）
   const { data: calleeChannel } = useQuery({
@@ -819,8 +832,8 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* ★ CRITICAL: pending 着信 → 自動応答ボタン（ライバーのみ） */}
-      {call?.status === 'pending' && user?.email === call?.callee_email && (
+      {/* ★ CRITICAL: pending 着信 → 承認ボタン（ライバーのみ）。ended でも pending に戻った直後は表示 */}
+      {(call?.status === 'pending') && user?.email === call?.callee_email && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
