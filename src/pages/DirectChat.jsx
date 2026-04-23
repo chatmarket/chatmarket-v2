@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Coins, Video, X } from "lucide-react";
+import { ArrowLeft, Send, Coins, Video, PhoneCall, X } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import YellCoinSendModal from "../components/chat/YellCoinSendModal";
@@ -36,10 +36,11 @@ export default function DirectChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showYellModal, setShowYellModal] = useState(false);
-  const [callModal, setCallModal] = useState(null); // { callId, otherName }
+  const [callModal, setCallModal] = useState(null);
   const [startingCall, setStartingCall] = useState(false);
   const bottomRef = useRef(null);
   const lastMsgCountRef = useRef(0);
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -52,6 +53,30 @@ export default function DirectChat() {
 
   const threadId = user && channel ? makeThreadId(user.email, channel.owner_email) : null;
   const isCreator = user && channel && user.email === channel.owner_email;
+
+  // ★ アクティブ/pending な通話を監視 → 自動リダイレクト
+  const { data: activeCall } = useQuery({
+    queryKey: ["direct-chat-active-call", user?.email, channel?.owner_email],
+    queryFn: async () => {
+      if (!user?.email || !channel?.owner_email) return null;
+      const calls = await base44.entities.VideoCall.filter(
+        { caller_email: user.email, callee_email: channel.owner_email },
+        "-created_date",
+        5
+      );
+      return calls.find((c) => ["pending", "accepted", "active"].includes(c.status)) || null;
+    },
+    enabled: !!user?.email && !!channel?.owner_email,
+    refetchInterval: 3000,
+  });
+
+  // アクティブ通話がある場合は通話ページへリダイレクト
+  useEffect(() => {
+    if (activeCall && ["accepted", "active"].includes(activeCall.status) && !redirectedRef.current) {
+      redirectedRef.current = true;
+      navigate(`/video-call/${activeCall.id}`);
+    }
+  }, [activeCall?.id, activeCall?.status]);
 
   const { data: messages = [] } = useQuery({
     queryKey: ["direct-chat", threadId],
@@ -249,19 +274,27 @@ export default function DirectChat() {
             </Button>
           </div>
         </div>
-        {!isCreator && channel.call_enabled && (
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] text-green-400 font-semibold flex-1">
-              ✅ {channel.name}は今すぐ通話可能です
-            </p>
-            <Button
-              size="sm"
-              className="h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1 shrink-0"
-              onClick={() => setCallModal({ otherName: channel.name })}
-            >
-              <Video className="w-3 h-3" /> 通話を申し込む
-            </Button>
-          </div>
+        {!isCreator && channel.call_enabled && !activeCall && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setCallModal({ otherName: channel.name })}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm text-black"
+            style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 20px rgba(0,255,157,0.5)" }}
+          >
+            <PhoneCall className="w-5 h-5" />
+            {channel.name} さんにビデオ通話を申し込む
+          </motion.button>
+        )}
+        {!isCreator && activeCall?.status === "pending" && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate(`/video-call/${activeCall.id}`)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm text-black animate-pulse"
+            style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 30px rgba(0,255,157,0.7)" }}
+          >
+            <span className="w-2 h-2 rounded-full bg-black animate-ping inline-block" />
+            通話申込中 — タップして通話画面へ
+          </motion.button>
         )}
       </div>
 
