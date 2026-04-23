@@ -425,14 +425,15 @@ export default function VideoCallPage() {
   }, [call?.status, calleeChannel?.incoming_call_mode, user?.email, call?.callee_email, refetchCall]);
 
   useEffect(() => {
-    if (call?.status === "active" && !callStartTime) {
+    // タイマーはchimeConnected（映像接続確立）後にのみ開始
+    if (call?.status === "active" && chimeConnected && !callStartTime) {
       setCallStartTime(Date.now());
     }
     // 自動切断検出
     if (call?.auto_disconnected && call?.status === "ended") {
       setShowInsufficientModal(true);
     }
-  }, [call?.status, call?.auto_disconnected]);
+  }, [call?.status, call?.auto_disconnected, chimeConnected]);
 
   // コイン残高取得
   useEffect(() => {
