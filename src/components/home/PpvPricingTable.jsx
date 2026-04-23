@@ -6,25 +6,22 @@ const TIERS = [
   {
     quality: "SD 480p",
     icon: "📺",
-    minPrice: "¥150〜",
-    note: "720pまで",
-    color: "border-gray-500/40 bg-gray-500/10",
+    minPrice: "¥15〜",
+    note: "最大480p",
     labelColor: "text-gray-300",
   },
   {
     quality: "HD 720p",
     icon: "🖥️",
-    minPrice: "¥300〜",
-    note: "1080pまで",
-    color: "border-blue-500/40 bg-blue-500/10",
+    minPrice: "¥55〜",
+    note: "最大720p",
     labelColor: "text-blue-300",
   },
   {
     quality: "FHD 1080p",
     icon: "✨",
-    minPrice: "¥1,500〜",
-    note: "フルHD",
-    color: "border-primary/40 bg-primary/10",
+    minPrice: "¥150〜",
+    note: "最大1080p",
     labelColor: "text-primary",
   },
 ];
@@ -66,7 +63,7 @@ export default function PpvPricingTable() {
         <div className="bg-secondary/40 px-4 py-4 space-y-2 text-xs text-muted-foreground border-t border-border/30">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <p>📌 収益還元率 <span className="text-primary font-bold">85%</span>（月間売上に応じて最大95%まで自動アップ）</p>
-            <p>📌 150円設定 → 最大720p ／ 300円以上 → 最大1080p許可</p>
+            <p>📌 15円設定 → 最大480p ／ 55円以上 → 720p ／ 150円以上 → 1080p許可</p>
             <p>📌 コスト：場所代30円/時間 ＋ 送料5円/視聴者/時間</p>
             <p>📌 音楽利用（歌唱・BGM等）はJASRAC包括契約対応</p>
           </div>
