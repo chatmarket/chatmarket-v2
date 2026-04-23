@@ -55,7 +55,7 @@ export default function DirectChat() {
   const isCreator = user && channel && user.email === channel.owner_email;
 
   // ★ アクティブ/pending な通話を監視 → 自動リダイレクト
-  const { data: activeCall } = useQuery({
+  const { data: activeCall, isFetched: activeCallFetched } = useQuery({
     queryKey: ["direct-chat-active-call", user?.email, channel?.owner_email],
     queryFn: async () => {
       if (!user?.email || !channel?.owner_email) return null;
@@ -190,7 +190,7 @@ export default function DirectChat() {
   const isMyMessage = (msg) => msg.from_email === user?.email;
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-4rem)]">
+    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-3rem)] sm:h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-card/80 backdrop-blur shrink-0">
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
@@ -275,7 +275,20 @@ export default function DirectChat() {
           </div>
         </div>
         {/* ビデオ通話ボタン（視聴者のみ・ライバー本人には非表示） */}
-        {!isCreator && !activeCall && (
+        {/* channel.call_enabled なら即座に表示（activeCallのロード待ち不要） */}
+        {!isCreator && channel.call_enabled && (!activeCallFetched || !activeCall) && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setCallModal({ otherName: channel.name })}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm text-black"
+            style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 20px rgba(0,255,157,0.5)" }}
+          >
+            <PhoneCall className="w-5 h-5" />
+            {channel.name} さんにビデオ通話を申し込む
+          </motion.button>
+        )}
+        {/* call_enabled でない場合は従来通りロード後に表示 */}
+        {!isCreator && !channel.call_enabled && activeCallFetched && !activeCall && (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setCallModal({ otherName: channel.name })}
