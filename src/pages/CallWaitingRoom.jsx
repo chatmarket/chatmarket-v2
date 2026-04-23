@@ -242,15 +242,30 @@ export default function CallWaitingRoom() {
 
   const features = PLAN_FEATURES[userPlan] || PLAN_FEATURES.free;
 
-  // 着信ポーリング（待機中のみ）
+  // 着信ポーリング（待機中のみ） - 指数バックオフ付き
+  const [pollRetries, setPollRetries] = useState(0);
+  const basePollInterval = 5000; // 5秒
+  const pollInterval = Math.min(basePollInterval * Math.pow(1.5, pollRetries), 30000); // 最大30秒
+
   const { data: pendingCalls = [] } = useQuery({
     queryKey: ["waiting-room-pending-v3", user?.email],
-    queryFn: () => base44.entities.VideoCall.filter(
-      { callee_email: user.email, status: "pending" },
-      "-created_date", 5
-    ),
+    queryFn: async () => {
+      try {
+        const res = await base44.entities.VideoCall.filter(
+          { callee_email: user.email, status: "pending" },
+          "-created_date", 5
+        );
+        setPollRetries(0); // 成功時はリセット
+        return res;
+      } catch (err) {
+        if (err.response?.status === 429) {
+          setPollRetries(prev => prev + 1); // 失敗時は指数バックオフ
+        }
+        throw err;
+      }
+    },
     enabled: !!user?.email && isWaiting,
-    refetchInterval: 3000,
+    refetchInterval: pollInterval,
     refetchIntervalInBackground: true,
   });
 

@@ -58,19 +58,32 @@ export default function ChimeVideoCall({
             console.warn('[Chime] ⚠️ localVideoRef is null!');
           }
         } else if (!tileState.isContent) {
-          // リモート映像 - 遅延バインドで確実に実行
-          console.log('[Chime] 🎯 Remote tile detected, binding...');
-          const bindRemote = () => {
+          // ★ リモート映像 - 配信者 ID（boundAttendeeId）と一致したら即座にバインド
+          const broadcasterAttendeeId = sessionStorage.getItem('broadcasterAttendeeId');
+          if (broadcasterAttendeeId && tileState.boundAttendeeId === broadcasterAttendeeId) {
+            // ★ 配信者の映像タイル確定 → 迷わずバインド
+            console.log('[Chime] 🎯 Broadcaster tile identified, binding immediately...');
             if (remoteVideoRef?.current) {
               audioVideo.bindVideoElement(tileState.tileId, remoteVideoRef.current);
-              console.log('[Chime] ✓ Remote video bound to tileId:', tileState.tileId);
+              console.log('[Chime] ✓ Broadcaster video bound to tileId:', tileState.tileId);
               onConnected?.();
             } else {
-              console.warn('[Chime] ⚠️ remoteVideoRef is null, retrying in 500ms...');
-              setTimeout(bindRemote, 500);
+              console.warn('[Chime] ⚠️ remoteVideoRef is null, retrying...');
+              const retryBind = () => {
+                if (remoteVideoRef?.current) {
+                  audioVideo.bindVideoElement(tileState.tileId, remoteVideoRef.current);
+                  console.log('[Chime] ✓ Broadcaster video bound (retry) to tileId:', tileState.tileId);
+                  onConnected?.();
+                } else {
+                  setTimeout(retryBind, 500);
+                }
+              };
+              retryBind();
             }
-          };
-          bindRemote();
+          } else {
+            // 配信者特定待機中 → バインドせず様子見
+            console.log('[Chime] 👥 Remote tile detected (not broadcaster), waiting...');
+          }
         }
       },
       videoTileWasRemoved: (tileId) => {

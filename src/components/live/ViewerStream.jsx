@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
 import { base44 } from "@/api/base44Client";
 import { Volume2, VolumeX, Wifi, WifiOff, Settings, Lock, ChevronRight } from "lucide-react";
 
@@ -49,12 +50,18 @@ export default function ViewerStream({ streamId, stream }) {
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
   const isWebRTC = stream?.stream_type === "webrtc";
 
-  // ★ Chime Meeting接続（WebRTC配信用）
+  // ★ Chime Meeting接続（WebRTC配信用） - Socket.io stream_started イベント待機（パッシブ）
   useEffect(() => {
     if (!isWebRTC || !streamId || !stream?.chime_meeting_id) return;
 
     let isMounted = true;
-    const initChime = async () => {
+    const socket = io(); // Socket.io インスタンス（app-wide configured）
+    
+    // stream_started イベント受信時のみ Chime 初期化（パッシブ）
+    const handleStreamStarted = async (data) => {
+      if (data.stream_id !== streamId || !isMounted) return;
+      console.log('[ViewerStream] 📡 stream_started event received, initializing Chime...');
+
       try {
         const res = await base44.functions.invoke('createLiveStreamChimeMeeting', {
           streamId,
@@ -64,7 +71,11 @@ export default function ViewerStream({ streamId, stream }) {
         if (!isMounted) return;
 
         const { Meeting, Attendee } = res.data;
-        console.log('[ViewerStream] ✅ Chime session created:', { meetingId: Meeting.MeetingId, attendeeId: Attendee.AttendeeId });
+        console.log('[ViewerStream] ✅ Chime session created:', { 
+          meetingId: Meeting.MeetingId, 
+          attendeeId: Attendee.AttendeeId,
+          broadcasterAttendeeId: data.broadcaster_attendee_id 
+        });
 
         // ★ Attendeeマネージャーで入室を記録
         await base44.functions.invoke('liveStreamAttendeeManager', {
@@ -73,22 +84,26 @@ export default function ViewerStream({ streamId, stream }) {
           attendee_id: Attendee.AttendeeId,
         });
 
-        chimeSessionRef.current = { Meeting, Attendee };
+        chimeSessionRef.current = { 
+          Meeting, 
+          Attendee, 
+          broadcasterAttendeeId: data.broadcaster_attendee_id // ★ 配信者 ID を保存（バインド判定用）
+        };
+        // ★ 配信者 ID を sessionStorage に保存（ChimeVideoCall 側で使用）
+        sessionStorage.setItem('broadcasterAttendeeId', data.broadcaster_attendee_id);
         setChimeReady(true);
-
-        // 15秒後に配信者の映像タイルを探索開始
-        setTimeout(() => {
-          if (!isMounted) return;
-          console.log('[ViewerStream] 🎯 Searching for broadcaster tile...');
-        }, 15000);
       } catch (err) {
         if (!isMounted) return;
         console.error('[ViewerStream] Chime init failed:', err.message);
       }
     };
 
-    initChime();
-    return () => { isMounted = false; };
+    socket.on('stream_started', handleStreamStarted);
+    
+    return () => {
+      isMounted = false;
+      socket.off('stream_started', handleStreamStarted);
+    };
   }, [isWebRTC, streamId, stream?.chime_meeting_id]);
 
   useEffect(() => {
