@@ -1707,9 +1707,9 @@ export default function VideoCallPage() {
               )}
               </div>
 
-              {/* Chat section - Below video (スマホ: 映像4:チャット6の比率) */}
+              {/* Chat section - Below video (3倍サイズ) */}
               {user && (
-                <div className="w-full h-48 sm:h-40 border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ background: "#050505" }}>
+                <div className="w-full border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ height: "576px", background: "#050505" }}>
                   {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
                 </div>
               )}
