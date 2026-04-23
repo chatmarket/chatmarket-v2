@@ -890,6 +890,13 @@ export default function VideoCallPage() {
             </div>
             <p className="text-white font-black text-xl">{call?.callee_name || "ライバー"} さんに着信中...</p>
             <p className="text-white/50 text-sm">承認されると通話が始まります</p>
+            {/* カメラ・マイク確認 */}
+            <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/40 rounded-xl px-4 py-3 text-left max-w-xs mx-auto">
+              <span className="text-lg shrink-0">📷</span>
+              <p className="text-yellow-300 text-xs font-bold leading-relaxed">
+                PCやスマートフォンのカメラ・マイクは必ずONになるよう確認してください
+              </p>
+            </div>
             <div className="flex items-center justify-center gap-1.5">
               {[0,1,2].map(i => (
                 <span key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
@@ -929,6 +936,13 @@ export default function VideoCallPage() {
               <p className="text-2xl font-black text-white">着信！</p>
               <p className="text-lg text-primary font-bold">{call?.caller_name || call?.caller_email}</p>
               <p className="text-sm text-muted-foreground">からの通話リクエストです</p>
+            </div>
+
+            <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/40 rounded-xl px-3 py-2.5 text-left">
+              <span className="text-base shrink-0">📷</span>
+              <p className="text-yellow-300 text-xs font-bold leading-relaxed">
+                カメラ・マイクは必ずONになるよう確認してください
+              </p>
             </div>
 
             <motion.div
@@ -1150,9 +1164,9 @@ export default function VideoCallPage() {
           </div>
         )}
 
-        {/* Coin billing HUD (発信者のみ) */}
+        {/* Coin billing HUD (発信者のみ) - 下部に配置 */}
         {call?.billing_started_at && user?.email === call?.caller_email && (
-          <div className="absolute top-2 md:top-4 left-2 md:left-4 z-10 space-y-1">
+          <div className="absolute bottom-4 left-2 md:left-4 z-10 space-y-1">
             {/* 残高 */}
             <div className="bg-black/70 border border-yellow-500/40 rounded-lg md:rounded-xl px-2 md:px-3 py-1 md:py-1.5 flex items-center gap-1.5 md:gap-2 text-yellow-400 text-[10px] md:text-xs font-bold backdrop-blur min-w-max">
               <Coins className="w-3 h-3 md:w-3.5 md:h-3.5" />
