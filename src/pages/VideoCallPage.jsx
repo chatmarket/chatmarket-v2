@@ -764,33 +764,28 @@ export default function VideoCallPage() {
   };
 
   // Chimeミーティング情報をバックエンドから取得
-  // accepted または active どちらのタイミングでも確実に1回だけ呼ぶ
+  // accepted/active になるたびに、まだ未接続なら呼ぶ（両者が確実に参加できるよう）
+  const fetchingMeetingRef = useRef(false);
   useEffect(() => {
-    console.log(`[VideoCallPage] Chime trigger: call=${!!call}, user=${!!user}, status=${call?.status}`);
-    if (!call || !user || !['accepted', 'active'].includes(call.status) || chimeMeeting) return;
-    
+    if (!call || !user || !['accepted', 'active'].includes(call.status)) return;
+    if (chimeMeeting || fetchingMeetingRef.current) return;
+    fetchingMeetingRef.current = true;
+
     const fetchMeeting = async () => {
       try {
-        console.log(`[VideoCallPage] 🎯 Calling createChimeMeeting for ${call.id}`);
+        console.log(`[VideoCallPage] 🎯 createChimeMeeting for ${call.id} (user: ${user.email})`);
         const res = await base44.functions.invoke('createChimeMeeting', { callId: call.id });
-        
         if (res?.data?.Meeting) {
-          console.log(`[Chime] ✅ Meeting ${res.data.Meeting.MeetingId} ready`);
-          console.log(`[Chime] ✅ Attendee ${res.data.Attendee.AttendeeId} registered`);
-          console.log('[Chime] 📡 CRITICAL: Check console for onTrack event within 5 seconds');
+          console.log(`[Chime] ✅ Meeting ready: ${res.data.Meeting.MeetingId}`);
           setChimeMeeting(res.data.Meeting);
           setChimeAttendee(res.data.Attendee);
-          
-          // ★ 両者接続確認のため、相手側への renegotiate トリガー
-          setTimeout(() => {
-            console.log('[VideoCallPage] 💥 Forcing connection renegotiation for bidirectional video');
-            // Chime SDK internal trigger（実装例）
-          }, 1000);
         } else {
-          console.error('[Chime] ❌ No Meeting in response');
+          console.error('[Chime] ❌ No Meeting in response:', res?.data);
+          fetchingMeetingRef.current = false; // 再試行可能にする
         }
       } catch (e) {
         console.error('[Chime] ❌ Meeting fetch failed:', e.message);
+        fetchingMeetingRef.current = false;
       }
     };
     fetchMeeting();
