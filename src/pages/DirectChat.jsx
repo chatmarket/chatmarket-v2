@@ -60,87 +60,38 @@ export default function DirectChat() {
     refetchInterval: 2000,
   });
 
-  // アクティブ/承認済み通話チェック（モーダル表示用）
-  const { data: pendingCall } = useQuery({
-    queryKey: ["chat-pending-call", threadId],
-    queryFn: async () => {
-      if (!threadId) return null;
-      const calls = await base44.entities.VideoCall.filter({ thread_id: threadId });
-      return calls.find((c) => ["pending_both", "creator_ready", "fan_ready"].includes(c.status)) || null;
-    },
-    enabled: !!threadId,
-    refetchInterval: 2000,
-  });
-
-  // accepted / active になったら両者を自動リダイレクト
-  const redirectedRef = useRef(false);
-  const { data: acceptedCall } = useQuery({
-    queryKey: ["chat-accepted-call", threadId],
-    queryFn: async () => {
-      if (!threadId) return null;
-      const calls = await base44.entities.VideoCall.filter({ thread_id: threadId });
-      // ended/declined/cancelled は除外し、最新の accepted/active のみを対象とする
-      const recent = calls
-        .filter((c) => ["accepted", "active"].includes(c.status))
-        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      return recent[0] || null;
-    },
-    enabled: !!threadId,
-    refetchInterval: 2000,
-  });
-
-  useEffect(() => {
-    if (!acceptedCall || redirectedRef.current) return;
-    redirectedRef.current = true;
-    navigate(`/video-call/${acceptedCall.id}`);
-  }, [acceptedCall?.id, acceptedCall?.status]);
-
-  // クリエイターが返信したら通話モーダルを自動表示
-  useEffect(() => {
-    if (!messages.length || !user || !channel) return;
-    const prev = lastMsgCountRef.current;
-    const curr = messages.length;
-    if (curr <= prev) { lastMsgCountRef.current = curr; return; }
-
-    const newMsgs = messages.slice(prev);
-    lastMsgCountRef.current = curr;
-
-    // クリエイターからのメッセージが新しく届いたか確認
-    const creatorReplied = newMsgs.some((m) => m.from_email === channel.owner_email);
-    if (creatorReplied && !isCreator && !callModal) {
-      // 通話レコード作成（pending_both）
-      createCallRecord();
-    }
-  }, [messages.length]);
-
-  // pending_both のコールが存在したら双方にモーダル表示
-  useEffect(() => {
-    if (!pendingCall || callModal) return;
-    const otherName = isCreator
-      ? (pendingCall.caller_name || pendingCall.caller_email)
-      : (pendingCall.callee_name || channel?.name);
-    setCallModal({ callId: pendingCall.id, otherName });
-  }, [pendingCall?.id]);
-
-  const createCallRecord = async () => {
-    if (!user || !channel || !threadId) return;
-    // 既存のpending_bothコールを確認
-    const existing = await base44.entities.VideoCall.filter({ thread_id: threadId, status: "pending_both" });
-    if (existing.length > 0) return;
-    const call = await base44.entities.VideoCall.create({
+  // ★ 通話モーダルの「通話を開始」は status:"pending" でCallを作成し、ライバー側ウィジェットへ着信させる
+  const createAndStartCall = async () => {
+    if (!user || !channel) return;
+    setStartingCall(true);
+    // 既存pending確認（重複防止）
+    const existing = await base44.entities.VideoCall.filter({
       caller_email: user.email,
-      caller_name: user.full_name || user.email,
       callee_email: channel.owner_email,
-      callee_name: channel.name,
-      callee_channel_id: channel.id,
-      status: "pending_both",
-      duration_minutes: 30,
-      is_paid: false,
-      price: 0,
-      thread_id: threadId,
-      message: "",
+      status: "pending",
     });
-    setCallModal({ callId: call.id, otherName: channel.name });
+    let callId;
+    if (existing.length > 0) {
+      callId = existing[0].id;
+    } else {
+      const call = await base44.entities.VideoCall.create({
+        caller_email: user.email,
+        caller_name: user.full_name || user.email,
+        callee_email: channel.owner_email,
+        callee_name: channel.name,
+        callee_channel_id: channel.id,
+        status: "pending",
+        duration_minutes: 30,
+        is_paid: false,
+        price: 0,
+        thread_id: threadId,
+        message: "",
+      });
+      callId = call.id;
+    }
+    console.log('[DirectChat] ✅ VideoCall created with status=pending, id:', callId);
+    // 視聴者はそのまま通話ルームへ飛んでライバーの承認を待つ
+    navigate(`/video-call/${callId}`);
   };
 
   // リアルタイム購読
@@ -153,6 +104,11 @@ export default function DirectChat() {
     });
     return unsub;
   }, [threadId, queryClient]);
+
+  // クリエイターからのメッセージ増加を追跡（通話誘導メッセージ表示用）
+  useEffect(() => {
+    lastMsgCountRef.current = messages.length;
+  }, [messages.length]);
 
   // 既読処理
   useEffect(() => {
@@ -185,22 +141,12 @@ export default function DirectChat() {
 
     // クリエイターが返信したら通話モーダルを表示
     if (isCreator && !callModal) {
-      createCallRecord();
+      setCallModal({ otherName: channel?.name });
     }
   };
 
-  const handleAcceptCall = async () => {
-    if (!callModal) return;
-    setStartingCall(true);
-    await base44.entities.VideoCall.update(callModal.callId, { status: "accepted" });
-    navigate(`/video-call/${callModal.callId}`);
-  };
-
-  const handleDeclineCall = async () => {
-    if (!callModal) return;
-    await base44.entities.VideoCall.update(callModal.callId, { status: "declined" });
+  const handleDeclineCall = () => {
     setCallModal(null);
-    queryClient.invalidateQueries({ queryKey: ["chat-pending-call", threadId] });
   };
 
   const handleYellSent = () => {
@@ -304,9 +250,18 @@ export default function DirectChat() {
           </div>
         </div>
         {!isCreator && channel.call_enabled && (
-          <p className="text-[10px] text-green-400 text-center font-semibold">
-            ✅ {channel.name}は今すぐ通話可能です。メッセージを送って声をかけましょう！
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] text-green-400 font-semibold flex-1">
+              ✅ {channel.name}は今すぐ通話可能です
+            </p>
+            <Button
+              size="sm"
+              className="h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1 shrink-0"
+              onClick={() => setCallModal({ otherName: channel.name })}
+            >
+              <Video className="w-3 h-3" /> 通話を申し込む
+            </Button>
+          </div>
         )}
       </div>
 
@@ -332,12 +287,13 @@ export default function DirectChat() {
               <div>
                 <p className="font-black text-xl">{callModal.otherName} さんと</p>
                 <p className="text-muted-foreground text-sm mt-1">ビデオ通話を開始しますか？</p>
+                <p className="text-xs text-muted-foreground mt-2 opacity-70">ライバーに着信が届き、承認後に繋がります</p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10" onClick={handleDeclineCall}>
                   <X className="w-4 h-4 mr-1" /> キャンセル
                 </Button>
-                <Button onClick={handleAcceptCall} disabled={startingCall} className="flex-1 bg-primary hover:bg-primary/90 font-black">
+                <Button onClick={createAndStartCall} disabled={startingCall} className="flex-1 bg-primary hover:bg-primary/90 font-black">
                   {startingCall ? "接続中..." : <><Video className="w-4 h-4 mr-1" />通話を開始</>}
                 </Button>
               </div>

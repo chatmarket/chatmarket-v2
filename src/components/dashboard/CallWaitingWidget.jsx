@@ -82,8 +82,36 @@ export default function CallWaitingWidget({ user, channel }) {
       console.log('[CallWaitingWidget] 🚨 NEW incoming call:', newCalls[0].id, 'from', newCalls[0].caller_email);
       setIncomingCall(newCalls[0]);
       newCalls.forEach((c) => seenIdsRef.current.add(c.id));
+      // ★ 着信音を鳴らす（Web Audio API）
+      playRingtone();
     }
   }, [pendingCalls]);
+
+  // ★ 着信音（Web Audio APIで生成）
+  const playRingtone = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const playBeep = (startTime, freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.4, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+        osc.start(startTime);
+        osc.stop(startTime + 0.4);
+      };
+      // 3回鳴らす（着信音パターン）
+      playBeep(ctx.currentTime, 880);
+      playBeep(ctx.currentTime + 0.5, 1100);
+      playBeep(ctx.currentTime + 1.0, 880);
+      playBeep(ctx.currentTime + 1.5, 1100);
+    } catch (e) {
+      console.warn('[CallWaitingWidget] Audio play failed:', e.message);
+    }
+  };
 
   const handleStartWaiting = async () => {
     if (!channel) {
