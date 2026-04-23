@@ -5,7 +5,7 @@
  * 2. 通話承認通知（caller側）→ 「承認されました！通話開始」バナー
  * チャンネルの有無に関係なく全ユーザーに対して動作する
  */
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -211,42 +211,99 @@ export default function GlobalCallNotifier({ user }) {
       {/* ===== 承認通知バナー（自分がcaller） ===== */}
       <AnimatePresence>
         {acceptedCall && (
-          <motion.div
-            initial={{ opacity: 0, y: -80 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -80 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[9998] w-full max-w-sm mx-4 px-4"
-          >
-            <div
-              className="rounded-2xl p-4 flex items-center gap-4 shadow-2xl"
-              style={{ background: "rgba(0,20,10,0.97)", border: "2px solid #00ff9d", boxShadow: "0 0 40px rgba(0,255,157,0.6)" }}
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/30 flex items-center justify-center shrink-0 border border-primary">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-black text-sm">{acceptedCall.callee_name} さんが承認しました！</p>
-                <p className="text-primary/80 text-xs">今すぐ通話を開始できます</p>
-              </div>
-              <div className="flex flex-col gap-1.5 shrink-0">
-                <Button
-                  size="sm"
-                  onClick={() => handleJoinAccepted(acceptedCall)}
-                  className="bg-primary hover:bg-primary/90 text-black font-black text-xs h-8 gap-1"
-                >
-                  <Video className="w-3.5 h-3.5" /> 通話開始
-                </Button>
-                <button
-                  onClick={() => setAcceptedCall(null)}
-                  className="text-[10px] text-white/40 hover:text-white/70 text-center"
-                >
-                  閉じる
-                </button>
-              </div>
-            </div>
-          </motion.div>
+          <AcceptedCallBanner
+            call={acceptedCall}
+            onJoin={() => handleJoinAccepted(acceptedCall)}
+            onClose={() => setAcceptedCall(null)}
+          />
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function AcceptedCallBanner({ call, onJoin, onClose }) {
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onJoin();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -100, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -100, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 300, damping: 28 }}
+      className="fixed top-3 left-3 right-3 sm:left-auto sm:right-4 sm:w-80 z-[9998]"
+    >
+      <div
+        className="rounded-2xl overflow-hidden shadow-2xl"
+        style={{
+          background: "rgba(0,15,8,0.97)",
+          border: "2px solid #00ff9d",
+          boxShadow: "0 0 40px rgba(0,255,157,0.5), 0 8px 32px rgba(0,0,0,0.6)",
+        }}
+      >
+        {/* カウントダウンプログレスバー */}
+        <motion.div
+          className="h-1 bg-primary"
+          initial={{ width: "100%" }}
+          animate={{ width: "0%" }}
+          transition={{ duration: 5, ease: "linear" }}
+        />
+
+        <div className="p-4 space-y-3">
+          {/* アイコン＋テキスト */}
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shrink-0">
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+              </motion.div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-black text-sm leading-tight">
+                {call.callee_name || "ライバー"} さんが承認しました！
+              </p>
+              <p className="text-primary text-xs mt-0.5 font-semibold">
+                {countdown}秒後に通話画面へ自動移動します
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/30 hover:text-white/70 text-xs shrink-0 mt-0.5 px-1"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* ボタン */}
+          <Button
+            onClick={onJoin}
+            className="w-full h-11 font-black text-sm gap-2 text-black"
+            style={{
+              background: "linear-gradient(135deg, #00ff9d, #00d4aa)",
+              boxShadow: "0 0 20px rgba(0,255,157,0.5)",
+            }}
+          >
+            <Video className="w-4 h-4" />
+            今すぐ通話画面へ
+          </Button>
+        </div>
+      </div>
+    </motion.div>
   );
 }
