@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import { Radio, Users, Settings, Play, Square } from "lucide-react";
 
 export default function LiveStreamTest() {
-  const { streamId } = useParams();
+  const { streamId: paramStreamId } = useParams();
+  // :streamId がリテラルのまま来た場合は無効とみなす
+  const routeStreamId = (paramStreamId && !paramStreamId.startsWith(':')) ? paramStreamId : null;
+
   const [user, setUser] = useState(null);
   const [stream, setStream] = useState(null);
   const [role, setRole] = useState("broadcaster"); // broadcaster | viewer
@@ -15,18 +18,27 @@ export default function LiveStreamTest() {
   const [loading, setLoading] = useState(false);
   const [streamStatus, setStreamStatus] = useState("scheduled"); // scheduled | live | ended
   const [errorDetail, setErrorDetail] = useState(null); // 詳細エラー表示用
+  const [manualStreamId, setManualStreamId] = useState(""); // 手動入力用
+
+  // 実際に使うstreamId（URLパラメータ or 手動入力）
+  const streamId = routeStreamId || (manualStreamId.trim() || null);
 
   useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
 
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId || streamId.startsWith(':')) return;
     base44.entities.LiveStream.filter({ id: streamId }).then(res => {
       if (res[0]) {
         setStream(res[0]);
         setStreamStatus(res[0].status || "scheduled");
+      } else {
+        setStream(null);
+        setErrorDetail(`StreamID「${streamId}」が見つかりません`);
       }
+    }).catch(err => {
+      setErrorDetail(`Stream取得エラー: ${err.message}`);
     });
   }, [streamId]);
 
@@ -136,6 +148,21 @@ export default function LiveStreamTest() {
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Radio className="w-6 h-6 text-primary" /> ライブ配信テスト
         </h1>
+
+        {/* StreamID 手動入力（URLパラメータがない場合） */}
+        {!routeStreamId && (
+          <div className="bg-yellow-500/10 border border-yellow-500/40 rounded-lg p-4 space-y-2">
+            <p className="text-sm font-bold text-yellow-400">⚠️ URLにStreamIDが含まれていません</p>
+            <p className="text-xs text-yellow-300/70">GoLiveページで配信を作成後、そのStreamIDを入力してください</p>
+            <input
+              type="text"
+              value={manualStreamId}
+              onChange={e => { setManualStreamId(e.target.value); setStream(null); setMeeting(null); setAttendee(null); setErrorDetail(null); }}
+              placeholder="LiveStream ID を貼り付け（例: abc123def456）"
+              className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-yellow-500"
+            />
+          </div>
+        )}
 
         {/* 配信情報 */}
         {stream && (
