@@ -15,11 +15,14 @@ export default function ViewerStream({ streamId, stream }) {
   const isMountedRef  = useRef(true);
   const retryTimerRef = useRef(null);
   const initCalledRef = useRef(false);
+  const bindTimerRef  = useRef(null);
+  const currentTileRef = useRef(null);
 
   const [ready, setReady]       = useState(false);
   const [muted, setMuted]       = useState(false);
   const [phase, setPhase]       = useState("チケット確認済み ✅ — Meeting入室中...");
   const [retryKey, setRetryKey] = useState(0);
+  const [bindAttempt, setBindAttempt] = useState(0);
 
   const isWebRTC    = stream?.stream_type === "webrtc" || !stream?.ivs_playback_url;
   const playbackUrl = stream?.ivs_playback_url;
@@ -76,16 +79,45 @@ export default function ViewerStream({ streamId, stream }) {
         av.addObserver({
           videoTileDidUpdate: (tileState) => {
             if (!isMountedRef.current) return;
-            console.log("[ViewerStream] tile update:", tileState.tileId,
-              "local:", tileState.localTile, "active:", tileState.active,
-              "hasVideo:", tileState.isContent || !tileState.localTile);
+            console.log("[ViewerStream] 🎯 tileDidUpdate FIRED:", {
+              tileId: tileState.tileId,
+              localTile: tileState.localTile,
+              active: tileState.active,
+              isContent: tileState.isContent,
+            });
 
-            // リモートタイル（localTile=false）を即バインド
-            if (!tileState.localTile && videoRef.current) {
-              console.log("[ViewerStream] 🎯 映像バインド! tileId:", tileState.tileId);
-              av.bindVideoElement(tileState.tileId, videoRef.current);
-              setPhase("映像受信中 🟢");
-              setReady(true);
+            // リモートタイル（localTile=false）を検出
+            if (!tileState.localTile && tileState.tileId) {
+              currentTileRef.current = tileState.tileId;
+              console.log(`[ViewerStream] 🎯 リモートタイル確定！ ID: ${tileState.tileId}`);
+              
+              // ★ 執拗な再バインド開始（0.5秒おきに10回）
+              setPhase("映像バインド中（ストーカー・モード）...");
+              let attempts = 0;
+              clearInterval(bindTimerRef.current);
+              bindTimerRef.current = setInterval(() => {
+                if (!isMountedRef.current || !videoRef.current) {
+                  clearInterval(bindTimerRef.current);
+                  return;
+                }
+                attempts++;
+                console.log(`[ViewerStream] 🔥 再バインド試行 #${attempts}/10 - tileId: ${tileState.tileId}`);
+                try {
+                  av.bindVideoElement(tileState.tileId, videoRef.current);
+                  console.log(`[ViewerStream] ✅ bindVideoElement 成功 (#${attempts})`);
+                  setPhase("映像受信中 🟢");
+                  setReady(true);
+                  setBindAttempt(attempts);
+                } catch (err) {
+                  console.error(`[ViewerStream] ❌ bind失敗 (#${attempts}):`, err.message);
+                }
+                if (attempts >= 10) {
+                  clearInterval(bindTimerRef.current);
+                  console.log(`[ViewerStream] 🛑 10回の再バインド終了`);
+                }
+              }, 500); // 0.5秒ごと
+            } else {
+              console.warn(`[ViewerStream] ⚠️ tileState条件不満たす: localTile=${tileState.localTile}, tileId=${tileState.tileId}`);
             }
           },
           videoTileWasRemoved: (tileId) => {
@@ -93,8 +125,28 @@ export default function ViewerStream({ streamId, stream }) {
             setPhase("映像停止 — 配信者の映像が止まりました");
           },
           audioVideoDidStart: () => {
-            console.log("[ViewerStream] ✅ audioVideoDidStart");
-            setPhase("映像受信待機中... 📡 (配信者が映像を送り始めるまで待機)");
+            console.log("[ViewerStream] ✅ audioVideoDidStart FIRED");
+            setPhase("映像受信待機中... 📡 (タイルID待機中)");
+            
+            // ★ 強制的にアクティブなタイルを探す（1秒ごと）
+            const searchTimer = setInterval(async () => {
+              if (!isMountedRef.current) { clearInterval(searchTimer); return; }
+              try {
+                // Chime SDK が内部的に保持しているタイル情報を取得
+                const activeTiles = av.getAllRemoteVideoTiles?.() || [];
+                console.log(`[ViewerStream] 🔍 アクティブなリモートタイル検索: ${activeTiles.length}個`);
+                activeTiles.forEach(tile => {
+                  console.log(`  - tileId: ${tile.tileId}, state: ${JSON.stringify(tile)}`);
+                  if (tile.tileId && !currentTileRef.current) {
+                    currentTileRef.current = tile.tileId;
+                    console.log(`[ViewerStream] 🎯 強制取得したタイルID: ${tile.tileId}`);
+                  }
+                });
+              } catch (err) {
+                console.warn(`[ViewerStream] ⚠️ タイル検索失敗: ${err.message}`);
+              }
+              if (currentTileRef.current) clearInterval(searchTimer);
+            }, 1000);
           },
           audioVideoDidStartConnecting: (reconnecting) => {
             setPhase(reconnecting ? "再接続中... 🔄" : "Meeting接続確立中... 🔌");
@@ -159,6 +211,7 @@ export default function ViewerStream({ streamId, stream }) {
     return () => {
       isMountedRef.current = false;
       clearTimeout(retryTimerRef.current);
+      clearInterval(bindTimerRef.current);
       try { sessionRef.current?.audioVideo?.stop(); } catch (_) {}
       sessionRef.current = null;
       // 音声エレメント後片付け
@@ -208,13 +261,20 @@ export default function ViewerStream({ streamId, stream }) {
 
   return (
     <div className="relative w-full h-full bg-black">
+      {/* ★ シンプルな video タグ直結：極限までシンプル */}
       <video
         ref={videoRef}
-        autoPlay
-        playsInline
+        id="chime-video"
+        autoPlay={true}
+        playsInline={true}
         muted={muted}
-        className="w-full h-full object-contain"
-        style={{ display: ready ? "block" : "none" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          backgroundColor: "#000",
+          display: ready ? "block" : "none"
+        }}
       />
 
       {/* ローディング表示 */}
@@ -247,9 +307,12 @@ export default function ViewerStream({ streamId, stream }) {
         </button>
       )}
 
-      {/* ★ デバッグステータス（常時表示） */}
-      <div className="absolute top-2 left-2 max-w-[80%] bg-black/80 border border-cyan-500/50 rounded px-2 py-1 text-[10px] font-mono text-cyan-300 pointer-events-none z-50 leading-relaxed">
-        {phase}
+      {/* ★ デバッグステータス（常時表示・詳細） */}
+      <div className="absolute top-2 left-2 max-w-[85%] bg-black/90 border-2 border-cyan-400 rounded px-2.5 py-1.5 text-[10px] font-mono text-cyan-300 pointer-events-none z-50 leading-relaxed">
+        <div>{phase}</div>
+        <div className="text-[9px] text-cyan-500 mt-0.5">
+          tileId: {currentTileRef.current || "pending"} | bind試行: {bindAttempt}/10
+        </div>
       </div>
     </div>
   );
