@@ -79,6 +79,13 @@ export default function AppLayout() {
     enabled: !!user?.email,
   });
 
+  const { data: myChannel } = useQuery({
+    queryKey: ["layout-my-channel", user?.email],
+    queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }).then(r => r[0] || null),
+    enabled: !!user?.email,
+    refetchInterval: 30000,
+  });
+
   const isActive = (path) => path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   const renderSidebar = (onCloseFn) => (
@@ -122,24 +129,27 @@ export default function AppLayout() {
             <div className="pt-3 pb-1 px-3">
               <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者メニュー</p>
             </div>
-            {CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => (
-              <Link key={path} to={path} onClick={onCloseFn}>
-                <div className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                  highlight && !isActive(path)
-                    ? "bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse"
-                    : isActive(path)
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                )}>
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="flex-1">{label}</span>
-                  {highlight && !isActive(path) && (
-                    <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">待機</span>
-                  )}
-                </div>
-              </Link>
-            ))}
+            {CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
+              const isWaiting = highlight && myChannel?.call_enabled && !isActive(path);
+              return (
+                <Link key={path} to={path} onClick={onCloseFn}>
+                  <div className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                    isWaiting
+                      ? "bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse"
+                      : isActive(path)
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  )}>
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="flex-1">{label}</span>
+                    {isWaiting && (
+                      <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">待機</span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
 
             {SUPER_ADMIN_EMAILS.includes(user.email) && (
               <>
