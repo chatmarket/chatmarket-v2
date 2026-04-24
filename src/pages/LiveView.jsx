@@ -415,9 +415,9 @@ function LiveViewInner() {
                 allowFullScreen
                 title={stream.title}
               />
-            ) : stream.status === "live" && !needsPayment ? (
-              /* ★ チケット確認完了時に完全リセット（key更新で強制マウント） */
-              <ViewerStream key={`${id}-${ticketChecked ? 'ready' : 'pending'}-${forceKey}`} streamId={id} stream={stream} />
+            ) : stream.status === "live" ? (
+              /* ★ RAW MODE: すべての判定を無視して無条件映像起動 */
+              <ViewerStream key={`${id}-raw-${forceKey}`} streamId={id} stream={stream} />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-secondary">
                 <p className="text-muted-foreground">
@@ -434,32 +434,12 @@ function LiveViewInner() {
               </div>
             )}
 
-            {/* ★ 大きなステータス表示 */}
-            {!ticketChecked && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/60">
-                <div className="animate-spin w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full" />
-                <div className="text-center space-y-2">
-                  <p className="text-2xl font-black text-primary">🔍 チケット確認中...</p>
-                  <p className="text-sm text-muted-foreground">Status: Checking...</p>
-                </div>
-              </div>
-            )}
-
-            {ticketChecked && !hasPurchased && !showPaywall && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/80 backdrop-blur-sm">
-                <div className="text-center space-y-3">
-                  <p className="text-3xl font-black text-red-400">❌ チケット確認: 未購入</p>
-                  <p className="text-lg text-muted-foreground">Status: Waiting for payment...</p>
-                </div>
-              </div>
-            )}
-
-            {ticketChecked && hasPurchased && !needsPayment && (
-              <div className="absolute top-4 left-4 z-50 bg-black/70 border border-green-500/50 rounded-lg px-4 py-3 backdrop-blur-sm">
-                <p className="text-lg font-black text-green-400">✅ チケット確認: 成功</p>
-                <p className="text-xs text-muted-foreground mt-1">Status: Streaming Initializing...</p>
-              </div>
-            )}
+            {/* ★ RAW MODE：判定バイパスモード表示 */}
+            <div className="absolute top-4 left-4 right-4 z-50 bg-black/80 border-2 border-red-500 rounded-lg px-6 py-4 backdrop-blur-sm text-center">
+              <p className="text-4xl font-black text-red-500 animate-pulse">🔴 RAW MODE: FORCING VIDEO</p>
+              <p className="text-sm text-red-300 mt-2">すべての判定をバイパス → 映像直結モード（課金判定無視）</p>
+              <p className="text-xs text-muted-foreground mt-1">Chimeセッション強制初期化中...</p>
+            </div>
 
 
 
@@ -487,19 +467,19 @@ function LiveViewInner() {
               </Link>
             )}
 
-            {stream.status === "live" && !needsPayment && (
-              <div className="absolute bottom-4 right-3 flex items-center gap-2">
-                {/* 視聴中の強制再接続ボタン */}
-                <button
-                  onClick={() => {
-                    addLog("🔄 強制再接続（視聴中）");
-                    setForceKey(k => k + 1);
-                  }}
-                  className="px-3 py-1.5 bg-orange-500/80 hover:bg-orange-400 text-white text-xs font-bold rounded-lg"
-                  style={{ touchAction: "manipulation" }}
-                >
-                  再接続
-                </button>
+            {stream.status === "live" && (
+             <div className="absolute bottom-4 right-3 flex items-center gap-2">
+               {/* ★ RAW MODE用：ページ完全リロード再接続 */}
+               <button
+                 onClick={() => {
+                   window.location.reload();
+                 }}
+                 className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg animate-pulse"
+                 style={{ touchAction: "manipulation" }}
+                 title="ページをリロード＆Chimeセッション完全破棄"
+               >
+                 🔴 再接続
+               </button>
                 <VideoControls videoRef={null} showQuality={true} />
                 <button
                   onClick={toggleFullscreen}
