@@ -195,14 +195,26 @@ function LiveViewInner() {
     return () => clearInterval(timer);
   }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
-  // ★ ローディング秒数カウンター（ticketChecked後にリセット）
+  // ★ ローディング秒数カウンター＋5秒タイムアウト強制開通
   useEffect(() => {
     if (ticketChecked) {
       clearInterval(loadingTimerRef.current);
       setLoadingSeconds(0);
       return;
     }
-    loadingTimerRef.current = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
+    loadingTimerRef.current = setInterval(() => {
+      setLoadingSeconds(s => {
+        const next = s + 1;
+        if (next >= 5) {
+          // 5秒経っても確認が終わらない → 強制開通
+          addLog("🚨 Status: Forced Start — 5秒タイムアウトで強制開通");
+          setTicketChecked(true);
+          setHasPurchased(true);
+          clearInterval(loadingTimerRef.current);
+        }
+        return next;
+      });
+    }, 1000);
     return () => clearInterval(loadingTimerRef.current);
   }, [ticketChecked]);
 
@@ -455,12 +467,9 @@ function LiveViewInner() {
                 allowFullScreen
                 title={stream.title}
               />
-            ) : stream.status === "live" && ticketChecked && !needsPayment ? (
-              /* ★ チケット確認済み & 決済完了後のみ ViewerStream をマウント */
+            ) : stream.status === "live" && !needsPayment ? (
+              /* ★ チケット確認の完了を待たずに先行マウント */
               <ViewerStream key={forceKey} streamId={id} stream={stream} />
-            ) : stream.status === "live" && !ticketChecked ? (
-              /* チケット確認中は空のまま（上の z-40 ローディングが覆う） */
-              <div className="w-full h-full bg-black" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-secondary">
                 <p className="text-muted-foreground">
