@@ -53,7 +53,6 @@ function LiveViewInner() {
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [ticketChecked, setTicketChecked] = useState(false);
-  const [previewSeconds, setPreviewSeconds] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const [activeTips, setActiveTips] = useState([]);
   const [activeGifts, setActiveGifts] = useState([]);
@@ -146,21 +145,22 @@ function LiveViewInner() {
     });
   }, [stream?.channel_id]);
 
-  useEffect(() => {
-    if (!stream || !stream.price || stream.price === 0 || hasPurchased) return;
-    if (stream.status !== "live") return;
-    const timer = setInterval(() => {
-      setPreviewSeconds(prev => {
-        if (prev >= 30) {
-          clearInterval(timer);
-          setShowPaywall(true);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [stream?.id, stream?.status, hasPurchased]);
+  // ★ プレビュー機能は一時停止（30秒無料ロジック全廃止）
+  // useEffect(() => {
+  //   if (!stream || !stream.price || stream.price === 0 || hasPurchased) return;
+  //   if (stream.status !== "live") return;
+  //   const timer = setInterval(() => {
+  //     setPreviewSeconds(prev => {
+  //       if (prev >= 30) {
+  //         clearInterval(timer);
+  //         setShowPaywall(true);
+  //         return prev;
+  //       }
+  //       return prev + 1;
+  //     });
+  //   }, 1000);
+  //   return () => clearInterval(timer);
+  // }, [stream?.id, stream?.status, hasPurchased]);
 
   useEffect(() => {
     if (stream?.status !== "live" || !hasPurchased) return;
@@ -195,7 +195,7 @@ function LiveViewInner() {
     return () => clearInterval(timer);
   }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
-  // ★ ローディング秒数カウンター＋5秒タイムアウト強制開通
+  // ★ ローディング秒数カウンター＋1秒タイムアウト→即購入モーダル
   useEffect(() => {
     if (ticketChecked) {
       clearInterval(loadingTimerRef.current);
@@ -205,11 +205,12 @@ function LiveViewInner() {
     loadingTimerRef.current = setInterval(() => {
       setLoadingSeconds(s => {
         const next = s + 1;
-        if (next >= 5) {
-          // 5秒経っても確認が終わらない → 強制開通
-          addLog("🚨 Status: Forced Start — 5秒タイムアウトで強制開通");
+        if (next >= 1) {
+          // 1秒タイムアウト → チケット確認を強制終了、未購入扱いで購入モーダル表示
+          addLog("🚨 Status: Forced Start — 1秒タイムアウト → 購入モーダル強制表示");
           setTicketChecked(true);
-          setHasPurchased(true);
+          setHasPurchased(false); // 未購入扱い → ペイウォール即表示
+          setShowPaywall(true);
           clearInterval(loadingTimerRef.current);
         }
         return next;
@@ -360,8 +361,6 @@ function LiveViewInner() {
 
   const isPaid = stream.price > 0;
   const needsPayment = isPaid && !hasPurchased;
-  // プレビュー30秒は無料配信のみ（有料でチケット未確認中はローディング表示）
-  const inPreview = needsPayment && previewSeconds < 30 && !showPaywall && ticketChecked;
 
   return (
     <div className="w-full min-h-screen bg-background">
@@ -387,41 +386,14 @@ function LiveViewInner() {
           <div ref={playerContainerRef} className="relative bg-black rounded-xl overflow-hidden aspect-video"
             style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
           >
-            {/* ★ チケット確認中ローディング＋緊急ボタン */}
-            {!ticketChecked && (
-              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black gap-4 p-4">
-                <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                <p className="text-white/70 text-sm font-medium">チケット確認中... {loadingSeconds}s</p>
-                {/* 3秒以上経ったら緊急ボタン表示 */}
-                {loadingSeconds >= 3 && (
-                  <button
-                    onClick={() => {
-                      addLog("🚨 強制再接続ボタンタップ");
-                      setTicketChecked(false);
-                      setHasPurchased(false);
-                      setLoadingSeconds(0);
-                      // 最新stream再取得してチケット確認
-                      base44.entities.LiveStream.filter({ id }).then(streams => {
-                        const latest = streams[0];
-                        addLog(`📡 Stream再取得: status=${latest?.status} price=${latest?.price}`);
-                        runTicketCheck(latest, user);
-                      }).catch(err => addLog(`❌ Stream取得失敗: ${err.message}`));
-                    }}
-                    className="mt-2 px-6 py-4 bg-red-500 hover:bg-red-400 active:bg-red-600 text-white font-black text-lg rounded-2xl shadow-2xl shadow-red-500/50 border-2 border-red-300 animate-pulse"
-                    style={{ minWidth: "280px", touchAction: "manipulation" }}
-                  >
-                    🔄 接続できない場合はここをタップ
-                  </button>
-                )}
-              </div>
-            )}
+            {/* ★ ローディング画面削除 — 即ペイウォールor映像へ */}
 
             {showPaywall && !hasPurchased ? (
-              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
                 <div className="text-center space-y-2">
                   <Lock className="w-12 h-12 text-primary mx-auto" />
-                  <h2 className="text-xl font-bold">30秒プレビューが終了しました</h2>
-                  <p className="text-muted-foreground text-sm">チケットを購入してすぐ視聴を再開</p>
+                  <h2 className="text-xl font-bold">有料ライブ配信です</h2>
+                  <p className="text-muted-foreground text-sm">チケットを購入してすぐ視聴開始</p>
                   <p className="text-3xl font-black text-primary">¥{stream.price?.toLocaleString()}</p>
                 </div>
                 {!user ? (
@@ -436,20 +408,7 @@ function LiveViewInner() {
               </div>
             ) : null}
 
-            {needsPayment && !inPreview && !showPaywall ? (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary to-card gap-3 sm:gap-4 p-4">
-              <Lock className="w-12 h-12 text-muted-foreground" />
-              <h2 className="text-lg sm:text-xl font-bold">有料ライブ配信</h2>
-              <p className="text-muted-foreground text-sm">チケットを購入してすぐ視聴開始</p>
-              <div className="text-2xl font-bold text-primary">
-                ¥{stream.price?.toLocaleString()}
-              </div>
-              <Button onClick={handlePurchase} className="bg-primary hover:bg-primary/90 gap-2 h-12 text-base font-bold">
-                <Zap className="w-5 h-5" />
-                今すぐ購入して視聴する
-              </Button>
-            </div>
-            ) : stream.status === "live" && ticketChecked && !needsPayment && stream.stream_type === "vimeo" && stream.vimeo_url ? (
+            {stream.status === "live" && ticketChecked && !needsPayment && stream.stream_type === "vimeo" && stream.vimeo_url ? (
               <iframe
                 src={stream.vimeo_url}
                 className="w-full h-full"
@@ -486,11 +445,7 @@ function LiveViewInner() {
               </div>
             )}
 
-            {inPreview && (
-              <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
-                プレビュー {30 - previewSeconds}秒
-              </div>
-            )}
+
 
             {stream.status === "live" && !needsPayment && (
               <div className="absolute top-3 left-3 flex items-center gap-2">
