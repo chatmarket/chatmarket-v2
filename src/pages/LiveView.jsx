@@ -25,7 +25,6 @@ export default function LiveView() {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
-  // ★ チケット確認が完了したかどうか（確認前は映像を一切起動させない）
   const [ticketChecked, setTicketChecked] = useState(false);
   const [previewSeconds, setPreviewSeconds] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -38,8 +37,19 @@ export default function LiveView() {
   const [showExtensionNotification, setShowExtensionNotification] = useState(false);
   const [extensionUserName, setExtensionUserName] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // ★ 緊急デバッグ用
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
+  const [debugLogs, setDebugLogs] = useState([]);
+  const [forceKey, setForceKey] = useState(0); // ViewerStream強制再マウント用
   const extensionNotifiedRef = useRef(false);
   const playerContainerRef = useRef(null);
+  const loadingTimerRef = useRef(null);
+
+  // ★ 画面上にログを追記するヘルパー
+  const addLog = (msg) => {
+    const ts = new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    setDebugLogs(prev => [`[${ts}] ${msg}`, ...prev].slice(0, 20));
+  };
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -145,39 +155,57 @@ export default function LiveView() {
     return () => clearInterval(timer);
   }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
-  // ★ チケット確認ロジック（stream確定後に1回だけ走る）
+  // ★ ローディング秒数カウンター（ticketChecked後にリセット）
   useEffect(() => {
-    if (!stream) return;
+    if (ticketChecked) {
+      clearInterval(loadingTimerRef.current);
+      setLoadingSeconds(0);
+      return;
+    }
+    loadingTimerRef.current = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
+    return () => clearInterval(loadingTimerRef.current);
+  }, [ticketChecked]);
 
-    // 無料配信 → 即解禁
-    if (!stream.price || stream.price === 0) {
-      console.log("[LiveView] ✅ 無料配信 — チケット確認スキップ、即解禁");
+  // ★ チケット確認ロジック
+  const runTicketCheck = (currentStream, currentUser) => {
+    const s = currentStream;
+    const u = currentUser;
+    if (!s) { addLog("⚠️ Stream未取得"); return; }
+
+    if (!s.price || s.price === 0) {
+      addLog("✅ 無料配信 — 即解禁");
       setHasPurchased(true);
       setTicketChecked(true);
       return;
     }
-
-    // 有料配信でログイン未済 → チェック完了（課金モーダル表示へ）
-    if (!user) {
-      console.log("[LiveView] 💰 有料配信・未ログイン — チケット確認完了（未購入扱い）");
+    if (!u) {
+      addLog("💰 有料・未ログイン — 課金画面へ");
       setTicketChecked(true);
       return;
     }
-
-    console.log("[LiveView] 🔍 チケット確認リクエスト送信 — item_id:", id, "buyer:", user.email);
+    addLog(`🔍 チケット確認送信... buyer=${u.email}`);
     base44.entities.Purchase.filter({
       item_type: "livestream",
       item_id: id,
-      buyer_email: user.email,
+      buyer_email: u.email,
       status: "completed",
     }).then((purchases) => {
-      console.log("[LiveView] 🎟️ チケット確認結果:", purchases.length, "件", purchases.length > 0 ? "✅ 購入済み" : "❌ 未購入");
-      if (purchases.length > 0) setHasPurchased(true);
+      if (purchases.length > 0) {
+        addLog(`✅ 購入済み (${purchases.length}件) — 視聴解禁`);
+        setHasPurchased(true);
+      } else {
+        addLog("❌ 未購入 — 課金画面へ");
+      }
       setTicketChecked(true);
     }).catch((err) => {
-      console.error("[LiveView] チケット確認エラー:", err.message, "→ 未購入扱いで続行");
+      addLog(`❌ チケット確認エラー: ${err.message}`);
       setTicketChecked(true);
     });
+  };
+
+  useEffect(() => {
+    if (!stream) return;
+    runTicketCheck(stream, user);
   }, [user, stream, id]);
 
   const toggleFullscreen = () => {
@@ -296,11 +324,32 @@ export default function LiveView() {
           <div ref={playerContainerRef} className="relative bg-black rounded-xl overflow-hidden aspect-video"
             style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
           >
-            {/* ★ チケット確認中はローディング表示（映像接続ロジック一切起動しない） */}
+            {/* ★ チケット確認中ローディング＋緊急ボタン */}
             {!ticketChecked && (
-              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black gap-4">
+              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black gap-4 p-4">
                 <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                <p className="text-white/70 text-sm font-medium">チケット確認中...</p>
+                <p className="text-white/70 text-sm font-medium">チケット確認中... {loadingSeconds}s</p>
+                {/* 3秒以上経ったら緊急ボタン表示 */}
+                {loadingSeconds >= 3 && (
+                  <button
+                    onClick={() => {
+                      addLog("🚨 強制再接続ボタンタップ");
+                      setTicketChecked(false);
+                      setHasPurchased(false);
+                      setLoadingSeconds(0);
+                      // 最新stream再取得してチケット確認
+                      base44.entities.LiveStream.filter({ id }).then(streams => {
+                        const latest = streams[0];
+                        addLog(`📡 Stream再取得: status=${latest?.status} price=${latest?.price}`);
+                        runTicketCheck(latest, user);
+                      }).catch(err => addLog(`❌ Stream取得失敗: ${err.message}`));
+                    }}
+                    className="mt-2 px-6 py-4 bg-red-500 hover:bg-red-400 active:bg-red-600 text-white font-black text-lg rounded-2xl shadow-2xl shadow-red-500/50 border-2 border-red-300 animate-pulse"
+                    style={{ minWidth: "280px", touchAction: "manipulation" }}
+                  >
+                    🔄 接続できない場合はここをタップ
+                  </button>
+                )}
               </div>
             )}
 
@@ -357,7 +406,7 @@ export default function LiveView() {
               />
             ) : stream.status === "live" && ticketChecked && !needsPayment ? (
               /* ★ チケット確認済み & 決済完了後のみ ViewerStream をマウント */
-              <ViewerStream streamId={id} stream={stream} />
+              <ViewerStream key={forceKey} streamId={id} stream={stream} />
             ) : stream.status === "live" && !ticketChecked ? (
               /* チケット確認中は空のまま（上の z-40 ローディングが覆う） */
               <div className="w-full h-full bg-black" />
@@ -409,6 +458,17 @@ export default function LiveView() {
 
             {stream.status === "live" && !needsPayment && (
               <div className="absolute bottom-4 right-3 flex items-center gap-2">
+                {/* 視聴中の強制再接続ボタン */}
+                <button
+                  onClick={() => {
+                    addLog("🔄 強制再接続（視聴中）");
+                    setForceKey(k => k + 1);
+                  }}
+                  className="px-3 py-1.5 bg-orange-500/80 hover:bg-orange-400 text-white text-xs font-bold rounded-lg"
+                  style={{ touchAction: "manipulation" }}
+                >
+                  再接続
+                </button>
                 <VideoControls videoRef={null} showQuality={true} />
                 <button
                   onClick={toggleFullscreen}
@@ -417,6 +477,15 @@ export default function LiveView() {
                 >
                   {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                 </button>
+              </div>
+            )}
+
+            {/* ★ 画面ログパネル（デバッグ用・常時表示） */}
+            {debugLogs.length > 0 && (
+              <div className="absolute bottom-14 left-2 right-2 max-h-28 overflow-y-auto bg-black/85 border border-cyan-500/40 rounded-lg p-2 pointer-events-none z-30">
+                {debugLogs.map((log, i) => (
+                  <p key={i} className="text-[10px] font-mono text-cyan-300 leading-tight">{log}</p>
+                ))}
               </div>
             )}
           </div>
