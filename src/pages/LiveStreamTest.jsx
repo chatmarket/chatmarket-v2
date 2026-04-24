@@ -16,23 +16,28 @@ export default function LiveStreamTest() {
   const [meeting, setMeeting] = useState(null);
   const [attendee, setAttendee] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [streamStatus, setStreamStatus] = useState("scheduled"); // scheduled | live | ended
-  const [errorDetail, setErrorDetail] = useState(null); // 詳細エラー表示用
-  const [manualStreamId, setManualStreamId] = useState(""); // 手動入力用
+  const [streamStatus, setStreamStatus] = useState("scheduled");
+  const [errorDetail, setErrorDetail] = useState(null);
+  const [manualStreamId, setManualStreamId] = useState("");
+  const [creating, setCreating] = useState(false);
 
   // 実際に使うstreamId（URLパラメータ or 手動入力）
   const streamId = routeStreamId || (manualStreamId.trim() || null);
+
+  // StreamIDが有効かチェック（24文字の16進数 or 英数字ID）
+  const isValidStreamId = (id) => id && id.length >= 8 && !id.startsWith(':');
 
   useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
 
   useEffect(() => {
-    if (!streamId || streamId.startsWith(':')) return;
+    if (!isValidStreamId(streamId)) return;
     base44.entities.LiveStream.filter({ id: streamId }).then(res => {
       if (res[0]) {
         setStream(res[0]);
         setStreamStatus(res[0].status || "scheduled");
+        setErrorDetail(null);
       } else {
         setStream(null);
         setErrorDetail(`StreamID「${streamId}」が見つかりません`);
@@ -42,8 +47,44 @@ export default function LiveStreamTest() {
     });
   }, [streamId]);
 
+  // テスト用LiveStreamを自動作成
+  const handleCreateTestStream = async () => {
+    if (!user) return;
+    setCreating(true);
+    setErrorDetail(null);
+    try {
+      // ユーザーのチャンネルを取得 or 作成
+      let channels = await base44.entities.Channel.filter({ owner_email: user.email });
+      let channel = channels[0];
+      if (!channel) {
+        channel = await base44.entities.Channel.create({ name: `${user.full_name || user.email}のチャンネル`, owner_email: user.email });
+      }
+      const newStream = await base44.entities.LiveStream.create({
+        title: `テスト配信 ${new Date().toLocaleTimeString('ja-JP')}`,
+        channel_id: channel.id,
+        channel_name: channel.name,
+        status: 'scheduled',
+        stream_type: 'webrtc',
+        price: 0,
+        viewer_count: 0,
+      });
+      setManualStreamId(newStream.id);
+      setStream(newStream);
+      setStreamStatus('scheduled');
+      toast.success(`✅ テスト用LiveStreamを作成しました: ${newStream.id}`);
+    } catch (err) {
+      setErrorDetail(`LiveStream作成エラー: ${err.message}`);
+      toast.error(`作成失敗: ${err.message}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const handleCreateMeeting = async () => {
-    if (!streamId) { toast.error("Stream ID required"); return; }
+    if (!isValidStreamId(streamId)) {
+      toast.error("有効なStream IDを先に入力または作成してください");
+      return;
+    }
     setLoading(true);
     setErrorDetail(null);
     try {
@@ -149,18 +190,29 @@ export default function LiveStreamTest() {
           <Radio className="w-6 h-6 text-primary" /> ライブ配信テスト
         </h1>
 
-        {/* StreamID 手動入力（URLパラメータがない場合） */}
+        {/* StreamID 入力・自動作成 */}
         {!routeStreamId && (
-          <div className="bg-yellow-500/10 border border-yellow-500/40 rounded-lg p-4 space-y-2">
-            <p className="text-sm font-bold text-yellow-400">⚠️ URLにStreamIDが含まれていません</p>
-            <p className="text-xs text-yellow-300/70">GoLiveページで配信を作成後、そのStreamIDを入力してください</p>
-            <input
-              type="text"
-              value={manualStreamId}
-              onChange={e => { setManualStreamId(e.target.value); setStream(null); setMeeting(null); setAttendee(null); setErrorDetail(null); }}
-              placeholder="LiveStream ID を貼り付け（例: abc123def456）"
-              className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-yellow-500"
-            />
+          <div className="bg-yellow-500/10 border border-yellow-500/40 rounded-lg p-4 space-y-3">
+            <p className="text-sm font-bold text-yellow-400">⚠️ Stream IDを設定してください</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={manualStreamId}
+                onChange={e => { setManualStreamId(e.target.value); setStream(null); setMeeting(null); setAttendee(null); setErrorDetail(null); }}
+                placeholder="LiveStream ID を貼り付け"
+                className="flex-1 rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-yellow-500"
+              />
+            </div>
+            <button
+              onClick={handleCreateTestStream}
+              disabled={creating}
+              className="w-full py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-sm transition-all disabled:opacity-50"
+            >
+              {creating ? "作成中..." : "🚀 テスト用LiveStreamを自動作成してIDをセット"}
+            </button>
+            {isValidStreamId(streamId) && (
+              <p className="text-xs text-green-400 font-mono">✅ 有効なID: {streamId}</p>
+            )}
           </div>
         )}
 

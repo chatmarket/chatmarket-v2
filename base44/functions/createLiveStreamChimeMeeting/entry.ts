@@ -104,13 +104,17 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { streamId, role } = body;
 
-    if (!streamId || !['broadcaster', 'viewer'].includes(role)) {
-      return new Response(JSON.stringify({ error: `Invalid params: streamId=${streamId}, role=${role}` }), { status: 400 });
+    // StreamID の形式チェック（コロン始まりやリテラル文字列を明示的に拒否）
+    if (!streamId || typeof streamId !== 'string' || streamId.startsWith(':') || streamId.length < 8) {
+      return new Response(JSON.stringify({ error: `Invalid Stream ID: "${streamId}". URLパラメータが正しく渡されていません。` }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (!['broadcaster', 'viewer'].includes(role)) {
+      return new Response(JSON.stringify({ error: `Invalid role: "${role}". Must be 'broadcaster' or 'viewer'.` }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     // ライブストリーム情報取得
     const streams = await base44.asServiceRole.entities.LiveStream.filter({ id: streamId });
-    if (!streams[0]) return new Response(JSON.stringify({ error: `Stream not found: ${streamId}` }), { status: 404 });
+    if (!streams[0]) return new Response(JSON.stringify({ error: `Stream not found: ${streamId}` }), { status: 404, headers: { 'Content-Type': 'application/json' } });
     const stream = streams[0];
 
     // Meetingを作成または既存のものを再利用
