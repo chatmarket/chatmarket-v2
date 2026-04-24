@@ -64,8 +64,7 @@ export default function PpvPricingTable() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <p>📌 収益還元率 <span className="text-primary font-bold">85%</span>（月間売上に応じて最大95%まで自動アップ）</p>
             <p>📌 15円設定 → 最大480p ／ 55円以上 → 720p ／ 150円以上 → 1080p許可</p>
-            <p>📌 コスト：場所代30円/時間 ＋ 送料5円/視聴者/時間</p>
-            <p>📌 音楽利用（歌唱・BGM等）はJASRAC包括契約対応</p>
+
           </div>
           <div className="pt-2 border-t border-border/20 flex items-center justify-between">
             <p className="text-[11px]">※ BASICプランとの組み合わせが必要です</p>
