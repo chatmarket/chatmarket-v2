@@ -4,14 +4,28 @@ import { appParams } from '@/lib/app-params';
 const { appId, token, functionsVersion, appBaseUrl } = appParams;
 
 // グローバルレベルで /app-logs/ へのフェッチリクエストを遮断
+// + 429エラー時は10秒間全リクエストをブロック
 if (typeof window !== 'undefined') {
+  let blockedUntil = 0;
+
   const originalFetch = window.fetch;
-  window.fetch = function(...args) {
+  window.fetch = async function(...args) {
     const url = args[0];
     if (typeof url === 'string' && url.includes('/app-logs/')) {
       return Promise.resolve(new Response('', { status: 204 }));
     }
-    return originalFetch.apply(this, args);
+    // 429バックオフ中はリクエストを即座にreject
+    if (Date.now() < blockedUntil) {
+      const waitMs = blockedUntil - Date.now();
+      console.warn(`[429_BACKOFF] Request blocked for ${Math.ceil(waitMs/1000)}s:`, typeof url === 'string' ? url.split('?')[0] : '');
+      return Promise.resolve(new Response(JSON.stringify({ error: 'rate limited - backoff' }), { status: 429 }));
+    }
+    const res = await originalFetch.apply(this, args);
+    if (res.status === 429) {
+      blockedUntil = Date.now() + 10000; // 10秒バックオフ
+      console.error('[429_BACKOFF] 429 detected! Blocking all requests for 10s');
+    }
+    return res;
   };
 }
 

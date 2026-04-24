@@ -28,7 +28,7 @@ export default function GlobalCallNotifier({ user }) {
   const seenAcceptedRef = useRef(new Set());
   const callerInitRef = useRef(false);
 
-  // ---- 着信ポーリング ----
+  // ---- 着信ポーリング: 初回1回のみ、以降はリアルタイム購読のみ ----
   const { data: pendingCalls = [] } = useQuery({
     queryKey: ["global-incoming-calls", user?.email],
     queryFn: () => base44.entities.VideoCall.filter(
@@ -36,11 +36,12 @@ export default function GlobalCallNotifier({ user }) {
       "-created_date", 5
     ),
     enabled: !!user?.email,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    staleTime: 60000,
   });
 
-  // ---- 発信済み通話の承認ポーリング ----
+  // ---- 発信済み通話の承認: 初回1回のみ、以降はリアルタイム購読のみ ----
   const { data: callerCalls = [] } = useQuery({
     queryKey: ["global-caller-accepted", user?.email],
     queryFn: () => base44.entities.VideoCall.filter(
@@ -48,11 +49,12 @@ export default function GlobalCallNotifier({ user }) {
       "-created_date", 3
     ),
     enabled: !!user?.email,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    staleTime: 60000,
   });
 
-  // リアルタイム購読
+  // リアルタイム購読のみで更新（ポーリング廃止）
   useEffect(() => {
     if (!user?.email) return;
     const unsub = base44.entities.VideoCall.subscribe((event) => {

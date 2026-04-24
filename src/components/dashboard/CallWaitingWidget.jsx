@@ -29,22 +29,21 @@ export default function CallWaitingWidget({ user, channel }) {
     }
   }, [channel?.call_enabled]);
 
-  // ★ callee_email でポーリング（リアルタイム購読メイン、ポーリングは30秒バックアップ）
+  // リアルタイム購読のみ使用（ポーリング廃止）
   const { data: pendingCalls = [] } = useQuery({
     queryKey: ["widget-pending-calls-v2", user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      const results = await base44.entities.VideoCall.filter(
+      return base44.entities.VideoCall.filter(
         { callee_email: user.email, status: "pending" },
         "-created_date",
         5
       );
-      console.log(`[CallWaitingWidget] 📞 Polled pending calls for ${user.email}:`, results.length, 'found');
-      return results;
     },
     enabled: !!user?.email,
-    refetchInterval: 30000, // 30秒（リアルタイム購読がメイン）
-    refetchIntervalInBackground: false, // バックグラウンド時は停止
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    staleTime: 60000,
   });
 
   // ★ リアルタイム購読も併用（二重で監視）

@@ -23,7 +23,8 @@ export default function AcceptedCallsList({ userEmail }) {
       return [...asCaller, ...asCallee];
     },
     enabled: !!userEmail,
-    refetchInterval: 5000,
+    refetchInterval: false,
+    staleTime: 60000,
   });
 
   if (acceptedCalls.length === 0) return null;
