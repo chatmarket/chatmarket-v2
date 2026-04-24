@@ -130,36 +130,42 @@ Deno.serve(async (req) => {
     let meetingData = null;
 
     if (!meetingId) {
-      console.log('[Chime] Creating new meeting...');
-      const meetingRes = await chimeRequest('POST', '/meetings', {
-        ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
-        MediaRegion: CHIME_REGION,
-        ExternalMeetingId: `livestream-${streamId}`,
-      });
-      meetingData = meetingRes.Meeting;
-      meetingId = meetingData.MeetingId;
-      console.log(`[Chime] Meeting created: ${meetingId}`);
-      await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
-    } else {
-      // 既存Meetingのフル情報（MediaPlacement等）を取得 — これがないとSDKが接続できない
-      console.log(`[Chime] Getting existing meeting info: ${meetingId}`);
-      try {
-        const getMeetingRes = await chimeRequest('GET', `/meetings/${meetingId}`, null);
-        meetingData = getMeetingRes.Meeting;
-        console.log(`[Chime] Got meeting data: ${meetingId}`);
-      } catch (err) {
-        // Meetingが期限切れの場合は新規作成
-        console.warn(`[Chime] Meeting not found (expired?), creating new: ${err.message}`);
-        const meetingRes = await chimeRequest('POST', '/meetings', {
-          ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
-          MediaRegion: CHIME_REGION,
-          ExternalMeetingId: `livestream-${streamId}`,
-        });
-        meetingData = meetingRes.Meeting;
-        meetingId = meetingData.MeetingId;
-        await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
-      }
-    }
+       console.log('[Chime] Creating new meeting...');
+       console.log(`[Chime] 🌍 MediaRegion FIXED: ${AWS_REGION} (broadcaster & viewer同期リージョン)`);
+       const meetingRes = await chimeRequest('POST', '/meetings', {
+         ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
+         MediaRegion: AWS_REGION,
+         ExternalMeetingId: `livestream-${streamId}`,
+       });
+       meetingData = meetingRes.Meeting;
+       meetingId = meetingData.MeetingId;
+       console.log(`[Chime] Meeting created: ${meetingId}`);
+       console.log(`[Chime] MediaPlacement: ${JSON.stringify(meetingData.MediaPlacement)}`);
+       await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
+     } else {
+       // 既存Meetingのフル情報（MediaPlacement等）を取得 — これがないとSDKが接続できない
+       console.log(`[Chime] Getting existing meeting info: ${meetingId}`);
+       try {
+         const getMeetingRes = await chimeRequest('GET', `/meetings/${meetingId}`, null);
+         meetingData = getMeetingRes.Meeting;
+         console.log(`[Chime] Got meeting data: ${meetingId}`);
+         console.log(`[Chime] MediaPlacement: ${JSON.stringify(meetingData.MediaPlacement)}`);
+       } catch (err) {
+         // Meetingが期限切れの場合は新規作成
+         console.warn(`[Chime] Meeting not found (expired?), creating new: ${err.message}`);
+         console.log(`[Chime] 🌍 MediaRegion FIXED: ${AWS_REGION} (broadcaster & viewer同期リージョン)`);
+         const meetingRes = await chimeRequest('POST', '/meetings', {
+           ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
+           MediaRegion: AWS_REGION,
+           ExternalMeetingId: `livestream-${streamId}`,
+         });
+         meetingData = meetingRes.Meeting;
+         meetingId = meetingData.MeetingId;
+         console.log(`[Chime] 🔄 New Meeting created: ${meetingId}`);
+         console.log(`[Chime] MediaPlacement: ${JSON.stringify(meetingData.MediaPlacement)}`);
+         await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
+       }
+     }
 
     // Attendee登録
     const capabilities = role === 'viewer'
