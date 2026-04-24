@@ -99,8 +99,15 @@ Deno.serve(async (req) => {
     }
 
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+
+    // ★ 視聴者はログイン不要（ゲストも視聴可）。ログイン済みなら情報取得、失敗してもゲスト扱いで続行
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch (_) {
+      // 未ログイン or 403 → ゲストとして続行
+      console.log('[Chime] Guest viewer (no auth) — continuing without user');
+    }
 
     const body = await req.json();
     const { streamId, role } = body;
@@ -159,8 +166,9 @@ Deno.serve(async (req) => {
       ? { Audio: 'Receive', Video: 'Receive', Content: 'Receive' }
       : { Audio: 'SendReceive', Video: 'SendReceive', Content: 'SendReceive' };
 
+    const userId = user?.email || `guest-${Date.now()}`;
     const attendeeRes = await chimeRequest('POST', `/meetings/${meetingId}/attendees`, {
-      ExternalUserId: `${role}-${user.email}-${Date.now()}`,
+      ExternalUserId: `${role}-${userId}`,
       Capabilities: capabilities,
     });
 

@@ -99,6 +99,25 @@
         100%{transform:translateX(100%)}
       }
     </style>
+    <!-- ★ SW強制クリア: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var reg of registrations) {
+            reg.unregister();
+            console.log('[SW] Unregistered:', reg.scope);
+          }
+        });
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (var name of names) {
+              caches.delete(name);
+              console.log('[SW] Cache deleted:', name);
+            }
+          });
+        }
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

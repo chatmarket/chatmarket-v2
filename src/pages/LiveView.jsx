@@ -21,7 +21,33 @@ import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream";
 import PpvPreSale from "../components/live/PpvPreSale";
 
-export default function LiveView() {
+// ★ エラーバウンダリ（LiveView全体をラップ）
+class LiveViewErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(err) { return { error: err }; }
+  componentDidCatch(err, info) { console.error("[LiveView] Fatal Error:", err, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 99999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", gap: "16px" }}>
+          <div style={{ fontSize: "48px" }}>🚨</div>
+          <p style={{ color: "#ff4444", fontWeight: "bold", fontSize: "18px", textAlign: "center" }}>LiveViewでエラーが発生しました</p>
+          <pre style={{ color: "#ffaaaa", fontSize: "12px", background: "#1a0000", padding: "16px", borderRadius: "8px", maxWidth: "100%", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+            {this.state.error?.message || String(this.state.error)}
+            {"\n\n"}
+            {this.state.error?.stack?.split("\n").slice(0, 5).join("\n")}
+          </pre>
+          <button onClick={() => window.location.reload()} style={{ background: "#ff4444", color: "white", border: "none", padding: "12px 32px", borderRadius: "8px", fontSize: "16px", fontWeight: "bold", cursor: "pointer" }}>
+            リロード
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function LiveViewInner() {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
@@ -606,5 +632,13 @@ export default function LiveView() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LiveView() {
+  return (
+    <LiveViewErrorBoundary>
+      <LiveViewInner />
+    </LiveViewErrorBoundary>
   );
 }
