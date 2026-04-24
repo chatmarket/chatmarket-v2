@@ -35,7 +35,9 @@ export default function HeroSlot() {
   const heroChannel = top1Channel || null;
   if (!heroChannel) return null;
 
-  const isLive = heroChannel.is_live || !!liveMegaStream;
+  // is_live フラグは古いデータが残ることがあるため、
+  // 実際のLiveStreamデータ（status:"live"）のみで判定する
+  const isLive = !!liveMegaStream;
   const liveStream = liveMegaStream;
   const href = liveStream ? `/live/${liveStream.id}` : `/channel/${heroChannel.id}`;
   const thumbnail = liveStream?.thumbnail_url || heroChannel.avatar_url;

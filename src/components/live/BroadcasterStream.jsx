@@ -120,7 +120,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
   const handleEndConfirmed = async () => {
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    await base44.entities.LiveStream.update(streamId, { status: "ended" });
+    const streams = await base44.entities.LiveStream.filter({ id: streamId });
+    if (streams[0]?.channel_id) {
+      await base44.entities.Channel.update(streams[0].channel_id, { is_live: false });
+    }
+    await base44.entities.LiveStream.update(streamId, { status: "ended", live_ended_at: new Date().toISOString() });
     setStatus("ended");
     toast.success("配信を終了しました");
     if (onEnd) onEnd();
