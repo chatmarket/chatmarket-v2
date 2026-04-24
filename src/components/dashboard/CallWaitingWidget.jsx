@@ -29,7 +29,7 @@ export default function CallWaitingWidget({ user, channel }) {
     }
   }, [channel?.call_enabled]);
 
-  // ★ callee_email でポーリング（channel_id に依存しない。3秒ごと）
+  // ★ callee_email でポーリング（リアルタイム購読メイン、ポーリングは30秒バックアップ）
   const { data: pendingCalls = [] } = useQuery({
     queryKey: ["widget-pending-calls-v2", user?.email],
     queryFn: async () => {
@@ -43,8 +43,8 @@ export default function CallWaitingWidget({ user, channel }) {
       return results;
     },
     enabled: !!user?.email,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 30000, // 30秒（リアルタイム購読がメイン）
+    refetchIntervalInBackground: false, // バックグラウンド時は停止
   });
 
   // ★ リアルタイム購読も併用（二重で監視）

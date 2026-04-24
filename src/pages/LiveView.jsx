@@ -85,7 +85,8 @@ export default function LiveView() {
       return calls[0] || null;
     },
     enabled: !!stream?.channel_id,
-    refetchInterval: 2000,
+    refetchInterval: 30000, // ライブ視聴中は30秒（リソースをChime接続に集中）
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
