@@ -22,18 +22,18 @@ async function hmacSha256(keyBytes, message) {
   return new Uint8Array(sig);
 }
 
-// 署名キー生成
-async function getSigningKey(dateStamp, serviceName) {
+// 署名キー生成（リージョンを引数で受け取る）
+async function getSigningKeyForRegion(dateStamp, serviceName, region) {
   const enc = new TextEncoder();
   const kDate   = await hmacSha256(enc.encode(`AWS4${AWS_SECRET_KEY}`), dateStamp);
-  const kRegion = await hmacSha256(kDate, AWS_REGION);
+  const kRegion = await hmacSha256(kDate, region);
   const kService = await hmacSha256(kRegion, serviceName);
   const kSigning = await hmacSha256(kService, 'aws4_request');
   return kSigning;
 }
 
 // AWS SigV4署名付きヘッダー生成
-async function signAWSRequest(method, host, path, bodyStr, service) {
+async function signAWSRequest(method, host, path, bodyStr, service, region = AWS_REGION) {
   const now = new Date();
   const amzdate = now.toISOString().replace(/[:-]/g, '').replace(/\.\d+Z$/, 'Z');
   const datestamp = amzdate.slice(0, 8);
@@ -42,9 +42,9 @@ async function signAWSRequest(method, host, path, bodyStr, service) {
   const canonicalHeaders = `host:${host}\nx-amz-date:${amzdate}\n`;
   const signedHeaders = 'host;x-amz-date';
   const canonicalRequest = [method, path, '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
-  const credentialScope = `${datestamp}/${AWS_REGION}/${service}/aws4_request`;
+  const credentialScope = `${datestamp}/${region}/${service}/aws4_request`;
   const stringToSign = ['AWS4-HMAC-SHA256', amzdate, credentialScope, await sha256Hex(canonicalRequest)].join('\n');
-  const signingKey = await getSigningKey(datestamp, service);
+  const signingKey = await getSigningKeyForRegion(datestamp, service, region);
   const signature = Array.from(await hmacSha256(signingKey, stringToSign)).map(x => x.toString(16).padStart(2, '0')).join('');
 
   return {
@@ -54,14 +54,15 @@ async function signAWSRequest(method, host, path, bodyStr, service) {
   };
 }
 
-// Chime API呼び出し
-// ★ Chime SDK Meetings API はグローバルエンドポイント（us-east-1）を使う
-const CHIME_HOST = 'chime.us-east-1.amazonaws.com';
+// Chime SDK Meetings API はグローバルエンドポイント（us-east-1）固定
+// ★ 署名リージョンも us-east-1 に固定しないと 403 "Credential should be scoped to a valid region" になる
+const CHIME_HOST = 'meetings-chime.us-east-1.amazonaws.com';
+const CHIME_REGION = 'us-east-1';
 const CHIME_SERVICE = 'chime';
 
 async function chimeRequest(method, path, body) {
   const bodyStr = body ? JSON.stringify(body) : '';
-  const headers = await signAWSRequest(method, CHIME_HOST, path, bodyStr, CHIME_SERVICE);
+  const headers = await signAWSRequest(method, CHIME_HOST, path, bodyStr, CHIME_SERVICE, CHIME_REGION);
   
   console.log(`[Chime] ${method} https://${CHIME_HOST}${path}`);
   
@@ -125,7 +126,7 @@ Deno.serve(async (req) => {
       console.log('[Chime] Creating new meeting...');
       const meetingRes = await chimeRequest('POST', '/meetings', {
         ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
-        MediaRegion: AWS_REGION,
+        MediaRegion: CHIME_REGION,
         ExternalMeetingId: `livestream-${streamId}`,
       });
       meetingData = meetingRes.Meeting;
