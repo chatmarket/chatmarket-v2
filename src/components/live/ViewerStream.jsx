@@ -8,9 +8,10 @@ const QUALITY_OPTIONS = [
   { label: "FHD", value: "1080p", minPrice: 150, color: "text-yellow-300", badgeColor: "bg-yellow-500", desc: "1080p / フルHD" },
 ];
 
+// デフォルトは常に720p（SD）に強制 — 確実に映ることを最優先
 function getDefaultQuality(price) {
-  const available = QUALITY_OPTIONS.filter(q => price >= q.minPrice);
-  return available[available.length - 1]?.value ?? "480p";
+  if (price >= 55) return "720p";
+  return "480p";
 }
 
 function getUpsellMessage(price) {
@@ -32,6 +33,8 @@ export default function ViewerStream({ streamId, stream }) {
   const [connQuality, setConnQuality]   = useState(null);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [status, setStatus]             = useState("初期化待機中...");
+  const [retryKey, setRetryKey]         = useState(0); // 自動リフレッシュ用
+  const videoTimeoutRef                 = useRef(null);
 
   const streamPrice      = stream?.price || 0;
   const availableQualities = QUALITY_OPTIONS.filter(q => streamPrice >= q.minPrice);
@@ -44,6 +47,21 @@ export default function ViewerStream({ streamId, stream }) {
 
   const isWebRTC   = stream?.stream_type === "webrtc";
   const playbackUrl = stream?.ivs_playback_url || stream?.vimeo_url;
+
+  // ─── 10秒タイムアウト → 自動リセット ──────────────────────────────
+  useEffect(() => {
+    if (!isWebRTC || ready) return;
+    videoTimeoutRef.current = setTimeout(() => {
+      if (!ready && isMountedRef.current) {
+        console.warn('[ViewerStream] ⏱ 10秒タイムアウト → 接続リセット');
+        setStatus("タイムアウト - 再接続中...");
+        try { sessionRef.current?.audioVideo?.stop(); } catch (e) {}
+        sessionRef.current = null;
+        setRetryKey(k => k + 1);
+      }
+    }, 10000);
+    return () => clearTimeout(videoTimeoutRef.current);
+  }, [isWebRTC, ready, retryKey]);
 
   // ─── Chime WebRTC 視聴者接続 ───────────────────────────────────────
   useEffect(() => {
@@ -171,8 +189,7 @@ export default function ViewerStream({ streamId, stream }) {
       }
     };
 
-    // stream が live になっているか否かに関わらず即時接続を試みる
-    // （chime_meeting_id がなくてもバックエンドが作成してくれる）
+    // chime_meeting_id の存在を待たず即時接続（バックエンドが作成してくれる）
     initChime();
 
     return () => {
@@ -183,7 +200,7 @@ export default function ViewerStream({ streamId, stream }) {
       } catch (e) {}
       sessionRef.current = null;
     };
-  }, [isWebRTC, streamId]); // chime_meeting_id の存在を待たない
+  }, [isWebRTC, streamId, retryKey]); // retryKey が変わると再接続
 
   // ─── IVS プレイヤー（WebRTC でない場合）────────────────────────────
   useEffect(() => {
