@@ -25,6 +25,8 @@ export default function LiveView() {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
+  // ★ チケット確認が完了したかどうか（確認前は映像を一切起動させない）
+  const [ticketChecked, setTicketChecked] = useState(false);
   const [previewSeconds, setPreviewSeconds] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const [activeTips, setActiveTips] = useState([]);
@@ -143,12 +145,21 @@ export default function LiveView() {
     return () => clearInterval(timer);
   }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
+  // ★ チケット確認ロジック（stream確定 & user確定後に1回だけ走る）
+  // 無料配信 → 即 hasPurchased=true
+  // 有料配信 → DB照合後に結果セット
+  // いずれの場合も ticketChecked=true にして映像接続を解禁
   useEffect(() => {
-    if (!user || !stream) return;
+    if (!stream) return;
+    // 無料配信はユーザー未ログインでも即解禁
     if (!stream.price || stream.price === 0) {
       setHasPurchased(true);
+      setTicketChecked(true);
       return;
     }
+    // 有料配信: ユーザー情報が揃うまで待つ
+    if (!user) return;
+
     base44.entities.Purchase.filter({
       item_type: "livestream",
       item_id: id,
@@ -156,6 +167,11 @@ export default function LiveView() {
       status: "completed",
     }).then((purchases) => {
       if (purchases.length > 0) setHasPurchased(true);
+      // チェック完了（購入有無に関わらず）
+      setTicketChecked(true);
+    }).catch(() => {
+      // エラーでもチェック済みにして課金画面を出す
+      setTicketChecked(true);
     });
   }, [user, stream, id]);
 
@@ -259,7 +275,8 @@ export default function LiveView() {
 
   const isPaid = stream.price > 0;
   const needsPayment = isPaid && !hasPurchased;
-  const inPreview = needsPayment && previewSeconds < 30 && !showPaywall;
+  // プレビュー30秒は無料配信のみ（有料でチケット未確認中はローディング表示）
+  const inPreview = needsPayment && previewSeconds < 30 && !showPaywall && ticketChecked;
 
   return (
     <div className="w-full min-h-screen bg-background">
@@ -274,6 +291,14 @@ export default function LiveView() {
           <div ref={playerContainerRef} className="relative bg-black rounded-xl overflow-hidden aspect-video"
             style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
           >
+            {/* ★ チケット確認中はローディング表示（映像接続ロジック一切起動しない） */}
+            {!ticketChecked && (
+              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black gap-4">
+                <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <p className="text-white/70 text-sm font-medium">チケット確認中...</p>
+              </div>
+            )}
+
             {showPaywall && !hasPurchased ? (
               <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
                 <div className="text-center space-y-2">
@@ -307,7 +332,7 @@ export default function LiveView() {
                 今すぐ購入して視聴する
               </Button>
             </div>
-            ) : stream.status === "live" && stream.stream_type === "vimeo" && stream.vimeo_url ? (
+            ) : stream.status === "live" && ticketChecked && !needsPayment && stream.stream_type === "vimeo" && stream.vimeo_url ? (
               <iframe
                 src={stream.vimeo_url}
                 className="w-full h-full"
@@ -316,7 +341,7 @@ export default function LiveView() {
                 allowFullScreen
                 title={stream.title}
               />
-            ) : stream.status === "live" && stream.stream_type === "youtube" && stream.youtube_url ? (
+            ) : stream.status === "live" && ticketChecked && !needsPayment && stream.stream_type === "youtube" && stream.youtube_url ? (
               <iframe
                 src={stream.youtube_url}
                 className="w-full h-full"
@@ -325,8 +350,12 @@ export default function LiveView() {
                 allowFullScreen
                 title={stream.title}
               />
-            ) : stream.status === "live" ? (
+            ) : stream.status === "live" && ticketChecked && !needsPayment ? (
+              /* ★ チケット確認済み & 決済完了後のみ ViewerStream をマウント */
               <ViewerStream streamId={id} stream={stream} />
+            ) : stream.status === "live" && !ticketChecked ? (
+              /* チケット確認中は空のまま（上の z-40 ローディングが覆う） */
+              <div className="w-full h-full bg-black" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-secondary">
                 <p className="text-muted-foreground">
