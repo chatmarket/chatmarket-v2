@@ -352,6 +352,17 @@ function LiveViewInner() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      {/* ★★★ BUILD証拠バナー [BUILD: 2026-04-24 REVENGE] ★★★ */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 999999,
+        background: "#ff0000", color: "#ffffff",
+        fontFamily: "monospace", fontWeight: "900", fontSize: "13px",
+        textAlign: "center", padding: "6px 8px",
+        letterSpacing: "0.05em", pointerEvents: "none",
+        boxShadow: "0 0 20px rgba(255,0,0,0.8)"
+      }}>
+        [BUILD: 2026-04-24 REVENGE] — SW停止済み / ゲスト視聴修正済み
+      </div>
       <MetaHelmet
         title={`🔴 ${stream.title} | ChatMarket LIVE`}
         description={stream.description || `${stream.channel_name}がライブ配信中！ChatMarketで今すぐ視聴。`}
