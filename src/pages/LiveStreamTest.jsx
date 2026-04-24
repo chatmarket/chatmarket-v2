@@ -14,6 +14,7 @@ export default function LiveStreamTest() {
   const [attendee, setAttendee] = useState(null);
   const [loading, setLoading] = useState(false);
   const [streamStatus, setStreamStatus] = useState("scheduled"); // scheduled | live | ended
+  const [errorDetail, setErrorDetail] = useState(null); // 詳細エラー表示用
 
   useEffect(() => {
     base44.auth.me().then(setUser);
@@ -32,17 +33,26 @@ export default function LiveStreamTest() {
   const handleCreateMeeting = async () => {
     if (!streamId) { toast.error("Stream ID required"); return; }
     setLoading(true);
+    setErrorDetail(null);
     try {
       const res = await base44.functions.invoke('createLiveStreamChimeMeeting', {
         streamId,
         role,
       });
-      setMeeting(res.Meeting);
-      setAttendee(res.Attendee);
+      // base44 SDK は {data} にラップする場合がある
+      const data = res?.data || res;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+      setMeeting(data.Meeting);
+      setAttendee(data.Attendee);
       toast.success(`✅ ${role === 'broadcaster' ? '配信者' : '視聴者'}として入室完了`);
-      console.log(`[Test] Meeting created:`, res);
+      console.log(`[Test] Meeting created:`, data);
     } catch (err) {
-      toast.error(`エラー: ${err.message}`);
+      const msg = err?.response?.data?.error || err?.message || String(err);
+      setErrorDetail(msg);
+      toast.error(`エラー: ${msg}`);
+      console.error('[Test] Meeting creation failed:', msg, err);
     } finally {
       setLoading(false);
     }
@@ -181,6 +191,14 @@ export default function LiveStreamTest() {
             {loading ? "作成中..." : "Meeting作成 + Attendee登録"}
           </Button>
         </div>
+
+        {/* エラー詳細表示 */}
+        {errorDetail && (
+          <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 space-y-1 text-sm">
+            <p className="font-bold text-red-400">❌ エラー詳細:</p>
+            <pre className="text-red-300 text-xs whitespace-pre-wrap break-all">{errorDetail}</pre>
+          </div>
+        )}
 
         {/* Meeting情報表示 */}
         {meeting && (

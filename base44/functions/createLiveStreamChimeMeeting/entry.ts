@@ -4,96 +4,155 @@ const AWS_REGION = Deno.env.get("AWS_REGION") || "ap-northeast-1";
 const AWS_ACCESS_KEY = Deno.env.get("AWS_ACCESS_KEY_ID");
 const AWS_SECRET_KEY = Deno.env.get("AWS_SECRET_ACCESS_KEY");
 
-// SHA256 and HMAC signing for AWS
-function sha256(message) {
+// SHA256ハッシュ（16進文字列を返す）
+async function sha256Hex(message) {
   const encoder = new TextEncoder();
-  return crypto.subtle.digest('SHA-256', encoder.encode(message));
+  const data = encoder.encode(message);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
-async function hmacSha256(key, message) {
+// HMAC-SHA256（バイト列を返す）
+async function hmacSha256(keyBytes, message) {
   const encoder = new TextEncoder();
-  const keyData = encoder.encode(key);
-  const messageData = encoder.encode(message);
-  return crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), messageData);
+  const key = await crypto.subtle.importKey(
+    'raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  return new Uint8Array(sig);
 }
 
-async function signAWSRequest(method, endpoint, path, payload) {
-  const algorithm = 'AWS4-HMAC-SHA256';
+// 署名キー生成
+async function getSigningKey(dateStamp, serviceName) {
+  const enc = new TextEncoder();
+  const kDate   = await hmacSha256(enc.encode(`AWS4${AWS_SECRET_KEY}`), dateStamp);
+  const kRegion = await hmacSha256(kDate, AWS_REGION);
+  const kService = await hmacSha256(kRegion, serviceName);
+  const kSigning = await hmacSha256(kService, 'aws4_request');
+  return kSigning;
+}
+
+// AWS SigV4署名付きヘッダー生成
+async function signAWSRequest(method, host, path, bodyStr, service) {
   const now = new Date();
   const amzdate = now.toISOString().replace(/[:-]/g, '').replace(/\.\d+Z$/, 'Z');
   const datestamp = amzdate.slice(0, 8);
-  const credentialScope = `${datestamp}/${AWS_REGION}/chime/aws4_request`;
-  const canonicalRequest = `${method}\n${path}\n\nhost:${endpoint}\nx-amz-date:${amzdate}\n\nhost;x-amz-date\n${payload ? (await sha256(payload)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('')) : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}`;
-  const stringToSign = `${algorithm}\n${amzdate}\n${credentialScope}\n${Array.from(new Uint8Array(await sha256(canonicalRequest))).map(x => x.toString(16).padStart(2, '0')).join('')}`;
-  const signature = Array.from(new Uint8Array(await hmacSha256(`AWS4${AWS_SECRET_KEY}`, stringToSign))).map(x => x.toString(16).padStart(2, '0')).join('');
+
+  const payloadHash = await sha256Hex(bodyStr || '');
+  const canonicalHeaders = `host:${host}\nx-amz-date:${amzdate}\n`;
+  const signedHeaders = 'host;x-amz-date';
+  const canonicalRequest = [method, path, '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const credentialScope = `${datestamp}/${AWS_REGION}/${service}/aws4_request`;
+  const stringToSign = ['AWS4-HMAC-SHA256', amzdate, credentialScope, await sha256Hex(canonicalRequest)].join('\n');
+  const signingKey = await getSigningKey(datestamp, service);
+  const signature = Array.from(await hmacSha256(signingKey, stringToSign)).map(x => x.toString(16).padStart(2, '0')).join('');
+
   return {
-    'Authorization': `${algorithm} Credential=${AWS_ACCESS_KEY}/${credentialScope}, SignedHeaders=host;x-amz-date, Signature=${signature}`,
+    'Authorization': `AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
     'x-amz-date': amzdate,
+    'Content-Type': 'application/json',
   };
 }
 
-async function chimeRequest(method, endpoint, path, body) {
-  const headers = {
-    'Content-Type': 'application/x-amz-json-1.1',
-    ...(await signAWSRequest(method, endpoint, path, body))
-  };
-  const response = await fetch(`https://${endpoint}${path}`, {
+// Chime API呼び出し
+// ★ Chime SDK Meetings API はグローバルエンドポイント（us-east-1）を使う
+const CHIME_HOST = 'chime.us-east-1.amazonaws.com';
+const CHIME_SERVICE = 'chime';
+
+async function chimeRequest(method, path, body) {
+  const bodyStr = body ? JSON.stringify(body) : '';
+  const headers = await signAWSRequest(method, CHIME_HOST, path, bodyStr, CHIME_SERVICE);
+  
+  console.log(`[Chime] ${method} https://${CHIME_HOST}${path}`);
+  
+  const response = await fetch(`https://${CHIME_HOST}${path}`, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: bodyStr || undefined,
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(`Chime API error: ${data.Message || response.statusText}`);
+
+  const responseText = await response.text();
+  console.log(`[Chime] Response ${response.status}: ${responseText.slice(0, 500)}`);
+
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    throw new Error(`Chime non-JSON response (${response.status}): ${responseText.slice(0, 200)}`);
   }
+
+  if (!response.ok) {
+    throw new Error(`Chime ${response.status}: ${data.Message || data.message || data.Code || responseText.slice(0, 200)}`);
+  }
+
   return data;
 }
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
-  
+
   try {
+    // 認証情報チェック
+    if (!AWS_ACCESS_KEY || !AWS_SECRET_KEY) {
+      return new Response(JSON.stringify({ error: 'AWS credentials not configured (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY)' }), { status: 500 });
+    }
+
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
-    const { streamId, role } = await req.json();
+    const body = await req.json();
+    const { streamId, role } = body;
+
     if (!streamId || !['broadcaster', 'viewer'].includes(role)) {
-      return new Response(JSON.stringify({ error: 'Invalid streamId or role' }), { status: 400 });
+      return new Response(JSON.stringify({ error: `Invalid params: streamId=${streamId}, role=${role}` }), { status: 400 });
     }
 
     // ライブストリーム情報取得
-    const streams = await base44.entities.LiveStream.filter({ id: streamId });
-    if (!streams[0]) return new Response(JSON.stringify({ error: 'Stream not found' }), { status: 404 });
+    const streams = await base44.asServiceRole.entities.LiveStream.filter({ id: streamId });
+    if (!streams[0]) return new Response(JSON.stringify({ error: `Stream not found: ${streamId}` }), { status: 404 });
     const stream = streams[0];
 
-    // 既存MeetingがあればUUID取得、なければ新規作成
+    // Meetingを作成または既存のものを再利用
     let meetingId = stream.chime_meeting_id;
+    let meetingData = null;
+
     if (!meetingId) {
-      const meetingRes = await chimeRequest('POST', 'chime.ap-northeast-1.amazonaws.com', '/meetings', {
-        ClientRequestToken: `stream-${streamId}-${Date.now()}`,
+      console.log('[Chime] Creating new meeting...');
+      const meetingRes = await chimeRequest('POST', '/meetings', {
+        ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
+        MediaRegion: AWS_REGION,
+        ExternalMeetingId: `livestream-${streamId}`,
       });
-      meetingId = meetingRes.Meeting.MeetingId;
-      await base44.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
+      meetingData = meetingRes.Meeting;
+      meetingId = meetingData.MeetingId;
+      console.log(`[Chime] Meeting created: ${meetingId}`);
+      await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
+    } else {
+      console.log(`[Chime] Reusing existing meeting: ${meetingId}`);
+      meetingData = { MeetingId: meetingId };
     }
 
-    // Attendee登録（ロール付き）★視聴者は受信専用に制限
-    const attendeeRes = await chimeRequest('POST', 'chime.ap-northeast-1.amazonaws.com', `/meetings/${meetingId}/attendees`, {
+    // Attendee登録
+    const capabilities = role === 'viewer'
+      ? { Audio: 'Receive', Video: 'Receive', Content: 'Receive' }
+      : { Audio: 'SendReceive', Video: 'SendReceive', Content: 'SendReceive' };
+
+    const attendeeRes = await chimeRequest('POST', `/meetings/${meetingId}/attendees`, {
       ExternalUserId: `${role}-${user.email}-${Date.now()}`,
-      Capabilities: role === 'viewer' 
-        ? { Audio: 'None', Video: 'None' }  // 受信専用（マイク・カメラ不可）
-        : { Audio: 'SendReceive', Video: 'SendReceive' }  // 配信者は双方向
+      Capabilities: capabilities,
     });
 
-    console.log(`[Chime] Attendee created: role=${role}, capabilities=${role === 'viewer' ? 'Receiver-Only' : 'Broadcaster'}, attendeeId=${attendeeRes.Attendee.AttendeeId}`);
+    console.log(`[Chime] Attendee created: role=${role}, attendeeId=${attendeeRes.Attendee.AttendeeId}`);
 
     return new Response(JSON.stringify({
-      Meeting: { MeetingId: meetingId },
+      Meeting: meetingData,
       Attendee: attendeeRes.Attendee,
-      role: role,
+      role,
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
   } catch (error) {
-    console.error('[createLiveStreamChimeMeeting] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('[createLiveStreamChimeMeeting] Error:', error.message);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 });
