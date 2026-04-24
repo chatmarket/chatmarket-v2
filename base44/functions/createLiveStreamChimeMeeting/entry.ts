@@ -134,8 +134,24 @@ Deno.serve(async (req) => {
       console.log(`[Chime] Meeting created: ${meetingId}`);
       await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
     } else {
-      console.log(`[Chime] Reusing existing meeting: ${meetingId}`);
-      meetingData = { MeetingId: meetingId };
+      // 既存Meetingのフル情報（MediaPlacement等）を取得 — これがないとSDKが接続できない
+      console.log(`[Chime] Getting existing meeting info: ${meetingId}`);
+      try {
+        const getMeetingRes = await chimeRequest('GET', `/meetings/${meetingId}`, null);
+        meetingData = getMeetingRes.Meeting;
+        console.log(`[Chime] Got meeting data: ${meetingId}`);
+      } catch (err) {
+        // Meetingが期限切れの場合は新規作成
+        console.warn(`[Chime] Meeting not found (expired?), creating new: ${err.message}`);
+        const meetingRes = await chimeRequest('POST', '/meetings', {
+          ClientRequestToken: `livestream-${streamId}-${Date.now()}`,
+          MediaRegion: CHIME_REGION,
+          ExternalMeetingId: `livestream-${streamId}`,
+        });
+        meetingData = meetingRes.Meeting;
+        meetingId = meetingData.MeetingId;
+        await base44.asServiceRole.entities.LiveStream.update(streamId, { chime_meeting_id: meetingId });
+      }
     }
 
     // Attendee登録
