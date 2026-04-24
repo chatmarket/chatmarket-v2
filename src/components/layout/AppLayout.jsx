@@ -315,8 +315,8 @@ export default function AppLayout() {
       {/* Push Notification Prompt */}
       <PushNotificationPrompt />
 
-      {/* グローバル着信・承認通知（全ログインユーザー対象） */}
-      {user && <GlobalCallNotifier user={user} />}
+      {/* グローバル着信・承認通知（ライブ視聴ページでは完全停止） */}
+      {user && !location.pathname.startsWith("/live/") && <GlobalCallNotifier user={user} />}
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center justify-around h-16 px-2">

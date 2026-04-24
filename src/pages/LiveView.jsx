@@ -145,32 +145,37 @@ export default function LiveView() {
     return () => clearInterval(timer);
   }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
-  // ★ チケット確認ロジック（stream確定 & user確定後に1回だけ走る）
-  // 無料配信 → 即 hasPurchased=true
-  // 有料配信 → DB照合後に結果セット
-  // いずれの場合も ticketChecked=true にして映像接続を解禁
+  // ★ チケット確認ロジック（stream確定後に1回だけ走る）
   useEffect(() => {
     if (!stream) return;
-    // 無料配信はユーザー未ログインでも即解禁
+
+    // 無料配信 → 即解禁
     if (!stream.price || stream.price === 0) {
+      console.log("[LiveView] ✅ 無料配信 — チケット確認スキップ、即解禁");
       setHasPurchased(true);
       setTicketChecked(true);
       return;
     }
-    // 有料配信: ユーザー情報が揃うまで待つ
-    if (!user) return;
 
+    // 有料配信でログイン未済 → チェック完了（課金モーダル表示へ）
+    if (!user) {
+      console.log("[LiveView] 💰 有料配信・未ログイン — チケット確認完了（未購入扱い）");
+      setTicketChecked(true);
+      return;
+    }
+
+    console.log("[LiveView] 🔍 チケット確認リクエスト送信 — item_id:", id, "buyer:", user.email);
     base44.entities.Purchase.filter({
       item_type: "livestream",
       item_id: id,
       buyer_email: user.email,
       status: "completed",
     }).then((purchases) => {
+      console.log("[LiveView] 🎟️ チケット確認結果:", purchases.length, "件", purchases.length > 0 ? "✅ 購入済み" : "❌ 未購入");
       if (purchases.length > 0) setHasPurchased(true);
-      // チェック完了（購入有無に関わらず）
       setTicketChecked(true);
-    }).catch(() => {
-      // エラーでもチェック済みにして課金画面を出す
+    }).catch((err) => {
+      console.error("[LiveView] チケット確認エラー:", err.message, "→ 未購入扱いで続行");
       setTicketChecked(true);
     });
   }, [user, stream, id]);
