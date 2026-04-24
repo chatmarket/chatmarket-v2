@@ -167,18 +167,42 @@ Deno.serve(async (req) => {
        }
      }
 
+    // ★ 重複Attendeeの強制削除（古いセッション洗浄）
+    const userId = user?.email || `guest-${Date.now()}`;
+    const externalUserId = `${role}-${userId}`;
+    
+    console.log(`[Chime] 🧹 重複Attendee検索開始: userId=${userId}, role=${role}`);
+    try {
+      // Meeting内の全Attendeeを取得
+      const attendeesRes = await chimeRequest('GET', `/meetings/${meetingId}/attendees`, null);
+      const existingAttendees = attendeesRes.Attendees || [];
+      
+      for (const attendee of existingAttendees) {
+        if (attendee.ExternalUserId === externalUserId) {
+          console.log(`[Chime] 🗑️ 古いAttendee検出 ID=${attendee.AttendeeId}, 削除中...`);
+          try {
+            await chimeRequest('DELETE', `/meetings/${meetingId}/attendees/${attendee.AttendeeId}`, null);
+            console.log(`[Chime] ✅ 古いAttendee削除完了: ${attendee.AttendeeId}`);
+          } catch (delErr) {
+            console.warn(`[Chime] ⚠️ 削除失敗: ${delErr.message}`);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[Chime] ⚠️ 重複検索失敗（続行）: ${err.message}`);
+    }
+
     // Attendee登録
     const capabilities = role === 'viewer'
       ? { Audio: 'Receive', Video: 'Receive', Content: 'Receive' }
       : { Audio: 'SendReceive', Video: 'SendReceive', Content: 'SendReceive' };
 
-    const userId = user?.email || `guest-${Date.now()}`;
     const attendeeRes = await chimeRequest('POST', `/meetings/${meetingId}/attendees`, {
-      ExternalUserId: `${role}-${userId}`,
+      ExternalUserId: externalUserId,
       Capabilities: capabilities,
     });
 
-    console.log(`[Chime] Attendee created: role=${role}, attendeeId=${attendeeRes.Attendee.AttendeeId}`);
+    console.log(`[Chime] ✅ 新規Attendee作成完了: role=${role}, attendeeId=${attendeeRes.Attendee.AttendeeId}`);
 
     return new Response(JSON.stringify({
       Meeting: meetingData,

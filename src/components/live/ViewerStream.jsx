@@ -17,12 +17,14 @@ export default function ViewerStream({ streamId, stream }) {
   const initCalledRef = useRef(false);
   const bindTimerRef  = useRef(null);
   const currentTileRef = useRef(null);
+  const deviceConflictRef = useRef(false);
 
   const [ready, setReady]       = useState(false);
   const [muted, setMuted]       = useState(false);
   const [phase, setPhase]       = useState("チケット確認済み ✅ — Meeting入室中...");
   const [retryKey, setRetryKey] = useState(0);
   const [bindAttempt, setBindAttempt] = useState(0);
+  const [deviceConflict, setDeviceConflict] = useState(false);
 
   const isWebRTC    = stream?.stream_type === "webrtc" || !stream?.ivs_playback_url;
   const playbackUrl = stream?.ivs_playback_url;
@@ -153,17 +155,21 @@ export default function ViewerStream({ streamId, stream }) {
           },
           audioVideoDidStop: (sessionStatus) => {
             const code = sessionStatus?.statusCode?.();
-            console.log("[ViewerStream] stop statusCode:", code);
+            console.log("[ViewerStream] ⚠️ audioVideoDidStop statusCode:", code);
             if (isMountedRef.current) {
-              setPhase(`接続終了(${code}) → 5秒後リトライ`);
+              setPhase(`接続終了(${code})`);
               setReady(false);
-              retryTimerRef.current = setTimeout(() => {
-                if (isMountedRef.current) {
-                  initCalledRef.current = false;
-                  setRetryKey(k => k + 1);
-                }
-              }, 5000);
             }
+          },
+          audioJoinedFromAnotherDevice: () => {
+            console.error("[ViewerStream] 🚨🚨🚨 AudioJoinedFromAnotherDevice: 別デバイスで接続検出！");
+            deviceConflictRef.current = true;
+            setDeviceConflict(true);
+            setPhase("🚨 エラー: 別のデバイスで既に接続中です。すべてのデバイスを閉じてください。");
+            setReady(false);
+            // 無限ループ防止：再接続禁止
+            clearTimeout(retryTimerRef.current);
+            clearInterval(bindTimerRef.current);
           },
         });
 
@@ -212,8 +218,23 @@ export default function ViewerStream({ streamId, stream }) {
       isMountedRef.current = false;
       clearTimeout(retryTimerRef.current);
       clearInterval(bindTimerRef.current);
-      try { sessionRef.current?.audioVideo?.stop(); } catch (_) {}
-      sessionRef.current = null;
+      
+      // ★ クライアント完全破棄：セッション・タイル完全削除
+      try {
+        if (sessionRef.current?.audioVideo) {
+          console.log("[ViewerStream] 🧹 audioVideo.stop() 実行");
+          sessionRef.current.audioVideo.stop();
+        }
+      } catch (_) {}
+      
+      // メモリから完全削除
+      if (sessionRef.current) {
+        console.log("[ViewerStream] 🗑️ meetingSession をメモリから完全削除");
+        sessionRef.current = null;
+      }
+      
+      currentTileRef.current = null;
+      
       // 音声エレメント後片付け
       if (audioElRef.current) {
         audioElRef.current.remove();
@@ -307,12 +328,14 @@ export default function ViewerStream({ streamId, stream }) {
         </button>
       )}
 
-      {/* ★ デバッグステータス（常時表示・詳細） */}
-      <div className="absolute top-2 left-2 max-w-[85%] bg-black/90 border-2 border-cyan-400 rounded px-2.5 py-1.5 text-[10px] font-mono text-cyan-300 pointer-events-none z-50 leading-relaxed">
-        <div>{phase}</div>
-        <div className="text-[9px] text-cyan-500 mt-0.5">
-          tileId: {currentTileRef.current || "pending"} | bind試行: {bindAttempt}/10
-        </div>
+      {/* ★ デバッグステータス＆デバイスコンフリクト警告 */}
+      <div className={`absolute top-2 left-2 max-w-[85%] rounded px-2.5 py-1.5 text-[10px] font-mono pointer-events-none z-50 leading-relaxed ${deviceConflict ? 'bg-red-900/90 border-2 border-red-500' : 'bg-black/90 border-2 border-cyan-400'}`}>
+        <div className={deviceConflict ? 'text-red-300' : 'text-cyan-300'}>{phase}</div>
+        {!deviceConflict && (
+          <div className="text-[9px] text-cyan-500 mt-0.5">
+            tileId: {currentTileRef.current || "pending"} | bind試行: {bindAttempt}/10
+          </div>
+        )}
       </div>
     </div>
   );
