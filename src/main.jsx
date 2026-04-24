@@ -52,8 +52,25 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// ★ SW強制クリア＆再登録停止（キャッシュが修正を妨害しないよう）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const reg of registrations) {
+      reg.unregister();
+      console.log('[SW] Force unregistered:', reg.scope);
+    }
+  });
+  if ('caches' in window) {
+    caches.keys().then((names) => {
+      for (const name of names) {
+        caches.delete(name);
+        console.log('[SW] Cache cleared:', name);
+      }
+    });
+  }
+}
 // Service Worker登録（PWAプッシュ通知用）
-registerServiceWorker();
+// registerServiceWorker(); // ★ 一時停止中（キャッシュ干渉対策）
 
 // ローディング画面を消す
 const hideLoader = () => {
