@@ -48,7 +48,8 @@ class LiveViewErrorBoundary extends React.Component {
 }
 
 function LiveViewInner() {
-  const { id } = useParams();
+  const { streamId, id: idParam } = useParams();
+  const id = streamId || idParam; // ルートは /live/:streamId
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [ticketChecked, setTicketChecked] = useState(false);
