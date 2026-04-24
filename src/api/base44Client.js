@@ -22,9 +22,10 @@ if (typeof window !== 'undefined') {
     }
     const res = await originalFetch.apply(this, args);
     if (res.status === 429) {
-      blockedUntil = Date.now() + 10000; // 10秒バックオフ
+      blockedUntil = Date.now() + 10000; // 10秒バックオフ（429のみ、403は対象外）
       console.error('[429_BACKOFF] 429 detected! Blocking all requests for 10s');
     }
+    // 403はバックオフしない（権限なし＝未ログインとして正常処理）
     return res;
   };
 }

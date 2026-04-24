@@ -53,10 +53,23 @@ export default function LiveView() {
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then((u) => {
+      if (!isAuth) {
+        addLog("👤 未ログイン — ゲストとして処理");
+        return;
+      }
+      base44.auth.me().then((u) => {
+        addLog(`👤 ログイン確認: ${u.email}`);
         setUser(u);
         base44.entities.YellCoinWallet.filter({ user_email: u.email }).then((r) => setWallet(r[0] || null));
-      }).catch(() => {});
+      }).catch((err) => {
+        // 403含む全エラーを「未ログインゲスト」として扱い処理続行
+        addLog(`⚠️ auth.me エラー(${err?.response?.status || err?.status || '?'}) → ゲスト扱いで続行`);
+        console.warn("[LiveView] auth.me failed, treating as guest:", err?.message);
+        // userはnullのまま → ticketCheckがゲスト用フローへ
+      });
+    }).catch((err) => {
+      addLog(`⚠️ isAuthenticated エラー → ゲスト扱いで続行`);
+      console.warn("[LiveView] isAuthenticated failed, treating as guest:", err?.message);
     });
   }, []);
 
@@ -480,11 +493,14 @@ export default function LiveView() {
               </div>
             )}
 
-            {/* ★ 画面ログパネル（デバッグ用・常時表示） */}
+            {/* ★ 画面ログパネル（デバッグ用・z-index最大・常時最前面） */}
             {debugLogs.length > 0 && (
-              <div className="absolute bottom-14 left-2 right-2 max-h-28 overflow-y-auto bg-black/85 border border-cyan-500/40 rounded-lg p-2 pointer-events-none z-30">
+              <div
+                className="absolute bottom-14 left-2 right-2 max-h-32 overflow-y-auto rounded-lg p-2 pointer-events-none"
+                style={{ zIndex: 9999, background: "rgba(0,0,0,0.92)", border: "1px solid rgba(0,255,220,0.5)" }}
+              >
                 {debugLogs.map((log, i) => (
-                  <p key={i} className="text-[10px] font-mono text-cyan-300 leading-tight">{log}</p>
+                  <p key={i} style={{ fontSize: "11px", fontFamily: "monospace", color: "#00ffd0", lineHeight: "1.4", margin: 0 }}>{log}</p>
                 ))}
               </div>
             )}
