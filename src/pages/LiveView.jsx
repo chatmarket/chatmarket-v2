@@ -195,29 +195,8 @@ function LiveViewInner() {
     return () => clearInterval(timer);
   }, [stream?.status, stream?.is_radio_mode, hasPurchased, id]);
 
-  // ★ ローディング秒数カウンター＋1秒タイムアウト→即購入モーダル
-  useEffect(() => {
-    if (ticketChecked) {
-      clearInterval(loadingTimerRef.current);
-      setLoadingSeconds(0);
-      return;
-    }
-    loadingTimerRef.current = setInterval(() => {
-      setLoadingSeconds(s => {
-        const next = s + 1;
-        if (next >= 1) {
-          // 1秒タイムアウト → チケット確認を強制終了、未購入扱いで購入モーダル表示
-          addLog("🚨 Status: Forced Start — 1秒タイムアウト → 購入モーダル強制表示");
-          setTicketChecked(true);
-          setHasPurchased(false); // 未購入扱い → ペイウォール即表示
-          setShowPaywall(true);
-          clearInterval(loadingTimerRef.current);
-        }
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(loadingTimerRef.current);
-  }, [ticketChecked]);
+  // ローディングタイマー（全開放モードでは不要なため無効化）
+  // useEffect(() => { ... }, [ticketChecked]);
 
   // ★ チケット確認ロジック【全開放テストモード: チケット不問で全員視聴可】
   const runTicketCheck = (currentStream, currentUser) => {
@@ -406,12 +385,7 @@ function LiveViewInner() {
               </div>
             )}
 
-            {/* ★ RAW MODE：判定バイパスモード表示 */}
-            <div className="absolute top-4 left-4 right-4 z-50 bg-black/80 border-2 border-red-500 rounded-lg px-6 py-4 backdrop-blur-sm text-center">
-              <p className="text-4xl font-black text-red-500 animate-pulse">🔴 RAW MODE: FORCING VIDEO</p>
-              <p className="text-sm text-red-300 mt-2">すべての判定をバイパス → 映像直結モード（課金判定無視）</p>
-              <p className="text-xs text-muted-foreground mt-1">Chimeセッション強制初期化中...</p>
-            </div>
+            {/* RAW MODEバナー削除済み */}
 
 
 
