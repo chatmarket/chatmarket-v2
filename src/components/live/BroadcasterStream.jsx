@@ -183,12 +183,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </div>
           )}
 
-          {/* ★ Chime送信エンジン（配信中かつlocalStream取得済みの場合にのみマウント） */}
-          {isLive && liveLocalStream && (
-            <ChimeBroadcasterEngine
-              streamId={streamId}
-              localStream={liveLocalStream}
-            />
+          {/* ★ Chime送信エンジン（配信開始と同時にマウント、内部でgetUserMedia再取得） */}
+          {isLive && (
+            <ChimeBroadcasterEngine streamId={streamId} />
           )}
 
           {/* ── カメラ映像（確認中 or 配信中） ── */}
