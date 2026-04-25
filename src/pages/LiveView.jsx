@@ -323,9 +323,7 @@ function LiveViewInner() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-0 xl:gap-4 h-screen">
         {/* Stream Player */}
         <div className="space-y-3 sm:space-y-4 xl:col-span-3 flex flex-col overflow-y-auto p-3 sm:p-4 xl:p-6">
-          <div ref={playerContainerRef} className="relative bg-black rounded-xl overflow-hidden aspect-video"
-            style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
-          >
+          <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, background: "red", borderRadius: 0 }}>
             {/* ★ ローディング画面削除 — 即ペイウォールor映像へ */}
 
             {showPaywall && !hasPurchased ? (
@@ -507,24 +505,13 @@ function LiveViewInner() {
             </div>
           )}
 
-          {!needsPayment && (
+          {/* GiftPanel / TipPanel — テスト中一時非表示 */}
+          {/* {!needsPayment && (
             <div className="space-y-2">
-              <GiftPanel
-                streamId={id}
-                channelId={stream?.channel_id}
-                channelOwnerEmail={channelOwnerEmail}
-                user={user}
-                wallet={wallet}
-                onGiftSent={() => base44.entities.YellCoinWallet.filter({ user_email: user?.email }).then((r) => setWallet(r[0] || null))}
-              />
-              <TipPanel
-                streamId={id}
-                user={user}
-                wallet={wallet}
-                onTipSent={() => base44.entities.YellCoinWallet.filter({ user_email: user?.email }).then((r) => setWallet(r[0] || null))}
-              />
+              <GiftPanel ... />
+              <TipPanel ... />
             </div>
-          )}
+          )} */}
 
           <div className="space-y-1 sm:space-y-2">
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{stream.title}</h1>
