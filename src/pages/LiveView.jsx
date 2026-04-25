@@ -126,18 +126,17 @@ function LiveViewInner() {
     refetchInterval: 5000,
   });
 
-  // OBS 設定情報取得（GoLive からのセッションストレージ）
+  // OBS 設定情報取得（stream から直接取得 — 別デバイスからのアクセスに対応）
   const [ivsStreamKey, setIvsStreamKey] = useState("");
   const [ivsIngestEndpoint, setIvsIngestEndpoint] = useState("");
 
   useEffect(() => {
-    // セッションストレージから取得
-    const streamKey = sessionStorage.getItem("ivsStreamKey");
-    const ingestEndpoint = sessionStorage.getItem("ivsIngestEndpoint");
+    if (!stream) return;
     
-    if (streamKey) setIvsStreamKey(streamKey);
-    if (ingestEndpoint) setIvsIngestEndpoint(ingestEndpoint);
-  }, []);
+    // stream エンティティから IVS 情報を取得
+    if (stream.ivs_stream_key) setIvsStreamKey(stream.ivs_stream_key);
+    if (stream.ivs_ingest_endpoint) setIvsIngestEndpoint(stream.ivs_ingest_endpoint);
+  }, [stream]);
 
   const { data: activeCall } = useQuery({
     queryKey: ["active-call", stream?.channel_id],
