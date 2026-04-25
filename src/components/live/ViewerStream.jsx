@@ -30,6 +30,17 @@ export default function ViewerStream({ streamId, stream }) {
   // ★ IVS URLがあれば必ずIVSプレイヤーを使う（stream_type問わず）
   const playbackUrl = stream?.ivs_playback_url;
   const isWebRTC    = !playbackUrl || playbackUrl.trim() === ""; // IVS URLなし（空文字列含む）= Chimeモード
+  
+  // デバッグ
+  useEffect(() => {
+    console.log("[ViewerStream] 📊 stream data:", {
+      streamId,
+      status: stream?.status,
+      ivs_playback_url: stream?.ivs_playback_url,
+      stream_type: stream?.stream_type,
+      isWebRTC,
+    });
+  }, [stream, streamId]);
 
   // ─── Chime WebRTC 受信専用 ────────────────────────────────────────
   useEffect(() => {
