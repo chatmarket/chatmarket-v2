@@ -15,7 +15,7 @@ import TicketSalesAnalytics from "../components/dashboard/TicketSalesAnalytics";
 import EventNotificationPanel from "../components/dashboard/EventNotificationPanel";
 import ProgressiveRateCard from "../components/dashboard/ProgressiveRateCard";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
-import CallWaitingWidget from "../components/dashboard/CallWaitingWidget";
+import CallWaitingManager from "../components/call/CallWaitingManager";
 import IncomingMessagesWidget from "../components/dashboard/IncomingMessagesWidget";
 import SkillRankCard from "../components/dashboard/SkillRankCard";
 import ArchiveAssetCard from "../components/dashboard/ArchiveAssetCard";
@@ -153,8 +153,8 @@ export default function CreatorDashboard() {
           {/* 受信メッセージ（DM）一覧 */}
           <IncomingMessagesWidget userEmail={user?.email} />
 
-          {/* 通話待機ウィジェット（固定配置・常時表示） */}
-          <CallWaitingWidget user={user} channel={channel} />
+          {/* 通話待機管理パネル */}
+          <CallWaitingManager user={user} channel={channel} />
 
           {/* 承認済み通話の入室ボタン */}
           <AcceptedCallsList userEmail={user?.email} />

@@ -7,6 +7,7 @@ import {
   CheckCircle2, XCircle, Settings, Play, Clock, Coins,
   ChevronRight, Info, Lock, Send
 } from "lucide-react";
+import CallWaitingManager from "@/components/call/CallWaitingManager";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -631,6 +632,9 @@ export default function CallWaitingRoom() {
   // ===== 待機中画面 =====
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+      {/* 管理パネル */}
+      <CallWaitingManager user={user} channel={null} onStatusChange={(on) => { if (!on) handleStopWaiting(); }} />
+
       {/* ヘッダー */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
