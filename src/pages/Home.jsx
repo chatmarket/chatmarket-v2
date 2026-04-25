@@ -59,10 +59,9 @@ export default function Home() {
         base44.auth.me().then(async (u) => {
           setUser(u);
           // console.log("Current User:", u.email);
-          const channels = await base44.entities.Channel.list("-updated_date", 100);
+          const channels = await base44.entities.Channel.filter({ owner_email: u.email });
           if (channels[0]) {
             setMyChannel(channels[0]);
-            // console.log("My Channel ID:", channels[0].id);
           }
         }).catch((err) => console.error("[Home] Auth error:", err));
       }
