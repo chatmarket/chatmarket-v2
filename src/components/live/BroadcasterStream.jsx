@@ -140,8 +140,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   };
 
   const copyServerUrl = () => {
-    const fullUrl = ivsIngestEndpoint.includes("rtmps://") ? ivsIngestEndpoint : `rtmps://${ivsIngestEndpoint}:443/app/`;
-    navigator.clipboard.writeText(fullUrl);
+    navigator.clipboard.writeText(ivsIngestEndpoint);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
     toast.success("Server URLをコピーしました");
@@ -319,7 +318,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
                   <input
                     type="text"
                     readOnly
-                    value={ivsIngestEndpoint.includes("rtmps://") ? ivsIngestEndpoint : `rtmps://${ivsIngestEndpoint}:443/app/`}
+                    value={ivsIngestEndpoint}
                     className="flex-1 bg-zinc-950 border border-green-500/40 rounded px-2 py-1 text-[10px] text-zinc-300 font-mono"
                   />
                   <button onClick={copyServerUrl} className="shrink-0 px-2 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-[10px] font-bold transition-colors">

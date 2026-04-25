@@ -76,7 +76,7 @@ export default function GoLive() {
     const ivsData = ivsRes.data;
     setIvsStream(ivsData);
     setManualStreamKey(ivsData.streamKey);
-    setManualIngestEndpoint(`rtmps://${ivsData.ingestEndpoint}:443/app/`);
+    setManualIngestEndpoint(ivsData.rtmpsUrl);
 
     let channel = channels[0];
     if (!channel) {
