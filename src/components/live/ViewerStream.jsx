@@ -19,8 +19,9 @@ export default function ViewerStream({ streamId, stream }) {
   const currentTileRef = useRef(null);
   const deviceConflictRef = useRef(false);
 
+  const tileTimeoutRef = useRef(null);
   const [ready, setReady]       = useState(false);
-  const [muted, setMuted]       = useState(false);
+  const [muted, setMuted]       = useState(true); // 最初はミュート→autoplay突破
   const [phase, setPhase]       = useState("チケット確認済み ✅ — Meeting入室中...");
   const [retryKey, setRetryKey] = useState(0);
   const [bindAttempt, setBindAttempt] = useState(0);
@@ -128,27 +129,52 @@ export default function ViewerStream({ streamId, stream }) {
           },
           audioVideoDidStart: () => {
             console.log("[ViewerStream] ✅ audioVideoDidStart FIRED");
-            setPhase("映像受信待機中... 📡 (タイルID待機中)");
-            
-            // ★ 強制的にアクティブなタイルを探す（1秒ごと）
-            const searchTimer = setInterval(async () => {
+            setPhase("映像受信待機中... 📡");
+
+            // ★ ビデオ受信を明示的に有効化
+            try {
+              av.startVideoSubscriptions?.();
+              console.log("[ViewerStream] ✅ startVideoSubscriptions 呼び出し成功");
+            } catch (e) {
+              console.warn("[ViewerStream] startVideoSubscriptions N/A:", e.message);
+            }
+
+            // ★ 1秒ごとにタイル強制検索
+            const searchTimer = setInterval(() => {
               if (!isMountedRef.current) { clearInterval(searchTimer); return; }
               try {
-                // Chime SDK が内部的に保持しているタイル情報を取得
                 const activeTiles = av.getAllRemoteVideoTiles?.() || [];
-                console.log(`[ViewerStream] 🔍 アクティブなリモートタイル検索: ${activeTiles.length}個`);
+                console.log(`[ViewerStream] 🔍 タイル検索: ${activeTiles.length}個`);
                 activeTiles.forEach(tile => {
-                  console.log(`  - tileId: ${tile.tileId}, state: ${JSON.stringify(tile)}`);
-                  if (tile.tileId && !currentTileRef.current) {
-                    currentTileRef.current = tile.tileId;
-                    console.log(`[ViewerStream] 🎯 強制取得したタイルID: ${tile.tileId}`);
+                  const state = tile.state?.();
+                  console.log(`  tileId: ${state?.tileId}, active: ${state?.active}, local: ${state?.localTile}`);
+                  if (state?.tileId && !state?.localTile && !currentTileRef.current) {
+                    currentTileRef.current = state.tileId;
+                    console.log(`[ViewerStream] 🎯 強制タイル取得: ${state.tileId}`);
+                    if (videoRef.current) {
+                      av.bindVideoElement(state.tileId, videoRef.current);
+                      setPhase("映像バインド完了 🟢");
+                      setReady(true);
+                    }
                   }
                 });
-              } catch (err) {
-                console.warn(`[ViewerStream] ⚠️ タイル検索失敗: ${err.message}`);
+              } catch (e) {
+                console.warn("[ViewerStream] タイル検索失敗:", e.message);
               }
               if (currentTileRef.current) clearInterval(searchTimer);
             }, 1000);
+
+            // ★ 10秒待ってもtileが来なければセッション再接続
+            clearTimeout(tileTimeoutRef.current);
+            tileTimeoutRef.current = setTimeout(() => {
+              if (!isMountedRef.current || currentTileRef.current) return;
+              console.warn("[ViewerStream] ⏰ 10秒タイムアウト → セッション再接続");
+              setPhase("タイルタイムアウト → 再接続中...");
+              try { sessionRef.current?.audioVideo?.stop(); } catch (_) {}
+              sessionRef.current = null;
+              initCalledRef.current = false;
+              setRetryKey(k => k + 1);
+            }, 10000);
           },
           audioVideoDidStartConnecting: (reconnecting) => {
             setPhase(reconnecting ? "再接続中... 🔄" : "Meeting接続確立中... 🔌");
@@ -217,6 +243,7 @@ export default function ViewerStream({ streamId, stream }) {
     return () => {
       isMountedRef.current = false;
       clearTimeout(retryTimerRef.current);
+      clearTimeout(tileTimeoutRef.current);
       clearInterval(bindTimerRef.current);
       
       // ★ クライアント完全破棄：セッション・タイル完全削除
@@ -286,15 +313,15 @@ export default function ViewerStream({ streamId, stream }) {
       <video
         ref={videoRef}
         id="chime-video"
-        autoPlay={true}
-        playsInline={true}
-        muted={muted}
+        autoPlay
+        playsInline
+        muted
         style={{
           width: "100%",
           height: "100%",
           objectFit: "contain",
           backgroundColor: "#000",
-          display: ready ? "block" : "none"
+          display: "block", // 常時表示（映像が来たら即見える）
         }}
       />
 
