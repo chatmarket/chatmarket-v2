@@ -52,16 +52,13 @@ export default function ObsConfigDisplay({ streamKey, ingestEndpoint }) {
                 <input
                   type="text"
                   readOnly
-                  value={`rtmps://${ingestEndpoint}:443/app/`}
+                  value={ingestEndpoint}
                   className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white/80 font-mono truncate"
                 />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    copyToClipboard(
-                      `rtmps://${ingestEndpoint}:443/app/`,
-                      "endpoint"
-                    );
+                    copyToClipboard(ingestEndpoint, "endpoint");
                   }}
                   className="w-9 h-9 rounded-lg bg-primary/20 hover:bg-primary/30 flex items-center justify-center text-primary transition-colors shrink-0"
                 >

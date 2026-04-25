@@ -140,7 +140,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   };
 
   const copyServerUrl = () => {
-    navigator.clipboard.writeText(`rtmps://${ivsIngestEndpoint}:443/app/` || "");
+    navigator.clipboard.writeText(ivsIngestEndpoint || "");
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
     toast.success("Server URLをコピーしました");
@@ -318,7 +318,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
                   <input
                     type="text"
                     readOnly
-                    value={`rtmps://${ivsIngestEndpoint}:443/app/`}
+                    value={ivsIngestEndpoint}
                     className="flex-1 bg-zinc-950 border border-green-500/40 rounded px-2 py-1 text-[10px] text-zinc-300 font-mono"
                   />
                   <button onClick={copyServerUrl} className="shrink-0 px-2 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-[10px] font-bold transition-colors">
@@ -328,7 +328,17 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
               </div>
               <div>
                 <p className="text-[10px] text-zinc-400">Stream Key（OBS の「ストリームキー」欄）</p>
-                <p className="text-[11px] text-zinc-200 font-mono bg-zinc-950 border border-green-500/40 rounded px-2 py-1 mt-0.5 truncate">{ivsStreamKey}</p>
+                <div className="flex gap-2 items-center mt-0.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={ivsStreamKey}
+                    className="flex-1 bg-zinc-950 border border-green-500/40 rounded px-2 py-1 text-[10px] text-zinc-300 font-mono"
+                  />
+                  <button onClick={copyStreamKey} className="shrink-0 px-2 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-[10px] font-bold transition-colors">
+                    {copiedKey ? "✓ Copied" : "Copy"}
+                  </button>
+                </div>
               </div>
             </div>
             <p className="text-[9px] text-zinc-500 mt-2">💡 これらをコピーしてOBS Studio に貼り付けてください</p>
