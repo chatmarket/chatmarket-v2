@@ -83,8 +83,10 @@ export default function AppLayout() {
     queryKey: ["layout-my-channel", user?.email],
     queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }).then(r => r[0] || null),
     enabled: !!user?.email,
-    refetchInterval: false,
     staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const isActive = (path) => path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
