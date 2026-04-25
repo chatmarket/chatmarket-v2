@@ -75,6 +75,10 @@ export default function GoLive() {
     }
     const ivsData = ivsRes.data;
     setIvsStream(ivsData);
+    
+    // セッションストレージに保存（LiveView で読み込む）
+    sessionStorage.setItem("ivsStreamKey", ivsData.streamKey);
+    sessionStorage.setItem("ivsIngestEndpoint", ivsData.ingestEndpoint);
 
     let channel = channels[0];
     if (!channel) {
@@ -130,6 +134,10 @@ export default function GoLive() {
     // Base44エンティティのIDを使う（IVS ARNではない）
     console.log(`[GoLive] Created stream with quality: ${autoQuality}`);
     setLiveStreamId(newStream.id);
+    
+    // セッションストレージに配信情報を保存
+    sessionStorage.setItem("liveStreamId", newStream.id);
+    
     // 配信方式選択UI表示
     setShowModeSelect(true);
   };
