@@ -27,8 +27,9 @@ export default function ViewerStream({ streamId, stream }) {
   const [bindAttempt, setBindAttempt] = useState(0);
   const [deviceConflict, setDeviceConflict] = useState(false);
 
-  const isWebRTC    = stream?.stream_type === "webrtc" || !stream?.ivs_playback_url;
+  // ★ IVS URLがあれば必ずIVSプレイヤーを使う（stream_type問わず）
   const playbackUrl = stream?.ivs_playback_url;
+  const isWebRTC    = !playbackUrl; // IVS URLなし = Chimeモード
 
   // ─── Chime WebRTC 受信専用 ────────────────────────────────────────
   useEffect(() => {
