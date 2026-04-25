@@ -132,17 +132,17 @@ export default function ChimeBroadcasterEngine({ streamId }) {
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         if (videoTrack) {
           setPhase("📹 フレッシュ映像を Chime に投入中...");
-          // MediaStream ごと渡す（トラックIDが正しく伝わる）
-          await av.startVideoInput(new MediaStream([videoTrack]));
-          console.log("[ChimeBroadcaster] ✅ startVideoInput 完了 — track:", videoTrack.label);
+          // ★ Chime SDK は MediaStreamTrack を直接受け付ける
+          await av.startVideoInput(videoTrack);
+          console.log("[ChimeBroadcaster] ✅ startVideoInput(track) 完了 — track:", videoTrack.label, "| enabled:", videoTrack.enabled, "| readyState:", videoTrack.readyState);
         } else {
           console.error("[ChimeBroadcaster] ❌ ビデオトラックなし！");
           setPhase("❌ ビデオトラック取得失敗");
           return;
         }
         if (audioTrack) {
-          await av.startAudioInput(new MediaStream([audioTrack]));
-          console.log("[ChimeBroadcaster] ✅ startAudioInput 完了");
+          await av.startAudioInput(audioTrack);
+          console.log("[ChimeBroadcaster] ✅ startAudioInput(track) 完了");
         }
 
         setPhase("⏳ Chime av.start() 実行中...");
@@ -150,9 +150,24 @@ export default function ChimeBroadcasterEngine({ streamId }) {
         console.log("[ChimeBroadcaster] ✅ av.start() 完了");
 
         // ★ startLocalVideoTile — これで視聴者にタイルが届く
-        av.startLocalVideoTile();
-        console.log("[ChimeBroadcaster] ✅✅✅ startLocalVideoTile() 発火！ 電波に乗った！");
+        const localTile = av.startLocalVideoTile();
+        console.log("[ChimeBroadcaster] ✅✅✅ startLocalVideoTile() 発火！ localTile:", localTile);
         setPhase("📡 startLocalVideoTile 発火済 — タイル確定待ち...");
+
+        // 3秒後にタイル状態を強制確認
+        setTimeout(() => {
+          if (!isMountedRef.current) return;
+          try {
+            const tiles = av.getAllLocalVideoTiles?.() || [];
+            console.log("[ChimeBroadcaster] 🔍 3秒後タイル確認:", tiles.length, "個");
+            tiles.forEach(tile => {
+              const s = tile.state?.();
+              console.log(`  → tileId: ${s?.tileId}, active: ${s?.active}, boundVideoElement: ${!!s?.boundVideoElement}`);
+            });
+          } catch (e) {
+            console.warn("[ChimeBroadcaster] タイル確認失敗:", e.message);
+          }
+        }, 3000);
 
       } catch (err) {
         if (!isMountedRef.current) return;

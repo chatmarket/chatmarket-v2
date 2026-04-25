@@ -72,8 +72,19 @@ async function chimeRequest(method, path, body) {
     body: bodyStr || undefined,
   });
 
+  // 204 No Content は成功（DELETEなど）— JSONパース不要
+  if (response.status === 204) {
+    console.log(`[Chime] Response 204: No Content (success)`);
+    return null;
+  }
+
   const responseText = await response.text();
   console.log(`[Chime] Response ${response.status}: ${responseText.slice(0, 500)}`);
+
+  if (!responseText) {
+    if (!response.ok) throw new Error(`Chime ${response.status}: empty response`);
+    return null;
+  }
 
   let data;
   try {
