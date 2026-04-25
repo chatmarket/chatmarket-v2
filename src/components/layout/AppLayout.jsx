@@ -115,8 +115,8 @@ export default function AppLayout() {
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
               isActive(path)
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                ? "bg-pink-500/20 text-pink-400"
+                : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
             )}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{label}</span>
@@ -141,8 +141,8 @@ export default function AppLayout() {
                     isWaiting
                       ? "bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse"
                       : isActive(path)
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "bg-red-500/20 text-red-400"
+                      : "text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
                   )}>
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="flex-1">{label}</span>
