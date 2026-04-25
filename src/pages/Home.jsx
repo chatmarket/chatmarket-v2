@@ -167,6 +167,14 @@ export default function Home() {
     gcTime: 600000,
   });
 
+  const { data: scheduledStreams = [] } = useQuery({
+    queryKey: ["livestreams-scheduled"],
+    queryFn: () => base44.entities.LiveStream.filter({ status: "scheduled" }, "scheduled_at", 6),
+    enabled: enabledSections.liveStreams,
+    staleTime: 300000,
+    gcTime: 600000,
+  });
+
   const { data: popularVideos = [] } = useQuery({
     queryKey: ["videos-popular"],
     queryFn: () => base44.entities.Video.list("-view_count", 30),
@@ -498,18 +506,37 @@ export default function Home() {
         )}
       </div>
 
-      {/* ライブ配信中 */}
+      {/* ライブ配信中 / 配信予定 */}
       <div ref={liveRef}>
-        {enabledSections.liveStreams && liveStreams.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-              <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
-              <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
-            </div>
-            <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-              {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
-            </ScrollRow>
+        {enabledSections.liveStreams && (liveStreams.length > 0 || scheduledStreams.length > 0) && (
+          <section className="space-y-6">
+            {/* ライブ配信中 */}
+            {liveStreams.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+                  <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
+                  <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
+                </div>
+                <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+                  {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
+                </ScrollRow>
+              </div>
+            )}
+
+            {/* 配信予定 */}
+            {scheduledStreams.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shrink-0" />
+                  <h2 className="text-base sm:text-lg font-bold">配信予定</h2>
+                  <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5 font-semibold">SCHEDULED</span>
+                </div>
+                <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+                  {scheduledStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
+                </ScrollRow>
+              </div>
+            )}
           </section>
         )}
       </div>
