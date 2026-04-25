@@ -14,7 +14,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const previewVideoRef = useRef(null);
   const localStreamRef = useRef(null);
 
-  const [status, setStatus] = useState("preview"); // "preview" | "mode" | "browser-live" | "obs-preview"
+  const [status, setStatus] = useState("preview"); // "preview" | "checking" | "live" | "browser-live" | "obs-live" | "ended"
   const [broadcastMode, setBroadcastMode] = useState(null); // "obs" | "browser"
   const [liveLocalStream, setLiveLocalStream] = useState(null);
   const [micOn, setMicOn] = useState(true);
@@ -28,7 +28,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const videoContainerRef = useRef(null);
 
   const isLive = status === "browser-live";
-  const isChecking = status === "obs-preview";
+  const isOBSLive = status === "obs-live";
+  const isChecking = status === "checking";
 
   // カメラ・マイク起動（プレビュー確認時 or 配信開始時）
   const startCamera = async () => {
@@ -95,20 +96,16 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return () => clearInterval(interval);
   }, [streamId]);
 
-  // 配信開始（カメラが既に起動済みならそのまま使う）
+  // 配信開始（OBS 配信開始に遷移）
   const handleGoLive = async () => {
     await startCamera(); // 未起動なら起動、起動済みならno-op
-    if (previewVideoRef.current && localStreamRef.current) {
-      previewVideoRef.current.srcObject = localStreamRef.current;
-    }
     const now = new Date().toISOString();
     await base44.entities.LiveStream.update(streamId, {
       status: "live",
       live_started_at: now,
     });
     setLiveStartedAt(now);
-    setLiveLocalStream(localStreamRef.current); // Chimeエンジンへ渡す
-    setStatus("live");
+    setStatus("obs-live"); // OBS 配信状態に遷移
     toast.success("✅ 配信ステータスを LIVE に設定しました。OBS から配信を開始してください。");
   };
 
@@ -186,23 +183,41 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
 
 
-          {/* ── カメラ映像（確認中 or 配信中） ── */}
-          <video
-            ref={previewVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full object-contain bg-black"
-            style={{ display: (isChecking || isLive) && camOn ? "block" : "none" }}
-          />
-          {(isChecking || isLive) && !camOn && (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-              <CameraOff className="w-14 h-14 text-zinc-600" />
+          {/* ── カメラ映像（確認中のみ表示） ── */}
+          {isChecking && (
+            <>
+              <video
+                ref={previewVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-contain bg-black"
+                style={{ display: camOn ? "block" : "none" }}
+              />
+              {!camOn && (
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                  <CameraOff className="w-14 h-14 text-zinc-600" />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── OBS 配信中: 視聴者向けプレビュー ── */}
+          {isOBSLive && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
+              <div className="text-center space-y-3 z-10">
+                <div className="w-16 h-16 rounded-full mx-auto bg-primary/20 border-2 border-primary flex items-center justify-center">
+                  <RadioIcon className="w-8 h-8 text-primary animate-pulse" />
+                </div>
+                <p className="text-sm font-bold text-white">OBS から配信中</p>
+                <p className="text-xs text-zinc-400">視聴者側に映像が配信されています</p>
+              </div>
+              <p className="absolute bottom-4 left-4 text-[10px] text-zinc-600">視聴者プレビュー</p>
             </div>
           )}
 
-          {/* ステータスバッジ（配信中のみ表示） */}
-          {isLive && (
+          {/* ステータスバッジ（OBS 配信中のみ表示） */}
+          {isOBSLive && (
             <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap z-10">
               <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
@@ -229,14 +244,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </div>
           )}
 
-          {isLive && (
+          {isOBSLive && (
             <div className="absolute top-3 right-3">
               <LiveCostTracker startedAt={liveStartedAt} viewerCount={viewerCount} priceCoins={150} />
             </div>
           )}
 
           {/* GoLive ボタン（配信前 & 確認中に表示） */}
-          {!isLive && (
+          {!isOBSLive && !isLive && (
             <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
               <button
                 onClick={handleGoLive}
@@ -252,7 +267,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         {/* コントロールバー */}
         <div className="px-4 py-3 border-t border-zinc-800 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            {(isChecking || isLive) && (
+            {isChecking && (
               <>
                 <CtrlBtn
                   icon={micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
