@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Radio, Loader2, Image, CheckCircle2, Users, Clock } from "lucide-react";
+import { Radio, Loader2, Image, CheckCircle2, Users, Clock, Copy, Smartphone } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
+import BrowserBroadcaster from "../components/live/BrowserBroadcaster";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
@@ -21,6 +22,7 @@ export default function GoLive() {
   const [creating, setCreating] = useState(false);
   const [liveStreamId, setLiveStreamId] = useState(null);
   const [ivsStream, setIvsStream] = useState(null);
+  const [showModeSelect, setShowModeSelect] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [manualStreamKey, setManualStreamKey] = useState("");
@@ -128,6 +130,8 @@ export default function GoLive() {
     // Base44エンティティのIDを使う（IVS ARNではない）
     console.log(`[GoLive] Created stream with quality: ${autoQuality}`);
     setLiveStreamId(newStream.id);
+    // 配信方式選択UI表示
+    setShowModeSelect(true);
   };
 
   // モード選択画面
@@ -162,7 +166,23 @@ export default function GoLive() {
     );
   }
 
-  // 配信中画面
+  // ブラウザ配信画面
+  if (liveStreamId && localStorage.getItem("broadcastMode") === "browser") {
+    return (
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 h-screen flex flex-col">
+        <BrowserBroadcaster
+          streamKey={ivsStream?.streamKey}
+          ingestEndpoint={ivsStream?.ingestEndpoint}
+          onEnd={() => {
+            localStorage.removeItem("broadcastMode");
+            navigate("/creator-dashboard");
+          }}
+        />
+      </div>
+    );
+  }
+
+  // OBS配信画面
   if (liveStreamId) {
     return (
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
@@ -183,6 +203,68 @@ export default function GoLive() {
     );
   }
 
+  // 配信方式選択モーダル
+  if (showModeSelect) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+        <div className="bg-card border border-border rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-black mb-2">配信方式を選択</h2>
+            <p className="text-muted-foreground">OBSかブラウザから選んでください</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {/* OBS配信 */}
+            <button
+              onClick={() => {
+                localStorage.removeItem("broadcastMode");
+                setShowModeSelect(false);
+              }}
+              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                <Radio className="w-7 h-7 text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white">OBS配信</p>
+                <p className="text-xs text-muted-foreground mt-1">RTMPSで高画質・高音質配信</p>
+                <p className="text-[10px] text-zinc-500 mt-2">推奨：ゲーム、教育、プロフェッショナル</p>
+              </div>
+            </button>
+
+            {/* ブラウザ配信 */}
+            <button
+              onClick={() => {
+                localStorage.setItem("broadcastMode", "browser");
+                setShowModeSelect(false);
+              }}
+              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                <Smartphone className="w-7 h-7 text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white">ブラウザ配信</p>
+                <p className="text-xs text-muted-foreground mt-1">スマホ・PCから即配信</p>
+                <p className="text-[10px] text-zinc-500 mt-2">推奨：初心者、雑談、日常配信</p>
+              </div>
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowModeSelect(false);
+              setLiveStreamId(null);
+            }}
+            className="w-full py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-semibold"
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12 h-screen overflow-y-auto">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
@@ -193,37 +275,63 @@ export default function GoLive() {
         <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
       </div>
 
-      {/* OBS 手動入力（任意） */}
-      <div className="space-y-4 bg-secondary rounded-2xl p-5 border border-border mb-6">
-        <p className="text-sm font-bold text-foreground">🎙️ OBS で配信する場合（任意）</p>
-        <p className="text-xs text-muted-foreground">入力しなくてもブラウザのカメラ・マイクで配信できます</p>
+      {/* OBS 配信キー自動生成・表示 */}
+      <div className="space-y-4 bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-6">
+        <p className="text-sm font-bold text-primary">🎬 OBS で配信する</p>
+        <p className="text-xs text-muted-foreground">下のキーをOBSに入力して配信できます（スマホと同時配信OK）</p>
         <div className="space-y-3">
           <div className="space-y-1">
             <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">Ingest Endpoint</label>
-            <Input
-              type="text"
-              value={manualIngestEndpoint}
-              onChange={(e) => setManualIngestEndpoint(e.target.value)}
-              placeholder="rtmps://xxxx.global-contribute.live-video.net:443/app/"
-              className="bg-background font-mono text-xs"
-              autoComplete="off"
-            />
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                readOnly
+                value={manualIngestEndpoint || "作成後に表示"}
+                className="flex-1 bg-background font-mono text-xs rounded-md px-3 py-2 border border-border"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  if (manualIngestEndpoint) {
+                    navigator.clipboard.writeText(manualIngestEndpoint);
+                    toast.success("コピーしました");
+                  }
+                }}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">Stream Key</label>
-            <Input
-              type="text"
-              value={manualStreamKey}
-              onChange={(e) => setManualStreamKey(e.target.value)}
-              placeholder="sk_ap-northeast-1_xxxxx"
-              className="bg-background font-mono text-xs"
-              autoComplete="off"
-            />
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                readOnly
+                value={manualStreamKey || "作成後に表示"}
+                className="flex-1 bg-background font-mono text-xs rounded-md px-3 py-2 border border-border"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  if (manualStreamKey) {
+                    navigator.clipboard.writeText(manualStreamKey);
+                    toast.success("コピーしました");
+                  }
+                }}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
         {manualIngestEndpoint && manualStreamKey && (
           <div className="flex items-center gap-2 text-green-400 text-xs font-bold">
-            <CheckCircle2 className="w-4 h-4" /> OBS 情報が入力されました
+            <CheckCircle2 className="w-4 h-4" /> OBS キー取得完了 ✅
           </div>
         )}
         <a
@@ -232,7 +340,7 @@ export default function GoLive() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-semibold underline underline-offset-2 transition-colors"
         >
-          → 高画質、高音質配信の詳細はこちら
+          → OBS設定ガイド
         </a>
       </div>
 

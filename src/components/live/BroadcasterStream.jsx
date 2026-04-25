@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Settings, X, AlertTriangle, Zap, Copy, Check, Maximize, Minimize } from "lucide-react";
+import { MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Settings, X, AlertTriangle, Zap, Copy, Check, Maximize, Minimize, Radio as RadioIcon } from "lucide-react";
+import BrowserBroadcaster from "./BrowserBroadcaster";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import LiveTimer from "./LiveTimer";
@@ -13,8 +14,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const previewVideoRef = useRef(null);
   const localStreamRef = useRef(null);
 
-  const [status, setStatus] = useState("preview"); // "preview" | "checking" | "live"
-  const [liveLocalStream, setLiveLocalStream] = useState(null); // Chime送出用
+  const [status, setStatus] = useState("preview"); // "preview" | "mode" | "browser-live" | "obs-preview"
+  const [broadcastMode, setBroadcastMode] = useState(null); // "obs" | "browser"
+  const [liveLocalStream, setLiveLocalStream] = useState(null);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
@@ -25,8 +27,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoContainerRef = useRef(null);
 
-  const isLive = status === "live";
-  const isChecking = status === "checking"; // カメラプレビュー中
+  const isLive = status === "browser-live";
+  const isChecking = status === "obs-preview";
 
   // カメラ・マイク起動（プレビュー確認時 or 配信開始時）
   const startCamera = async () => {
