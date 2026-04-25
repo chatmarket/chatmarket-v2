@@ -7,6 +7,7 @@ import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
 import MicLevelMeter from "./MicLevelMeter";
+import ChimeBroadcasterEngine from "./ChimeBroadcasterEngine";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const localStreamRef = useRef(null);
 
   const [status, setStatus] = useState("preview"); // "preview" | "checking" | "live"
+  const [liveLocalStream, setLiveLocalStream] = useState(null); // Chime送出用
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
@@ -104,6 +106,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       live_started_at: now,
     });
     setLiveStartedAt(now);
+    setLiveLocalStream(localStreamRef.current); // Chimeエンジンへ渡す
     setStatus("live");
     toast.success("✅ 配信ステータスを LIVE に設定しました。OBS から配信を開始してください。");
   };
@@ -178,6 +181,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
               視聴者には見えていません
             </div>
+          )}
+
+          {/* ★ Chime送信エンジン（配信中かつlocalStream取得済みの場合にのみマウント） */}
+          {isLive && liveLocalStream && (
+            <ChimeBroadcasterEngine
+              streamId={streamId}
+              localStream={liveLocalStream}
+            />
           )}
 
           {/* ── カメラ映像（確認中 or 配信中） ── */}
