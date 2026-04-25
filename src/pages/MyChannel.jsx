@@ -37,14 +37,10 @@ export default function MyChannel() {
 
   const { data: channels = [] } = useQuery({
     queryKey: ["my-channels", user?.email],
-    queryFn: async () => {
-      // テスト中：owner_email チェックを無視 (常に全チャンネルを取得)
-      return base44.entities.Channel.list("-updated_date", 50);
-    },
+    queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }, "-updated_date", 10),
     enabled: !!user,
   });
 
-  // テスト中：最初のチャンネルをデフォルト選択（オーナーチェック無し）
   const channel = channels[0];
 
   const { data: videos = [] } = useQuery({
