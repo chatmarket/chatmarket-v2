@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -313,17 +314,8 @@ function LiveViewInner() {
   const isPaid = stream.price > 0;
   const needsPayment = isPaid && !hasPurchased;
 
-  return (
-    <div className="w-full min-h-screen bg-background">
-      <MetaHelmet
-        title={`🔴 ${stream.title} | ChatMarket LIVE`}
-        description={stream.description || `${stream.channel_name}がライブ配信中！ChatMarketで今すぐ視聴。`}
-        image={stream.thumbnail_url}
-      />
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-0 xl:gap-4 h-screen">
-        {/* Stream Player */}
-        <div className="space-y-3 sm:space-y-4 xl:col-span-3 flex flex-col overflow-y-auto p-3 sm:p-4 xl:p-6">
-          <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, background: "red", borderRadius: 0 }}>
+  const videoPortal = ReactDOM.createPortal(
+    <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "red", borderRadius: 0 }}>
             {/* ★ ローディング画面削除 — 即ペイウォールor映像へ */}
 
             {showPaywall && !hasPurchased ? (
@@ -446,96 +438,18 @@ function LiveViewInner() {
                 ))}
               </div>
             )}
-          </div>
+          </div>,
+    document.body
+  );
 
-          {!needsPayment && (
-            <GiftRankingWidget streamId={id} isLive={stream.status === "live"} />
-          )}
-
-          <PpvPreSale stream={stream} user={user} />
-
-          <ExtensionNotification 
-            userName={extensionUserName}
-            isVisible={showExtensionNotification}
-            duration={5000}
-          />
-
-          {showExtensionWarning && hasPurchased && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-              <div className="bg-card border border-primary/40 rounded-2xl max-w-sm p-6 space-y-4 shadow-2xl">
-                <div className="text-center space-y-2">
-                  <div className="text-4xl">⏰</div>
-                  <h2 className="text-xl font-black">あと3分で視聴終了</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {streamTimeSeconds <= 900 
-                      ? "無料15分が終了します。" 
-                      : "現在の視聴枠が終了します。"}
-                  </p>
-                  <p className="text-xs text-green-400 font-semibold mt-2">
-                    🎁 50コイン = 60分延長
-                  </p>
-                </div>
-
-                <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-center space-y-2">
-                  <p className="text-xs text-muted-foreground">現在のコイン残高</p>
-                  <p className="text-3xl font-black text-primary">{wallet?.balance || 0}コイン</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {wallet && wallet.balance >= 50 
-                      ? "✓ 延長可能です" 
-                      : `あと${50 - (wallet?.balance || 0)}コイン必要`}
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowExtensionWarning(false)}
-                    className="flex-1 px-4 py-3 rounded-xl border border-border text-sm font-bold hover:bg-secondary transition-colors"
-                  >
-                    後で
-                  </button>
-                  <button
-                    onClick={handleExtendStream}
-                    disabled={!wallet || wallet.balance < 50}
-                    className="flex-1 px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
-                  >
-                    ✨ 延長する
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* GiftPanel / TipPanel — テスト中一時非表示 */}
-          {/* {!needsPayment && (
-            <div className="space-y-2">
-              <GiftPanel ... />
-              <TipPanel ... />
-            </div>
-          )} */}
-
-          <div className="space-y-1 sm:space-y-2">
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{stream.title}</h1>
-            <p className="text-sm text-muted-foreground">{stream.channel_name}</p>
-            {stream.description && (
-              <div className="bg-card rounded-lg sm:rounded-xl p-3 sm:p-4 border border-border/50 mt-3 sm:mt-4">
-                <p className="text-xs sm:text-sm text-foreground/80 whitespace-pre-wrap">{stream.description}</p>
-              </div>
-            )}
-            {hasPurchased && (
-              <div className="space-y-3">
-                <RatingSection targetId={id} user={user} />
-                <ReactionBar targetType="livestream" targetId={id} user={user} />
-                <CommentSection targetType="livestream" targetId={id} user={user} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Chat */}
-        <div className="xl:col-span-1 h-[300px] sm:h-[400px] xl:h-screen xl:overflow-hidden border-t xl:border-t-0 xl:border-l border-border/50">
-          <ChatPanel targetType="livestream" targetId={id} />
-        </div>
-      </div>
+  return (
+    <div className="w-full min-h-screen bg-background">
+      <MetaHelmet
+        title={`🔴 ${stream.title} | ChatMarket LIVE`}
+        description={stream.description || `${stream.channel_name}がライブ配信中！ChatMarketで今すぐ視聴。`}
+        image={stream.thumbnail_url}
+      />
+      {videoPortal}
     </div>
   );
 }
