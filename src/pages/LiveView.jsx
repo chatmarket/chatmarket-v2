@@ -219,41 +219,13 @@ function LiveViewInner() {
     return () => clearInterval(loadingTimerRef.current);
   }, [ticketChecked]);
 
-  // ★ チケット確認ロジック
+  // ★ チケット確認ロジック【全開放テストモード: チケット不問で全員視聴可】
   const runTicketCheck = (currentStream, currentUser) => {
     const s = currentStream;
-    const u = currentUser;
     if (!s) { addLog("⚠️ Stream未取得"); return; }
-
-    if (!s.price || s.price === 0) {
-      addLog("✅ 無料配信 — 即解禁");
-      setHasPurchased(true);
-      setTicketChecked(true);
-      return;
-    }
-    if (!u) {
-      addLog("💰 有料・未ログイン — 課金画面へ");
-      setTicketChecked(true);
-      return;
-    }
-    addLog(`🔍 チケット確認送信... buyer=${u.email}`);
-    base44.entities.Purchase.filter({
-      item_type: "livestream",
-      item_id: id,
-      buyer_email: u.email,
-      status: "completed",
-    }).then((purchases) => {
-      if (purchases.length > 0) {
-        addLog(`✅ 購入済み (${purchases.length}件) — 視聴解禁`);
-        setHasPurchased(true);
-      } else {
-        addLog("❌ 未購入 — 課金画面へ");
-      }
-      setTicketChecked(true);
-    }).catch((err) => {
-      addLog(`❌ チケット確認エラー: ${err.message}`);
-      setTicketChecked(true);
-    });
+    addLog("🔓 全開放モード — チケット不問で即解禁");
+    setHasPurchased(true);
+    setTicketChecked(true);
   };
 
   useEffect(() => {
