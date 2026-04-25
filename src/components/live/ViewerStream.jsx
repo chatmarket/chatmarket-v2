@@ -311,7 +311,7 @@ export default function ViewerStream({ streamId, stream }) {
 
   return (
     <div className="relative w-full h-full bg-black">
-      {/* ★ シンプルな video タグ直結：極限までシンプル */}
+      {/* ★ プロフェッショナル video プレイヤー */}
       <video
         ref={videoRef}
         id="chime-video"
@@ -323,49 +323,81 @@ export default function ViewerStream({ streamId, stream }) {
           height: "100%",
           objectFit: "contain",
           backgroundColor: "#000",
-          display: "block", // 常時表示（映像が来たら即見える）
+          display: "block",
         }}
       />
 
-      {/* ローディング表示 */}
+      {/* ローディング表示 - プロ仕様 */}
       {!ready && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-black">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-            <div className="absolute inset-3 rounded-full bg-red-500/20 flex items-center justify-center">
-              <span className="w-3 h-3 rounded-full bg-red-400 animate-pulse" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-black via-black/80 to-black/95">
+          <div className="relative w-20 h-20">
+            <div className="absolute inset-0 rounded-full border-4 border-white/20 border-t-primary border-r-primary animate-spin" />
+            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-primary/30 to-transparent flex items-center justify-center">
+              <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
             </div>
           </div>
-          <div className="text-center space-y-1 px-6">
-            <p className="text-white font-semibold text-sm">
-              {stream?.status === "live" ? "接続中..." : "配信開始を待っています"}
-            </p>
-            <p className="text-white/50 text-xs">
-              {stream?.status !== "live" && "配信者が開始するとすぐに繋がります"}
+          <div className="text-center space-y-2 px-6">
+            <h3 className="text-white font-bold text-base">
+              {stream?.status === "live" ? "配信に接続中" : "配信を待機中"}
+            </h3>
+            <p className="text-white/60 text-sm leading-relaxed">
+              {stream?.status === "live" 
+                ? "配信者と接続しています。少々お待ちください..." 
+                : "配信者が配信を開始するとすぐに接続されます"}
             </p>
           </div>
         </div>
       )}
 
-      {/* ミュートボタン */}
+      {/* コントロールバー - プロ仕様 */}
       {ready && (
-        <button
-          onClick={() => setMuted(v => !v)}
-          className="absolute bottom-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
-        >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent h-20 flex items-end px-4 py-3 z-20 group hover:from-black hover:via-black/80">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMuted(v => !v)}
+                className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                title={muted ? "ミュート解除" : "ミュート"}
+              >
+                {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+              <div className="text-xs text-white/70 font-medium">
+                {muted ? "ミュート中" : "音声あり"}
+              </div>
+            </div>
+            <div className="text-xs text-white/60 font-mono">
+              {stream?.status === "live" && "● LIVE"}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* ★ デバッグステータス＆デバイスコンフリクト警告 */}
-      <div className={`absolute top-2 left-2 max-w-[85%] rounded px-2.5 py-1.5 text-[10px] font-mono pointer-events-none z-50 leading-relaxed ${deviceConflict ? 'bg-red-900/90 border-2 border-red-500' : 'bg-black/90 border-2 border-cyan-400'}`}>
-        <div className={deviceConflict ? 'text-red-300' : 'text-cyan-300'}>{phase}</div>
-        {!deviceConflict && (
-          <div className="text-[9px] text-cyan-500 mt-0.5">
-            tileId: {currentTileRef.current || "pending"} | bind試行: {bindAttempt}/10
+      {/* ステータスバッジ - 左上 */}
+      {ready && stream?.status === "live" && (
+        <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500 text-white text-xs font-bold">
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            LIVE
           </div>
-        )}
-      </div>
+          {stream?.viewer_count !== undefined && (
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/70 text-white text-xs font-semibold border border-white/20">
+              👁 {stream.viewer_count}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* デバッグ情報 - 右上（開発時のみ表示） */}
+      {!ready && (
+        <div className={`absolute top-4 right-4 rounded-lg px-3 py-2 text-xs font-mono pointer-events-none z-50 ${deviceConflict ? 'bg-red-900/95 text-red-200 border border-red-500' : 'bg-black/80 text-cyan-300 border border-cyan-500/50'}`}>
+          <div className="font-bold mb-1">{phase}</div>
+          {!deviceConflict && (
+            <div className="text-[10px] text-cyan-400 opacity-70">
+              tileId: {currentTileRef.current || "pending"}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

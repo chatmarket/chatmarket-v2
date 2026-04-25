@@ -14,6 +14,7 @@ import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
 import RatingSection from "../components/video/RatingSection";
 import ExtensionNotification from "../components/live/ExtensionNotification";
+import ObsConfigDisplay from "../components/live/ObsConfigDisplay";
 import { Users, Radio, Lock, CreditCard, Zap, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +125,17 @@ function LiveViewInner() {
     },
     refetchInterval: 5000,
   });
+
+  // OBS 設定情報取得
+  const [ivsStreamKey, setIvsStreamKey] = useState("");
+  const [ivsIngestEndpoint, setIvsIngestEndpoint] = useState("");
+
+  useEffect(() => {
+    // GoLive 時に IVS チャンネルが作成される
+    // ここでは仮データを表示 — 実運用では stream から取得
+    setIvsStreamKey("srp_...abcd1234");
+    setIvsIngestEndpoint("123ab456.ingest.ivs.us-east-1.amazonaws.com");
+  }, []);
 
   const { data: activeCall } = useQuery({
     queryKey: ["active-call", stream?.channel_id],
@@ -434,6 +446,11 @@ function LiveViewInner() {
         image={stream.thumbnail_url}
       />
       {videoPortal}
+      
+      {/* OBS 設定パネル - 配信テスト時に表示 */}
+      {ivsStreamKey && ivsIngestEndpoint && (
+        <ObsConfigDisplay streamKey={ivsStreamKey} ingestEndpoint={ivsIngestEndpoint} />
+      )}
     </div>
   );
 }
