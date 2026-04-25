@@ -171,7 +171,9 @@ export default function Home() {
     queryKey: ["videos-popular"],
     queryFn: async () => {
       const all = await base44.entities.Video.list("-view_count", 30);
-      return all.filter((v) => !v.moderation_status || v.moderation_status === "approved");
+      const filtered = all.filter((v) => !v.moderation_status || v.moderation_status === "approved");
+      console.log("[Home] 🎬 POPULAR VIDEOS RAW RESPONSE:", filtered.map(v => ({ id: v.id, title: v.title, video_url: v.video_url })));
+      return filtered;
     },
     enabled: enabledSections.popularVideos,
     staleTime: 600000,
@@ -182,7 +184,9 @@ export default function Home() {
     queryKey: ["videos-featured"],
     queryFn: async () => {
       const all = await base44.entities.Video.list("-created_date", 30);
-      return all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && !v.is_free && v.price > 0).slice(0, 8);
+      const filtered = all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && !v.is_free && v.price > 0).slice(0, 8);
+      console.log("[Home] 💰 FEATURED VIDEOS RAW RESPONSE:", filtered.map(v => ({ id: v.id, title: v.title, video_url: v.video_url })));
+      return filtered;
     },
     enabled: enabledSections.featuredVideos,
     staleTime: 600000,
@@ -193,7 +197,9 @@ export default function Home() {
     queryKey: ["videos-free"],
     queryFn: async () => {
       const all = await base44.entities.Video.list("-created_date", 30);
-      return all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && v.is_free).slice(0, 8);
+      const filtered = all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && v.is_free).slice(0, 8);
+      console.log("[Home] 🆓 FREE VIDEOS RAW RESPONSE:", filtered.map(v => ({ id: v.id, title: v.title, video_url: v.video_url })));
+      return filtered;
     },
     enabled: enabledSections.freeVideos,
     staleTime: 600000,
@@ -204,7 +210,17 @@ export default function Home() {
     queryKey: ["videos-recent"],
     queryFn: async () => {
       const all = await base44.entities.Video.list("-created_date", 30);
-      return all.filter((v) => !v.moderation_status || v.moderation_status === "approved").slice(0, 8);
+      const filtered = all.filter((v) => !v.moderation_status || v.moderation_status === "approved").slice(0, 8);
+      console.log("[Home] 📅 RECENT VIDEOS RAW RESPONSE:", filtered.map(v => ({ id: v.id, title: v.title, video_url: v.video_url })));
+      // ID ユニーク性チェック
+      const ids = filtered.map(v => v.id);
+      const uniqueIds = new Set(ids);
+      if (ids.length !== uniqueIds.size) {
+        console.error("🚨 [Home] DUPLICATE IDs DETECTED IN RECENT VIDEOS:", ids);
+      } else {
+        console.log("✅ [Home] All RECENT video IDs are unique");
+      }
+      return filtered;
     },
     enabled: enabledSections.recentVideos,
     staleTime: 600000,
