@@ -35,22 +35,145 @@ Deno.serve(async (req) => {
     console.log(`[hardReset] ✅ Deleted: ${deleteCount} videos`);
 
     // ========== STEP 3: 新規データ挿入（完全にユニーク） ==========
+    const videoUrls = [
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/ElephantsDream.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/ForBiggerBlazes.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/ForBiggerJlazes.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/ForBiggerMeltdowns.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/Sintel.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/SubaruOutbackOnStreetAndDirt.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/TearsOfSteel.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/VolleyballShortFilm.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-library/sample/WhatCarCanYouGetForAGrand.mp4",
+      "https://vimeo.com/648359395/download/a8fc88fa-3925-49cd-9c4b-bc1d23f65f84/master.json",
+      "https://test-streams.mux.dev/x36xhzz/x3iu7z32.m3u8",
+      "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+      "https://www.learningcontainer.com/download/sample-mp4-video-file-download-for-testing/",
+      "https://media.w3.org/2010/05/sintel/trailer.mp4",
+    ];
+
     const newVideos = [
-      { title: "React Hook メカニズム解説", category: "教育", is_free: false, price: 150, view_count: 2500 },
-      { title: "Vue.js 3.0 完全ガイド", category: "教育", is_free: true, price: 0, view_count: 1800 },
-      { title: "Svelte フレームワーク入門", category: "技術", is_free: false, price: 200, view_count: 980 },
-      { title: "Web Components 標準仕様", category: "技術", is_free: true, price: 0, view_count: 1200 },
-      { title: "Python データ分析実践", category: "教育", is_free: false, price: 250, view_count: 3400 },
-      { title: "Go 言語システムプログラミング", category: "技術", is_free: true, price: 0, view_count: 1100 },
-      { title: "Rust 所有権システム深掘り", category: "教育", is_free: false, price: 280, view_count: 2100 },
-      { title: "Kotlin Android 開発完全版", category: "技術", is_free: true, price: 0, view_count: 1450 },
-      { title: "Swift iOS アプリ開発", category: "教育", is_free: false, price: 220, view_count: 2800 },
-      { title: "C++ ゲームエンジン プログラミング", category: "技術", is_free: true, price: 0, view_count: 1650 },
-      { title: "SQL データベース設計", category: "教育", is_free: false, price: 190, view_count: 2300 },
-      { title: "PostgreSQL パフォーマンス最適化", category: "技術", is_free: true, price: 0, view_count: 890 },
-      { title: "MongoDB NoSQL 実践", category: "教育", is_free: false, price: 210, view_count: 1750 },
-      { title: "Redis キャッシング戦略", category: "技術", is_free: true, price: 0, view_count: 1320 },
-      { title: "Elasticsearch 全文検索構築", category: "教育", is_free: false, price: 260, view_count: 2650 },
+      { 
+        title: "JavaScript 完全ガイド",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 2500,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop"
+      },
+      {
+        title: "React Hook 完全マスター",
+        category: "教育",
+        is_free: false,
+        price: 150,
+        view_count: 1800,
+        thumbnail_url: "https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Vue 3.0 フレームワーク解説",
+        category: "技術",
+        is_free: true,
+        price: 0,
+        view_count: 980,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712645-2f3c256a1101?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Svelte 最新フレームワーク",
+        category: "技術",
+        is_free: false,
+        price: 200,
+        view_count: 1200,
+        thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06fe8c50e9b?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Python データサイエンス",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 3400,
+        thumbnail_url: "https://images.unsplash.com/photo-1551523164-0de305d12537?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Go 言語入門",
+        category: "技術",
+        is_free: false,
+        price: 180,
+        view_count: 1100,
+        thumbnail_url: "https://images.unsplash.com/photo-1542393881-24ac4a6d9ecf?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Rust システムプログラミング",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 2100,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712642-f4a0be2b1d18?w=400&h=225&fit=crop"
+      },
+      {
+        title: "TypeScript 型システム",
+        category: "技術",
+        is_free: false,
+        price: 220,
+        view_count: 1450,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Docker コンテナ化技術",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 2800,
+        thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06fe8c50e9b?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Kubernetes デプロイメント",
+        category: "技術",
+        is_free: false,
+        price: 250,
+        view_count: 1650,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712645-2f3c256a1101?w=400&h=225&fit=crop"
+      },
+      {
+        title: "GraphQL API 設計",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 2300,
+        thumbnail_url: "https://images.unsplash.com/photo-1533241749318-6b8da08a523e?w=400&h=225&fit=crop"
+      },
+      {
+        title: "データベース最適化",
+        category: "技術",
+        is_free: false,
+        price: 200,
+        view_count: 1750,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop"
+      },
+      {
+        title: "Web セキュリティ基礎",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 2650,
+        thumbnail_url: "https://images.unsplash.com/photo-1530268729831-4ca8ffd4d14d?w=400&h=225&fit=crop"
+      },
+      {
+        title: "CI/CD パイプライン構築",
+        category: "技術",
+        is_free: false,
+        price: 280,
+        view_count: 1320,
+        thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06fe8c50e9b?w=400&h=225&fit=crop"
+      },
+      {
+        title: "マイクロサービス設計",
+        category: "教育",
+        is_free: true,
+        price: 0,
+        view_count: 1890,
+        thumbnail_url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop"
+      },
     ];
 
     const channels = await base44.asServiceRole.entities.Channel.list("", 5);
@@ -67,10 +190,10 @@ Deno.serve(async (req) => {
     const inserted = await base44.asServiceRole.entities.Video.bulkCreate(
       newVideos.map((v, i) => ({
         title: v.title,
-        description: `${v.title} - Professional video content`,
-        video_url: `https://cdn.example.com/video-${i + 1}-${Date.now()}.mp4`,
-        thumbnail_url: `https://images.example.com/thumb-${i + 1}.jpg?t=${Date.now()}`,
-        mux_playback_id: `mux-${i + 1}-${Date.now()}`,
+        description: `${v.title} - 高品質なビデオコンテンツです。${v.is_free ? '無料' : 'プレミアム'}視聴可能。`,
+        video_url: videoUrls[i % videoUrls.length],
+        thumbnail_url: v.thumbnail_url,
+        mux_playback_id: `mux-demo-${i + 1}`,
         channel_id: targetChannel.id,
         channel_name: targetChannel.name,
         channel_avatar: targetChannel.avatar_url || "",
