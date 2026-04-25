@@ -141,7 +141,7 @@ export default function Home() {
   const { data: videos = [] } = useQuery({
     queryKey: ["videos-home"],
     queryFn: () => base44.entities.Video.list("-created_date", 20),
-    enabled: false,
+    enabled: enabledSections.popularVideos || enabledSections.featuredVideos || enabledSections.recentVideos,
     staleTime: 600000,
     gcTime: 1200000,
   });
