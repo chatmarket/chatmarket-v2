@@ -316,8 +316,6 @@ function LiveViewInner() {
 
   const videoPortal = ReactDOM.createPortal(
     <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "red", borderRadius: 0 }}>
-            {/* ★ ローディング画面削除 — 即ペイウォールor映像へ */}
-
             {showPaywall && !hasPurchased ? (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
                 <div className="text-center space-y-2">
@@ -357,8 +355,8 @@ function LiveViewInner() {
                 title={stream.title}
               />
             ) : stream.status === "live" ? (
-              /* ★ RAW MODE: すべての判定を無視して無条件映像起動 */
-              <ViewerStream key={`${id}-raw-${forceKey}`} streamId={id} stream={stream} />
+              /* IVS配信 */
+              <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-secondary">
                 <p className="text-muted-foreground">
@@ -374,9 +372,6 @@ function LiveViewInner() {
                 </span>
               </div>
             )}
-
-            {/* RAW MODEバナー削除済み */}
-
 
 
             {stream.status === "live" && !needsPayment && (
@@ -405,17 +400,6 @@ function LiveViewInner() {
 
             {stream.status === "live" && (
              <div className="absolute bottom-4 right-3 flex items-center gap-2">
-               {/* ★ RAW MODE用：ページ完全リロード再接続 */}
-               <button
-                 onClick={() => {
-                   window.location.reload();
-                 }}
-                 className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg animate-pulse"
-                 style={{ touchAction: "manipulation" }}
-                 title="ページをリロード＆Chimeセッション完全破棄"
-               >
-                 🔴 再接続
-               </button>
                 <VideoControls videoRef={null} showQuality={true} />
                 <button
                   onClick={toggleFullscreen}

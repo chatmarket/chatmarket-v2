@@ -7,7 +7,6 @@ import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
 import MicLevelMeter from "./MicLevelMeter";
-import ChimeBroadcasterEngine from "./ChimeBroadcasterEngine";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
@@ -183,10 +182,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </div>
           )}
 
-          {/* ★ Chime送信エンジン（配信開始と同時にマウント、内部でgetUserMedia再取得） */}
-          {isLive && (
-            <ChimeBroadcasterEngine streamId={streamId} />
-          )}
+
 
           {/* ── カメラ映像（確認中 or 配信中） ── */}
           <video

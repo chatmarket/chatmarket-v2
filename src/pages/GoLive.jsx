@@ -112,7 +112,7 @@ export default function GoLive() {
       available_time: form.availableTime || "",
       price: form.price,
       viewer_count: 0,
-      stream_type: "webrtc",
+      stream_type: "ivs",
       ivs_playback_url: ivsData.playbackUrl || "",
       max_bitrate_restriction: autoQuality,
       live_started_at: isLiveNow ? new Date().toISOString() : null,
