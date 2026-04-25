@@ -69,11 +69,14 @@ export default function ViewerStream({ streamId, stream }) {
 
         if (!isMountedRef.current) return;
 
-        const logger      = new ConsoleLogger('ChimeViewer', LogLevel.WARN);
-        // ★ 視聴者は NullDeviceController ではなく DefaultDeviceController を使うが
-        //   入力デバイスは一切 start しない（受信のみ）
+        const logger      = new ConsoleLogger('ChimeViewer', LogLevel.INFO);
         const deviceCtrl  = new DefaultDeviceController(logger);
         const config      = new MeetingSessionConfiguration(Meeting, Attendee);
+
+        // ★ TURN強制中継：5G/NAT環境でP2Pが失敗してもAWS中継サーバー経由で必ず繋ぐ
+        config.iceTransportPolicy = 'relay'; // 'relay' = TURN経由強制
+        console.log("[ViewerStream] 🔧 ICE Transport Policy: relay（TURN強制中継モード）");
+
         const session     = new DefaultMeetingSession(config, logger, deviceCtrl);
         sessionRef.current = session;
 
@@ -139,7 +142,7 @@ export default function ViewerStream({ streamId, stream }) {
               console.warn("[ViewerStream] startVideoSubscriptions N/A:", e.message);
             }
 
-            // ★ 1秒ごとにタイル強制検索
+            // ★ 100msごとにタイル強制検索（5G速度対応）
             const searchTimer = setInterval(() => {
               if (!isMountedRef.current) { clearInterval(searchTimer); return; }
               try {
@@ -162,7 +165,7 @@ export default function ViewerStream({ streamId, stream }) {
                 console.warn("[ViewerStream] タイル検索失敗:", e.message);
               }
               if (currentTileRef.current) clearInterval(searchTimer);
-            }, 1000);
+            }, 100); // 100ms間隔（5G対応）
 
             // ★ 10秒待ってもtileが来なければセッション再接続
             clearTimeout(tileTimeoutRef.current);
