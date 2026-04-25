@@ -138,14 +138,6 @@ export default function Home() {
   const { ref: rankingRef } = useInViewTrigger(() => triggerSection('ranking'));
   const { ref: millionaireRef } = useInViewTrigger(() => triggerSection('millionaire'));
 
-  const { data: videos = [] } = useQuery({
-    queryKey: ["videos-home"],
-    queryFn: () => base44.entities.Video.list("-created_date", 20),
-    enabled: enabledSections.popularVideos || enabledSections.featuredVideos || enabledSections.recentVideos,
-    staleTime: 600000,
-    gcTime: 1200000,
-  });
-
   const { data: channels = [] } = useQuery({
     queryKey: ["channels-all"],
     queryFn: async () => {
@@ -177,8 +169,44 @@ export default function Home() {
 
   const { data: popularVideos = [] } = useQuery({
     queryKey: ["videos-popular"],
-    queryFn: () => base44.entities.Video.list("-view_count", 30),
+    queryFn: async () => {
+      const all = await base44.entities.Video.list("-view_count", 30);
+      return all.filter((v) => !v.moderation_status || v.moderation_status === "approved");
+    },
     enabled: enabledSections.popularVideos,
+    staleTime: 600000,
+    gcTime: 1200000,
+  });
+
+  const { data: featuredVideos = [] } = useQuery({
+    queryKey: ["videos-featured"],
+    queryFn: async () => {
+      const all = await base44.entities.Video.list("-created_date", 30);
+      return all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && !v.is_free && v.price > 0).slice(0, 8);
+    },
+    enabled: enabledSections.featuredVideos,
+    staleTime: 600000,
+    gcTime: 1200000,
+  });
+
+  const { data: freeVideos = [] } = useQuery({
+    queryKey: ["videos-free"],
+    queryFn: async () => {
+      const all = await base44.entities.Video.list("-created_date", 30);
+      return all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && v.is_free).slice(0, 8);
+    },
+    enabled: enabledSections.freeVideos,
+    staleTime: 600000,
+    gcTime: 1200000,
+  });
+
+  const { data: recentVideos = [] } = useQuery({
+    queryKey: ["videos-recent"],
+    queryFn: async () => {
+      const all = await base44.entities.Video.list("-created_date", 30);
+      return all.filter((v) => !v.moderation_status || v.moderation_status === "approved").slice(0, 8);
+    },
+    enabled: enabledSections.recentVideos,
     staleTime: 600000,
     gcTime: 1200000,
   });
@@ -191,11 +219,6 @@ export default function Home() {
     gcTime: 1200000,
   });
 
-  const approvedVideos = videos.filter((v) => !v.moderation_status || v.moderation_status === "approved");
-  const featuredVideos = approvedVideos.filter((v) => !v.is_free && v.price > 0).slice(0, 8);
-  const freeVideos = approvedVideos.filter((v) => v.is_free).slice(0, 8);
-  const recentVideos = approvedVideos.slice(0, 8);
-
   const getChannel = (video) => channels.find((c) => c.id === video.channel_id);
 
   const handleMessage = (video) => {
@@ -204,7 +227,7 @@ export default function Home() {
     if (channel) setMessageTarget({ channel, video });
   };
 
-  const isEmpty = approvedVideos.length === 0 && liveStreams.length === 0;
+  const isEmpty = popularVideos.length === 0 && liveStreams.length === 0;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 md:px-4 lg:px-8 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-12 lg:space-y-14 overflow-x-hidden">
