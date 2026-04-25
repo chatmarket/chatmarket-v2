@@ -300,23 +300,31 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           </div>
         </div>
 
-        {/* OBS用 RTMPS 情報表示 */}
+        {/* OBS用 RTMPS 情報表示（本配信前にコピー可能） */}
         {ivsStreamKey && (
-          <div className="px-4 pb-4 space-y-2">
-            <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">OBS 配信情報 (RTMPS)</p>
-            <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2">
-              <p className="text-[10px] text-zinc-500">Ingest Endpoint</p>
-              <p className="text-xs text-zinc-300 font-mono truncate">rtmps://{ivsIngestEndpoint}:443/app/</p>
-            </div>
-            <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 flex items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-zinc-500">Stream Key</p>
-                <p className="text-xs text-zinc-300 font-mono truncate">{ivsStreamKey.slice(0, 30)}...</p>
+          <div className="px-4 pb-4 space-y-2 bg-zinc-900/50 rounded-lg border border-green-500/30 p-3">
+            <p className="text-[10px] text-green-400 font-bold uppercase tracking-wider">✅ OBS 接続情報</p>
+            <div className="space-y-2">
+              <div>
+                <p className="text-[10px] text-zinc-400">Server URL（OBS の「サーバー」欄）</p>
+                <div className="flex gap-2 items-center mt-0.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`rtmps://${ivsIngestEndpoint}:443/app/`}
+                    className="flex-1 bg-zinc-950 border border-green-500/40 rounded px-2 py-1 text-[10px] text-zinc-300 font-mono"
+                  />
+                  <button onClick={copyStreamKey} className="shrink-0 px-2 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-[10px] font-bold transition-colors">
+                    {copiedKey ? "✓ Copied" : "Copy"}
+                  </button>
+                </div>
               </div>
-              <button onClick={copyStreamKey} className="shrink-0 text-zinc-400 hover:text-primary transition-colors">
-                {copiedKey ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              </button>
+              <div>
+                <p className="text-[10px] text-zinc-400">Stream Key（OBS の「ストリームキー」欄）</p>
+                <p className="text-[11px] text-zinc-200 font-mono bg-zinc-950 border border-green-500/40 rounded px-2 py-1 mt-0.5 truncate">{ivsStreamKey}</p>
+              </div>
             </div>
+            <p className="text-[9px] text-zinc-500 mt-2">💡 これらをコピーしてOBS Studio に貼り付けてください</p>
           </div>
         )}
       </div>

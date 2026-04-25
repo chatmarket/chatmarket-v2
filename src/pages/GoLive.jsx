@@ -75,10 +75,8 @@ export default function GoLive() {
     }
     const ivsData = ivsRes.data;
     setIvsStream(ivsData);
-    
-    // セッションストレージに保存（LiveView で読み込む）
-    sessionStorage.setItem("ivsStreamKey", ivsData.streamKey);
-    sessionStorage.setItem("ivsIngestEndpoint", ivsData.ingestEndpoint);
+    setManualStreamKey(ivsData.streamKey);
+    setManualIngestEndpoint(ivsData.rtmpsUrl || `rtmps://${ivsData.ingestEndpoint}:443/app/`);
 
     let channel = channels[0];
     if (!channel) {
@@ -291,7 +289,7 @@ export default function GoLive() {
         <p className="text-xs text-muted-foreground">下のキーをOBSに入力して配信できます（スマホと同時配信OK）</p>
         <div className="space-y-3">
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">Ingest Endpoint</label>
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">RTMPS Server URL</label>
             <div className="flex gap-2 items-center">
               <input
                 type="text"

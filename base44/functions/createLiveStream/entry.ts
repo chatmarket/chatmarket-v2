@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     const accessKeyId = Deno.env.get("AWS_ACCESS_KEY_ID");
     const secretAccessKey = Deno.env.get("AWS_SECRET_ACCESS_KEY");
 
-    const channelName = `chatmarket-${Date.now()}`;
+    const channelName = `chatmarket-${user.id || user.email}-${Date.now()}`;
     const body = JSON.stringify({
       name: channelName,
       type: "BASIC",
@@ -98,10 +98,14 @@ Deno.serve(async (req) => {
     const channel = data.channel;
     const streamKey = data.streamKey;
 
+    // OBS が必要とする RTMPS 形式に変換
+    const rtmpsUrl = `rtmps://${channel.ingestEndpoint}:443/app/`;
+
     return Response.json({
       streamId: channel.arn,
       streamKey: streamKey.value,
       ingestEndpoint: channel.ingestEndpoint,
+      rtmpsUrl: rtmpsUrl,
       playbackUrl: channel.playbackUrl,
       channelArn: channel.arn,
     });
