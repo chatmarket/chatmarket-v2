@@ -286,7 +286,7 @@ export default function GoLive() {
       {/* OBS 配信キー自動生成・表示 */}
       <div className="space-y-4 bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-6">
         <p className="text-sm font-bold text-primary">🎬 OBS で配信する</p>
-        <p className="text-xs text-muted-foreground">タイトル、価格、配信スターを押すと表示されます（スマホと同時配信OK）</p>
+        <p className="text-xs text-muted-foreground">タイトル、価格、配信スタートを押すと表示されます（スマホと同時配信OK）</p>
         <div className="space-y-3">
           <div className="space-y-1">
             <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">RTMPS Server URL</label>
