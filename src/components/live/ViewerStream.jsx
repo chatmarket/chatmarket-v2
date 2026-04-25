@@ -134,50 +134,48 @@ export default function ViewerStream({ streamId, stream }) {
             console.log("[ViewerStream] ✅ audioVideoDidStart FIRED");
             setPhase("映像受信待機中... 📡");
 
-            // ★ ビデオ受信を明示的に有効化
-            try {
-              av.startVideoSubscriptions?.();
-              console.log("[ViewerStream] ✅ startVideoSubscriptions 呼び出し成功");
-            } catch (e) {
-              console.warn("[ViewerStream] startVideoSubscriptions N/A:", e.message);
-            }
-
-            // ★ 100msごとにタイル強制検索（5G速度対応）
+            // ★ 500msごとにタイル強制サブスクライブ（配信者がまだ送信開始していない場合も対応）
+            let pollCount = 0;
             const searchTimer = setInterval(() => {
               if (!isMountedRef.current) { clearInterval(searchTimer); return; }
-              try {
-                const activeTiles = av.getAllRemoteVideoTiles?.() || [];
-                console.log(`[ViewerStream] 🔍 タイル検索: ${activeTiles.length}個`);
-                activeTiles.forEach(tile => {
-                  const state = tile.state?.();
-                  console.log(`  tileId: ${state?.tileId}, active: ${state?.active}, local: ${state?.localTile}`);
-                  if (state?.tileId && !state?.localTile && !currentTileRef.current) {
-                    currentTileRef.current = state.tileId;
-                    console.log(`[ViewerStream] 🎯 強制タイル取得: ${state.tileId}`);
-                    if (videoRef.current) {
-                      av.bindVideoElement(state.tileId, videoRef.current);
-                      setPhase("映像バインド完了 🟢");
-                      setReady(true);
-                    }
-                  }
-                });
-              } catch (e) {
-                console.warn("[ViewerStream] タイル検索失敗:", e.message);
-              }
-              if (currentTileRef.current) clearInterval(searchTimer);
-            }, 100); // 100ms間隔（5G対応）
+              pollCount++;
 
-            // ★ 10秒待ってもtileが来なければセッション再接続
-            clearTimeout(tileTimeoutRef.current);
-            tileTimeoutRef.current = setTimeout(() => {
-              if (!isMountedRef.current || currentTileRef.current) return;
-              console.warn("[ViewerStream] ⏰ 10秒タイムアウト → セッション再接続");
-              setPhase("タイルタイムアウト → 再接続中...");
-              try { sessionRef.current?.audioVideo?.stop(); } catch (_) {}
-              sessionRef.current = null;
-              initCalledRef.current = false;
-              setRetryKey(k => k + 1);
-            }, 10000);
+              // タイル既に確定済みなら終了
+              if (currentTileRef.current) { clearInterval(searchTimer); return; }
+
+              try {
+                // 方法1: getAllRemoteVideoTiles でスキャン
+                const activeTiles = av.getAllRemoteVideoTiles?.() || [];
+                if (activeTiles.length > 0) {
+                  console.log(`[ViewerStream] 🔍 タイルスキャン #${pollCount}: ${activeTiles.length}個発見`);
+                  activeTiles.forEach(tile => {
+                    const state = tile.state?.();
+                    if (state?.tileId && !state?.localTile && !currentTileRef.current) {
+                      currentTileRef.current = state.tileId;
+                      console.log(`[ViewerStream] 🎯 タイル取得: tileId=${state.tileId}`);
+                      if (videoRef.current) {
+                        av.bindVideoElement(state.tileId, videoRef.current);
+                        setPhase(`映像バインド完了 tileId=${state.tileId} 🟢`);
+                        setReady(true);
+                      }
+                    }
+                  });
+                }
+              } catch (e) {
+                console.warn("[ViewerStream] タイルスキャン失敗:", e.message);
+              }
+
+              // 30秒（60回）待ってもタイルが来なければ再接続
+              if (pollCount >= 60 && !currentTileRef.current) {
+                clearInterval(searchTimer);
+                console.warn("[ViewerStream] ⏰ 30秒タイムアウト → 再接続");
+                setPhase("タイムアウト → 再接続中...");
+                try { sessionRef.current?.audioVideo?.stop(); } catch (_) {}
+                sessionRef.current = null;
+                initCalledRef.current = false;
+                setRetryKey(k => k + 1);
+              }
+            }, 500); // 0.5秒間隔
           },
           audioVideoDidStartConnecting: (reconnecting) => {
             setPhase(reconnecting ? "再接続中... 🔄" : "Meeting接続確立中... 🔌");
