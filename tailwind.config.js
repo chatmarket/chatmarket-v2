@@ -2,6 +2,10 @@
 module.exports = {
     darkMode: ["class"],
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+  safelist: [
+    { pattern: /^(bg|text|border)-(pink|red)-(400|500)/ },
+    { pattern: /^(bg|text|border)-(pink|red)-\d+\/(10|20|30)/ },
+  ],
   theme: {
   	extend: {
   		fontFamily: {
