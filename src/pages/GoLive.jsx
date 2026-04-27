@@ -36,6 +36,7 @@ export default function GoLive() {
     availableTime: "",
     price: "",
   });
+  const [manualWhipEndpoint, setManualWhipEndpoint] = useState("");
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -143,6 +144,10 @@ export default function GoLive() {
     // セッションストレージに配信情報を保存（古いIDは完全削除）
     sessionStorage.clear();
     sessionStorage.setItem("liveStreamId", newStream.id);
+    if (manualWhipEndpoint) {
+      sessionStorage.setItem("manualWhipEndpoint", manualWhipEndpoint);
+      console.log(`[GoLive] ✅ Stored manual WHIP endpoint: ${manualWhipEndpoint.split('?')[0]}...`);
+    }
     console.log(`[GoLive] ✅ Stored streamId in sessionStorage: ${newStream.id}`);
     
     // 配信方式選択UI表示
@@ -562,6 +567,18 @@ export default function GoLive() {
             <option value="2時間">2時間（最大）</option>
           </select>
           <p className="text-xs text-muted-foreground">最大2時間まで設定できます</p>
+        </div>
+
+        {/* WHIP エンドポイント手動入力 */}
+        <div className="space-y-2">
+          <Label className="text-cyan-400 font-bold">🌐 WHIPエンドポイント（手動）</Label>
+          <Input
+            value={manualWhipEndpoint}
+            onChange={(e) => setManualWhipEndpoint(e.target.value)}
+            placeholder="https://27683d3bba7... (AWS IVS WHIP URL)"
+            className="bg-secondary border-2 border-cyan-500/50 focus:border-cyan-500 font-mono text-xs"
+          />
+          <p className="text-xs text-cyan-300">💡 AWSから取得したWHIP URLを貼り付けるとRTMPからWHIPに自動切り替え</p>
         </div>
 
         {/* 価格 */}

@@ -300,6 +300,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setLoading(true);
         setError(null);
         console.log('[BrowserBroadcaster] 🚀 [MOUNT] Initializing media stream...');
+        
+        // 【器の流し込み】手動WHIP URLを sessionStorage から取得
+        const manualWhip = sessionStorage.getItem("manualWhipEndpoint");
+        if (manualWhip) {
+          console.log('[BrowserBroadcaster] 🌐 [MANUAL WHIP] Using user-provided endpoint:', manualWhip.split('?')[0]);
+          setWhipEndpoint(manualWhip);
+        }
 
         // デバイス列挙
         await enumerateDevices();
@@ -774,18 +781,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     try {
       console.log('[BrowserBroadcaster] 📍 [STEP 1/4] Starting broadcast (force mode)...');
       
-      // 【最新WHIP取得】毎回リセット → キャッシュドメイン問題を根絶
-      console.log('[BrowserBroadcaster] 🌐 [FORCE LATEST] Fetching fresh WHIP endpoint from AWS IVS...');
-      let freshWhipEndpoint = whipEndpoint;
-      try {
-        const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
-        if (whipRes?.data?.whipEndpoint) {
-          freshWhipEndpoint = whipRes.data.whipEndpoint;
-          setWhipEndpoint(freshWhipEndpoint);
-          console.log('[BrowserBroadcaster] ✅ Fresh WHIP endpoint acquired:', freshWhipEndpoint.split('?')[0]);
+      // 【器の流し込み】手動WHIP URLを優先取得 → キャッシュドメイン問題を根絶
+      const manualWhipFromSession = sessionStorage.getItem("manualWhipEndpoint");
+      let freshWhipEndpoint = manualWhipFromSession || whipEndpoint;
+      
+      if (manualWhipFromSession) {
+        console.log('[BrowserBroadcaster] 🌐 [MANUAL WHIP PRIORITY] Using user-provided AWS endpoint (skipping backend fetch)');
+      } else {
+        console.log('[BrowserBroadcaster] 🌐 [FORCE LATEST] Fetching fresh WHIP endpoint from AWS IVS...');
+        try {
+          const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
+          if (whipRes?.data?.whipEndpoint) {
+            freshWhipEndpoint = whipRes.data.whipEndpoint;
+            setWhipEndpoint(freshWhipEndpoint);
+            console.log('[BrowserBroadcaster] ✅ Fresh WHIP endpoint acquired:', freshWhipEndpoint.split('?')[0]);
+          }
+        } catch (err) {
+          console.warn('[BrowserBroadcaster] ⚠️ Fresh WHIP endpoint fetch failed, using cached:', err.message);
         }
-      } catch (err) {
-        console.warn('[BrowserBroadcaster] ⚠️ Fresh WHIP endpoint fetch failed, using cached:', err.message);
       }
 
       if (!freshWhipEndpoint) {
