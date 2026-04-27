@@ -74,10 +74,10 @@ Deno.serve(async (req) => {
 
     // ChatMarket-Main チャンネル（固定）の情報を返す
     // arn:aws:ivs:ap-northeast-1:813372611580:channel/xuKjuYTGr3sc
-    const FIXED_CHANNEL_ARN = "arn:aws:ivs:ap-northeast-1:813372611580:channel/xuKjuYTGr3sc";
-    const FIXED_STREAM_KEY = "sk_ap-northeast-1_LlX8hjN5vJEs_KWdRW6FDzFFkwmeSkbGvXsthhsb1Ub";
+    const FIXED_CHANNEL_ARN = "arn:aws:ivs:ap-northeast-1:813372611580:channel/pVdn6DgvnSMG";
+    const FIXED_STREAM_KEY = "sk_ap-northeast-1_iYbETprO3ixW_1iEQD65hcKx0Mi253OGFyRzkYkaRAc";
     const FIXED_INGEST_ENDPOINT = "27b83d82b8a7.global-contribute.live-video.net";
-    const FIXED_PLAYBACK_URL = "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.xuKjuYTGr3sc.m3u8";
+    const FIXED_PLAYBACK_URL = "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
     const FIXED_RTMPS_URL = "rtmps://27b83d82b8a7.global-contribute.live-video.net:443/app/";
 
     return Response.json({
