@@ -81,9 +81,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     const unsubscribeYell = base44.entities.SuperChat.subscribe((event) => {
       if (event.type !== "create") return;
       if (event.data?.livestream_id !== streamId) return;
+      const yellData = { ...event.data, id: event.id };
       console.log(`[BroadcasterStream] ✅ Yell received from ${event.data?.user_name}: ${event.data?.amount} coins`);
-      setLatestYell({ ...event.data, id: event.id });
-      setTimeout(() => setLatestYell(null), 4000);
+      console.log(`[BroadcasterStream] 🎯 Setting latestYell state:`, yellData);
+      setLatestYell(yellData);
+      setTimeout(() => {
+        console.log(`[BroadcasterStream] ⏱️ Clearing latestYell after 4s`);
+        setLatestYell(null);
+      }, 4000);
     });
     
     return unsubscribeYell;

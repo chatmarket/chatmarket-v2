@@ -5,6 +5,13 @@ import { base44 } from "@/api/base44Client";
 export default function LiveYellDisplay({ streamId, latestYell }) {
   const [superChats, setSuperChats] = useState([]);
 
+  // props で受け取った latestYell を画面に反映（log付き）
+  useEffect(() => {
+    if (latestYell) {
+      console.log(`[LiveYellDisplay] 🎯 latestYell props received:`, latestYell);
+    }
+  }, [latestYell]);
+
   useEffect(() => {
     if (!streamId) return;
     
@@ -18,6 +25,7 @@ export default function LiveYellDisplay({ streamId, latestYell }) {
           "-created_date",
           20
         );
+        console.log(`[LiveYellDisplay] 📥 Initial superChats loaded: ${data.length} items`);
         setSuperChats(data);
       } catch (err) {
         console.error('[LiveYellDisplay] Failed to fetch SuperChat:', err);
@@ -40,18 +48,19 @@ export default function LiveYellDisplay({ streamId, latestYell }) {
   return (
     <>
       <AnimatePresence>
-        {latestYell && (
+        {latestYell ? (
           <motion.div
+            key={latestYell.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-gradient-to-r from-yellow-500/20 to-amber-600/20 border border-yellow-500/40 rounded-lg p-3 ring-1 ring-yellow-500/30"
+            className="bg-gradient-to-r from-yellow-500/20 to-amber-600/20 border border-yellow-500/40 rounded-lg p-3 ring-1 ring-yellow-500/30 animate-pulse"
           >
             <p className="text-xs font-bold text-yellow-400">🎉 {latestYell.user_name}</p>
             <p className="text-sm font-black text-yellow-300 mt-1">🪙 {latestYell.amount} コイン</p>
             {latestYell.message && <p className="text-xs text-foreground/80 mt-2">「{latestYell.message}」</p>}
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
 
       {superChats.length > 0 ? (
