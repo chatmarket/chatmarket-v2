@@ -4,6 +4,25 @@ import App from './App.jsx'
 import './index.css'
 import { registerServiceWorker } from './lib/pushNotifications.js'
 
+// ★ amazon-ivs-player v1.50.0 の EventEmitter クラッシュを防ぐポリフィル
+// モバイルブラウザでは EventEmitter が存在しないためエラーになる
+if (typeof window !== 'undefined') {
+  // EventEmitter の最小限ポリフィル
+  class MinimalEventEmitter {
+    constructor() { this._events = {}; }
+    on(e, fn) { (this._events[e] = this._events[e] || []).push(fn); return this; }
+    off(e, fn) { if (this._events[e]) this._events[e] = this._events[e].filter(f => f !== fn); return this; }
+    emit(e, ...a) { (this._events[e] || []).forEach(fn => fn(...a)); return this; }
+    removeAllListeners(e) { if (e) delete this._events[e]; else this._events = {}; return this; }
+  }
+  // IVS SDK が参照するグローバルを事前に定義
+  if (!window.EventEmitter) window.EventEmitter = MinimalEventEmitter;
+  // Node.js の events モジュール互換
+  if (typeof globalThis !== 'undefined' && !globalThis.EventEmitter) {
+    globalThis.EventEmitter = MinimalEventEmitter;
+  }
+}
+
 // グローバルレベルで /app-logs/ へのリクエストを遮断（fetch と axios 両方）
 if (typeof window !== 'undefined') {
   // === fetch インターセプション ===
