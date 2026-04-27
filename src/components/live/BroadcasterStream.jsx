@@ -35,13 +35,27 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
   // エール通知をリアルタイムで監視（配信者側）
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId) {
+      console.warn("[BroadcasterStream] streamId not set, cannot listen for Yell notifications");
+      return;
+    }
+    console.log(`[BroadcasterStream] Listening for Yell on streamId: ${streamId}`);
+    
     const unsubscribe = base44.entities.SuperChat.subscribe((event) => {
-      if (event.type !== "create" || event.data?.livestream_id !== streamId) return;
+      console.log(`[BroadcasterStream] SuperChat event received:`, event.data?.livestream_id, "vs", streamId);
+      if (event.type !== "create") return;
+      if (event.data?.livestream_id !== streamId) {
+        console.log(`[BroadcasterStream] Event streamId mismatch, ignoring`);
+        return;
+      }
+      console.log(`[BroadcasterStream] ✅ Yell received from ${event.data?.user_name}: ${event.data?.amount} coins`);
       setLatestYell({ ...event.data, id: event.id });
       setTimeout(() => setLatestYell(null), 4000);
     });
-    return unsubscribe;
+    return () => {
+      console.log(`[BroadcasterStream] Unsubscribing from Yell notifications`);
+      unsubscribe();
+    };
   }, [streamId]);
 
   // カメラ・マイク起動（プレビュー確認時 or 配信開始時）

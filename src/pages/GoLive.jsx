@@ -136,12 +136,13 @@ export default function GoLive() {
     await base44.entities.Channel.update(channel.id, { is_live: true });
 
     setCreating(false);
-    // Base44エンティティのIDを使う（IVS ARNではない）
-    console.log(`[GoLive] Created stream with quality: ${autoQuality}`);
+    console.log(`[GoLive] ✅ Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
     setLiveStreamId(newStream.id);
     
-    // セッションストレージに配信情報を保存
+    // セッションストレージに配信情報を保存（古いIDは完全削除）
+    sessionStorage.clear();
     sessionStorage.setItem("liveStreamId", newStream.id);
+    console.log(`[GoLive] ✅ Stored streamId in sessionStorage: ${newStream.id}`);
     
     // 配信方式選択UI表示
     setShowModeSelect(true);
