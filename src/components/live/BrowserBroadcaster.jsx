@@ -102,8 +102,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           }
           analyzerRef.current.getByteFrequencyData(dataArray);
           const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-          // 感度を 2 倍に上げる（小さい音もキャッチ）
-          const newLevel = Math.min(100, Math.round((avg / 64) * 100));
+          // 生データを100倍ブースト（フィルタリング除去で生の音声を表示）
+          const newLevel = Math.min(100, Math.round(avg * 100 / 255));
           setMicLevel(newLevel);
           meterLoopId = requestAnimationFrame(meterTick);
         } catch (err) {
@@ -130,7 +130,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     navigator.mediaDevices.getUserMedia({
       video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
-      audio: selectedMic ? { deviceId: { exact: selectedMic } } : true,
+      audio: selectedMic
+        ? {
+            deviceId: { exact: selectedMic },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          }
+        : {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
     }).then((stream) => {
       console.log('[BrowserBroadcaster] ✅ Stream acquired');
       streamRef.current = stream;
@@ -161,11 +172,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setShowErrorDialog(true);
     });
 
-    // クリック時に AudioContext.resume() を実行（ブラウザ音声制限解除）
+    // クリック時に AudioContext.resume() を『強制連発』（ブラウザ音声制限を突き破る）
     const handleUserClick = () => {
-      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      if (audioContextRef.current) {
         audioContextRef.current.resume().then(() => {
-          console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
+          console.log('[BrowserBroadcaster] ✅ AudioContext force resumed');
         }).catch((err) => {
           console.warn('[BrowserBroadcaster] AudioContext resume failed:', err);
         });
