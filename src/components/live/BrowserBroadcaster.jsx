@@ -365,27 +365,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         // 再列挙でデバイス名が確定される
         await enumerateDevices(); // これで deviceId.label が正式名に確定
         
-        // 【強制配置】ビデオ要素は一度だけ生成 → 再利用
-        let videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
-        
-        if (!videoElement) {
-          console.log('[BrowserBroadcaster] 💪 Creating video element with z-index: 9999');
-          videoElement = document.createElement('video');
-          videoElement.id = 'browser-broadcaster-video';
-          videoElement.autoplay = true;
-          videoElement.muted = true;
-          videoElement.playsInline = true;
-          videoElement.style.position = 'fixed';
-          videoElement.style.top = '0';
-          videoElement.style.left = '0';
-          videoElement.style.width = '100vw';
-          videoElement.style.height = '100vh';
-          videoElement.style.objectFit = 'cover';
-          videoElement.style.zIndex = '9999';
-          videoElement.style.display = 'block';
-          videoElement.style.backgroundColor = '#000';
-          document.body.appendChild(videoElement);
-          console.log('[BrowserBroadcaster] ✅ Video element created at full screen (z-index: 9999)');
+        // 【UIレイアウト修正】ビデオ要素をコンテナ内に配置（背面）
+        let videoElement = videoRef.current;
+        if (videoElement) {
+          console.log('[BrowserBroadcaster] 📹 Video element already mounted');
         }
         
         console.log('[BrowserBroadcaster] 🚀 Video element mounted - injecting stream immediately (zero latency)!');
@@ -407,33 +390,33 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         videoElement.style.display = 'block';
         videoElement.style.backgroundColor = '#000';
 
-        // 【強制再生：srcObject 設定直後に play() を即座に実行】
+        // 【強制再生：play() は一度だけ実行 — 無限ループ停止】
+        let playAttempted = false;
         const forcePlay = async () => {
+          if (playAttempted) return;
+          playAttempted = true;
           try {
-            console.log('[BrowserBroadcaster] 🎬 Attempting immediate play()...');
+            console.log('[BrowserBroadcaster] 🎬 Attempting play()...');
             await videoElement.play();
-            console.log('[BrowserBroadcaster] ✅ play() succeeded immediately');
+            console.log('[BrowserBroadcaster] ✅ play() succeeded');
           } catch (err) {
-            console.warn(`[BrowserBroadcaster] ⚠️  Autoplay blocked: ${err.name} - ${err.message}`);
-            console.log('[BrowserBroadcaster] 📍 Waiting for user interaction to play...');
-            // ユーザークリック時に play() を再度試みる
-            const onUserInteraction = async () => {
+            console.warn(`[BrowserBroadcaster] ⚠️  Autoplay blocked: ${err.name}`);
+            const onUserClick = async () => {
               try {
-                console.log('[BrowserBroadcaster] 👆 User clicked, attempting play()...');
                 await videoElement.play();
-                console.log('[BrowserBroadcaster] ✅ play() succeeded after user interaction');
-                document.removeEventListener('click', onUserInteraction);
+                console.log('[BrowserBroadcaster] ✅ play() succeeded after user click');
               } catch (err2) {
-                console.warn('[BrowserBroadcaster] ⚠️  play() failed even after click:', err2.message);
+                console.warn('[BrowserBroadcaster] ⚠️  play() failed after click:', err2.message);
               }
+              document.removeEventListener('click', onUserClick);
             };
-            document.addEventListener('click', onUserInteraction);
+            document.addEventListener('click', onUserClick);
           }
         };
 
-        // メタデータ読み込み後も play() をリトライ
+        // メタデータ読み込み後も play() を実行（一度限り）
         const onMetadata = () => {
-          console.log('[BrowserBroadcaster] 📹 Metadata loaded, attempting play...');
+          console.log('[BrowserBroadcaster] 📹 Metadata loaded');
           forcePlay();
         };
         videoElement.addEventListener('loadedmetadata', onMetadata, { once: true });
@@ -615,29 +598,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       }
     }, []); // 【マウント時のみ実行】依存配列から streamId を削除して無限ループ防止
 
-  // 【マウント時に setupDevices 実行 + 全自動・無条件プロンプト】
+  // 【マウント時のみ実行】setupDevices は一度だけ
   useEffect(() => {
-    // 【全回路リセット】AudioContext の物理的変数削除再起動
-    console.log('[BrowserBroadcaster] 🚀 [FULL RESET 1/4] Clearing old AudioContext reference from memory...');
-    audioContextRef.current = null;  // 変数ごと削除＝メモリ完全リセット
-    whipClientRef.current = null;
-    analyzerRef.current = null;
-
-    // 【全自動バイパス 1】全フィルターの物理的削除＝生データ直結
-    console.log('[BrowserBroadcaster] 🚀 [FULL BYPASS 1/5] Triggering auto-prompt with ALL FILTERS DISABLED...');
+    console.log('[BrowserBroadcaster] 🚀 マウント時にセットアップ開始');
+    
+    // 許可プロンプトトリガー（フィルターなし）
     navigator.mediaDevices.getUserMedia({ 
       audio: {
-        echoCancellation: false,    // ブラウザの賢い機能を完全削除
-        noiseSuppression: false,    // ノイズ判定を完全削除
-        autoGainControl: false      // 自動ゲイン調整を完全削除
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
       }, 
       video: true 
     }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ [FULL BYPASS 1/5] Raw stream acquired (no processing)');
+      console.log('[BrowserBroadcaster] ✅ 許可プロンプト完了');
       stream.getTracks().forEach(t => t.stop());
       setupDevices();
     }).catch((err) => {
-      console.warn('[BrowserBroadcaster] ⚠️ [FULL BYPASS 1/5] Prompt failed:', err.name);
+      console.warn('[BrowserBroadcaster] ⚠️ 許可プロンプト失敗:', err.name);
       setupDevices();
     });
 
@@ -647,7 +625,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       clearInterval(videoWidthCheckRef.current);
       cancelAnimationFrame(canvasRafRef.current);
     };
-  }, [setupDevices]); // streamId は削除（setupDevices で使用）
+  }, []); // 依存配列は空（マウント時のみ実行）
 
   // 【デバイス選択変更時に手動着火】
   useEffect(() => {
@@ -917,10 +895,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【修正】ローディング画面は、エラーがない場合だけ表示
+  // 【修正】ローディング画面（メーター表示は常に最前面）
   if (loading && !error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-2xl">
+      <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-2xl relative">
         <div className="text-center space-y-4 max-w-sm px-6">
           <div className="flex justify-center">
             <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -937,6 +915,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
           )}
         </div>
+
+        {/* マイクメーター：最前面に常時表示 */}
+        <div className="absolute bottom-6 left-6 right-6 z-50 p-4 rounded-lg bg-zinc-800/80 border border-zinc-700">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-primary">🎤 マイク接続確認中</span>
+            <span className="text-xs font-bold text-primary">{micLevel}%</span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-zinc-700 overflow-hidden">
+            <div
+              className={`h-full transition-all duration-75 ${
+                micLevel < 30 ? "bg-green-500" : micLevel < 60 ? "bg-yellow-500" : "bg-red-500"
+              }`}
+              style={{ width: `${Math.min(micLevel, 100)}%` }}
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -945,21 +939,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const errorOverlayVisible = false;
 
   return (
-    <div className="w-full space-y-6">
-      {/* 【修正】デバッグ情報は debug=true の時だけ表示（管理者限定） */}
-      {error && debugMode && (
-        <div className="bg-red-950/80 border border-red-700 rounded-lg p-3 text-xs font-mono text-red-200 space-y-1">
-          <p>🔴 <strong>DEBUG INFO:</strong></p>
-          <p>videoRef.current: {videoRef.current === null ? 'NULL' : videoRef.current === undefined ? 'UNDEFINED' : 'ELEMENT FOUND ✅'}</p>
-          <p>videoRef.current.tagName: {videoRef.current?.tagName || 'N/A'}</p>
-          <p>videoRef.current.srcObject: {videoRef.current?.srcObject ? 'STREAM ASSIGNED ✅' : 'NO STREAM ❌'}</p>
-          <p>streamRef.current: {streamRef.current ? 'EXISTS ✅' : 'NULL ❌'}</p>
-          <p>Error: {error}</p>
-        </div>
-      )}
-
-      {/* プレビュー */}
-      <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-zinc-800" style={{ aspectRatio: "16/9" }}>
+    <div className="w-full h-screen flex flex-col bg-zinc-950 relative">
+      {/* 【ビデオ背面配置】アスペクト比 16:9 のコンテナ */}
+      <div className="relative flex-shrink-0 bg-black" style={{ aspectRatio: "16/9" }}>
         {/* 【最終解 4】視覚的フィードバック：マイク 0% の場合に大きく表示 */}
         {micLevel === 0 && !isBroadcasting && (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none">
@@ -1040,7 +1022,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
         )}
 
-        {/* 【皿確保】メインビデオ要素 */}
+        {/* 【ビデオ背面配置】z-index 低め */}
         <video
           id="browser-broadcaster-video"
           ref={videoRef}
@@ -1053,7 +1035,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             height: '100%',
             objectFit: 'cover',
             opacity: 1,
-            zIndex: 10,
+            zIndex: 5,
             display: 'block',
             backgroundColor: '#000',
           }}
@@ -1116,8 +1098,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         )}
       </div>
 
-      {/* デバイス選択 */}
-      <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-lg">
+      {/* 【最前面コントロールパネル】z-50 以上で常時表示 */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent p-6 space-y-4 max-w-5xl mx-auto w-full">
+        {/* デバイス選択 */}
+        <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-lg">
         <div className="flex items-center gap-2 mb-4">
           <Settings className="w-5 h-5 text-primary" />
           <h3 className="font-bold text-white text-lg">デバイス選択</h3>
@@ -1287,42 +1271,50 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         </div>
       </div>
 
-      {/* 配信開始ボタン */}
-      <div className="flex gap-3">
-        <button
-          onClick={onEnd}
-          disabled={isBroadcasting || broadcastStatus === "connecting"}
-          className="flex-1 py-4 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold transition-all duration-200 disabled:opacity-50 shadow-lg"
-        >
-          キャンセル
-        </button>
-        <button
-          onClick={handleStartBroadcast}
-          disabled={false}
-          className={`flex-1 py-4 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-lg ${
-            broadcastStatus === "live"
-              ? "bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/30"
-              : broadcastStatus === "error"
-              ? "bg-gradient-to-r from-red-600 to-red-700 shadow-red-600/30"
-              : broadcastStatus === "connecting"
-              ? "bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/30 animate-pulse"
-              : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/30 hover:shadow-red-500/50"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {broadcastStatus === "live" && <CheckCircle2 className="w-5 h-5" />}
-          {broadcastStatus === "connecting" && <Loader2 className="w-5 h-5 animate-spin" />}
-          {broadcastStatus === "error" && <AlertCircle className="w-5 h-5" />}
-          {!broadcastStatus && <Zap className="w-5 h-5" />}
+        {/* 配信開始ボタン：最前面・必ず見える位置 */}
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onEnd}
+            disabled={isBroadcasting || broadcastStatus === "connecting"}
+            className="flex-1 py-4 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold transition-all duration-200 disabled:opacity-50 shadow-lg"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleStartBroadcast}
+            disabled={false}
+            className={`flex-1 py-4 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-lg ${
+              broadcastStatus === "live"
+                ? "bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/30"
+                : broadcastStatus === "error"
+                ? "bg-gradient-to-r from-red-600 to-red-700 shadow-red-600/30"
+                : broadcastStatus === "connecting"
+                ? "bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/30 animate-pulse"
+                : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/30 hover:shadow-red-500/50"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {broadcastStatus === "live" && <CheckCircle2 className="w-5 h-5" />}
+            {broadcastStatus === "connecting" && <Loader2 className="w-5 h-5 animate-spin" />}
+            {broadcastStatus === "error" && <AlertCircle className="w-5 h-5" />}
+            {!broadcastStatus && <Zap className="w-5 h-5" />}
 
-          {broadcastStatus === "live"
-            ? "配信中（LIVE）"
-            : broadcastStatus === "connecting"
-            ? "接続中..."
-            : broadcastStatus === "error"
-            ? `エラー: ${broadcastError || "接続失敗"}`
-            : "配信を開始する"}
-        </button>
+            {broadcastStatus === "live"
+              ? "配信中（LIVE）"
+              : broadcastStatus === "connecting"
+              ? "接続中..."
+              : broadcastStatus === "error"
+              ? `エラー: ${broadcastError || "接続失敗"}`
+              : "配信を開始する"}
+          </button>
+        </div>
       </div>
+
+      {/* デバッグ情報：最前面 */}
+      {error && debugMode && (
+        <div className="fixed top-4 right-4 z-50 bg-red-950/80 border border-red-700 rounded-lg p-3 text-xs font-mono text-red-200 max-w-xs">
+          <p>🔴 {error}</p>
+        </div>
+      )}
     </div>
   );
 }
