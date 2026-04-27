@@ -389,30 +389,26 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         // 再列挙でデバイス名が確定される
         await enumerateDevices(); // これで deviceId.label が正式名に確定
         
-        // 【必須確認】video要素がDOMに存在することを確認（既に JSX でレンダリングされているはず）
+        // 【皿確保】video要素を確認 → なければ即座に動的生成（待たない！）
         let videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
         
         if (!videoElement) {
-          console.warn('[BrowserBroadcaster] ⚠️  Video element not in DOM, waiting for React render...');
-          // React のレンダリング待機（最大 3秒）
-          for (let i = 0; i < 30; i++) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
-            if (videoElement) {
-              console.log(`[BrowserBroadcaster] ✅ Video element found after ${(i + 1) * 100}ms`);
-              break;
-            }
-          }
+          console.warn('[BrowserBroadcaster] ⚠️  Video element not found - FORCE CREATE now!');
+          // 【無理やり皿を作る】プログラム側で video 要素を動的生成
+          videoElement = document.createElement('video');
+          videoElement.id = 'browser-broadcaster-video';
+          videoElement.autoplay = true;
+          videoElement.muted = true;
+          videoElement.playsInline = true;
+          
+          // ストリーム確立と同時に DOM に挿入
+          const container = document.querySelector('[style*="16/9"], [style*="aspect-ratio"]') || document.body;
+          container.appendChild(videoElement);
+          
+          console.log('[BrowserBroadcaster] ✅ Video element FORCE CREATED and injected');
+        } else {
+          console.log('[BrowserBroadcaster] ✅ Video element found in DOM');
         }
-
-        if (!videoElement) {
-          console.error('[BrowserBroadcaster] ❌ Video element still not found (React rendering failed)');
-          setError('⚠️ ビデオ要素の生成に失敗しました。ページを再読み込みしてください。');
-          setLoading(false);
-          return;
-        }
-        
-        console.log('[BrowserBroadcaster] ✅ Video element confirmed in DOM');
         
         console.log('[BrowserBroadcaster] 🚀 Video element mounted - injecting stream immediately (zero latency)!');
 
