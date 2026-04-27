@@ -236,9 +236,9 @@ function LiveViewInner() {
       )}
 
       {stream.status === "live" && (
-        <div className="absolute bottom-0 left-0 right-0 z-20 max-h-1/2 flex flex-col">
+        <div className="absolute bottom-0 left-0 right-0 z-20 max-h-[50vh] md:max-h-1/2 flex flex-col">
           {/* チャット表示エリア — リアルタイム */}
-          <div className="flex-1 overflow-y-auto bg-black/40 px-3 py-2 space-y-1.5 min-h-[120px] max-h-[200px]">
+          <div className="flex-1 overflow-y-auto bg-black/40 px-2 sm:px-3 py-1.5 sm:py-2 space-y-1 min-h-[80px] sm:min-h-[120px] max-h-[140px] sm:max-h-[200px]">
             <LiveChatDisplay streamId={id} />
           </div>
 
@@ -250,18 +250,18 @@ function LiveViewInner() {
             }}
           >
             {/* ラベル行 */}
-            <div className="flex items-center justify-between px-4 pt-2 pb-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-black text-yellow-400 tracking-widest uppercase">⚡ YELL</span>
-                <span className="text-[9px] text-yellow-400/50">応援コインを送る</span>
+            <div className="flex items-center justify-between px-2 sm:px-4 pt-1.5 sm:pt-2 pb-0.5 sm:pb-1">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <span className="text-[9px] sm:text-[11px] font-black text-yellow-400 tracking-widest uppercase">⚡ YELL</span>
+                <span className="text-[7px] sm:text-[9px] text-yellow-400/50">応援コイン</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <VideoControls videoRef={null} showQuality={true} />
                 <button
                   onClick={toggleFullscreen}
-                  className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 flex items-center justify-center text-white"
                 >
-                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                  {isFullscreen ? <Minimize className="w-3 h-3 sm:w-4 sm:h-4" /> : <Maximize className="w-3 h-3 sm:w-4 sm:h-4" />}
                 </button>
               </div>
             </div>
@@ -269,8 +269,8 @@ function LiveViewInner() {
             <ViewerChatInput streamId={id} user={user} />
 
             {/* エールボタン行（横スクロール対応） */}
-            <div className="px-3 pb-3 overflow-x-auto">
-              <div className="flex gap-2" style={{ width: "max-content" }}>
+            <div className="px-2 sm:px-3 pb-2 sm:pb-3 overflow-x-auto">
+              <div className="flex gap-1 sm:gap-2" style={{ width: "max-content" }}>
                 <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
               </div>
             </div>

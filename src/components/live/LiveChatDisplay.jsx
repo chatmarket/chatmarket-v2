@@ -38,12 +38,12 @@ export default function LiveChatDisplay({ streamId }) {
 
   return comments.length > 0 ? (
     comments.map((c) => (
-      <div key={c.id} className="bg-zinc-800/50 rounded-lg p-2 border border-zinc-700/50">
-        <p className="text-xs font-bold text-cyan-400">{c.user_name}</p>
-        <p className="text-xs text-foreground/80 break-words">{c.content}</p>
+      <div key={c.id} className="bg-zinc-800/50 rounded px-1.5 sm:px-2 py-1 border border-zinc-700/50 text-[10px] sm:text-xs">
+        <p className="font-bold text-cyan-400 leading-tight">{c.user_name}</p>
+        <p className="text-foreground/80 break-words leading-tight">{c.content}</p>
       </div>
     ))
   ) : (
-    <p className="text-xs text-zinc-500 text-center py-8">チャットが表示されます</p>
+    <p className="text-[9px] sm:text-xs text-zinc-500 text-center py-4">チャットが表示されます</p>
   );
 }

@@ -33,10 +33,10 @@ export default function ViewerChatInput({ streamId, user }) {
 
   if (!user) {
     return (
-      <div className="px-3 pb-3 flex gap-2">
+      <div className="px-2 sm:px-3 pb-2 sm:pb-3 flex gap-1.5 sm:gap-2">
         <button
           onClick={() => base44.auth.redirectToLogin()}
-          className="flex-1 py-2 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-bold transition-colors"
+          className="flex-1 py-1.5 sm:py-2 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-[10px] sm:text-xs font-bold transition-colors"
         >
           ログインしてコメント
         </button>
@@ -45,20 +45,20 @@ export default function ViewerChatInput({ streamId, user }) {
   }
 
   return (
-    <form onSubmit={handleSend} className="px-3 pb-3 flex gap-2">
+    <form onSubmit={handleSend} className="px-2 sm:px-3 pb-2 sm:pb-3 flex gap-1.5 sm:gap-2">
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="コメントを入力..."
-        className="bg-zinc-800/80 border-zinc-700 text-white placeholder:text-zinc-500 flex-1 text-sm"
+        placeholder="コメント..."
+        className="bg-zinc-800/80 border-zinc-700 text-white placeholder:text-zinc-500 flex-1 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
         disabled={sending}
       />
       <button
         type="submit"
         disabled={sending || !message.trim()}
-        className="shrink-0 w-9 h-9 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center transition-colors"
+        className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center transition-colors"
       >
-        <Send className="w-4 h-4" />
+        <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
     </form>
   );
