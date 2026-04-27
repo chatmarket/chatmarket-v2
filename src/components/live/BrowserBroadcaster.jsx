@@ -939,9 +939,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const errorOverlayVisible = false;
 
   return (
-    <div className="w-full h-screen flex flex-col bg-zinc-950 relative">
-      {/* 【ビデオ背面配置】アスペクト比 16:9 のコンテナ */}
-      <div className="relative flex-shrink-0 bg-black" style={{ aspectRatio: "16/9" }}>
+    <div className="w-full min-h-screen bg-zinc-950 flex flex-col lg:flex-row gap-4 p-4 lg:p-6">
+      {/* 【YouTube風】左側：ビデオプレイヤー */}
+      <div className="flex-1 flex flex-col gap-4">
+        {/* ビデオコンテナ */}
+        <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16/9" }}>
         {/* 【最終解 4】視覚的フィードバック：マイク 0% の場合に大きく表示 */}
         {micLevel === 0 && !isBroadcasting && (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none">
@@ -1098,216 +1100,104 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         )}
       </div>
 
-      {/* 【最前面コントロールパネル】z-50 以上で常時表示 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent p-6 space-y-4 max-w-5xl mx-auto w-full">
-        {/* デバイス選択 */}
-        <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-primary" />
-          <h3 className="font-bold text-white text-lg">デバイス選択</h3>
-        </div>
+      {/* 右側パネル：YouTube風 */}
+      <div className="w-full lg:w-80 flex flex-col gap-4 lg:pb-6">
+        {/* マイク・デバイス設定 */}
+        <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3 shadow-lg">
+          <h3 className="font-bold text-white text-sm flex items-center gap-2">
+            <Settings className="w-4 h-4 text-primary" />
+            デバイス
+          </h3>
 
-        {/* カメラ選択 */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-muted-foreground">カメラ</label>
-          <select
-            value={selectedCamera || ""}
-            onChange={(e) => {
-              console.log('[BrowserBroadcaster] 📷 Camera device changed, reinitializing...');
-              setSelectedCamera(e.target.value);
-            }}
-            disabled={isBroadcasting}
-            className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {cameras.map((cam) => (
-              <option key={cam.deviceId} value={cam.deviceId}>
-                {cam.label || `カメラ ${cameras.indexOf(cam) + 1}`}
-              </option>
-            ))}
-          </select>
-        </div>
+          {/* カメラ選択 */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">カメラ</label>
+            <select
+              value={selectedCamera || ""}
+              onChange={(e) => setSelectedCamera(e.target.value)}
+              disabled={isBroadcasting}
+              className="w-full px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
+            >
+              {cameras.map((cam) => (
+                <option key={cam.deviceId} value={cam.deviceId}>
+                  {cam.label || `カメラ ${cameras.indexOf(cam) + 1}`}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* マイク選択 */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-muted-foreground">マイク</label>
-          <select
-            value={selectedMic || ""}
-            onChange={(e) => {
-              console.log('[BrowserBroadcaster] 🎤 Microphone device changed, reinitializing...');
-              setSelectedMic(e.target.value);
-            }}
-            disabled={isBroadcasting}
-            className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {microphones.map((mic) => (
-              <option key={mic.deviceId} value={mic.deviceId}>
-                {mic.label || `マイク ${microphones.indexOf(mic) + 1}`}
-              </option>
-            ))}
-          </select>
+          {/* マイク選択 */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">マイク</label>
+            <select
+              value={selectedMic || ""}
+              onChange={(e) => setSelectedMic(e.target.value)}
+              disabled={isBroadcasting}
+              className="w-full px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
+            >
+              {microphones.map((mic) => (
+                <option key={mic.deviceId} value={mic.deviceId}>
+                  {mic.label || `マイク ${microphones.indexOf(mic) + 1}`}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          {/* マイクレベルメーター */}
-          <div className="space-y-1.5 mt-3 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+          {/* マイクメーター */}
+          <div className="space-y-1.5 p-2.5 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground">🎤 音量レベル</p>
-              <span className="text-xs font-bold text-primary">{micLevel}%</span>
+              <span className="text-xs font-bold text-primary">🎤 {micLevel}%</span>
             </div>
-            {/* 横棒メーター */}
-            <div className="w-full h-2 rounded-full bg-zinc-700 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-zinc-700 overflow-hidden">
               <div
-                className={`h-full transition-all duration-75 rounded-full ${
-                  micLevel < 30
-                    ? "bg-green-500"
-                    : micLevel < 60
-                    ? "bg-yellow-500"
-                    : micLevel < 85
-                    ? "bg-orange-500"
-                    : "bg-red-500"
+                className={`h-full transition-all ${
+                  micLevel < 30 ? "bg-green-500" : micLevel < 60 ? "bg-yellow-500" : "bg-red-500"
                 }`}
                 style={{ width: `${Math.min(micLevel, 100)}%` }}
               />
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              {micLevel < 20 ? "📍 無音に近い" : micLevel < 50 ? "🟢 良好" : micLevel < 80 ? "🟡 大きめ" : "🔴 大きすぎる"}
-            </p>
-            
-            {/* 【デバッグ表示】生データが動いているか確認 */}
-            <p className="text-[9px] text-zinc-500 mt-1 font-mono">
-              🔍 Debug: raw={micDebugValue} level={micLevel}%
-            </p>
-            
-            {/* 【最終解 4】視覚的フィードバック＆マイク単独再試行ボタン */}
-            {micLevel === 0 && (
-              <div className="space-y-2 mt-2">
-                <div className="px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-center">
-                  <p className="text-xs font-black text-red-400 animate-pulse">
-                    🔴 マイクが反応していません
-                  </p>
-                  <p className="text-[10px] text-red-300 mt-1">
-                    プレビュー画面をクリックして有効化してください
-                  </p>
-                </div>
-                <button
-                  onClick={retryMicrophoneOnly}
-                  disabled={micRetrying}
-                  className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-white text-xs font-bold rounded-lg transition-colors"
-                >
-                  {micRetrying ? '再接続中...' : '🔄 マイク再接続（最終解）'}
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      </div>
 
-      {/* ステータスチェック */}
-      <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-lg">
-        <h3 className="font-bold text-white text-lg mb-4">配信準備確認</h3>
-
-        {/* カメラステータス */}
-        <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
-          <div className="flex items-center gap-3">
-            {cameraReady ? (
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-red-400" />
-            )}
-            <div>
-              <p className="text-sm font-semibold text-white">カメラ</p>
-              <p className="text-xs text-muted-foreground">
-                {cameraReady ? "✅ 準備完了" : "❌ エラー"}
-              </p>
+          {/* ステータス */}
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              {cameraReady ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <AlertCircle className="w-4 h-4 text-red-400" />}
+              <span className="text-muted-foreground">カメラ {cameraReady ? "✅" : "❌"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {micReady ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <AlertCircle className="w-4 h-4 text-red-400" />}
+              <span className="text-muted-foreground">マイク {micReady ? "✅" : "❌"}</span>
             </div>
           </div>
-          <button
-            onClick={() => {
-              const track = streamRef.current?.getVideoTracks()[0];
-              if (track) {
-                track.enabled = !track.enabled;
-                setCameraReady(track.enabled);
-              }
-            }}
-            className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            {cameraReady ? (
-              <Camera className="w-4 h-4 text-primary" />
-            ) : (
-              <CameraOff className="w-4 h-4 text-muted-foreground" />
-            )}
-          </button>
         </div>
 
-        {/* マイクステータス */}
-        <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
-          <div className="flex items-center gap-3">
-            {micReady ? (
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-red-400" />
-            )}
-            <div>
-              <p className="text-sm font-semibold text-white">マイク</p>
-              <p className="text-xs text-muted-foreground">
-                {micReady ? "✅ 準備完了" : "❌ エラー"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              const track = streamRef.current?.getAudioTracks()[0];
-              if (track) {
-                track.enabled = !track.enabled;
-                setMicReady(track.enabled);
-              }
-            }}
-            className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            {micReady ? (
-              <Mic className="w-4 h-4 text-primary" />
-            ) : (
-              <MicOff className="w-4 h-4 text-muted-foreground" />
-            )}
-          </button>
-        </div>
-      </div>
-
-        {/* 配信開始ボタン：最前面・必ず見える位置 */}
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={onEnd}
-            disabled={isBroadcasting || broadcastStatus === "connecting"}
-            className="flex-1 py-4 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold transition-all duration-200 disabled:opacity-50 shadow-lg"
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={handleStartBroadcast}
-            disabled={false}
-            className={`flex-1 py-4 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-lg ${
-              broadcastStatus === "live"
-                ? "bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/30"
-                : broadcastStatus === "error"
-                ? "bg-gradient-to-r from-red-600 to-red-700 shadow-red-600/30"
-                : broadcastStatus === "connecting"
-                ? "bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/30 animate-pulse"
-                : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/30 hover:shadow-red-500/50"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {broadcastStatus === "live" && <CheckCircle2 className="w-5 h-5" />}
-            {broadcastStatus === "connecting" && <Loader2 className="w-5 h-5 animate-spin" />}
-            {broadcastStatus === "error" && <AlertCircle className="w-5 h-5" />}
-            {!broadcastStatus && <Zap className="w-5 h-5" />}
-
-            {broadcastStatus === "live"
-              ? "配信中（LIVE）"
+        {/* 配信ボタン */}
+        <button
+          onClick={handleStartBroadcast}
+          disabled={false}
+          className={`w-full py-3 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all shadow-lg ${
+            broadcastStatus === "live"
+              ? "bg-gradient-to-r from-green-500 to-green-600"
               : broadcastStatus === "connecting"
-              ? "接続中..."
-              : broadcastStatus === "error"
-              ? `エラー: ${broadcastError || "接続失敗"}`
-              : "配信を開始する"}
-          </button>
-        </div>
+              ? "bg-gradient-to-r from-yellow-500 to-yellow-600 animate-pulse"
+              : "bg-red-500 hover:bg-red-600"
+          }`}
+        >
+          {broadcastStatus === "live" && <CheckCircle2 className="w-5 h-5" />}
+          {broadcastStatus === "connecting" && <Loader2 className="w-5 h-5 animate-spin" />}
+          {!broadcastStatus && <Zap className="w-5 h-5" />}
+          {broadcastStatus === "live" ? "配信中" : broadcastStatus === "connecting" ? "接続中..." : "配信を開始"}
+        </button>
+
+        <button
+          onClick={onEnd}
+          disabled={isBroadcasting}
+          className="w-full py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold text-sm transition-all disabled:opacity-50"
+        >
+          キャンセル
+        </button>
       </div>
+    </div>
 
       {/* デバッグ情報：最前面 */}
       {error && debugMode && (
