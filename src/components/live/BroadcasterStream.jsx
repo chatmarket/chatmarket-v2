@@ -70,40 +70,13 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
   }, []);
 
-  // ストリーム情報取得＆エール購読を同時実行
+  // エール購読を優先実行（最優先度）
   useEffect(() => {
-    if (!streamId) {
-      console.log('[BroadcasterStream] streamId not available yet');
-      return;
-    }
+    if (!streamId) return;
     
-    console.log(`[BroadcasterStream] ✅ Listening for yells on stream: ${streamId}`);
+    console.log(`[BroadcasterStream] ✅ Socket initialized for stream: ${streamId}`);
     
-    const fetchStreamInfo = async () => {
-      try {
-        const streams = await base44.entities.LiveStream.filter({ id: streamId });
-        if (streams[0]) {
-          const stream = streams[0];
-          if (stream.viewer_count !== undefined) setViewerCount(stream.viewer_count);
-          if (stream.max_bitrate_restriction && !streamQuality) {
-            console.log('[BroadcasterStream] StreamQuality set to:', stream.max_bitrate_restriction);
-            setStreamQuality(stream.max_bitrate_restriction);
-          }
-        }
-      } catch (err) {
-        console.error('[BroadcasterStream] Failed to fetch stream info:', err);
-      }
-    };
-
-    // 初回即座に取得（1回のみ）
-    fetchStreamInfo();
-    
-    // 定期ポーリング（5秒ごと、ただし streamQuality はセット済みなら更新しない）
-    const interval = setInterval(fetchStreamInfo, 5000);
-    
-    // エール購読（優先度最高）
     const unsubscribeYell = base44.entities.SuperChat.subscribe((event) => {
-      console.log(`[BroadcasterStream] SuperChat event:`, event.data?.livestream_id, "vs", streamId);
       if (event.type !== "create") return;
       if (event.data?.livestream_id !== streamId) return;
       console.log(`[BroadcasterStream] ✅ Yell received from ${event.data?.user_name}: ${event.data?.amount} coins`);
@@ -111,11 +84,46 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
       setTimeout(() => setLatestYell(null), 4000);
     });
     
-    return () => {
-      clearInterval(interval);
-      unsubscribeYell();
-      console.log(`[BroadcasterStream] Cleanup: streamId=${streamId}`);
+    return unsubscribeYell;
+  }, [streamId]);
+
+  // 視聴者数取得（定期ポーリング）
+  useEffect(() => {
+    if (!streamId) return;
+    
+    const fetchViewerCount = async () => {
+      try {
+        const streams = await base44.entities.LiveStream.filter({ id: streamId });
+        if (streams[0]?.viewer_count !== undefined) {
+          setViewerCount(streams[0].viewer_count);
+        }
+      } catch (err) {
+        console.error('[BroadcasterStream] Failed to fetch viewer count:', err);
+      }
     };
+
+    fetchViewerCount();
+    const interval = setInterval(fetchViewerCount, 5000);
+    return () => clearInterval(interval);
+  }, [streamId]);
+
+  // 画質設定（1回だけ、以降は実行しない）
+  useEffect(() => {
+    if (!streamId || streamQuality) return; // 既に設定済みなら実行しない
+    
+    const fetchStreamQuality = async () => {
+      try {
+        const streams = await base44.entities.LiveStream.filter({ id: streamId });
+        if (streams[0]?.max_bitrate_restriction) {
+          console.log('[BroadcasterStream] StreamQuality set to:', streams[0].max_bitrate_restriction);
+          setStreamQuality(streams[0].max_bitrate_restriction);
+        }
+      } catch (err) {
+        console.error('[BroadcasterStream] Failed to fetch stream quality:', err);
+      }
+    };
+
+    fetchStreamQuality();
   }, [streamId, streamQuality]);
 
   // 配信開始（OBS 配信開始に遷移）
