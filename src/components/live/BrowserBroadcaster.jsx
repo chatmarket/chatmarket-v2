@@ -608,11 +608,6 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           setLoading(false);
         }
 
-        // 【固定URL】社長指定のWHIP エンドポイント（変更不可）
-        const FIXED_WHIP_URL = "https://27b83d82b8a7.global-bm.whip.live-video.net";
-        setWhipEndpoint(FIXED_WHIP_URL);
-        console.log('[BrowserBroadcaster] ✅ WHIP endpoint hardcoded:', FIXED_WHIP_URL);
-
         setLoading(false);
       } catch (err) {
         // エラーを無視して続行（ログのみ）
