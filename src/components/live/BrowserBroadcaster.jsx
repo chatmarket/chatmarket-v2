@@ -21,9 +21,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   // デバイス列挙
   const enumerateDevices = async () => {
     try {
+      console.log('[BrowserBroadcaster] 📱 Enumerating devices...');
       const devices = await navigator.mediaDevices.enumerateDevices();
       const cameraDevices = devices.filter((d) => d.kind === 'videoinput');
       const micDevices = devices.filter((d) => d.kind === 'audioinput');
+      
+      console.log(`[BrowserBroadcaster] 📷 Found ${cameraDevices.length} camera(s), 🎤 ${micDevices.length} microphone(s)`);
+      cameraDevices.forEach((cam, i) => console.log(`  Camera ${i + 1}: ${cam.label || 'Unknown'}`));
+      micDevices.forEach((mic, i) => console.log(`  Mic ${i + 1}: ${mic.label || 'Unknown'}`));
       
       setCameras(cameraDevices);
       setMicrophones(micDevices);
@@ -35,7 +40,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setSelectedMic(micDevices[0].deviceId);
       }
     } catch (err) {
-      console.error('[BrowserBroadcaster] Device enumeration error:', err);
+      console.error('[BrowserBroadcaster] ❌ Device enumeration error:', err);
+      toast.error('デバイス列挙に失敗: ' + err.message);
     }
   };
 
@@ -45,6 +51,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       try {
         setLoading(true);
         setError(null);
+        console.log('[BrowserBroadcaster] 🚀 Initializing media stream...');
 
         // デバイス列挙
         await enumerateDevices();
@@ -63,7 +70,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             : true,
         };
 
+        console.log('[BrowserBroadcaster] 📍 Requesting user media with constraints:', constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        // 既存ストリームを停止
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -73,18 +85,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         const videoTrack = stream.getVideoTracks()[0];
         const audioTrack = stream.getAudioTracks()[0];
 
+        const videoSettings = videoTrack?.getSettings();
+        console.log(`[BrowserBroadcaster] ✅ Video track acquired: ${videoSettings?.width}x${videoSettings?.height} @ ${videoSettings?.frameRate}fps`);
+        console.log(`[BrowserBroadcaster] ✅ Audio track acquired: ${audioTrack?.label}`);
+
         setCameraReady(!!videoTrack && videoTrack.enabled);
         setMicReady(!!audioTrack && audioTrack.enabled);
 
         // WHIP エンドポイント取得
+        console.log('[BrowserBroadcaster] 🌐 Fetching WHIP endpoint...');
         const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
         if (whipRes?.data?.whipEndpoint) {
           setWhipEndpoint(whipRes.data.whipEndpoint);
-          console.log('[BrowserBroadcaster] WHIP endpoint ready:', whipRes.data.whipEndpoint);
+          console.log('[BrowserBroadcaster] ✅ WHIP endpoint ready:', whipRes.data.whipEndpoint);
         }
 
         setLoading(false);
       } catch (err) {
+        console.error('[BrowserBroadcaster] ❌ Initialization error:', err);
         setError(err.message);
         setLoading(false);
         toast.error("初期化に失敗しました: " + err.message);
@@ -94,8 +112,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     initMedia();
 
     return () => {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      whipClientRef.current?.disconnect();
+      streamRef.current?.getTracks().forEach((t) => {
+        console.log(`[BrowserBroadcaster] 🛑 Stopping ${t.kind} track`);
+        t.stop();
+      });
+      whipClientRef.current?.close();
     };
   }, [streamId, selectedCamera, selectedMic]);
 
@@ -112,9 +133,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     try {
       setIsBroadcasting(true);
+      console.log('[BrowserBroadcaster] 🎬 Starting broadcast...');
 
       // ストリーム状態を 'live' に更新
       const now = new Date().toISOString();
+      console.log('[BrowserBroadcaster] 💾 Updating stream status to "live"');
       await base44.entities.LiveStream.update(streamId, {
         status: "live",
         live_started_at: now,
@@ -122,35 +145,59 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       // チャンネル is_live フラグ更新
       if (channelId) {
+        console.log('[BrowserBroadcaster] 💾 Updating channel is_live flag');
         await base44.entities.Channel.update(channelId, { is_live: true });
       }
 
       // IVS WebRTC 接続開始（WHIP プロトコル）
+      console.log('[BrowserBroadcaster] 🔌 Initiating WHIP connection...');
       await connectToWhip();
 
       toast.success("✅ ブラウザ配信開始 — AWS IVS へ接続中...");
     } catch (err) {
-      console.error('[BrowserBroadcaster] Broadcast start error:', err);
-      toast.error("配信開始に失敗しました");
+      console.error('[BrowserBroadcaster] ❌ Broadcast start error:', err);
+      toast.error("配信開始に失敗しました: " + err.message);
       setIsBroadcasting(false);
     }
   };
 
-  const connectToWhip = async () => {
+  const connectToWhip = async (retryCount = 0, maxRetries = 3) => {
     try {
+      console.log(`[BrowserBroadcaster] 🔌 Connecting to WHIP (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+      
       // PC (PeerConnection) 作成
       const pc = new RTCPeerConnection();
+
+      // 接続状態を監視
+      pc.onconnectionstatechange = () => {
+        console.log(`[BrowserBroadcaster] WebRTC Connection State: ${pc.connectionState}`);
+        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+          console.warn('[BrowserBroadcaster] ⚠️  Connection lost, attempting to reconnect...');
+          if (retryCount < maxRetries) {
+            setTimeout(() => connectToWhip(retryCount + 1, maxRetries), 2000);
+          } else {
+            console.error('[BrowserBroadcaster] ❌ Max retries reached');
+            toast.error('配信接続が失敗しました。もう一度試してください。');
+            setIsBroadcasting(false);
+          }
+        } else if (pc.connectionState === 'connected') {
+          console.log('[BrowserBroadcaster] ✅ WebRTC Connection Established');
+        }
+      };
 
       // ローカルストリームのトラックを追加
       streamRef.current?.getTracks().forEach((track) => {
         pc.addTrack(track, streamRef.current);
+        console.log(`[BrowserBroadcaster] ➕ Added ${track.kind} track: ${track.label}`);
       });
 
       // Offer 生成
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      console.log('[BrowserBroadcaster] 📝 Offer created and set as local description');
 
       // WHIP エンドポイントへ POST
+      console.log(`[BrowserBroadcaster] 📤 Sending offer to WHIP endpoint: ${whipEndpoint}`);
       const response = await fetch(whipEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/sdp' },
@@ -158,17 +205,23 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       });
 
       if (!response.ok) {
-        throw new Error(`WHIP connection failed: ${response.statusText}`);
+        throw new Error(`WHIP HTTP Error: ${response.status} ${response.statusText}`);
       }
 
       const answerSdp = await response.text();
       const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp });
       await pc.setRemoteDescription(answer);
+      console.log('[BrowserBroadcaster] ✅ Answer received and set as remote description');
 
       whipClientRef.current = pc;
-      console.log('[BrowserBroadcaster] ✅ WHIP connection established');
+      console.log('[BrowserBroadcaster] 🎬 WHIP connection established successfully');
     } catch (err) {
-      console.error('[BrowserBroadcaster] WHIP connection error:', err);
+      console.error('[BrowserBroadcaster] ❌ WHIP connection error:', err);
+      if (retryCount < maxRetries) {
+        console.log(`[BrowserBroadcaster] 🔄 Retrying in 2 seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return connectToWhip(retryCount + 1, maxRetries);
+      }
       throw err;
     }
   };
