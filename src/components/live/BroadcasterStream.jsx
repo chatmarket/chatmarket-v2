@@ -126,7 +126,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
 
     fetchStreamQuality();
-  }, [streamId, streamQuality]);
+  }, [streamId]); // 🚨 streamQuality を依存配列から削除（無限ループ防止）
 
   // 配信開始（OBS 配信開始に遷移）
   const handleGoLive = async () => {

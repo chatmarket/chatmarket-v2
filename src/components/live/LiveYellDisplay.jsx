@@ -1,15 +1,41 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
 export default function LiveYellDisplay({ streamId, latestYell }) {
-  const { data: superChats = [] } = useQuery({
-    queryKey: ["live-yells", streamId],
-    queryFn: () => base44.entities.SuperChat.filter({ livestream_id: streamId }, "-created_date", 20),
-    refetchInterval: 2000,
-    enabled: !!streamId,
-  });
+  const [superChats, setSuperChats] = useState([]);
+
+  useEffect(() => {
+    if (!streamId) return;
+    
+    console.log(`[LiveYellDisplay] 📡 Subscribing to SuperChat on stream: ${streamId}`);
+    
+    // 初回ロード
+    const fetchSuperChats = async () => {
+      try {
+        const data = await base44.entities.SuperChat.filter(
+          { livestream_id: streamId },
+          "-created_date",
+          20
+        );
+        setSuperChats(data);
+      } catch (err) {
+        console.error('[LiveYellDisplay] Failed to fetch SuperChat:', err);
+      }
+    };
+
+    fetchSuperChats();
+
+    // リアルタイム購読
+    const unsubscribe = base44.entities.SuperChat.subscribe((event) => {
+      if (event.type !== "create") return;
+      if (event.data?.livestream_id !== streamId) return;
+      console.log(`[LiveYellDisplay] ✅ SuperChat added: ${event.data?.user_name} - ${event.data?.amount}コイン`);
+      setSuperChats((prev) => [event.data, ...prev.slice(0, 19)]);
+    });
+
+    return unsubscribe;
+  }, [streamId]);
 
   return (
     <>

@@ -1,14 +1,40 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 
 export default function LiveChatDisplay({ streamId }) {
-  const { data: comments = [] } = useQuery({
-    queryKey: ["live-comments", streamId],
-    queryFn: () => base44.entities.Comment.filter({ target_type: "livestream_chat", target_id: streamId }, "-created_date", 30),
-    refetchInterval: 2000,
-    enabled: !!streamId,
-  });
+  const [comments, setComments] = useState([]);
+
+  useEffect(() => {
+    if (!streamId) return;
+    
+    console.log(`[LiveChatDisplay] 📡 Subscribing to comments on stream: ${streamId}`);
+    
+    // 初回ロード
+    const fetchComments = async () => {
+      try {
+        const data = await base44.entities.Comment.filter(
+          { target_type: "livestream_chat", target_id: streamId },
+          "-created_date",
+          30
+        );
+        setComments(data);
+      } catch (err) {
+        console.error('[LiveChatDisplay] Failed to fetch comments:', err);
+      }
+    };
+
+    fetchComments();
+
+    // リアルタイム購読
+    const unsubscribe = base44.entities.Comment.subscribe((event) => {
+      if (event.type !== "create") return;
+      if (event.data?.target_id !== streamId) return;
+      console.log(`[LiveChatDisplay] ✅ Comment added: ${event.data?.user_name}`);
+      setComments((prev) => [event.data, ...prev.slice(0, 29)]);
+    });
+
+    return unsubscribe;
+  }, [streamId]);
 
   return comments.length > 0 ? (
     comments.map((c) => (
