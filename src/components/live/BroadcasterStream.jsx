@@ -9,6 +9,8 @@ import LiveTimer from "./LiveTimer";
 import LiveCostTracker from "./LiveCostTracker";
 import ViewerCountGraph from "./ViewerCountGraph";
 import MicLevelMeter from "./MicLevelMeter";
+import LiveChatDisplay from "./LiveChatDisplay";
+import LiveYellDisplay from "./LiveYellDisplay";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
@@ -384,8 +386,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           <div className="px-4 py-3 border-b border-zinc-800">
             <p className="text-sm font-bold text-white">💬 チャット</p>
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-3">
-            <p className="text-xs text-zinc-500 text-center py-8">配信中にチャットが表示されます</p>
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            <LiveChatDisplay streamId={streamId} />
           </div>
         </div>
 
@@ -393,21 +395,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           <div className="px-4 py-3 border-b border-zinc-800">
             <p className="text-sm font-bold text-yellow-400">⭐ エール・スーパーチャット</p>
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-3">
-            {latestYell ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-gradient-to-r from-yellow-500/20 to-amber-600/20 border border-yellow-500/40 rounded-lg p-3"
-              >
-                <p className="text-xs font-bold text-yellow-400">{latestYell.user_name} さん</p>
-                <p className="text-sm font-black text-yellow-300 mt-1">🪙 {latestYell.amount} コイン</p>
-                {latestYell.message && <p className="text-xs text-foreground/80 mt-2">「{latestYell.message}」</p>}
-              </motion.div>
-            ) : (
-              <p className="text-xs text-zinc-500 text-center py-8">応援メッセージが表示されます</p>
-            )}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            <LiveYellDisplay streamId={streamId} latestYell={latestYell} />
           </div>
         </div>
       </div>
