@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio, Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -137,9 +137,42 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【修正】マウント時に一回だけ setupDevices() を実行（複雑な監視ループ破棄）
+  // 【権限状態リアルタイム監視】ブラウザの権限状態変化を検知
   useEffect(() => {
-    const setupDevices = async () => {
+    let permissionListener = null;
+
+    const setupPermissionMonitoring = async () => {
+      try {
+        const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+        const micPermission = await navigator.permissions.query({ name: 'microphone' });
+
+        const onPermissionChange = () => {
+          console.log(`[BrowserBroadcaster] 🔄 Permission state changed: camera=${cameraPermission.state}, mic=${micPermission.state}`);
+          // 権限が「granted」に変わった瞬間に setupDevices を再実行
+          if (cameraPermission.state === 'granted' || micPermission.state === 'granted') {
+            console.log('[BrowserBroadcaster] ✅ Permissions granted! Re-running setupDevices...');
+            setupDevices();
+          }
+        };
+
+        cameraPermission.addEventListener('change', onPermissionChange);
+        micPermission.addEventListener('change', onPermissionChange);
+
+        permissionListener = () => {
+          cameraPermission.removeEventListener('change', onPermissionChange);
+          micPermission.removeEventListener('change', onPermissionChange);
+        };
+      } catch (err) {
+        console.warn('[BrowserBroadcaster] ⚠️ Permission monitoring not supported:', err.message);
+      }
+    };
+
+    setupPermissionMonitoring();
+    return permissionListener;
+  }, []);
+
+  // 【修正】setupDevices() を定義（複数のトリガーから呼び出し可能）
+  const setupDevices = React.useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
@@ -164,29 +197,60 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           sessionStorage.removeItem('selectedMic');
         }
 
-        // ユーザーメディアを取得（デバイスID指定なし = デフォルト）
-        const constraints = {
-          video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
-          audio: true,
-        };
+        // 【制約緩和】最初は最小限（360p）で接続し、成功してから画質を上げる
+        const qualityLevels = [
+          { width: 480, height: 360, label: '360p (低)' },
+          { width: 1280, height: 720, label: '720p (中)' },
+          { width: 1920, height: 1080, label: '1080p (高)' },
+        ];
 
-        console.log('[BrowserBroadcaster] 📍 Requesting user media (default devices)...');
-        
-        // 【権限ダイアログ表示時間考慮】タイムアウトを 15秒に設定（ダイアログ表示＋ユーザー操作時間）
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Permission dialog timeout')), 15000)
-        );
-        
-        const stream = await Promise.race([
-          navigator.mediaDevices.getUserMedia(constraints),
-          timeoutPromise
-        ]);
-        
+        let stream = null;
+        let successQuality = null;
+
+        for (const quality of qualityLevels) {
+          try {
+            const constraints = {
+              video: { 
+                width: { ideal: quality.width }, 
+                height: { ideal: quality.height }
+              },
+              audio: true,
+            };
+
+            console.log(`[BrowserBroadcaster] 📍 Requesting user media (${quality.label})...`);
+            
+            // 【権限ダイアログ表示時間考慮】タイムアウトを 15秒に設定（ダイアログ表示＋ユーザー操作時間）
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Permission dialog timeout')), 15000)
+            );
+            
+            stream = await Promise.race([
+              navigator.mediaDevices.getUserMedia(constraints),
+              timeoutPromise
+            ]);
+
+            successQuality = quality.label;
+            console.log(`[BrowserBroadcaster] ✅ Stream acquired at ${quality.label}`);
+            console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
+            break; // 成功したら抜ける
+          } catch (qualityErr) {
+            console.warn(`[BrowserBroadcaster] ⚠️ Failed at ${quality.label}: ${qualityErr.message}`);
+            if (quality === qualityLevels[qualityLevels.length - 1]) {
+              // 最後の試みが失敗 → エラースロー
+              throw qualityErr;
+            }
+            // 次の品質で再試行
+            continue;
+          }
+        }
+
+        if (!stream) {
+          throw new Error('Failed to acquire media stream at any quality level');
+        }
+
         streamRef.current = stream;
-        console.log('[BrowserBroadcaster] ✅ Stream acquired');
-        console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
-        // 【修正】権限取得後に再度デバイス列挙（Unknown を Unknown解消）
+        // 【修正】権限取得後に再度デバイス列挙（Unknown を解消）
         console.log('[BrowserBroadcaster] 🔄 Re-enumerating devices after permission grant...');
         await enumerateDevices(); // 名前が取得できるようになったはず
         
@@ -436,7 +500,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setLoading(false);
         toast.error('デバイスの準備に失敗しました。上のメッセージを確認してください。');
       }
-    };
+    }, [streamId]);
 
     setupDevices();
 
@@ -446,7 +510,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       clearInterval(videoWidthCheckRef.current);
       cancelAnimationFrame(canvasRafRef.current);
     };
-  }, [streamId]); // 【修正】依存配列を最小化（一回だけ実行）
+  }, [setupDevices, streamId]);
+
+  // 【デバイス選択変更時に手動着火】
+  useEffect(() => {
+    if (!selectedCamera && !selectedMic) return;
+    console.log('[BrowserBroadcaster] 👤 Device selection changed - re-running setupDevices...');
+    setLoading(true);
+    setError(null);
+    setupDevices();
+  }, [selectedCamera, selectedMic, setupDevices]);
 
   const handleStartBroadcast = async () => {
     if (!cameraReady || !micReady) {
@@ -711,9 +784,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  console.log('[BrowserBroadcaster] ✅ User clicked retry - resetting error state');
+                  console.log('[BrowserBroadcaster] 👤 User clicked retry button - re-running setupDevices...');
                   setError(null);
                   setLoading(true);
+                  setupDevices(); // 手動着火
                 }}
                 className="px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-semibold text-white transition-colors"
               >
