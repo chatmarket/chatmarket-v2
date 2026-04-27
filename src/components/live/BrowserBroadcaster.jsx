@@ -586,16 +586,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           setLoading(false);
         }
 
-        // WHIP エンドポイント取得（並列）
-        console.log('[BrowserBroadcaster] 🌐 Fetching WHIP endpoint...');
+        // 【正しい住所】WHIP エンドポイント再取得（毎回最新を取得）
+        console.log('[BrowserBroadcaster] 🌐 Fetching latest WHIP endpoint from AWS IVS...');
         try {
           const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
           if (whipRes?.data?.whipEndpoint) {
             setWhipEndpoint(whipRes.data.whipEndpoint);
-            console.log('[BrowserBroadcaster] ✅ WHIP endpoint ready');
+            console.log('[BrowserBroadcaster] ✅ WHIP endpoint ready:', whipRes.data.whipEndpoint.split('?')[0]);
+          } else {
+            throw new Error('WHIP endpoint not provided by backend - check AWS IVS configuration');
           }
         } catch (whipErr) {
-          console.warn('[BrowserBroadcaster] ⚠️  WHIP endpoint fetch failed:', whipErr.message);
+          console.warn('[BrowserBroadcaster] ⚠️  WHIP endpoint fetch failed (will retry on broadcast):', whipErr.message);
         }
 
         setLoading(false);
@@ -772,11 +774,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     try {
       console.log('[BrowserBroadcaster] 📍 [STEP 1/4] Starting broadcast (force mode)...');
       
-      // WHIP エンドポイントが無くても続行
-      if (!whipEndpoint) {
+      // 【最新WHIP取得】毎回リセット → キャッシュドメイン問題を根絶
+      console.log('[BrowserBroadcaster] 🌐 [FORCE LATEST] Fetching fresh WHIP endpoint from AWS IVS...');
+      let freshWhipEndpoint = whipEndpoint;
+      try {
+        const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
+        if (whipRes?.data?.whipEndpoint) {
+          freshWhipEndpoint = whipRes.data.whipEndpoint;
+          setWhipEndpoint(freshWhipEndpoint);
+          console.log('[BrowserBroadcaster] ✅ Fresh WHIP endpoint acquired:', freshWhipEndpoint.split('?')[0]);
+        }
+      } catch (err) {
+        console.warn('[BrowserBroadcaster] ⚠️ Fresh WHIP endpoint fetch failed, using cached:', err.message);
+      }
+
+      if (!freshWhipEndpoint) {
         console.warn('[BrowserBroadcaster] ⚠️ WHIP endpoint missing - but force continuing');
       } else {
-        console.log(`[BrowserBroadcaster] ✅ WHIP Endpoint: ${whipEndpoint.split('?')[0]}...`);
+        console.log(`[BrowserBroadcaster] ✅ WHIP Endpoint: ${freshWhipEndpoint.split('?')[0]}...`);
 
       // ストリーム情報を取得（無くても続行）
       console.log('[BrowserBroadcaster] 📍 [STEP 2/4] Fetching stream info...');
@@ -834,12 +849,40 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         }
       }
 
-      // WHIP 接続開始（失敗しても配信状態は保持）
+      // 【音声再接続】AudioContext 強制 resume + analyzer 再配線
+      console.log('[BrowserBroadcaster] 🎤 [FINAL FIX 4/4] Forcing AudioContext + analyzer reconnection...');
+      try {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume();
+          console.log('[BrowserBroadcaster] ✅ AudioContext resumed (force mode)');
+        }
+
+        // アナライザーを再接続（浮いている配線を固定）
+        if (streamRef.current && analyzerRef.current) {
+          const audioTrack = streamRef.current.getAudioTracks()[0];
+          if (audioTrack && audioContextRef.current) {
+            // 既存の接続を削除
+            if (analyzerRef.current.input) {
+              try { analyzerRef.current.input.disconnect(); } catch (_) {}
+            }
+
+            // 強制的に再接続
+            const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+            source.connect(analyzerRef.current);
+            analyzerRef.current.connect(audioContextRef.current.destination);
+            console.log('[BrowserBroadcaster] ✅ Audio analyzer re-wired successfully');
+          }
+        }
+      } catch (audioErr) {
+        console.warn('[BrowserBroadcaster] ⚠️ Audio re-wiring attempt (non-critical):', audioErr.message);
+      }
+
+      // WHIP 接続開始（失敗しても配信状態は保持・無限リトライ）
       console.log('[BrowserBroadcaster] 🔌 Initiating WHIP connection to AWS IVS...');
       try {
-        await connectToWhip();
+        await connectToWhip(0, Infinity); // 【無限リトライ】maxRetries = Infinity
       } catch (err) {
-        console.warn('[BrowserBroadcaster] ⚠️ WHIP connection failed - but staying in broadcast mode');
+        console.warn('[BrowserBroadcaster] ⚠️ WHIP connection exhausted - but staying in broadcast mode');
       }
 
       // タイムアウトをクリア（成功時）
@@ -875,6 +918,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   };
 
   const connectToWhip = async (retryCount = 0, maxRetries = 3) => {
+    // 【無限リトライ】maxRetries が Infinity の場合は永遠にリトライ
+    const shouldRetryForever = maxRetries === Infinity;
     try {
       console.log(`[BrowserBroadcaster] 🔌 [WHIP ${retryCount + 1}/${maxRetries + 1}] Creating RTCPeerConnection...`);
       
@@ -882,10 +927,23 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       const pc = new RTCPeerConnection();
       console.log('[BrowserBroadcaster] ✅ RTCPeerConnection created');
 
-      // 【全回路リセット 1】WHIP ドメイン・ランダムクエリ追加＝キャッシュ回避
+      // 【正しい住所の使用】WHIP ドメイン・ランダムクエリ追加＝キャッシュ回避 + 最新エンドポイント確保
+      let broadcastWhipEndpoint = whipEndpoint;
+      if (!broadcastWhipEndpoint) {
+        console.warn('[BrowserBroadcaster] ⚠️ WHIP endpoint is null - attempting fresh fetch...');
+        try {
+          const freshRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
+          broadcastWhipEndpoint = freshRes?.data?.whipEndpoint;
+        } catch (_) {}
+      }
+
+      if (!broadcastWhipEndpoint) {
+        throw new Error('WHIP endpoint unavailable - check AWS IVS configuration and domain DNS');
+      }
+
       const randomQueryParam = `_cache_bust=${Math.random().toString(36).substr(2, 9)}`;
-      const whipUrlWithBypass = `${whipEndpoint}${whipEndpoint.includes('?') ? '&' : '?'}${randomQueryParam}`;
-      console.log('[BrowserBroadcaster] 🚀 [FULL RESET 1/4] WHIP endpoint with cache-bust:', whipUrlWithBypass.split('?')[0] + '?...');
+      const whipUrlWithBypass = `${broadcastWhipEndpoint}${broadcastWhipEndpoint.includes('?') ? '&' : '?'}${randomQueryParam}`;
+      console.log('[BrowserBroadcaster] 🚀 [FORCE LATEST] WHIP endpoint with cache-bust:', whipUrlWithBypass.split('?')[0] + '?...');
 
       // 接続状態を監視
       pc.onconnectionstatechange = () => {
@@ -946,10 +1004,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         toast.error('⚠️ ネット接続またはDNS設定を確認してください。\n【解決策】①Wi-Fiを一度OFF/ON②別のWi-Fi試行③デバイス再起動');
       }
       
-      if (retryCount < maxRetries) {
-        console.log(`[BrowserBroadcaster] 🔄 Retrying in 2 seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        return connectToWhip(retryCount + 1, maxRetries);
+      // 【無限リトライ】ネットワークエラーは永遠にリトライ（ボタン無効化なし）
+      if (shouldRetryForever || retryCount < maxRetries) {
+        const nextRetryCount = retryCount + 1;
+        console.log(`[BrowserBroadcaster] 🔄 ${shouldRetryForever ? '♾️ Infinite' : 'Finite'} Retrying in 3 seconds (attempt ${nextRetryCount})...`);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        return connectToWhip(nextRetryCount, maxRetries);
       }
       
       // 【全回路リセット 4】エラー飲み込み強行＝配信を続行（エラーログのみ）
@@ -1326,7 +1386,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         </button>
         <button
           onClick={handleStartBroadcast}
-          disabled={!cameraReady || !micReady || isBroadcasting || broadcastStatus === "connecting"}
+          disabled={!cameraReady || !micReady}
           className={`flex-1 py-4 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-lg ${
             broadcastStatus === "live"
               ? "bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/30"
