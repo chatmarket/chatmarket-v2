@@ -8,13 +8,14 @@ import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel.jsx";
 import TipOverlay from "../components/live/TipOverlay";
 import ExtensionNotification from "../components/live/ExtensionNotification";
-import { Users, Radio, Lock, CreditCard, Zap, Maximize, Minimize } from "lucide-react";
+import { Users, Radio, Lock, CreditCard, Zap, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream.jsx";
 import YellButtons from "../components/live/YellButtons.jsx";
+import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -49,6 +50,7 @@ function LiveViewInner() {
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [forceKey, setForceKey] = useState(0);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
   const extensionNotifiedRef = useRef(false);
 
   useEffect(() => {
@@ -186,6 +188,40 @@ function LiveViewInner() {
         </div>
       )}
 
+      {/* 読み上げトグル（右上） */}
+      {stream.status === "live" && (
+        <button
+          onClick={() => setSpeechEnabled((v) => !v)}
+          title={speechEnabled ? "読み上げON" : "読み上げOFF"}
+          style={{
+            position: "absolute",
+            top: 12,
+            right: activeCall ? 120 : 12,
+            zIndex: 30,
+            width: 38,
+            height: 38,
+            borderRadius: "50%",
+            background: speechEnabled ? "rgba(251,191,36,0.85)" : "rgba(0,0,0,0.5)",
+            border: speechEnabled ? "2px solid #fbbf24" : "1px solid rgba(255,255,255,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          {speechEnabled
+            ? <Volume2 style={{ width: 18, height: 18, color: "#000" }} />
+            : <VolumeX style={{ width: 18, height: 18, color: "#fff" }} />
+          }
+        </button>
+      )}
+
+      {/* エール通知ポップアップ */}
+      {stream.status === "live" && (
+        <YellNotificationPopup streamId={id} speechEnabled={speechEnabled} />
+      )}
+
       <TipOverlay tips={activeTips} />
 
       {activeCall && (
@@ -199,31 +235,34 @@ function LiveViewInner() {
 
       {stream.status === "live" && (
         <div className="absolute bottom-0 left-0 right-0 z-20">
-          {/* エールバー — ゴールドUI */}
+          {/* エールバー — スマホ最適化 */}
           <div
-            className="flex items-center justify-between px-4 py-3"
             style={{
-              background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, transparent 100%)",
+              background: "linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.75) 70%, transparent 100%)",
+              paddingBottom: "env(safe-area-inset-bottom, 8px)",
             }}
           >
-            {/* 左: エールボタン */}
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col items-start mr-1">
-                <span className="text-[10px] font-black text-yellow-400 tracking-widest uppercase">YELL</span>
-                <span className="text-[8px] text-yellow-400/60">応援する</span>
+            {/* ラベル行 */}
+            <div className="flex items-center justify-between px-4 pt-2 pb-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-black text-yellow-400 tracking-widest uppercase">⚡ YELL</span>
+                <span className="text-[9px] text-yellow-400/50">応援コインを送る</span>
               </div>
-              <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
+              <div className="flex items-center gap-2">
+                <VideoControls videoRef={null} showQuality={true} />
+                <button
+                  onClick={toggleFullscreen}
+                  className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white"
+                >
+                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
-
-            {/* 右: 設定・フルスクリーン */}
-            <div className="flex items-center gap-2">
-              <VideoControls videoRef={null} showQuality={true} />
-              <button
-                onClick={toggleFullscreen}
-                className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
-              >
-                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-              </button>
+            {/* ボタン行（横スクロール対応） */}
+            <div className="px-3 pb-3 overflow-x-auto">
+              <div className="flex gap-2" style={{ width: "max-content" }}>
+                <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
+              </div>
             </div>
           </div>
         </div>
