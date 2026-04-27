@@ -26,6 +26,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [micLevel, setMicLevel] = useState(0);
   const [permissionError, setPermissionError] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const loadingTimeoutRef = useRef(null);
+
+  // 【修正】3秒後にローディング画面を強制的に削除
+  useEffect(() => {
+    if (loading) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (loading) {
+          console.log('[BrowserBroadcaster] ⏱️ 3秒経過 — ローディング画面を強制削除');
+          setLoading(false);
+        }
+      }, 3000);
+    }
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, [loading]);
 
   // 【修正】selectedCamera/selectedMic を sessionStorage に永続化
   useEffect(() => {
@@ -156,20 +172,41 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] ✅ Stream acquired, assigning to video element...');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
-        // 【修正】videoRef の直接代入 — 命令系で即座に実行
-        if (!videoRef.current) {
-          throw new Error(`videoRef.current not found after 200ms wait. Debugging: videoRef=${videoRef.current}, streamRef=${streamRef.current ? 'exists' : 'null'}`);
+        // 【修正】document.getElementById で直接要素を掴む（最終手段）
+        let videoElement = videoRef.current;
+        if (!videoElement) {
+          console.warn('[BrowserBroadcaster] ⚠️  videoRef is null, trying document.getElementById...');
+          videoElement = document.getElementById('browser-broadcaster-video');
         }
 
-        // 【重要】srcObject 直接代入
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        videoRef.current.autoplay = true;
-        videoRef.current.playsInline = true;
+        if (!videoElement) {
+          throw new Error('[BrowserBroadcaster] ❌ Video element not found in DOM');
+        }
+
+        // 【最強属性セット】
+        videoElement.srcObject = stream;
+        videoElement.muted = true;
+        videoElement.autoplay = true;
+        videoElement.playsInline = true;
         
-        console.log('[BrowserBroadcaster] ✅ Stream INJECTED directly to videoRef.current.srcObject');
+        // 【最強CSS直書き】
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.objectFit = 'cover';
+        videoElement.style.opacity = '1';
+        videoElement.style.zIndex = '10';
+        videoElement.style.display = 'block';
+        videoElement.style.backgroundColor = '#000';
+
+        // 【メタデータ読み込み時に play() を明示的に叩く】
+        const onMetadata = () => {
+          console.log('[BrowserBroadcaster] 📹 Metadata loaded, playing...');
+          videoElement.play().catch(err => console.warn('[BrowserBroadcaster] ⚠️  play() failed:', err));
+        };
+        videoElement.addEventListener('loadedmetadata', onMetadata, { once: true });
+        
+        console.log('[BrowserBroadcaster] ✅ Stream INJECTED with MAXED-OUT attributes');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
-        console.log(`  videoRef.current.parentElement: ${videoRef.current.parentElement ? 'attached to DOM ✅' : 'DETACHED ❌'}`);
         
         setPermissionError(null);
 
@@ -425,11 +462,20 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         )}
 
         <video
+          id="browser-broadcaster-video"
           ref={videoRef}
           autoPlay
           muted
           playsInline
-          className="w-full h-full object-cover"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 1,
+            zIndex: 10,
+            display: 'block',
+            backgroundColor: '#000',
+          }}
         />
 
         {/* テストパターン オーバーレイ */}
