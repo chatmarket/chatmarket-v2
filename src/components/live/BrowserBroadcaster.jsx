@@ -54,9 +54,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   }, [selectedCamera, selectedMic]);
 
-  // 【マイクメーター独立稼働】映像と無関係に、ストリーム → AudioContext → 周波数解析
+  // 【マイクメーター独立稼働】映像と無関係に、ストリーム → AudioContext → 周波数解析 → React state
   const startMicMeter = useCallback((stream) => {
-    if (!stream) return;
+    if (!stream) {
+      console.warn('[BrowserBroadcaster] startMicMeter: stream is null');
+      return;
+    }
     
     try {
       const audioTracks = stream.getAudioTracks();
@@ -64,10 +67,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.warn('[BrowserBroadcaster] No audio tracks');
         return;
       }
+      console.log('[BrowserBroadcaster] ✅ Audio track found, initializing meter');
 
       // AudioContext 作成
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('[BrowserBroadcaster] ✅ AudioContext created');
       }
 
       const ctx = audioContextRef.current;
@@ -82,22 +87,39 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         analyzerRef.current.fftSize = 256;
         source.connect(analyzerRef.current);
         analyzerRef.current.connect(ctx.destination);
+        console.log('[BrowserBroadcaster] ✅ Analyser connected');
       }
 
-      // メーター解析ループ
+      // メーター解析ループ（state 更新を明示的に行う）
+      let meterLoopId = null;
       const dataArray = new Uint8Array(analyzerRef.current.frequencyBinCount);
+      
       const meterTick = () => {
-        if (!analyzerRef.current) return;
-        analyzerRef.current.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        setMicLevel(Math.min(100, Math.round((avg / 128) * 100)));
-        requestAnimationFrame(meterTick);
+        try {
+          if (!analyzerRef.current) {
+            console.warn('[BrowserBroadcaster] Analyser lost');
+            return;
+          }
+          analyzerRef.current.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          const newLevel = Math.min(100, Math.round((avg / 128) * 100));
+          setMicLevel(newLevel);
+          meterLoopId = requestAnimationFrame(meterTick);
+        } catch (err) {
+          console.error('[BrowserBroadcaster] Meter loop error:', err);
+        }
       };
-      meterTick();
+      
+      meterLoopId = requestAnimationFrame(meterTick);
+      console.log('[BrowserBroadcaster] ✅ Mic meter started — loop active');
 
-      console.log('[BrowserBroadcaster] ✅ Mic meter started');
+      // Cleanup function を返す（不要になった時に loop 停止）
+      return () => {
+        if (meterLoopId) cancelAnimationFrame(meterLoopId);
+        console.log('[BrowserBroadcaster] Meter loop stopped');
+      };
     } catch (err) {
-      console.warn('[BrowserBroadcaster] Mic meter error:', err.message);
+      console.error('[BrowserBroadcaster] Mic meter init error:', err.message);
     }
   }, []);
 
@@ -196,20 +218,29 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【WHIP 接続】社長指定URL固定（一行も変更なし）
+  // 【WHIP 接続】社長指定URL固定 + streamId でログを刻む
   const connectToWhip = async () => {
     const WHIP_ENDPOINT = "https://27b83d82b8a7.global-bm.whip.live-video.net";
+    
+    console.log('[BrowserBroadcaster] 🌐 WHIP Endpoint:', WHIP_ENDPOINT);
+    console.log('[BrowserBroadcaster] 📡 StreamId:', streamId);
+
+    if (!streamRef.current || streamRef.current.getTracks().length === 0) {
+      throw new Error('No local stream available');
+    }
 
     const pc = new RTCPeerConnection();
 
     // ローカルストリーム追加
-    streamRef.current?.getTracks().forEach((track) => {
+    streamRef.current.getTracks().forEach((track) => {
       pc.addTrack(track, streamRef.current);
+      console.log(`[BrowserBroadcaster] ✅ Track added: ${track.kind}`);
     });
 
     // Offer 生成 → WHIP に POST
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
+    console.log('[BrowserBroadcaster] 📤 Offer created, sending to WHIP...');
 
     const response = await fetch(WHIP_ENDPOINT, {
       method: 'POST',
@@ -218,7 +249,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     });
 
     if (!response.ok) {
-      throw new Error(`WHIP error: ${response.status}`);
+      throw new Error(`WHIP error: ${response.status} ${response.statusText}`);
     }
 
     const answerSdp = await response.text();
@@ -226,7 +257,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     await pc.setRemoteDescription(answer);
 
     whipClientRef.current = pc;
-    console.log('[BrowserBroadcaster] ✅ WHIP connected');
+    console.log('[BrowserBroadcaster] ✅ WHIP connected — broadcasting to world');
   };
 
   return (
@@ -383,31 +414,31 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           キャンセル
         </button>
 
-        {/* チャット表示 */}
-        {isBroadcasting && (
-          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-sm flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary" />
-              チャット
-            </h3>
-            <div className="text-xs text-muted-foreground text-center py-4">
-              コメントが表示されます
+        {/* チャット表示（常時表示）*/}
+        <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+          <h3 className="font-bold text-sm flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary" />
+            💬 チャット
+          </h3>
+          <div className="h-32 bg-zinc-900/50 rounded-lg p-2 overflow-y-auto border border-zinc-800/50">
+            <div className="text-xs text-muted-foreground text-center py-12">
+              {isBroadcasting ? "コメント待機中..." : "配信開始後に表示"}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* コイン・ギフト通知 */}
-        {isBroadcasting && (
-          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-sm flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-yellow-400" />
-              ギフト
-            </h3>
-            <div className="text-xs text-muted-foreground text-center py-4">
-              スーパーチャットが表示されます
+        {/* コイン・ギフト通知（常時表示）*/}
+        <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+          <h3 className="font-bold text-sm flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-yellow-400" />
+            ⭐ スーパーチャット
+          </h3>
+          <div className="h-32 bg-zinc-900/50 rounded-lg p-2 overflow-y-auto border border-zinc-800/50">
+            <div className="text-xs text-muted-foreground text-center py-12">
+              {isBroadcasting ? "ギフト待機中..." : "配信開始後に表示"}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* エラーダイアログ */}
