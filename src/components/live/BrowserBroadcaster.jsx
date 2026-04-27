@@ -851,6 +851,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       console.log('[BrowserBroadcaster] ✅✅✅ WHIP BROADCAST SUCCESSFULLY STARTED ✅✅✅');
       setBroadcastStatus("live");
       toast.success("✅ ブラウザ配信開始 — 視聴者へ配信中...");
+    }
     } catch (err) {
       console.error('[BrowserBroadcaster] ❌❌❌ BROADCAST START FAILED ❌❌❌');
       console.error('[BrowserBroadcaster] 🔍 Error details:', {
