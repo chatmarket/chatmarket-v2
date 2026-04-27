@@ -102,7 +102,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           }
           analyzerRef.current.getByteFrequencyData(dataArray);
           const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-          const newLevel = Math.min(100, Math.round((avg / 128) * 100));
+          // 感度を 2 倍に上げる（小さい音もキャッチ）
+          const newLevel = Math.min(100, Math.round((avg / 64) * 100));
           setMicLevel(newLevel);
           meterLoopId = requestAnimationFrame(meterTick);
         } catch (err) {
@@ -160,7 +161,21 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setShowErrorDialog(true);
     });
 
+    // クリック時に AudioContext.resume() を実行（ブラウザ音声制限解除）
+    const handleUserClick = () => {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
+        }).catch((err) => {
+          console.warn('[BrowserBroadcaster] AudioContext resume failed:', err);
+        });
+      }
+    };
+
+    document.addEventListener('click', handleUserClick);
+
     return () => {
+      document.removeEventListener('click', handleUserClick);
       streamRef.current?.getTracks().forEach((t) => t.stop());
       whipClientRef.current?.close();
       if (audioContextRef.current) {
@@ -345,7 +360,23 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">マイク</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted-foreground">マイク</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMic(null);
+                  // デバイスを再選択させるため、stream を再初期化
+                  streamRef.current?.getTracks().forEach((t) => t.stop());
+                  streamRef.current = null;
+                  console.log('[BrowserBroadcaster] Mic reset triggered');
+                }}
+                disabled={isBroadcasting}
+                className="text-[10px] text-primary hover:text-primary/80 font-bold disabled:opacity-50"
+              >
+                リセット
+              </button>
+            </div>
             <select
               value={selectedMic || ""}
               onChange={(e) => setSelectedMic(e.target.value)}
