@@ -138,21 +138,14 @@ export default function GoLive() {
     await base44.entities.Channel.update(channel.id, { is_live: true });
 
     setCreating(false);
-    console.log(`[GoLive] ✅ Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
+    console.log(`[GoLive] ✅ [1対多 配信] Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
     setLiveStreamId(newStream.id);
     
     // セッションストレージに配信情報を保存（古いIDは完全削除）
     sessionStorage.clear();
     sessionStorage.setItem("liveStreamId", newStream.id);
     
-    // WHIP エンドポイントを確実に保存
-    const whipUrl = manualWhipEndpoint || "https://27b83d82b8a7.global-bm.whip.live-video.net";
-    sessionStorage.setItem("manualWhipEndpoint", whipUrl);
-    sessionStorage.setItem("streamId", newStream.id);
-    
-    console.log(`[GoLive] ✅ Stored streamId: ${newStream.id}`);
-    console.log(`[GoLive] ✅ Stored WHIP endpoint: ${whipUrl}`);
-    console.log(`[GoLive] 🔗 Connection URL will be: ${whipUrl}?streamId=${newStream.id}`);
+    console.log(`[GoLive] ✅ [1対多 配信] Stored streamId: ${newStream.id}`);
     
     // 配信方式選択UI表示
     setShowModeSelect(true);
