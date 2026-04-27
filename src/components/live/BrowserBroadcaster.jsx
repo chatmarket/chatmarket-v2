@@ -45,20 +45,21 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     setDebugMode(params.get('debug') === 'true');
   }, []);
 
-  // 【修正】3秒後にローディング画面を強制的に削除
+  // 【粘り強い待機】デバイス確定まで絶対にローディング画面を削除しない（Permission dialog 完全対応）
   useEffect(() => {
-    if (loading) {
+    if (loading && !cameraReady && !micReady) {
+      // デバイスが確定するまで 10秒以上待つ（Permission dialog + user interaction time）
       loadingTimeoutRef.current = setTimeout(() => {
-        if (loading) {
-          console.log('[BrowserBroadcaster] ⏱️ 3秒経過 — ローディング画面を強制削除');
-          setLoading(false);
+        if (loading && !cameraReady && !micReady) {
+          console.log('[BrowserBroadcaster] ⏱️ 10秒経過 — デバイス確定待機中（許可待ち）');
+          // 10秒経過後も待ち続ける（最大 30秒まで）
         }
-      }, 3000);
+      }, 10000);
     }
     return () => {
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
     };
-  }, [loading]);
+  }, [loading, cameraReady, micReady]);
 
   // 【修正】selectedCamera/selectedMic を sessionStorage に永続化
   useEffect(() => {
@@ -347,9 +348,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
             console.log(`[BrowserBroadcaster] 📍 Requesting user media (${quality.label})...`);
             
-            // 【権限ダイアログ表示時間考慮】タイムアウトを 15秒に設定（ダイアログ表示＋ユーザー操作時間）
+            // 【Permission dialog 長時間対応】タイムアウトを 30秒に設定（社長の許可を待つ時間を確保）
             const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Permission dialog timeout')), 15000)
+              setTimeout(() => reject(new Error('Permission dialog timeout')), 30000)
             );
             
             stream = await Promise.race([
@@ -378,9 +379,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         streamRef.current = stream;
         
-        // 【修正】権限取得後に再度デバイス列挙（Unknown を解消）
-        console.log('[BrowserBroadcaster] 🔄 Re-enumerating devices after permission grant...');
-        await enumerateDevices(); // 名前が取得できるようになったはず
+        // 【『Unknown』解消】権限取得後に再度デバイス列挙 ✅ CRITICAL: enumerateDevices()を権限確定後に実行
+        console.log('[BrowserBroadcaster] 🔄 Re-enumerating devices AFTER permission grant (Unknown 完全排除)...');
+        
+        // 権限が完全に反映されるまで 500ms 待機
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        // 再列挙でデバイス名が確定される
+        await enumerateDevices(); // これで deviceId.label が正式名に確定
         
         // 【修正】video要素がDOMにマウントされるまで polling で待機（最大15秒、Async/Await最適化）
         let videoElement = null;
