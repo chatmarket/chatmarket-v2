@@ -779,9 +779,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     try {
       console.log('[BrowserBroadcaster] 📍 [STEP 1/4] Starting broadcast (force mode)...');
       
-      // 【器の流し込み】デフォルト WHIP URL を優先使用（永続化済み）
-      let freshWhipEndpoint = sessionStorage.getItem("manualWhipEndpoint") || "https://27b83d82b8a7.global-bm.whip.live-video.net";
-      console.log('[BrowserBroadcaster] 🌐 [WHIP READY] Using endpoint:', freshWhipEndpoint.split('?')[0]);
+      // 【正しい住所】社長が用意した本物のWHIP URL へ固定
+      const WHIP_ENDPOINT_CONSTANT = "https://27b83d82b8a7.global-bm.whip.live-video.net";
+      let freshWhipEndpoint = WHIP_ENDPOINT_CONSTANT;
+      console.log('[BrowserBroadcaster] 🌐 [WHIP READY] Using fixed endpoint:', freshWhipEndpoint);
 
       if (!freshWhipEndpoint) {
         console.warn('[BrowserBroadcaster] ⚠️ WHIP endpoint missing - but force continuing');
@@ -946,23 +947,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       const pc = new RTCPeerConnection();
       console.log('[BrowserBroadcaster] ✅ RTCPeerConnection created');
 
-      // 【正しい住所の使用】WHIP ドメイン・ランダムクエリ追加＝キャッシュ回避 + 最新エンドポイント確保
-      let broadcastWhipEndpoint = whipEndpoint;
-      if (!broadcastWhipEndpoint) {
-        console.warn('[BrowserBroadcaster] ⚠️ WHIP endpoint is null - attempting fresh fetch...');
-        try {
-          const freshRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
-          broadcastWhipEndpoint = freshRes?.data?.whipEndpoint;
-        } catch (_) {}
-      }
+      // 【本物の住所を使う】CEO の WHIP 定数を直接使用（API呼び出しなし）
+      const WHIP_ENDPOINT_CONSTANT = "https://27b83d82b8a7.global-bm.whip.live-video.net";
+      let broadcastWhipEndpoint = WHIP_ENDPOINT_CONSTANT;
+      console.log('[BrowserBroadcaster] 🌐 [WHIP FINAL] Using fixed endpoint:', broadcastWhipEndpoint);
 
-      if (!broadcastWhipEndpoint) {
-        throw new Error('WHIP endpoint unavailable - check AWS IVS configuration and domain DNS');
-      }
-
+      // キャッシュバスト追加（ドメイン自体は固定）
       const randomQueryParam = `_cache_bust=${Math.random().toString(36).substr(2, 9)}`;
-      const whipUrlWithBypass = `${broadcastWhipEndpoint}${broadcastWhipEndpoint.includes('?') ? '&' : '?'}${randomQueryParam}`;
-      console.log('[BrowserBroadcaster] 🚀 [FORCE LATEST] WHIP endpoint with cache-bust:', whipUrlWithBypass.split('?')[0] + '?...');
+      const whipUrlWithBypass = `${broadcastWhipEndpoint}?${randomQueryParam}`;
+      console.log('[BrowserBroadcaster] 🚀 WHIP POST URL:', whipUrlWithBypass.split('?')[0] + '?...');
 
       // 接続状態を監視
       pc.onconnectionstatechange = () => {
@@ -986,6 +979,45 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         pc.addTrack(track, streamRef.current);
         console.log(`[BrowserBroadcaster] ➕ Added ${track.kind} track: ${track.label}`);
       });
+
+      // 【メーター強制点火】AudioContext 解析を即座に開始 + メーター流し込み
+      try {
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+          console.log('[BrowserBroadcaster] 🔊 AudioContext created for meter analysis');
+        }
+
+        if (audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume();
+          console.log('[BrowserBroadcaster] 🔊 AudioContext resumed for meter');
+        }
+
+        // アナライザー強制作成 + ストリーム接続
+        if (!analyzerRef.current && streamRef.current && audioContextRef.current) {
+          const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+          analyzerRef.current = audioContextRef.current.createAnalyser();
+          analyzerRef.current.fftSize = 256;
+          source.connect(analyzerRef.current);
+          analyzerRef.current.connect(audioContextRef.current.destination);
+
+          // メーター解析開始（リアルタイム）
+          const analyzeFrequency = () => {
+            if (!analyzerRef.current) return;
+            const dataArray = new Uint8Array(analyzerRef.current.frequencyBinCount);
+            analyzerRef.current.getByteFrequencyData(dataArray);
+            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+            const level = Math.min(100, Math.round((avg / 128) * 100));
+            setMicLevel(level);
+            setMicDebugValue(avg.toFixed(0));
+            requestAnimationFrame(analyzeFrequency);
+          };
+          analyzeFrequency();
+
+          console.log('[BrowserBroadcaster] ✅✅✅ Microphone meter FORCE IGNITED - analyzing audio in real-time');
+        }
+      } catch (meterErr) {
+        console.warn('[BrowserBroadcaster] ⚠️ Meter ignition failed (non-critical):', meterErr.message);
+      }
 
       // Offer 生成
       console.log('[BrowserBroadcaster] 📝 Creating SDP offer...');
