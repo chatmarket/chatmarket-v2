@@ -37,6 +37,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [broadcastError, setBroadcastError] = useState(null);
   const broadcastTimeoutRef = useRef(null);
   const [micRetrying, setMicRetrying] = useState(false);
+  const [micDebugValue, setMicDebugValue] = useState(0);  // デバッグ用：生音量データ
 
   // 【修正】クエリパラメータから debug=true を検出
   useEffect(() => {
@@ -98,40 +99,63 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         const audioSettings = audioTrack.getSettings();
         console.log(`[BrowserBroadcaster] 📊 Audio Settings: sampleRate=${audioSettings?.sampleRate}Hz, echoCancellation=${audioSettings?.echoCancellation}`);
 
-        // 【禁断 3】AudioContext の『使い捨て』宣言＝古いインスタンスを確実にクローズ
+        // 【最終外科手術 3】古いインスタンスをクローズ
         if (audioContextRef.current) {
-          console.log('[BrowserBroadcaster] 🗑️ [FORBIDDEN PROTOCOL 3/5] Closing old AudioContext instance...');
+          console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 3/4] Closing old AudioContext...');
           try {
             audioContextRef.current.close();
-            console.log('[BrowserBroadcaster] ✅ Old AudioContext closed');
           } catch (closeErr) {
-            console.warn('[BrowserBroadcaster] ⚠️ Old AudioContext close failed:', closeErr.message);
+            console.warn('[BrowserBroadcaster] ⚠️ Close failed:', closeErr.message);
           }
         }
 
-        // 【Macサンプリングレート強制一致】トラックのサンプリングレートを取得＆指定
-        const trackSampleRate = audioSettings?.sampleRate || 48000;
-        console.log(`[BrowserBroadcaster] 🎚️ [FORBIDDEN PROTOCOL 4/5] Creating fresh AudioContext with sampleRate: ${trackSampleRate}Hz`);
-
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({
-          sampleRate: trackSampleRate
-        });
+        // 【最終外科手術 4】サンプリングレート自動解決＝ブラウザ推奨値を使う（固定値なし）
+        console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 4/4] Creating AudioContext with browser-recommended sampleRate...');
+        
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // sampleRate を指定しない＝ブラウザ推奨値（通常 44.1kHz または 48kHz）を自動採用
+        
         audioContextRef.current = audioContext;
-        console.log(`[BrowserBroadcaster] ✅ Fresh AudioContext created (sampleRate=${audioContext.sampleRate}Hz, state=${audioContext.state})`);
+        console.log(`[BrowserBroadcaster] ✅ AudioContext ready (sampleRate=${audioContext.sampleRate}Hz, state=${audioContext.state})`);
 
-        // 【禁断 5】接続順序の完全固定 + 生音モード（全補正OFF）
-        console.log('[BrowserBroadcaster] 🔌 [FORBIDDEN PROTOCOL 5/5] Wiring: stream → source → analyzer (RAW MODE)...');
+        // 【最後の配線】シンプルに接続
         source = audioContext.createMediaStreamSource(streamRef.current);
-        console.log('[BrowserBroadcaster] ✅ Source created (RAW stream connected)');
-
         analyzer = audioContext.createAnalyser();
         analyzer.fftSize = 256;
-        console.log('[BrowserBroadcaster] ✅ Analyzer created (fftSize=256)');
-
-        // 生データを直接叩き込む＝補正なし
+        
         source.connect(analyzer);
         analyzer.connect(audioContext.destination);
-        console.log('[BrowserBroadcaster] ✅ Pipeline complete: RAW AUDIO → ANALYZER (no processing)');
+        console.log('[BrowserBroadcaster] ✅ Audio pipeline established');
+
+        // 【無音トラック自動復旧ループ】0.5秒ごとにチェック＆自動置換
+        console.log('[BrowserBroadcaster] 🔄 Starting muted track auto-recovery loop (500ms interval)...');
+        const mutedCheckInterval = setInterval(() => {
+          const currentTrack = streamRef.current?.getAudioTracks()[0];
+          if (!currentTrack) {
+            clearInterval(mutedCheckInterval);
+            return;
+          }
+
+          if (currentTrack.muted || !currentTrack.enabled) {
+            console.warn('[BrowserBroadcaster] 🚨 Muted track detected! Auto-replacing...');
+            // トラック再取得ロジック
+            navigator.mediaDevices.getUserMedia({ audio: true }).then((newStream) => {
+              const newTrack = newStream.getAudioTracks()[0];
+              if (newTrack && streamRef.current) {
+                const oldTrack = streamRef.current.getAudioTracks()[0];
+                if (oldTrack) {
+                  streamRef.current.removeTrack(oldTrack);
+                  oldTrack.stop();
+                }
+                streamRef.current.addTrack(newTrack);
+                console.log('[BrowserBroadcaster] ✅ Muted track replaced with fresh one');
+              }
+            }).catch(err => console.warn('[BrowserBroadcaster] ⚠️ Muted track replacement failed:', err.message));
+          }
+        }, 500);
+
+        // クリーンアップ時にこのループを停止する
+        analyzerRef.current._mutedCheckInterval = mutedCheckInterval;
 
         analyzerRef.current = analyzer;
 
@@ -168,19 +192,26 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         document.addEventListener('click', onUserClick);
 
-        // 【音量メーター：RAF ループ】
+        // 【音量メーター＋デバッグ表示】
         const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        let debugRawValue = 0;  // デバッグ用の生データ値
+        
         const tick = () => {
           if (!alive) return;
           analyzer.getByteFrequencyData(dataArray);
           const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
           const level = Math.round((avg / 255) * 100);
-          setMicLevel(Math.max(level, 0)); // 常に 0 以上
+          
+          debugRawValue = avg;  // デバッグ値を更新（画面表示用）
+          
+          setMicLevel(Math.max(level, 0));
+          setMicDebugValue(Math.round(avg));  // デバッグ値を状態に設定
+          
           rafId = requestAnimationFrame(tick);
         };
 
         tick();
-        console.log('[BrowserBroadcaster] 🎤 Mic level meter started (RAF + MediaRecorder redundancy)');
+        console.log('[BrowserBroadcaster] 🎤 Mic level meter started (browser defaults + auto-recovery)');
 
         return () => {
           document.removeEventListener('click', onUserClick);
@@ -200,7 +231,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       alive = false;
       cancelAnimationFrame(rafId);
       if (source) source.disconnect();
-      if (analyzer) analyzer.disconnect();
+      if (analyzer) {
+        // 無音トラック自動復旧ループを停止
+        if (analyzerRef.current?._mutedCheckInterval) {
+          clearInterval(analyzerRef.current._mutedCheckInterval);
+        }
+        analyzer.disconnect();
+      }
       if (audioContext) audioContext.close();
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     };
@@ -600,22 +637,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   // 【マウント時に setupDevices 実行 + 全自動・無条件プロンプト】
   useEffect(() => {
-    // 【禁断のシンプル・プロトコル】ページ読み込み後、即座にダイアログを表示
-    console.log('[BrowserBroadcaster] 🚀 [FORBIDDEN PROTOCOL] Triggering immediate getUserMedia prompt (no button)...');
+    // 【最終外科手術 1】おまかせモードへの完全移行＝ブラウザ標準設定に任せる
+    console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 1/4] Triggering auto-prompt with browser defaults...');
     navigator.mediaDevices.getUserMedia({ 
       audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false
+        echoCancellation: true,     // ブラウザ標準に任せる
+        noiseSuppression: true,     // ブラウザ標準に任せる
+        autoGainControl: true       // ブラウザ標準に任せる
       }, 
       video: true 
     }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ [FORBIDDEN PROTOCOL] Auto-prompt successful - stream acquired without button');
-      stream.getTracks().forEach(t => t.stop()); // 一度停止して、setupDevices で再取得
+      console.log('[BrowserBroadcaster] ✅ [FINAL SURGERY 1/4] Auto-prompt successful with browser defaults');
+      stream.getTracks().forEach(t => t.stop());
       setupDevices();
     }).catch((err) => {
-      console.warn('[BrowserBroadcaster] ⚠️ [FORBIDDEN PROTOCOL] Auto-prompt failed (likely permission denied):', err.name);
-      setupDevices(); // エラーでも setupDevices を実行
+      console.warn('[BrowserBroadcaster] ⚠️ [FINAL SURGERY 1/4] Auto-prompt failed:', err.name);
+      setupDevices();
     });
 
     return () => {
@@ -666,16 +703,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.warn('[BrowserBroadcaster] ⚠️  Silent oscillator failed (non-critical):', dummyErr.message);
       }
 
-      // 【禁断 2】全自動デバイス選択（デバイスリスト待たずに index[0] を信じる）
-      console.log('[BrowserBroadcaster] 🎤 [FORBIDDEN PROTOCOL 2/5] Requesting audio WITHOUT waiting for device name resolution...');
+      // 【最終外科手術 2】おまかせモード＝ブラウザ標準に完全移行
+      console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 2/4] Requesting audio with browser defaults (no forced settings)...');
       
-      // デバイス列挙は行わない＝「Unknown」の名前解決を待たない
+      // すべての複雑な設定を削除＝ブラウザに完全に任せる
       const audioConstraints = {
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false
-        },
+        audio: true,  // シンプル＝デフォルト設定
         video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true
       };
 
@@ -1155,6 +1188,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             </div>
             <p className="text-[10px] text-muted-foreground">
               {micLevel < 20 ? "📍 無音に近い" : micLevel < 50 ? "🟢 良好" : micLevel < 80 ? "🟡 大きめ" : "🔴 大きすぎる"}
+            </p>
+            
+            {/* 【デバッグ表示】生データが動いているか確認 */}
+            <p className="text-[9px] text-zinc-500 mt-1 font-mono">
+              🔍 Debug: raw={micDebugValue} level={micLevel}%
             </p>
             
             {/* 【最終解 4】視覚的フィードバック＆マイク単独再試行ボタン */}
