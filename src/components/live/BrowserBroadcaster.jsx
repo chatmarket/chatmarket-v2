@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio } from "lucide-react";
+import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
@@ -13,6 +13,31 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [error, setError] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [whipEndpoint, setWhipEndpoint] = useState(null);
+  const [cameras, setCameras] = useState([]);
+  const [microphones, setMicrophones] = useState([]);
+  const [selectedCamera, setSelectedCamera] = useState(null);
+  const [selectedMic, setSelectedMic] = useState(null);
+
+  // デバイス列挙
+  const enumerateDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameraDevices = devices.filter((d) => d.kind === 'videoinput');
+      const micDevices = devices.filter((d) => d.kind === 'audioinput');
+      
+      setCameras(cameraDevices);
+      setMicrophones(micDevices);
+      
+      if (cameraDevices.length > 0 && !selectedCamera) {
+        setSelectedCamera(cameraDevices[0].deviceId);
+      }
+      if (micDevices.length > 0 && !selectedMic) {
+        setSelectedMic(micDevices[0].deviceId);
+      }
+    } catch (err) {
+      console.error('[BrowserBroadcaster] Device enumeration error:', err);
+    }
+  };
 
   // カメラ・マイク起動 + WHIP エンドポイント取得
   useEffect(() => {
@@ -20,12 +45,25 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       try {
         setLoading(true);
         setError(null);
-        
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: true,
-        });
 
+        // デバイス列挙
+        await enumerateDevices();
+
+        // ユーザーメディアを取得（1080p 優先）
+        const constraints = {
+          video: selectedCamera
+            ? {
+                deviceId: { exact: selectedCamera },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+              }
+            : { width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: selectedMic
+            ? { deviceId: { exact: selectedMic } }
+            : true,
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -59,7 +97,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       whipClientRef.current?.disconnect();
     };
-  }, [streamId]);
+  }, [streamId, selectedCamera, selectedMic]);
 
   const handleStartBroadcast = async () => {
     if (!cameraReady || !micReady) {
@@ -191,6 +229,48 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             <span className="text-xs font-semibold text-white">配信中</span>
           </div>
         )}
+      </div>
+
+      {/* デバイス選択 */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Settings className="w-5 h-5 text-primary" />
+          <h3 className="font-bold text-white">デバイス選択</h3>
+        </div>
+
+        {/* カメラ選択 */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-muted-foreground">カメラ</label>
+          <select
+            value={selectedCamera || ""}
+            onChange={(e) => setSelectedCamera(e.target.value)}
+            disabled={isBroadcasting}
+            className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {cameras.map((cam) => (
+              <option key={cam.deviceId} value={cam.deviceId}>
+                {cam.label || `カメラ ${cameras.indexOf(cam) + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* マイク選択 */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-muted-foreground">マイク</label>
+          <select
+            value={selectedMic || ""}
+            onChange={(e) => setSelectedMic(e.target.value)}
+            disabled={isBroadcasting}
+            className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {microphones.map((mic) => (
+              <option key={mic.deviceId} value={mic.deviceId}>
+                {mic.label || `マイク ${microphones.indexOf(mic) + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* ステータスチェック */}
