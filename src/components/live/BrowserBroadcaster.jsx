@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap } from "lucide-react";
+import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio } from "lucide-react";
 import { toast } from "sonner";
 
 export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const whipClientRef = useRef(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [micReady, setMicReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [whipEndpoint, setWhipEndpoint] = useState(null);
 
-  // カメラ・マイク起動
+  // カメラ・マイク起動 + WHIP エンドポイント取得
   useEffect(() => {
     const initMedia = async () => {
       try {
@@ -35,11 +37,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         setCameraReady(!!videoTrack && videoTrack.enabled);
         setMicReady(!!audioTrack && audioTrack.enabled);
+
+        // WHIP エンドポイント取得
+        const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
+        if (whipRes?.data?.whipEndpoint) {
+          setWhipEndpoint(whipRes.data.whipEndpoint);
+          console.log('[BrowserBroadcaster] WHIP endpoint ready:', whipRes.data.whipEndpoint);
+        }
+
         setLoading(false);
       } catch (err) {
         setError(err.message);
         setLoading(false);
-        toast.error("カメラ・マイクの起動に失敗しました: " + err.message);
+        toast.error("初期化に失敗しました: " + err.message);
       }
     };
 
@@ -47,8 +57,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      whipClientRef.current?.disconnect();
     };
-  }, []);
+  }, [streamId]);
 
   const handleStartBroadcast = async () => {
     if (!cameraReady || !micReady) {
@@ -56,9 +67,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       return;
     }
 
+    if (!whipEndpoint) {
+      toast.error("WHIP エンドポイントが見つかりません");
+      return;
+    }
+
     try {
       setIsBroadcasting(true);
-      
+
       // ストリーム状態を 'live' に更新
       const now = new Date().toISOString();
       await base44.entities.LiveStream.update(streamId, {
@@ -71,11 +87,51 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         await base44.entities.Channel.update(channelId, { is_live: true });
       }
 
-      toast.success("✅ ブラウザ配信開始しました");
-      // 配信ページへ遷移してもよい（今はここで待機）
+      // IVS WebRTC 接続開始（WHIP プロトコル）
+      await connectToWhip();
+
+      toast.success("✅ ブラウザ配信開始 — AWS IVS へ接続中...");
     } catch (err) {
+      console.error('[BrowserBroadcaster] Broadcast start error:', err);
       toast.error("配信開始に失敗しました");
       setIsBroadcasting(false);
+    }
+  };
+
+  const connectToWhip = async () => {
+    try {
+      // PC (PeerConnection) 作成
+      const pc = new RTCPeerConnection();
+
+      // ローカルストリームのトラックを追加
+      streamRef.current?.getTracks().forEach((track) => {
+        pc.addTrack(track, streamRef.current);
+      });
+
+      // Offer 生成
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // WHIP エンドポイントへ POST
+      const response = await fetch(whipEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/sdp' },
+        body: offer.sdp,
+      });
+
+      if (!response.ok) {
+        throw new Error(`WHIP connection failed: ${response.statusText}`);
+      }
+
+      const answerSdp = await response.text();
+      const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp });
+      await pc.setRemoteDescription(answer);
+
+      whipClientRef.current = pc;
+      console.log('[BrowserBroadcaster] ✅ WHIP connection established');
+    } catch (err) {
+      console.error('[BrowserBroadcaster] WHIP connection error:', err);
+      throw err;
     }
   };
 
@@ -127,6 +183,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           <Camera className="w-4 h-4 text-primary" />
           <span className="text-xs font-semibold text-primary">ブラウザプレビュー</span>
         </div>
+
+        {/* WHIP 接続ステータス */}
+        {isBroadcasting && (
+          <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500/80 backdrop-blur px-3 py-2 rounded-lg border border-red-400/50 animate-pulse">
+            <Radio className="w-4 h-4 text-white animate-pulse" />
+            <span className="text-xs font-semibold text-white">配信中</span>
+          </div>
+        )}
       </div>
 
       {/* ステータスチェック */}
