@@ -6,9 +6,13 @@ import { toast } from "sonner";
 export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const canvasRef = useRef(null);
+  const canvasCtxRef = useRef(null);
+  const canvasRafRef = useRef(null);
   const whipClientRef = useRef(null);
   const analyzerRef = useRef(null);
   const audioContextRef = useRef(null);
+  const videoWidthCheckRef = useRef(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [micReady, setMicReady] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,6 +32,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [isRetrying, setIsRetrying] = useState(false);
   const loadingTimeoutRef = useRef(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [canvasActive, setCanvasActive] = useState(false);
 
   // 【修正】クエリパラメータから debug=true を検出
   useEffect(() => {
@@ -243,11 +248,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] ✅ Stream INJECTED with MAXED-OUT attributes');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
 
-        // 【Canvas フォールバック：最終手段として映像を Canvas に描画】
+        // 【Canvas フォールバック：requestAnimationFrame で強制描画】
         const setupCanvasFallback = () => {
-          const videoTrack = stream.getVideoTracks()[0];
-          if (!videoTrack) return;
-
           const canvas = document.createElement('canvas');
           canvas.id = 'browser-broadcaster-canvas-fallback';
           canvas.style.position = 'absolute';
@@ -263,29 +265,83 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           const container = videoElement.parentElement;
           if (container) {
             container.appendChild(canvas);
+            canvasRef.current = canvas;
             console.log('[BrowserBroadcaster] 📋 Canvas fallback prepared (hidden)');
 
-            // video が描画されなかったら Canvas を表示
-            setTimeout(() => {
+            // video が描画されなかったら Canvas で requestAnimationFrame 描画開始
+            const startCanvasRendering = () => {
               if (videoElement.readyState < 2) {
-                console.log('[BrowserBroadcaster] 🎨 Video not ready, activating Canvas fallback...');
+                console.log('[BrowserBroadcaster] 🎨 Video not ready, activating Canvas RAF rendering...');
                 const ctx = canvas.getContext('2d');
+                canvasCtxRef.current = ctx;
+                
                 if (ctx) {
                   canvas.style.display = 'block';
                   videoElement.style.display = 'none';
-                  // Canvas に動的に描画する処理はここで可能（WebRTC API 使用時）
-                  ctx.fillStyle = '#111';
-                  ctx.fillRect(0, 0, canvas.width, canvas.height);
-                  ctx.fillStyle = '#00ff00';
-                  ctx.font = '20px monospace';
-                  ctx.fillText('[Canvas Rendering Active]', 20, 40);
+                  setCanvasActive(true);
+
+                  const renderCanvas = () => {
+                    if (!canvasRef.current || !videoElement.srcObject) return;
+                    
+                    // Canvas サイズを video サイズに同期
+                    if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+                      canvas.width = videoElement.videoWidth;
+                      canvas.height = videoElement.videoHeight;
+                    }
+
+                    // 1/30秒ごとに video フレームを canvas に描画
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    canvasRafRef.current = requestAnimationFrame(renderCanvas);
+                  };
+
+                  renderCanvas();
                 }
               }
-            }, 2000);
+            };
+
+            // 1.5秒後に videoWidth 確認、ダメなら Canvas 開始
+            setTimeout(() => {
+              if (videoElement.videoWidth === 0 && videoElement.videoHeight === 0) {
+                startCanvasRendering();
+              }
+            }, 1500);
           }
         };
 
         setupCanvasFallback();
+
+        // 【ストリームの自動復旧：videoWidth が 0 のままなら再取得】
+        const startWidthCheck = () => {
+          videoWidthCheckRef.current = setInterval(() => {
+            if (!videoElement.srcObject) {
+              clearInterval(videoWidthCheckRef.current);
+              return;
+            }
+            if (videoElement.videoWidth === 0 && videoElement.videoHeight === 0) {
+              console.warn('[BrowserBroadcaster] ⚠️  videoWidth is still 0, attempting stream restart...');
+              // ストリーム再取得（非同期で静かに実行）
+              streamRef.current?.getTracks().forEach((t) => {
+                console.log(`[BrowserBroadcaster] 🔄 Restarting ${t.kind} track`);
+                t.stop();
+              });
+              // 200ms 待ってから再取得
+              setTimeout(() => {
+                navigator.mediaDevices
+                  .getUserMedia({
+                    video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
+                    audio: selectedMic ? { deviceId: { exact: selectedMic } } : true,
+                  })
+                  .then((newStream) => {
+                    console.log('[BrowserBroadcaster] ✅ Stream reacquired after auto-recovery');
+                    streamRef.current = newStream;
+                    videoElement.srcObject = newStream;
+                  })
+                  .catch((err) => console.error('[BrowserBroadcaster] ❌ Stream restart failed:', err));
+              }, 200);
+            }
+          }, 3000); // 3秒ごとにチェック
+        };
+        startWidthCheck();
         
         setPermissionError(null);
 
@@ -346,6 +402,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         t.stop();
       });
       whipClientRef.current?.close();
+      clearInterval(videoWidthCheckRef.current);
+      cancelAnimationFrame(canvasRafRef.current);
     };
   }, [streamId, selectedCamera, selectedMic]);
 
@@ -510,6 +568,25 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       {/* プレビュー */}
       <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-zinc-800" style={{ aspectRatio: "16/9" }}>
+        {/* 【強制描画ボタン】映像が黒い場合、クリックで 10 回連続 play() */}
+        {!isBroadcasting && (
+          <button
+            onClick={async () => {
+              console.log('[BrowserBroadcaster] 💥 Force play triggered! Executing 10 play() attempts...');
+              for (let i = 0; i < 10; i++) {
+                try {
+                  await videoRef.current?.play();
+                  console.log(`[BrowserBroadcaster] ✅ Force play attempt ${i + 1}/10 succeeded`);
+                } catch (err) {
+                  console.warn(`[BrowserBroadcaster] ⚠️  Force play attempt ${i + 1}/10 failed:`, err.message);
+                }
+                await new Promise((resolve) => setTimeout(resolve, 100));
+              }
+            }}
+            className="absolute inset-0 z-30 cursor-pointer opacity-0 hover:opacity-5 transition-opacity"
+            title="クリックして映像を強制再生"
+          />
+        )}
         {/* 【修正】エラーオーバーレイ — ブランド保護メッセージ */}
         {errorOverlayVisible && (
           <div className="absolute inset-0 z-50 bg-zinc-950 flex flex-col items-center justify-center rounded-2xl">
