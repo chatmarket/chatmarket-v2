@@ -36,6 +36,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [broadcastStatus, setBroadcastStatus] = useState(null); // null | "connecting" | "live" | "error"
   const [broadcastError, setBroadcastError] = useState(null);
   const broadcastTimeoutRef = useRef(null);
+  const [micRetrying, setMicRetrying] = useState(false);
 
   // 【修正】クエリパラメータから debug=true を検出
   useEffect(() => {
@@ -67,40 +68,70 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (selectedMic) sessionStorage.setItem('selectedMic', selectedMic);
   }, [selectedMic]);
 
-  // 【修正】マイクレベルメーター監視 — ストリーム取得直後から稼働
-  // 【修正】マイクレベルメーター — 映像完了を待たずに独立実行
+  // 【修正】マイクレベルメーター監視＆AudioContext強制再開
   useEffect(() => {
     if (!streamRef.current) return;
 
     const audioTracks = streamRef.current.getAudioTracks();
-    if (audioTracks.length === 0) return;
+    if (audioTracks.length === 0) {
+      console.warn('[BrowserBroadcaster] ⚠️ No audio tracks found');
+      return;
+    }
 
     let audioContext = null;
     let analyzer = null;
     let rafId = null;
     let alive = true;
 
-    try {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioContext.createMediaStreamSource(streamRef.current);
-      analyzer = audioContext.createAnalyser();
-      analyzer.fftSize = 256;
-      source.connect(analyzer);
+    const setupAudioAnalyzer = async () => {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = audioContext;
+        
+        // 【AudioContext強制再開】ユーザークリック時に resume()
+        const onUserClick = async () => {
+          if (audioContext && audioContext.state === 'suspended') {
+            console.log('[BrowserBroadcaster] 🔊 User clicked - resuming AudioContext...');
+            try {
+              await audioContext.resume();
+              console.log('[BrowserBroadcaster] ✅ AudioContext resumed by user click');
+            } catch (err) {
+              console.warn('[BrowserBroadcaster] ⚠️ AudioContext resume failed:', err);
+            }
+          }
+        };
 
-      const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-      const tick = () => {
-        if (!alive) return;
-        analyzer.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
-        setMicLevel(Math.round((avg / 255) * 100));
-        rafId = requestAnimationFrame(tick);
-      };
+        document.addEventListener('click', onUserClick);
 
-      tick();
-      console.log('[BrowserBroadcaster] 🎤 Mic level meter started (independent)');
-    } catch (err) {
-      console.error('[BrowserBroadcaster] ❌ Audio context error:', err);
-    }
+        const source = audioContext.createMediaStreamSource(streamRef.current);
+        analyzer = audioContext.createAnalyser();
+        analyzer.fftSize = 256;
+        source.connect(analyzer);
+        analyzerRef.current = analyzer;
+
+        console.log('[BrowserBroadcaster] ✅ Audio analyzer connected');
+
+        const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        const tick = () => {
+          if (!alive) return;
+          analyzer.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
+          setMicLevel(Math.round((avg / 255) * 100));
+          rafId = requestAnimationFrame(tick);
+        };
+
+        tick();
+        console.log('[BrowserBroadcaster] 🎤 Mic level meter started (independent)');
+
+        return () => {
+          document.removeEventListener('click', onUserClick);
+        };
+      } catch (err) {
+        console.error('[BrowserBroadcaster] ❌ Audio context error:', err);
+      }
+    };
+
+    setupAudioAnalyzer();
 
     return () => {
       alive = false;
@@ -502,6 +533,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       }
     }, [streamId]);
 
+  // 【マウント時に setupDevices 実行】
+  useEffect(() => {
     setupDevices();
 
     return () => {
@@ -520,6 +553,56 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     setError(null);
     setupDevices();
   }, [selectedCamera, selectedMic, setupDevices]);
+
+  // 【マイク単独再試行】音声ストリームだけを再取得
+  const retryMicrophoneOnly = async () => {
+    setMicRetrying(true);
+    console.log('[BrowserBroadcaster] 🎤 [RETRY] Attempting to refresh microphone stream...');
+    
+    try {
+      // 既存の音声トラックを停止
+      streamRef.current?.getAudioTracks().forEach((t) => {
+        console.log('[BrowserBroadcaster] 🛑 Stopping existing audio track');
+        t.stop();
+      });
+
+      // 音声ストリームだけを再取得（360p での低負荷リトライ）
+      const audioConstraints = {
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false
+        }
+      };
+
+      const audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+      const audioTrack = audioStream.getAudioTracks()[0];
+
+      if (!streamRef.current) {
+        console.warn('[BrowserBroadcaster] ⚠️ Main stream is null, cannot add audio track');
+        setMicRetrying(false);
+        return;
+      }
+
+      // 既存の音声トラックを新しいものに置き換え
+      const oldAudioTrack = streamRef.current.getAudioTracks()[0];
+      if (oldAudioTrack) {
+        streamRef.current.removeTrack(oldAudioTrack);
+      }
+      streamRef.current.addTrack(audioTrack);
+
+      console.log('[BrowserBroadcaster] ✅ Microphone stream refreshed successfully');
+      console.log(`[BrowserBroadcaster] 🎤 Audio track label: ${audioTrack.label}`);
+      
+      setMicReady(true);
+      toast.success('✅ マイク接続を更新しました');
+    } catch (err) {
+      console.error('[BrowserBroadcaster] ❌ Microphone retry failed:', err.message);
+      toast.error('マイク再接続に失敗しました: ' + err.message);
+    } finally {
+      setMicRetrying(false);
+    }
+  };
 
   const handleStartBroadcast = async () => {
     if (!cameraReady || !micReady) {
@@ -934,6 +1017,17 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             <p className="text-[10px] text-muted-foreground">
               {micLevel < 20 ? "📍 無音に近い" : micLevel < 50 ? "🟢 良好" : micLevel < 80 ? "🟡 大きめ" : "🔴 大きすぎる"}
             </p>
+            
+            {/* 【マイク単独再試行ボタン】音声が 0% の場合に表示 */}
+            {micLevel === 0 && (
+              <button
+                onClick={retryMicrophoneOnly}
+                disabled={micRetrying}
+                className="w-full mt-2 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-white text-xs font-bold rounded-lg transition-colors"
+              >
+                {micRetrying ? '再接続中...' : '🔄 マイク再接続'}
+              </button>
+            )}
           </div>
         </div>
       </div>
