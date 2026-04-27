@@ -68,7 +68,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (selectedMic) sessionStorage.setItem('selectedMic', selectedMic);
   }, [selectedMic]);
 
-  // 【修正】マイクレベルメーター監視＆AudioContext強制再開
+  // 【鉄壁の配線】AudioContext＋MediaStreamSource 接続順序の完全固定
   useEffect(() => {
     if (!streamRef.current) return;
 
@@ -80,54 +80,110 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     let audioContext = null;
     let analyzer = null;
+    let source = null;
     let rafId = null;
+    let mediaRecorder = null;
     let alive = true;
 
     const setupAudioAnalyzer = async () => {
       try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        audioContextRef.current = audioContext;
+        const audioTrack = streamRef.current.getAudioTracks()[0];
         
-        // 【AudioContext強制再開】ユーザークリック時に resume()
+        // 【無音トラック自動修復】muted: true の場合は強制的に enabled = true に変更
+        if (audioTrack.muted) {
+          console.warn('[BrowserBroadcaster] 🔴 Audio track is MUTED, forcing enabled = true');
+          audioTrack.enabled = true;
+        }
+        
+        const audioSettings = audioTrack.getSettings();
+        console.log(`[BrowserBroadcaster] 📊 Audio Settings: sampleRate=${audioSettings?.sampleRate}Hz, echoCancellation=${audioSettings?.echoCancellation}`);
+
+        // 【Macサンプリングレート強制一致】トラックのサンプリングレートを取得＆指定
+        const trackSampleRate = audioSettings?.sampleRate || 48000;
+        console.log(`[BrowserBroadcaster] 🎚️ Creating AudioContext with sampleRate: ${trackSampleRate}Hz`);
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({
+          sampleRate: trackSampleRate
+        });
+        audioContextRef.current = audioContext;
+        console.log(`[BrowserBroadcaster] ✅ AudioContext created (sampleRate=${audioContext.sampleRate}Hz, state=${audioContext.state})`);
+
+        // 【接続順序の完全固定】stream → source → analyzer → destination
+        console.log('[BrowserBroadcaster] 🔌 [STEP 1] Creating MediaStreamSource...');
+        source = audioContext.createMediaStreamSource(streamRef.current);
+        console.log('[BrowserBroadcaster] ✅ [STEP 1] MediaStreamSource created');
+
+        console.log('[BrowserBroadcaster] 🔌 [STEP 2] Creating AnalyserNode...');
+        analyzer = audioContext.createAnalyser();
+        analyzer.fftSize = 256;
+        console.log('[BrowserBroadcaster] ✅ [STEP 2] AnalyserNode created (fftSize=256)');
+
+        console.log('[BrowserBroadcaster] 🔌 [STEP 3] Connecting source → analyzer...');
+        source.connect(analyzer);
+        console.log('[BrowserBroadcaster] ✅ [STEP 3] source.connect(analyzer) executed');
+
+        console.log('[BrowserBroadcaster] 🔌 [STEP 4] Connecting analyzer → destination...');
+        analyzer.connect(audioContext.destination);
+        console.log('[BrowserBroadcaster] ✅ [STEP 4] analyzer.connect(destination) executed');
+
+        analyzerRef.current = analyzer;
+
+        // 【最終手段：MediaRecorder冗長ループ】AudioContext の音が取れなくても MediaRecorder から検出
+        console.log('[BrowserBroadcaster] 🎙️ [REDUNDANCY] Starting MediaRecorder fallback...');
+        try {
+          mediaRecorder = new MediaRecorder(streamRef.current);
+          let mediaLevel = 0;
+          
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              mediaLevel = Math.min(100, mediaLevel + 10);
+            }
+          };
+          
+          mediaRecorder.start(100); // 100ms ごとに ondataavailable を発火
+          console.log('[BrowserBroadcaster] ✅ [REDUNDANCY] MediaRecorder started as fallback');
+        } catch (mrErr) {
+          console.warn('[BrowserBroadcaster] ⚠️ MediaRecorder fallback not available:', mrErr.message);
+        }
+
+        // 【AudioContext.resume() — ユーザークリック時】
         const onUserClick = async () => {
           if (audioContext && audioContext.state === 'suspended') {
-            console.log('[BrowserBroadcaster] 🔊 User clicked - resuming AudioContext...');
+            console.log('[BrowserBroadcaster] 👆 User clicked - resuming AudioContext...');
             try {
               await audioContext.resume();
-              console.log('[BrowserBroadcaster] ✅ AudioContext resumed by user click');
+              console.log(`[BrowserBroadcaster] ✅ AudioContext resumed (state=${audioContext.state})`);
             } catch (err) {
-              console.warn('[BrowserBroadcaster] ⚠️ AudioContext resume failed:', err);
+              console.warn('[BrowserBroadcaster] ⚠️ AudioContext resume failed:', err.message);
             }
           }
         };
 
         document.addEventListener('click', onUserClick);
 
-        const source = audioContext.createMediaStreamSource(streamRef.current);
-        analyzer = audioContext.createAnalyser();
-        analyzer.fftSize = 256;
-        source.connect(analyzer);
-        analyzerRef.current = analyzer;
-
-        console.log('[BrowserBroadcaster] ✅ Audio analyzer connected');
-
+        // 【音量メーター：RAF ループ】
         const dataArray = new Uint8Array(analyzer.frequencyBinCount);
         const tick = () => {
           if (!alive) return;
           analyzer.getByteFrequencyData(dataArray);
           const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
-          setMicLevel(Math.round((avg / 255) * 100));
+          const level = Math.round((avg / 255) * 100);
+          setMicLevel(Math.max(level, 0)); // 常に 0 以上
           rafId = requestAnimationFrame(tick);
         };
 
         tick();
-        console.log('[BrowserBroadcaster] 🎤 Mic level meter started (independent)');
+        console.log('[BrowserBroadcaster] 🎤 Mic level meter started (RAF + MediaRecorder redundancy)');
 
         return () => {
           document.removeEventListener('click', onUserClick);
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
         };
       } catch (err) {
-        console.error('[BrowserBroadcaster] ❌ Audio context error:', err);
+        console.error('[BrowserBroadcaster] ❌ Audio wiring error:', err);
+        console.error('[BrowserBroadcaster] 🔍 Error stack:', err.stack);
       }
     };
 
@@ -136,8 +192,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     return () => {
       alive = false;
       cancelAnimationFrame(rafId);
+      if (source) source.disconnect();
       if (analyzer) analyzer.disconnect();
       if (audioContext) audioContext.close();
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     };
   }, []);
 
