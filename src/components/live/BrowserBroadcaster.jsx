@@ -109,8 +109,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           const sumSquares = dataArray.reduce((sum, val) => sum + val * val, 0);
           const rms = Math.sqrt(sumSquares / dataArray.length);
           
-          // 生データを 10,000 倍ブースト（+80dB）
-          const newLevel = Math.min(100, Math.round((rms / 255) * 10000));
+          // 標準倍率（0-100%範囲に正規化）
+          const newLevel = Math.min(100, Math.round((rms / 255) * 100));
           setMicLevel(newLevel);
           
           // RMS をコンソール垂れ流し
@@ -184,6 +184,33 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   useEffect(() => {
     if (selectedMic) sessionStorage.setItem('selectedMic', selectedMic);
   }, [selectedMic]);
+
+  // 【カメラ変更時に即座に反映】
+  useEffect(() => {
+    if (!streamRef.current || isBroadcasting) return;
+    
+    console.log('[BrowserBroadcaster] 📹 Camera selection changed, restarting video track');
+    
+    // 既存のビデオトラックを停止
+    streamRef.current.getVideoTracks().forEach((t) => t.stop());
+    
+    // 新しいカメラで再取得
+    navigator.mediaDevices.getUserMedia({
+      video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
+      audio: false, // オーディオは既に取得済みなので不要
+    }).then((videoStream) => {
+      const newVideoTrack = videoStream.getVideoTracks()[0];
+      if (newVideoTrack && streamRef.current) {
+        streamRef.current.addTrack(newVideoTrack);
+        if (videoRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+        }
+        console.log('[BrowserBroadcaster] ✅ Video track replaced');
+      }
+    }).catch((err) => {
+      console.error('[BrowserBroadcaster] Camera switch failed:', err);
+    });
+  }, [selectedCamera, isBroadcasting]);
 
   // 【配信開始】streamId 確認 → メーター動作確認 → 状態更新 → WHIP 接続
   const handleStartBroadcast = async () => {
@@ -322,6 +349,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.muted = true; // スピーカーからの音出力を防ぐ
         videoRef.current.play().catch((err) => {
           console.warn('[BrowserBroadcaster] Video play warning:', err.name);
         });
