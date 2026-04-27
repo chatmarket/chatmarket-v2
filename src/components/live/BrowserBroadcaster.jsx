@@ -149,58 +149,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   }, []);
 
   // 【初期化：Permission Dialog → デバイス確定 → ビデオ → マイクメーター】
+  // 【初期化】- 自動起動せず、ボタンクリック待機
   useEffect(() => {
-    console.log('[BrowserBroadcaster] 🚀 Mount: Getting user permission');
+    console.log('[BrowserBroadcaster] 🚀 Mount: Waiting for user interaction');
 
-    navigator.mediaDevices.getUserMedia({
-      video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
-      audio: selectedMic
-        ? {
-            deviceId: { exact: selectedMic },
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          }
-        : {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
-    }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ Stream acquired');
-      streamRef.current = stream;
-
-      // ビデオ要素に流す
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch((err) => {
-          console.warn('[BrowserBroadcaster] Autoplay blocked:', err.name);
-        });
-      }
-
-      // ステータス確定
-      const videoTrack = stream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks()[0];
-      
-      setCameraReady(!!videoTrack && videoTrack.enabled);
-      setMicReady(!!audioTrack && audioTrack.enabled);
-
-      // マイクメーター起動（映像の有無と無関係）
-      startMicMeter(stream);
-
-      // デバイス再列挙（権限確定後）
-      enumerateDevices();
-    }).catch((err) => {
-      console.error('[BrowserBroadcaster] Permission denied:', err.message);
-      setError(err.message);
-      setShowErrorDialog(true);
-    });
-
-    // クリック時に AudioContext.resume() を『強制連発』（ブラウザ音声制限を突き破る）
+    // クリック時に AudioContext.resume() を『強制連発』
     const handleUserClick = () => {
-      if (audioContextRef.current) {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
         audioContextRef.current.resume().then(() => {
-          console.log('[BrowserBroadcaster] ✅ AudioContext force resumed');
+          console.log('[BrowserBroadcaster] ✅ AudioContext force resumed on click');
         }).catch((err) => {
           console.warn('[BrowserBroadcaster] AudioContext resume failed:', err);
         });
@@ -217,7 +174,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         audioContextRef.current.close().catch(() => {});
       }
     };
-  }, [selectedCamera, selectedMic, startMicMeter, enumerateDevices]);
+  }, []);
 
   // 【sessionStorage に選択状態を保存】
   useEffect(() => {
@@ -317,23 +274,21 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     console.log('[BrowserBroadcaster] ✅ WHIP connected — broadcasting to world');
   };
 
-  // 【マイク有効化ボタン（中央）】
+  // 【マイク有効化ボタン（中央）】ユーザー操作で初実行
   const handleMicEnable = async () => {
-    console.log('[BrowserBroadcaster] 🎙️ Mic enable button clicked');
+    console.log('[BrowserBroadcaster] 🎙️ Mic enable button clicked - User gesture detected');
     
-    // AudioContext 強制 resume
-    if (audioContextRef.current) {
-      await audioContextRef.current.resume();
-      console.log('[BrowserBroadcaster] ✅ AudioContext resumed by user');
+    // 初めて AudioContext を作成（ユーザー操作のタイミングで）
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      console.log('[BrowserBroadcaster] ✅ AudioContext created on user click');
     }
     
-    // ストリーム再起動
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
+    // AudioContext resume
+    await audioContextRef.current.resume();
+    console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
     
-    // マイク再初期化
+    // ストリーム取得
     navigator.mediaDevices.getUserMedia({
       video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
       audio: selectedMic
@@ -349,17 +304,38 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             autoGainControl: false,
           },
     }).then((stream) => {
+      console.log('[BrowserBroadcaster] ✅ Stream acquired on user gesture');
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play().catch(() => {});
       }
+
+      const videoTrack = stream.getVideoTracks()[0];
+      const audioTrack = stream.getAudioTracks()[0];
+      
+      setCameraReady(!!videoTrack && videoTrack.enabled);
+      setMicReady(!!audioTrack && audioTrack.enabled);
+
       startMicMeter(stream);
+      enumerateDevices();
       setShowMicEnableButton(false);
-      console.log('[BrowserBroadcaster] ✅ Mic re-initialized');
     }).catch((err) => {
       console.error('[BrowserBroadcaster] Mic enable failed:', err);
+      setError('マイク取得に失敗しました: ' + err.message);
+      setShowErrorDialog(true);
     });
+  };
+
+  // 【マイク再起動ボタン】
+  const handleMicRestart = () => {
+    console.log('[BrowserBroadcaster] 🔄 Mic restart requested');
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    handleMicEnable();
   };
 
   return (
@@ -451,17 +427,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               <label className="text-xs font-semibold text-muted-foreground">マイク</label>
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedMic(null);
-                  // デバイスを再選択させるため、stream を再初期化
-                  streamRef.current?.getTracks().forEach((t) => t.stop());
-                  streamRef.current = null;
-                  console.log('[BrowserBroadcaster] Mic reset triggered');
-                }}
-                disabled={isBroadcasting}
-                className="text-[10px] text-primary hover:text-primary/80 font-bold disabled:opacity-50"
+                onClick={handleMicRestart}
+                disabled={isBroadcasting || showMicEnableButton}
+                className="text-[10px] text-primary hover:text-primary/80 font-bold disabled:opacity-50 transition-colors"
+                title="マイクを再初期化"
               >
-                リセット
+                🔄 再起動
               </button>
             </div>
             <select
