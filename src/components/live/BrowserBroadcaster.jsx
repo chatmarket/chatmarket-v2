@@ -32,6 +32,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   
   const [error, setError] = useState(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showMicEnableButton, setShowMicEnableButton] = useState(true);
+  const [micWarning, setMicWarning] = useState(null);
+  const silenceCounterRef = useRef(0);
 
   // 【最初にデバイス列挙】
   const enumerateDevices = useCallback(async () => {
@@ -101,10 +104,31 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             return;
           }
           analyzerRef.current.getByteFrequencyData(dataArray);
-          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-          // 生データを100倍ブースト（フィルタリング除去で生の音声を表示）
-          const newLevel = Math.min(100, Math.round(avg * 100 / 255));
+          
+          // RMS（二乗平均平方根）を計算
+          const sumSquares = dataArray.reduce((sum, val) => sum + val * val, 0);
+          const rms = Math.sqrt(sumSquares / dataArray.length);
+          
+          // 生データを 10,000 倍ブースト（+80dB）
+          const newLevel = Math.min(100, Math.round((rms / 255) * 10000));
           setMicLevel(newLevel);
+          
+          // RMS をコンソール垂れ流し
+          console.log(`[BrowserBroadcaster] 🎤 RMS: ${rms.toFixed(4)} | Level: ${newLevel}%`);
+          
+          // 無音検知（0.1秒 = ~6フレーム）
+          if (rms < 1) {
+            silenceCounterRef.current += 1;
+            if (silenceCounterRef.current > 6) {
+              setMicWarning('マイクの音が届いていません！');
+            }
+          } else {
+            silenceCounterRef.current = 0;
+            if (newLevel > 5) {
+              setMicWarning(null);
+            }
+          }
+          
           meterLoopId = requestAnimationFrame(meterTick);
         } catch (err) {
           console.error('[BrowserBroadcaster] Meter loop error:', err);
@@ -204,10 +228,17 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (selectedMic) sessionStorage.setItem('selectedMic', selectedMic);
   }, [selectedMic]);
 
-  // 【配信開始】streamId 確認 → 状態更新 → WHIP 接続
+  // 【配信開始】streamId 確認 → メーター動作確認 → 状態更新 → WHIP 接続
   const handleStartBroadcast = async () => {
     if (!streamId) {
       setError('配信IDが見つかりません');
+      setShowErrorDialog(true);
+      return;
+    }
+
+    // メーターが動いているか確認（0なら配信不可）
+    if (micLevel === 0) {
+      setError('マイクが反応していません。マイクリセットボタンを押してから再度お試しください。');
       setShowErrorDialog(true);
       return;
     }
@@ -286,8 +317,53 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     console.log('[BrowserBroadcaster] ✅ WHIP connected — broadcasting to world');
   };
 
+  // 【マイク有効化ボタン（中央）】
+  const handleMicEnable = async () => {
+    console.log('[BrowserBroadcaster] 🎙️ Mic enable button clicked');
+    
+    // AudioContext 強制 resume
+    if (audioContextRef.current) {
+      await audioContextRef.current.resume();
+      console.log('[BrowserBroadcaster] ✅ AudioContext resumed by user');
+    }
+    
+    // ストリーム再起動
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    
+    // マイク再初期化
+    navigator.mediaDevices.getUserMedia({
+      video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
+      audio: selectedMic
+        ? {
+            deviceId: { exact: selectedMic },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          }
+        : {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+    }).then((stream) => {
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+      startMicMeter(stream);
+      setShowMicEnableButton(false);
+      console.log('[BrowserBroadcaster] ✅ Mic re-initialized');
+    }).catch((err) => {
+      console.error('[BrowserBroadcaster] Mic enable failed:', err);
+    });
+  };
+
   return (
-    <div className="w-full min-h-screen bg-zinc-950 flex flex-col lg:flex-row gap-4 p-4 lg:p-6">
+    <div className="w-full min-h-screen bg-zinc-950 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 relative">
       {/* 左側：ビデオプレイヤー */}
       <div className="flex-1 flex flex-col gap-4">
         <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16/9" }}>
@@ -433,12 +509,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         {/* 配信ボタン */}
         <button
           onClick={handleStartBroadcast}
-          disabled={isBroadcasting}
+          disabled={isBroadcasting || micLevel === 0}
           className={`w-full py-3 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all shadow-lg ${
             broadcastStatus === "live"
               ? "bg-gradient-to-r from-green-500 to-green-600"
               : broadcastStatus === "connecting"
               ? "bg-gradient-to-r from-yellow-500 to-yellow-600 animate-pulse"
+              : micLevel === 0
+              ? "bg-gray-600 cursor-not-allowed opacity-50"
               : "bg-red-500 hover:bg-red-600"
           }`}
         >
@@ -517,6 +595,37 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* マイク有効化ボタン（中央） */}
+      {showMicEnableButton && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur">
+          <div className="flex flex-col items-center gap-6 bg-gradient-to-br from-zinc-900 to-black rounded-2xl p-8 border border-primary/30 shadow-2xl max-w-sm">
+            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+              <Mic className="w-8 h-8 text-primary animate-pulse" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-black text-white">マイクを有効にする</h2>
+              <p className="text-sm text-muted-foreground">
+                ボタンを押してマイクの接続を開始してください
+              </p>
+            </div>
+            <button
+              onClick={handleMicEnable}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-black text-lg transition-all shadow-lg"
+            >
+              マイクを有効にする
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 無音警告 */}
+      {micWarning && (
+        <div className="absolute top-4 right-4 z-30 bg-red-500/80 border border-red-400 rounded-lg px-4 py-3 flex items-center gap-2 backdrop-blur">
+          <AlertCircle className="w-5 h-5 text-white" />
+          <span className="text-sm font-bold text-white">{micWarning}</span>
         </div>
       )}
     </div>
