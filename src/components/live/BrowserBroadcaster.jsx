@@ -98,33 +98,40 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         const audioSettings = audioTrack.getSettings();
         console.log(`[BrowserBroadcaster] 📊 Audio Settings: sampleRate=${audioSettings?.sampleRate}Hz, echoCancellation=${audioSettings?.echoCancellation}`);
 
+        // 【禁断 3】AudioContext の『使い捨て』宣言＝古いインスタンスを確実にクローズ
+        if (audioContextRef.current) {
+          console.log('[BrowserBroadcaster] 🗑️ [FORBIDDEN PROTOCOL 3/5] Closing old AudioContext instance...');
+          try {
+            audioContextRef.current.close();
+            console.log('[BrowserBroadcaster] ✅ Old AudioContext closed');
+          } catch (closeErr) {
+            console.warn('[BrowserBroadcaster] ⚠️ Old AudioContext close failed:', closeErr.message);
+          }
+        }
+
         // 【Macサンプリングレート強制一致】トラックのサンプリングレートを取得＆指定
         const trackSampleRate = audioSettings?.sampleRate || 48000;
-        console.log(`[BrowserBroadcaster] 🎚️ Creating AudioContext with sampleRate: ${trackSampleRate}Hz`);
+        console.log(`[BrowserBroadcaster] 🎚️ [FORBIDDEN PROTOCOL 4/5] Creating fresh AudioContext with sampleRate: ${trackSampleRate}Hz`);
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)({
           sampleRate: trackSampleRate
         });
         audioContextRef.current = audioContext;
-        console.log(`[BrowserBroadcaster] ✅ AudioContext created (sampleRate=${audioContext.sampleRate}Hz, state=${audioContext.state})`);
+        console.log(`[BrowserBroadcaster] ✅ Fresh AudioContext created (sampleRate=${audioContext.sampleRate}Hz, state=${audioContext.state})`);
 
-        // 【接続順序の完全固定】stream → source → analyzer → destination
-        console.log('[BrowserBroadcaster] 🔌 [STEP 1] Creating MediaStreamSource...');
+        // 【禁断 5】接続順序の完全固定 + 生音モード（全補正OFF）
+        console.log('[BrowserBroadcaster] 🔌 [FORBIDDEN PROTOCOL 5/5] Wiring: stream → source → analyzer (RAW MODE)...');
         source = audioContext.createMediaStreamSource(streamRef.current);
-        console.log('[BrowserBroadcaster] ✅ [STEP 1] MediaStreamSource created');
+        console.log('[BrowserBroadcaster] ✅ Source created (RAW stream connected)');
 
-        console.log('[BrowserBroadcaster] 🔌 [STEP 2] Creating AnalyserNode...');
         analyzer = audioContext.createAnalyser();
         analyzer.fftSize = 256;
-        console.log('[BrowserBroadcaster] ✅ [STEP 2] AnalyserNode created (fftSize=256)');
+        console.log('[BrowserBroadcaster] ✅ Analyzer created (fftSize=256)');
 
-        console.log('[BrowserBroadcaster] 🔌 [STEP 3] Connecting source → analyzer...');
+        // 生データを直接叩き込む＝補正なし
         source.connect(analyzer);
-        console.log('[BrowserBroadcaster] ✅ [STEP 3] source.connect(analyzer) executed');
-
-        console.log('[BrowserBroadcaster] 🔌 [STEP 4] Connecting analyzer → destination...');
         analyzer.connect(audioContext.destination);
-        console.log('[BrowserBroadcaster] ✅ [STEP 4] analyzer.connect(destination) executed');
+        console.log('[BrowserBroadcaster] ✅ Pipeline complete: RAW AUDIO → ANALYZER (no processing)');
 
         analyzerRef.current = analyzer;
 
@@ -591,9 +598,25 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       }
     }, [streamId]);
 
-  // 【マウント時に setupDevices 実行】
+  // 【マウント時に setupDevices 実行 + 全自動・無条件プロンプト】
   useEffect(() => {
-    setupDevices();
+    // 【禁断のシンプル・プロトコル】ページ読み込み後、即座にダイアログを表示
+    console.log('[BrowserBroadcaster] 🚀 [FORBIDDEN PROTOCOL] Triggering immediate getUserMedia prompt (no button)...');
+    navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }, 
+      video: true 
+    }).then((stream) => {
+      console.log('[BrowserBroadcaster] ✅ [FORBIDDEN PROTOCOL] Auto-prompt successful - stream acquired without button');
+      stream.getTracks().forEach(t => t.stop()); // 一度停止して、setupDevices で再取得
+      setupDevices();
+    }).catch((err) => {
+      console.warn('[BrowserBroadcaster] ⚠️ [FORBIDDEN PROTOCOL] Auto-prompt failed (likely permission denied):', err.name);
+      setupDevices(); // エラーでも setupDevices を実行
+    });
 
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -643,14 +666,17 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.warn('[BrowserBroadcaster] ⚠️  Silent oscillator failed (non-critical):', dummyErr.message);
       }
 
-      // 【最終解 2】生音モード（エコーキャンセラー OFF）での再取得
-      console.log('[BrowserBroadcaster] 🎤 [FINAL FIX 2/4] Requesting raw audio without processing...');
+      // 【禁断 2】全自動デバイス選択（デバイスリスト待たずに index[0] を信じる）
+      console.log('[BrowserBroadcaster] 🎤 [FORBIDDEN PROTOCOL 2/5] Requesting audio WITHOUT waiting for device name resolution...');
+      
+      // デバイス列挙は行わない＝「Unknown」の名前解決を待たない
       const audioConstraints = {
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false
-        }
+        },
+        video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true
       };
 
       const audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
