@@ -18,6 +18,7 @@ import YellButtons from "../components/live/YellButtons.jsx";
 import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx";
 import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
 import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
+import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -53,6 +54,7 @@ function LiveViewInner() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [forceKey, setForceKey] = useState(0);
   const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [celebrationYell, setCelebrationYell] = useState(null);
   const extensionNotifiedRef = useRef(false);
 
   useEffect(() => {
@@ -68,6 +70,7 @@ function LiveViewInner() {
       const item = { ...event.data, id: event.id };
       if (!item.gift_id) {
         setActiveTips((prev) => [...prev.slice(-4), item]);
+        setCelebrationYell(item);
         setTimeout(() => setActiveTips((prev) => prev.filter((t) => t.id !== event.id)), 5000);
       }
     });
@@ -142,7 +145,7 @@ function LiveViewInner() {
   }
 
   const videoPortal = ReactDOM.createPortal(
-    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000", borderRadius: "12px" }}>
+    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000" }}>
       {/* 有料ペイウォール */}
       {stream.price > 0 && !hasPurchased && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
@@ -161,20 +164,24 @@ function LiveViewInner() {
         </div>
       )}
 
-      {/* 映像エリア */}
-      {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
-        <iframe src={stream.vimeo_url} className="w-full h-full rounded-xl" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
-      ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
-        <iframe src={stream.youtube_url} className="w-full h-full rounded-xl" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
-      ) : stream.status === "live" ? (
-        <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-xl">
-          <p className="text-muted-foreground">
-            {stream.status === "ended" ? "配信は終了しました" : "配信開始をお待ちください"}
-          </p>
+      {/* 映像エリア — プレミアムスタイル */}
+      <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+        <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)" }}>
+          {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
+            <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
+          ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
+            <iframe src={stream.youtube_url} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
+          ) : stream.status === "live" ? (
+            <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-950">
+              <p className="text-muted-foreground">
+                {stream.status === "ended" ? "配信は終了しました" : "配信開始をお待ちください"}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* LIVEバッジ */}
       {stream.status === "live" && (
@@ -236,42 +243,34 @@ function LiveViewInner() {
       )}
 
       {stream.status === "live" && (
-        <div className="absolute bottom-0 left-0 right-0 z-20 max-h-[50vh] md:max-h-1/2 flex flex-col">
-          {/* チャット表示エリア — リアルタイム */}
-          <div className="flex-1 overflow-y-auto bg-black/40 px-2 sm:px-3 py-1.5 sm:py-2 space-y-1 min-h-[80px] sm:min-h-[120px] max-h-[140px] sm:max-h-[200px]">
-            <LiveChatDisplay streamId={id} />
+        <div className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none">
+          {/* チャット背景 — Blur + 高級感 */}
+          <div className="pointer-events-auto absolute bottom-0 left-0 right-0 max-h-[50vh] md:max-h-1/2 flex flex-col"
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)", backdropFilter: "blur(12px)" }}>
+            <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-1.5 sm:py-2 space-y-1 min-h-[60px] sm:min-h-[100px] max-h-[120px] sm:max-h-[180px]">
+              <LiveChatDisplay streamId={id} />
+            </div>
           </div>
 
-          {/* エールバー — スマホ最適化 */}
-          <div
-            style={{
-              background: "linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.75) 70%, transparent 100%)",
-              paddingBottom: "env(safe-area-inset-bottom, 8px)",
-            }}
-          >
-            {/* ラベル行 */}
-            <div className="flex items-center justify-between px-2 sm:px-4 pt-1.5 sm:pt-2 pb-0.5 sm:pb-1">
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                <span className="text-[9px] sm:text-[11px] font-black text-yellow-400 tracking-widest uppercase">⚡ YELL</span>
-                <span className="text-[7px] sm:text-[9px] text-yellow-400/50">応援コイン</span>
+          {/* エール送信エリア — 親指エリア最適化 */}
+          <div className="pointer-events-auto absolute bottom-0 left-0 right-0"
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)", paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
+            {/* チャット入力 */}
+            <ViewerChatInput streamId={id} user={user} />
+
+            {/* エールボタン — 親指エリア配置（下部両脇） */}
+            <div className="px-2 sm:px-3 pb-3 sm:pb-4 flex justify-between items-end gap-1 sm:gap-2">
+              <div className="flex gap-1 sm:gap-1.5 flex-wrap justify-start flex-1">
+                <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
               </div>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <VideoControls videoRef={null} showQuality={true} />
+              <div className="flex items-center gap-1">
+                <VideoControls videoRef={null} showQuality={false} />
                 <button
                   onClick={toggleFullscreen}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 flex items-center justify-center text-white"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur hover:from-white/30 hover:to-white/10 flex items-center justify-center text-white transition-all shadow-lg"
                 >
                   {isFullscreen ? <Minimize className="w-3 h-3 sm:w-4 sm:h-4" /> : <Maximize className="w-3 h-3 sm:w-4 sm:h-4" />}
                 </button>
-              </div>
-            </div>
-            {/* チャット入力欄 */}
-            <ViewerChatInput streamId={id} user={user} />
-
-            {/* エールボタン行（横スクロール対応） */}
-            <div className="px-2 sm:px-3 pb-2 sm:pb-3 overflow-x-auto">
-              <div className="flex gap-1 sm:gap-2" style={{ width: "max-content" }}>
-                <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
               </div>
             </div>
           </div>
@@ -289,6 +288,7 @@ function LiveViewInner() {
         image={stream.thumbnail_url}
       />
       {videoPortal}
+      {celebrationYell && <YellCelebrationEffect yell={celebrationYell} onComplete={() => setCelebrationYell(null)} />}
     </div>
   );
 }

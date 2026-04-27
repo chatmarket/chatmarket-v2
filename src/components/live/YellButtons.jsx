@@ -59,7 +59,7 @@ export default function YellButtons({ streamId, user, channelId }) {
 
   return (
     <>
-      <div className="relative flex items-center gap-1.5">
+      <div className="relative flex items-center gap-0.5 sm:gap-1">
         {/* パーティクルエフェクト */}
         <AnimatePresence>
           {particles.map((p) => (
@@ -94,10 +94,11 @@ export default function YellButtons({ streamId, user, channelId }) {
             transition={{ duration: 0.3 }}
             className={`
               relative flex flex-col items-center justify-center
-              w-16 h-16 rounded-2xl
+              w-12 h-12 sm:w-16 sm:h-16 rounded-3xl
               bg-gradient-to-b ${gradient}
               text-black font-black
               transition-all duration-150
+              backdrop-blur-sm
             `}
             style={{
               boxShadow: bursting === coins
@@ -108,10 +109,9 @@ export default function YellButtons({ streamId, user, channelId }) {
               border: `2px solid ${hoveredCoins === coins ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)"}`,
             }}
           >
-            <Coins className="w-3.5 h-3.5 mb-0.5" />
-            <span className="text-xs leading-none">{coins}</span>
-            <span className="text-[9px] leading-none opacity-70 mt-0.5">コイン</span>
-            <span className="text-[8px] leading-none opacity-50">({calcTotal(coins)})</span>
+            <Coins className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 mb-0.5" />
+            <span className="text-[10px] sm:text-xs leading-none">{coins}</span>
+            <span className="text-[7px] sm:text-[9px] leading-none opacity-70">コイン</span>
           </motion.button>
         ))}
       </div>
