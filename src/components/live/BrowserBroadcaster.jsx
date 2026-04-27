@@ -99,9 +99,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         const audioSettings = audioTrack.getSettings();
         console.log(`[BrowserBroadcaster] 📊 Audio Settings: sampleRate=${audioSettings?.sampleRate}Hz, echoCancellation=${audioSettings?.echoCancellation}`);
 
-        // 【最終外科手術 3】古いインスタンスをクローズ
+        // 【全自動バイパス 3】AudioContext周波数リセット＝柔軟対応
         if (audioContextRef.current) {
-          console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 3/4] Closing old AudioContext...');
+          console.log('[BrowserBroadcaster] 🚀 [FULL BYPASS 3/5] Closing old AudioContext...');
           try {
             audioContextRef.current.close();
           } catch (closeErr) {
@@ -109,53 +109,43 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           }
         }
 
-        // 【最終外科手術 4】サンプリングレート自動解決＝ブラウザ推奨値を使う（固定値なし）
-        console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 4/4] Creating AudioContext with browser-recommended sampleRate...');
+        // トラック周波数を取得してマッチさせるか、標準値を使う
+        const trackSampleRate = audioSettings?.sampleRate;
+        console.log(`[BrowserBroadcaster] 🚀 [FULL BYPASS 4/5] Creating AudioContext (track sampleRate=${trackSampleRate}Hz)...`);
         
+        // ブラウザ推奨値で作成（自動）
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        // sampleRate を指定しない＝ブラウザ推奨値（通常 44.1kHz または 48kHz）を自動採用
-        
         audioContextRef.current = audioContext;
-        console.log(`[BrowserBroadcaster] ✅ AudioContext ready (sampleRate=${audioContext.sampleRate}Hz, state=${audioContext.state})`);
+        console.log(`[BrowserBroadcaster] ✅ Fresh AudioContext created (sampleRate=${audioContext.sampleRate}Hz)`);
 
-        // 【最後の配線】シンプルに接続
+        // 【全自動バイパス 5】生データ直結＝フィルターゼロで配信エンジンへ
+        console.log('[BrowserBroadcaster] 🚀 [FULL BYPASS 5/5] Wiring: RAW STREAM → ANALYZER (no processing)...');
         source = audioContext.createMediaStreamSource(streamRef.current);
         analyzer = audioContext.createAnalyser();
         analyzer.fftSize = 256;
         
         source.connect(analyzer);
         analyzer.connect(audioContext.destination);
-        console.log('[BrowserBroadcaster] ✅ Audio pipeline established');
+        console.log('[BrowserBroadcaster] ✅ Raw audio pipeline connected (all filters bypassed)');
 
-        // 【無音トラック自動復旧ループ】0.5秒ごとにチェック＆自動置換
-        console.log('[BrowserBroadcaster] 🔄 Starting muted track auto-recovery loop (500ms interval)...');
-        const mutedCheckInterval = setInterval(() => {
-          const currentTrack = streamRef.current?.getAudioTracks()[0];
-          if (!currentTrack) {
-            clearInterval(mutedCheckInterval);
+        // 【デバッグ強化】enabled/muted状態を0.1秒おきにログ
+        console.log('[BrowserBroadcaster] 🔍 Starting audio track state monitor (100ms interval)...');
+        const trackStateInterval = setInterval(() => {
+          const track = streamRef.current?.getAudioTracks()[0];
+          if (!track) {
+            clearInterval(trackStateInterval);
             return;
           }
-
-          if (currentTrack.muted || !currentTrack.enabled) {
-            console.warn('[BrowserBroadcaster] 🚨 Muted track detected! Auto-replacing...');
-            // トラック再取得ロジック
-            navigator.mediaDevices.getUserMedia({ audio: true }).then((newStream) => {
-              const newTrack = newStream.getAudioTracks()[0];
-              if (newTrack && streamRef.current) {
-                const oldTrack = streamRef.current.getAudioTracks()[0];
-                if (oldTrack) {
-                  streamRef.current.removeTrack(oldTrack);
-                  oldTrack.stop();
-                }
-                streamRef.current.addTrack(newTrack);
-                console.log('[BrowserBroadcaster] ✅ Muted track replaced with fresh one');
-              }
-            }).catch(err => console.warn('[BrowserBroadcaster] ⚠️ Muted track replacement failed:', err.message));
+          console.log(`[BrowserBroadcaster] 📊 Track state: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
+          
+          // 自動修復：muted を検知したら即座に enabled を true に
+          if (track.muted || !track.enabled) {
+            console.warn('[BrowserBroadcaster] 🚨 TRACK MUTED DETECTED - forcing enabled=true');
+            track.enabled = true;
           }
-        }, 500);
+        }, 100);
 
-        // クリーンアップ時にこのループを停止する
-        analyzerRef.current._mutedCheckInterval = mutedCheckInterval;
+        analyzerRef.current._trackStateInterval = trackStateInterval;
 
         analyzerRef.current = analyzer;
 
@@ -232,9 +222,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       cancelAnimationFrame(rafId);
       if (source) source.disconnect();
       if (analyzer) {
-        // 無音トラック自動復旧ループを停止
-        if (analyzerRef.current?._mutedCheckInterval) {
-          clearInterval(analyzerRef.current._mutedCheckInterval);
+        // デバッグループを停止
+        if (analyzerRef.current?._trackStateInterval) {
+          clearInterval(analyzerRef.current._trackStateInterval);
         }
         analyzer.disconnect();
       }
@@ -637,21 +627,21 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   // 【マウント時に setupDevices 実行 + 全自動・無条件プロンプト】
   useEffect(() => {
-    // 【最終外科手術 1】おまかせモードへの完全移行＝ブラウザ標準設定に任せる
-    console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 1/4] Triggering auto-prompt with browser defaults...');
+    // 【全自動バイパス 1】全フィルターの物理的削除＝生データ直結
+    console.log('[BrowserBroadcaster] 🚀 [FULL BYPASS 1/5] Triggering auto-prompt with ALL FILTERS DISABLED...');
     navigator.mediaDevices.getUserMedia({ 
       audio: {
-        echoCancellation: true,     // ブラウザ標準に任せる
-        noiseSuppression: true,     // ブラウザ標準に任せる
-        autoGainControl: true       // ブラウザ標準に任せる
+        echoCancellation: false,    // ブラウザの賢い機能を完全削除
+        noiseSuppression: false,    // ノイズ判定を完全削除
+        autoGainControl: false      // 自動ゲイン調整を完全削除
       }, 
       video: true 
     }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ [FINAL SURGERY 1/4] Auto-prompt successful with browser defaults');
+      console.log('[BrowserBroadcaster] ✅ [FULL BYPASS 1/5] Raw stream acquired (no processing)');
       stream.getTracks().forEach(t => t.stop());
       setupDevices();
     }).catch((err) => {
-      console.warn('[BrowserBroadcaster] ⚠️ [FINAL SURGERY 1/4] Auto-prompt failed:', err.name);
+      console.warn('[BrowserBroadcaster] ⚠️ [FULL BYPASS 1/5] Prompt failed:', err.name);
       setupDevices();
     });
 
@@ -703,12 +693,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.warn('[BrowserBroadcaster] ⚠️  Silent oscillator failed (non-critical):', dummyErr.message);
       }
 
-      // 【最終外科手術 2】おまかせモード＝ブラウザ標準に完全移行
-      console.log('[BrowserBroadcaster] 🏥 [FINAL SURGERY 2/4] Requesting audio with browser defaults (no forced settings)...');
+      // 【全自動バイパス 2】全フィルター物理削除＝ブラウザ補正ゼロ
+      console.log('[BrowserBroadcaster] 🚀 [FULL BYPASS 2/5] Requesting audio RAW (no echo/noise/gain suppression)...');
       
-      // すべての複雑な設定を削除＝ブラウザに完全に任せる
+      // 全フィルター明示的OFF＝外来ノイズ誤認識を排除
       const audioConstraints = {
-        audio: true,  // シンプル＝デフォルト設定
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        },
         video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true
       };
 
