@@ -64,6 +64,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       return;
     }
     
+    // AudioContext は handleMicEnable で既に作成済みと仮定
+    if (!audioContextRef.current) {
+      console.warn('[BrowserBroadcaster] startMicMeter: AudioContext not initialized yet');
+      return;
+    }
+    
     try {
       const audioTracks = stream.getAudioTracks();
       if (audioTracks.length === 0) {
@@ -71,12 +77,6 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         return;
       }
       console.log('[BrowserBroadcaster] ✅ Audio track found, initializing meter');
-
-      // AudioContext 作成
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('[BrowserBroadcaster] ✅ AudioContext created');
-      }
 
       const ctx = audioContextRef.current;
       if (ctx.state === 'suspended') {
@@ -278,17 +278,30 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const handleMicEnable = async () => {
     console.log('[BrowserBroadcaster] 🎙️ Mic enable button clicked - User gesture detected');
     
+    // 古いストリームを完全破棄
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => {
+        t.stop();
+        console.log('[BrowserBroadcaster] 🛑 Track stopped:', t.kind);
+      });
+      streamRef.current = null;
+    }
+    
     // 初めて AudioContext を作成（ユーザー操作のタイミングで）
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       console.log('[BrowserBroadcaster] ✅ AudioContext created on user click');
     }
     
-    // AudioContext resume
-    await audioContextRef.current.resume();
-    console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
+    // AudioContext を確実に resume（Safari ユーザージェスチャー認証）
+    try {
+      await audioContextRef.current.resume();
+      console.log('[BrowserBroadcaster] ✅ AudioContext resumed - state:', audioContextRef.current.state);
+    } catch (err) {
+      console.warn('[BrowserBroadcaster] AudioContext resume warning:', err);
+    }
     
-    // ストリーム取得
+    // ストリーム取得（真っさらな状態）
     navigator.mediaDevices.getUserMedia({
       video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
       audio: selectedMic
@@ -304,12 +317,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             autoGainControl: false,
           },
     }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ Stream acquired on user gesture');
+      console.log('[BrowserBroadcaster] ✅ Stream acquired on user gesture - tracks:', stream.getTracks().map(t => t.kind));
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch((err) => {
+          console.warn('[BrowserBroadcaster] Video play warning:', err.name);
+        });
       }
 
       const videoTrack = stream.getVideoTracks()[0];
@@ -317,23 +332,32 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       
       setCameraReady(!!videoTrack && videoTrack.enabled);
       setMicReady(!!audioTrack && audioTrack.enabled);
+      console.log('[BrowserBroadcaster] ✅ Camera ready:', !!videoTrack, 'Mic ready:', !!audioTrack);
 
       startMicMeter(stream);
       enumerateDevices();
       setShowMicEnableButton(false);
     }).catch((err) => {
-      console.error('[BrowserBroadcaster] Mic enable failed:', err);
+      console.error('[BrowserBroadcaster] Mic enable failed:', err.name, err.message);
       setError('マイク取得に失敗しました: ' + err.message);
       setShowErrorDialog(true);
     });
   };
 
-  // 【マイク再起動ボタン】
+  // 【マイク再起動ボタン】ストリーム完全破棄 + 再初期化
   const handleMicRestart = () => {
     console.log('[BrowserBroadcaster] 🔄 Mic restart requested');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach((t) => {
+        t.stop();
+        console.log('[BrowserBroadcaster] 🛑 Track stopped on restart:', t.kind);
+      });
       streamRef.current = null;
+    }
+    // AudioContext も一度 close して再作成
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
     }
     handleMicEnable();
   };
