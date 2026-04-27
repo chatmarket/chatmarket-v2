@@ -12,6 +12,7 @@ import BroadcasterStream from "../components/live/BroadcasterStream";
 import BrowserBroadcaster from "../components/live/BrowserBroadcaster.jsx";
 
 const MODE_SELECT = "select";
+const MODE_CHOOSE = "choose";
 const MODE_LIVE = "live";
 
 export default function GoLive() {
@@ -148,7 +149,57 @@ export default function GoLive() {
     setShowModeSelect(true);
   };
 
-  // モード選択画面
+  // 配信方式選択画面（OBS vs ブラウザ）
+  if (mode === MODE_CHOOSE) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center gap-6">
+        <div className="text-center mb-2">
+          <h1 className="text-2xl font-black text-white mb-1">配信方式を選択</h1>
+          <p className="text-muted-foreground text-sm">どちらで配信しますか？</p>
+        </div>
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* OBS配信 */}
+          <button
+            onClick={() => requireAuth(() => setMode(MODE_LIVE))}
+            className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+              <Radio className="w-7 h-7 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="font-black text-white text-base mb-1">OBS で配信</p>
+              <p className="text-muted-foreground text-xs leading-relaxed">RTMPSで高画質・高音質。プロフェッショナルな配信。</p>
+            </div>
+            <span className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-black text-center transition-colors">
+              OBS で開始
+            </span>
+          </button>
+
+          {/* ブラウザ配信 */}
+          <button
+            onClick={() => {
+              localStorage.setItem("broadcastMode", "browser");
+              requireAuth(() => setMode(MODE_LIVE));
+            }}
+            className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+              <Smartphone className="w-7 h-7 text-green-400" />
+            </div>
+            <div className="text-center">
+              <p className="font-black text-white text-base mb-1">ブラウザで配信</p>
+              <p className="text-muted-foreground text-xs leading-relaxed">スマホ・PCから即配信。セットアップ不要。</p>
+            </div>
+            <span className="w-full py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-black text-center transition-colors">
+              ブラウザで開始
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // モード選択画面（ライブ配信のみ）
   if (mode === MODE_SELECT) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center gap-6">
@@ -159,7 +210,7 @@ export default function GoLive() {
         <div className="w-full grid grid-cols-1 gap-4">
           {/* 1対多ライブ配信 */}
           <button
-            onClick={() => requireAuth(() => setMode(MODE_LIVE))}
+            onClick={() => requireAuth(() => setMode(MODE_CHOOSE))}
             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
@@ -185,8 +236,8 @@ export default function GoLive() {
     return (
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 h-screen flex flex-col">
         <BrowserBroadcaster
-          streamKey={ivsStream?.streamKey}
-          ingestEndpoint={ivsStream?.ingestEndpoint}
+          streamId={liveStreamId}
+          channelId={channels[0]?.id}
           onEnd={() => {
             localStorage.removeItem("broadcastMode");
             navigate("/creator-dashboard");
