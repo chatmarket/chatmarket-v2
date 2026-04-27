@@ -566,17 +566,38 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         t.stop();
       });
 
-      // 音声ストリームだけを再取得（360p での低負荷リトライ）
+      // 【最終解 1】ダミー音源による AudioContext 強制定着
+      console.log('[BrowserBroadcaster] 🔊 [FINAL FIX 1/4] Creating silent oscillator to force AudioContext engagement...');
+      try {
+        const dummyCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = dummyCtx.createOscillator();
+        const gainNode = dummyCtx.createGain();
+        gainNode.gain.value = 0; // 無音
+        osc.connect(gainNode);
+        gainNode.connect(dummyCtx.destination);
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          dummyCtx.close();
+          console.log('[BrowserBroadcaster] ✅ [FINAL FIX 1/4] Silent oscillator completed');
+        }, 100);
+      } catch (dummyErr) {
+        console.warn('[BrowserBroadcaster] ⚠️  Silent oscillator failed (non-critical):', dummyErr.message);
+      }
+
+      // 【最終解 2】生音モード（エコーキャンセラー OFF）での再取得
+      console.log('[BrowserBroadcaster] 🎤 [FINAL FIX 2/4] Requesting raw audio without processing...');
       const audioConstraints = {
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
+          echoCancellation: false,
+          noiseSuppression: false,
           autoGainControl: false
         }
       };
 
       const audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
       const audioTrack = audioStream.getAudioTracks()[0];
+      console.log('[BrowserBroadcaster] ✅ [FINAL FIX 2/4] Raw audio stream acquired');
 
       if (!streamRef.current) {
         console.warn('[BrowserBroadcaster] ⚠️ Main stream is null, cannot add audio track');
@@ -584,18 +605,27 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         return;
       }
 
-      // 既存の音声トラックを新しいものに置き換え
+      // 【最終解 3】マイク・ストリーム再構築（Re-attach）
+      console.log('[BrowserBroadcaster] 🔌 [FINAL FIX 3/4] Detaching old audio track...');
       const oldAudioTrack = streamRef.current.getAudioTracks()[0];
       if (oldAudioTrack) {
         streamRef.current.removeTrack(oldAudioTrack);
+        oldAudioTrack.stop();
+        console.log('[BrowserBroadcaster] ✅ [FINAL FIX 3/4] Old audio track removed');
       }
+      
+      console.log('[BrowserBroadcaster] 🔌 Re-attaching new audio track...');
       streamRef.current.addTrack(audioTrack);
+      
+      // 1秒待機して配線を安定させる
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log('[BrowserBroadcaster] ✅ [FINAL FIX 3/4] New audio track attached and stabilized');
 
-      console.log('[BrowserBroadcaster] ✅ Microphone stream refreshed successfully');
+      console.log('[BrowserBroadcaster] ✅ Microphone stream reconstructed successfully');
       console.log(`[BrowserBroadcaster] 🎤 Audio track label: ${audioTrack.label}`);
       
       setMicReady(true);
-      toast.success('✅ マイク接続を更新しました');
+      toast.success('✅ マイク接続を完全再構築しました (生音モード)');
     } catch (err) {
       console.error('[BrowserBroadcaster] ❌ Microphone retry failed:', err.message);
       toast.error('マイク再接続に失敗しました: ' + err.message);
@@ -831,11 +861,36 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       {/* プレビュー */}
       <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-zinc-800" style={{ aspectRatio: "16/9" }}>
-        {/* 【強制描画ボタン】映像が黒い場合、クリックで 10 回連続 play() */}
+        {/* 【最終解 4】視覚的フィードバック：マイク 0% の場合に大きく表示 */}
+        {micLevel === 0 && !isBroadcasting && (
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none">
+            <div className="text-center animate-pulse">
+              <p className="text-4xl mb-3">🔴</p>
+              <p className="text-lg font-black text-white mb-2">マイクが反応していません</p>
+              <p className="text-sm text-red-300">
+                画面のどこかをクリックして<br/>AudioContext を有効化してください
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 【強制描画ボタン】映像が黒い場合、クリックで 10 回連続 play() + AudioContext resume */}
         {!isBroadcasting && (
           <button
             onClick={async () => {
-              console.log('[BrowserBroadcaster] 💥 Force play triggered! Executing 10 play() attempts...');
+              console.log('[BrowserBroadcaster] 💥 Force play + AudioContext resume triggered!');
+
+              // AudioContext 強制再開
+              if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+                try {
+                  await audioContextRef.current.resume();
+                  console.log('[BrowserBroadcaster] ✅ AudioContext resumed by user click');
+                } catch (err) {
+                  console.warn('[BrowserBroadcaster] ⚠️  AudioContext resume failed:', err.message);
+                }
+              }
+
+              // 映像強制再生
               for (let i = 0; i < 10; i++) {
                 try {
                   await videoRef.current?.play();
@@ -847,7 +902,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               }
             }}
             className="absolute inset-0 z-30 cursor-pointer opacity-0 hover:opacity-5 transition-opacity"
-            title="クリックして映像を強制再生"
+            title="クリックして映像・音声を強制有効化"
           />
         )}
         {/* 【修正】エラーオーバーレイ — ブランド保護メッセージ */}
@@ -1018,15 +1073,25 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               {micLevel < 20 ? "📍 無音に近い" : micLevel < 50 ? "🟢 良好" : micLevel < 80 ? "🟡 大きめ" : "🔴 大きすぎる"}
             </p>
             
-            {/* 【マイク単独再試行ボタン】音声が 0% の場合に表示 */}
+            {/* 【最終解 4】視覚的フィードバック＆マイク単独再試行ボタン */}
             {micLevel === 0 && (
-              <button
-                onClick={retryMicrophoneOnly}
-                disabled={micRetrying}
-                className="w-full mt-2 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-white text-xs font-bold rounded-lg transition-colors"
-              >
-                {micRetrying ? '再接続中...' : '🔄 マイク再接続'}
-              </button>
+              <div className="space-y-2 mt-2">
+                <div className="px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-center">
+                  <p className="text-xs font-black text-red-400 animate-pulse">
+                    🔴 マイクが反応していません
+                  </p>
+                  <p className="text-[10px] text-red-300 mt-1">
+                    プレビュー画面をクリックして有効化してください
+                  </p>
+                </div>
+                <button
+                  onClick={retryMicrophoneOnly}
+                  disabled={micRetrying}
+                  className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-white text-xs font-bold rounded-lg transition-colors"
+                >
+                  {micRetrying ? '再接続中...' : '🔄 マイク再接続（最終解）'}
+                </button>
+              </div>
             )}
           </div>
         </div>
