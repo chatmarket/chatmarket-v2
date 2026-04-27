@@ -177,16 +177,25 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] ✅ Stream acquired');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
-        // 【修正】document.getElementById で直接要素を掴む（最終手段）
-        let videoElement = videoRef.current;
-        if (!videoElement) {
-          console.warn('[BrowserBroadcaster] ⚠️  videoRef is null, trying document.getElementById...');
-          videoElement = document.getElementById('browser-broadcaster-video');
+        // 【修正】video要素がDOMにマウントされるまで polling で待機
+        let videoElement = null;
+        let retries = 0;
+        const maxRetries = 50; // 5秒間（100ms × 50回）待機
+        
+        while (!videoElement && retries < maxRetries) {
+          videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
+          if (!videoElement) {
+            retries++;
+            console.log(`[BrowserBroadcaster] ⏳ Waiting for video element... (attempt ${retries}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
 
         if (!videoElement) {
-          throw new Error('[BrowserBroadcaster] ❌ Video element not found in DOM');
+          throw new Error('[BrowserBroadcaster] ❌ Video element not found in DOM after 5 second wait');
         }
+        
+        console.log('[BrowserBroadcaster] ✅ Video element found in DOM');
 
         // 【最強属性セット】
         videoElement.srcObject = stream;
