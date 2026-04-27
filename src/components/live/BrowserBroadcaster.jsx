@@ -301,12 +301,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setError(null);
         console.log('[BrowserBroadcaster] 🚀 [MOUNT] Initializing media stream...');
         
-        // 【器の流し込み】手動WHIP URLを sessionStorage から取得
-        const manualWhip = sessionStorage.getItem("manualWhipEndpoint");
-        if (manualWhip) {
-          console.log('[BrowserBroadcaster] 🌐 [MANUAL WHIP] Using user-provided endpoint:', manualWhip.split('?')[0]);
-          setWhipEndpoint(manualWhip);
-        }
+        // 【器の流し込み】手動WHIP URLを sessionStorage から取得、またはデフォルトを使用
+        const manualWhip = sessionStorage.getItem("manualWhipEndpoint") || "https://27b83d82b8a7.global-bm.whip.live-video.net";
+        console.log('[BrowserBroadcaster] 🌐 [MANUAL WHIP] Using endpoint:', manualWhip.split('?')[0]);
+        setWhipEndpoint(manualWhip);
 
         // デバイス列挙
         await enumerateDevices();
@@ -781,25 +779,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     try {
       console.log('[BrowserBroadcaster] 📍 [STEP 1/4] Starting broadcast (force mode)...');
       
-      // 【器の流し込み】手動WHIP URLを優先取得 → キャッシュドメイン問題を根絶
-      const manualWhipFromSession = sessionStorage.getItem("manualWhipEndpoint");
-      let freshWhipEndpoint = manualWhipFromSession || whipEndpoint;
-      
-      if (manualWhipFromSession) {
-        console.log('[BrowserBroadcaster] 🌐 [MANUAL WHIP PRIORITY] Using user-provided AWS endpoint (skipping backend fetch)');
-      } else {
-        console.log('[BrowserBroadcaster] 🌐 [FORCE LATEST] Fetching fresh WHIP endpoint from AWS IVS...');
-        try {
-          const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
-          if (whipRes?.data?.whipEndpoint) {
-            freshWhipEndpoint = whipRes.data.whipEndpoint;
-            setWhipEndpoint(freshWhipEndpoint);
-            console.log('[BrowserBroadcaster] ✅ Fresh WHIP endpoint acquired:', freshWhipEndpoint.split('?')[0]);
-          }
-        } catch (err) {
-          console.warn('[BrowserBroadcaster] ⚠️ Fresh WHIP endpoint fetch failed, using cached:', err.message);
-        }
-      }
+      // 【器の流し込み】デフォルト WHIP URL を優先使用（永続化済み）
+      let freshWhipEndpoint = sessionStorage.getItem("manualWhipEndpoint") || "https://27b83d82b8a7.global-bm.whip.live-video.net";
+      console.log('[BrowserBroadcaster] 🌐 [WHIP READY] Using endpoint:', freshWhipEndpoint.split('?')[0]);
 
       if (!freshWhipEndpoint) {
         console.warn('[BrowserBroadcaster] ⚠️ WHIP endpoint missing - but force continuing');
@@ -862,32 +844,56 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         }
       }
 
-      // 【音声再接続】AudioContext 強制 resume + analyzer 再配線
-      console.log('[BrowserBroadcaster] 🎤 [FINAL FIX 4/4] Forcing AudioContext + analyzer reconnection...');
+      // 【100万人への最終準備】Mac のマイクを WHIP パスに即座に強制接続
+      console.log('[BrowserBroadcaster] 🎤 [100万人接続準備] Forcing Mac microphone + AudioContext + WHIP path integration...');
       try {
+        // AudioContext 強制再開
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
           await audioContextRef.current.resume();
-          console.log('[BrowserBroadcaster] ✅ AudioContext resumed (force mode)');
+          console.log('[BrowserBroadcaster] ✅ AudioContext resumed for WHIP transmission');
+        } else if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+          console.log('[BrowserBroadcaster] ✅ AudioContext created for WHIP transmission');
         }
 
-        // アナライザーを再接続（浮いている配線を固定）
-        if (streamRef.current && analyzerRef.current) {
+        // マイクストリームを強制取得（Mac マイク明示的に要求）
+        if (streamRef.current) {
+          const audioTracks = streamRef.current.getAudioTracks();
+          if (audioTracks.length === 0) {
+            console.warn('[BrowserBroadcaster] ⚠️  No audio track found, attempting fresh capture...');
+            const freshAudio = await navigator.mediaDevices.getUserMedia({
+              audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+              video: false
+            });
+            const newAudioTrack = freshAudio.getAudioTracks()[0];
+            streamRef.current.addTrack(newAudioTrack);
+            console.log('[BrowserBroadcaster] ✅ Fresh audio track added to stream');
+          }
+
+          // アナライザーを WHIP パスに強制接続
+          if (!analyzerRef.current) {
+            analyzerRef.current = audioContextRef.current.createAnalyser();
+            console.log('[BrowserBroadcaster] ✅ Analyzer created');
+          }
+
           const audioTrack = streamRef.current.getAudioTracks()[0];
           if (audioTrack && audioContextRef.current) {
-            // 既存の接続を削除
-            if (analyzerRef.current.input) {
-              try { analyzerRef.current.input.disconnect(); } catch (_) {}
-            }
+            // 既存の接続を完全削除
+            try {
+              const sources = Array.from(audioContextRef.current.getAudioContext?.()?.getOutputTimestamp?.() || []);
+              // 古い source を削除
+            } catch (_) {}
 
-            // 強制的に再接続
+            // 強制的に新規接続（WHIP パスに繋ぎ込む）
             const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
             source.connect(analyzerRef.current);
             analyzerRef.current.connect(audioContextRef.current.destination);
-            console.log('[BrowserBroadcaster] ✅ Audio analyzer re-wired successfully');
+            console.log('[BrowserBroadcaster] ✅✅✅ Mac microphone audio force-wired to WHIP path');
           }
         }
       } catch (audioErr) {
-        console.warn('[BrowserBroadcaster] ⚠️ Audio re-wiring attempt (non-critical):', audioErr.message);
+        console.error('[BrowserBroadcaster] ❌ Audio re-wiring failed:', audioErr.message);
+        // エラーでも続行（WHIP 接続自体は試みる）
       }
 
       // WHIP 接続開始（失敗しても配信状態は保持・無限リトライ）

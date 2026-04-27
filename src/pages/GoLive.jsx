@@ -573,12 +573,12 @@ export default function GoLive() {
         <div className="space-y-2">
           <Label className="text-cyan-400 font-bold">🌐 WHIPエンドポイント（手動）</Label>
           <Input
-            value={manualWhipEndpoint}
+            value={manualWhipEndpoint || "https://27b83d82b8a7.global-bm.whip.live-video.net"}
             onChange={(e) => setManualWhipEndpoint(e.target.value)}
-            placeholder="https://27683d3bba7... (AWS IVS WHIP URL)"
+            placeholder="https://27b83d82b8a7.global-bm.whip.live-video.net"
             className="bg-secondary border-2 border-cyan-500/50 focus:border-cyan-500 font-mono text-xs"
           />
-          <p className="text-xs text-cyan-300">💡 AWSから取得したWHIP URLを貼り付けるとRTMPからWHIPに自動切り替え</p>
+          <p className="text-xs text-cyan-300">💡 ✅ デフォルト: 27b83d82b8a7.global-bm.whip.live-video.net</p>
         </div>
 
         {/* 価格 */}
