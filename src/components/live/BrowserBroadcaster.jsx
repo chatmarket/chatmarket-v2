@@ -68,22 +68,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   }, [selectedMic]);
 
   // 【修正】マイクレベルメーター監視 — ストリーム取得直後から稼働
+  // 【修正】マイクレベルメーター — 映像完了を待たずに独立実行
   useEffect(() => {
     if (!streamRef.current) return;
 
     const audioTracks = streamRef.current.getAudioTracks();
-    if (audioTracks.length === 0) {
-      console.warn('[BrowserBroadcaster] ⚠️  No audio tracks available for metering');
-      return;
-    }
+    if (audioTracks.length === 0) return;
 
     let audioContext = null;
     let analyzer = null;
-    let animationFrameId = null;
+    let rafId = null;
     let alive = true;
 
     try {
-      console.log('[BrowserBroadcaster] 🎤 Initializing mic level meter...');
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(streamRef.current);
       analyzer = audioContext.createAnalyser();
@@ -91,31 +88,27 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       source.connect(analyzer);
 
       const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-
-      const updateLevel = () => {
+      const tick = () => {
         if (!alive) return;
         analyzer.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        const levelPercent = Math.round((average / 255) * 100);
-        console.log(`[BrowserBroadcaster] 🎤 Mic level: ${levelPercent}%`);
-        setMicLevel(Math.max(0, levelPercent)); // 負の値を防ぐ
-        animationFrameId = requestAnimationFrame(updateLevel);
+        const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
+        setMicLevel(Math.round((avg / 255) * 100));
+        rafId = requestAnimationFrame(tick);
       };
 
-      console.log('[BrowserBroadcaster] ✅ Mic meter started');
-      updateLevel();
+      tick();
+      console.log('[BrowserBroadcaster] 🎤 Mic level meter started (independent)');
     } catch (err) {
       console.error('[BrowserBroadcaster] ❌ Audio context error:', err);
     }
 
     return () => {
       alive = false;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(rafId);
       if (analyzer) analyzer.disconnect();
       if (audioContext) audioContext.close();
-      console.log('[BrowserBroadcaster] 🛑 Mic meter stopped');
     };
-  }, [streamRef.current]);
+  }, []);
 
   // デバイス列挙
   const enumerateDevices = async () => {
@@ -144,13 +137,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【修正】シンプルなマウント待機＆初期化
+  // 【修正】マウント時に一回だけ setupDevices() を実行（複雑な監視ループ破棄）
   useEffect(() => {
-    const initMedia = async () => {
+    const setupDevices = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('[BrowserBroadcaster] 🚀 Initializing media stream...');
+        console.log('[BrowserBroadcaster] 🚀 [MOUNT] Initializing media stream...');
 
         // デバイス列挙
         await enumerateDevices();
@@ -158,33 +151,30 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         // 【重要】既存ストリームを確実に停止
         if (streamRef.current) {
           console.log('[BrowserBroadcaster] 🛑 Stopping existing stream tracks...');
-          streamRef.current.getTracks().forEach((t) => {
-            console.log(`  → Stopping ${t.kind} track: ${t.label}`);
-            t.stop();
-          });
+          streamRef.current.getTracks().forEach((t) => t.stop());
           streamRef.current = null;
         }
 
-        // ユーザーメディアを取得（1080p 優先）
+        // 【修正】デバイスIDをクリア（sessionStorage リセット）→ デフォルトカメラで再接続
+        const cleanCamera = !selectedCamera;
+        const cleanMic = !selectedMic;
+        if (cleanCamera || cleanMic) {
+          console.log('[BrowserBroadcaster] 🔄 [CLEAN RETRY] Clearing device IDs from sessionStorage...');
+          sessionStorage.removeItem('selectedCamera');
+          sessionStorage.removeItem('selectedMic');
+        }
+
+        // ユーザーメディアを取得（デバイスID指定なし = デフォルト）
         const constraints = {
-          video: selectedCamera
-            ? {
-                deviceId: { exact: selectedCamera },
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-              }
-            : { width: { ideal: 1920 }, height: { ideal: 1080 } },
-          audio: selectedMic
-            ? { deviceId: { exact: selectedMic } }
-            : true,
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: true,
         };
 
-        console.log('[BrowserBroadcaster] 📍 Requesting user media with constraints:', constraints);
+        console.log('[BrowserBroadcaster] 📍 Requesting user media (default devices)...');
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         
-        // 【修正】ストリームを ref に保存してから video 要素に代入（確実に実行）
         streamRef.current = stream;
-        console.log('[BrowserBroadcaster] ✅ Stream acquired, assigning to video element...');
+        console.log('[BrowserBroadcaster] ✅ Stream acquired');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
         // 【修正】document.getElementById で直接要素を掴む（最終手段）
@@ -359,57 +349,61 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setCameraReady(!!videoTrack && videoTrack.enabled);
         setMicReady(!!audioTrack && audioTrack.enabled);
 
-        // 【修正】マイク音が取れていれば、ローディング画面を強制的に消す
+        // 【修正】マイク音が取れたら即座にローディング解除（映像待たない）
         if (audioTrack && audioTrack.enabled) {
-          console.log('[BrowserBroadcaster] 🎤 Audio track confirmed, forcing loading screen OFF');
+          console.log('[BrowserBroadcaster] 🎤 Audio ready - forcing loading OFF immediately');
+          setLoading(false);
+        } else if (videoTrack && videoTrack.enabled) {
+          // 映像だけでも取れたら解除
+          console.log('[BrowserBroadcaster] 📹 Video ready - forcing loading OFF');
           setLoading(false);
         }
 
-        // WHIP エンドポイント取得
+        // WHIP エンドポイント取得（並列）
         console.log('[BrowserBroadcaster] 🌐 Fetching WHIP endpoint...');
-        const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
-        if (whipRes?.data?.whipEndpoint) {
-          setWhipEndpoint(whipRes.data.whipEndpoint);
-          console.log('[BrowserBroadcaster] ✅ WHIP endpoint ready:', whipRes.data.whipEndpoint);
+        try {
+          const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
+          if (whipRes?.data?.whipEndpoint) {
+            setWhipEndpoint(whipRes.data.whipEndpoint);
+            console.log('[BrowserBroadcaster] ✅ WHIP endpoint ready');
+          }
+        } catch (whipErr) {
+          console.warn('[BrowserBroadcaster] ⚠️  WHIP endpoint fetch failed:', whipErr.message);
         }
 
         setLoading(false);
       } catch (err) {
+        // 【修正】エラーの生の英語メッセージをそのまま画面表示
         console.error('[BrowserBroadcaster] ❌ Initialization error:', err);
-        let friendlyMsg = err.message;
-
-        // 【修正】エラー段階を詳細に特定して画面表示＋権限ガイド
-        if (err.name === 'NotAllowedError' || err.message.includes('Permission denied')) {
-          friendlyMsg = '🔴 カメラ/マイクへのアクセスを許可してください\n\n手順:\n1️⃣ URLバーの左側「南京錠🔒」をクリック\n2️⃣ 「カメラ」と「マイク」を「許可」に変更\n3️⃣ ページを再読み込み';
-          setPermissionError(friendlyMsg);
-        } else if (err.name === 'NotFoundError' || err.message.includes('Requested device not found')) {
-          friendlyMsg = '🔴 選択したカメラ/マイクが見つかりません\n\n確認事項:\n• 他のアプリがカメラを使用していないか\n• デバイスが接続されているか\n• USB ケーブルがしっかり接続されているか';
+        const rawMsg = err.message || String(err);
+        
+        // ユーザー向けメッセージを構築（英語エラーコード含める）
+        let userMsg = rawMsg;
+        if (err.name === 'NotAllowedError') {
+          userMsg = `🔴 Permission Denied (${err.name})\n\n手順:\n1️⃣ URLバーの南京錠🔒をクリック\n2️⃣ 「カメラ」「マイク」を「許可」に\n3️⃣ ページを再読み込み`;
+        } else if (err.name === 'NotFoundError') {
+          userMsg = `🔴 Device Not Found (${err.name})\n\n• 他のアプリがカメラを使用していないか\n• USB ケーブルがしっかり接続されているか`;
         } else if (err.name === 'OverconstrainedError') {
-          friendlyMsg = '🔴 デバイスが制約条件に対応していません\n\n別のカメラを選択してお試しください';
-        } else if (err.name === 'TypeError') {
-          friendlyMsg = '🔴 デバイス選択が無効です\n\n別のカメラ/マイクを選択してください';
+          userMsg = `🔴 Overconstrained (${err.name})\n\n別のカメラを選択してください`;
         }
 
-        console.error(`[BrowserBroadcaster] 詳細: ${err.name} - ${err.message}`);
-        setPermissionError(friendlyMsg);
-        setError(friendlyMsg);
+        console.error(`[BrowserBroadcaster] Error: ${err.name} - ${rawMsg}`);
+        setError(userMsg);
+        setPermissionError(userMsg);
         setLoading(false);
-        toast.error(friendlyMsg);
+        toast.error(`エラー: ${rawMsg}`);
       }
     };
 
-    initMedia();
+    setupDevices();
 
     return () => {
-      streamRef.current?.getTracks().forEach((t) => {
-        console.log(`[BrowserBroadcaster] 🛑 Stopping ${t.kind} track`);
-        t.stop();
-      });
+      streamRef.current?.getTracks().forEach((t) => t.stop());
       whipClientRef.current?.close();
       clearInterval(videoWidthCheckRef.current);
       cancelAnimationFrame(canvasRafRef.current);
     };
-  }, [streamId, selectedCamera, selectedMic]);
+  }, [streamId]); // 【修正】依存配列を最小化（一回だけ実行）
 
   const handleStartBroadcast = async () => {
     if (!cameraReady || !micReady) {
