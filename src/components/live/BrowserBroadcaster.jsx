@@ -7,6 +7,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const whipClientRef = useRef(null);
+  const analyzerRef = useRef(null);
+  const audioContextRef = useRef(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [micReady, setMicReady] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,44 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [microphones, setMicrophones] = useState([]);
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [selectedMic, setSelectedMic] = useState(null);
+  const [micLevel, setMicLevel] = useState(0);
+
+  // マイクレベルメーター監視
+  useEffect(() => {
+    if (!streamRef.current || isBroadcasting) return;
+
+    const audioTracks = streamRef.current.getAudioTracks();
+    if (audioTracks.length === 0) return;
+
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      const audioContext = audioContextRef.current;
+      if (!analyzerRef.current) {
+        const source = audioContext.createMediaStreamSource(streamRef.current);
+        const analyzer = audioContext.createAnalyser();
+        analyzer.fftSize = 256;
+        source.connect(analyzer);
+        analyzerRef.current = analyzer;
+      }
+
+      const analyzer = analyzerRef.current;
+      const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+
+      const updateLevel = () => {
+        analyzer.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        setMicLevel(Math.round((average / 255) * 100));
+        requestAnimationFrame(updateLevel);
+      };
+
+      updateLevel();
+    } catch (err) {
+      console.warn('[BrowserBroadcaster] Audio context error:', err);
+    }
+  }, [isBroadcasting]);
 
   // デバイス列挙
   const enumerateDevices = async () => {
@@ -269,6 +309,34 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           className="w-full h-full object-cover"
         />
 
+        {/* テストパターン オーバーレイ */}
+        {!isBroadcasting && (
+          <div className="absolute inset-0 pointer-events-none">
+            {/* グリッド線 */}
+            <svg className="absolute inset-0 w-full h-full opacity-10">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+
+            {/* Test Pattern テキスト */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-6xl font-black text-white opacity-5 pointer-events-none select-none">TEST</span>
+            </div>
+          </div>
+        )}
+
+        {/* プレビュー中バッジ（中央下部） */}
+        {!isBroadcasting && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-red-500/90 backdrop-blur px-4 py-2 rounded-full border border-red-400/50 shadow-lg">
+            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+            <span className="text-xs font-black text-white tracking-wide">🔴 プレビュー中：視聴者には見えていません</span>
+          </div>
+        )}
+
         {/* ステータスバッジ */}
         <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur px-3 py-2 rounded-lg border border-zinc-700/50">
           <Camera className="w-4 h-4 text-primary" />
@@ -323,6 +391,32 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               </option>
             ))}
           </select>
+
+          {/* マイクレベルメーター */}
+          <div className="space-y-1.5 mt-3 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground">🎤 音量レベル</p>
+              <span className="text-xs font-bold text-primary">{micLevel}%</span>
+            </div>
+            {/* 横棒メーター */}
+            <div className="w-full h-2 rounded-full bg-zinc-700 overflow-hidden">
+              <div
+                className={`h-full transition-all duration-75 rounded-full ${
+                  micLevel < 30
+                    ? "bg-green-500"
+                    : micLevel < 60
+                    ? "bg-yellow-500"
+                    : micLevel < 85
+                    ? "bg-orange-500"
+                    : "bg-red-500"
+                }`}
+                style={{ width: `${Math.min(micLevel, 100)}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              {micLevel < 20 ? "📍 無音に近い" : micLevel < 50 ? "🟢 良好" : micLevel < 80 ? "🟡 大きめ" : "🔴 大きすぎる"}
+            </p>
+          </div>
         </div>
       </div>
 
