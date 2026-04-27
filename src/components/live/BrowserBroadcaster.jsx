@@ -21,42 +21,55 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [selectedMic, setSelectedMic] = useState(null);
   const [micLevel, setMicLevel] = useState(0);
 
-  // マイクレベルメーター監視
+  // 【修正】マイクレベルメーター監視 — ストリーム取得直後から稼働
   useEffect(() => {
-    if (!streamRef.current || isBroadcasting) return;
+    if (!streamRef.current) return;
 
     const audioTracks = streamRef.current.getAudioTracks();
-    if (audioTracks.length === 0) return;
+    if (audioTracks.length === 0) {
+      console.warn('[BrowserBroadcaster] ⚠️  No audio tracks available for metering');
+      return;
+    }
+
+    let audioContext = null;
+    let analyzer = null;
+    let animationFrameId = null;
+    let alive = true;
 
     try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      }
+      console.log('[BrowserBroadcaster] 🎤 Initializing mic level meter...');
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(streamRef.current);
+      analyzer = audioContext.createAnalyser();
+      analyzer.fftSize = 256;
+      source.connect(analyzer);
 
-      const audioContext = audioContextRef.current;
-      if (!analyzerRef.current) {
-        const source = audioContext.createMediaStreamSource(streamRef.current);
-        const analyzer = audioContext.createAnalyser();
-        analyzer.fftSize = 256;
-        source.connect(analyzer);
-        analyzerRef.current = analyzer;
-      }
-
-      const analyzer = analyzerRef.current;
       const dataArray = new Uint8Array(analyzer.frequencyBinCount);
 
       const updateLevel = () => {
+        if (!alive) return;
         analyzer.getByteFrequencyData(dataArray);
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        setMicLevel(Math.round((average / 255) * 100));
-        requestAnimationFrame(updateLevel);
+        const levelPercent = Math.round((average / 255) * 100);
+        console.log(`[BrowserBroadcaster] 🎤 Mic level: ${levelPercent}%`);
+        setMicLevel(Math.max(0, levelPercent)); // 負の値を防ぐ
+        animationFrameId = requestAnimationFrame(updateLevel);
       };
 
+      console.log('[BrowserBroadcaster] ✅ Mic meter started');
       updateLevel();
     } catch (err) {
-      console.warn('[BrowserBroadcaster] Audio context error:', err);
+      console.error('[BrowserBroadcaster] ❌ Audio context error:', err);
     }
-  }, [isBroadcasting]);
+
+    return () => {
+      alive = false;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (analyzer) analyzer.disconnect();
+      if (audioContext) audioContext.close();
+      console.log('[BrowserBroadcaster] 🛑 Mic meter stopped');
+    };
+  }, [streamRef.current]);
 
   // デバイス列挙
   const enumerateDevices = async () => {
@@ -85,7 +98,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // カメラ・マイク起動 + WHIP エンドポイント取得
+  // 【修正】カメラ・マイク起動 + WHIP エンドポイント取得 — 強制接続＆初期化
   useEffect(() => {
     const initMedia = async () => {
       try {
@@ -95,6 +108,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         // デバイス列挙
         await enumerateDevices();
+
+        // 【重要】既存ストリームを確実に停止
+        if (streamRef.current) {
+          console.log('[BrowserBroadcaster] 🛑 Stopping existing stream tracks...');
+          streamRef.current.getTracks().forEach((t) => {
+            console.log(`  → Stopping ${t.kind} track: ${t.label}`);
+            t.stop();
+          });
+          streamRef.current = null;
+        }
 
         // ユーザーメディアを取得（1080p 優先）
         const constraints = {
@@ -113,12 +136,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] 📍 Requesting user media with constraints:', constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         
-        // 既存ストリームを停止
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        
+        // 【修正】ストリームを ref に保存してから video 要素に代入
         streamRef.current = stream;
+        console.log('[BrowserBroadcaster] ✅ Stream acquired, assigning to video element...');
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          console.log('[BrowserBroadcaster] ✅ Video element srcObject assigned');
+        } else {
+          console.warn('[BrowserBroadcaster] ⚠️  videoRef not available');
         }
 
         // トラック確認
@@ -364,7 +390,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           <label className="text-sm font-semibold text-muted-foreground">カメラ</label>
           <select
             value={selectedCamera || ""}
-            onChange={(e) => setSelectedCamera(e.target.value)}
+            onChange={(e) => {
+              console.log('[BrowserBroadcaster] 📷 Camera device changed, reinitializing...');
+              setSelectedCamera(e.target.value);
+            }}
             disabled={isBroadcasting}
             className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -381,7 +410,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           <label className="text-sm font-semibold text-muted-foreground">マイク</label>
           <select
             value={selectedMic || ""}
-            onChange={(e) => setSelectedMic(e.target.value)}
+            onChange={(e) => {
+              console.log('[BrowserBroadcaster] 🎤 Microphone device changed, reinitializing...');
+              setSelectedMic(e.target.value);
+            }}
             disabled={isBroadcasting}
             className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
