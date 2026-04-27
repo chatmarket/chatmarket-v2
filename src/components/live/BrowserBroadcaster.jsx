@@ -177,31 +177,49 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] ✅ Stream acquired');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
-        // 【修正】video要素がDOMにマウントされるまで polling で待機
+        // 【修正】video要素がDOMにマウントされるまで polling で待機（最大15秒、Async/Await最適化）
         let videoElement = null;
         let retries = 0;
-        const maxRetries = 50; // 5秒間（100ms × 50回）待機
+        const maxRetries = 150; // 15秒間（100ms × 150回）待機
         
+        console.log('[BrowserBroadcaster] ⏳ Polling for video element mount...');
+        
+        // 非同期でポーリング（ブラウザフリーズ防止）
         while (!videoElement && retries < maxRetries) {
           videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
-          if (!videoElement) {
-            retries++;
-            console.log(`[BrowserBroadcaster] ⏳ Waiting for video element... (attempt ${retries}/${maxRetries})`);
-            await new Promise(resolve => setTimeout(resolve, 100));
+          if (videoElement) {
+            console.log(`[BrowserBroadcaster] ✅ Video element found at attempt ${retries + 1}`);
+            break;
           }
+          
+          retries++;
+          
+          // 進捗ログ（5回ごと）
+          if (retries % 5 === 0) {
+            console.log(`[BrowserBroadcaster] ⏳ Still waiting... (${retries * 100}ms / ${maxRetries * 100}ms)`);
+          }
+          
+          // 非同期で優雅に待機（イベントループを解放）
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         if (!videoElement) {
-          throw new Error('[BrowserBroadcaster] ❌ Video element not found in DOM after 5 second wait');
+          // 【修正】失敗時に再試行ボタンをUI上に自動表示
+          console.error('[BrowserBroadcaster] ❌ Video element not found after 15 second wait');
+          setError('⚠️ ブラウザの準備に時間がかかっています。下の「再度試す」ボタンをクリックしてください。');
+          setLoading(false);
+          return; // setupDevices 終了、再試行待機
         }
         
-        console.log('[BrowserBroadcaster] ✅ Video element found in DOM');
+        console.log('[BrowserBroadcaster] 🚀 Video element mounted - injecting stream immediately (zero latency)!');
 
-        // 【最強属性セット】
-        videoElement.srcObject = stream;
+        // 【瞬発力：要素マウント直後の即着火】
+        console.log('[BrowserBroadcaster] ⚡ [ZERO LATENCY] srcObject injection...');
+        videoElement.srcObject = stream; // 1ミリ秒の遅延もなく即座にストリーム流し込み
         videoElement.muted = true;
         videoElement.autoplay = true;
         videoElement.playsInline = true;
+        console.log('[BrowserBroadcaster] ✅ Stream injected with zero latency');
         
         // 【最強CSS直書き】
         videoElement.style.width = '100%';
