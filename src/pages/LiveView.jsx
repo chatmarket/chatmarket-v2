@@ -16,6 +16,7 @@ import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream.jsx";
 import YellButtons from "../components/live/YellButtons.jsx";
 import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx";
+import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -258,7 +259,10 @@ function LiveViewInner() {
                 </button>
               </div>
             </div>
-            {/* ボタン行（横スクロール対応） */}
+            {/* チャット入力欄 */}
+            <ViewerChatInput streamId={id} user={user} />
+
+            {/* エールボタン行（横スクロール対応） */}
             <div className="px-3 pb-3 overflow-x-auto">
               <div className="flex gap-2" style={{ width: "max-content" }}>
                 <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
