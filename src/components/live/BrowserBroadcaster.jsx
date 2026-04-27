@@ -102,10 +102,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   // 【修正】DOMマウント待機 → ビデオ要素が確実にDOMに紐付いてから初期化
   useEffect(() => {
-    // 【重要】videoRef が確実にDOMに存在するか確認
+    // 【重要】videoRef が存在するまで待機（ポーリング）
     if (!videoRef.current) {
-      console.warn('[BrowserBroadcaster] ⚠️  videoRef is not mounted yet, deferring initialization...');
-      return; // DOMが準備できるまで待つ
+      console.log('[BrowserBroadcaster] ⏳ Waiting for videoRef to mount...');
+      const checkInterval = setInterval(() => {
+        if (videoRef.current) {
+          console.log('[BrowserBroadcaster] ✅ videoRef mounted! Starting initialization...');
+          clearInterval(checkInterval);
+        }
+      }, 50);
+      return () => clearInterval(checkInterval);
     }
 
     const initMedia = async () => {
