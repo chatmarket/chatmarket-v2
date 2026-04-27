@@ -75,19 +75,22 @@ export default function ViewerStream({ stream }) {
         return;
       }
 
-      // ── 方法2: HLS.js (Android Chrome / Desktop) ──
+      // ── 方法2: HLS.js CDN (Android Chrome / Desktop) ──
       try {
         setPhase("HLS.js をロード中...");
-        const Hls = (await import("hls.js")).default;
+        const Hls = await new Promise((resolve, reject) => {
+          if (window.Hls) { resolve(window.Hls); return; }
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js";
+          script.onload = () => resolve(window.Hls);
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
         if (cancelled) return;
 
         if (Hls.isSupported()) {
           console.log("[ViewerStream] ✅ HLS.js モード");
-          const hls = new Hls({
-            lowLatencyMode: true,
-            liveSyncDurationCount: 2,
-            liveMaxLatencyDurationCount: 5,
-          });
+          const hls = new Hls({ lowLatencyMode: true, liveSyncDurationCount: 2 });
           hlsRef.current = hls;
           hls.loadSource(playbackUrl);
           hls.attachMedia(videoEl);
@@ -103,9 +106,7 @@ export default function ViewerStream({ stream }) {
           });
           hls.on(Hls.Events.ERROR, (_, data) => {
             console.error("[ViewerStream] HLS.js error:", data);
-            if (data.fatal && !cancelled) {
-              setPhase(`❌ HLSエラー: ${data.type}`);
-            }
+            if (data.fatal && !cancelled) setPhase(`❌ HLSエラー: ${data.type}`);
           });
           return;
         }
