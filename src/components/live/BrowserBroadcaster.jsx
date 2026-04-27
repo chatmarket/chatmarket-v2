@@ -127,28 +127,21 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         
         source.connect(analyzer);
         analyzer.connect(audioContext.destination);
-        console.log('[BrowserBroadcaster] ✅ Raw audio pipeline connected (all filters bypassed)');
+        analyzerRef.current = analyzer; // ← 必ずここで設定
+        console.log('[BrowserBroadcaster] ✅ Audio pipeline connected');
 
-        // 【デバッグ強化】enabled/muted状態を0.1秒おきにログ
-        console.log('[BrowserBroadcaster] 🔍 Starting audio track state monitor (100ms interval)...');
-        const trackStateInterval = setInterval(() => {
-          const track = streamRef.current?.getAudioTracks()[0];
-          if (!track) {
-            clearInterval(trackStateInterval);
-            return;
-          }
-          console.log(`[BrowserBroadcaster] 📊 Track state: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
-          
-          // 自動修復：muted を検知したら即座に enabled を true に
-          if (track.muted || !track.enabled) {
-            console.warn('[BrowserBroadcaster] 🚨 TRACK MUTED DETECTED - forcing enabled=true');
-            track.enabled = true;
-          }
-        }, 100);
-
-        analyzerRef.current._trackStateInterval = trackStateInterval;
-
-        analyzerRef.current = analyzer;
+        // RAF メーターループ即座開始
+        const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        const meterTick = () => {
+          if (!analyzerRef.current) return;
+          analyzerRef.current.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          setMicLevel(Math.min(100, Math.round((avg / 128) * 100)));
+          setMicDebugValue(Math.round(avg));
+          rafId = requestAnimationFrame(meterTick);
+        };
+        meterTick();
+        console.log('[BrowserBroadcaster] 🎤 Mic meter RAF loop started');
 
         // 【最終手段：MediaRecorder冗長ループ】AudioContext の音が取れなくても MediaRecorder から検出
         console.log('[BrowserBroadcaster] 🎙️ [REDUNDANCY] Starting MediaRecorder fallback...');
@@ -242,36 +235,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【独立マイクメーター】RAF ループを常時稼働
-  useEffect(() => {
-    if (!analyzerRef.current) return;
 
-    let rafId = null;
-    let alive = true;
-
-    const tick = () => {
-      if (!alive || !analyzerRef.current) return;
-      
-      const dataArray = new Uint8Array(analyzerRef.current.frequencyBinCount);
-      analyzerRef.current.getByteFrequencyData(dataArray);
-      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-      const level = Math.min(100, Math.round((avg / 128) * 100));
-      
-      setMicLevel(level);
-      setMicDebugValue(Math.round(avg));
-      
-      rafId = requestAnimationFrame(tick);
-    };
-
-    console.log('[BrowserBroadcaster] 🎤 Mic level meter RAF loop STARTED');
-    rafId = requestAnimationFrame(tick);
-
-    return () => {
-      alive = false;
-      cancelAnimationFrame(rafId);
-      console.log('[BrowserBroadcaster] 🛑 Mic level meter RAF loop STOPPED');
-    };
-  }, []);
 
   // 【権限状態リアルタイム監視】ブラウザの権限状態変化を検知
   useEffect(() => {
