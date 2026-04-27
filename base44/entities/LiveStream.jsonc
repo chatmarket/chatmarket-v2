@@ -63,6 +63,7 @@
       "type": "string",
       "enum": [
         "webrtc",
+        "ivs",
         "vimeo",
         "youtube"
       ],
@@ -81,6 +82,18 @@
       "type": "string",
       "description": "Amazon IVS \u518d\u751fURL (HLS)"
     },
+    "ivs_channel_arn": {
+      "type": "string",
+      "description": "Amazon IVS \u30c1\u30e3\u30f3\u30cd\u30ebARN"
+    },
+    "ivs_stream_key": {
+      "type": "string",
+      "description": "Amazon IVS \u30b9\u30c8\u30ea\u30fc\u30e0\u30ad\u30fc"
+    },
+    "ivs_ingest_endpoint": {
+      "type": "string",
+      "description": "Amazon IVS \u914d\u4fe1\u30a8\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8"
+    },
     "webrtc_offer": {
       "type": "string",
       "description": "WebRTC SDP Offer (JSON\u6587\u5b57\u5217)"
@@ -96,14 +109,6 @@
     "webrtc_ice_candidates_viewer": {
       "type": "string",
       "description": "\u8996\u8074\u8005\u306eICE candidates (JSON\u914d\u5217\u6587\u5b57\u5217)"
-    },
-    "chime_meeting_id": {
-      "type": "string",
-      "description": "Amazon Chime Meeting ID\uff081\u5bfe\u591a\u914d\u4fe1\u7528\uff09"
-    },
-    "broadcaster_attendee_id": {
-      "type": "string",
-      "description": "\u914d\u4fe1\u8005\u306eChime Attendee ID"
     },
     "viewer_attendee_ids": {
       "type": "array",
@@ -129,12 +134,12 @@
           }
         }
       },
-      "description": "\u8996\u8074\u8005\u306eAttendee\u60c5\u5831\uff08\u5165\u9000\u5ba4\u8ffd\u8de1\u7528\uff09"
+      "description": "\u8996\u8074\u8005\u60c5\u5831"
     },
     "live_started_at": {
       "type": "string",
       "format": "date-time",
-      "description": "\u914d\u4fe1\u958b\u59cb\u65e5\u6642\uff08\u30b3\u30b9\u30c8\u8a08\u7b97\u8d77\u70b9\uff09"
+      "description": "\u914d\u4fe1\u958b\u59cb\u65e5\u6642"
     },
     "live_ended_at": {
       "type": "string",
@@ -154,7 +159,7 @@
     "total_viewer_minutes": {
       "type": "number",
       "default": 0,
-      "description": "\u7d2f\u8a08\u8996\u8074\u8005\u5206\uff08\u8996\u8074\u8005\u6570\u00d7\u5206\uff09: \u51fa\u529b\u30b3\u30b9\u30c8\u8a08\u7b97\u7528"
+      "description": "\u7d2f\u8a08\u8996\u8074\u8005\u5206\uff08\u8996\u8074\u8005\u6570\u00d7\u5206\uff09"
     },
     "revenue_coins": {
       "type": "number",
@@ -164,7 +169,7 @@
     "zero_viewer_since": {
       "type": "string",
       "format": "date-time",
-      "description": "\u8996\u8074\u80050\u4eba\u306b\u306a\u3063\u305f\u6642\u523b\uff08\u30aa\u30fc\u30c8\u30b9\u30c8\u30c3\u30d7\u5224\u5b9a\u7528\uff09"
+      "description": "\u8996\u8074\u80050\u4eba\u306b\u306a\u3063\u305f\u6642\u523b"
     },
     "auto_stopped": {
       "type": "boolean",
@@ -180,21 +185,49 @@
         "1080p+"
       ],
       "default": "1080p",
-      "description": "\u3010\u65bd\u7b563\u3011\u753b\u8cea\u5236\u9650: 150\u5186\u8a2d\u5b9a\u306f720p\u3001300\u5186\u4ee5\u4e0a\u306f1080p\u3092\u8a31\u53ef"
+      "description": "\u753b\u8cea\u5236\u9650"
     },
     "has_music_usage": {
       "type": "boolean",
       "default": false,
-      "description": "\u97f3\u697d\u3092\u5229\u7528\u3059\u308b\uff08\u6b4c\u5531\u30fb\u6f14\u594f\u30fbBGM\u7b49\uff09JASRAC\u5305\u62ec\u5951\u7d04\u5bfe\u8c61"
+      "description": "\u97f3\u697d\u3092\u5229\u7528\u3059\u308b\uff08\u6b4c\u5531\u30fb\u6f14\u594f\u30fbBGM\u7b49\uff09"
     },
     "is_radio_mode": {
       "type": "boolean",
       "default": false,
-      "description": "\u30e9\u30b8\u30aa\u30e2\u30fc\u30c9\u4e2d\u30d5\u30e9\u30b0\uff08\u6620\u50cf\u505c\u6b62\u3001\u97f3\u58f0\u7279\u5316\uff09"
+      "description": "\u30e9\u30b8\u30aa\u30e2\u30fc\u30c9\u4e2d\u30d5\u30e9\u30b0"
     },
     "radio_background_url": {
       "type": "string",
       "description": "\u30e9\u30b8\u30aa\u30e2\u30fc\u30c9\u6642\u306e\u80cc\u666f\u753b\u50cfURL"
+    },
+    "auto_archive_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "AWS IVS \u81ea\u52d5\u30a2\u30fc\u30ab\u30a4\u30d6\u6709\u52b9\u30d5\u30e9\u30b0"
+    },
+    "archive_s3_bucket": {
+      "type": "string",
+      "description": "\u30a2\u30fc\u30ab\u30a4\u30d6\u4fdd\u5b58S3\u30d0\u30b1\u30c3\u30c8\u540d"
+    },
+    "archive_enabled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30a2\u30fc\u30ab\u30a4\u30d6\u6709\u52b9\u5316\u65e5\u6642"
+    },
+    "archive_vod_url": {
+      "type": "string",
+      "description": "\u30a2\u30fc\u30ab\u30a4\u30d6\u3092VOD\u3068\u3057\u3066\u5229\u7528\u3059\u308b\u969b\u306eURL"
+    },
+    "archive_vod_price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30a2\u30fc\u30ab\u30a4\u30d6VOD\u8ca9\u58f2\u4fa1\u683c\uff08\u5186\uff09"
+    },
+    "archive_vod_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30a2\u30fc\u30ab\u30a4\u30d6\u3092VOD\u3068\u3057\u3066\u8ca9\u58f2\u3059\u308b\u304b\u3069\u3046\u304b"
     }
   },
   "required": [

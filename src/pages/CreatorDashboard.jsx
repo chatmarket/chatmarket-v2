@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, Wallet, Radio, Video, Phone, RefreshCw } from "lucide-react";
+import { BarChart3, TrendingUp, Wallet, Radio, Video, Phone, RefreshCw, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EarningsSummaryCard from "../components/dashboard/EarningsSummaryCard";
 import UnpaidBalanceCard from "../components/dashboard/UnpaidBalanceCard";
@@ -226,10 +226,11 @@ export default function CreatorDashboard() {
           <UnpaidBalanceCard unpaidBalance={unpaidBalance} />
 
           {/* クイックアクション */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               { label: "ライブ配信", icon: Radio, to: "/go-live", color: "text-red-400", bg: "bg-red-500/10 border-red-500/30" },
               { label: "動画アップ", icon: Video, to: "/upload", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
+              { label: "VOD管理", icon: ShoppingCart, to: "/vod-management", color: "text-green-400", bg: "bg-green-500/10 border-green-500/30" },
               { label: "通話枠設定", icon: Phone, to: "/call-slots", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/30" },
               { label: "チャンネル管理", icon: RefreshCw, to: "/my-channel", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30" },
             ].map(({ label, icon: Icon, to, color, bg }) => (

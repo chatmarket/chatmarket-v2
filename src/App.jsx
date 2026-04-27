@@ -62,6 +62,7 @@ import MyTickets from '@/pages/MyTickets';
 import MyLibrary from '@/pages/MyLibrary';
 import ContentAnalytics from '@/pages/ContentAnalytics';
 import CreatorRevenueDashboard from '@/pages/CreatorRevenueDashboard';
+import VodManagement from '@/pages/VodManagement';
 import MillionaireChallenge from '@/pages/MillionaireChallenge';
 import InfluencerCampaign from '@/pages/InfluencerCampaign';
 import NgWordAnalytics from '@/pages/NgWordAnalytics';
@@ -139,6 +140,7 @@ export default function App() {
             <Route path="/my-tickets" element={<MyTickets />} />
             <Route path="/my-library" element={<MyLibrary />} />
             <Route path="/content-analytics" element={<ContentAnalytics />} />
+            <Route path="/vod-management" element={<VodManagement />} />
             <Route path="/vod-analytics" element={<VodAnalytics />} />
             <Route path="/revenue-dashboard" element={<CreatorRevenueDashboard />} />
             <Route path="/millionaire" element={<MillionaireChallenge />} />
