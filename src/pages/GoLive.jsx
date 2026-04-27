@@ -144,11 +144,15 @@ export default function GoLive() {
     // セッションストレージに配信情報を保存（古いIDは完全削除）
     sessionStorage.clear();
     sessionStorage.setItem("liveStreamId", newStream.id);
-    if (manualWhipEndpoint) {
-      sessionStorage.setItem("manualWhipEndpoint", manualWhipEndpoint);
-      console.log(`[GoLive] ✅ Stored manual WHIP endpoint: ${manualWhipEndpoint.split('?')[0]}...`);
-    }
-    console.log(`[GoLive] ✅ Stored streamId in sessionStorage: ${newStream.id}`);
+    
+    // WHIP エンドポイントを確実に保存
+    const whipUrl = manualWhipEndpoint || "https://27b83d82b8a7.global-bm.whip.live-video.net";
+    sessionStorage.setItem("manualWhipEndpoint", whipUrl);
+    sessionStorage.setItem("streamId", newStream.id);
+    
+    console.log(`[GoLive] ✅ Stored streamId: ${newStream.id}`);
+    console.log(`[GoLive] ✅ Stored WHIP endpoint: ${whipUrl}`);
+    console.log(`[GoLive] 🔗 Connection URL will be: ${whipUrl}?streamId=${newStream.id}`);
     
     // 配信方式選択UI表示
     setShowModeSelect(true);

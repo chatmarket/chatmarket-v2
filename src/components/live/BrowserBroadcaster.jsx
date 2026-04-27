@@ -259,12 +259,26 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【WHIP 接続】社長指定URL固定 + streamId でログを刻む
+  // 【WHIP 接続】sessionStorage から URL を取得 + streamId で接続
   const connectToWhip = async () => {
-    const WHIP_ENDPOINT = "https://27b83d82b8a7.global-bm.whip.live-video.net";
+    // sessionStorage から WHIP エンドポイントを取得
+    let WHIP_ENDPOINT = sessionStorage.getItem("manualWhipEndpoint") || "https://27b83d82b8a7.global-bm.whip.live-video.net";
     
     console.log('[BrowserBroadcaster] 🌐 WHIP Endpoint:', WHIP_ENDPOINT);
     console.log('[BrowserBroadcaster] 📡 StreamId:', streamId);
+    
+    // URL 確認
+    if (!WHIP_ENDPOINT) {
+      console.error('[BrowserBroadcaster] ❌ WHIP_ENDPOINT is null or empty!');
+      throw new Error('WHIP エンドポイント URL が見つかりません');
+    }
+    
+    if (!streamId) {
+      console.error('[BrowserBroadcaster] ❌ streamId is null or empty!');
+      throw new Error('配信 ID が見つかりません');
+    }
+    
+    console.log('[BrowserBroadcaster] 🔗 Connecting to:', `${WHIP_ENDPOINT}?streamId=${streamId}`);
 
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
       throw new Error('No local stream available');
@@ -283,13 +297,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     await pc.setLocalDescription(offer);
     console.log('[BrowserBroadcaster] 📤 Offer created, sending to WHIP...');
 
-    const response = await fetch(WHIP_ENDPOINT, {
+    // WHIP エンドポイント URL を構築（streamId をパラメータとして追加）
+    const whipUrl = new URL(WHIP_ENDPOINT);
+    whipUrl.searchParams.append('streamId', streamId);
+    
+    console.log('[BrowserBroadcaster] 📮 Posting to:', whipUrl.toString());
+
+    const response = await fetch(whipUrl.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/sdp' },
       body: offer.sdp,
     });
 
     if (!response.ok) {
+      console.error('[BrowserBroadcaster] ❌ WHIP POST failed:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('[BrowserBroadcaster] Error details:', errorText);
       throw new Error(`WHIP error: ${response.status} ${response.statusText}`);
     }
 
