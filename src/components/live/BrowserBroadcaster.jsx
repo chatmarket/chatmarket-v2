@@ -171,11 +171,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         };
 
         console.log('[BrowserBroadcaster] 📍 Requesting user media (default devices)...');
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        // 【権限ダイアログ表示時間考慮】タイムアウトを 15秒に設定（ダイアログ表示＋ユーザー操作時間）
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Permission dialog timeout')), 15000)
+        );
+        
+        const stream = await Promise.race([
+          navigator.mediaDevices.getUserMedia(constraints),
+          timeoutPromise
+        ]);
         
         streamRef.current = stream;
         console.log('[BrowserBroadcaster] ✅ Stream acquired');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
+        
+        // 【修正】権限取得後に再度デバイス列挙（Unknown を Unknown解消）
+        console.log('[BrowserBroadcaster] 🔄 Re-enumerating devices after permission grant...');
+        await enumerateDevices(); // 名前が取得できるようになったはず
         
         // 【修正】video要素がDOMにマウントされるまで polling で待機（最大15秒、Async/Await最適化）
         let videoElement = null;
@@ -400,25 +413,28 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         setLoading(false);
       } catch (err) {
-        // 【修正】エラーの生の英語メッセージをそのまま画面表示
+        // 【修正】エラーを日本語で親切に＆解決策を提示
         console.error('[BrowserBroadcaster] ❌ Initialization error:', err);
         const rawMsg = err.message || String(err);
         
-        // ユーザー向けメッセージを構築（英語エラーコード含める）
-        let userMsg = rawMsg;
+        // ユーザー向けメッセージを構築（解決策を日本語で明確に）
+        let userMsg = '';
+        
         if (err.name === 'NotAllowedError') {
-          userMsg = `🔴 Permission Denied (${err.name})\n\n手順:\n1️⃣ URLバーの南京錠🔒をクリック\n2️⃣ 「カメラ」「マイク」を「許可」に\n3️⃣ ページを再読み込み`;
+          userMsg = `🔴 カメラ・マイクの使用が許可されていません\n\n【次にすること】\n1️⃣ URLバーの南京錠🔒をクリック\n2️⃣ 「カメラ」「マイク」を「許可」に変更\n3️⃣ ページを再読み込み (F5)\n\n💡 ヒント: ブラウザを再起動すると直る場合もあります`;
         } else if (err.name === 'NotFoundError') {
-          userMsg = `🔴 Device Not Found (${err.name})\n\n• 他のアプリがカメラを使用していないか\n• USB ケーブルがしっかり接続されているか`;
+          userMsg = `🔴 カメラまたはマイクが見つかりません\n\n【確認項目】\n• 他のアプリでカメラを使用していないか確認\n• USB ケーブルがしっかり接続されているか\n• 別のカメラを選択してみる\n\n💡 PC の再起動で解決することもあります`;
         } else if (err.name === 'OverconstrainedError') {
-          userMsg = `🔴 Overconstrained (${err.name})\n\n別のカメラを選択してください`;
+          userMsg = `🔴 選択したカメラが要件を満たしていません\n\n【解決策】\n別のカメラを「デバイス選択」から選んでください`;
+        } else {
+          userMsg = `🔴 デバイス初期化エラー\n\n【詳細】 ${rawMsg}\n\n【試してみて】\n1. ページを再読み込み (F5)\n2. ブラウザを再起動\n3. PC を再起動`;
         }
 
-        console.error(`[BrowserBroadcaster] Error: ${err.name} - ${rawMsg}`);
+        console.error(`[BrowserBroadcaster] ${err.name}: ${rawMsg}`);
         setError(userMsg);
         setPermissionError(userMsg);
         setLoading(false);
-        toast.error(`エラー: ${rawMsg}`);
+        toast.error('デバイスの準備に失敗しました。上のメッセージを確認してください。');
       }
     };
 
