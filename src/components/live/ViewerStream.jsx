@@ -1,22 +1,37 @@
 /**
- * ViewerStream — IVS専用プレイヤー
- * Chime完全削除。ivs_playback_url があれば即再生。
+ * ViewerStream — IVS HLS プレイヤー
+ * 戦略: まず <video> + HLS.js で再生、失敗時に amazon-ivs-player にフォールバック
+ * Chime / EventEmitter / Chime SDK: ゼロ
  */
 import React, { useEffect, useRef, useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw } from "lucide-react";
 
-export default function ViewerStream({ streamId, stream }) {
+export default function ViewerStream({ stream }) {
   const videoRef = useRef(null);
-  const playerRef = useRef(null);
+  const hlsRef = useRef(null);
+  const ivsPlayerRef = useRef(null);
+
   const [ready, setReady] = useState(false);
   const [muted, setMuted] = useState(true);
-  const [phase, setPhase] = useState("プレイヤー起動中...");
+  const [phase, setPhase] = useState("起動中...");
+  const [retryCount, setRetryCount] = useState(0);
 
   const playbackUrl = stream?.ivs_playback_url?.trim();
 
+  // クリーンアップ
+  const cleanup = () => {
+    try { hlsRef.current?.destroy(); } catch (_) {}
+    hlsRef.current = null;
+    try { ivsPlayerRef.current?.pause(); } catch (_) {}
+    try { ivsPlayerRef.current?.delete(); } catch (_) {}
+    ivsPlayerRef.current = null;
+  };
+
   useEffect(() => {
+    console.log("[ViewerStream] stream:", stream?.id, "status:", stream?.status, "url:", playbackUrl);
+
     if (!playbackUrl) {
-      setPhase("❌ 再生URLがありません (ivs_playback_url未設定)");
+      setPhase("❌ 再生URLなし (ivs_playback_url 未設定)");
       return;
     }
     if (stream?.status !== "live") {
@@ -24,104 +39,152 @@ export default function ViewerStream({ streamId, stream }) {
       return;
     }
 
-    let isMounted = true;
+    cleanup();
+    setReady(false);
+    setPhase("プレイヤー起動中...");
 
-    console.log("[ViewerStream] ✅ IVS起動 url:", playbackUrl);
-    setPhase("IVSプレイヤー起動中...");
+    let cancelled = false;
+
+    // video要素が確実に存在するまで待つ
+    const waitForVideo = () => new Promise((resolve) => {
+      const check = () => {
+        if (videoRef.current) { resolve(videoRef.current); return; }
+        setTimeout(check, 100);
+      };
+      check();
+    });
 
     (async () => {
+      const videoEl = await waitForVideo();
+      if (cancelled) return;
+
+      // ── 方法1: ネイティブ HLS (Safari / iOS) ──
+      if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+        console.log("[ViewerStream] ✅ ネイティブHLS (Safari/iOS)");
+        setPhase("ネイティブHLSで接続中...");
+        videoEl.src = playbackUrl;
+        videoEl.muted = true;
+        videoEl.playsInline = true;
+        try {
+          await videoEl.play();
+          if (!cancelled) { setReady(true); setPhase("🟢 再生中"); }
+        } catch (e) {
+          console.warn("[ViewerStream] native play error:", e);
+          if (!cancelled) setPhase(`再生エラー: ${e.message}`);
+        }
+        return;
+      }
+
+      // ── 方法2: HLS.js (Android Chrome / Desktop) ──
       try {
+        setPhase("HLS.js をロード中...");
+        const Hls = (await import("hls.js")).default;
+        if (cancelled) return;
+
+        if (Hls.isSupported()) {
+          console.log("[ViewerStream] ✅ HLS.js モード");
+          const hls = new Hls({
+            lowLatencyMode: true,
+            liveSyncDurationCount: 2,
+            liveMaxLatencyDurationCount: 5,
+          });
+          hlsRef.current = hls;
+          hls.loadSource(playbackUrl);
+          hls.attachMedia(videoEl);
+          hls.on(Hls.Events.MANIFEST_PARSED, async () => {
+            if (cancelled) return;
+            setPhase("マニフェスト取得済み — 再生開始...");
+            try {
+              await videoEl.play();
+              if (!cancelled) { setReady(true); setPhase("🟢 再生中"); }
+            } catch (e) {
+              console.warn("[ViewerStream] hls.js play error:", e);
+            }
+          });
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            console.error("[ViewerStream] HLS.js error:", data);
+            if (data.fatal && !cancelled) {
+              setPhase(`❌ HLSエラー: ${data.type}`);
+            }
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn("[ViewerStream] HLS.js load failed:", e.message);
+      }
+
+      // ── 方法3: amazon-ivs-player (フォールバック) ──
+      try {
+        setPhase("IVS Playerをロード中...");
         const { create, isPlayerSupported, PlayerState, PlayerEventType } =
           await import("amazon-ivs-player");
-
-        if (!isMounted) return;
+        if (cancelled) return;
 
         if (!isPlayerSupported) {
-          setPhase("❌ このブラウザはIVS非対応です");
+          setPhase("❌ このブラウザは再生非対応です");
           return;
         }
-
-        // video要素が描画されるまで待つ
-        let wait = 0;
-        while (!videoRef.current && wait < 30) {
-          await new Promise(r => setTimeout(r, 100));
-          wait++;
-        }
-        if (!videoRef.current) {
-          setPhase("❌ video要素の取得タイムアウト");
-          return;
-        }
-
+        console.log("[ViewerStream] ✅ amazon-ivs-player モード");
         const player = create({
           wasmWorker: "https://player.live-video.net/1.36.0/amazon-ivs-wasmworker.min.js",
           wasmBinary: "https://player.live-video.net/1.36.0/amazon-ivs-wasmworker.min.wasm",
         });
-
-        playerRef.current = player;
-        player.attachHTMLVideoElement(videoRef.current);
-
+        ivsPlayerRef.current = player;
+        player.attachHTMLVideoElement(videoEl);
         player.addEventListener(PlayerEventType.STATE_CHANGED, (s) => {
-          if (!isMounted) return;
+          if (cancelled) return;
           console.log("[ViewerStream] IVS state:", s);
-          if (s === PlayerState.PLAYING) {
-            setReady(true);
-            setPhase("再生中 🟢");
-          } else if (s === PlayerState.BUFFERING) {
-            setPhase("バッファリング中...");
-          } else if (s === PlayerState.ENDED) {
-            setPhase("配信終了");
-            setReady(false);
-          } else {
-            setPhase(`IVS: ${s}`);
-          }
+          if (s === PlayerState.PLAYING) { setReady(true); setPhase("🟢 再生中"); }
+          else if (s === PlayerState.BUFFERING) setPhase("バッファリング...");
+          else if (s === PlayerState.ENDED) { setReady(false); setPhase("配信終了"); }
         });
-
         player.addEventListener(PlayerEventType.ERROR, (err) => {
           console.error("[ViewerStream] IVS error:", err);
-          if (isMounted) setPhase(`❌ IVSエラー: ${err.type} (${err.code})`);
+          if (!cancelled) setPhase(`❌ IVSエラー: ${err.type}`);
         });
-
         player.setMuted(true);
         player.load(playbackUrl);
         player.play();
-
-      } catch (err) {
-        console.error("[ViewerStream] 初期化エラー:", err);
-        if (isMounted) setPhase(`❌ 初期化エラー: ${err.message}`);
+      } catch (e) {
+        console.error("[ViewerStream] IVS Player load failed:", e);
+        if (!cancelled) setPhase(`❌ プレイヤー起動失敗: ${e.message}`);
       }
     })();
 
     return () => {
-      isMounted = false;
-      try { playerRef.current?.pause(); } catch (_) {}
-      try { playerRef.current?.delete(); } catch (_) {}
-      playerRef.current = null;
+      cancelled = true;
+      cleanup();
     };
-  }, [playbackUrl, stream?.status]);
+  }, [playbackUrl, stream?.status, retryCount]);
 
+  // ミュート同期
   useEffect(() => {
-    if (playerRef.current) {
-      playerRef.current.setMuted(muted);
-    }
+    if (videoRef.current) videoRef.current.muted = muted;
+    if (ivsPlayerRef.current) { try { ivsPlayerRef.current.setMuted(muted); } catch (_) {} }
   }, [muted]);
 
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-full bg-black" style={{ minHeight: "200px" }}>
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", background: "#000" }}
+        style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
       />
 
       {/* ローディングオーバーレイ */}
       {!ready && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90 z-10">
           <div className="w-14 h-14 border-4 border-white/20 border-t-primary rounded-full animate-spin" />
           <p className="text-white/80 text-sm font-medium text-center px-6">{phase}</p>
-          {stream?.status === "live" && (
-            <p className="text-white/40 text-xs">OBSから映像が届くまで少々お待ちください</p>
+          {stream?.status === "live" && playbackUrl && (
+            <button
+              onClick={() => setRetryCount(c => c + 1)}
+              className="flex items-center gap-2 text-xs text-primary/80 hover:text-primary mt-2"
+            >
+              <RefreshCw className="w-3 h-3" /> 再試行
+            </button>
           )}
         </div>
       )}
@@ -130,22 +193,14 @@ export default function ViewerStream({ streamId, stream }) {
       {ready && (
         <button
           onClick={() => setMuted(v => !v)}
-          className="absolute bottom-4 left-4 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all z-20"
+          className="absolute bottom-16 left-4 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white z-20"
         >
           {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </button>
       )}
 
-      {/* LIVE バッジ */}
-      {ready && (
-        <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold z-20">
-          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-          LIVE
-        </div>
-      )}
-
-      {/* デバッグ情報（右上・常時表示） */}
-      <div className="absolute top-4 right-4 bg-black/70 text-cyan-300 text-[10px] font-mono px-2 py-1 rounded z-30 pointer-events-none max-w-[60vw] break-all">
+      {/* デバッグステータス（右上） */}
+      <div className="absolute top-0 right-0 bg-black/70 text-cyan-300 text-[10px] font-mono px-2 py-1 z-30 pointer-events-none max-w-[55vw] break-all">
         {phase}
       </div>
     </div>
