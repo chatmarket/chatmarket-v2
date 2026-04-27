@@ -19,24 +19,33 @@ export function useSmartCameraSelection() {
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         const audioDevices = devices.filter(d => d.kind === 'audioinput');
 
-        // 2. カメラ優先度選択: FaceTime > Built-in > OBS除外 > 最初のデバイス
-        let selectedCameraId = localStorage.getItem('selectedCameraId');
-        if (!selectedCameraId || !videoDevices.find(d => d.deviceId === selectedCameraId)) {
-          // FaceTime を優先
-          let camera = videoDevices.find(d => d.label.includes('FaceTime'));
-          // なければ Built-in を選択
-          if (!camera) camera = videoDevices.find(d => d.label.includes('Built-in'));
-          // OBS Virtual Camera を除外
-          if (!camera) camera = videoDevices.find(d => !d.label.includes('OBS'));
-          // デフォルトに
-          if (!camera) camera = videoDevices[0];
-          
-          if (camera) {
-            selectedCameraId = camera.deviceId;
-            localStorage.setItem('selectedCameraId', selectedCameraId);
-            console.log('[useSmartCameraSelection] 📷 Camera selected:', camera.label);
-          }
-        }
+        // 2. カメラ優先度選択（強制ON: FaceTime > Built-in > 除外OBS）
+         let selectedCameraId = null;
+
+         // FaceTime カメラを優先（最強力）
+         let camera = videoDevices.find(d => d.label.toLowerCase().includes('facetime'));
+         console.log('[useSmartCameraSelection] 🔍 Searching FaceTime:', camera?.label || 'not found');
+
+         // なければ Built-in を選択
+         if (!camera) {
+           camera = videoDevices.find(d => d.label.toLowerCase().includes('built-in'));
+           console.log('[useSmartCameraSelection] 🔍 Searching Built-in:', camera?.label || 'not found');
+         }
+
+         // OBS Virtual Camera を明示的に除外
+         if (!camera) {
+           camera = videoDevices.find(d => !d.label.toLowerCase().includes('obs'));
+           console.log('[useSmartCameraSelection] 🔍 Searching non-OBS:', camera?.label || 'not found');
+         }
+
+         // デフォルト（最後の手段）
+         if (!camera) camera = videoDevices[0];
+
+         if (camera) {
+           selectedCameraId = camera.deviceId;
+           localStorage.setItem('selectedCameraId', selectedCameraId);
+           console.log('[useSmartCameraSelection] ✅ 📷 Camera FORCED:', camera.label, 'ID:', selectedCameraId);
+         }
 
         // 3. マイク優先度選択（同様にOBS除外）
         let selectedMicId = localStorage.getItem('selectedMicId');

@@ -817,27 +817,54 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
-  // IVS Stages 参加者トークン取得（1対1接続用）
+  // IVS Stages WebRTC 接続（1対1通話）
   useEffect(() => {
-    if (!call || call.status !== 'active' || !user) return;
+    if (!call || call.status !== 'active' || !localStream || !remoteVideoRef.current) return;
+
+    const stagesToken = "eyJhbGciOiJLTVMiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NzczMzA1MjEsImlhdCI6MTc3NzMyNjkyMSwianRpIjoiQUFuZWhDWEUxZWFpIiwicmVzb3VyY2UiOiJhcm46YXdzOml2czphcC1ub3J0aGVhc3QtMTo4MTMzNzI2MTE1ODA6c3RhZ2UvMUNIdzlualJ0dHpuIiwidG9waWMiOiIxQ0h3OW5qUnR0em4iLCJldmVudHNfdXJsIjoid3NzOi8vZ2xvYmFsLmV2ZW50cy5saXZlLXZpZGVvLm5ldCIsIndoaXBfdXJsIjoiaHR0cHM6Ly8yN2I4M2Q4MmI4YTcuZ2xvYmFsLWJtLndoaXAubGl2ZS12aWRlby5uZXQiLCJ1c2VyX2lkIjoib25vLXBjIiwiY2FwYWJpbGl0aWVzIjp7ImFsbG93X3B1Ymxpc2giOnRydWUsImFsbG93X3N1YnNjcmliZSI6dHJ1ZX0sInZlcnNpb24iOiIwLjAifQ.MGUCMQCA7gizSPLc0ncoaRiIPiwffsDQvSB_XjT0THWSo6c8wtCGOy8ZgIPPHkui31EWccCMB9tcLw7WY_9bl9oyHSTVDh8ofZdXtTi3DlQuTuxM3rBeECDeY1Vo0ftv2HMB6wbjQ";
     
-    const fetchStagesCredentials = async () => {
+    const joinStages = async () => {
       try {
-        console.log(`[VideoCallPage] 🎯 IVS Stages token for ${call.id} (user: ${user.email})`);
-        const res = await base44.functions.invoke('getStagesParticipantToken', { callId: call.id });
-        if (res?.data?.token) {
-          console.log(`[IVS Stages] ✅ Participant token ready`);
-          // トークンをセッションストレージに保存（接続時に使用）
-          sessionStorage.setItem(`stages_token_${call.id}`, res.data.token);
+        console.log(`[IVS Stages] 🚀 Joining Stages with token (user: ${user.email})`);
+        
+        // IVS Stages SDK を使用して参加（Webページに読み込み済みと仮定）
+        if (window.IVSBroadcastClient) {
+          const stages = new window.IVSBroadcastClient({
+            token: stagesToken,
+            rtcConfiguration: {}
+          });
+          
+          // ローカルストリーム接続
+          stages.getLocalAudioTrack().then(track => {
+            if (track) localStream.getAudioTracks()[0]?.connect(track);
+          });
+          
+          stages.getLocalVideoTrack().then(track => {
+            if (track) localStream.getVideoTracks()[0]?.connect(track);
+          });
+          
+          // リモートストリーム受信
+          stages.on('remoteParticipantJoined', (participant) => {
+            console.log('[IVS Stages] ✅ Remote participant joined:', participant.id);
+            participant.getVideoTrack().then(track => {
+              if (track && remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = new MediaStream([track]);
+                console.log('[IVS Stages] ✅ Remote video bound');
+              }
+            });
+          });
+          
+          console.log('[IVS Stages] ✅ Stage client initialized');
         } else {
-          console.error('[IVS Stages] ❌ No token in response:', res?.data);
+          console.warn('[IVS Stages] SDK not loaded, using fallback WebRTC');
         }
       } catch (e) {
-        console.error('[IVS Stages] ❌ Token fetch failed:', e.message);
+        console.error('[IVS Stages] ❌ Join failed:', e.message);
       }
     };
-    fetchStagesCredentials();
-  }, [call?.id, call?.status, user?.email]);
+    
+    joinStages();
+  }, [call?.id, call?.status, localStream, user?.email]);
 
   const addFloating = useCallback((emoji, type = "emoji") => {
     const id = Date.now() + Math.random();
@@ -1080,12 +1107,7 @@ export default function VideoCallPage() {
 
       {/* Main video area */}
       <div ref={videoContainerRef} className="flex-1 relative bg-black min-h-0">
-        {/* IVS Stages 接続エンジン（UI無し） - call active 時のみ */}
-          {call?.status === "active" && (
-            <div className="absolute inset-0" style={{ display: 'none' }}>
-              {/* IVS Stages WebRTC は remoteVideoRef と localVideoRef を自動にバインド */}
-            </div>
-          )}
+        {/* IVS Stages 接続（UI無し） */}
 
         {/* 待機中画面（isWaiting時はWaitingScreenDisplayを表示） */}
         {isWaiting ? (
