@@ -1,6 +1,6 @@
 /**
  * ViewerStream — HLS.js プレイヤー（IVS SDK完全排除）
- * amazon-ivs-player は一切使用しない
+ * 映像を最優先で初期化する。エール機能とは完全分離。
  */
 import React, { useEffect, useRef, useState } from "react";
 
@@ -16,49 +16,80 @@ export default function ViewerStream({ stream }) {
     if (!playbackUrl || !videoRef.current) return;
 
     let hls;
+    let destroyed = false;
+
+    // タイムアウト: 15秒でローディング解除（映像は映るが音だけの場合など）
+    const loadingTimeout = setTimeout(() => {
+      if (!destroyed) setLoading(false);
+    }, 15000);
 
     async function initHls() {
-      const Hls = (await import("hls.js")).default;
+      try {
+        const Hls = (await import("hls.js")).default;
+        if (destroyed) return;
 
-      if (Hls.isSupported()) {
-        hls = new Hls({
-          liveSyncDurationCount: 1,
-          liveMaxLatencyDurationCount: 3,
-          liveMaxLatencyDuration: 5,
-          maxBufferLength: 3,
-          maxMaxBufferLength: 5,
-          liveDurationInfinity: true,
-          lowLatencyMode: true,
-        });
-        hlsRef.current = hls;
+        if (Hls.isSupported()) {
+          hls = new Hls({
+            liveSyncDurationCount: 1,
+            liveMaxLatencyDurationCount: 3,
+            liveMaxLatencyDuration: 5,
+            maxBufferLength: 3,
+            maxMaxBufferLength: 5,
+            liveDurationInfinity: true,
+            lowLatencyMode: true,
+          });
+          hlsRef.current = hls;
 
-        hls.loadSource(playbackUrl);
-        hls.attachMedia(videoRef.current);
+          hls.loadSource(playbackUrl);
+          hls.attachMedia(videoRef.current);
 
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setLoading(false);
-          videoRef.current?.play().catch(() => {});
-        });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (destroyed) return;
+            clearTimeout(loadingTimeout);
+            setLoading(false);
+            videoRef.current?.play().catch(() => {});
+          });
 
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (data.fatal) {
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            if (destroyed) return;
+            if (data.fatal) {
+              clearTimeout(loadingTimeout);
+              setError("映像の読み込みに失敗しました");
+              setLoading(false);
+            }
+          });
+
+        } else if (videoRef.current?.canPlayType("application/vnd.apple.mpegurl")) {
+          // Safari / iOS ネイティブHLS
+          const vid = videoRef.current;
+          vid.src = playbackUrl;
+
+          const onReady = () => {
+            if (destroyed) return;
+            clearTimeout(loadingTimeout);
+            setLoading(false);
+            vid.play().catch(() => {});
+          };
+          const onError = () => {
+            if (destroyed) return;
+            clearTimeout(loadingTimeout);
             setError("映像の読み込みに失敗しました");
             setLoading(false);
-          }
-        });
-      } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
-        // Safari / iOS native HLS
-        videoRef.current.src = playbackUrl;
-        videoRef.current.addEventListener("loadedmetadata", () => {
+          };
+
+          vid.addEventListener("loadedmetadata", onReady, { once: true });
+          vid.addEventListener("canplay", onReady, { once: true });
+          vid.addEventListener("error", onError, { once: true });
+          vid.load();
+
+        } else {
+          clearTimeout(loadingTimeout);
+          setError("このブラウザはHLS再生に対応していません");
           setLoading(false);
-          videoRef.current?.play().catch(() => {});
-        });
-        videoRef.current.addEventListener("error", () => {
-          setError("映像の読み込みに失敗しました");
-          setLoading(false);
-        });
-      } else {
-        setError("このブラウザはHLS再生に対応していません");
+        }
+      } catch (e) {
+        clearTimeout(loadingTimeout);
+        setError("プレイヤーの初期化に失敗しました");
         setLoading(false);
       }
     }
@@ -66,6 +97,8 @@ export default function ViewerStream({ stream }) {
     initHls();
 
     return () => {
+      destroyed = true;
+      clearTimeout(loadingTimeout);
       hls?.destroy();
       hlsRef.current = null;
     };
