@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream.jsx";
+import YellButtons from "../components/live/YellButtons.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -197,14 +198,34 @@ function LiveViewInner() {
       )}
 
       {stream.status === "live" && (
-        <div className="absolute bottom-4 right-3 flex items-center gap-2">
-          <VideoControls videoRef={null} showQuality={true} />
-          <button
-            onClick={toggleFullscreen}
-            className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+        <div className="absolute bottom-0 left-0 right-0 z-20">
+          {/* エールバー — ゴールドUI */}
+          <div
+            className="flex items-center justify-between px-4 py-3"
+            style={{
+              background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, transparent 100%)",
+            }}
           >
-            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-          </button>
+            {/* 左: エールボタン */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-start mr-1">
+                <span className="text-[10px] font-black text-yellow-400 tracking-widest uppercase">YELL</span>
+                <span className="text-[8px] text-yellow-400/60">応援する</span>
+              </div>
+              <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
+            </div>
+
+            {/* 右: 設定・フルスクリーン */}
+            <div className="flex items-center gap-2">
+              <VideoControls videoRef={null} showQuality={true} />
+              <button
+                onClick={toggleFullscreen}
+                className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+              >
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>,
