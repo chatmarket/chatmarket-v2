@@ -295,9 +295,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     return permissionListener;
   }, []);
 
-  // 【修正】setupDevices() を定義（複数のトリガーから呼び出し可能）
+  // 【修正】setupDevices() を定義（マウント時 + デバイス選択変更時のみ）
   const setupDevices = React.useCallback(async () => {
       try {
+        console.log('[BrowserBroadcaster] 📍 setupDevices called...');
         setLoading(true);
         setError(null);
         console.log('[BrowserBroadcaster] 🚀 [MOUNT] Initializing media stream...');
@@ -614,7 +615,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setLoading(false);
       } catch (err) {
         // 【修正】エラーを日本語で親切に＆解決策を提示
-        console.error('[BrowserBroadcaster] ❌ Initialization error:', err);
+        console.error('[BrowserBroadcaster] ❌ setupDevices initialization error:', err);
         const rawMsg = err.message || String(err);
         
         // ユーザー向けメッセージを構築（解決策を日本語で明確に）
@@ -636,7 +637,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setLoading(false);
         toast.error('デバイスの準備に失敗しました。上のメッセージを確認してください。');
       }
-    }, [streamId]);
+    }, []); // 【マウント時のみ実行】依存配列から streamId を削除して無限ループ防止
 
   // 【マウント時に setupDevices 実行 + 全自動・無条件プロンプト】
   useEffect(() => {
@@ -670,7 +671,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       clearInterval(videoWidthCheckRef.current);
       cancelAnimationFrame(canvasRafRef.current);
     };
-  }, [setupDevices, streamId]);
+  }, [setupDevices]); // streamId は削除（setupDevices で使用）
 
   // 【デバイス選択変更時に手動着火】
   useEffect(() => {
