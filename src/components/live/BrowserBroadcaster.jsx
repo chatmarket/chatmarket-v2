@@ -183,26 +183,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         document.addEventListener('click', onUserClick);
 
-        // 【音量メーター＋デバッグ表示】
-        const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-        let debugRawValue = 0;  // デバッグ用の生データ値
-        
-        const tick = () => {
-          if (!alive) return;
-          analyzer.getByteFrequencyData(dataArray);
-          const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
-          const level = Math.round((avg / 255) * 100);
-          
-          debugRawValue = avg;  // デバッグ値を更新（画面表示用）
-          
-          setMicLevel(Math.max(level, 0));
-          setMicDebugValue(Math.round(avg));  // デバッグ値を状態に設定
-          
-          rafId = requestAnimationFrame(tick);
-        };
-
-        tick();
-        console.log('[BrowserBroadcaster] 🎤 Mic level meter started (browser defaults + auto-recovery)');
+        console.log('[BrowserBroadcaster] ✅ Analyzer wired - meter RAF loop will start in separate useEffect');
 
         return () => {
           document.removeEventListener('click', onUserClick);
@@ -260,6 +241,37 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       toast.error('デバイス列挙に失敗: ' + err.message);
     }
   };
+
+  // 【独立マイクメーター】RAF ループを常時稼働
+  useEffect(() => {
+    if (!analyzerRef.current) return;
+
+    let rafId = null;
+    let alive = true;
+
+    const tick = () => {
+      if (!alive || !analyzerRef.current) return;
+      
+      const dataArray = new Uint8Array(analyzerRef.current.frequencyBinCount);
+      analyzerRef.current.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const level = Math.min(100, Math.round((avg / 128) * 100));
+      
+      setMicLevel(level);
+      setMicDebugValue(Math.round(avg));
+      
+      rafId = requestAnimationFrame(tick);
+    };
+
+    console.log('[BrowserBroadcaster] 🎤 Mic level meter RAF loop STARTED');
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      alive = false;
+      cancelAnimationFrame(rafId);
+      console.log('[BrowserBroadcaster] 🛑 Mic level meter RAF loop STOPPED');
+    };
+  }, []);
 
   // 【権限状態リアルタイム監視】ブラウザの権限状態変化を検知
   useEffect(() => {
