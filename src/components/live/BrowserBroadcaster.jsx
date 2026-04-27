@@ -15,7 +15,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const videoWidthCheckRef = useRef(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [micReady, setMicReady] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 強制初期非表示
   const [error, setError] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [whipEndpoint, setWhipEndpoint] = useState(null);
@@ -38,6 +38,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const broadcastTimeoutRef = useRef(null);
   const [micRetrying, setMicRetrying] = useState(false);
   const [micDebugValue, setMicDebugValue] = useState(0);  // デバッグ用：生音量データ
+  const [retryBlockedUntil, setRetryBlockedUntil] = useState(0); // 次のリトライ許可時刻
 
   // 【修正】クエリパラメータから debug=true を検出
   useEffect(() => {
@@ -273,9 +274,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   // 【修正】setupDevices() を定義（マウント時 + デバイス選択変更時のみ）
   const setupDevices = React.useCallback(async () => {
+      // 【10秒リトライ禁止】前回失敗からまだ10秒以内ならリターン
+      const now = Date.now();
+      if (retryBlockedUntil && now < retryBlockedUntil) {
+        console.log(`[BrowserBroadcaster] 🛑 リトライ禁止中（${Math.ceil((retryBlockedUntil - now) / 1000)}秒待機中）`);
+        return;
+      }
+
       try {
         console.log('[BrowserBroadcaster] 📍 setupDevices called...');
-        setLoading(true);
         setError(null);
         console.log('[BrowserBroadcaster] 🚀 [MOUNT] Initializing media stream...');
         
@@ -593,12 +600,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         setLoading(false);
       } catch (err) {
-        // エラーを無視して続行（ログのみ）
-        console.warn('[BrowserBroadcaster] ⚠️ setupDevices error (ignored):', err.message);
+        // エラー発生 → 10秒のリトライ禁止を設定
+        console.warn('[BrowserBroadcaster] ⚠️ setupDevices error:', err.message);
+        setRetryBlockedUntil(Date.now() + 10000); // 次のリトライを10秒後にブロック
       }
-    }, []); // 【マウント時のみ実行】依存配列から streamId を削除して無限ループ防止
+    }, [retryBlockedUntil]);
 
-  // 【マウント時のみ実行】setupDevices は一度だけ
+  // 【マウント時のみ実行】許可プロンプト → setupDevices（10秒リトライ禁止付き）
   useEffect(() => {
     console.log('[BrowserBroadcaster] 🚀 マウント時にセットアップ開始');
     
@@ -616,7 +624,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setupDevices();
     }).catch((err) => {
       console.warn('[BrowserBroadcaster] ⚠️ 許可プロンプト失敗:', err.name);
-      setupDevices();
+      // 失敗時も10秒待機してから setupDevices() を呼ぶ
+      setTimeout(() => setupDevices(), 10000);
     });
 
     return () => {
@@ -625,7 +634,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       clearInterval(videoWidthCheckRef.current);
       cancelAnimationFrame(canvasRafRef.current);
     };
-  }, []); // 依存配列は空（マウント時のみ実行）
+  }, [setupDevices]);
 
   // 【デバイス選択変更時に手動着火】
   useEffect(() => {
