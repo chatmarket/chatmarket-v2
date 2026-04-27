@@ -33,30 +33,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const isOBSLive = status === "obs-live";
   const isChecking = status === "checking";
 
-  // エール通知をリアルタイムで監視（配信者側）
-  useEffect(() => {
-    if (!streamId) {
-      console.warn("[BroadcasterStream] streamId not set, cannot listen for Yell notifications");
-      return;
-    }
-    console.log(`[BroadcasterStream] Listening for Yell on streamId: ${streamId}`);
-    
-    const unsubscribe = base44.entities.SuperChat.subscribe((event) => {
-      console.log(`[BroadcasterStream] SuperChat event received:`, event.data?.livestream_id, "vs", streamId);
-      if (event.type !== "create") return;
-      if (event.data?.livestream_id !== streamId) {
-        console.log(`[BroadcasterStream] Event streamId mismatch, ignoring`);
-        return;
-      }
-      console.log(`[BroadcasterStream] ✅ Yell received from ${event.data?.user_name}: ${event.data?.amount} coins`);
-      setLatestYell({ ...event.data, id: event.id });
-      setTimeout(() => setLatestYell(null), 4000);
-    });
-    return () => {
-      console.log(`[BroadcasterStream] Unsubscribing from Yell notifications`);
-      unsubscribe();
-    };
-  }, [streamId]);
+
 
   // カメラ・マイク起動（プレビュー確認時 or 配信開始時）
   const startCamera = async () => {
@@ -93,9 +70,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
   }, []);
 
-  // ストリーム情報取得（配信前 & 配信開始時と定期ポーリング）
+  // ストリーム情報取得＆エール購読を同時実行
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId) {
+      console.log('[BroadcasterStream] streamId not available yet');
+      return;
+    }
+    
+    console.log(`[BroadcasterStream] ✅ Listening for yells on stream: ${streamId}`);
     
     const fetchStreamInfo = async () => {
       try {
@@ -103,25 +85,38 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         if (streams[0]) {
           const stream = streams[0];
           if (stream.viewer_count !== undefined) setViewerCount(stream.viewer_count);
-          if (stream.max_bitrate_restriction) {
-            console.log('StreamQuality set to:', stream.max_bitrate_restriction);
+          if (stream.max_bitrate_restriction && !streamQuality) {
+            console.log('[BroadcasterStream] StreamQuality set to:', stream.max_bitrate_restriction);
             setStreamQuality(stream.max_bitrate_restriction);
-          } else {
-            console.warn('max_bitrate_restriction not found in stream:', stream);
           }
         }
       } catch (err) {
-        console.error('Failed to fetch stream info:', err);
+        console.error('[BroadcasterStream] Failed to fetch stream info:', err);
       }
     };
 
-    // 初回即座に取得
+    // 初回即座に取得（1回のみ）
     fetchStreamInfo();
     
-    // 定期ポーリング（配信前も含めて常時実行）
+    // 定期ポーリング（5秒ごと、ただし streamQuality はセット済みなら更新しない）
     const interval = setInterval(fetchStreamInfo, 5000);
-    return () => clearInterval(interval);
-  }, [streamId]);
+    
+    // エール購読（優先度最高）
+    const unsubscribeYell = base44.entities.SuperChat.subscribe((event) => {
+      console.log(`[BroadcasterStream] SuperChat event:`, event.data?.livestream_id, "vs", streamId);
+      if (event.type !== "create") return;
+      if (event.data?.livestream_id !== streamId) return;
+      console.log(`[BroadcasterStream] ✅ Yell received from ${event.data?.user_name}: ${event.data?.amount} coins`);
+      setLatestYell({ ...event.data, id: event.id });
+      setTimeout(() => setLatestYell(null), 4000);
+    });
+    
+    return () => {
+      clearInterval(interval);
+      unsubscribeYell();
+      console.log(`[BroadcasterStream] Cleanup: streamId=${streamId}`);
+    };
+  }, [streamId, streamQuality]);
 
   // 配信開始（OBS 配信開始に遷移）
   const handleGoLive = async () => {
