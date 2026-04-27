@@ -17,6 +17,7 @@ import ViewerStream from "../components/live/ViewerStream.jsx";
 import YellButtons from "../components/live/YellButtons.jsx";
 import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx";
 import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
+import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -235,7 +236,12 @@ function LiveViewInner() {
       )}
 
       {stream.status === "live" && (
-        <div className="absolute bottom-0 left-0 right-0 z-20">
+        <div className="absolute bottom-0 left-0 right-0 z-20 max-h-1/2 flex flex-col">
+          {/* チャット表示エリア — リアルタイム */}
+          <div className="flex-1 overflow-y-auto bg-black/40 px-3 py-2 space-y-1.5 min-h-[120px] max-h-[200px]">
+            <LiveChatDisplay streamId={id} />
+          </div>
+
           {/* エールバー — スマホ最適化 */}
           <div
             style={{
