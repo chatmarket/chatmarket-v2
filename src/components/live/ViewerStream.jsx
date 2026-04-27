@@ -22,9 +22,11 @@ export default function ViewerStream({ stream }) {
 
       if (Hls.isSupported()) {
         hls = new Hls({
-          liveSyncDurationCount: 3,
-          liveMaxLatencyDurationCount: 10,
-          maxBufferLength: 30,
+          liveSyncDurationCount: 2,
+          liveMaxLatencyDurationCount: 5,
+          maxBufferLength: 5,
+          maxMaxBufferLength: 10,
+          liveDurationInfinity: true,
         });
         hlsRef.current = hls;
 
