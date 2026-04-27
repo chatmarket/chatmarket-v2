@@ -575,12 +575,51 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setCameraReady(!!videoTrack && videoTrack.enabled);
         setMicReady(!!audioTrack && audioTrack.enabled);
 
-        // 【マイク優先】映像がなくてもマイクストリームが確立したら AudioContext セットアップ開始
-        if (audioTrack && audioTrack.enabled) {
-          console.log('[BrowserBroadcaster] 🎤 Audio track acquired - starting audio analysis independently');
-          // AudioContext は video 要素がなくても動作可能
-          setMicReady(true);
-        }
+        // 【マイク優先 + 即座点火】映像がなくてもマイクストリームが確立したら AudioContext セットアップ開始
+         if (audioTrack && audioTrack.enabled) {
+           console.log('[BrowserBroadcaster] 🎤 Audio track acquired - FORCE igniting meter NOW');
+
+           // AudioContext 強制作成 + メーター解析即座開始
+           try {
+             if (!audioContextRef.current) {
+               audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+               console.log('[BrowserBroadcaster] 🔊 AudioContext created at setupDevices');
+             }
+
+             if (audioContextRef.current.state === 'suspended') {
+               await audioContextRef.current.resume();
+               console.log('[BrowserBroadcaster] 🔊 AudioContext resumed at setupDevices');
+             }
+
+             // ストリームソース + アナライザー接続（setup 時点で即座実行）
+             if (!analyzerRef.current && stream) {
+               const source = audioContextRef.current.createMediaStreamSource(stream);
+               analyzerRef.current = audioContextRef.current.createAnalyser();
+               analyzerRef.current.fftSize = 256;
+               source.connect(analyzerRef.current);
+               analyzerRef.current.connect(audioContextRef.current.destination);
+
+               // メーター解析開始（requestAnimationFrame）
+               const analyzeFrequency = () => {
+                 if (!analyzerRef.current) return;
+                 const dataArray = new Uint8Array(analyzerRef.current.frequencyBinCount);
+                 analyzerRef.current.getByteFrequencyData(dataArray);
+                 const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+                 const level = Math.min(100, Math.round((avg / 128) * 100));
+                 setMicLevel(level);
+                 setMicDebugValue(avg.toFixed(0));
+                 requestAnimationFrame(analyzeFrequency);
+               };
+               analyzeFrequency();
+
+               console.log('[BrowserBroadcaster] ✅✅✅ MICROPHONE METER IGNITED AT setupDevices - analyzing NOW');
+             }
+           } catch (meterErr) {
+             console.warn('[BrowserBroadcaster] ⚠️ Meter ignition at setupDevices failed:', meterErr.message);
+           }
+
+           setMicReady(true);
+         }
 
         // 映像要素がなくても、マイクメーター表示のためにローディング解除
         if (audioTrack) {
