@@ -176,7 +176,7 @@ export default function ViewerStream({ stream }) {
   }
 
   return (
-    <div className="w-full h-full relative bg-black">
+    <div className="w-full h-full relative bg-black rounded-xl overflow-hidden">
       {loading && !fatalError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3 pointer-events-none">
           <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />

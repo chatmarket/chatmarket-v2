@@ -140,7 +140,7 @@ function LiveViewInner() {
   }
 
   const videoPortal = ReactDOM.createPortal(
-    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000" }}>
+    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000", borderRadius: "12px" }}>
       {/* 有料ペイウォール */}
       {stream.price > 0 && !hasPurchased && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
@@ -161,13 +161,13 @@ function LiveViewInner() {
 
       {/* 映像エリア */}
       {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
-        <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
+        <iframe src={stream.vimeo_url} className="w-full h-full rounded-xl" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
       ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
-        <iframe src={stream.youtube_url} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
+        <iframe src={stream.youtube_url} className="w-full h-full rounded-xl" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
       ) : stream.status === "live" ? (
         <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-secondary">
+        <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-xl">
           <p className="text-muted-foreground">
             {stream.status === "ended" ? "配信は終了しました" : "配信開始をお待ちください"}
           </p>
@@ -272,7 +272,7 @@ function LiveViewInner() {
   );
 
   return (
-    <div className="w-full min-h-screen bg-background">
+    <div className="w-full min-h-screen bg-black">
       <MetaHelmet
         title={`🔴 ${stream.title} | ChatMarket LIVE`}
         description={stream.description || `${stream.channel_name}がライブ配信中！`}

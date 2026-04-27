@@ -38,6 +38,7 @@ export default function YellButtons({ streamId, user, channelId }) {
   const [bursting, setBursting] = useState(null);
   const [sending, setSending] = useState(false);
   const [particles, setParticles] = useState([]);
+  const [hoveredCoins, setHoveredCoins] = useState(null);
 
   const handleYell = async (coins) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
@@ -142,12 +143,14 @@ export default function YellButtons({ streamId, user, channelId }) {
           key={coins}
           onClick={() => handleYell(coins)}
           disabled={sending}
+          onMouseEnter={() => setHoveredCoins(coins)}
+          onMouseLeave={() => setHoveredCoins(null)}
           whileTap={{ scale: 0.82 }}
-          animate={bursting === coins ? { scale: [1, 1.25, 1] } : {}}
+          animate={bursting === coins ? { scale: [1, 1.25, 1] } : hoveredCoins === coins ? { scale: 1.1 } : {}}
           transition={{ duration: 0.3 }}
           className={`
             relative flex flex-col items-center justify-center
-            w-14 h-14 rounded-2xl
+            w-16 h-16 rounded-2xl
             bg-gradient-to-b ${gradient}
             text-black font-black
             disabled:opacity-60
@@ -155,9 +158,11 @@ export default function YellButtons({ streamId, user, channelId }) {
           `}
           style={{
             boxShadow: bursting === coins
-              ? `0 0 24px 8px ${glow}`
-              : `0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)`,
-            border: "1px solid rgba(255,255,255,0.25)",
+              ? `0 0 32px 12px ${glow}, inset 0 1px 12px rgba(255,255,255,0.4)`
+              : hoveredCoins === coins
+              ? `0 8px 24px ${glow}, inset 0 1px 8px rgba(255,255,255,0.35)`
+              : `0 4px 12px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.3)`,
+            border: `2px solid ${hoveredCoins === coins ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)"}`,
           }}
         >
           <Coins className="w-3.5 h-3.5 mb-0.5" />

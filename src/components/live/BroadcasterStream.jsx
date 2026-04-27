@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { MicOff, Mic, Camera, CameraOff, PhoneOff, Eye, Settings, X, AlertTriangle, Zap, Copy, Check, Maximize, Minimize, Radio as RadioIcon } from "lucide-react";
 import BrowserBroadcaster from "./BrowserBroadcaster";
@@ -25,11 +26,23 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [copiedKey, setCopiedKey] = useState(false);
   const [streamQuality, setStreamQuality] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [latestYell, setLatestYell] = useState(null);
   const videoContainerRef = useRef(null);
 
   const isLive = status === "browser-live";
   const isOBSLive = status === "obs-live";
   const isChecking = status === "checking";
+
+  // エール通知をリアルタイムで監視（配信者側）
+  useEffect(() => {
+    if (!streamId) return;
+    const unsubscribe = base44.entities.SuperChat.subscribe((event) => {
+      if (event.type !== "create" || event.data?.livestream_id !== streamId) return;
+      setLatestYell({ ...event.data, id: event.id });
+      setTimeout(() => setLatestYell(null), 4000);
+    });
+    return unsubscribe;
+  }, [streamId]);
 
   // カメラ・マイク起動（プレビュー確認時 or 配信開始時）
   const startCamera = async () => {
@@ -364,7 +377,20 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             <p className="text-sm font-bold text-yellow-400">⭐ エール・スーパーチャット</p>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            <p className="text-xs text-zinc-500 text-center py-8">応援メッセージが表示されます</p>
+            {latestYell ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-gradient-to-r from-yellow-500/20 to-amber-600/20 border border-yellow-500/40 rounded-lg p-3"
+              >
+                <p className="text-xs font-bold text-yellow-400">{latestYell.user_name} さん</p>
+                <p className="text-sm font-black text-yellow-300 mt-1">🪙 {latestYell.amount} コイン</p>
+                {latestYell.message && <p className="text-xs text-foreground/80 mt-2">「{latestYell.message}」</p>}
+              </motion.div>
+            ) : (
+              <p className="text-xs text-zinc-500 text-center py-8">応援メッセージが表示されます</p>
+            )}
           </div>
         </div>
       </div>
