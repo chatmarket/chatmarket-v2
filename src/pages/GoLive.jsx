@@ -9,7 +9,7 @@ import { Radio, Loader2, Image, CheckCircle2, Users, Clock, Copy, Smartphone } f
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
-import BrowserBroadcaster from "../components/live/BrowserBroadcaster";
+import BrowserBroadcaster from "../components/live/BrowserBroadcaster.jsx";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
