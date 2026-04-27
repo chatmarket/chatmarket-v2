@@ -1,18 +1,19 @@
 /**
- * ViewerStream — シンプル優先HLSプレイヤー
- * 映像表示を最優先。設定は軽量化、エラー時は自動リトライ（最大3回）。
+ * ViewerStream — シンプルHLSプレイヤー
+ * - videoRef が確実にマウントされてから初期化
+ * - 自動リトライ最大3回
+ * - グローバル汚染なし
  */
 import React, { useEffect, useRef, useState } from "react";
 
-const MAX_AUTO_RETRY = 3;
+const MAX_RETRY = 3;
+const RETRY_DELAY_MS = 2500;
 
 export default function ViewerStream({ stream }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
-  const retryCountRef = useRef(0);
-  const retryTimerRef = useRef(null);
+  const retryRef = useRef(0);
   const destroyedRef = useRef(false);
-
   const [loading, setLoading] = useState(true);
   const [fatalError, setFatalError] = useState(false);
 
@@ -22,97 +23,97 @@ export default function ViewerStream({ stream }) {
     if (!playbackUrl) return;
 
     destroyedRef.current = false;
-    retryCountRef.current = 0;
+    retryRef.current = 0;
+    setLoading(true);
+    setFatalError(false);
 
-    startPlayer();
+    // videoRefがDOMにマウントされるまで少し待つ
+    const initTimer = setTimeout(() => {
+      if (!destroyedRef.current) initPlayer();
+    }, 100);
 
     return () => {
       destroyedRef.current = true;
-      clearTimeout(retryTimerRef.current);
-      cleanupHls();
+      clearTimeout(initTimer);
+      destroyHls();
     };
   }, [playbackUrl]);
 
-  function cleanupHls() {
-    try {
-      hlsRef.current?.destroy();
-    } catch (_) {}
+  function destroyHls() {
+    try { hlsRef.current?.destroy(); } catch (_) {}
     hlsRef.current = null;
   }
 
-  function scheduleRetry(delaySec) {
-    clearTimeout(retryTimerRef.current);
-    retryTimerRef.current = setTimeout(() => {
-      if (destroyedRef.current) return;
-      retryCountRef.current += 1;
-      cleanupHls();
-      startPlayer();
-    }, delaySec * 1000);
+  function retry() {
+    if (destroyedRef.current) return;
+    if (retryRef.current >= MAX_RETRY) {
+      setFatalError(true);
+      setLoading(false);
+      return;
+    }
+    retryRef.current += 1;
+    console.log(`[ViewerStream] retry ${retryRef.current}/${MAX_RETRY}`);
+    destroyHls();
+    setTimeout(() => {
+      if (!destroyedRef.current) initPlayer();
+    }, RETRY_DELAY_MS);
   }
 
-  async function startPlayer() {
-    if (destroyedRef.current) return;
+  async function initPlayer() {
     const vid = videoRef.current;
-    if (!vid) return;
-
-    // ━━ iOS Safari: ネイティブHLS ━━
-    if (!window.__hlsSupported && vid.canPlayType("application/vnd.apple.mpegurl")) {
-      vid.src = playbackUrl;
-      vid.preload = "auto";
-      vid.addEventListener("canplay", () => {
-        if (destroyedRef.current) return;
-        setLoading(false);
-        vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
-      }, { once: true });
-      vid.addEventListener("error", () => {
-        if (destroyedRef.current) return;
-        handleFatal();
-      }, { once: true });
-      vid.load();
+    if (!vid) {
+      console.warn("[ViewerStream] videoRef is null, retrying...");
+      retry();
       return;
     }
 
-    // ━━ hls.js ━━
+    // iOS Safari ネイティブHLS
+    if (vid.canPlayType("application/vnd.apple.mpegurl")) {
+      vid.src = playbackUrl;
+      vid.load();
+      const onCanPlay = () => {
+        if (destroyedRef.current) return;
+        setLoading(false);
+        vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+      };
+      const onError = () => {
+        if (destroyedRef.current) return;
+        console.warn("[ViewerStream] native HLS error");
+        retry();
+      };
+      vid.addEventListener("canplay", onCanPlay, { once: true });
+      vid.addEventListener("error", onError, { once: true });
+      return;
+    }
+
+    // hls.js
     try {
-      const Hls = (await import("hls.js")).default;
+      const HlsModule = await import("hls.js");
+      const Hls = HlsModule.default;
+
       if (destroyedRef.current) return;
 
       if (!Hls.isSupported()) {
+        console.error("[ViewerStream] hls.js not supported");
         setFatalError(true);
         setLoading(false);
         return;
       }
 
-      window.__hlsSupported = true;
-
       const hls = new Hls({
-        // 軽量設定 — ブラウザ負荷を下げて安定再生優先
-        lowLatencyMode: false,           // LL-HLSは無効（安定性優先）
+        lowLatencyMode: false,
         liveSyncDurationCount: 3,
         liveMaxLatencyDurationCount: 10,
-
-        maxBufferLength: 15,
+        maxBufferLength: 10,
         maxMaxBufferLength: 30,
-        maxBufferSize: 20 * 1000 * 1000, // 20MB（軽量化）
+        maxBufferSize: 20 * 1000 * 1000,
         backBufferLength: 5,
-
-        // ABR: シンプルな自動設定
         startLevel: -1,
-        abrEwmaFastLive: 5,
-        abrEwmaSlowLive: 15,
         abrBandWidthFactor: 0.8,
-        abrBandWidthUpFactor: 0.5,
-
-        // フラグメント
-        fragLoadingTimeOut: 15000,
-        fragLoadingMaxRetry: 4,
-        fragLoadingRetryDelay: 1000,
-
-        // マニフェスト
-        manifestLoadingTimeOut: 10000,
+        fragLoadingTimeOut: 20000,
+        fragLoadingMaxRetry: 3,
+        manifestLoadingTimeOut: 15000,
         manifestLoadingMaxRetry: 3,
-        manifestLoadingRetryDelay: 1000,
-
         enableWorker: true,
       });
 
@@ -122,49 +123,36 @@ export default function ViewerStream({ stream }) {
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (destroyedRef.current) return;
+        console.log("[ViewerStream] manifest parsed, playing");
         setLoading(false);
         setFatalError(false);
         vid.play().catch(() => {
           vid.muted = true;
-          vid.play().catch(() => {});
+          vid.play().catch((e) => console.warn("[ViewerStream] play failed:", e));
         });
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (destroyedRef.current) return;
         if (!data.fatal) return;
-
-        console.warn(`[ViewerStream] fatal error: ${data.type}/${data.details} retry=${retryCountRef.current}`);
-
-        if (retryCountRef.current < MAX_AUTO_RETRY) {
-          // 自動リトライ（exponential backoff）
-          scheduleRetry(2 * (retryCountRef.current + 1));
-        } else {
-          handleFatal();
-        }
+        console.warn(`[ViewerStream] fatal: ${data.type}/${data.details}`);
+        retry();
       });
 
     } catch (e) {
-      console.error("[ViewerStream] init failed:", e);
-      if (!destroyedRef.current) handleFatal();
-    }
-  }
-
-  function handleFatal() {
-    if (retryCountRef.current < MAX_AUTO_RETRY) {
-      scheduleRetry(2 * (retryCountRef.current + 1));
-    } else {
-      setFatalError(true);
-      setLoading(false);
+      console.error("[ViewerStream] hls.js import/init error:", e);
+      if (!destroyedRef.current) retry();
     }
   }
 
   function manualRetry() {
-    retryCountRef.current = 0;
+    retryRef.current = 0;
     setFatalError(false);
     setLoading(true);
-    cleanupHls();
-    startPlayer();
+    destroyHls();
+    setTimeout(() => {
+      if (!destroyedRef.current) initPlayer();
+    }, 200);
   }
 
   if (!playbackUrl) {
@@ -177,15 +165,15 @@ export default function ViewerStream({ stream }) {
 
   return (
     <div className="w-full h-full relative bg-black">
-      {/* ローディング */}
       {loading && !fatalError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3">
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3 pointer-events-none">
           <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-          <p className="text-white/40 text-xs">映像を読み込み中...</p>
+          <p className="text-white/40 text-xs">
+            {retryRef.current > 0 ? `再接続中... (${retryRef.current}/${MAX_RETRY})` : "映像を読み込み中..."}
+          </p>
         </div>
       )}
 
-      {/* 致命的エラー（自動リトライ失敗後のみ表示） */}
       {fatalError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3">
           <p className="text-red-400 text-sm">映像の読み込みに失敗しました</p>
