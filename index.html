@@ -99,22 +99,29 @@
         100%{transform:translateX(100%)}
       }
     </style>
-    <!-- ★ SW強制クリア: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
+    <!-- ★ SW強制クリア v2: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for (var reg of registrations) {
-            reg.unregister();
-            console.log('[SW] Unregistered:', reg.scope);
-          }
-        });
+      // バージョントークン: 変更するたびにキャッシュが無効化される
+      var CACHE_VERSION = '20260427-hlsonly';
+      var stored = localStorage.getItem('cm_cache_ver');
+      if (stored !== CACHE_VERSION) {
+        localStorage.setItem('cm_cache_ver', CACHE_VERSION);
+        // 全SW解除
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(reg) { reg.unregister(); });
+          });
+        }
+        // 全キャッシュ削除
         if ('caches' in window) {
           caches.keys().then(function(names) {
-            for (var name of names) {
-              caches.delete(name);
-              console.log('[SW] Cache deleted:', name);
-            }
+            names.forEach(function(name) { caches.delete(name); });
           });
+        }
+        // 初回のみリロード（無限ループ防止）
+        if (!sessionStorage.getItem('cm_reloaded_' + CACHE_VERSION)) {
+          sessionStorage.setItem('cm_reloaded_' + CACHE_VERSION, '1');
+          window.location.reload(true);
         }
       }
     </script>

@@ -76,8 +76,20 @@ function LiveViewInner() {
   // ★ 画面上にログを追記するヘルパー
   const addLog = (msg) => {
     const ts = new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    console.log("[LiveView]", msg);
     setDebugLogs(prev => [`[${ts}] ${msg}`, ...prev].slice(0, 20));
   };
+
+  // ★ キャッシュバスター: グローバルエラーをキャッチしてIVS関連ならログ表示
+  useEffect(() => {
+    const handler = (e) => {
+      if (e?.message?.includes("EventEmitter") || e?.message?.includes("ivs")) {
+        addLog(`❌ グローバルエラー検出: ${e.message} — ブラウザのキャッシュをクリアしてください (Shift+リロード)`);
+      }
+    };
+    window.addEventListener("error", handler);
+    return () => window.removeEventListener("error", handler);
+  }, []);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -441,6 +453,12 @@ function LiveViewInner() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      {/* ★ キャッシュクリア案内バナー（デバッグ用・一時表示） */}
+      {debugLogs.some(l => l.includes("EventEmitter")) && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 999999, background: "#ff0000", color: "#fff", padding: "12px 16px", textAlign: "center", fontSize: "13px", fontWeight: "bold" }}>
+          ⚠️ 古いキャッシュが残っています。iPhoneの場合: Safari設定→詳細→Webサイトデータを削除 してリロード
+        </div>
+      )}
       <MetaHelmet
         title={`🔴 ${stream.title} | ChatMarket LIVE`}
         description={stream.description || `${stream.channel_name}がライブ配信中！ChatMarketで今すぐ視聴。`}
