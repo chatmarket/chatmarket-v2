@@ -279,10 +279,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setError(null);
         console.log('[BrowserBroadcaster] 🚀 [MOUNT] Initializing media stream...');
         
-        // 【器の流し込み】手動WHIP URLを sessionStorage から取得、またはデフォルトを使用
-        const manualWhip = sessionStorage.getItem("manualWhipEndpoint") || "https://27b83d82b8a7.global-bm.whip.live-video.net";
-        console.log('[BrowserBroadcaster] 🌐 [MANUAL WHIP] Using endpoint:', manualWhip.split('?')[0]);
-        setWhipEndpoint(manualWhip);
+        // 【固定URL】社長指定の WHIP エンドポイント（変更禁止）
+        const FIXED_WHIP = "https://27b83d82b8a7.global-bm.whip.live-video.net";
+        setWhipEndpoint(FIXED_WHIP);
+        console.log('[BrowserBroadcaster] 🌐 WHIP endpoint (hardcoded):', FIXED_WHIP);
 
         // デバイス列挙
         await enumerateDevices();
@@ -365,19 +365,27 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         // 再列挙でデバイス名が確定される
         await enumerateDevices(); // これで deviceId.label が正式名に確定
         
-        // 【強制生成】ビデオ要素がなければ即座に display:none で body に挿入
+        // 【強制配置】ビデオ要素は一度だけ生成 → 再利用
         let videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
         
         if (!videoElement) {
-          console.log('[BrowserBroadcaster] 💪 Video element missing - FORCE CREATE with display:none');
+          console.log('[BrowserBroadcaster] 💪 Creating video element with z-index: 9999');
           videoElement = document.createElement('video');
           videoElement.id = 'browser-broadcaster-video';
           videoElement.autoplay = true;
           videoElement.muted = true;
           videoElement.playsInline = true;
-          videoElement.style.display = 'none'; // 強制 display:none
+          videoElement.style.position = 'fixed';
+          videoElement.style.top = '0';
+          videoElement.style.left = '0';
+          videoElement.style.width = '100vw';
+          videoElement.style.height = '100vh';
+          videoElement.style.objectFit = 'cover';
+          videoElement.style.zIndex = '9999';
+          videoElement.style.display = 'block';
+          videoElement.style.backgroundColor = '#000';
           document.body.appendChild(videoElement);
-          console.log('[BrowserBroadcaster] ✅ Video element force-created at body (hidden)');
+          console.log('[BrowserBroadcaster] ✅ Video element created at full screen (z-index: 9999)');
         }
         
         console.log('[BrowserBroadcaster] 🚀 Video element mounted - injecting stream immediately (zero latency)!');
@@ -600,19 +608,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           setLoading(false);
         }
 
-        // 【正しい住所】WHIP エンドポイント再取得（毎回最新を取得）
-        console.log('[BrowserBroadcaster] 🌐 Fetching latest WHIP endpoint from AWS IVS...');
-        try {
-          const whipRes = await base44.functions.invoke('getIvsWhipEndpoint', { streamId });
-          if (whipRes?.data?.whipEndpoint) {
-            setWhipEndpoint(whipRes.data.whipEndpoint);
-            console.log('[BrowserBroadcaster] ✅ WHIP endpoint ready:', whipRes.data.whipEndpoint.split('?')[0]);
-          } else {
-            throw new Error('WHIP endpoint not provided by backend - check AWS IVS configuration');
-          }
-        } catch (whipErr) {
-          console.warn('[BrowserBroadcaster] ⚠️  WHIP endpoint fetch failed (will retry on broadcast):', whipErr.message);
-        }
+        // 【固定URL】社長指定のWHIP エンドポイント（変更不可）
+        const FIXED_WHIP_URL = "https://27b83d82b8a7.global-bm.whip.live-video.net";
+        setWhipEndpoint(FIXED_WHIP_URL);
+        console.log('[BrowserBroadcaster] ✅ WHIP endpoint hardcoded:', FIXED_WHIP_URL);
 
         setLoading(false);
       } catch (err) {
@@ -797,19 +796,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     try {
       console.log(`[BrowserBroadcaster] 🔌 [WHIP ${retryCount + 1}/${maxRetries + 1}] Creating RTCPeerConnection...`);
       
-      // PC (PeerConnection) 作成
       const pc = new RTCPeerConnection();
       console.log('[BrowserBroadcaster] ✅ RTCPeerConnection created');
 
-      // 【本物の住所を使う】CEO の WHIP 定数を直接使用（API呼び出しなし）
+      // 【愚直にハードコード】社長指定URL以外は一切受け付けない
       const WHIP_ENDPOINT_CONSTANT = "https://27b83d82b8a7.global-bm.whip.live-video.net";
-      let broadcastWhipEndpoint = WHIP_ENDPOINT_CONSTANT;
-      console.log('[BrowserBroadcaster] 🌐 [WHIP FINAL] Using fixed endpoint:', broadcastWhipEndpoint);
+      console.log('[BrowserBroadcaster] 🌐 WHIP endpoint (hardcoded):', WHIP_ENDPOINT_CONSTANT);
 
-      // キャッシュバスト追加（ドメイン自体は固定）
-      const randomQueryParam = `_cache_bust=${Math.random().toString(36).substr(2, 9)}`;
-      const whipUrlWithBypass = `${broadcastWhipEndpoint}?${randomQueryParam}`;
-      console.log('[BrowserBroadcaster] 🚀 WHIP POST URL:', whipUrlWithBypass.split('?')[0] + '?...');
+      // キャッシュバスト（ドメイン固定、パラメータのみ変更）
+      const whipUrlWithBypass = `${WHIP_ENDPOINT_CONSTANT}?_cache_bust=${Math.random().toString(36).substr(2, 9)}`;
+      console.log('[BrowserBroadcaster] 🚀 WHIP endpoint:', WHIP_ENDPOINT_CONSTANT);
 
       // 接続状態を監視
       pc.onconnectionstatechange = () => {
@@ -909,12 +905,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         toast.error('⚠️ ネット接続またはDNS設定を確認してください。\n【解決策】①Wi-Fiを一度OFF/ON②別のWi-Fi試行③デバイス再起動');
       }
       
-      // 【無限リトライ】ネットワークエラーは永遠にリトライ（ボタン無効化なし）
+      // リトライは5秒以上の間隔
       if (shouldRetryForever || retryCount < maxRetries) {
-        const nextRetryCount = retryCount + 1;
-        console.log(`[BrowserBroadcaster] 🔄 ${shouldRetryForever ? '♾️ Infinite' : 'Finite'} Retrying in 3 seconds (attempt ${nextRetryCount})...`);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        return connectToWhip(nextRetryCount, maxRetries);
+       const nextRetryCount = retryCount + 1;
+       const retryDelay = Math.max(5000, 5000 + (retryCount * 1000)); // 最小5秒、以降は1秒ずつ増
+       console.log(`[BrowserBroadcaster] 🔄 Retrying in ${retryDelay / 1000}s (attempt ${nextRetryCount})...`);
+       await new Promise((resolve) => setTimeout(resolve, retryDelay));
+       return connectToWhip(nextRetryCount, maxRetries);
       }
       
       // 【全回路リセット 4】エラー飲み込み強行＝配信を続行（エラーログのみ）
