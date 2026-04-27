@@ -65,6 +65,11 @@ export default function GoLive() {
     if (!form.title) return;
 
     setCreating(true);
+    
+    // 古いデータをクリア
+    sessionStorage.removeItem("liveStreamId");
+    setManualStreamKey("");
+    setManualIngestEndpoint("");
 
     // IVS チャンネル作成（バックエンド）
     const ivsRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: false });
