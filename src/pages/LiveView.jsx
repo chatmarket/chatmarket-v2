@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import VideoControls from "../components/video/VideoControls";
-import ViewerStream from "../components/live/ViewerStream";
+import ViewerStream from "../components/live/ViewerStream.jsx";
 import PpvPreSale from "../components/live/PpvPreSale";
 
 // ★ エラーバウンダリ（LiveView全体をラップ）
@@ -324,8 +324,8 @@ function LiveViewInner() {
     );
   }
 
-  const isPaid = stream.price > 0;
-  const needsPayment = isPaid && !hasPurchased;
+  // テスト期間中は全開放（hasPurchasedは runTicketCheck で常時true）
+  const needsPayment = false;
 
   const videoPortal = ReactDOM.createPortal(
     <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000", borderRadius: 0 }}>
