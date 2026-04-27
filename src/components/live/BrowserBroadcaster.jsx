@@ -156,8 +156,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (selectedMic) sessionStorage.setItem('selectedMic', selectedMic);
   }, [selectedMic]);
 
-  // 【配信開始】
+  // 【配信開始】streamId 確認 → 状態更新 → WHIP 接続
   const handleStartBroadcast = async () => {
+    if (!streamId) {
+      setError('配信IDが見つかりません');
+      setShowErrorDialog(true);
+      return;
+    }
+
+    console.log('[BrowserBroadcaster] 🚀 Starting broadcast for streamId:', streamId);
     setBroadcastStatus("connecting");
     setBroadcastError(null);
 
@@ -167,16 +174,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         status: "live",
         live_started_at: new Date().toISOString(),
       });
+      console.log('[BrowserBroadcaster] ✅ LiveStream status updated');
 
       if (channelId) {
         await base44.entities.Channel.update(channelId, { is_live: true });
+        console.log('[BrowserBroadcaster] ✅ Channel is_live updated');
       }
 
       // WHIP 接続
+      console.log('[BrowserBroadcaster] 🔌 Connecting to WHIP...');
       setIsBroadcasting(true);
       await connectToWhip();
       setBroadcastStatus("live");
-      toast.success("✅ 配信開始");
+      toast.success("✅ 配信開始 — 世界へ放送中");
     } catch (err) {
       console.error('[BrowserBroadcaster] Broadcast error:', err);
       setBroadcastStatus("error");
@@ -278,8 +288,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         </div>
       </div>
 
-      {/* 右側パネル：コントロール */}
-      <div className="w-full lg:w-80 flex flex-col gap-4">
+      {/* 右側パネル：コントロール + チャット + コイン */}
+      <div className="w-full lg:w-80 flex flex-col gap-4 max-h-screen overflow-y-auto">
         {/* デバイス設定 */}
         <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3 shadow-lg">
           <h3 className="font-bold text-white text-sm flex items-center gap-2">
@@ -372,6 +382,32 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         >
           キャンセル
         </button>
+
+        {/* チャット表示 */}
+        {isBroadcasting && (
+          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              チャット
+            </h3>
+            <div className="text-xs text-muted-foreground text-center py-4">
+              コメントが表示されます
+            </div>
+          </div>
+        )}
+
+        {/* コイン・ギフト通知 */}
+        {isBroadcasting && (
+          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-400" />
+              ギフト
+            </h3>
+            <div className="text-xs text-muted-foreground text-center py-4">
+              スーパーチャットが表示されます
+            </div>
+          </div>
+        )}
       </div>
 
       {/* エラーダイアログ */}
