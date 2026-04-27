@@ -375,15 +375,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.error('[BrowserBroadcaster] ❌ Initialization error:', err);
         let friendlyMsg = err.message;
 
-        // 【修正】エラー段階を詳細に特定して画面表示
+        // 【修正】エラー段階を詳細に特定して画面表示＋権限ガイド
         if (err.name === 'NotAllowedError' || err.message.includes('Permission denied')) {
-          friendlyMsg = '🔴 カメラ/マイクへのアクセスを許可してください（Permission Denied）';
+          friendlyMsg = '🔴 カメラ/マイクへのアクセスを許可してください\n\n手順:\n1️⃣ URLバーの左側「南京錠🔒」をクリック\n2️⃣ 「カメラ」と「マイク」を「許可」に変更\n3️⃣ ページを再読み込み';
+          setPermissionError(friendlyMsg);
         } else if (err.name === 'NotFoundError' || err.message.includes('Requested device not found')) {
-          friendlyMsg = '🔴 選択したカメラ/マイクが見つかりません（Not Found）';
+          friendlyMsg = '🔴 選択したカメラ/マイクが見つかりません\n\n確認事項:\n• 他のアプリがカメラを使用していないか\n• デバイスが接続されているか\n• USB ケーブルがしっかり接続されているか';
         } else if (err.name === 'OverconstrainedError') {
-          friendlyMsg = '🔴 デバイスが制約条件に対応していません（Overconstrained）';
+          friendlyMsg = '🔴 デバイスが制約条件に対応していません\n\n別のカメラを選択してお試しください';
         } else if (err.name === 'TypeError') {
-          friendlyMsg = '🔴 デバイス選択が無効です（Type Error）';
+          friendlyMsg = '🔴 デバイス選択が無効です\n\n別のカメラ/マイクを選択してください';
         }
 
         console.error(`[BrowserBroadcaster] 詳細: ${err.name} - ${err.message}`);
@@ -419,7 +420,6 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
 
     // 【修正】AudioContext.resume() をクリック時に即座に実行
-    // ブラウザの仕様：ユーザー操作なしでは音声解析が開始しない
     try {
       if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
         console.log('[BrowserBroadcaster] 🔊 Resuming AudioContext...');
@@ -433,6 +433,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     try {
       setIsBroadcasting(true);
       console.log('[BrowserBroadcaster] 🎬 Starting broadcast...');
+      console.log(`[BrowserBroadcaster] 📡 WHIP Endpoint: ${whipEndpoint}`);
+      console.log(`[BrowserBroadcaster] 📊 Stream State: ${streamRef.current?.getTracks().map(t => `${t.kind}:${t.enabled}`).join(', ') || 'NO TRACKS'}`);
+      console.log(`[BrowserBroadcaster] 🎥 Video: ${cameraReady ? '✅ READY' : '❌ NOT READY'}, 🎤 Audio: ${micReady ? '✅ READY' : '❌ NOT READY'}`);
 
       // ストリーム状態を 'live' に更新
       const now = new Date().toISOString();
@@ -450,11 +453,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       // IVS WebRTC 接続開始（WHIP プロトコル）
       console.log('[BrowserBroadcaster] 🔌 Initiating WHIP connection...');
+      console.log(`[BrowserBroadcaster] 📍 Ingest URL: ${whipEndpoint.split('?')[0]}...`);
       await connectToWhip();
 
+      console.log('[BrowserBroadcaster] ✅ WHIP startBroadcast() SUCCESSFUL');
       toast.success("✅ ブラウザ配信開始 — AWS IVS へ接続中...");
     } catch (err) {
       console.error('[BrowserBroadcaster] ❌ Broadcast start error:', err);
+      console.error('[BrowserBroadcaster] 🔍 Error details:', {
+        name: err.name,
+        message: err.message,
+        code: err.code,
+        stack: err.stack?.split('\n')[0],
+      });
       toast.error("配信開始に失敗しました: " + err.message);
       setIsBroadcasting(false);
     }
@@ -463,6 +474,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const connectToWhip = async (retryCount = 0, maxRetries = 3) => {
     try {
       console.log(`[BrowserBroadcaster] 🔌 Connecting to WHIP (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+      console.log(`[BrowserBroadcaster] 📊 RTC Config: ${JSON.stringify({ iceServers: ['STUN/TURN servers enabled'] })}`);
       
       // PC (PeerConnection) 作成
       const pc = new RTCPeerConnection();
@@ -540,9 +552,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             </p>
           </div>
           {permissionError && (
-            <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-2">
-              {permissionError}
-            </div>
+          <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-2 whitespace-pre-line">
+            {permissionError}
+          </div>
           )}
         </div>
       </div>
@@ -684,10 +696,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       </div>
 
       {/* デバイス選択 */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+      <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-lg">
         <div className="flex items-center gap-2 mb-4">
           <Settings className="w-5 h-5 text-primary" />
-          <h3 className="font-bold text-white">デバイス選択</h3>
+          <h3 className="font-bold text-white text-lg">デバイス選択</h3>
         </div>
 
         {/* カメラ選択 */}
@@ -758,8 +770,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       </div>
 
       {/* ステータスチェック */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
-        <h3 className="font-bold text-white mb-4">配信準備確認</h3>
+      <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-lg">
+        <h3 className="font-bold text-white text-lg mb-4">配信準備確認</h3>
 
         {/* カメラステータス */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
@@ -833,14 +845,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         <button
           onClick={onEnd}
           disabled={isBroadcasting}
-          className="flex-1 py-4 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold transition-colors disabled:opacity-50"
+          className="flex-1 py-4 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold transition-all duration-200 disabled:opacity-50 shadow-lg"
         >
           キャンセル
         </button>
         <button
           onClick={handleStartBroadcast}
           disabled={!cameraReady || !micReady || isBroadcasting}
-          className="flex-1 py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-4 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-black flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
         >
           <Zap className="w-5 h-5" />
           {isBroadcasting ? "配信開始中..." : "配信を開始する"}

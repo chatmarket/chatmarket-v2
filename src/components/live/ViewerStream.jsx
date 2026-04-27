@@ -16,6 +16,13 @@ export default function ViewerStream({ stream }) {
   const destroyedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [fatalError, setFatalError] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+
+  // 【修正】クエリパラメータから debug=true を検出
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setDebugMode(params.get('debug') === 'true');
+  }, []);
 
   const playbackUrl = stream?.ivs_playback_url;
 
@@ -148,6 +155,14 @@ export default function ViewerStream({ stream }) {
         if (destroyedRef.current) return;
         if (!data.fatal) return;
         console.warn(`[ViewerStream] fatal: ${data.type}/${data.details}`);
+        if (debugMode) {
+          console.error('[ViewerStream] 🔍 DEBUG ERROR INFO:', {
+            errorType: data.type,
+            errorDetails: data.details,
+            errorCode: data.response?.code || 'N/A',
+            errorMessage: data.response?.message || 'N/A',
+          });
+        }
         retry();
       });
 
@@ -170,7 +185,10 @@ export default function ViewerStream({ stream }) {
   if (!playbackUrl) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-black">
-        <p className="text-white/50 text-sm">映像URLがありません</p>
+        <div className="text-center space-y-2">
+          <p className="text-white/50 text-sm">映像URLがありません</p>
+          {debugMode && <p className="text-red-400 text-xs font-mono">playbackUrl is undefined</p>}
+        </div>
       </div>
     );
   }
@@ -187,8 +205,15 @@ export default function ViewerStream({ stream }) {
       )}
 
       {fatalError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3">
-          <p className="text-red-400 text-sm">映像の読み込みに失敗しました</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3 p-4">
+          <p className="text-red-400 text-sm text-center">映像の読み込みに失敗しました</p>
+          {debugMode && (
+            <div className="bg-red-950/80 border border-red-700 rounded p-2 text-xs font-mono text-red-200 max-w-xs">
+              <p className="mb-1">🔍 デバッグ情報:</p>
+              <p>配信者が配信開始したか確認</p>
+              <p>コンソール(F12)のエラーコードを確認</p>
+            </div>
+          )}
           <button
             onClick={manualRetry}
             className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm"
