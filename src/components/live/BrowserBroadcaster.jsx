@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio, Settings } from "lucide-react";
+import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio, Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
@@ -33,6 +33,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const loadingTimeoutRef = useRef(null);
   const [debugMode, setDebugMode] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
+  const [broadcastStatus, setBroadcastStatus] = useState(null); // null | "connecting" | "live" | "error"
+  const [broadcastError, setBroadcastError] = useState(null);
+  const broadcastTimeoutRef = useRef(null);
 
   // 【修正】クエリパラメータから debug=true を検出
   useEffect(() => {
@@ -414,28 +417,63 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       return;
     }
 
-    if (!whipEndpoint) {
-      toast.error("WHIP エンドポイントが見つかりません");
-      return;
-    }
+    // 【修正】ボタン押下状態を即座に表示
+    setBroadcastStatus("connecting");
+    setBroadcastError(null);
+    console.log('[BrowserBroadcaster] 🚀 [USER CLICKED] Start broadcast button pressed');
 
-    // 【修正】AudioContext.resume() をクリック時に即座に実行
+    // 【修正】10秒タイムアウトをセット
+    broadcastTimeoutRef.current = setTimeout(() => {
+      console.error('[BrowserBroadcaster] ⏱️ TIMEOUT: Broadcast connection took too long (10s)');
+      setBroadcastStatus("error");
+      setBroadcastError("接続がタイムアウトしました。OBS配信をお試しください。");
+      setIsBroadcasting(false);
+      toast.error("配信接続がタイムアウトしました");
+    }, 10000);
+
     try {
-      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-        console.log('[BrowserBroadcaster] 🔊 Resuming AudioContext...');
-        await audioContextRef.current.resume();
-        console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
+      console.log('[BrowserBroadcaster] 📍 [STEP 1/4] Validating prerequisites...');
+      
+      if (!whipEndpoint) {
+        throw new Error('WHIP エンドポイントが見つかりません');
       }
-    } catch (err) {
-      console.warn('[BrowserBroadcaster] ⚠️  AudioContext resume failed:', err);
-    }
 
-    try {
-      setIsBroadcasting(true);
-      console.log('[BrowserBroadcaster] 🎬 Starting broadcast...');
-      console.log(`[BrowserBroadcaster] 📡 WHIP Endpoint: ${whipEndpoint}`);
+      console.log(`[BrowserBroadcaster] ✅ WHIP Endpoint present: ${whipEndpoint.split('?')[0]}...`);
+
+      // 【修正】ストリームキーを再ロード（最新性保証）
+      console.log('[BrowserBroadcaster] 📍 [STEP 2/4] Reloading stream key from database...');
+      const streams = await base44.entities.LiveStream.filter({ id: streamId });
+      if (!streams[0]) {
+        throw new Error('配信情報が見つかりません');
+      }
+
+      const freshStreamKey = streams[0].ivs_stream_key;
+      const freshIngestEndpoint = streams[0].ivs_ingest_endpoint;
+      console.log(`[BrowserBroadcaster] ✅ Stream key reloaded: ${freshStreamKey ? '✅ PRESENT' : '❌ EMPTY'}`);
+      console.log(`[BrowserBroadcaster] ✅ Ingest endpoint reloaded: ${freshIngestEndpoint ? '✅ PRESENT' : '❌ EMPTY'}`);
+
+      if (!freshStreamKey || !freshIngestEndpoint) {
+        throw new Error('ストリームキーまたはインジェストエンドポイントが空です');
+      }
+
+      // 【修正】AudioContext.resume() をクリック時に即座に実行
+      console.log('[BrowserBroadcaster] 📍 [STEP 3/4] Preparing audio context...');
+      try {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          console.log('[BrowserBroadcaster] 🔊 Resuming AudioContext...');
+          await audioContextRef.current.resume();
+          console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
+        }
+      } catch (err) {
+        console.warn('[BrowserBroadcaster] ⚠️  AudioContext resume failed (non-critical):', err);
+      }
+
+      console.log('[BrowserBroadcaster] 📍 [STEP 4/4] Initiating WHIP connection...');
       console.log(`[BrowserBroadcaster] 📊 Stream State: ${streamRef.current?.getTracks().map(t => `${t.kind}:${t.enabled}`).join(', ') || 'NO TRACKS'}`);
       console.log(`[BrowserBroadcaster] 🎥 Video: ${cameraReady ? '✅ READY' : '❌ NOT READY'}, 🎤 Audio: ${micReady ? '✅ READY' : '❌ NOT READY'}`);
+
+      setIsBroadcasting(true);
+      console.log('[BrowserBroadcaster] 🎬 Starting broadcast...');
 
       // ストリーム状態を 'live' に更新
       const now = new Date().toISOString();
@@ -444,40 +482,57 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         status: "live",
         live_started_at: now,
       });
+      console.log('[BrowserBroadcaster] ✅ Stream status updated');
 
       // チャンネル is_live フラグ更新
       if (channelId) {
         console.log('[BrowserBroadcaster] 💾 Updating channel is_live flag');
         await base44.entities.Channel.update(channelId, { is_live: true });
+        console.log('[BrowserBroadcaster] ✅ Channel is_live flag updated');
       }
 
       // IVS WebRTC 接続開始（WHIP プロトコル）
-      console.log('[BrowserBroadcaster] 🔌 Initiating WHIP connection...');
-      console.log(`[BrowserBroadcaster] 📍 Ingest URL: ${whipEndpoint.split('?')[0]}...`);
+      console.log('[BrowserBroadcaster] 🔌 Initiating WHIP connection to AWS IVS...');
       await connectToWhip();
 
-      console.log('[BrowserBroadcaster] ✅ WHIP startBroadcast() SUCCESSFUL');
-      toast.success("✅ ブラウザ配信開始 — AWS IVS へ接続中...");
+      // タイムアウトをクリア（成功時）
+      if (broadcastTimeoutRef.current) {
+        clearTimeout(broadcastTimeoutRef.current);
+        broadcastTimeoutRef.current = null;
+      }
+
+      console.log('[BrowserBroadcaster] ✅✅✅ WHIP BROADCAST SUCCESSFULLY STARTED ✅✅✅');
+      setBroadcastStatus("live");
+      toast.success("✅ ブラウザ配信開始 — 視聴者へ配信中...");
     } catch (err) {
-      console.error('[BrowserBroadcaster] ❌ Broadcast start error:', err);
+      console.error('[BrowserBroadcaster] ❌❌❌ BROADCAST START FAILED ❌❌❌');
       console.error('[BrowserBroadcaster] 🔍 Error details:', {
         name: err.name,
         message: err.message,
         code: err.code,
         stack: err.stack?.split('\n')[0],
       });
-      toast.error("配信開始に失敗しました: " + err.message);
+
+      // タイムアウトをクリア（失敗時）
+      if (broadcastTimeoutRef.current) {
+        clearTimeout(broadcastTimeoutRef.current);
+        broadcastTimeoutRef.current = null;
+      }
+
+      setBroadcastStatus("error");
+      setBroadcastError(err.message);
+      toast.error("配信開始に失敗: " + err.message);
       setIsBroadcasting(false);
     }
   };
 
   const connectToWhip = async (retryCount = 0, maxRetries = 3) => {
     try {
-      console.log(`[BrowserBroadcaster] 🔌 Connecting to WHIP (attempt ${retryCount + 1}/${maxRetries + 1})...`);
-      console.log(`[BrowserBroadcaster] 📊 RTC Config: ${JSON.stringify({ iceServers: ['STUN/TURN servers enabled'] })}`);
+      console.log(`[BrowserBroadcaster] 🔌 [WHIP ${retryCount + 1}/${maxRetries + 1}] Creating RTCPeerConnection...`);
       
       // PC (PeerConnection) 作成
       const pc = new RTCPeerConnection();
+      console.log('[BrowserBroadcaster] ✅ RTCPeerConnection created');
 
       // 接続状態を監視
       pc.onconnectionstatechange = () => {
@@ -503,29 +558,32 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       });
 
       // Offer 生成
+      console.log('[BrowserBroadcaster] 📝 Creating SDP offer...');
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      console.log('[BrowserBroadcaster] 📝 Offer created and set as local description');
+      console.log('[BrowserBroadcaster] ✅ SDP offer created and set as local description');
 
       // WHIP エンドポイントへ POST
-      console.log(`[BrowserBroadcaster] 📤 Sending offer to WHIP endpoint: ${whipEndpoint}`);
+      console.log(`[BrowserBroadcaster] 📤 Posting offer to WHIP endpoint...`);
       const response = await fetch(whipEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/sdp' },
         body: offer.sdp,
       });
 
+      console.log(`[BrowserBroadcaster] 📥 WHIP response status: ${response.status} ${response.statusText}`);
       if (!response.ok) {
         throw new Error(`WHIP HTTP Error: ${response.status} ${response.statusText}`);
       }
 
       const answerSdp = await response.text();
+      console.log('[BrowserBroadcaster] 📄 SDP answer received from WHIP server');
       const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp });
       await pc.setRemoteDescription(answer);
-      console.log('[BrowserBroadcaster] ✅ Answer received and set as remote description');
+      console.log('[BrowserBroadcaster] ✅ Remote description set from answer');
 
       whipClientRef.current = pc;
-      console.log('[BrowserBroadcaster] 🎬 WHIP connection established successfully');
+      console.log('[BrowserBroadcaster] 🎬🎬🎬 WHIP CONNECTION ESTABLISHED SUCCESSFULLY 🎬🎬🎬');
     } catch (err) {
       console.error('[BrowserBroadcaster] ❌ WHIP connection error:', err);
       if (retryCount < maxRetries) {
@@ -844,18 +902,36 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       <div className="flex gap-3">
         <button
           onClick={onEnd}
-          disabled={isBroadcasting}
+          disabled={isBroadcasting || broadcastStatus === "connecting"}
           className="flex-1 py-4 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold transition-all duration-200 disabled:opacity-50 shadow-lg"
         >
           キャンセル
         </button>
         <button
           onClick={handleStartBroadcast}
-          disabled={!cameraReady || !micReady || isBroadcasting}
-          className="flex-1 py-4 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-black flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
+          disabled={!cameraReady || !micReady || isBroadcasting || broadcastStatus === "connecting"}
+          className={`flex-1 py-4 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-lg ${
+            broadcastStatus === "live"
+              ? "bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/30"
+              : broadcastStatus === "error"
+              ? "bg-gradient-to-r from-red-600 to-red-700 shadow-red-600/30"
+              : broadcastStatus === "connecting"
+              ? "bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/30 animate-pulse"
+              : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/30 hover:shadow-red-500/50"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          <Zap className="w-5 h-5" />
-          {isBroadcasting ? "配信開始中..." : "配信を開始する"}
+          {broadcastStatus === "live" && <CheckCircle2 className="w-5 h-5" />}
+          {broadcastStatus === "connecting" && <Loader2 className="w-5 h-5 animate-spin" />}
+          {broadcastStatus === "error" && <AlertCircle className="w-5 h-5" />}
+          {!broadcastStatus && <Zap className="w-5 h-5" />}
+
+          {broadcastStatus === "live"
+            ? "配信中（LIVE）"
+            : broadcastStatus === "connecting"
+            ? "接続中..."
+            : broadcastStatus === "error"
+            ? `エラー: ${broadcastError || "接続失敗"}`
+            : "配信を開始する"}
         </button>
       </div>
     </div>
