@@ -300,12 +300,27 @@ export default function ViewerStream({ streamId, stream }) {
           wasmWorker: "https://player.live-video.net/1.36.0/amazon-ivs-wasmworker.min.js",
           wasmBinary: "https://player.live-video.net/1.36.0/amazon-ivs-wasmworker.min.wasm",
         });
+
+        // videoRef が DOM にマウントされるまで待つ
+        let waitCount = 0;
+        while (!videoRef.current && waitCount < 20) {
+          await new Promise(r => setTimeout(r, 100));
+          waitCount++;
+        }
+        if (!videoRef.current) { setPhase("❌ video要素が見つかりません"); return; }
+
         player.attachHTMLVideoElement(videoRef.current);
         player.addEventListener(PlayerEventType.STATE_CHANGED, (s) => {
           if (!isMounted) return;
+          console.log("[IVS] state:", s, "url:", playbackUrl);
           if (s === PlayerState.PLAYING) { setReady(true); setPhase("IVS再生中 🟢"); }
           else setPhase(`IVS状態: ${s}`);
         });
+        player.addEventListener(PlayerEventType.ERROR, (err) => {
+          console.error("[IVS] error:", err);
+          if (isMounted) setPhase(`IVSエラー: ${err.type} ${err.code}`);
+        });
+        console.log("[IVS] loading URL:", playbackUrl);
         player.load(playbackUrl);
         player.play();
       } catch (err) {

@@ -328,7 +328,7 @@ function LiveViewInner() {
   const needsPayment = isPaid && !hasPurchased;
 
   const videoPortal = ReactDOM.createPortal(
-    <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "red", borderRadius: 0 }}>
+    <div ref={playerContainerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000", borderRadius: 0 }}>
             {showPaywall && !hasPurchased ? (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
                 <div className="text-center space-y-2">
