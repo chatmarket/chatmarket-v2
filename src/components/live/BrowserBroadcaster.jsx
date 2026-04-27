@@ -21,6 +21,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [selectedMic, setSelectedMic] = useState(null);
   const [micLevel, setMicLevel] = useState(0);
   const [permissionError, setPermissionError] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // 【修正】マイクレベルメーター監視 — ストリーム取得直後から稼働
   useEffect(() => {
@@ -99,8 +100,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【修正】カメラ・マイク起動 + WHIP エンドポイント取得 — 強制接続＆初期化
+  // 【修正】DOMマウント待機 → ビデオ要素が確実にDOMに紐付いてから初期化
   useEffect(() => {
+    // 【重要】videoRef が確実にDOMに存在するか確認
+    if (!videoRef.current) {
+      console.warn('[BrowserBroadcaster] ⚠️  videoRef is not mounted yet, deferring initialization...');
+      return; // DOMが準備できるまで待つ
+    }
+
     const initMedia = async () => {
       try {
         setLoading(true);
@@ -144,23 +151,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         
         // 【重要】videoRef.current.srcObject の代入を確実に実行
         if (!videoRef.current) {
-          throw new Error('videoRef.current is null - DOM element not found');
+          throw new Error('videoRef.current is null - DOM element not found. Check if video element is rendered.');
         }
         
+        // 【重要】srcObject の直接代入
         videoRef.current.srcObject = stream;
-        console.log('[BrowserBroadcaster] ✅ Video element srcObject assigned successfully');
+        console.log('[BrowserBroadcaster] ✅ Stream assigned to videoRef.current.srcObject');
+        console.log(`  videoRef is attached to DOM: ${videoRef.current.parentElement !== null}`);
         
-        // 【重要】実際に映像が再生されるまで監視
-        const onLoadedMetadata = () => {
+        // 【重要】メタデータ読み込み監視
+        videoRef.current.onloadedmetadata = () => {
           console.log(`[BrowserBroadcaster] ✅ Video metadata loaded: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
-          videoRef.current.removeEventListener('loadedmetadata', onLoadedMetadata);
         };
-        
-        const onPlayingTimeoutId = setTimeout(() => {
-          console.log('[BrowserBroadcaster] ⚠️  Video playback timeout - might not be visible yet');
-        }, 3000);
-        
-        videoRef.current.addEventListener('loadedmetadata', onLoadedMetadata);
         
         setPermissionError(null); // エラーをクリア
 
@@ -380,10 +382,27 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => window.location.reload()}
-              className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-semibold"
+              onClick={async () => {
+                setIsRetrying(true);
+                // 【修正】videoRef 存在確認 → 100ms 待機 → 再実行
+                if (!videoRef.current) {
+                  console.log('[BrowserBroadcaster] videoRef not found, waiting 100ms...');
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                if (videoRef.current) {
+                  console.log('[BrowserBroadcaster] ✅ videoRef found, retrying initialization...');
+                  setError(null);
+                  setLoading(true);
+                } else {
+                  console.log('[BrowserBroadcaster] ❌ videoRef still not available, reloading page...');
+                  window.location.reload();
+                }
+                setIsRetrying(false);
+              }}
+              disabled={isRetrying}
+              className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-semibold disabled:opacity-50"
             >
-              リトライ
+              {isRetrying ? '再試行中...' : 'リトライ'}
             </button>
             <button
               onClick={() => {
