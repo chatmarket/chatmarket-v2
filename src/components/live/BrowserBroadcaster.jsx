@@ -389,39 +389,30 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         // 再列挙でデバイス名が確定される
         await enumerateDevices(); // これで deviceId.label が正式名に確定
         
-        // 【修正】video要素がDOMにマウントされるまで polling で待機（最大15秒、Async/Await最適化）
-        let videoElement = null;
-        let retries = 0;
-        const maxRetries = 150; // 15秒間（100ms × 150回）待機
+        // 【必須確認】video要素がDOMに存在することを確認（既に JSX でレンダリングされているはず）
+        let videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
         
-        console.log('[BrowserBroadcaster] ⏳ Polling for video element mount...');
-        
-        // 非同期でポーリング（ブラウザフリーズ防止）
-        while (!videoElement && retries < maxRetries) {
-          videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
-          if (videoElement) {
-            console.log(`[BrowserBroadcaster] ✅ Video element found at attempt ${retries + 1}`);
-            break;
+        if (!videoElement) {
+          console.warn('[BrowserBroadcaster] ⚠️  Video element not in DOM, waiting for React render...');
+          // React のレンダリング待機（最大 3秒）
+          for (let i = 0; i < 30; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            videoElement = videoRef.current || document.getElementById('browser-broadcaster-video');
+            if (videoElement) {
+              console.log(`[BrowserBroadcaster] ✅ Video element found after ${(i + 1) * 100}ms`);
+              break;
+            }
           }
-          
-          retries++;
-          
-          // 進捗ログ（5回ごと）
-          if (retries % 5 === 0) {
-            console.log(`[BrowserBroadcaster] ⏳ Still waiting... (${retries * 100}ms / ${maxRetries * 100}ms)`);
-          }
-          
-          // 非同期で優雅に待機（イベントループを解放）
-          await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         if (!videoElement) {
-          // 【修正】失敗時に再試行ボタンをUI上に自動表示
-          console.error('[BrowserBroadcaster] ❌ Video element not found after 15 second wait');
-          setError('⚠️ ブラウザの準備に時間がかかっています。下の「再度試す」ボタンをクリックしてください。');
+          console.error('[BrowserBroadcaster] ❌ Video element still not found (React rendering failed)');
+          setError('⚠️ ビデオ要素の生成に失敗しました。ページを再読み込みしてください。');
           setLoading(false);
-          return; // setupDevices 終了、再試行待機
+          return;
         }
+        
+        console.log('[BrowserBroadcaster] ✅ Video element confirmed in DOM');
         
         console.log('[BrowserBroadcaster] 🚀 Video element mounted - injecting stream immediately (zero latency)!');
 
@@ -588,12 +579,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setCameraReady(!!videoTrack && videoTrack.enabled);
         setMicReady(!!audioTrack && audioTrack.enabled);
 
-        // 【修正】マイク音が取れたら即座にローディング解除（映像待たない）
+        // 【マイク優先】映像がなくてもマイクストリームが確立したら AudioContext セットアップ開始
         if (audioTrack && audioTrack.enabled) {
-          console.log('[BrowserBroadcaster] 🎤 Audio ready - forcing loading OFF immediately');
+          console.log('[BrowserBroadcaster] 🎤 Audio track acquired - starting audio analysis independently');
+          // AudioContext は video 要素がなくても動作可能
+          setMicReady(true);
+        }
+
+        // 映像要素がなくても、マイクメーター表示のためにローディング解除
+        if (audioTrack) {
+          console.log('[BrowserBroadcaster] 🎤 Audio ready - forcing loading OFF (video optional)');
           setLoading(false);
         } else if (videoTrack && videoTrack.enabled) {
-          // 映像だけでも取れたら解除
           console.log('[BrowserBroadcaster] 📹 Video ready - forcing loading OFF');
           setLoading(false);
         }
@@ -1169,6 +1166,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
         )}
 
+        {/* 【皿確保】メインビデオ要素 */}
         <video
           id="browser-broadcaster-video"
           ref={videoRef}
@@ -1185,6 +1183,20 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             display: 'block',
             backgroundColor: '#000',
           }}
+        />
+        
+        {/* 【バックアップ皿】背景隠しビデオ（マイクストリーム安定化用） */}
+        <video
+          id="browser-broadcaster-backup-video"
+          style={{
+            display: 'none',
+            visibility: 'hidden',
+            width: '0',
+            height: '0',
+          }}
+          autoPlay={true}
+          muted={true}
+          playsInline={true}
         />
 
         {/* テストパターン オーバーレイ */}
