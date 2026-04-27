@@ -102,19 +102,19 @@ export default function ViewerStream({ stream }) {
 
       const hls = new Hls({
         lowLatencyMode: true,
-        liveSyncDurationCount: 2,
-        liveMaxLatencyDurationCount: 5,
+        liveSyncDuration: 0.5,
+        liveMaxLatencyDuration: 2,
         liveBackBufferLength: 0,
-        maxBufferLength: 4,
-        maxMaxBufferLength: 8,
-        maxBufferSize: 8 * 1000 * 1000,
+        maxBufferLength: 1,
+        maxMaxBufferLength: 2,
+        maxBufferSize: 2 * 1000 * 1000,
         backBufferLength: 0,
         startLevel: -1,
         abrBandWidthFactor: 0.7,
-        fragLoadingTimeOut: 15000,
-        fragLoadingMaxRetry: 3,
-        manifestLoadingTimeOut: 10000,
-        manifestLoadingMaxRetry: 3,
+        fragLoadingTimeOut: 10000,
+        fragLoadingMaxRetry: 2,
+        manifestLoadingTimeOut: 8000,
+        manifestLoadingMaxRetry: 2,
         enableWorker: true,
         liveDurationInfinity: true,
       });
@@ -134,13 +134,13 @@ export default function ViewerStream({ stream }) {
         });
       });
 
-      // 追いかけ再生: ライブエッジから2秒以上遅れたら自動追従
+      // 追いかけ再生: ライブエッジから1.5秒以上遅れたら自動追従
       hls.on(Hls.Events.FRAG_CHANGED, () => {
         if (destroyedRef.current || !vid) return;
         if (!hls.liveSyncPosition) return;
         const lag = hls.liveSyncPosition - vid.currentTime;
-        if (lag > 2.5) {
-          vid.currentTime = hls.liveSyncPosition - 0.5;
+        if (lag > 1.5) {
+          vid.currentTime = hls.liveSyncPosition - 0.2;
         }
       });
 
