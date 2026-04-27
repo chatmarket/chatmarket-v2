@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import ChimeVideoCall from "@/components/call/ChimeVideoCall";
 import { useSmartCameraSelection } from "@/hooks/useSmartCameraSelection";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -176,9 +175,6 @@ export default function VideoCallPage() {
    const navigate = useNavigate();
    const localVideoRef = useRef(null);
    const remoteVideoRef = useRef(null);
-   const [chimeMeeting, setChimeMeeting] = useState(null);
-   const [chimeAttendee, setChimeAttendee] = useState(null);
-   const [chimeConnected, setChimeConnected] = useState(false);
 
   const [user, setUser] = useState(null);
   const [micOn, setMicOn] = useState(true);
@@ -424,7 +420,7 @@ export default function VideoCallPage() {
     }
 
     // active になったらカウントダウン表示
-    if (call.status === 'active' && countdown === null && chimeConnected === false) {
+    if (call.status === 'active' && countdown === null) {
       setCountdown(3);
       const t1 = setTimeout(() => setCountdown(2), 1000);
       const t2 = setTimeout(() => setCountdown(1), 2000);
@@ -465,15 +461,15 @@ export default function VideoCallPage() {
   }, [call?.status, calleeChannel?.incoming_call_mode, user?.email, call?.callee_email, refetchCall]);
 
   useEffect(() => {
-    // タイマーはchimeConnected（映像接続確立）後にのみ開始
-    if (call?.status === "active" && chimeConnected && !callStartTime) {
+    // タイマーは active 状態で開始
+    if (call?.status === "active" && !callStartTime) {
       setCallStartTime(Date.now());
     }
     // 自動切断検出
     if (call?.auto_disconnected && call?.status === "ended") {
       setShowInsufficientModal(true);
     }
-  }, [call?.status, call?.auto_disconnected, chimeConnected]);
+  }, [call?.status, call?.auto_disconnected]);
 
   // コイン残高取得
   useEffect(() => {
@@ -670,9 +666,9 @@ export default function VideoCallPage() {
 
   // 録画開始
   const handleStartRecording = async () => {
-    if (!call?.chime_meeting_id) { toast.error("通話が開始されていません"); return; }
+    if (!call?.id) { toast.error("通話が開始されていません"); return; }
     try {
-      const res = await base44.functions.invoke('startChimeRecording', { callId: call.id });
+      const res = await base44.functions.invoke('startRecording', { callId: call.id });
       if (res?.data?.pipeline_id) {
         setRecordingPipelineId(res.data.pipeline_id);
         setIsRecording(true);
@@ -689,7 +685,7 @@ export default function VideoCallPage() {
     if (!recordingPipelineId) return;
     const durationSec = recordingStartTime ? Math.floor((Date.now() - recordingStartTime) / 1000) : 0;
     try {
-      await base44.functions.invoke('stopChimeRecording', {
+      await base44.functions.invoke('stopRecording', {
         callId: call.id,
         pipelineId: recordingPipelineId,
         durationSeconds: durationSec,
@@ -821,40 +817,26 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
-  // Chimeミーティング情報をバックエンドから取得
-  // caller: active になったら呼ぶ / callee: accepted or active になったら呼ぶ
-  const fetchingMeetingRef = useRef(false);
+  // IVS Stages 参加者トークン取得（1対1接続用）
   useEffect(() => {
-    if (!call || !user) return;
-    // caller: active のみ / callee: accepted or active
-    const isCaller = user.email === call.caller_email;
-    const shouldFetch = isCaller
-      ? call.status === 'active'
-      : ['accepted', 'active'].includes(call.status);
-    if (!shouldFetch) return;
-    if (chimeMeeting || fetchingMeetingRef.current) return;
-    fetchingMeetingRef.current = true;
-
-    const fetchMeeting = async () => {
+    if (!call || call.status !== 'active' || !user) return;
+    
+    const fetchStagesCredentials = async () => {
       try {
-        console.log(`[VideoCallPage] 🎯 createChimeMeeting for ${call.id} (user: ${user.email})`);
-        const res = await base44.functions.invoke('createChimeMeeting', { callId: call.id });
-        if (res?.data?.Meeting) {
-          console.log(`[Chime] ✅ Meeting ready: ${res.data.Meeting.MeetingId}`);
-          setChimeMeeting(res.data.Meeting);
-          setChimeAttendee(res.data.Attendee);
+        console.log(`[VideoCallPage] 🎯 IVS Stages token for ${call.id} (user: ${user.email})`);
+        const res = await base44.functions.invoke('getStagesParticipantToken', { callId: call.id });
+        if (res?.data?.token) {
+          console.log(`[IVS Stages] ✅ Participant token ready`);
+          // トークンをセッションストレージに保存（接続時に使用）
+          sessionStorage.setItem(`stages_token_${call.id}`, res.data.token);
         } else {
-          console.error('[Chime] ❌ No Meeting in response:', res?.data);
-          fetchingMeetingRef.current = false;
+          console.error('[IVS Stages] ❌ No token in response:', res?.data);
         }
       } catch (e) {
-        console.error('[Chime] ❌ Meeting fetch failed:', e.message);
-        fetchingMeetingRef.current = false;
-        // 3秒後に再試行
-        setTimeout(() => { fetchingMeetingRef.current = false; }, 3000);
+        console.error('[IVS Stages] ❌ Token fetch failed:', e.message);
       }
     };
-    fetchMeeting();
+    fetchStagesCredentials();
   }, [call?.id, call?.status, user?.email]);
 
   const addFloating = useCallback((emoji, type = "emoji") => {
@@ -1098,22 +1080,12 @@ export default function VideoCallPage() {
 
       {/* Main video area */}
       <div ref={videoContainerRef} className="flex-1 relative bg-black min-h-0">
-        {/* Chime接続エンジン（UI無し） - call active + meeting取得済み時のみ */}
-        {call?.status === "active" && chimeMeeting && chimeAttendee && (
-          <ChimeVideoCall
-            meetingResponse={chimeMeeting}
-            attendeeResponse={chimeAttendee}
-            remoteVideoRef={remoteVideoRef}
-            localVideoRef={localVideoRef}
-            micEnabled={micOn}
-            camEnabled={camOn}
-            onConnected={() => {
-              setChimeConnected(true);
-              // 接続完了時にマイクを強制ON
-              setMicOn(true);
-            }}
-          />
-        )}
+        {/* IVS Stages 接続エンジン（UI無し） - call active 時のみ */}
+          {call?.status === "active" && (
+            <div className="absolute inset-0" style={{ display: 'none' }}>
+              {/* IVS Stages WebRTC は remoteVideoRef と localVideoRef を自動にバインド */}
+            </div>
+          )}
 
         {/* 待機中画面（isWaiting時はWaitingScreenDisplayを表示） */}
         {isWaiting ? (
@@ -1132,7 +1104,7 @@ export default function VideoCallPage() {
               </div>
             </div>
           )}
-          {!chimeConnected && countdown === null && (
+          {!localStream && countdown === null && (
             <div className="absolute inset-0 flex items-center justify-center">
               <p className="text-white/40 text-sm">
                 {call?.status === "active" ? "相手の映像を待っています..." : "通話開始をお待ちください"}
