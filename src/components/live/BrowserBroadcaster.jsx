@@ -27,6 +27,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [permissionError, setPermissionError] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const loadingTimeoutRef = useRef(null);
+  const [debugMode, setDebugMode] = useState(false);
+
+  // 【修正】クエリパラメータから debug=true を検出
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setDebugMode(params.get('debug') === 'true');
+  }, []);
 
   // 【修正】3秒後にローディング画面を強制的に削除
   useEffect(() => {
@@ -417,8 +424,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   return (
     <div className="w-full space-y-6">
-      {/* 【修正】デバッグ情報をUI上に表示 */}
-      {error && (
+      {/* 【修正】デバッグ情報は debug=true の時だけ表示（管理者限定） */}
+      {error && debugMode && (
         <div className="bg-red-950/80 border border-red-700 rounded-lg p-3 text-xs font-mono text-red-200 space-y-1">
           <p>🔴 <strong>DEBUG INFO:</strong></p>
           <p>videoRef.current: {videoRef.current === null ? 'NULL' : videoRef.current === undefined ? 'UNDEFINED' : 'ELEMENT FOUND ✅'}</p>
@@ -431,31 +438,36 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       {/* プレビュー */}
       <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-zinc-800" style={{ aspectRatio: "16/9" }}>
-        {/* 【修正】エラーオーバーレイ — ビデオタグはDOMに残す */}
+        {/* 【修正】エラーオーバーレイ — ブランド保護メッセージ */}
         {errorOverlayVisible && (
           <div className="absolute inset-0 z-50 bg-zinc-950 flex flex-col items-center justify-center rounded-2xl">
-            <AlertCircle className="w-16 h-16 text-red-400 mx-auto animate-pulse mb-4" />
-            <p className="font-bold text-white mb-2 text-lg">デバイス接続に失敗</p>
-            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4 font-mono max-w-xs">
-              {error}
+            <AlertCircle className="w-16 h-16 text-amber-400 mx-auto animate-pulse mb-4" />
+            <p className="font-bold text-white mb-2 text-lg">配信環境を準備中</p>
+            <p className="text-sm text-foreground/80 text-center max-w-xs mb-4 leading-relaxed">
+              現在、より良い配信環境を構築中です。<br/>
+              お急ぎの方は <strong>OBS配信</strong> をご利用ください。
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-4 max-w-sm">
-              💡 ヒント:<br/>
-              • ブラウザの permission を確認<br/>
-              • 別のアプリがカメラを使用していないか確認<br/>
-              • デバイスが接続されているか確認
-            </p>
+            {debugMode && (
+              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2 mb-4 font-mono max-w-xs">
+                [DEBUG] {error}
+              </p>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={() => {
                   console.log('[BrowserBroadcaster] ✅ User clicked retry - resetting error state');
                   setError(null);
                   setLoading(true);
-                  // selectedCamera/selectedMic は sessionStorage に保持されているので自動再実行
                 }}
                 className="px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-semibold text-white transition-colors"
               >
-                リトライ
+                再度試す
+              </button>
+              <button
+                onClick={() => window.history.back()}
+                className="px-6 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-sm font-semibold text-white transition-colors"
+              >
+                OBS配信に切り替え
               </button>
             </div>
           </div>
