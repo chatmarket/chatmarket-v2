@@ -113,20 +113,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【修正】DOMマウント待機 → ビデオ要素が確実にDOMに紐付いてから初期化
+  // 【修正】シンプルなマウント待機＆初期化
   useEffect(() => {
-    // 【重要】videoRef が存在するまで待機（ポーリング）
-    if (!videoRef.current) {
-      console.log('[BrowserBroadcaster] ⏳ Waiting for videoRef to mount...');
-      const checkInterval = setInterval(() => {
-        if (videoRef.current) {
-          console.log('[BrowserBroadcaster] ✅ videoRef mounted! Starting initialization...');
-          clearInterval(checkInterval);
-        }
-      }, 50);
-      return () => clearInterval(checkInterval);
-    }
-
     const initMedia = async () => {
       try {
         setLoading(true);
@@ -168,22 +156,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] ✅ Stream acquired, assigning to video element...');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
-        // 【重要】videoRef.current.srcObject の代入を確実に実行
+        // 【修正】videoRef の直接代入 — 命令系で即座に実行
         if (!videoRef.current) {
-          throw new Error('videoRef.current is null - DOM element not found. Check if video element is rendered.');
+          throw new Error(`videoRef.current not found after 200ms wait. Debugging: videoRef=${videoRef.current}, streamRef=${streamRef.current ? 'exists' : 'null'}`);
         }
-        
-        // 【重要】srcObject の直接代入
+
+        // 【重要】srcObject 直接代入
         videoRef.current.srcObject = stream;
-        console.log('[BrowserBroadcaster] ✅ Stream assigned to videoRef.current.srcObject');
-        console.log(`  videoRef is attached to DOM: ${videoRef.current.parentElement !== null}`);
+        videoRef.current.muted = true;
+        videoRef.current.autoplay = true;
+        videoRef.current.playsInline = true;
         
-        // 【重要】メタデータ読み込み監視
-        videoRef.current.onloadedmetadata = () => {
-          console.log(`[BrowserBroadcaster] ✅ Video metadata loaded: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
-        };
+        console.log('[BrowserBroadcaster] ✅ Stream INJECTED directly to videoRef.current.srcObject');
+        console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
+        console.log(`  videoRef.current.parentElement: ${videoRef.current.parentElement ? 'attached to DOM ✅' : 'DETACHED ❌'}`);
         
-        setPermissionError(null); // エラーをクリア
+        setPermissionError(null);
 
         // トラック確認
         const videoTrack = stream.getVideoTracks()[0];
@@ -195,6 +183,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
         setCameraReady(!!videoTrack && videoTrack.enabled);
         setMicReady(!!audioTrack && audioTrack.enabled);
+
+        // 【修正】マイク音が取れていれば、ローディング画面を強制的に消す
+        if (audioTrack && audioTrack.enabled) {
+          console.log('[BrowserBroadcaster] 🎤 Audio track confirmed, forcing loading screen OFF');
+          setLoading(false);
+        }
 
         // WHIP エンドポイント取得
         console.log('[BrowserBroadcaster] 🌐 Fetching WHIP endpoint...');
@@ -357,7 +351,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  if (loading) {
+  // 【修正】ローディング画面は、エラーがない場合だけ表示
+  if (loading && !error) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-2xl">
         <div className="text-center space-y-4 max-w-sm px-6">
@@ -370,7 +365,6 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               コンソールで進捗を確認: ブラウザの開発者ツール (F12) → Console タブ
             </p>
           </div>
-          {/* 【修正】ローディング中にもエラーが表示されていれば表示 */}
           {permissionError && (
             <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-2">
               {permissionError}
@@ -386,6 +380,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   return (
     <div className="w-full space-y-6">
+      {/* 【修正】デバッグ情報をUI上に表示 */}
+      {error && (
+        <div className="bg-red-950/80 border border-red-700 rounded-lg p-3 text-xs font-mono text-red-200 space-y-1">
+          <p>🔴 <strong>DEBUG INFO:</strong></p>
+          <p>videoRef.current: {videoRef.current === null ? 'NULL' : videoRef.current === undefined ? 'UNDEFINED' : 'ELEMENT FOUND ✅'}</p>
+          <p>videoRef.current.tagName: {videoRef.current?.tagName || 'N/A'}</p>
+          <p>videoRef.current.srcObject: {videoRef.current?.srcObject ? 'STREAM ASSIGNED ✅' : 'NO STREAM ❌'}</p>
+          <p>streamRef.current: {streamRef.current ? 'EXISTS ✅' : 'NULL ❌'}</p>
+          <p>Error: {error}</p>
+        </div>
+      )}
+
       {/* プレビュー */}
       <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-zinc-800" style={{ aspectRatio: "16/9" }}>
         {/* 【修正】エラーオーバーレイ — ビデオタグはDOMに残す */}
