@@ -72,42 +72,21 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { isArchiveSaved } = await req.json();
-
-    const region = Deno.env.get("AWS_REGION") || "us-east-1";
-    const accessKeyId = Deno.env.get("AWS_ACCESS_KEY_ID");
-    const secretAccessKey = Deno.env.get("AWS_SECRET_ACCESS_KEY");
-
-    const channelName = `chatmarket-${user.id || user.email}-${Date.now()}`;
-    const body = JSON.stringify({
-      name: channelName,
-      type: "BASIC",
-      latencyMode: "LOW",
-    });
-
-    const url = `https://ivs.${region}.amazonaws.com/CreateChannel`;
-    const headers = await signRequest({ method: "POST", url, region, service: "ivs", accessKeyId, secretAccessKey, body });
-
-    const res = await fetch(url, { method: "POST", headers, body });
-    if (!res.ok) {
-      const errText = await res.text();
-      return Response.json({ error: `IVS API error: ${errText}` }, { status: 500 });
-    }
-
-    const data = await res.json();
-    const channel = data.channel;
-    const streamKey = data.streamKey;
-
-    // OBS が必要とする RTMPS 形式に変換
-    const rtmpsUrl = `rtmps://${channel.ingestEndpoint}:443/app/`;
+    // ChatMarket-Main チャンネル（固定）の情報を返す
+    // arn:aws:ivs:ap-northeast-1:813372611580:channel/xuKjuYTGr3sc
+    const FIXED_CHANNEL_ARN = "arn:aws:ivs:ap-northeast-1:813372611580:channel/xuKjuYTGr3sc";
+    const FIXED_STREAM_KEY = "sk_ap-northeast-1_LlX8hjN5vJEs_KWdRW6FDzFFkwmeSkbGvXsthhsb1Ub";
+    const FIXED_INGEST_ENDPOINT = "27b83d82b8a7.global-contribute.live-video.net";
+    const FIXED_PLAYBACK_URL = "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.xuKjuYTGr3sc.m3u8";
+    const FIXED_RTMPS_URL = "rtmps://27b83d82b8a7.global-contribute.live-video.net:443/app/";
 
     return Response.json({
-      streamId: channel.arn,
-      streamKey: streamKey.value,
-      ingestEndpoint: channel.ingestEndpoint,
-      rtmpsUrl: rtmpsUrl,
-      playbackUrl: channel.playbackUrl,
-      channelArn: channel.arn,
+      streamId: FIXED_CHANNEL_ARN,
+      streamKey: FIXED_STREAM_KEY,
+      ingestEndpoint: FIXED_INGEST_ENDPOINT,
+      rtmpsUrl: FIXED_RTMPS_URL,
+      playbackUrl: FIXED_PLAYBACK_URL,
+      channelArn: FIXED_CHANNEL_ARN,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
