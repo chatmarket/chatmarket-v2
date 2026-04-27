@@ -1,0 +1,121 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+
+const FEE_RATE = 0.036;
+
+function calcTotal(coins) {
+  return Math.ceil(coins * (1 + FEE_RATE));
+}
+
+export default function YellMessageModal({ coins, user, streamId, channelId, onClose }) {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (sending) return;
+    setSending(true);
+
+    try {
+      const total = calcTotal(coins);
+      const wallets = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
+      const wallet = wallets[0];
+
+      if (!wallet || wallet.balance < total) {
+        toast.error(`コインが不足しています`);
+        setSending(false);
+        return;
+      }
+
+      // ウォレット更新
+      await base44.entities.YellCoinWallet.update(wallet.id, {
+        balance: wallet.balance - total,
+        total_sent: (wallet.total_sent || 0) + coins,
+      });
+
+      // トランザクション記録
+      await base44.entities.YellCoinTransaction.create({
+        user_email: user.email,
+        type: "send",
+        amount: coins,
+        target_id: streamId,
+        service_type: "superchat",
+        service_id: streamId,
+        channel_id: channelId,
+      });
+
+      // SuperChat 作成（応援メッセージ付き）
+      await base44.entities.SuperChat.create({
+        livestream_id: streamId,
+        user_email: user.email,
+        user_name: user.full_name || "匿名",
+        amount: coins,
+        message: message || "応援しています！",
+        color: coins >= 500 ? "red" : coins >= 100 ? "orange" : coins >= 50 ? "yellow" : "green",
+      });
+
+      toast.success(`🎉 ${coins}コインのエール送信！`);
+      onClose();
+    } catch (e) {
+      toast.error("送信に失敗しました");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-black">応援メッセージを入力</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm text-primary font-bold">🪙 {coins} コイン</p>
+          <p className="text-xs text-muted-foreground">手数料込み: {calcTotal(coins)} コイン消費</p>
+        </div>
+
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value.slice(0, 50))}
+          placeholder="応援メッセージ（50文字以内、任意）"
+          maxLength={50}
+          className="w-full h-24 bg-secondary border border-border rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+        <p className="text-xs text-muted-foreground text-right">{message.length}/50</p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-bold transition-colors"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={sending}
+            className="flex-1 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-colors disabled:opacity-50"
+          >
+            {sending ? "送信中..." : "送信"}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
