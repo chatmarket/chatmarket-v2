@@ -20,6 +20,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [selectedMic, setSelectedMic] = useState(null);
   const [micLevel, setMicLevel] = useState(0);
+  const [permissionError, setPermissionError] = useState(null);
 
   // 【修正】マイクレベルメーター監視 — ストリーム取得直後から稼働
   useEffect(() => {
@@ -136,16 +137,32 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] 📍 Requesting user media with constraints:', constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         
-        // 【修正】ストリームを ref に保存してから video 要素に代入
+        // 【修正】ストリームを ref に保存してから video 要素に代入（確実に実行）
         streamRef.current = stream;
         console.log('[BrowserBroadcaster] ✅ Stream acquired, assigning to video element...');
+        console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
         
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          console.log('[BrowserBroadcaster] ✅ Video element srcObject assigned');
-        } else {
-          console.warn('[BrowserBroadcaster] ⚠️  videoRef not available');
+        // 【重要】videoRef.current.srcObject の代入を確実に実行
+        if (!videoRef.current) {
+          throw new Error('videoRef.current is null - DOM element not found');
         }
+        
+        videoRef.current.srcObject = stream;
+        console.log('[BrowserBroadcaster] ✅ Video element srcObject assigned successfully');
+        
+        // 【重要】実際に映像が再生されるまで監視
+        const onLoadedMetadata = () => {
+          console.log(`[BrowserBroadcaster] ✅ Video metadata loaded: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+          videoRef.current.removeEventListener('loadedmetadata', onLoadedMetadata);
+        };
+        
+        const onPlayingTimeoutId = setTimeout(() => {
+          console.log('[BrowserBroadcaster] ⚠️  Video playback timeout - might not be visible yet');
+        }, 3000);
+        
+        videoRef.current.addEventListener('loadedmetadata', onLoadedMetadata);
+        
+        setPermissionError(null); // エラーをクリア
 
         // トラック確認
         const videoTrack = stream.getVideoTracks()[0];
@@ -169,9 +186,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         setLoading(false);
       } catch (err) {
         console.error('[BrowserBroadcaster] ❌ Initialization error:', err);
-        setError(err.message);
+        let friendlyMsg = err.message;
+
+        // 【修正】エラー段階を詳細に特定して画面表示
+        if (err.name === 'NotAllowedError' || err.message.includes('Permission denied')) {
+          friendlyMsg = '🔴 カメラ/マイクへのアクセスを許可してください（Permission Denied）';
+        } else if (err.name === 'NotFoundError' || err.message.includes('Requested device not found')) {
+          friendlyMsg = '🔴 選択したカメラ/マイクが見つかりません（Not Found）';
+        } else if (err.name === 'OverconstrainedError') {
+          friendlyMsg = '🔴 デバイスが制約条件に対応していません（Overconstrained）';
+        } else if (err.name === 'TypeError') {
+          friendlyMsg = '🔴 デバイス選択が無効です（Type Error）';
+        }
+
+        console.error(`[BrowserBroadcaster] 詳細: ${err.name} - ${err.message}`);
+        setPermissionError(friendlyMsg);
+        setError(friendlyMsg);
         setLoading(false);
-        toast.error("初期化に失敗しました: " + err.message);
+        toast.error(friendlyMsg);
       }
     };
 
@@ -195,6 +227,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (!whipEndpoint) {
       toast.error("WHIP エンドポイントが見つかりません");
       return;
+    }
+
+    // 【修正】AudioContext.resume() をクリック時に即座に実行
+    // ブラウザの仕様：ユーザー操作なしでは音声解析が開始しない
+    try {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        console.log('[BrowserBroadcaster] 🔊 Resuming AudioContext...');
+        await audioContextRef.current.resume();
+        console.log('[BrowserBroadcaster] ✅ AudioContext resumed');
+      }
+    } catch (err) {
+      console.warn('[BrowserBroadcaster] ⚠️  AudioContext resume failed:', err);
     }
 
     try {
@@ -295,9 +339,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-2xl">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground text-sm">カメラ・マイクを初期化中...</p>
+        <div className="text-center space-y-4 max-w-sm px-6">
+          <div className="flex justify-center">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          </div>
+          <div>
+            <p className="text-white font-semibold mb-1">デバイスを接続中...</p>
+            <p className="text-xs text-muted-foreground">
+              コンソールで進捗を確認: ブラウザの開発者ツール (F12) → Console タブ
+            </p>
+          </div>
+          {/* 【修正】ローディング中にもエラーが表示されていれば表示 */}
+          {permissionError && (
+            <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-2">
+              {permissionError}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -306,18 +363,38 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-zinc-950 rounded-2xl">
-        <div className="text-center space-y-4 px-6">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+        <div className="text-center space-y-4 px-6 max-w-sm">
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto animate-pulse" />
           <div>
-            <p className="font-bold text-white mb-1">初期化に失敗しました</p>
-            <p className="text-xs text-muted-foreground">{error}</p>
+            <p className="font-bold text-white mb-2 text-lg">デバイス接続に失敗</p>
+            {/* 【修正】エラー内容を赤文字で大きく表示 */}
+            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-2 font-mono">
+              {error}
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              💡 ヒント:<br/>
+              • ブラウザの permission を確認<br/>
+              • 別のアプリがカメラを使用していないか確認<br/>
+              • デバイスが接続されているか確認
+            </p>
           </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-semibold"
-          >
-            リトライ
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-semibold"
+            >
+              リトライ
+            </button>
+            <button
+              onClick={() => {
+                console.log('[BrowserBroadcaster] User clicked back');
+                window.history.back();
+              }}
+              className="flex-1 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-sm font-semibold"
+            >
+              戻る
+            </button>
+          </div>
         </div>
       </div>
     );
