@@ -152,48 +152,118 @@ export default function GoLive() {
   // 配信方式選択画面（OBS vs ブラウザ）
   if (mode === MODE_CHOOSE) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center gap-6">
+      <div className="max-w-5xl mx-auto px-4 py-12 flex flex-col items-center gap-8">
         <div className="text-center mb-2">
           <h1 className="text-2xl font-black text-white mb-1">配信方式を選択</h1>
           <p className="text-muted-foreground text-sm">どちらで配信しますか？</p>
         </div>
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* OBS配信 */}
-          <button
-            onClick={() => requireAuth(() => setMode(MODE_LIVE))}
-            className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-              <Radio className="w-7 h-7 text-primary" />
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => requireAuth(() => setMode(MODE_LIVE))}
+              className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                <Radio className="w-7 h-7 text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white text-base mb-1">OBS で配信</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">RTMPSで高画質・高音質。プロフェッショナルな配信。</p>
+              </div>
+              <span className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-black text-center transition-colors">
+                OBS で開始
+              </span>
+            </button>
+            
+            {/* OBS 機材コンサルティング */}
+            <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-primary/20 rounded-2xl p-5 space-y-4">
+              <div>
+                <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">📹 OBS 推奨機材</p>
+                <p className="text-xs text-muted-foreground">外部ソフトで本格配信する人向け</p>
+              </div>
+              
+              {/* OBS 機材リスト */}
+              <div className="space-y-2">
+                {[
+                  { name: "キャプチャーボード", desc: "ゲーム・映像入力用", url: "https://www.amazon.co.jp/s?k=キャプチャーボード" },
+                  { name: "コンデンサーマイク", desc: "高音質音声取得", url: "https://www.amazon.co.jp/s?k=コンデンサーマイク+USB" },
+                  { name: "XLRマイク + オーディオインターフェース", desc: "プロ音声品質", url: "https://www.amazon.co.jp/s?k=オーディオインターフェース" },
+                  { name: "三脚 + リングライト", desc: "固定・照明用", url: "https://www.amazon.co.jp/s?k=三脚+リングライト" },
+                ].map((item, i) => (
+                  <a
+                    key={i}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-primary/40 transition-all group"
+                  >
+                    <div className="text-lg">🛒</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white group-hover:text-primary transition-colors truncate">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <div className="text-lg opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="text-center">
-              <p className="font-black text-white text-base mb-1">OBS で配信</p>
-              <p className="text-muted-foreground text-xs leading-relaxed">RTMPSで高画質・高音質。プロフェッショナルな配信。</p>
-            </div>
-            <span className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-black text-center transition-colors">
-              OBS で開始
-            </span>
-          </button>
+          </div>
 
           {/* ブラウザ配信 */}
-          <button
-            onClick={() => {
-              localStorage.setItem("broadcastMode", "browser");
-              requireAuth(() => setMode(MODE_LIVE));
-            }}
-            className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
-              <Smartphone className="w-7 h-7 text-green-400" />
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => {
+                localStorage.setItem("broadcastMode", "browser");
+                requireAuth(() => setMode(MODE_LIVE));
+              }}
+              className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                <Smartphone className="w-7 h-7 text-green-400" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white text-base mb-1">ブラウザで配信</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">スマホ・PCから即配信。セットアップ不要。</p>
+              </div>
+              <span className="w-full py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-black text-center transition-colors">
+                ブラウザで開始
+              </span>
+            </button>
+            
+            {/* ブラウザ 機材コンサルティング */}
+            <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-green-500/20 rounded-2xl p-5 space-y-4">
+              <div>
+                <p className="text-xs font-black text-green-400 uppercase tracking-widest mb-1">📱 ブラウザ 推奨機材</p>
+                <p className="text-xs text-muted-foreground">すぐに始めたい初心者向け</p>
+              </div>
+              
+              {/* ブラウザ 機材リスト */}
+              <div className="space-y-2">
+                {[
+                  { name: "Webカメラ (1080p)", desc: "USB直挿し対応", url: "https://www.amazon.co.jp/s?k=Webカメラ+1080p" },
+                  { name: "USB マイク", desc: "ワンステップで接続", url: "https://www.amazon.co.jp/s?k=USBマイク" },
+                  { name: "ポップフィルター", desc: "音声品質向上", url: "https://www.amazon.co.jp/s?k=ポップフィルター" },
+                  { name: "スマートフォンホルダー", desc: "スマホ配信用", url: "https://www.amazon.co.jp/s?k=スマートフォンホルダー+三脚" },
+                ].map((item, i) => (
+                  <a
+                    key={i}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-green-500/40 transition-all group"
+                  >
+                    <div className="text-lg">🛒</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white group-hover:text-green-400 transition-colors truncate">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <div className="text-lg opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="text-center">
-              <p className="font-black text-white text-base mb-1">ブラウザで配信</p>
-              <p className="text-muted-foreground text-xs leading-relaxed">スマホ・PCから即配信。セットアップ不要。</p>
-            </div>
-            <span className="w-full py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-black text-center transition-colors">
-              ブラウザで開始
-            </span>
-          </button>
+          </div>
         </div>
       </div>
     );
