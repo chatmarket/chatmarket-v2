@@ -91,17 +91,35 @@ export default function CallWaitingManager({ user, channel, onStatusChange }) {
     staleTime: 30000,
   });
 
-  // リアルタイム購読
+  // リアルタイム購読（着信即時検出 → 即座に navigate）
   useEffect(() => {
     if (!user?.email) return;
     const unsub = base44.entities.VideoCall.subscribe((event) => {
       const data = event.data;
-      if (data?.callee_email === user.email && data?.status === "pending") {
+      if (!data) return;
+      
+      // ライバー側：pending着信を即座に拾ってオーバーレイ表示
+      if (data.callee_email === user.email && data.status === "pending" && !seenIdsRef.current.has(event.id)) {
+        console.log('[CallWaitingManager] 🔔 INSTANT incoming call:', event.id);
         queryClient.invalidateQueries({ queryKey: ["call-manager-pending", user.email] });
+        seenIdsRef.current.add(event.id);
+        if (!incomingCall) {
+          setIncomingCall({ ...data, id: event.id });
+          playRingtone();
+        }
+      }
+      
+      // accepted/active になったら即座に通話ページへ強制遷移
+      if (data.callee_email === user.email && ["accepted", "active"].includes(data.status)) {
+        const callId = event.id || data.id;
+        if (callId) {
+          console.log('[CallWaitingManager] 🚀 Call accepted/active → navigating to', callId);
+          navigate(`/video-call/${callId}`);
+        }
       }
     });
     return () => unsub();
-  }, [user?.email, queryClient]);
+  }, [user?.email, queryClient, incomingCall, navigate]);
 
   // 着信検出
   useEffect(() => {

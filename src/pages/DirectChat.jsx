@@ -54,29 +54,46 @@ export default function DirectChat() {
   const threadId = user && channel ? makeThreadId(user.email, channel.owner_email) : null;
   const isCreator = user && channel && user.email === channel.owner_email;
 
-  // ★ アクティブ/pending な通話を監視 → 自動リダイレクト
-  const { data: activeCall, isFetched: activeCallFetched } = useQuery({
+  // ★ アクティブ/pending な通話を監視 → 自動リダイレクト（caller/callee 両方向）
+  const { data: activeCall } = useQuery({
     queryKey: ["direct-chat-active-call", user?.email, channel?.owner_email],
     queryFn: async () => {
       if (!user?.email || !channel?.owner_email) return null;
-      const calls = await base44.entities.VideoCall.filter(
+      // caller（視聴者）として送信した通話
+      const asCaller = await base44.entities.VideoCall.filter(
         { caller_email: user.email, callee_email: channel.owner_email },
-        "-created_date",
-        5
+        "-created_date", 5
       );
-      return calls.find((c) => ["pending", "accepted", "active"].includes(c.status)) || null;
+      // callee（ライバー）として着信した通話
+      const asCallee = await base44.entities.VideoCall.filter(
+        { caller_email: channel.owner_email, callee_email: user.email },
+        "-created_date", 5
+      );
+      const allCalls = [...asCaller, ...asCallee];
+      return allCalls.find((c) => ["pending", "accepted", "active"].includes(c.status)) || null;
     },
     enabled: !!user?.email && !!channel?.owner_email,
-    refetchInterval: 3000,
+    refetchInterval: 2000,
   });
 
-  // アクティブ通話がある場合は通話ページへリダイレクト
+  // アクティブ通話 or pending着信（ライバー側）→ 即座に通話ページへ強制遷移
   useEffect(() => {
-    if (activeCall && ["accepted", "active"].includes(activeCall.status) && !redirectedRef.current) {
+    if (!activeCall || redirectedRef.current) return;
+    
+    const isCaller = user?.email === activeCall.caller_email;
+    const isCallee = user?.email === activeCall.callee_email;
+    
+    // caller: accepted/active で遷移
+    // callee（ライバー）: pending でも即座に通話ページへ飛ばす（VideoCallPage内で着信UI表示）
+    if (
+      ["accepted", "active"].includes(activeCall.status) ||
+      (isCallee && activeCall.status === "pending")
+    ) {
       redirectedRef.current = true;
+      console.log('[DirectChat] 🚀 Redirecting to video-call:', activeCall.id, activeCall.status);
       navigate(`/video-call/${activeCall.id}`);
     }
-  }, [activeCall?.id, activeCall?.status]);
+  }, [activeCall?.id, activeCall?.status, user?.email]);
 
   const { data: messages = [] } = useQuery({
     queryKey: ["direct-chat", threadId],
