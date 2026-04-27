@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import ChimeVideoCall from "@/components/call/ChimeVideoCall";
+import { useSmartCameraSelection } from "@/hooks/useSmartCameraSelection";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -633,14 +634,14 @@ export default function VideoCallPage() {
     return () => clearInterval(timer);
   }, [callStartTime, effectiveDuration, extendPaid, call?.id]);
 
-  // Start camera
+  // スマートカメラ選択 hook からストリームを取得
+  const { stream: smartStream } = useSmartCameraSelection();
   useEffect(() => {
-    navigator.mediaDevices?.getUserMedia({ video: true, audio: true }).then((stream) => {
-      setLocalStream(stream);
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-    }).catch(() => {});
-    return () => {};
-  }, []);
+    if (smartStream) {
+      setLocalStream(smartStream);
+      if (localVideoRef.current) localVideoRef.current.srcObject = smartStream;
+    }
+  }, [smartStream]);
 
   useEffect(() => {
     if (!localStream) return;
