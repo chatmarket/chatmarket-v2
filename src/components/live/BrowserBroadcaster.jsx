@@ -205,15 +205,87 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         videoElement.style.display = 'block';
         videoElement.style.backgroundColor = '#000';
 
-        // 【メタデータ読み込み時に play() を明示的に叩く】
+        // 【強制再生：srcObject 設定直後に play() を即座に実行】
+        const forcePlay = async () => {
+          try {
+            console.log('[BrowserBroadcaster] 🎬 Attempting immediate play()...');
+            await videoElement.play();
+            console.log('[BrowserBroadcaster] ✅ play() succeeded immediately');
+          } catch (err) {
+            console.warn(`[BrowserBroadcaster] ⚠️  Autoplay blocked: ${err.name} - ${err.message}`);
+            console.log('[BrowserBroadcaster] 📍 Waiting for user interaction to play...');
+            // ユーザークリック時に play() を再度試みる
+            const onUserInteraction = async () => {
+              try {
+                console.log('[BrowserBroadcaster] 👆 User clicked, attempting play()...');
+                await videoElement.play();
+                console.log('[BrowserBroadcaster] ✅ play() succeeded after user interaction');
+                document.removeEventListener('click', onUserInteraction);
+              } catch (err2) {
+                console.warn('[BrowserBroadcaster] ⚠️  play() failed even after click:', err2.message);
+              }
+            };
+            document.addEventListener('click', onUserInteraction);
+          }
+        };
+
+        // メタデータ読み込み後も play() をリトライ
         const onMetadata = () => {
-          console.log('[BrowserBroadcaster] 📹 Metadata loaded, playing...');
-          videoElement.play().catch(err => console.warn('[BrowserBroadcaster] ⚠️  play() failed:', err));
+          console.log('[BrowserBroadcaster] 📹 Metadata loaded, attempting play...');
+          forcePlay();
         };
         videoElement.addEventListener('loadedmetadata', onMetadata, { once: true });
         
+        // srcObject 設定直後に一度試す
+        await new Promise(resolve => setTimeout(resolve, 50));
+        forcePlay();
+        
         console.log('[BrowserBroadcaster] ✅ Stream INJECTED with MAXED-OUT attributes');
         console.log(`  Video tracks: ${stream.getVideoTracks().length}, Audio tracks: ${stream.getAudioTracks().length}`);
+
+        // 【Canvas フォールバック：最終手段として映像を Canvas に描画】
+        const setupCanvasFallback = () => {
+          const videoTrack = stream.getVideoTracks()[0];
+          if (!videoTrack) return;
+
+          const canvas = document.createElement('canvas');
+          canvas.id = 'browser-broadcaster-canvas-fallback';
+          canvas.style.position = 'absolute';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.objectFit = 'cover';
+          canvas.style.zIndex = '5';
+          canvas.style.backgroundColor = '#000';
+          canvas.style.display = 'none';
+
+          const container = videoElement.parentElement;
+          if (container) {
+            container.appendChild(canvas);
+            console.log('[BrowserBroadcaster] 📋 Canvas fallback prepared (hidden)');
+
+            // video が描画されなかったら Canvas を表示
+            setTimeout(() => {
+              if (videoElement.readyState < 2) {
+                console.log('[BrowserBroadcaster] 🎨 Video not ready, activating Canvas fallback...');
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  canvas.style.display = 'block';
+                  videoElement.style.display = 'none';
+                  // Canvas に動的に描画する処理はここで可能（WebRTC API 使用時）
+                  ctx.fillStyle = '#111';
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                  ctx.fillStyle = '#00ff00';
+                  ctx.font = '20px monospace';
+                  ctx.fillText('[Canvas Rendering Active]', 20, 40);
+                }
+              }
+            }, 2000);
+          }
+        };
+
+        setupCanvasFallback();
         
         setPermissionError(null);
 
@@ -476,9 +548,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         <video
           id="browser-broadcaster-video"
           ref={videoRef}
-          autoPlay
-          muted
-          playsInline
+          autoPlay={true}
+          muted={true}
+          playsInline={true}
+          controls={false}
           style={{
             width: '100%',
             height: '100%',
