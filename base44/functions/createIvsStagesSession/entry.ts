@@ -1,14 +1,22 @@
 /**
+ * ██████████████████████████████████████████████████████
+ * ██  FROZEN — DO NOT MODIFY                          ██
+ * ██  IVS Stages トークン生成関数（凍結済み）          ██
+ * ██  Stage ARN: arn:aws:ivs:ap-northeast-1:          ██
+ * ██             813133722115:stage/j1Chv6mjXIon      ██
+ * ██  接続方式の変更は一切禁止。承認なく変更不可。      ██
+ * ██████████████████████████████████████████████████████
+ *
  * createIvsStagesSession
- * 
+ *
  * IVS Stages の Participant Token を caller / callee 両者分生成して
  * VideoCall エンティティの chime_attendee_caller / chime_attendee_callee に保存する。
- * 
+ *
  * 呼び出しタイミング: VideoCall.status が "accepted" になった直後に caller 側から invoke する。
- * 
+ *
  * 必要な環境変数:
  *   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
- *   IVS_STAGES_ARN  ← AWS コンソールで作成した Stage の ARN
+ *   IVS_STAGES_ARN  ← IVS_STAGES_ARN シークレットに設定済み
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';

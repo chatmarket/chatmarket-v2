@@ -1,9 +1,17 @@
 /**
+ * ██████████████████████████████████████████████████████
+ * ██  FROZEN — DO NOT MODIFY                          ██
+ * ██  S3 + CloudFront 動画アップロード関数（凍結済み）  ██
+ * ██  再生URLは必ず CloudFront ドメインを使用する。    ██
+ * ██  S3直URL配信は絶対禁止（転送料垂れ流し防止）。    ██
+ * ██████████████████████████████████████████████████████
+ *
  * uploadVideoToS3
- * 
+ *
  * S3 Presigned PUT URL を生成してフロントエンドに返す。
  * フロントは直接 S3 に PUT し、完了後に CloudFront URL を使って再生する。
- * 
+ * S3直URLは絶対に返さない — playback_url は常に CloudFront ドメイン。
+ *
  * 必要な環境変数:
  *   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
  *   S3_BUCKET_VOD       ← 動画保存バケット名
@@ -59,13 +67,12 @@ Deno.serve(async (req) => {
 
     const presignedUrl = await getSignedUrl(s3, putCommand, { expiresIn: 900 });
 
-    // CloudFront 経由の再生 URL
-    const cfDomain = CF_DOMAIN
-      ? (CF_DOMAIN.startsWith('https://') ? CF_DOMAIN : `https://${CF_DOMAIN}`)
-      : null;
-    const playback_url = cfDomain
-      ? `${cfDomain}/${s3Key}`
-      : `https://${BUCKET}.s3.${Deno.env.get('AWS_REGION') || 'ap-northeast-1'}.amazonaws.com/${s3Key}`;
+    // CloudFront 経由の再生 URL（S3直URLは絶対に使わない）
+    if (!CF_DOMAIN) {
+      return Response.json({ error: 'CLOUDFRONT_DOMAIN not configured — S3 direct URL is forbidden' }, { status: 500 });
+    }
+    const cfDomain = CF_DOMAIN.startsWith('https://') ? CF_DOMAIN : `https://${CF_DOMAIN}`;
+    const playback_url = `${cfDomain}/${s3Key}`;
 
     console.log('[uploadVideoToS3] ✅ Presigned URL generated for:', s3Key);
 

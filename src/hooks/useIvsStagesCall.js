@@ -1,8 +1,14 @@
 import { useEffect, useRef } from 'react';
 
 /**
+ * ██████████████████████████████████████████████████████
+ * ██  FROZEN — DO NOT MODIFY                          ██
+ * ██  IVS Stages 1対1通話フック（凍結済み）            ██
+ * ██  接続方式の変更は一切禁止。承認なく変更不可。      ██
+ * ██████████████████████████████████████████████████████
+ *
  * IVS Stages を使った1対1ビデオ通話フック
- * 
+ *
  * - window.IVSBroadcastClient は index.html で読み込み済み
  * - トークンは VideoCall.chime_attendee_caller / chime_attendee_callee に格納
  * - リモート映像を remoteVideoRef.current.srcObject にバインドする
