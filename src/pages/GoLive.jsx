@@ -36,6 +36,14 @@ export default function GoLive() {
     availableTime: "",
     price: "",
   });
+
+  // チケット販売設定
+  const [ticketEnabled, setTicketEnabled] = useState(false);
+  const [ticketDurationMinutes, setTicketDurationMinutes] = useState(60);
+  const [ticketPriceYen, setTicketPriceYen] = useState(600);
+
+  const TICKET_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120];
+  const minTicketPrice = Math.ceil((ticketDurationMinutes / 15) * 150);
   const [manualWhipEndpoint, setManualWhipEndpoint] = useState("");
 
   useEffect(() => {
@@ -133,6 +141,12 @@ export default function GoLive() {
       cost_output_yen: 0,
       total_viewer_minutes: 0,
       revenue_coins: 0,
+      // チケット販売設定
+      is_ticket_enabled: ticketEnabled,
+      ticket_price_yen: ticketEnabled ? Math.max(minTicketPrice, ticketPriceYen) : 0,
+      ticket_duration_minutes: ticketEnabled ? ticketDurationMinutes : 0,
+      ticket_total_revenue_yen: 0,
+      ticket_purchases: [],
     });
 
     await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -627,6 +641,74 @@ export default function GoLive() {
               </div>
             );
           })()}
+        </div>
+
+        {/* チケット販売設定 */}
+        <div className="space-y-3 bg-yellow-500/5 border border-yellow-500/30 rounded-2xl p-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-bold text-yellow-400 flex items-center gap-2">
+              🎫 チケット販売（1対多数限定）
+            </label>
+            <button
+              type="button"
+              onClick={() => setTicketEnabled((v) => !v)}
+              className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled ? "bg-yellow-500" : "bg-secondary"}`}
+            >
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ticketEnabled ? "left-6" : "left-0.5"}`} />
+            </button>
+          </div>
+          {ticketEnabled && (
+            <div className="space-y-3">
+              {/* 配信時間 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">配信時間（15分単位・最大2時間）</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {TICKET_DURATIONS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setTicketDurationMinutes(m);
+                        setTicketPriceYen(Math.ceil((m / 15) * 150));
+                      }}
+                      className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                        ticketDurationMinutes === m
+                          ? "bg-yellow-500 text-black"
+                          : "bg-secondary hover:bg-yellow-500/20"
+                      }`}
+                    >
+                      {m}分
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* チケット価格 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  チケット価格（最低 ¥{minTicketPrice}）
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={minTicketPrice}
+                    step={50}
+                    value={ticketPriceYen}
+                    onChange={(e) => setTicketPriceYen(Math.max(minTicketPrice, parseInt(e.target.value) || minTicketPrice))}
+                    className="flex-1 rounded-lg bg-secondary border-0 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
+                  />
+                  <span className="text-sm text-muted-foreground">円</span>
+                </div>
+                <p className="text-[10px] text-yellow-400">
+                  配信者受取: <span className="font-bold">¥{Math.floor(ticketPriceYen * 0.85)}</span>（85%）
+                  ・コイン/クレジット両対応
+                </p>
+              </div>
+            </div>
+          )}
+          {!ticketEnabled && (
+            <p className="text-[11px] text-muted-foreground">ONにすると視聴者がコインまたはクレジットカードでチケットを購入して入場できます</p>
+          )}
         </div>
 
         {/* 送信 */}

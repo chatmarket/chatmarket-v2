@@ -228,6 +228,58 @@
       "type": "boolean",
       "default": false,
       "description": "\u30a2\u30fc\u30ab\u30a4\u30d6\u3092VOD\u3068\u3057\u3066\u8ca9\u58f2\u3059\u308b\u304b\u3069\u3046\u304b"
+    },
+    "is_ticket_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30c1\u30b1\u30c3\u30c8\u8ca9\u58f2\u6709\u52b9\u30d5\u30e9\u30b0"
+    },
+    "ticket_price_yen": {
+      "type": "number",
+      "default": 150,
+      "description": "\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u5186\uff09\u3010\u6700\u4f4e150\u5186\u30fb15\u5206\u5358\u4f4d\u3011"
+    },
+    "ticket_duration_minutes": {
+      "type": "number",
+      "default": 15,
+      "description": "\u914d\u4fe1\u6642\u9593\uff08\u5206\uff09\u301015\u5206\u5358\u4f4d\u30fb\u6700\u5927120\u5206\u3011"
+    },
+    "ticket_total_revenue_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30c1\u30b1\u30c3\u30c8\u58f2\u4e0a\u5408\u8a08\uff08\u5186\uff09"
+    },
+    "ticket_purchases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_email": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "price_yen": {
+            "type": "number"
+          },
+          "payment_method": {
+            "type": "string",
+            "enum": [
+              "coins",
+              "credit_card"
+            ]
+          },
+          "coins_used": {
+            "type": "number"
+          },
+          "purchased_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "\u30c1\u30b1\u30c3\u30c8\u8cfc\u5165\u5c65\u6b74"
     }
   },
   "required": [

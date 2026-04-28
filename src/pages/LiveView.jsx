@@ -19,6 +19,7 @@ import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx"
 import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
 import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
 import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx";
+import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -56,6 +57,7 @@ function LiveViewInner() {
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [celebrationYell, setCelebrationYell] = useState(null);
   const extensionNotifiedRef = useRef(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -108,10 +110,20 @@ function LiveViewInner() {
   }, [stream?.channel_id]);
 
   useEffect(() => {
-    if (!stream) return;
-    setHasPurchased(true);
-    setTicketChecked(true);
-  }, [stream]);
+    if (!stream || !user) return;
+
+    // チケット販売が有効な場合、購入済みかチェック
+    if (stream.is_ticket_enabled) {
+      const purchases = stream.ticket_purchases || [];
+      const purchased = purchases.some((p) => p.user_email === user.email);
+      setHasPurchased(purchased);
+      setTicketChecked(true);
+    } else {
+      // チケット不要（既存PPV価格システムまたは無料）
+      setHasPurchased(true);
+      setTicketChecked(true);
+    }
+  }, [stream, user?.email]);
 
   const toggleFullscreen = () => setIsFullscreen((prev) => !prev);
 
@@ -146,19 +158,25 @@ function LiveViewInner() {
 
   const videoPortal = ReactDOM.createPortal(
     <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000" }}>
-      {/* 有料ペイウォール */}
-      {stream.price > 0 && !hasPurchased && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-4 p-4">
-          <Lock className="w-12 h-12 text-primary mx-auto" />
-          <h2 className="text-xl font-bold text-white">有料ライブ配信です</h2>
-          <p className="text-3xl font-black text-primary">¥{stream.price?.toLocaleString()}</p>
+      {/* チケットペイウォール */}
+      {stream.is_ticket_enabled && !hasPurchased && ticketChecked && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-5 p-6">
+          <div className="text-6xl">🎫</div>
+          <h2 className="text-xl font-black text-white">チケット制ライブ配信</h2>
+          <div className="text-center space-y-1">
+            <p className="text-3xl font-black text-yellow-400">¥{(stream.ticket_price_yen || 150).toLocaleString()}</p>
+            <p className="text-sm text-white/60">{stream.ticket_duration_minutes || 60}分間の視聴チケット</p>
+          </div>
+          <p className="text-xs text-white/40 text-center max-w-xs">
+            コインまたはクレジットカードで購入後、すぐに視聴できます
+          </p>
           {!user ? (
-            <Button onClick={() => base44.auth.redirectToLogin()} className="gap-2 h-12">
+            <Button onClick={() => base44.auth.redirectToLogin()} className="gap-2 h-12 px-8">
               <CreditCard className="w-5 h-5" /> ログインして購入
             </Button>
           ) : (
-            <Button onClick={handlePurchase} className="gap-2 h-12">
-              <Zap className="w-5 h-5" /> 今すぐ購入して視聴する
+            <Button onClick={() => setShowTicketModal(true)} className="gap-2 h-12 px-8 bg-yellow-500 hover:bg-yellow-600 text-black font-black">
+              <span className="text-lg">🎫</span> チケットを購入する
             </Button>
           )}
         </div>
@@ -289,6 +307,19 @@ function LiveViewInner() {
       />
       {videoPortal}
       {celebrationYell && <YellCelebrationEffect yell={celebrationYell} onComplete={() => setCelebrationYell(null)} />}
+      {/* チケット購入モーダル */}
+      {stream && user && showTicketModal && (
+        <LiveTicketPurchase
+          stream={stream}
+          user={user}
+          isOpen={showTicketModal}
+          onClose={() => setShowTicketModal(false)}
+          onPurchaseSuccess={() => {
+            setHasPurchased(true);
+            setShowTicketModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
