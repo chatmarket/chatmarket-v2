@@ -228,6 +228,10 @@ export default function GoLive() {
             className="bg-primary text-black font-black px-8 py-3 rounded-xl hover:bg-primary/90">
             PPVプランを確認する
           </button>
+          <div className="bg-red-500/10 border-2 border-red-500 rounded-2xl p-5 space-y-2">
+            <p className="text-red-500 font-black text-xl">⚠️ PPVプラン加入後に配信画面へ進めます</p>
+            <p className="text-red-400 text-sm font-semibold">PPVプランを購入しないと、生配信（予約チケット制・即時配信）はご利用いただけません。</p>
+          </div>
         </div>
       );
     }
