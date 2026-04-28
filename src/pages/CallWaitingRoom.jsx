@@ -188,6 +188,7 @@ export default function CallWaitingRoom() {
   const [pricePerUnit, setPricePerUnit] = useState(150); // 15分あたりの料金
   const [maxDuration, setMaxDuration] = useState(30);    // 最大通話時間（分）
   const [isWaiting, setIsWaiting] = useState(false);
+  const [recordingEnabled, setRecordingEnabled] = useState(false);
 
   // 着信関連
   const [incomingCall, setIncomingCall] = useState(null);
@@ -582,7 +583,15 @@ export default function CallWaitingRoom() {
           {features.recordingAllowed ? (
             <div className="flex gap-3">
               {[{ val: false, label: "録画なし" }, { val: true, label: "録画あり（別途料金）" }].map(({ val, label }) => (
-                <button key={String(val)} className="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all bg-secondary border-border hover:border-primary/40">
+                <button
+                  key={String(val)}
+                  onClick={() => setRecordingEnabled(val)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
+                    recordingEnabled === val
+                      ? "bg-primary/20 border-primary text-primary"
+                      : "bg-secondary border-border hover:border-primary/40"
+                  }`}
+                >
                   {label}
                 </button>
               ))}
