@@ -39,6 +39,22 @@ export default function CallChatPanel({ call, user }) {
     console.log(`📞 CallChatPanel Debug:`, { call_id: call?.id, call_status: currentCall?.status, user_email: user?.email, threadId });
   }, [call, user, currentCall]);
 
+  const playMsgSound = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } catch {}
+  };
+
   useEffect(() => {
     if (!threadId) return;
     
@@ -52,12 +68,13 @@ export default function CallChatPanel({ call, user }) {
         console.error('Failed to load messages:', err);
       });
 
-    // リアルタイム購読
+    // リアルタイム購読 + 通知音
     const unsub = base44.entities.DirectChat.subscribe((event) => {
       if (event.data?.thread_id === threadId) {
         if (event.type === "create") {
           console.log('📨 New message received');
           setMessages((prev) => [...prev, event.data]);
+          playMsgSound(); // 新着メッセージ通知音
         }
         if (event.type === "update") {
           setMessages((prev) => prev.map((m) => m.id === event.id ? event.data : m));

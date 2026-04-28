@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useSmartCameraSelection } from "@/hooks/useSmartCameraSelection";
+import { useWebRtcCall } from "@/hooks/useWebRtcCall";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -817,54 +818,14 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
-  // IVS Stages WebRTC 接続（1対1通話）
-  useEffect(() => {
-    if (!call || call.status !== 'active' || !localStream || !remoteVideoRef.current) return;
-
-    const stagesToken = "eyJhbGciOiJLTVMiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NzczMzA1MjEsImlhdCI6MTc3NzMyNjkyMSwianRpIjoiQUFuZWhDWEUxZWFpIiwicmVzb3VyY2UiOiJhcm46YXdzOml2czphcC1ub3J0aGVhc3QtMTo4MTMzNzI2MTE1ODA6c3RhZ2UvMUNIdzlualJ0dHpuIiwidG9waWMiOiIxQ0h3OW5qUnR0em4iLCJldmVudHNfdXJsIjoid3NzOi8vZ2xvYmFsLmV2ZW50cy5saXZlLXZpZGVvLm5ldCIsIndoaXBfdXJsIjoiaHR0cHM6Ly8yN2I4M2Q4MmI4YTcuZ2xvYmFsLWJtLndoaXAubGl2ZS12aWRlby5uZXQiLCJ1c2VyX2lkIjoib25vLXBjIiwiY2FwYWJpbGl0aWVzIjp7ImFsbG93X3B1Ymxpc2giOnRydWUsImFsbG93X3N1YnNjcmliZSI6dHJ1ZX0sInZlcnNpb24iOiIwLjAifQ.MGUCMQCA7gizSPLc0ncoaRiIPiwffsDQvSB_XjT0THWSo6c8wtCGOy8ZgIPPHkui31EWccCMB9tcLw7WY_9bl9oyHSTVDh8ofZdXtTi3DlQuTuxM3rBeECDeY1Vo0ftv2HMB6wbjQ";
-    
-    const joinStages = async () => {
-      try {
-        console.log(`[IVS Stages] 🚀 Joining Stages with token (user: ${user.email})`);
-        
-        // IVS Stages SDK を使用して参加（Webページに読み込み済みと仮定）
-        if (window.IVSBroadcastClient) {
-          const stages = new window.IVSBroadcastClient({
-            token: stagesToken,
-            rtcConfiguration: {}
-          });
-          
-          // ローカルストリーム接続
-          stages.getLocalAudioTrack().then(track => {
-            if (track) localStream.getAudioTracks()[0]?.connect(track);
-          });
-          
-          stages.getLocalVideoTrack().then(track => {
-            if (track) localStream.getVideoTracks()[0]?.connect(track);
-          });
-          
-          // リモートストリーム受信
-          stages.on('remoteParticipantJoined', (participant) => {
-            console.log('[IVS Stages] ✅ Remote participant joined:', participant.id);
-            participant.getVideoTrack().then(track => {
-              if (track && remoteVideoRef.current) {
-                remoteVideoRef.current.srcObject = new MediaStream([track]);
-                console.log('[IVS Stages] ✅ Remote video bound');
-              }
-            });
-          });
-          
-          console.log('[IVS Stages] ✅ Stage client initialized');
-        } else {
-          console.warn('[IVS Stages] SDK not loaded, using fallback WebRTC');
-        }
-      } catch (e) {
-        console.error('[IVS Stages] ❌ Join failed:', e.message);
-      }
-    };
-    
-    joinStages();
-  }, [call?.id, call?.status, localStream, user?.email]);
+  // ---- WebRTC P2P 接続（シグナリングはVideoCallエンティティ経由） ----
+  useWebRtcCall({
+    call,
+    localStream,
+    remoteVideoRef,
+    user,
+    enabled: call?.status === 'active' && !!localStream && !!user,
+  });
 
   const addFloating = useCallback((emoji, type = "emoji") => {
     const id = Date.now() + Math.random();
