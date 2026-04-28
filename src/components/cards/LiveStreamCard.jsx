@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Users, Radio, Clock, Calendar } from "lucide-react";
+import { Users, Radio, Clock, Calendar, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -11,7 +11,7 @@ function formatTime(dateStr) {
   return format(d, "M月d日(EEE) HH:mm", { locale: ja });
 }
 
-export default function LiveStreamCard({ stream }) {
+export default function LiveStreamCard({ stream, channelCallEnabled }) {
   const isLive = stream.status === "live";
   const isScheduled = stream.status === "scheduled";
 
@@ -52,6 +52,18 @@ export default function LiveStreamCard({ stream }) {
           <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
             <Users className="w-3 h-3" />
             {stream.viewer_count || 0}
+          </div>
+        )}
+
+        {/* 通話受付バッジ */}
+        {channelCallEnabled !== undefined && (
+          <div className={`absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md flex items-center gap-1 font-bold ${
+            channelCallEnabled
+              ? "bg-green-500/80 text-white"
+              : "bg-black/60 text-white/50"
+          }`}>
+            <Phone className="w-3 h-3" />
+            {channelCallEnabled ? "通話受付中" : "通話オフ"}
           </div>
         )}
 

@@ -6,7 +6,7 @@ import VideoCard from "../components/cards/VideoCard";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Button } from "@/components/ui/button";
-import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag, Users as UsersIcon, Gem, Shield } from "lucide-react";
+import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag, Users as UsersIcon, Gem, Shield, Phone, PhoneOff } from "lucide-react";
 import ReportChannelDialog from "../components/channel/ReportChannelDialog";
 import CategoryBadge from "../components/channel/CategoryBadge";
 import FanCommunityTab from "../components/community/FanCommunityTab";
@@ -150,6 +150,17 @@ export default function ChannelPage() {
                   <Radio className="w-3.5 h-3.5 animate-pulse" /> 配信中
                 </span>
               )}
+              {channel.call_enabled ? (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-500/15 text-green-400 border border-green-500/30">
+                  <Phone className="w-3 h-3" />
+                  通話受付中
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-white/5 text-muted-foreground border border-border/50">
+                  <PhoneOff className="w-3 h-3" />
+                  通話オフ
+                </span>
+              )}
             </div>
           </div>
 
@@ -249,7 +260,7 @@ export default function ChannelPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {liveStreams.map((s) => (
-              <LiveStreamCard key={s.id} stream={s} />
+              <LiveStreamCard key={s.id} stream={s} channelCallEnabled={channel.call_enabled} />
             ))}
           </div>
         </section>
