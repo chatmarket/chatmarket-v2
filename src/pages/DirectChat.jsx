@@ -267,8 +267,8 @@ export default function DirectChat() {
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-border/50 bg-card/80 backdrop-blur shrink-0 space-y-2">
-        <div className="flex items-end gap-2">
+      <div className="px-4 py-4 border-t border-border/50 bg-card/80 backdrop-blur shrink-0 space-y-2">
+        <div className="flex items-end gap-3">
           <div className="flex-1 relative">
             <textarea
               value={input}
@@ -276,18 +276,18 @@ export default function DirectChat() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="メッセージを入力..."
               rows={2}
-              className="w-full resize-none rounded-xl bg-secondary border-0 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+              className="w-full resize-none rounded-xl bg-secondary border border-white/20 px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/40 transition-all"
             />
             <span className={`absolute bottom-2 right-3 text-[10px] ${input.length >= MAX_CHARS ? "text-destructive font-bold" : "text-muted-foreground"}`}>
               {input.length}/{MAX_CHARS}
             </span>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Button size="icon" variant="outline" className="w-9 h-9 text-yellow-400 border-yellow-400/30 hover:bg-yellow-400/10" onClick={() => setShowYellModal(true)} title="エールコインを送る">
-              <Coins className="w-4 h-4" />
+            <Button size="icon" variant="outline" className="w-12 h-12 text-yellow-400 border-yellow-400/40 hover:bg-yellow-400/10" onClick={() => setShowYellModal(true)} title="エールコインを送る">
+              <Coins className="w-5 h-5" />
             </Button>
-            <Button size="icon" onClick={handleSend} disabled={!input.trim() || sending} className="w-9 h-9 bg-primary hover:bg-primary/90">
-              <Send className="w-4 h-4" />
+            <Button size="icon" onClick={handleSend} disabled={!input.trim() || sending} className="w-12 h-12 bg-primary hover:bg-primary/90">
+              <Send className="w-5 h-5" />
             </Button>
           </div>
         </div>

@@ -45,20 +45,20 @@ export default function ViewerChatInput({ streamId, user }) {
   }
 
   return (
-    <form onSubmit={handleSend} className="px-2 sm:px-3 pb-2 sm:pb-3 flex gap-1.5 sm:gap-2">
+    <form onSubmit={handleSend} className="px-2 sm:px-3 pb-2 sm:pb-3 flex gap-2">
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="コメント..."
-        className="bg-zinc-800/80 border-zinc-700 text-white placeholder:text-zinc-500 flex-1 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+        className="bg-zinc-800/80 border-zinc-600 text-white placeholder:text-zinc-400 flex-1 text-xs sm:text-sm h-10 sm:h-11 px-3"
         disabled={sending}
       />
       <button
         type="submit"
         disabled={sending || !message.trim()}
-        className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center transition-colors"
+        className="shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center transition-colors"
       >
-        <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <Send className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
     </form>
   );
