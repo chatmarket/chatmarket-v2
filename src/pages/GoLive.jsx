@@ -70,7 +70,7 @@ export default function GoLive() {
   });
 
   // PPVプラン加入確認（1対多数配信の要件）
-  const { data: ppvSubscription = null } = useQuery({
+  const { data: ppvSubscription = null, isLoading: ppvLoading } = useQuery({
     queryKey: ["ppv-subscription", user?.email],
     queryFn: async () => {
       const subs = await base44.entities.PlanSubscription.filter({
@@ -84,7 +84,7 @@ export default function GoLive() {
   });
 
   // キャンペーン対象者確認（期間限定で1対多数配信が無料）
-  const { data: campaignGrantee = null } = useQuery({
+  const { data: campaignGrantee = null, isLoading: campaignLoading } = useQuery({
     queryKey: ["campaign-live-grantee", user?.email],
     queryFn: async () => {
       const grantees = await base44.entities.CampaignLiveGrantee.filter({
@@ -108,13 +108,13 @@ export default function GoLive() {
 
   // PPVプラン加入者 or テストアカウントなら即時フォーム画面へスキップ
   useEffect(() => {
-    if (!modeInitialized && user && (ppvSubscription !== null || campaignGrantee !== null || isTestAccount)) {
+    if (!modeInitialized && user && !ppvLoading && !campaignLoading) {
       if (canUseLiveStream) {
         setMode(MODE_LIVE);
       }
       setModeInitialized(true);
     }
-  }, [user, ppvSubscription, campaignGrantee, isTestAccount, canUseLiveStream, modeInitialized]);
+  }, [user, ppvLoading, campaignLoading, canUseLiveStream, modeInitialized]);
 
 
 
