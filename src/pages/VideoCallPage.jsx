@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useSmartCameraSelection } from "@/hooks/useSmartCameraSelection";
-import { useWebRtcCall } from "@/hooks/useWebRtcCall";
+import { useIvsStagesCall } from "@/hooks/useIvsStagesCall";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -818,8 +818,8 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
-  // ---- WebRTC P2P 接続（シグナリングはVideoCallエンティティ経由） ----
-  useWebRtcCall({
+  // ---- IVS Stages 接続（1対1通話） ----
+  useIvsStagesCall({
     call,
     localStream,
     remoteVideoRef,
