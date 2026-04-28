@@ -15,8 +15,9 @@ const TIERS = [
     bg: "rgba(156,163,175,0.08)",
     border: "rgba(156,163,175,0.25)",
     icon: "📺",
-    desc: "入門・体験向け",
-    wow: null,
+    desc: "15円/15分〜収益化最低設定金額で始められます",
+    wow: "← これが革命",
+    wowColor: "#9ca3af",
   },
   {
     label: "HD",
@@ -27,8 +28,7 @@ const TIERS = [
     border: "rgba(0,212,255,0.50)",
     icon: "⭐",
     desc: "YouTube並みの高画質",
-    wow: "← これが革命",
-    wowColor: "#00d4ff",
+    wow: null,
   },
   {
     label: "FHD",
@@ -59,7 +59,7 @@ export default function QualityRevolutionBanner() {
       <div className="text-center space-y-1">
         <div className="flex items-center justify-center gap-2">
           <Zap className="w-4 h-4 text-cyan-400" />
-          <p className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">15円革命</p>
+          <p className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">1対多数配信（PPV)</p>
           <Zap className="w-4 h-4 text-cyan-400" />
         </div>
         <p className="text-base sm:text-lg font-black text-white leading-tight">
