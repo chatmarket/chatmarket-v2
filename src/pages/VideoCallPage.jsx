@@ -414,10 +414,18 @@ export default function VideoCallPage() {
   useEffect(() => {
     if (!call || !user) return;
 
-    // callerのみ: accepted → active に更新
+    // callerのみ: accepted → IVS Stagesトークン生成 → active に更新
     if (call.status === 'accepted' && user.email === call.caller_email && !countdownStartedRef.current) {
       countdownStartedRef.current = true;
-      base44.entities.VideoCall.update(call.id, { status: 'active' }).then(() => refetchCall()).catch(() => {});
+      // まずIVS Stagesのトークンを生成してVideoCallに保存してからactiveへ
+      base44.functions.invoke('createIvsStagesSession', { call_id: call.id })
+        .then(() => base44.entities.VideoCall.update(call.id, { status: 'active' }))
+        .then(() => refetchCall())
+        .catch((err) => {
+          console.error('[VideoCallPage] IVS token gen failed, falling back to active:', err.message);
+          // トークン生成失敗でも通話は続行
+          base44.entities.VideoCall.update(call.id, { status: 'active' }).then(() => refetchCall()).catch(() => {});
+        });
     }
 
     // active になったらカウントダウン表示
