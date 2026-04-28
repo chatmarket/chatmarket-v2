@@ -207,21 +207,6 @@ export default function GoLive() {
         <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
           <div className="text-6xl">🔒</div>
           <h1 className="text-2xl font-black">1対多数配信はPPVプラン加入が必須です</h1>
-          <p className="text-muted-foreground">1対多数のライブ配信とチケット制予約配信を利用するにはPPVプラン（¥9,900/月）への加入が必要です。</p>
-          <Link to="/plan-select">
-            <button className="bg-primary text-black font-black px-8 py-3 rounded-xl hover:bg-primary/90">
-              PPVプランを確認する
-            </button>
-          </Link>
-        </div>
-      );
-    }
-
-    if (!canUseLiveStream) {
-      return (
-        <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
-          <div className="text-6xl">🔒</div>
-          <h1 className="text-2xl font-black">1対多数配信はPPVプラン加入が必須です</h1>
           <p className="text-muted-foreground">1対多数のライブ配信とチケット制予約配信を利用するにはPPVプラン（¥9,900/月）への加入が必須です。</p>
           <button 
             onClick={() => navigate("/plan-select")}
