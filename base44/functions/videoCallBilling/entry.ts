@@ -100,8 +100,9 @@ async function chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg) {
   return { coinsToCharge, creatorCoins, platformCoins, nextBillingAt };
 }
 
-const TURN_COST_PER_MIN = 2;
-const P2P_SUCCESS_RATE  = 0.80;
+const TURN_COST_PER_MIN   = 2;
+const P2P_SUCCESS_RATE    = 0.80;
+const RECORDING_COST_FLAT = 100; // 録画オプション追加料金: 100コイン/通話（固定）
 
 Deno.serve(async (req) => {
   try {
@@ -143,16 +144,57 @@ Deno.serve(async (req) => {
     if (action === 'end') {
       const billingStart = call.billing_started_at ? new Date(call.billing_started_at) : now;
       const actualMinutes = Math.ceil((now - billingStart) / 1000 / 60);
-      const consumedCoins = call.coins_consumed || 0;
+      let consumedCoins = call.coins_consumed || 0;
 
       // 終了時点のプランで分配比率を確定（最後に適用されたプランを使用）
-      const planCfg = await getCallerPlanConfig(base44, call.caller_email);
+      const planCfg = await getCalleePlanConfig(base44, call.callee_email);
+
+      // ── 録画オプション追加課金 ──────────────────────────────────────
+      // recording_option が true の場合、録画コストを発信者ウォレットから追加徴収
+      let recordingOptionCost = 0;
+      if (call.recording_option) {
+        recordingOptionCost = RECORDING_COST_FLAT;
+        const callerWallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
+        const callerWallet = callerWallets[0];
+        if (callerWallet && callerWallet.balance >= recordingOptionCost) {
+          await base44.entities.YellCoinWallet.update(callerWallet.id, {
+            balance:    callerWallet.balance - recordingOptionCost,
+            total_sent: (callerWallet.total_sent || 0) + recordingOptionCost,
+          });
+          consumedCoins += recordingOptionCost;
+          // トランザクション記録
+          await base44.entities.YellCoinTransaction.create({
+            user_email:          call.caller_email,
+            type:                'send',
+            service_type:        'direct_chat',
+            service_id:          call.id,
+            amount:              recordingOptionCost,
+            target_name:         call.callee_name,
+            target_id:           call.callee_channel_id,
+            channel_id:          call.callee_channel_id,
+            channel_owner_email: call.callee_email,
+            message:             `録画オプション追加料金: ${recordingOptionCost}コイン`,
+          });
+          console.log(`[videoCallBilling/end] recording_option charge: ${recordingOptionCost}コイン from ${call.caller_email}`);
+        } else {
+          console.warn(`[videoCallBilling/end] recording_option: 残高不足のためスキップ (balance: ${callerWallet?.balance})`);
+        }
+        // 録画インフラコストを記録
+        await base44.entities.VideoCall.update(call_id, {
+          recording_infra_cost_yen: recordingOptionCost,
+          recording_option_price:   recordingOptionCost,
+        });
+      }
+
+      // ライバーへの還元はプランの creator_rate に連動
       const creatorRevenueCoins  = Math.floor(consumedCoins * planCfg.creator_rate);
       const platformRevenueCoins = consumedCoins - creatorRevenueCoins;
 
       const commCostYen    = Math.round(actualMinutes * TURN_COST_PER_MIN * (1 - P2P_SUCCESS_RATE));
       const platformRevYen = platformRevenueCoins;
       const profitYen      = platformRevYen - commCostYen;
+
+      console.log(`[videoCallBilling/end] call=${call_id} plan=${planCfg.plan} consumed=${consumedCoins} creator=${creatorRevenueCoins}(${Math.round(planCfg.creator_rate*100)}%) platform=${platformRevenueCoins} recording=${recordingOptionCost} profit_yen=${profitYen}`);
 
       await base44.entities.VideoCall.update(call_id, {
         status:                  'ended',
@@ -161,13 +203,16 @@ Deno.serve(async (req) => {
         platform_revenue_coins:  platformRevenueCoins,
         creator_revenue_coins:   creatorRevenueCoins,
         platform_profit_yen:     profitYen,
+        coins_consumed:          consumedCoins,
       });
 
       return Response.json({
         success:                true,
         actual_minutes:         actualMinutes,
         plan:                   planCfg.plan,
+        creator_rate:           planCfg.creator_rate,
         coins_consumed:         consumedCoins,
+        recording_option_cost:  recordingOptionCost,
         creator_revenue_coins:  creatorRevenueCoins,
         platform_revenue_coins: platformRevenueCoins,
         platform_profit_yen:    profitYen,
