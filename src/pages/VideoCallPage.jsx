@@ -924,7 +924,9 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* MobileVideoCallUI — 映像疎通確認後に有効化予定 */}
+      {/* ★ MobileVideoCallUI は一旦コメントアウト — 映像疎通テスト中 */}
+      {/* {isMobile && <MobileVideoCallUI {...} />} */}
+
       {/* ★ 視聴者側（caller）pending 待機画面 */}
       {call?.status === 'pending' && user?.email === call?.caller_email && (
         <OutgoingCallScreen

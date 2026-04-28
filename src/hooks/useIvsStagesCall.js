@@ -47,18 +47,28 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       const SubscribeType = IVSClient.SubscribeType;
       const StageEvents = IVSClient.StageEvents;
 
-      console.log('[IVS Stages] 🔍 API check:', {
+      // 🔍 API VERIFICATION — CRITICAL FOR MOBILE VIDEO
+      const apiCheck = {
         Stage: typeof Stage,
         LocalStageStream: typeof LocalStageStream,
         SubscribeType: typeof SubscribeType,
         StageEvents: typeof StageEvents,
-      });
+      };
+      console.log('╔═══════════════════════════════════════════════════╗');
+      console.log('║ 🔍 API CHECK: IVS STAGES SDK AVAILABILITY        ║');
+      console.log('╠═══════════════════════════════════════════════════╣');
+      console.log('║ Stage:', apiCheck.Stage.padEnd(39) + '║');
+      console.log('║ LocalStageStream:', apiCheck.LocalStageStream.padEnd(32) + '║');
+      console.log('║ SubscribeType:', apiCheck.SubscribeType.padEnd(34) + '║');
+      console.log('║ StageEvents:', apiCheck.StageEvents.padEnd(36) + '║');
+      console.log('╚═══════════════════════════════════════════════════╝');
 
       if (!Stage || !LocalStageStream || !StageEvents) {
-        console.error('[IVS Stages] ❌ Required Stages API classes missing from SDK!');
-        console.error('[IVS Stages] SDK keys available:', Object.keys(IVSClient).join(', '));
+        console.error('[IVS Stages] ❌❌❌ CRITICAL: Required Stages API classes missing from SDK!');
+        console.error('[IVS Stages] ❌ SDK keys available:', Object.keys(IVSClient).join(', '));
         return;
       }
+      console.log('[IVS Stages] ✅✅✅ ALL API CLASSES VERIFIED - PROCEEDING TO JOIN');
 
       // ローカルトラックをラップ（readyState に関係なく追加 — モバイル回線対応）
       const localStreams = [];
@@ -252,19 +262,25 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
 
     // Stages API の場所を探す: rawClient.Stage または rawClient 自体
     let IVSClient = rawClient;
+    console.log('╔════════════════════════════════════════════════════╗');
+    console.log('║ 🔎 STAGE API LOCATION CHECK                       ║');
+    console.log('╚════════════════════════════════════════════════════╝');
+    console.log('[IVS Stages] Checking rawClient.Stage:', typeof rawClient.Stage);
+    console.log('[IVS Stages] Checking rawClient.StageEvents:', typeof rawClient.StageEvents);
+
     if (!rawClient.Stage && !rawClient.StageEvents) {
-      console.warn('[IVS Stages] ⚠️ Stage API not found directly on IVSBroadcastClient. Checking sub-properties...');
-      // 一部バージョンでは window 直下に Stage が存在する
+      console.warn('[IVS Stages] ⚠️ Stage API not found on IVSBroadcastClient. Searching window...');
       if (window.Stage && window.StageEvents) {
         IVSClient = window;
-        console.log('[IVS Stages] ✅ Found Stage API on window directly');
+        console.log('[IVS Stages] ✅✅ FOUND: Stage API on window directly');
       } else {
-        console.error('[IVS Stages] ❌ Stage / StageEvents not found anywhere. SDK version mismatch.');
+        console.error('[IVS Stages] ❌❌ CRITICAL: Stage / StageEvents not found anywhere!');
+        console.error('[IVS Stages] ❌ SDK version mismatch or amazon-ivs-web-broadcast.js not loaded');
         console.error('[IVS Stages] Available on window:', Object.keys(window).filter(k => k.toLowerCase().includes('ivs') || k.toLowerCase().includes('stage')).join(', '));
         return;
       }
     } else {
-      console.log('[IVS Stages] ✅ Stage API found on IVSBroadcastClient');
+      console.log('[IVS Stages] ✅✅ Stage API FOUND on IVSBroadcastClient');
     }
 
     const stagesToken = user.email === call.caller_email
