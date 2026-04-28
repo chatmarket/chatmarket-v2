@@ -3,6 +3,82 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+
+// サンプルライブストリーム（AWS通信なし・ダミー）
+const SAMPLE_LIVESTREAMS = [
+  {
+    id: "sample_1",
+    title: "朝のおはよう配信💖",
+    channel_name: "あおいのチャンネル",
+    channel_avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+    thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06f70d504f0?w=400&q=80",
+    viewer_count: 342,
+    price: 200,
+    status: "live",
+    live_started_at: new Date().toISOString(),
+    stream_type: "ivs",
+  },
+  {
+    id: "sample_2",
+    title: "ゲーム配信🎮",
+    channel_name: "げーまーゆき",
+    channel_avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
+    thumbnail_url: "https://images.unsplash.com/photo-1538481143235-405ba17c9f2f?w=400&q=80",
+    viewer_count: 1205,
+    price: 300,
+    status: "live",
+    live_started_at: new Date().toISOString(),
+    stream_type: "ivs",
+  },
+  {
+    id: "sample_3",
+    title: "料理の時間🍳",
+    channel_name: "シェフたかし",
+    channel_avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+    thumbnail_url: "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=400&q=80",
+    viewer_count: 567,
+    price: 150,
+    status: "live",
+    live_started_at: new Date().toISOString(),
+    stream_type: "ivs",
+  },
+  {
+    id: "sample_4",
+    title: "音楽ライブ🎵",
+    channel_name: "ミュージシャン太郎",
+    channel_avatar: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200&q=80",
+    thumbnail_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80",
+    viewer_count: 2341,
+    price: 500,
+    status: "live",
+    live_started_at: new Date().toISOString(),
+    stream_type: "ivs",
+  },
+  {
+    id: "sample_5",
+    title: "フィットネス配信💪",
+    channel_name: "トレーナーアキ",
+    channel_avatar: "https://images.unsplash.com/photo-1534126466717-e64a2a54ad41?w=200&q=80",
+    thumbnail_url: "https://images.unsplash.com/photo-1552258989-8bdab63c507b?w=400&q=80",
+    viewer_count: 876,
+    price: 250,
+    status: "live",
+    live_started_at: new Date().toISOString(),
+    stream_type: "ivs",
+  },
+  {
+    id: "sample_6",
+    title: "お絵描き配信✨",
+    channel_name: "イラストレーターまお",
+    channel_avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+    thumbnail_url: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&q=80",
+    viewer_count: 654,
+    price: 180,
+    status: "live",
+    live_started_at: new Date().toISOString(),
+    stream_type: "ivs",
+  },
+];
 import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap, PhoneCall, PhoneOff, Settings, X } from "lucide-react";
 import { isBefore } from "date-fns";
 import { toast } from "sonner";
@@ -150,9 +226,17 @@ export default function Home() {
     gcTime: 1200000,
   });
 
+  // ライブストリーム：本物 + ダミー統合
   const { data: liveStreams = [] } = useQuery({
     queryKey: ["livestreams-home"],
-    queryFn: () => base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6),
+    queryFn: async () => {
+      const real = await base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6);
+      // 本物が6件未満なら、ダミーを追加して計6件に統一
+      if (real.length < 6) {
+        return [...real, ...SAMPLE_LIVESTREAMS.slice(0, 6 - real.length)];
+      }
+      return real;
+    },
     enabled: enabledSections.liveStreams,
     staleTime: 300000,
     refetchInterval: 120000,
