@@ -1487,201 +1487,48 @@ export default function VideoCallPage() {
 
       {/* Bottom controls */}
       </div>
-      <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20">
-
-      {/* ▼ Progress bar - 最下部コントロールエリア最上部に配置 */}
-      {callStartTime && effectiveDuration && (
-        <div className="mb-3">
-          <div className="flex justify-between items-center mb-1 text-[10px]">
-            <span className="text-cyan-400 font-bold">
-              {`${Math.floor((Date.now() - callStartTime) / 1000 / 60)}:${String(Math.floor(((Date.now() - callStartTime) / 1000) % 60)).padStart(2, '0')}`} 経過
-            </span>
-            <span className="text-white/40">/ {effectiveDuration}分</span>
-            <span className={`font-bold ${remainingSeconds <= 60 ? "text-red-400" : "text-cyan-400"}`}>
-              {remainingSeconds !== null ? `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}` : "-"} 残り
-            </span>
-          </div>
-          <div className="w-full bg-black/50 rounded-full h-1.5 border border-cyan-500/20">
-            <motion.div
-              className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
-              initial={{ width: "0%" }}
-              animate={{ width: `${Math.min(100, (remainingSeconds === null ? 0 : (effectiveDuration * 60 - remainingSeconds) / (effectiveDuration * 60)) * 100)}%` }}
-              transition={{ duration: 1 }}
-              style={{ boxShadow: "0 0 8px rgba(0,229,255,0.5)" }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Feature row */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-          {/* 延長リクエスト（ライバーのみ・通話中） */}
-          {call?.status === "active" && user?.email === call?.callee_email && !call?.extension_request_status && (
+      <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20 flex flex-col gap-3">
+        {/* Settings icon - gear at right for access to all features */}
+        {call?.status === "active" && (
+          <div className="flex justify-end">
             <button
-              onClick={() => setShowExtensionRequest(true)}
-              className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl bg-purple-500/20 border border-purple-500/60 hover:bg-purple-500/30 transition-all"
-            >
-              <Clock className="w-5 h-5 text-purple-400" />
-              <span className="text-[10px] text-purple-400">延長</span>
-            </button>
-          )}
-
-          {/* 録画オプション有効バナー（calleeのみ・未録画時） */}
-          {call?.status === "active" && user?.email === call?.callee_email && call?.recording_option && !isRecording && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full mb-2 flex items-center gap-2 bg-blue-500/20 border border-blue-500/50 rounded-xl px-3 py-2"
-            >
-              <span className="text-base shrink-0">🎥</span>
-              <p className="text-xs text-blue-300 font-bold flex-1">
-                録画オプションが有効です。録画ボタンを押して開始してください。
-              </p>
-            </motion.div>
-          )}
-
-          {/* 録画ボタン（calleeのみ・通話中） */}
-          {call?.status === "active" && user?.email === call?.callee_email && (
-            <button
-              onClick={isRecording ? handleStopRecording : handleStartRecording}
-              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
-                isRecording ? "bg-red-500/20 border border-red-500/60 animate-pulse" : "bg-white/5 hover:bg-white/10"
+              onClick={() => togglePanel("settings")}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                activePanel === "settings" ? "bg-primary/20 border border-primary/40" : "bg-white/10 hover:bg-white/20"
               }`}
+              title="設定"
             >
-              {isRecording ? <VideoOff className="w-5 h-5 text-red-400" /> : <Video className="w-5 h-5 text-white/70" />}
-              <span className={`text-[10px] ${isRecording ? "text-red-400" : "text-white/50"}`}>{isRecording ? "録画中" : "録画"}</span>
+              <Settings className={`w-5 h-5 ${activePanel === "settings" ? "text-primary" : "text-white/70"}`} />
             </button>
-          )}
-          {[
-            { key: "emoji", icon: Smile, label: "絵文字" },
-            { key: "throw", icon: Sparkles, label: "投げマーク" },
-            { key: "yell", icon: Coins, label: "エール" },
-            { key: "filter", icon: Camera, label: "フィルター" },
-            { key: "bg", icon: Image, label: "背景" },
-            { key: "settings", icon: Settings, label: "設定" },
-          ].map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              onClick={() => togglePanel(key)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
-                activePanel === key ? "bg-primary/20 border border-primary/40" : "bg-white/5 hover:bg-white/10"
-              }`}
-            >
-              <Icon className={`w-5 h-5 ${activePanel === key ? "text-primary" : "text-white/70"}`} />
-              <span className={`text-[10px] ${activePanel === key ? "text-primary" : "text-white/50"}`}>{label}</span>
-            </button>
-          ))}
+          </div>
+        )}
+
+        {/* Main control row - 3 buttons only */}
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => setMicOn(!micOn)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
+          >
+            {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+          </button>
+
+          <button
+            onClick={() => setCamOn(!camOn)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
+          >
+            {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
+          </button>
+
+          <motion.button
+            onClick={handleEndCall}
+            animate={{ boxShadow: ["0 0 20px rgba(255,0,85,0.6)", "0 0 40px rgba(255,0,85,1)", "0 0 20px rgba(255,0,85,0.6)"] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-500"
+            style={{ boxShadow: "0 0 30px #ff0055, inset 0 0 20px rgba(255,0,85,0.3)" }}
+          >
+            <PhoneOff className="w-6 h-6 text-white" />
+          </motion.button>
         </div>
-
-        {/* Main control row */}
-        <div className="flex items-center justify-center gap-3">
-          {!isWaiting ? (
-            <>
-              <button
-                onClick={() => setMicOn(!micOn)}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
-              >
-                {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
-              </button>
-
-              <button
-                onClick={() => setCamOn(!camOn)}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-500"}`}
-              >
-                {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
-              </button>
-
-              {/* エールコインボタン（視聴者＝callerのみ） */}
-              {user?.email === call?.caller_email && (
-                <button
-                  onClick={() => setShowYellModal(true)}
-                  className="flex items-center gap-1 md:gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/30 h-10 md:h-12 px-3 md:px-5 rounded-full font-bold text-xs md:text-sm transition-all"
-                >
-                  <Coins className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="hidden sm:inline">エール</span>
-                </button>
-              )}
-
-              <button
-                onClick={handleStartWaiting}
-                className="flex items-center gap-1 md:gap-2 bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 h-10 md:h-12 px-3 md:px-5 rounded-full font-bold text-xs md:text-sm transition-all"
-              >
-                <Radio className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">待機開始</span>
-              </button>
-
-              <motion.button
-                onClick={handleEndCall}
-                animate={{ boxShadow: ["0 0 20px rgba(255,0,85,0.6)", "0 0 40px rgba(255,0,85,1)", "0 0 20px rgba(255,0,85,0.6)"] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-500"
-                style={{
-                  boxShadow: "0 0 30px #ff0055, inset 0 0 20px rgba(255,0,85,0.3)",
-                }}
-              >
-                <PhoneOff className="w-6 h-6 text-white" />
-              </motion.button>
-              </>
-              ) : (
-              <>
-              <button
-                onClick={async () => {
-                  const isAuth = await base44.auth.isAuthenticated();
-                  if (!isAuth) {
-                    base44.auth.redirectToLogin();
-                    return;
-                  }
-                  // コイン残高確認
-                  const wallet = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
-                  const balance = wallet[0]?.balance || 0;
-                  const minCoins = 150; // Basic最小コスト
-                  if (balance >= minCoins) {
-                    // コイン充分 → 通話開始
-                    await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
-                    toast.success('通話を開始します');
-                  } else {
-                    // コイン不足 → プラン選択へ
-                    navigate('/plan-select');
-                  }
-                }}
-                className="flex items-center gap-2 bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 h-12 px-5 rounded-full font-bold text-sm transition-all"
-              >
-                <PhoneCall className="w-5 h-5" />
-                申し込む
-              </button>
-              <motion.button
-                onClick={handleEndCall}
-                animate={{ boxShadow: ["0 0 20px rgba(255,0,85,0.6)", "0 0 40px rgba(255,0,85,1)", "0 0 20px rgba(255,0,85,0.6)"] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-500"
-                style={{
-                  boxShadow: "0 0 30px #ff0055, inset 0 0 20px rgba(255,0,85,0.3)",
-                }}
-              >
-                <PhoneOff className="w-6 h-6 text-white" />
-              </motion.button>
-              </>
-              )}
-              </div>
-
-              {/* Quality indicator */}
-              <div className="flex items-center justify-center gap-3 mt-3">
-              <span className="text-[10px] text-white/30">🎙️ {AUDIO_QUALITY.find(q => q.id === audioQuality)?.label}</span>
-              <span className="text-white/20">·</span>
-              <span className="text-[10px] text-white/30">📹 {videoQuality}</span>
-              {selectedFilter !== "none" && (
-              <>
-              <span className="text-white/20">·</span>
-              <span className="text-[10px] text-primary/60">✨ {FILTERS.find(f => f.id === selectedFilter)?.label}</span>
-              </>
-              )}
-              {selectedBg !== "none" && (
-              <>
-              <span className="text-white/20">·</span>
-              <span className="text-[10px] text-primary/60">🖼️ {BACKGROUNDS.find(b => b.id === selectedBg)?.label}</span>
-              </>
-              )}
-              </div>
 
               {/* Chat section - Below video (3倍サイズ) */}
               {user && (
