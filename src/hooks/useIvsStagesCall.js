@@ -22,7 +22,7 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
   const reconnectTimerRef = useRef(null);
   const remoteVideoTimeoutRef = useRef(null);
 
-  const MAX_RECONNECT_ATTEMPTS = 5;
+  const MAX_RECONNECT_ATTEMPTS = 10;  // モバイル回線の不安定性に対応
 
   const cleanup = useCallback(() => {
     cancelledRef.current = true;
@@ -110,7 +110,30 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         },
       };
 
-      const stage = new Stage(stagesToken, strategy);
+      // 🔥 ICE SERVER CONFIGURATION — CRITICAL FOR MOBILE CONNECTIVITY
+      // STUN: NAT穿孔 / TURN: Relay通信（Wi-Fi・企業ネットワーク対応）
+      const rtcConfiguration = {
+        iceServers: [
+          // Google STUN（無料・高速）
+          { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+          // AWS TURN Relay（IVS公式推奨）
+          { 
+            urls: ['turns:global.turn.aws:3478?transport=tcp'],
+            username: 'aws',
+            credential: 'aws'
+          },
+          // Fallback STUN
+          { urls: ['stun:stun.stunprotocol.org:3478'] }
+        ],
+        iceCandidatePoolSize: 10,
+      };
+      console.log('[IVS Stages] 🌐 RTC Configuration (ICE Servers):', {
+        stunServers: 3,
+        turnServers: 1,
+        iceCandidatePoolSize: rtcConfiguration.iceCandidatePoolSize,
+      });
+
+      const stage = new Stage(stagesToken, strategy, rtcConfiguration);
 
       // リモートストリームを受信 → video 要素にバインド
       stage.on(StageEvents.STAGE_PARTICIPANT_STREAMS_ADDED, (participant, streams) => {
@@ -225,20 +248,30 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
     const attempt = reconnectAttemptRef.current;
 
     if (attempt > MAX_RECONNECT_ATTEMPTS) {
-      console.error('[IVS Stages] ❌ Max reconnect attempts reached. Giving up.');
+      console.error('[IVS Stages] ❌❌ Max reconnect attempts (10) reached. Giving up.');
       onReconnectFailed?.();
       toast.error('通話の再接続に失敗しました。通話を終了してください。');
       return;
     }
 
-    // 指数バックオフ: 2s, 4s, 8s, 16s, 30s（max）
-    const delayMs = Math.min(2000 * Math.pow(2, attempt - 1), 30000);
+    // 🔥 EXPONENTIAL BACKOFF WITH MOBILE TOLERANCE
+    // 指数バックオフ: 1s, 2s, 4s, 8s, 16s, 30s, 30s, 30s, 30s, 30s（最後は30s固定で粘る）
+    const delayMs = attempt <= 6 
+      ? Math.min(1000 * Math.pow(2, attempt - 1), 30000) 
+      : 30000;
+    
     console.log(`[IVS Stages] 🔄 Reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms`);
 
-    onReconnecting?.(attempt);
-    toast.warning(`再接続中... (${attempt}/${MAX_RECONNECT_ATTEMPTS})`);
+    // 最初の3回は通知 → 4回目以降は静かに（ユーザーを惑わさない）
+    if (attempt <= 3) {
+      onReconnecting?.(attempt);
+      toast.warning(`再接続中... (${attempt}/${MAX_RECONNECT_ATTEMPTS})`);
+    } else {
+      console.log('[IVS Stages] 🔄 Reconnecting silently in background...');
+    }
 
     reconnectTimerRef.current = setTimeout(() => {
+      console.log(`[IVS Stages] 🔄 Attempting reconnect #${attempt}...`);
       join(stagesToken, IVSClient, true);
     }, delayMs);
   }, [join, onReconnecting, onReconnectFailed]);

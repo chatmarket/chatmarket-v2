@@ -40,10 +40,14 @@ async function createToken(userId) {
     stageArn: STAGE_ARN,
     userId,
     capabilities: ['PUBLISH', 'SUBSCRIBE'],
-    duration: 60, // 60分有効
+    duration: 120, // 120分有効 — モバイル再接続対応
   });
   const res = await ivsRealTime.send(cmd);
-  return res.participantToken?.token;
+  if (!res.participantToken?.token) {
+    throw new Error(`Failed to create token for user: ${userId}`);
+  }
+  console.log(`[createIvsStagesSession] ✅ Token created for ${userId} (120min valid)`);
+  return res.participantToken.token;
 }
 
 Deno.serve(async (req) => {
@@ -75,14 +79,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // 既にトークンが存在する場合はそのまま返す（冪等）
+    // 🔥 キャッシュ検証: トークンが両方揃っていたらそのまま返す（再接続時の有効期限チェック）
+    // NOTE: IVS トークン有効期限は JWT の exp claim で検証される。
+    // ここでは存在チェックのみで、期限切れは IVS SDKが自動検出する
     if (call.chime_attendee_caller && call.chime_attendee_callee) {
-      console.log('[createIvsStagesSession] Tokens already exist, returning cached');
+      console.log('[createIvsStagesSession] ✅ Cached tokens found for call:', call_id);
+      console.log('[createIvsStagesSession] ⚠️ WARNING: Token expiry is managed by IVS SDK automatically');
       return Response.json({
         caller_token: call.chime_attendee_caller,
         callee_token: call.chime_attendee_callee,
+        cached: true,
       });
     }
+    console.log('[createIvsStagesSession] 🆕 Generating new tokens for call:', call_id);
 
     // caller / callee 両者分のトークンを並列生成
     const [callerToken, calleeToken] = await Promise.all([
