@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +67,40 @@ export default function GoLive() {
     queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }),
     enabled: !!user,
   });
+
+  // PPVプラン加入確認（1対多数配信の要件）
+  const { data: ppvSubscription = null } = useQuery({
+    queryKey: ["ppv-subscription", user?.email],
+    queryFn: async () => {
+      const subs = await base44.entities.PlanSubscription.filter({
+        user_email: user.email,
+        plan_id: "ppv",
+        status: "active",
+      });
+      return subs[0] || null;
+    },
+    enabled: !!user,
+  });
+
+  // キャンペーン対象者確認（期間限定で1対多数配信が無料）
+  const { data: campaignGrantee = null } = useQuery({
+    queryKey: ["campaign-live-grantee", user?.email],
+    queryFn: async () => {
+      const grantees = await base44.entities.CampaignLiveGrantee.filter({
+        email: user.email,
+      });
+      const grantee = grantees[0];
+      // 有効期限内かチェック
+      if (grantee && new Date(grantee.expires_at) > new Date()) {
+        return grantee;
+      }
+      return null;
+    },
+    enabled: !!user,
+  });
+
+  // 1対多数配信利用可能判定（PPV加入 OR キャンペーン対象）
+  const canUseLiveStream = !!ppvSubscription || !!campaignGrantee;
 
 
 
@@ -167,6 +201,22 @@ export default function GoLive() {
 
   // 配信方式選択画面（OBS vs ブラウザ）
   if (mode === MODE_CHOOSE) {
+    // 1対多数配信利用可能確認
+    if (!canUseLiveStream) {
+      return (
+        <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
+          <div className="text-6xl">🔒</div>
+          <h1 className="text-2xl font-black">1対多数配信はPPVプラン加入が必須です</h1>
+          <p className="text-muted-foreground">1対多数のライブ配信とチケット制予約配信を利用するにはPPVプラン（¥9,900/月）への加入が必要です。</p>
+          <Link to="/plan-select">
+            <button className="bg-primary text-black font-black px-8 py-3 rounded-xl hover:bg-primary/90">
+              PPVプランを確認する
+            </button>
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-5xl mx-auto px-4 py-12 flex flex-col items-center gap-8">
         <div className="text-center mb-2">
@@ -296,7 +346,14 @@ export default function GoLive() {
         <div className="w-full grid grid-cols-1 gap-4">
           {/* 1対多ライブ配信 */}
           <button
-            onClick={() => requireAuth(() => setMode(MODE_CHOOSE))}
+            onClick={() => requireAuth(() => {
+              if (!canUseLiveStream) {
+                toast.error("PPVプランへの加入が必須です");
+                navigate("/plan-select");
+                return;
+              }
+              setMode(MODE_CHOOSE);
+            })}
             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
@@ -643,18 +700,19 @@ export default function GoLive() {
           })()}
         </div>
 
-        {/* チケット販売設定 */}
-        <div className="space-y-3 bg-yellow-500/5 border border-yellow-500/30 rounded-2xl p-4">
+        {/* チケット販売設定（PPV限定） */}
+        <div className={`space-y-3 border rounded-2xl p-4 ${canUseLiveStream && ppvSubscription ? "bg-yellow-500/5 border-yellow-500/30" : "bg-muted/20 border-muted/40 opacity-60"}`}>
           <div className="flex items-center justify-between">
-            <label className="text-sm font-bold text-yellow-400 flex items-center gap-2">
-              🎫 チケット販売（1対多数限定）
+            <label className={`text-sm font-bold flex items-center gap-2 ${canUseLiveStream && ppvSubscription ? "text-yellow-400" : "text-muted-foreground"}`}>
+              🎫 チケット販売（PPVプラン限定）
             </label>
             <button
               type="button"
+              disabled={!canUseLiveStream || !ppvSubscription}
               onClick={() => setTicketEnabled((v) => !v)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled ? "bg-yellow-500" : "bg-secondary"}`}
+              className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled && ppvSubscription ? "bg-yellow-500" : "bg-secondary"}`}
             >
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ticketEnabled ? "left-6" : "left-0.5"}`} />
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ticketEnabled && ppvSubscription ? "left-6" : "left-0.5"}`} />
             </button>
           </div>
           {ticketEnabled && (
@@ -706,7 +764,13 @@ export default function GoLive() {
               </div>
             </div>
           )}
-          {!ticketEnabled && (
+          {!canUseLiveStream && (
+            <p className="text-xs text-muted-foreground">PPVプランへの加入でチケット販売機能を利用できます</p>
+          )}
+          {canUseLiveStream && !ppvSubscription && campaignGrantee && (
+            <p className="text-xs text-yellow-400 font-semibold">✅ キャンペーン対象：期間限定でチケット販売が無料です</p>
+          )}
+          {ppvSubscription && !ticketEnabled && (
             <p className="text-[11px] text-muted-foreground">ONにすると視聴者がコインまたはクレジットカードでチケットを購入して入場できます</p>
           )}
         </div>
