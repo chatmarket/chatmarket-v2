@@ -74,6 +74,12 @@ export default function ContentAnalytics() {
     enabled: !!user,
   });
 
+  const { data: liveStreams = [] } = useQuery({
+    queryKey: ["analytics-live-streams", channel?.id],
+    queryFn: () => base44.entities.LiveStream.filter({ channel_id: channel.id }, "-created_date", 200),
+    enabled: !!channel,
+  });
+
   const videoIds = useMemo(() => videos.map((v) => v.id), [videos]);
   const myWatchHistory = useMemo(() => allWatchHistory.filter((w) => videoIds.includes(w.video_id)), [allWatchHistory, videoIds]);
 
@@ -204,6 +210,7 @@ export default function ContentAnalytics() {
           <TabsTrigger value="retention">視聴維持率</TabsTrigger>
           <TabsTrigger value="audience">視聴者属性</TabsTrigger>
           <TabsTrigger value="top-content">収益貢献コンテンツ</TabsTrigger>
+          <TabsTrigger value="tickets">🎫 チケット販売</TabsTrigger>
           <TabsTrigger value="daily">日別トレンド</TabsTrigger>
           <TabsTrigger value="radar">総合スコア</TabsTrigger>
         </TabsList>
@@ -445,6 +452,112 @@ export default function ContentAnalytics() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── チケット販売 ── */}
+        <TabsContent value="tickets" className="space-y-4">
+          {liveStreams.filter((s) => s.is_ticket_enabled).length > 0 ? (
+            <>
+              <Card className="bg-card border-border/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Zap className="w-4 h-4 text-yellow-400" /> チケット販売状況（配信予約別）
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/50 text-muted-foreground text-xs">
+                          <th className="text-left py-3 px-3">配信日時</th>
+                          <th className="text-center py-3 px-3">配信タイトル</th>
+                          <th className="text-right py-3 px-3">チケット価格</th>
+                          <th className="text-right py-3 px-3">販売枚数</th>
+                          <th className="text-right py-3 px-3">売上（円）</th>
+                          <th className="text-center py-3 px-3">ステータス</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {liveStreams
+                          .filter((s) => s.is_ticket_enabled && s.ticket_purchases?.length > 0)
+                          .map((stream) => {
+                            const scheduledDate = stream.scheduled_at
+                              ? new Date(stream.scheduled_at).toLocaleDateString("ja-JP", {
+                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "即配信";
+                            const ticketCount = stream.ticket_purchases?.length || 0;
+                            const totalRevenue = stream.ticket_total_revenue_yen || 0;
+                            return (
+                              <tr key={stream.id} className="border-b border-border/30 hover:bg-secondary/50">
+                                <td className="py-3 px-3 text-sm font-medium">{scheduledDate}</td>
+                                <td className="py-3 px-3 text-sm truncate max-w-[200px]">{stream.title}</td>
+                                <td className="text-right py-3 px-3">¥{(stream.ticket_price_yen || 0).toLocaleString()}</td>
+                                <td className="text-right py-3 px-3 font-bold text-primary">{ticketCount}枚</td>
+                                <td className="text-right py-3 px-3 font-bold text-green-400">¥{totalRevenue.toLocaleString()}</td>
+                                <td className="text-center py-3 px-3">
+                                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                                    stream.status === "live" ? "bg-red-500/20 text-red-400" :
+                                    stream.status === "scheduled" ? "bg-blue-500/20 text-blue-400" :
+                                    "bg-zinc-500/20 text-zinc-400"
+                                  }`}>
+                                    {stream.status === "live" ? "配信中" : stream.status === "scheduled" ? "予定" : "終了"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* チケット販売サマリー */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <Card className="bg-gradient-to-br from-yellow-500/5 to-card border-yellow-500/20">
+                  <CardContent className="pt-5">
+                    <p className="text-xs text-muted-foreground mb-1">総チケット販売枚数</p>
+                    <p className="text-3xl font-black text-yellow-400">
+                      {liveStreams
+                        .filter((s) => s.is_ticket_enabled)
+                        .reduce((sum, s) => sum + (s.ticket_purchases?.length || 0), 0)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-green-500/5 to-card border-green-500/20">
+                  <CardContent className="pt-5">
+                    <p className="text-xs text-muted-foreground mb-1">チケット売上合計</p>
+                    <p className="text-3xl font-black text-green-400">
+                      ¥{liveStreams
+                        .filter((s) => s.is_ticket_enabled)
+                        .reduce((sum, s) => sum + (s.ticket_total_revenue_yen || 0), 0)
+                        .toLocaleString()}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-primary/5 to-card border-primary/20">
+                  <CardContent className="pt-5">
+                    <p className="text-xs text-muted-foreground mb-1">チケット有効配信数</p>
+                    <p className="text-3xl font-black text-primary">
+                      {liveStreams.filter((s) => s.is_ticket_enabled).length}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <Card className="bg-card border-border/50">
+              <CardContent className="py-16">
+                <p className="text-center text-muted-foreground text-sm">🎫 チケット販売を有効にした配信がありません</p>
+                <p className="text-center text-muted-foreground text-xs mt-2">PPVプランで配信を予約する際にチケット販売をONにしてください</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ── 日別トレンド ── */}
