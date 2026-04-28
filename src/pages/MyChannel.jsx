@@ -4,11 +4,14 @@ import { base44 } from "@/api/base44Client";
 import VideoCard from "../components/cards/VideoCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall } from "lucide-react";
+import QRCode from "qrcode.react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 import VideoEditPanel from "../components/channel/VideoEditPanel";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
@@ -20,6 +23,7 @@ export default function MyChannel() {
   const [channelForm, setChannelForm] = useState({});
   const [archiveModalStream, setArchiveModalStream] = useState(null);
   const [editingVideo, setEditingVideo] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -132,6 +136,95 @@ export default function MyChannel() {
           onUpdate={() => queryClient.invalidateQueries({ queryKey: ["my-videos"] })}
         />
       )}
+      
+      {/* チャンネルシェアモーダル */}
+      {showShareModal && channel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-card border border-border/50 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl space-y-5">
+            <div className="space-y-1">
+              <h2 className="text-lg font-black flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-primary" />
+                チャンネルを共有
+              </h2>
+              <p className="text-xs text-muted-foreground">チャンネルURLとQRコードを使って新規ユーザーに紹介してください</p>
+            </div>
+
+            {/* チャンネルURL */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">チャンネルURL</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  readOnly
+                  value={`${window.location.origin}/channel/${channel.id}`}
+                  className="bg-secondary border-0 text-xs font-mono flex-1"
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/channel/${channel.id}`);
+                    toast.success("URLをコピーしました");
+                  }}
+                  className="gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* QRコード */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">QRコード</Label>
+              <div className="bg-white rounded-xl p-4 flex items-center justify-center">
+                <QRCode
+                  value={`${window.location.origin}/channel/${channel.id}`}
+                  size={160}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center">スマートフォンで読み込んでチャンネルにアクセス</p>
+            </div>
+
+            {/* SNS共有 */}
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-muted-foreground">SNSで共有</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const text = encodeURIComponent(`${channel.name}のチャンネル: ${window.location.origin}/channel/${channel.id}`);
+                    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
+                  }}
+                  className="text-xs"
+                >
+                  𝕏
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const url = encodeURIComponent(`${window.location.origin}/channel/${channel.id}`);
+                    const text = encodeURIComponent(channel.name);
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
+                  }}
+                  className="text-xs"
+                >
+                  Facebook
+                </Button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="w-full py-2 rounded-lg border border-border hover:bg-secondary transition-colors text-sm font-semibold"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
       {/* Channel Header */}
       <div className="bg-card rounded-2xl border border-border/50 p-6 mb-8">
         <div className="flex items-start gap-4">
@@ -188,6 +281,9 @@ export default function MyChannel() {
                 <Radio className="w-4 h-4 text-red-400" /> 配信開始
               </Button>
             </Link>
+            <Button size="sm" variant="outline" className="gap-2 w-full" onClick={() => setShowShareModal(true)}>
+              <Share2 className="w-4 h-4" /> チャンネル共有
+            </Button>
           </div>
         </div>
 
