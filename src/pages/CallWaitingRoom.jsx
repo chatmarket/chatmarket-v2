@@ -202,6 +202,8 @@ export default function CallWaitingRoom() {
   const [camStream, setCamStream] = useState(null);
   const [showCam, setShowCam] = useState(false);
   const camRef = useRef(null);
+  const [videoDevices, setVideoDevices] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState("");
 
   const [isCampaignUser, setIsCampaignUser] = useState(false);
   const [campaignMonthsLeft, setCampaignMonthsLeft] = useState(null);
@@ -358,27 +360,45 @@ export default function CallWaitingRoom() {
     toast.info("通話を断りました");
   };
 
-  const toggleCam = async () => {
-    if (showCam) { stopCam(); return; }
+  // デバイスリスト取得（初回レンダリング時）
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const vDevices = devices.filter((d) => d.kind === "videoinput");
+      setVideoDevices(vDevices);
+      // デフォルト: FaceTime / Built-in 優先
+      let def = vDevices.find((d) => d.label.toLowerCase().includes("facetime"));
+      if (!def) def = vDevices.find((d) => d.label.toLowerCase().includes("built-in"));
+      if (!def) def = vDevices.find((d) => !d.label.toLowerCase().includes("obs"));
+      if (!def) def = vDevices[0];
+      if (def) setSelectedCameraId(def.deviceId);
+    }).catch(() => {});
+  }, []);
+
+  const startCam = async (deviceId) => {
+    camStream?.getTracks().forEach((t) => t.stop());
     try {
-      // FaceTime / Built-in を優先・OBS Virtual Camera を除外
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter((d) => d.kind === "videoinput");
-      let camera = videoDevices.find((d) => d.label.toLowerCase().includes("facetime"));
-      if (!camera) camera = videoDevices.find((d) => d.label.toLowerCase().includes("built-in"));
-      if (!camera) camera = videoDevices.find((d) => !d.label.toLowerCase().includes("obs"));
-      if (!camera) camera = videoDevices[0];
-
-      const videoConstraint = camera?.deviceId
-        ? { deviceId: { exact: camera.deviceId } }
-        : true;
-
+      const videoConstraint = deviceId ? { deviceId: { exact: deviceId } } : true;
       const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: false });
+      // カメラ起動後にデバイスラベルを再取得（初回許可後にラベルが付く）
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const vDevices = devices.filter((d) => d.kind === "videoinput");
+      setVideoDevices(vDevices);
       setCamStream(stream);
       setShowCam(true);
       setTimeout(() => { if (camRef.current) camRef.current.srcObject = stream; }, 100);
     } catch { toast.error("カメラにアクセスできません"); }
   };
+
+  const toggleCam = async () => {
+    if (showCam) { stopCam(); return; }
+    await startCam(selectedCameraId);
+  };
+
+  const handleCameraSwitch = async (deviceId) => {
+    setSelectedCameraId(deviceId);
+    if (showCam) await startCam(deviceId);
+  };
+
   const stopCam = () => {
     camStream?.getTracks().forEach((t) => t.stop());
     setCamStream(null); setShowCam(false);
@@ -601,19 +621,35 @@ export default function CallWaitingRoom() {
 
         {/* カメラ確認 */}
         <div className="rounded-2xl border border-border/50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-card">
+          <div className="flex items-center justify-between px-4 py-3 bg-card gap-3 flex-wrap">
             <p className="text-sm font-bold">カメラ確認（任意）</p>
-            <button
-              onClick={toggleCam}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
-                showCam
-                  ? "bg-red-500/20 border-red-500/60 text-red-300"
-                  : "bg-secondary border-border text-muted-foreground hover:border-primary/40"
-              }`}
-            >
-              {showCam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
-              {showCam ? "カメラOFF" : "カメラ確認"}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* デバイス選択 */}
+              {videoDevices.length > 1 && (
+                <select
+                  value={selectedCameraId}
+                  onChange={(e) => handleCameraSwitch(e.target.value)}
+                  className="text-xs rounded-lg bg-secondary border-0 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/50 max-w-[180px]"
+                >
+                  {videoDevices.map((d, i) => (
+                    <option key={d.deviceId} value={d.deviceId}>
+                      {d.label || `カメラ ${i + 1}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                onClick={toggleCam}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
+                  showCam
+                    ? "bg-red-500/20 border-red-500/60 text-red-300"
+                    : "bg-secondary border-border text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                {showCam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+                {showCam ? "カメラOFF" : "カメラ確認"}
+              </button>
+            </div>
           </div>
           {showCam && (
             <div className="aspect-video bg-black">
@@ -695,15 +731,30 @@ export default function CallWaitingRoom() {
               </div>
               <p className="text-white/50 text-xs">リクエストが届くと着信します</p>
             </div>
-            <button
-              onClick={toggleCam}
-              className={`absolute bottom-3 right-3 pointer-events-auto flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
-                showCam ? "bg-red-500/20 border-red-500/60 text-red-300" : "bg-black/60 border-white/20 text-white/70"
-              }`}
-            >
-              {showCam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
-              {showCam ? "カメラOFF" : "カメラ確認"}
-            </button>
+            <div className="absolute bottom-3 right-3 pointer-events-auto flex items-center gap-2">
+              {showCam && videoDevices.length > 1 && (
+                <select
+                  value={selectedCameraId}
+                  onChange={(e) => handleCameraSwitch(e.target.value)}
+                  className="text-xs rounded-lg bg-black/70 border border-white/20 text-white px-2 py-1 focus:outline-none max-w-[150px]"
+                >
+                  {videoDevices.map((d, i) => (
+                    <option key={d.deviceId} value={d.deviceId} className="bg-black">
+                      {d.label || `カメラ ${i + 1}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                onClick={toggleCam}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
+                  showCam ? "bg-red-500/20 border-red-500/60 text-red-300" : "bg-black/60 border-white/20 text-white/70"
+                }`}
+              >
+                {showCam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+                {showCam ? "カメラOFF" : "カメラ確認"}
+              </button>
+            </div>
           </div>
           <div className="bg-card border border-border/50 rounded-xl p-3 text-xs space-y-1 text-muted-foreground">
             <p className="font-bold text-foreground text-sm">通話設定</p>
