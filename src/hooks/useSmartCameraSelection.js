@@ -1,68 +1,65 @@
 import { useEffect, useState } from 'react';
 
 /**
- * 1対1通話用のスマートカメラ・マイク選択 hook
- * - FaceTime / Built-in を優先
- * - OBS Virtual Camera を除外
- * - localStorage に選択状態を記憶
+ * 1対1通話用のカメラ・マイク選択 hook
+ *
+ * デフォルト: PC内蔵カメラ（FaceTime / Built-in）を優先して自動選択
+ * 選択肢: OBS Virtual Camera も含む全デバイスをリストアップ
+ * ユーザーが localStorage でデバイスを切り替え可能
+ *
+ * ★ AWS通信網（IVS Stages）は一切変更しない
  */
 export function useSmartCameraSelection() {
   const [stream, setStream] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [videoDevices, setVideoDevices] = useState([]);
+  const [audioDevices, setAudioDevices] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState(null);
+  const [selectedMicId, setSelectedMicId] = useState(null);
 
   useEffect(() => {
     const initializeDevices = async () => {
       try {
-        // 1. デバイス一覧取得
+        // 1. デバイス一覧取得（OBS含む全デバイス）
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(d => d.kind === 'videoinput');
-        const audioDevices = devices.filter(d => d.kind === 'audioinput');
+        const vDevices = devices.filter(d => d.kind === 'videoinput');
+        const aDevices = devices.filter(d => d.kind === 'audioinput');
 
-        // 2. カメラ優先度選択（強制ON: FaceTime > Built-in > 除外OBS）
-         let selectedCameraId = null;
+        setVideoDevices(vDevices);
+        setAudioDevices(aDevices);
 
-         // FaceTime カメラを優先（最強力）
-         let camera = videoDevices.find(d => d.label.toLowerCase().includes('facetime'));
-         console.log('[useSmartCameraSelection] 🔍 Searching FaceTime:', camera?.label || 'not found');
-
-         // なければ Built-in を選択
-         if (!camera) {
-           camera = videoDevices.find(d => d.label.toLowerCase().includes('built-in'));
-           console.log('[useSmartCameraSelection] 🔍 Searching Built-in:', camera?.label || 'not found');
-         }
-
-         // OBS Virtual Camera を明示的に除外
-         if (!camera) {
-           camera = videoDevices.find(d => !d.label.toLowerCase().includes('obs'));
-           console.log('[useSmartCameraSelection] 🔍 Searching non-OBS:', camera?.label || 'not found');
-         }
-
-         // デフォルト（最後の手段）
-         if (!camera) camera = videoDevices[0];
-
-         if (camera) {
-           selectedCameraId = camera.deviceId;
-           localStorage.setItem('selectedCameraId', selectedCameraId);
-           console.log('[useSmartCameraSelection] ✅ 📷 Camera FORCED:', camera.label, 'ID:', selectedCameraId);
-         }
-
-        // 3. マイク優先度選択（同様にOBS除外）
-        let selectedMicId = localStorage.getItem('selectedMicId');
-        if (!selectedMicId || !audioDevices.find(d => d.deviceId === selectedMicId)) {
-          let mic = audioDevices.find(d => !d.label.includes('OBS'));
-          if (!mic) mic = audioDevices[0];
-          if (mic) {
-            selectedMicId = mic.deviceId;
-            localStorage.setItem('selectedMicId', selectedMicId);
-            console.log('[useSmartCameraSelection] 🎤 Mic selected:', mic.label);
-          }
+        // 2. カメラ: localStorage に保存済みなら使用、なければ内蔵カメラを優先
+        let camId = localStorage.getItem('selectedCameraId');
+        if (!camId || !vDevices.find(d => d.deviceId === camId)) {
+          // FaceTime > Built-in > その他（OBSは除外してデフォルトを選ぶが、選択肢には残す）
+          let cam = vDevices.find(d => d.label.toLowerCase().includes('facetime'));
+          if (!cam) cam = vDevices.find(d => d.label.toLowerCase().includes('built-in'));
+          if (!cam) cam = vDevices.find(d => !d.label.toLowerCase().includes('obs'));
+          if (!cam) cam = vDevices[0];
+          camId = cam?.deviceId || null;
+          if (camId) localStorage.setItem('selectedCameraId', camId);
+          console.log('[useSmartCameraSelection] 📷 Default camera:', cam?.label);
+        } else {
+          console.log('[useSmartCameraSelection] 📷 Restored camera from localStorage:', vDevices.find(d => d.deviceId === camId)?.label);
         }
+        setSelectedCameraId(camId);
 
-        // ストリーム取得
+        // 3. マイク: localStorage に保存済みなら使用、なければ内蔵マイクを優先
+        let micId = localStorage.getItem('selectedMicId');
+        if (!micId || !aDevices.find(d => d.deviceId === micId)) {
+          let mic = aDevices.find(d => !d.label.toLowerCase().includes('obs'));
+          if (!mic) mic = aDevices[0];
+          micId = mic?.deviceId || null;
+          if (micId) localStorage.setItem('selectedMicId', micId);
+          console.log('[useSmartCameraSelection] 🎤 Default mic:', mic?.label);
+        }
+        setSelectedMicId(micId);
+
+        // 4. ストリーム取得
         const constraints = {
-          video: selectedCameraId ? { deviceId: { exact: selectedCameraId } } : true,
-          audio: selectedMicId ? { deviceId: { exact: selectedMicId } } : true,
+          video: camId ? { deviceId: { exact: camId } } : true,
+          audio: micId ? { deviceId: { exact: micId } } : true,
         };
         const newStream = await navigator.mediaDevices.getUserMedia(constraints);
         setStream(newStream);
@@ -76,11 +73,42 @@ export function useSmartCameraSelection() {
     };
 
     initializeDevices();
-
-    return () => {
-      // cleanup
-    };
   }, []);
 
-  return { stream, loading, error };
+  // デバイス切り替え関数（VideoCallPage から呼び出し可能）
+  const switchCamera = async (deviceId) => {
+    localStorage.setItem('selectedCameraId', deviceId);
+    setSelectedCameraId(deviceId);
+    if (stream) {
+      stream.getVideoTracks().forEach(t => t.stop());
+      try {
+        const newVideoStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } }, audio: false });
+        const newTrack = newVideoStream.getVideoTracks()[0];
+        const newStream = new MediaStream([newTrack, ...stream.getAudioTracks()]);
+        setStream(newStream);
+        console.log('[useSmartCameraSelection] 🔄 Camera switched:', deviceId);
+      } catch (err) {
+        console.error('[useSmartCameraSelection] ❌ Camera switch failed:', err);
+      }
+    }
+  };
+
+  const switchMic = async (deviceId) => {
+    localStorage.setItem('selectedMicId', deviceId);
+    setSelectedMicId(deviceId);
+    if (stream) {
+      stream.getAudioTracks().forEach(t => t.stop());
+      try {
+        const newAudioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: { deviceId: { exact: deviceId } } });
+        const newTrack = newAudioStream.getAudioTracks()[0];
+        const newStream = new MediaStream([...stream.getVideoTracks(), newTrack]);
+        setStream(newStream);
+        console.log('[useSmartCameraSelection] 🔄 Mic switched:', deviceId);
+      } catch (err) {
+        console.error('[useSmartCameraSelection] ❌ Mic switch failed:', err);
+      }
+    }
+  };
+
+  return { stream, loading, error, videoDevices, audioDevices, selectedCameraId, selectedMicId, switchCamera, switchMic };
 }

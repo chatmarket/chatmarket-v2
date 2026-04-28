@@ -642,7 +642,7 @@ export default function VideoCallPage() {
   }, [callStartTime, effectiveDuration, extendPaid, call?.id]);
 
   // スマートカメラ選択 hook からストリームを取得
-  const { stream: smartStream } = useSmartCameraSelection();
+  const { stream: smartStream, videoDevices, audioDevices, selectedCameraId, selectedMicId, switchCamera, switchMic } = useSmartCameraSelection();
   useEffect(() => {
     if (smartStream) {
       setLocalStream(smartStream);
@@ -1384,6 +1384,41 @@ export default function VideoCallPage() {
 
                 {activePanel === "settings" && (
                   <div className="space-y-3">
+                    {/* カメラ選択（OBS含む全デバイス） */}
+                    {videoDevices.length > 1 && (
+                      <div>
+                        <label className="text-xs text-white/60 mb-1 block">📹 カメラ選択</label>
+                        <select
+                          value={selectedCameraId || ""}
+                          onChange={(e) => switchCamera(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-primary"
+                        >
+                          {videoDevices.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId} className="bg-black">
+                              {d.label || `カメラ ${videoDevices.indexOf(d) + 1}`}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-white/30 mt-1">内蔵カメラ・OBS等から選択できます</p>
+                      </div>
+                    )}
+                    {/* マイク選択 */}
+                    {audioDevices.length > 1 && (
+                      <div>
+                        <label className="text-xs text-white/60 mb-1 block">🎙️ マイク選択</label>
+                        <select
+                          value={selectedMicId || ""}
+                          onChange={(e) => switchMic(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-primary"
+                        >
+                          {audioDevices.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId} className="bg-black">
+                              {d.label || `マイク ${audioDevices.indexOf(d) + 1}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label className="text-xs text-white/60 mb-1 block">🎙️ 音声品質</label>
                       <div className="flex flex-wrap gap-2">

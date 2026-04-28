@@ -47,10 +47,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setMicrophones(micDevices);
       
       if (cameraDevices.length > 0 && !selectedCamera) {
-        setSelectedCamera(cameraDevices[0].deviceId);
+        // デフォルト: FaceTime > Built-in > OBS含む残り全デバイス（選択肢には全部残す）
+        let defaultCam = cameraDevices.find(d => d.label.toLowerCase().includes('facetime'));
+        if (!defaultCam) defaultCam = cameraDevices.find(d => d.label.toLowerCase().includes('built-in'));
+        if (!defaultCam) defaultCam = cameraDevices[0];
+        setSelectedCamera(defaultCam.deviceId);
+        console.log('[BrowserBroadcaster] 📷 Default camera:', defaultCam.label);
       }
       if (micDevices.length > 0 && !selectedMic) {
-        setSelectedMic(micDevices[0].deviceId);
+        // デフォルト: 内蔵マイク優先（OBSは除外してデフォルトにしないが選択肢には残す）
+        let defaultMic = micDevices.find(d => !d.label.toLowerCase().includes('obs'));
+        if (!defaultMic) defaultMic = micDevices[0];
+        setSelectedMic(defaultMic.deviceId);
+        console.log('[BrowserBroadcaster] 🎤 Default mic:', defaultMic.label);
       }
     } catch (err) {
       console.error('[BrowserBroadcaster] Device enumeration error:', err);
