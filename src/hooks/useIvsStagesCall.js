@@ -135,37 +135,95 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
 
       const stage = new Stage(stagesToken, strategy, rtcConfiguration);
 
-      // リモートストリームを受信 → video 要素にバインド
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // リモートストリームを受信 → video 要素へ強制アタッチ
+      // IVS SDK v1.34.0 仕様: streams は LocalStageStream の配列
+      // 各要素から mediaStreamTrack を取り出して MediaStream に追加する
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       stage.on(StageEvents.STAGE_PARTICIPANT_STREAMS_ADDED, (participant, streams) => {
-        console.log('[IVS Stages] STREAMS_ADDED:', { participantId: participant.id, isLocal: participant.isLocal, streamCount: streams.length });
-        if (participant.isLocal || cancelledRef.current) return;
-
-        const mediaStream = new MediaStream();
-        streams.forEach(s => {
-          console.log('[IVS Stages] Stream track:', s.streamType, s.mediaStreamTrack?.kind, s.mediaStreamTrack?.readyState);
-          if (s.mediaStreamTrack) mediaStream.addTrack(s.mediaStreamTrack);
+        console.log('[IVS Stages] 🎬 STREAMS_ADDED:', {
+          participantId: participant.id,
+          isLocal: participant.isLocal,
+          streamCount: streams.length,
+          streamTypes: streams.map(s => ({ type: s.streamType, trackKind: s.mediaStreamTrack?.kind, readyState: s.mediaStreamTrack?.readyState }))
         });
 
+        if (participant.isLocal || cancelledRef.current) {
+          console.log('[IVS Stages] ⏭ Skipping local participant or cancelled');
+          return;
+        }
+
+        // 既存の srcObject があればトラックを追加、なければ新規作成
         const videoEl = remoteVideoRef.current;
-        if (videoEl) {
-          videoEl.srcObject = mediaStream;
-          // スマホ対応: muted不要・再生保証
-          videoEl.muted = false;
-          videoEl.volume = 1.0;
-          const playPromise = videoEl.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => console.log('[IVS Stages] ✅ Remote video playing. Video tracks exchanged successfully on mobile.'))
-              .catch(e => {
-                console.warn('[IVS Stages] ⚠️ Remote video play() failed (user gesture needed?):', e.name, e.message);
-                // autoplay blocked: ユーザーの操作後に再試行
-                document.addEventListener('click', () => videoEl.play().catch(() => {}), { once: true });
-                document.addEventListener('touchstart', () => videoEl.play().catch(() => {}), { once: true });
-              });
+        if (!videoEl) {
+          console.error('[IVS Stages] ❌ remoteVideoRef.current is NULL — video element not mounted!');
+          return;
+        }
+
+        // 現在の srcObject を再利用 or 新規作成
+        let mediaStream = videoEl.srcObject instanceof MediaStream ? videoEl.srcObject : new MediaStream();
+        
+        let tracksAdded = 0;
+        streams.forEach(stageStream => {
+          const track = stageStream.mediaStreamTrack;
+          if (!track) {
+            console.warn('[IVS Stages] ⚠️ No mediaStreamTrack on stream:', stageStream.streamType);
+            return;
           }
-          console.log('[IVS Stages] ✅ srcObject set on remoteVideoRef, tracks:', mediaStream.getTracks().length);
+          // 重複追加を防ぐ
+          const existingTrack = mediaStream.getTracks().find(t => t.id === track.id);
+          if (!existingTrack) {
+            mediaStream.addTrack(track);
+            tracksAdded++;
+            console.log(`[IVS Stages] ✅ Track added: ${track.kind} [${track.readyState}] id=${track.id.slice(0,8)}`);
+          }
+        });
+
+        console.log(`[IVS Stages] 📊 Total tracks in MediaStream: ${mediaStream.getTracks().length} (+${tracksAdded} new)`);
+
+        // video要素に強制アタッチ
+        videoEl.srcObject = mediaStream;
+        videoEl.muted = false;
+        videoEl.volume = 1.0;
+
+        const attemptPlay = () => {
+          const p = videoEl.play();
+          if (p !== undefined) {
+            p.then(() => {
+              console.log('[IVS Stages] ✅✅✅ Remote video PLAYING — video+audio connected successfully!');
+              console.log('[IVS Stages] Video tracks:', mediaStream.getVideoTracks().length, '| Audio tracks:', mediaStream.getAudioTracks().length);
+            }).catch(err => {
+              console.warn('[IVS Stages] ⚠️ play() blocked:', err.name, '— waiting for user gesture...');
+              // autoplay policy: 最初のユーザー操作で再試行
+              const retry = () => { videoEl.play().catch(() => {}); };
+              document.addEventListener('click', retry, { once: true });
+              document.addEventListener('touchstart', retry, { once: true });
+            });
+          }
+        };
+
+        // readyState チェック — loadedmetadata 待ちが必要な場合
+        if (videoEl.readyState >= 2) {
+          attemptPlay();
         } else {
-          console.error('[IVS Stages] ❌ remoteVideoRef.current is null — cannot display remote video!');
+          videoEl.addEventListener('loadedmetadata', attemptPlay, { once: true });
+          console.log('[IVS Stages] ⏳ Waiting for loadedmetadata before play()...');
+        }
+      });
+
+      // トラック削除時の処理
+      stage.on(StageEvents.STAGE_PARTICIPANT_STREAMS_REMOVED, (participant, streams) => {
+        if (participant.isLocal || cancelledRef.current) return;
+        console.log('[IVS Stages] 🗑 STREAMS_REMOVED:', participant.id, streams.map(s => s.streamType));
+        const videoEl = remoteVideoRef.current;
+        if (videoEl?.srcObject instanceof MediaStream) {
+          streams.forEach(stageStream => {
+            const track = stageStream.mediaStreamTrack;
+            if (track) videoEl.srcObject.removeTrack(track);
+          });
+          if (videoEl.srcObject.getTracks().length === 0) {
+            videoEl.srcObject = null;
+          }
         }
       });
 

@@ -1054,19 +1054,39 @@ export default function VideoCallPage() {
           />
         )}
 
-        {/* 自分の映像（PiP右下） - 待機中・カメラモードはWaitingScreenDisplay内で表示するため非表示 */}
+        {/* 自分の映像 — 通話前は中央大表示、通話中はPiP右下 */}
         {!isWaiting && (
-        <div className="absolute bottom-4 right-4 w-24 h-32 md:w-32 md:h-44 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black/80 z-10">
-          <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
-          {!camOn && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-              <CameraOff className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+          call?.status === 'active' ? (
+            // 通話中: 右下PiP
+            <div className="absolute bottom-4 right-4 w-28 h-36 md:w-36 md:h-48 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black/80 z-10">
+              <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
+              {!camOn && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                  <CameraOff className="w-5 h-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="absolute bottom-1 inset-x-0 text-center">
+                <span className="text-[9px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">あなた</span>
+              </div>
             </div>
-          )}
-          <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
-            <span className="text-[8px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded-full">自分</span>
-          </div>
-        </div>
+          ) : (
+            // 通話前: 中央に大きく自画像プレビュー
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-full h-full relative">
+                <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
+                {!camOn && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 gap-4">
+                    <CameraOff className="w-12 h-12 text-muted-foreground" />
+                    <p className="text-white/50 text-sm">カメラがOFFです</p>
+                  </div>
+                )}
+                {/* 自画像確認ラベル */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur rounded-full px-4 py-1.5">
+                  <span className="text-white/80 text-xs font-bold">📹 あなたの映り確認中</span>
+                </div>
+              </div>
+            </div>
+          )
         )}
       {/* フルスクリーンボタン */}
         <button

@@ -203,6 +203,7 @@ export default function CallWaitingRoom() {
   const [camStream, setCamStream] = useState(null);
   const [showCam, setShowCam] = useState(false);
   const camRef = useRef(null);
+  const remoteVideoRef = useRef(null);
   const [videoDevices, setVideoDevices] = useState([]);
   const [selectedCameraId, setSelectedCameraId] = useState("");
 
@@ -692,9 +693,9 @@ export default function CallWaitingRoom() {
 
   // ===== 待機中画面 =====
   return (
-    <div className="flex flex-col h-screen max-w-5xl mx-auto px-4">
+    <div className="flex flex-col h-screen bg-background">
       {/* ヘッダー */}
-      <div className="flex items-center justify-between py-4 border-b border-border/30">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border/30 shrink-0">
         <div className="flex items-center gap-3">
           <PhoneCall className="w-6 h-6 text-primary" />
           <div>
@@ -710,37 +711,79 @@ export default function CallWaitingRoom() {
         </Button>
       </div>
 
-      {/* メインエリア */}
-      <div className="flex-1 flex gap-4 min-h-0 py-4">
-        {/* 左: カメラプレビュー */}
-        <div className="flex-1 rounded-2xl overflow-hidden bg-black relative flex flex-col">
-          <div className="flex-1 relative bg-black">
-            {showCam ? (
-              <video ref={camRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card">
-                <PhoneCall className="w-16 h-16 text-primary/30" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center pointer-events-none gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-white font-bold text-sm">着信待機中...</span>
-            </div>
+      {/* ビデオエリア（上部50%） */}
+      <div className="h-1/2 bg-black rounded-b-2xl mx-4 mt-2 relative overflow-hidden flex items-center justify-center">
+        {/* リモート映像（相手） */}
+        <video ref={remoteVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+        
+        {/* ローカル映像（自分） - 通話中は右下、通話前は中央 */}
+        {showCam && (
+          <div className={`${isWaiting ? "absolute inset-0 w-full h-full" : "absolute bottom-4 right-4 w-32 h-40"} rounded-xl overflow-hidden border-2 border-white/30 bg-black z-10`}>
+            <video ref={camRef} autoPlay muted playsInline className="w-full h-full object-cover" />
           </div>
-          <div className="absolute bottom-3 right-3 flex items-center gap-2 pointer-events-auto">
-            {showCam && videoDevices.length > 1 && (
-              <select value={selectedCameraId} onChange={(e) => handleCameraSwitch(e.target.value)} className="text-xs rounded-lg bg-black/80 border border-white/20 text-white px-2 py-1 focus:outline-none max-w-[120px]">
-                {videoDevices.map((d, i) => <option key={d.deviceId} value={d.deviceId} className="bg-black">{d.label || `カメラ ${i + 1}`}</option>)}
-              </select>
-            )}
-            <button onClick={toggleCam} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-all ${showCam ? "bg-red-500/20 border-red-500/60 text-red-300" : "bg-black/60 border-white/20 text-white/70"}`}>
-              {showCam ? <CameraOff className="w-3 h-3" /> : <Camera className="w-3 h-3" />}
-            </button>
-          </div>
-        </div>
+        )}
 
-        {/* 右: チャット */}
-        <div className="w-80 bg-card border border-border/50 rounded-2xl overflow-hidden flex flex-col">
+        {/* カメラOFF時のプレースホルダー */}
+        {!showCam && (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card flex-col gap-4">
+            <PhoneCall className="w-20 h-20 text-primary/30" />
+            <p className="text-white/50 text-sm">カメラをONにしてください</p>
+          </div>
+        )}
+
+        {/* 待機中のテキスト（待機時のみ） */}
+        {isWaiting && !showCam && (
+          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3 pointer-events-none">
+            <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+            <span className="text-white font-bold text-lg">着信待機中...</span>
+            <p className="text-white/50 text-sm">お客様がリクエストするのをお待ちしています</p>
+          </div>
+        )}
+
+        {/* カメラコントロール（右上） */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 pointer-events-auto z-20">
+          {showCam && videoDevices.length > 1 && (
+            <select value={selectedCameraId} onChange={(e) => handleCameraSwitch(e.target.value)} className="text-xs rounded-lg bg-black/80 border border-white/20 text-white px-2 py-1.5 focus:outline-none max-w-[140px]">
+              {videoDevices.map((d, i) => <option key={d.deviceId} value={d.deviceId} className="bg-black">{d.label || `カメラ ${i + 1}`}</option>)}
+            </select>
+          )}
+          <button onClick={toggleCam} className={`flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-full border transition-all font-bold ${showCam ? "bg-red-500/20 border-red-500/60 text-red-300" : "bg-black/60 border-white/20 text-white/70 hover:border-white/40"}`}>
+            {showCam ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
+            {showCam ? "カメラOFF" : "カメラON"}
+          </button>
+        </div>
+      </div>
+
+      {/* チャット + 着信エリア（下部50%） */}
+      <div className="flex-1 flex flex-col gap-3 px-6 py-4 min-h-0 overflow-hidden">
+        {/* 着信バナー */}
+        {incomingCall && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="bg-primary/10 border border-primary/40 rounded-2xl p-4 flex items-center justify-between gap-4 shrink-0"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1 }}>
+                <PhoneCall className="w-5 h-5 text-primary shrink-0" />
+              </motion.div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-primary truncate">{incomingCall.caller_name || incomingCall.caller_email}</p>
+                <p className="text-xs text-primary/70">がビデオ通話をリクエストしています</p>
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button onClick={handleDecline} variant="outline" size="sm" className="gap-1 border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs">
+                断る
+              </Button>
+              <Button onClick={handleAccept} disabled={accepting} size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-black text-xs font-bold">
+                {accepting ? "接続中..." : "承認"}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* チャットエリア */}
+        <div className="flex-1 bg-card border border-border/50 rounded-2xl overflow-hidden flex flex-col min-h-0">
           {!selectedThread ? (
             <>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 shrink-0">
@@ -748,7 +791,7 @@ export default function CallWaitingRoom() {
                 <h3 className="text-sm font-bold flex-1">メッセージ</h3>
                 {unreadCount > 0 && <span className="text-xs font-black bg-red-500 text-white px-2 py-0.5 rounded-full">{unreadCount}</span>}
               </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-border/30">
+              <div className="flex-1 overflow-y-auto divide-y divide-border/30 min-h-0">
                 {threads.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-xs"><p>メッセージなし</p></div>
                 ) : (
@@ -775,39 +818,11 @@ export default function CallWaitingRoom() {
             </>
           )}
         </div>
-      </div>
 
-      {/* 着信バナー + 下部ボタンバー */}
-      <div className="flex flex-col gap-3 py-4 border-t border-border/30 shrink-0">
-        {incomingCall && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="bg-primary/10 border border-primary/40 rounded-2xl p-4 flex items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-3">
-              <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1 }}>
-                <PhoneCall className="w-5 h-5 text-primary" />
-              </motion.div>
-              <div className="flex-1">
-                <p className="text-sm font-black text-primary">{incomingCall.caller_name || incomingCall.caller_email}</p>
-                <p className="text-xs text-primary/70">がビデオ通話をリクエストしています</p>
-              </div>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Button onClick={handleDecline} variant="outline" size="sm" className="gap-1 border-red-500/40 text-red-400 hover:bg-red-500/10">
-                <XCircle className="w-4 h-4" /> 断る
-              </Button>
-              <Button onClick={handleAccept} disabled={accepting} size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-black">
-                <CheckCircle2 className="w-4 h-4" /> {accepting ? "接続中..." : "承認"}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 待機中/接続確認中フラグ */}
+        {/* 待機中ステータス */}
         {!incomingCall && (
-          <div className="text-xs text-center text-muted-foreground py-2 bg-secondary/30 rounded-lg">
-            <span className="animate-pulse">📡 接続を確認中...</span>
+          <div className="text-xs text-center text-muted-foreground py-2 bg-secondary/30 rounded-lg shrink-0 animate-pulse">
+            📡 接続を確認中...
           </div>
         )}
       </div>
