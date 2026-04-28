@@ -4,15 +4,18 @@
  * 確定仕様（2026-04）プラン別マトリックス:
  *
  *   FREEプラン:
- *     最低価格: 200エールコイン / 15分
- *     ライバー還元: 70% (140コイン = ¥140)
- *     Admin手数料: 30% (60コイン = ¥60) ← AWS原価と相殺して収支トントン
+ *     基本価格: 200エールコイン / 15分
+ *     購入者負担: ceil(200 × 1.036) = 208コイン（+3.6%手数料）
+ *     ライバー還元: 70% of 200 = 140コイン
+ *     Admin手数料: 30% of 200 = 60コイン + 手数料8コイン
  *
  *   BasicプランおよびCALLプラン:
- *     最低価格: 150エールコイン / 15分
- *     ライバー還元: 85% (127.5コイン = ¥127.5)
- *     Admin手数料: 15% (22.5コイン = ¥22.5) ← 不足分はBasicプランMRRから補填
+ *     基本価格: 150エールコイン / 15分
+ *     購入者負担: ceil(150 × 1.036) = 156コイン（+3.6%手数料）
+ *     ライバー還元: 85% of 150 = 127コイン
+ *     Admin手数料: 15% of 150 = 23コイン + 手数料6コイン
  *
+ *   ※ ライバー還元は基本価格（手数料前）に対して計算
  *   プランアップグレード: ライバーのプラン変更後、次回tickから自動的に新レートを適用
  *
  * POST body: { call_id: string, action: "tick" | "end" | "check_next" }
@@ -61,10 +64,14 @@ async function getCalleePlanConfig(base44, calleeEmail) {
 }
 
 // 1ユニット課金処理（共通）
+// coinsCharged: 購入者から引く額（基本 + 3.6%手数料）
+// creatorCoins: ライバー還元は基本価格に対して計算（手数料は含まない）
 async function chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg) {
-  const coinsToCharge = planCfg.min_coins;
-  const creatorCoins  = Math.floor(coinsToCharge * planCfg.creator_rate);
-  const platformCoins = coinsToCharge - creatorCoins;
+  const baseCoins     = planCfg.min_coins;                          // 基本コイン（還元計算基準）
+  const coinsToCharge = withFee(baseCoins);                         // 購入者負担（+3.6%）
+  const feeCoins      = coinsToCharge - baseCoins;                  // 手数料コイン
+  const creatorCoins  = Math.floor(baseCoins * planCfg.creator_rate); // ライバー還元（基本コインベース）
+  const platformCoins = coinsToCharge - creatorCoins;               // Admin取り分（手数料含む）
 
   const nextBillingAt = new Date(now.getTime() + 15 * 60 * 1000);
 
@@ -83,26 +90,34 @@ async function chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg) {
     target_id:           call.callee_channel_id,
     channel_id:          call.callee_channel_id,
     channel_owner_email: call.callee_email,
-    message:             `1対1ビデオ通話（第${unitNumber}ユニット）ライバー${Math.round(planCfg.creator_rate*100)}% / Admin${Math.round(planCfg.platform_rate*100)}% [${planCfg.plan}プラン]`,
+    message:             `1対1ビデオ通話（第${unitNumber}ユニット）基本${baseCoins}+手数料${feeCoins}コイン / ライバー${Math.round(planCfg.creator_rate*100)}% [${planCfg.plan}プラン]`,
   });
 
-  // ミリオネア・チャレンジ集計
+  console.log(`[chargeOneUnit] unit=${unitNumber} base=${baseCoins} fee=${feeCoins} total=${coinsToCharge} creator=${creatorCoins} platform=${platformCoins}`);
+
+  // ミリオネア・チャレンジ集計（基本コインベースで集計）
   if (call.callee_channel_id) {
     const channels = await base44.entities.Channel.filter({ id: call.callee_channel_id });
     const ch = channels[0];
     if (ch) {
       await base44.entities.Channel.update(call.callee_channel_id, {
-        monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + coinsToCharge,
+        monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + baseCoins,
       });
     }
   }
 
-  return { coinsToCharge, creatorCoins, platformCoins, nextBillingAt };
+  return { coinsToCharge, baseCoins, feeCoins, creatorCoins, platformCoins, nextBillingAt };
 }
 
 const TURN_COST_PER_MIN   = 2;
 const P2P_SUCCESS_RATE    = 0.80;
-const RECORDING_COST_FLAT = 100; // 録画オプション追加料金: 100コイン/通話（固定）
+const RECORDING_COST_FLAT = 100;  // 録画オプション追加料金: 100コイン/通話（固定）
+const PLATFORM_FEE_RATE   = 0.036; // プラットフォーム手数料: +3.6%（購入者負担）
+
+// 購入者が支払うコイン数（基本コイン + 3.6%手数料）
+function withFee(baseCoins) {
+  return Math.ceil(baseCoins * (1 + PLATFORM_FEE_RATE));
+}
 
 Deno.serve(async (req) => {
   try {
@@ -131,12 +146,15 @@ Deno.serve(async (req) => {
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
       const wallet = wallets[0];
       const balance = wallet?.balance || 0;
+      const nextUnitCost = withFee(planCfg.min_coins);
       return Response.json({
-        success:        true,
+        success:          true,
         balance,
-        plan:           planCfg.plan,
-        next_unit_cost: planCfg.min_coins,
-        has_enough:     balance >= planCfg.min_coins,
+        plan:             planCfg.plan,
+        base_unit_cost:   planCfg.min_coins,
+        next_unit_cost:   nextUnitCost,
+        fee_coins:        nextUnitCost - planCfg.min_coins,
+        has_enough:       balance >= nextUnitCost,
       });
     }
 
@@ -229,16 +247,17 @@ Deno.serve(async (req) => {
         const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
         const wallet = wallets[0];
 
-        if (!wallet || wallet.balance < planCfg.min_coins) {
+        const requiredCoins = withFee(planCfg.min_coins);
+        if (!wallet || wallet.balance < requiredCoins) {
           await base44.entities.VideoCall.update(call_id, { auto_disconnected: true, status: 'ended' });
           return Response.json({
             success: false, reason: 'insufficient_balance',
-            required: planCfg.min_coins, balance: wallet?.balance || 0,
+            required: requiredCoins, balance: wallet?.balance || 0,
             plan: planCfg.plan, auto_disconnected: true,
           });
         }
 
-        const { coinsToCharge, creatorCoins, platformCoins, nextBillingAt } =
+        const { coinsToCharge, baseCoins, feeCoins, creatorCoins, platformCoins, nextBillingAt } =
           await chargeOneUnit(base44, call, wallet, 1, now, planCfg);
 
         await base44.entities.VideoCall.update(call_id, {
@@ -253,6 +272,8 @@ Deno.serve(async (req) => {
         return Response.json({
           success: true, billed: true,
           plan:            planCfg.plan,
+          base_coins:      baseCoins,
+          fee_coins:       feeCoins,
           coins_billed:    coinsToCharge,
           creator_coins:   creatorCoins,
           platform_coins:  platformCoins,
@@ -281,7 +302,8 @@ Deno.serve(async (req) => {
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
       const wallet = wallets[0];
 
-      if (!wallet || wallet.balance < planCfg.min_coins) {
+      const requiredCoinsNext = withFee(planCfg.min_coins);
+      if (!wallet || wallet.balance < requiredCoinsNext) {
         const billingStart  = new Date(call.billing_started_at);
         const actualMinutes = Math.ceil((now - billingStart) / 1000 / 60);
         const consumedCoins = call.coins_consumed || 0;
@@ -302,12 +324,12 @@ Deno.serve(async (req) => {
         return Response.json({
           success: false, reason: 'insufficient_balance', auto_disconnected: true,
           plan: planCfg.plan,
-          required: planCfg.min_coins, balance: wallet?.balance || 0,
+          required: requiredCoinsNext, balance: wallet?.balance || 0,
         });
       }
 
       const unitNumber = (call.billing_interval_count || 0) + 1;
-      const { coinsToCharge, creatorCoins, platformCoins, nextBillingAt: newNextBillingAt } =
+      const { coinsToCharge, baseCoins: bc, feeCoins: fc, creatorCoins, platformCoins, nextBillingAt: newNextBillingAt } =
         await chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg);
 
       const newConsumed        = (call.coins_consumed || 0) + coinsToCharge;
@@ -325,6 +347,8 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true, billed: true,
         plan:                 planCfg.plan,
+        base_coins:           bc,
+        fee_coins:            fc,
         coins_billed:         coinsToCharge,
         creator_coins:        creatorCoins,
         platform_coins:       platformCoins,
