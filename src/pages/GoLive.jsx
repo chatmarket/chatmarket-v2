@@ -717,6 +717,9 @@ export default function GoLive() {
             <label className={`text-sm font-bold flex items-center gap-2 ${canUseLiveStream && ppvSubscription ? "text-yellow-400" : "text-muted-foreground"}`}>
               🎫 チケット販売（PPVプラン限定）
             </label>
+            <a href="/content-analytics" className="text-xs text-primary hover:text-primary/80 font-semibold underline underline-offset-2 transition-colors">
+              売れ行き確認 →
+            </a>
             <button
               type="button"
               disabled={!canUseLiveStream || !ppvSubscription}
@@ -783,6 +786,14 @@ export default function GoLive() {
           )}
           {ppvSubscription && !ticketEnabled && (
             <p className="text-[11px] text-muted-foreground">ONにすると視聴者がコインまたはクレジットカードでチケットを購入して入場できます</p>
+          )}
+          {(ppvSubscription || campaignGrantee) && (
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 space-y-1">
+              <p className="text-[11px] text-yellow-400 font-semibold">💡 チケット売れ行き状況は「コンテンツ分析」で確認できます</p>
+              <a href="/content-analytics" className="text-[10px] text-yellow-300 hover:text-yellow-200 font-semibold underline underline-offset-2 transition-colors inline-block">
+                → コンテンツ分析ページを開く
+              </a>
+            </div>
           )}
         </div>
 
