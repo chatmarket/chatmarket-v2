@@ -234,7 +234,7 @@ export default function GoLive() {
           {/* OBS配信 */}
           <div className="flex flex-col gap-4">
             <button
-              onClick={() => requireAuth(() => setMode(MODE_LIVE))}
+              onClick={() => setMode(MODE_LIVE)}
               className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group"
             >
               <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
@@ -288,7 +288,7 @@ export default function GoLive() {
             <button
               onClick={() => {
                 localStorage.setItem("broadcastMode", "browser");
-                requireAuth(() => setMode(MODE_LIVE));
+                setMode(MODE_LIVE);
               }}
               className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
             >
@@ -352,10 +352,10 @@ export default function GoLive() {
         </div>
         <div className="w-full grid grid-cols-1 gap-4">
           {/* 1対多ライブ配信 */}
-          <button
-            onClick={() => requireAuth(() => setMode(MODE_CHOOSE))}
-            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
-          >
+           <button
+             onClick={() => setMode(MODE_CHOOSE)}
+             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
+           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
               <Radio className="w-8 h-8 text-red-400" />
             </div>
@@ -426,7 +426,7 @@ export default function GoLive() {
             <button
               onClick={() => {
                 localStorage.removeItem("broadcastMode");
-                setShowModeSelect(false);
+                setMode(MODE_LIVE);
               }}
               className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
             >
@@ -444,7 +444,7 @@ export default function GoLive() {
             <button
               onClick={() => {
                 localStorage.setItem("broadcastMode", "browser");
-                setShowModeSelect(false);
+                setMode(MODE_LIVE);
               }}
               className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
             >
