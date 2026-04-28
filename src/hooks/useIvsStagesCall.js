@@ -36,7 +36,7 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
     cancelledRef.current = true;
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     if (stageRef.current) {
-      stageRef.current.leave().catch(() => {});
+      stageRef.current.leave();
       stageRef.current = null;
       console.log('[IVS Stages] 🔒 Left stage (cleanup)');
     }
@@ -184,7 +184,7 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         reconnectAttemptRef.current = 0;
         console.log('[IVS Stages] ✅ stage.join() completed. Waiting for remote participant...');
       } else {
-        stage.leave().catch(() => {});
+        stage.leave();
       }
     } catch (e) {
       console.error('[IVS Stages] ❌ Join error:', e.name, e.message, e.stack);
