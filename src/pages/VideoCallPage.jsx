@@ -922,34 +922,9 @@ export default function VideoCallPage() {
   // 配信者判定: calleeがlistreamerの場合、userが配信者
   const isBroadcaster = user && call && user?.email === call?.callee_email;
 
-  // モバイルサイズ判定
-  const isMobileSize = typeof window !== 'undefined' && window.innerWidth < 768;
-
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* ★ モバイルビデオ通話UI（活動中） */}
-      {call?.status === 'active' && isMobileSize && (
-        <MobileVideoCallUI
-          call={call}
-          user={user}
-          localStream={localStream}
-          localVideoRef={localVideoRef}
-          remoteVideoRef={remoteVideoRef}
-          micOn={micOn}
-          camOn={camOn}
-          onMicToggle={() => setMicOn(!micOn)}
-          onCamToggle={() => setCamOn(!camOn)}
-          onEndCall={handleEndCall}
-          onFullscreen={toggleFullscreen}
-          isFullscreen={isFullscreen}
-          remainingSeconds={remainingSeconds}
-          coinBalance={coinBalance}
-        />
-      )}
-
-      {/* ★ デスクトップUI（通常表示） */}
-      {!(call?.status === 'active' && isMobileSize) && (
-        <>
+      {/* MobileVideoCallUI — 映像疎通確認後に有効化予定 */}
       {/* ★ 視聴者側（caller）pending 待機画面 */}
       {call?.status === 'pending' && user?.email === call?.caller_email && (
         <OutgoingCallScreen
@@ -1984,8 +1959,6 @@ export default function VideoCallPage() {
           </div>
         </DialogContent>
         </Dialog>
-        </>
-        )}
         </div>
         );
         }
