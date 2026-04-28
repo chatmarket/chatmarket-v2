@@ -826,6 +826,9 @@ export default function VideoCallPage() {
     toast.success(`${extendMinutes}分延長しました！`);
   };
 
+  // ---- IVS Stages 接続ステータス ----
+  const [ivsConnectStatus, setIvsConnectStatus] = useState(null); // null | 'reconnecting' | 'failed'
+
   // ---- IVS Stages 接続（1対1通話） ----
   useIvsStagesCall({
     call,
@@ -833,6 +836,9 @@ export default function VideoCallPage() {
     remoteVideoRef,
     user,
     enabled: call?.status === 'active' && !!localStream && !!user,
+    onReconnecting: (attempt) => setIvsConnectStatus('reconnecting'),
+    onReconnected: () => setIvsConnectStatus(null),
+    onReconnectFailed: () => setIvsConnectStatus('failed'),
   });
 
   const addFloating = useCallback((emoji, type = "emoji") => {
@@ -1136,6 +1142,29 @@ export default function VideoCallPage() {
         >
           {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
         </button>
+
+        {/* IVS 再接続バナー */}
+        {ivsConnectStatus === 'reconnecting' && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full border-4 border-primary/40 border-t-primary animate-spin" />
+              <p className="text-white font-bold text-lg">再接続中...</p>
+              <p className="text-white/50 text-sm">ネットワークが回復するまでお待ちください</p>
+            </div>
+          </div>
+        )}
+        {ivsConnectStatus === 'failed' && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="text-center space-y-3 px-6">
+              <AlertTriangle className="w-12 h-12 text-red-400 mx-auto" />
+              <p className="text-white font-bold text-lg">再接続に失敗しました</p>
+              <p className="text-white/50 text-sm">通話を終了して再度お試しください</p>
+              <button onClick={() => handleEndCall(true)} className="px-6 py-2.5 bg-red-600 text-white rounded-full font-bold text-sm">
+                通話を終了する
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* マイクOFF警告 */}
         {!micOn && call?.status === "active" && (
