@@ -95,35 +95,29 @@ export default function Upload() {
 
     try {
       if (videoFile) {
-        // Get S3 presigned upload URL
-        const s3Res = await base44.functions.invoke('uploadToS3', {
-          fileName: videoFile.name,
-          fileType: videoFile.type,
-          duration_seconds: videoDuration,
+        // S3 Presigned URL を取得して直接アップロード → CloudFront で配信
+        const s3Res = await base44.functions.invoke('uploadVideoToS3', {
+          filename: videoFile.name,
+          content_type: videoFile.type || 'video/mp4',
+          channel_id: channel.id,
         });
-        if (!s3Res.data?.presignedUrl) {
+        if (!s3Res.data?.presigned_url) {
           alert(s3Res.data?.error || 'アップロードURLの取得に失敗しました');
           setUploading(false);
           return;
         }
-        // Upload directly to S3
-        const uploadContentType = videoFile.type || 'video/mp4';
-        console.log('[UPLOAD] S3 upload starting... Content-Type:', uploadContentType);
-        const uploadRes = await fetch(s3Res.data.presignedUrl, {
+        const uploadRes = await fetch(s3Res.data.presigned_url, {
           method: 'PUT',
           body: videoFile,
-          headers: { 'Content-Type': uploadContentType },
+          headers: { 'Content-Type': videoFile.type || 'video/mp4' },
         });
         if (!uploadRes.ok) {
-          const errorText = await uploadRes.text();
-          console.error('[UPLOAD] S3 upload error:', uploadRes.status, errorText);
           alert(`S3へのアップロードに失敗しました (${uploadRes.status})`);
           setUploading(false);
           return;
         }
-        console.log('[UPLOAD] S3 upload completed. Status:', uploadRes.status);
-        video_url = s3Res.data.cloudFrontUrl;
-        console.log('[UPLOAD] CloudFront URL set:', video_url);
+        video_url = s3Res.data.playback_url; // CloudFront URL
+        console.log('[UPLOAD] ✅ Uploaded via S3+CloudFront:', video_url);
       }
       if (thumbnailFile) {
         const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
