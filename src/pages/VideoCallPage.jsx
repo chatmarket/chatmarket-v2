@@ -24,6 +24,7 @@ import ExtensionConfirmationModal from "../components/call/ExtensionConfirmation
 import ReconnectionNotification from "../components/call/ReconnectionNotification";
 import IncomingCallScreen from "../components/call/IncomingCallScreen";
 import OutgoingCallScreen from "../components/call/OutgoingCallScreen";
+import MobileVideoCallUI from "../components/call/MobileVideoCallUI";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -646,7 +647,21 @@ export default function VideoCallPage() {
   useEffect(() => {
     if (smartStream) {
       setLocalStream(smartStream);
-      if (localVideoRef.current) localVideoRef.current.srcObject = smartStream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = smartStream;
+        localVideoRef.current.play().catch((e) => {
+          console.warn('[VideoCallPage] ⚠️ Local video play error:', e);
+        });
+      }
+      // トラック確認ログ
+      const vTracks = smartStream.getVideoTracks();
+      const aTracks = smartStream.getAudioTracks();
+      console.log('[VideoCallPage] 📹 Local stream tracks:', {
+        video: vTracks.length,
+        audio: aTracks.length,
+        videoEnabled: vTracks[0]?.enabled,
+        audioEnabled: aTracks[0]?.enabled,
+      });
     }
   }, [smartStream]);
 
@@ -907,8 +922,34 @@ export default function VideoCallPage() {
   // 配信者判定: calleeがlistreamerの場合、userが配信者
   const isBroadcaster = user && call && user?.email === call?.callee_email;
 
+  // モバイルサイズ判定
+  const isMobileSize = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* ★ モバイルビデオ通話UI（活動中） */}
+      {call?.status === 'active' && isMobileSize && (
+        <MobileVideoCallUI
+          call={call}
+          user={user}
+          localStream={localStream}
+          localVideoRef={localVideoRef}
+          remoteVideoRef={remoteVideoRef}
+          micOn={micOn}
+          camOn={camOn}
+          onMicToggle={() => setMicOn(!micOn)}
+          onCamToggle={() => setCamOn(!camOn)}
+          onEndCall={handleEndCall}
+          onFullscreen={toggleFullscreen}
+          isFullscreen={isFullscreen}
+          remainingSeconds={remainingSeconds}
+          coinBalance={coinBalance}
+        />
+      )}
+
+      {/* ★ デスクトップUI（通常表示） */}
+      {!(call?.status === 'active' && isMobileSize) && (
+        <>
       {/* ★ 視聴者側（caller）pending 待機画面 */}
       {call?.status === 'pending' && user?.email === call?.caller_email && (
         <OutgoingCallScreen
@@ -1942,7 +1983,9 @@ export default function VideoCallPage() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+        </Dialog>
+        </>
+        )}
+        </div>
+        );
+        }
