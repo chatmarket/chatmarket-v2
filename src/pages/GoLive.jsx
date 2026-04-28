@@ -20,6 +20,7 @@ export default function GoLive() {
 
   const [user, setUser] = useState(null);
   const [mode, setMode] = useState(MODE_SELECT);
+  const [modeInitialized, setModeInitialized] = useState(false);
   const [creating, setCreating] = useState(false);
   const [liveStreamId, setLiveStreamId] = useState(null);
   const [ivsStream, setIvsStream] = useState(null);
@@ -104,6 +105,16 @@ export default function GoLive() {
 
   // 1対多数配信利用可能判定（PPV加入 OR キャンペーン対象 OR テストアカウント）
   const canUseLiveStream = isTestAccount || !!ppvSubscription || !!campaignGrantee;
+
+  // PPVプラン加入者 or テストアカウントなら即時フォーム画面へスキップ
+  useEffect(() => {
+    if (!modeInitialized && user && (ppvSubscription !== null || campaignGrantee !== null || isTestAccount)) {
+      if (canUseLiveStream) {
+        setMode(MODE_LIVE);
+      }
+      setModeInitialized(true);
+    }
+  }, [user, ppvSubscription, campaignGrantee, isTestAccount, canUseLiveStream, modeInitialized]);
 
 
 
