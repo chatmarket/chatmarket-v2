@@ -361,7 +361,19 @@ export default function CallWaitingRoom() {
   const toggleCam = async () => {
     if (showCam) { stopCam(); return; }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      // FaceTime / Built-in を優先・OBS Virtual Camera を除外
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter((d) => d.kind === "videoinput");
+      let camera = videoDevices.find((d) => d.label.toLowerCase().includes("facetime"));
+      if (!camera) camera = videoDevices.find((d) => d.label.toLowerCase().includes("built-in"));
+      if (!camera) camera = videoDevices.find((d) => !d.label.toLowerCase().includes("obs"));
+      if (!camera) camera = videoDevices[0];
+
+      const videoConstraint = camera?.deviceId
+        ? { deviceId: { exact: camera.deviceId } }
+        : true;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: false });
       setCamStream(stream);
       setShowCam(true);
       setTimeout(() => { if (camRef.current) camRef.current.srcObject = stream; }, 100);
