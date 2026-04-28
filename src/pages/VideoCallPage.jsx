@@ -22,6 +22,7 @@ import ExtensionRequestModal from "../components/call/ExtensionRequestModal";
 import ExtensionAcceptanceModal from "../components/call/ExtensionAcceptanceModal";
 import ExtensionConfirmationModal from "../components/call/ExtensionConfirmationModal";
 import ReconnectionNotification from "../components/call/ReconnectionNotification";
+import IncomingCallScreen from "../components/call/IncomingCallScreen";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -952,76 +953,26 @@ export default function VideoCallPage() {
         </div>
       )}
 
-      {/* ★ CRITICAL: pending 着信 → 承認ボタン（ライバーのみ）。ended でも pending に戻った直後は表示 */}
-      {(call?.status === 'pending') && user?.email === call?.callee_email && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-card border-2 border-primary rounded-3xl p-8 max-w-sm w-full mx-4 text-center space-y-6"
-          >
-            <div className="flex justify-center">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center"
-              >
-                <PhoneCall className="w-10 h-10 text-primary" />
-              </motion.div>
-            </div>
-            
-            <div className="space-y-2">
-              <p className="text-2xl font-black text-white">着信！</p>
-              <p className="text-lg text-primary font-bold">{call?.caller_name || call?.caller_email}</p>
-              <p className="text-sm text-muted-foreground">からの通話リクエストです</p>
-            </div>
-
-            <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/40 rounded-xl px-3 py-2.5 text-left">
-              <span className="text-base shrink-0">📷</span>
-              <p className="text-yellow-300 text-xs font-bold leading-relaxed">
-                カメラ・マイクは必ずONになるよう確認してください
-              </p>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0.5 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
-              className="text-xs text-muted-foreground"
-            >
-              自動で受け付けます...
-            </motion.div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={async () => {
-                  if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
-                  navigate(-1);
-                }}
-              >
-                <PhoneOff className="w-4 h-4" /> 拒否
-              </Button>
-              <Button
-                className="flex-1 bg-primary hover:bg-primary/90 gap-2 font-black"
-                onClick={async () => {
-                  try {
-                    console.log('[VideoCallPage] ⚡ Streamer accepting call...');
-                    await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
-                    console.log('[VideoCallPage] ✅ Call accepted -> status: accepted');
-                    setTimeout(() => refetchCall(), 500);
-                  } catch (err) {
-                    console.error('[VideoCallPage] ❌ Accept failed:', err);
-                    toast.error('承認に失敗しました');
-                  }
-                }}
-              >
-                <Phone className="w-4 h-4" /> 通話開始
-              </Button>
-            </div>
-          </motion.div>
-        </div>
+      {/* ★ CRITICAL: pending 着信 → 承認ボタン（ライバーのみ） */}
+      {call?.status === 'pending' && user?.email === call?.callee_email && (
+        <IncomingCallScreen
+          call={call}
+          onAccept={async () => {
+            try {
+              console.log('[VideoCallPage] ⚡ Streamer accepting call...');
+              await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
+              console.log('[VideoCallPage] ✅ Call accepted -> status: accepted');
+              setTimeout(() => refetchCall(), 500);
+            } catch (err) {
+              console.error('[VideoCallPage] ❌ Accept failed:', err);
+              toast.error('承認に失敗しました');
+            }
+          }}
+          onDecline={() => {
+            if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
+            navigate(-1);
+          }}
+        />
       )}
 
       {/* ABR Manager */}
