@@ -412,34 +412,59 @@ export default function VideoCallPage() {
     [calleeChannel, user]
   );
 
-  // accepted → callerのみが active に変更（callee は待つだけ）
-  // active になったら3秒カウントダウン表示
+  // ★ Caller側: accepted を検知 → IVSトークン生成 → active に変更
+  // ★ Callee側: active を待機 → リモート映像受信開始
   useEffect(() => {
     if (!call || !user) return;
 
-    // callerのみ: accepted → IVS Stagesトークン生成 → active に更新
-    if (call.status === 'accepted' && user.email === call.caller_email && !countdownStartedRef.current) {
+    const callerId = call.caller_email;
+    const calleeId = call.callee_email;
+    const isCaller = user.email === callerId;
+    const isCallee = user.email === calleeId;
+
+    console.log('[VideoCallPage] 🔍 Call state check:', {
+      call_id: call.id,
+      status: call.status,
+      user_email: user.email,
+      is_caller: isCaller,
+      is_callee: isCallee,
+      countdown_started: countdownStartedRef.current
+    });
+
+    // Caller のみ: accepted → IVS Stages token 生成 → active に遷移
+    if (isCaller && call.status === 'accepted' && !countdownStartedRef.current) {
       countdownStartedRef.current = true;
-      // まずIVS Stagesのトークンを生成してVideoCallに保存してからactiveへ
+      console.log('[VideoCallPage] ⚡ CALLER: accepted detected, generating IVS tokens...');
+      
       base44.functions.invoke('createIvsStagesSession', { call_id: call.id })
-        .then(() => base44.entities.VideoCall.update(call.id, { status: 'active' }))
-        .then(() => refetchCall())
+        .then((res) => {
+          console.log('[VideoCallPage] ✅ IVS tokens generated:', res.data);
+          return base44.entities.VideoCall.update(call.id, { status: 'active' });
+        })
+        .then(() => {
+          console.log('[VideoCallPage] ✅ Call status updated to active, refetching...');
+          return refetchCall();
+        })
         .catch((err) => {
-          console.error('[VideoCallPage] IVS token gen failed, falling back to active:', err.message);
-          // トークン生成失敗でも通話は続行
-          base44.entities.VideoCall.update(call.id, { status: 'active' }).then(() => refetchCall()).catch(() => {});
+          console.error('[VideoCallPage] ❌ IVS token gen failed:', err.message);
+          // フォールバック: トークン生成失敗でも active に進む
+          console.log('[VideoCallPage] 🔄 Fallback: proceeding to active anyway');
+          base44.entities.VideoCall.update(call.id, { status: 'active' })
+            .then(() => refetchCall())
+            .catch((e) => console.error('[VideoCallPage] ❌ Fallback update failed:', e));
         });
     }
 
-    // active になったらカウントダウン表示
+    // Active になったら 3秒カウントダウン表示
     if (call.status === 'active' && countdown === null) {
+      console.log('[VideoCallPage] 🎬 Active detected, starting countdown...');
       setCountdown(3);
       const t1 = setTimeout(() => setCountdown(2), 1000);
       const t2 = setTimeout(() => setCountdown(1), 2000);
       const t3 = setTimeout(() => setCountdown(null), 3000);
       return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     }
-  }, [call?.status, call?.id, user?.email]);
+  }, [call?.status, call?.id, user?.email, call?.caller_email, call?.callee_email]);
 
   // 通話開始時刻をセット
   // AUTO_ACCEPT 自動承諾ロジック
