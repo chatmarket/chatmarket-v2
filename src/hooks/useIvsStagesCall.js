@@ -2,19 +2,10 @@ import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
 /**
- * ████████████████████████████████████████████████████████████
- * ██  ██████  FROZEN — PRODUCTION LOCKED  ██████            ██
- * ██  実装完了日: 2026-04-28                                  ██
- * ██  検証済み: IVS Stages トークン生成 + 再接続ロジック      ██
- * ██                                                          ██
- * ██  変更禁止項目:                                           ██
- * ██    - 接続方式 (IVS Stages / Stage ARN)                  ██
- * ██    - onReconnecting / onReconnected / onReconnectFailed  ██
- * ██    - 指数バックオフ再接続ロジック (最大5回)              ██
- * ██    - トークンフィールド名 (chime_attendee_*)             ██
- * ██                                                          ██
- * ██  変更する場合は必ずレビュー・承認を経ること。            ██
- * ████████████████████████████████████████████████████████████
+ * ⚠️  TEMPORARY THAW FOR MOBILE VIDEO DEBUGGING
+ * Frozen status: TEMPORARILY LIFTED for mobile video troubleshooting
+ * Purpose: Fix video track exchange on 4G/5G networks
+ * Will be re-frozen after successful mobile video test
  *
  * IVS Stages を使った1対1ビデオ通話フック
  *
@@ -29,12 +20,14 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
   const cancelledRef = useRef(false);
   const reconnectAttemptRef = useRef(0);
   const reconnectTimerRef = useRef(null);
+  const remoteVideoTimeoutRef = useRef(null);
 
   const MAX_RECONNECT_ATTEMPTS = 5;
 
   const cleanup = useCallback(() => {
     cancelledRef.current = true;
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+    if (remoteVideoTimeoutRef.current) clearTimeout(remoteVideoTimeoutRef.current);
     if (stageRef.current) {
       stageRef.current.leave();
       stageRef.current = null;
@@ -67,31 +60,34 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         return;
       }
 
-      // ローカルトラックをラップ（readyState=live のトラックのみ追加）
+      // ローカルトラックをラップ（readyState に関係なく追加 — モバイル回線対応）
       const localStreams = [];
       const vt = localStream.getVideoTracks()[0];
       const at = localStream.getAudioTracks()[0];
 
       console.log('[IVS Stages] 📹 Adding tracks to publish:', {
-        video: vt ? `${vt.label} [${vt.readyState}]` : 'none',
-        audio: at ? `${at.label} [${at.readyState}]` : 'none',
+        video: vt ? `${vt.label} [${vt.readyState}] [enabled:${vt.enabled}]` : 'none',
+        audio: at ? `${at.label} [${at.readyState}] [enabled:${at.enabled}]` : 'none',
       });
 
-      if (vt && vt.readyState === 'live') {
+      // 🔥 MOBILE FIX: readyState 'live' チェックを削除 — モバイルではトラック追加直後に
+      // readyState === 'live' になるまで待つ必要がある。
+      // Stages SDK は内部でトラック状態を監視し、自動的に publishing を開始する。
+      if (vt) {
         localStreams.push(new LocalStageStream(vt));
-        console.log('[IVS Stages] ✅ Video track added to publish');
+        console.log('[IVS Stages] ✅ Video track added to publish (readyState:', vt.readyState, ')');
       } else {
-        console.warn('[IVS Stages] ⚠️ Video track not live, skipping:', vt?.readyState);
+        console.warn('[IVS Stages] ⚠️ No video track available');
       }
-      if (at && at.readyState === 'live') {
+      if (at) {
         localStreams.push(new LocalStageStream(at));
-        console.log('[IVS Stages] ✅ Audio track added to publish');
+        console.log('[IVS Stages] ✅ Audio track added to publish (readyState:', at.readyState, ')');
       } else {
-        console.warn('[IVS Stages] ⚠️ Audio track not live, skipping:', at?.readyState);
+        console.warn('[IVS Stages] ⚠️ No audio track available');
       }
 
       if (localStreams.length === 0) {
-        console.error('[IVS Stages] ❌ No live tracks to publish! Aborting join.');
+        console.error('[IVS Stages] ❌ No tracks to publish! Aborting join.');
         return;
       }
 
@@ -142,7 +138,13 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
 
       // 接続状態変化
       stage.on(StageEvents.STAGE_CONNECTION_STATE_CHANGED, (state) => {
-        console.log('[IVS Stages] 🔄 Connection state changed:', state);
+        // 🔥 MOBILE DEBUG: ネットワーク状態を詳細ログ
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        console.log('[IVS Stages] 🔄 Connection state changed:', state, {
+          networkType: connection ? connection.effectiveType : 'unknown',
+          bandwidth: connection ? connection.downlink + ' Mbps' : 'unknown',
+          rtt: connection ? connection.rtt + ' ms' : 'unknown',
+        });
 
         if ((state === 'disconnected' || state === 'failed') && !cancelledRef.current) {
           console.warn('[IVS Stages] ⚠️ Disconnected. Scheduling reconnect...');
@@ -183,6 +185,18 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         stageRef.current = stage;
         reconnectAttemptRef.current = 0;
         console.log('[IVS Stages] ✅ stage.join() completed. Waiting for remote participant...');
+
+        // 🔥 MOBILE FIX: リモート映像受信の監視タイムアウト（30秒）
+        // useRef で管理してクリーンアップ時に clearTimeout する
+        remoteVideoTimeoutRef.current = setTimeout(() => {
+          if (!cancelledRef.current) {
+            console.warn('[IVS Stages] ⏱️ Remote video timeout (30s). Checking connection state...');
+            if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
+              console.error('[IVS Stages] ❌ Remote video not received after 30s. Reconnecting...');
+              scheduleReconnect(stagesToken, IVSClient);
+            }
+          }
+        }, 30000);
       } else {
         stage.leave();
       }
