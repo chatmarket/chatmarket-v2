@@ -200,12 +200,41 @@ export default function ChannelPage() {
                   チャットで問い合わせ
                 </Button>
                 {channel.call_enabled && (
-                  <Link to={`/call-calendar/${channelId}`}>
-                    <Button size="sm" className="gap-2 w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30">
-                      <CalendarDays className="w-4 h-4" />
-                      通話を予約する
+                  <>
+                    <Button
+                      size="sm"
+                      className="gap-2 w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-bold"
+                      onClick={async () => {
+                        if (!currentUser) { base44.auth.redirectToLogin(); return; }
+                        try {
+                          // ビデオ通話リクエストを作成（callerとしてリクエスト）
+                          const call = await base44.entities.VideoCall.create({
+                            caller_email: currentUser.email,
+                            caller_name: currentUser.full_name || currentUser.email,
+                            callee_email: channel.owner_email,
+                            callee_channel_id: channelId,
+                            callee_name: channel.name,
+                            status: "pending",
+                            message: `${currentUser.full_name || currentUser.email}が通話をリクエストしました`,
+                          });
+                          console.log('[ChannelPage] ✅ Call request created:', call.id);
+                          // 通話リクエスト画面へ遷移
+                          navigate(`/video-call/${call.id}`);
+                        } catch (err) {
+                          console.error('[ChannelPage] ❌ Call request failed:', err);
+                        }
+                      }}
+                    >
+                      <Phone className="w-4 h-4" />
+                      今すぐ通話をリクエスト
                     </Button>
-                  </Link>
+                    <Link to={`/call-calendar/${channelId}`}>
+                      <Button size="sm" className="gap-2 w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30">
+                        <CalendarDays className="w-4 h-4" />
+                        通話を予約する
+                      </Button>
+                    </Link>
+                  </>
                 )}
                 <Button
                   size="sm"
