@@ -99,8 +99,11 @@ export default function GoLive() {
     enabled: !!user,
   });
 
-  // 1対多数配信利用可能判定（PPV加入 OR キャンペーン対象）
-  const canUseLiveStream = !!ppvSubscription || !!campaignGrantee;
+  // テストアカウント判定（全プラン加入状態）
+  const isTestAccount = user?.email === 'ono@onestep-corp.com';
+
+  // 1対多数配信利用可能判定（PPV加入 OR キャンペーン対象 OR テストアカウント）
+  const canUseLiveStream = isTestAccount || !!ppvSubscription || !!campaignGrantee;
 
 
 
