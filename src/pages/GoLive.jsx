@@ -217,6 +217,21 @@ export default function GoLive() {
       );
     }
 
+    if (!canUseLiveStream) {
+      return (
+        <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
+          <div className="text-6xl">🔒</div>
+          <h1 className="text-2xl font-black">1対多数配信はPPVプラン加入が必須です</h1>
+          <p className="text-muted-foreground">1対多数のライブ配信とチケット制予約配信を利用するにはPPVプラン（¥9,900/月）への加入が必須です。</p>
+          <button 
+            onClick={() => navigate("/plan-select")}
+            className="bg-primary text-black font-black px-8 py-3 rounded-xl hover:bg-primary/90">
+            PPVプランを確認する
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-5xl mx-auto px-4 py-12 flex flex-col items-center gap-8">
         <div className="text-center mb-2">
@@ -346,14 +361,7 @@ export default function GoLive() {
         <div className="w-full grid grid-cols-1 gap-4">
           {/* 1対多ライブ配信 */}
           <button
-            onClick={() => requireAuth(() => {
-              if (!canUseLiveStream) {
-                toast.error("PPVプランへの加入が必須です");
-                navigate("/plan-select");
-                return;
-              }
-              setMode(MODE_CHOOSE);
-            })}
+            onClick={() => requireAuth(() => setMode(MODE_CHOOSE))}
             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
