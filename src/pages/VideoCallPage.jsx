@@ -1508,6 +1508,20 @@ export default function VideoCallPage() {
             </button>
           )}
 
+          {/* 録画オプション有効バナー（calleeのみ・未録画時） */}
+          {call?.status === "active" && user?.email === call?.callee_email && call?.recording_option && !isRecording && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full mb-2 flex items-center gap-2 bg-blue-500/20 border border-blue-500/50 rounded-xl px-3 py-2"
+            >
+              <span className="text-base shrink-0">🎥</span>
+              <p className="text-xs text-blue-300 font-bold flex-1">
+                録画オプションが有効です。録画ボタンを押して開始してください。
+              </p>
+            </motion.div>
+          )}
+
           {/* 録画ボタン（calleeのみ・通話中） */}
           {call?.status === "active" && user?.email === call?.callee_email && (
             <button

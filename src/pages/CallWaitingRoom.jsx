@@ -348,7 +348,11 @@ export default function CallWaitingRoom() {
   const handleAccept = async () => {
     if (!incomingCall) return;
     setAccepting(true);
-    await base44.entities.VideoCall.update(incomingCall.id, { status: "accepted" });
+    // recording_option フラグをDBに保存（後で「録画付きプラン」だったか確認できるようにする）
+    await base44.entities.VideoCall.update(incomingCall.id, {
+      status: "accepted",
+      recording_option: recordingEnabled,
+    });
     setIncomingCall(null);
     navigate(`/video-call/${incomingCall.id}`);
   };
