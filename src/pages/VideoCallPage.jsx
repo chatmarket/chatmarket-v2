@@ -23,6 +23,7 @@ import ExtensionAcceptanceModal from "../components/call/ExtensionAcceptanceModa
 import ExtensionConfirmationModal from "../components/call/ExtensionConfirmationModal";
 import ReconnectionNotification from "../components/call/ReconnectionNotification";
 import IncomingCallScreen from "../components/call/IncomingCallScreen";
+import OutgoingCallScreen from "../components/call/OutgoingCallScreen";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -908,49 +909,13 @@ export default function VideoCallPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* ★ 視聴者側（caller）pending 待機画面 — ライバーの承認を待っている */}
+      {/* ★ 視聴者側（caller）pending 待機画面 */}
       {call?.status === 'pending' && user?.email === call?.caller_email && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black gap-6 px-6">
-          {/* 自分のカメラプレビュー（PiP） */}
-          <div className="w-40 h-56 rounded-2xl overflow-hidden border-2 border-primary/50 bg-black shadow-2xl relative">
-            <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-            <div className="absolute bottom-1 left-0 right-0 text-center">
-              <span className="text-[9px] text-white/70 bg-black/60 px-2 py-0.5 rounded-full">あなたのカメラ</span>
-            </div>
-          </div>
-
-          {/* 待機メッセージ */}
-          <div className="text-center space-y-3">
-            <div className="relative w-16 h-16 mx-auto">
-              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-              <div className="relative w-16 h-16 rounded-full bg-primary/30 border-2 border-primary flex items-center justify-center">
-                <PhoneCall className="w-8 h-8 text-primary" />
-              </div>
-            </div>
-            <p className="text-white font-black text-xl">{call?.callee_name || "ライバー"} さんに着信中...</p>
-            <p className="text-white/50 text-sm">承認されると通話が始まります</p>
-            {/* カメラ・マイク確認 */}
-            <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/40 rounded-xl px-4 py-3 text-left max-w-xs mx-auto">
-              <span className="text-lg shrink-0">📷</span>
-              <p className="text-yellow-300 text-xs font-bold leading-relaxed">
-                PCやスマートフォンのカメラ・マイクは必ずONになるよう確認してください
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-1.5">
-              {[0,1,2].map(i => (
-                <span key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
-              ))}
-            </div>
-          </div>
-
-          {/* キャンセルボタン */}
-          <button
-            onClick={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
-            className="flex items-center gap-2 text-red-400 border border-red-500/40 px-6 py-2.5 rounded-full text-sm hover:bg-red-500/10 transition-all"
-          >
-            <PhoneOff className="w-4 h-4" /> キャンセル
-          </button>
-        </div>
+        <OutgoingCallScreen
+          call={call}
+          localVideoRef={localVideoRef}
+          onCancel={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
+        />
       )}
 
       {/* ★ CRITICAL: pending 着信 → 承認ボタン（ライバーのみ） */}
