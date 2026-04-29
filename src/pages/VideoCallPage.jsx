@@ -244,31 +244,43 @@ export default function VideoCallPage() {
   const remoteAnalyserRef = useRef(null);
   const remoteAnimFrameRef = useRef(null);
 
-  // ローカルマイクの音声メーター
+  // ローカルマイクの音声メーター（スマートフォン対応: AudioContext を resume してから起動）
   useEffect(() => {
     if (!localStream || !micOn) {
       setAudioLevel(0);
       if (audioAnimFrameRef.current) cancelAnimationFrame(audioAnimFrameRef.current);
-      if (audioAnalyserRef.current) { audioAnalyserRef.current.context?.close(); audioAnalyserRef.current = null; }
+      if (audioAnalyserRef.current) { try { audioAnalyserRef.current.context?.close(); } catch {} audioAnalyserRef.current = null; }
       return;
     }
-    const ctx = new AudioContext();
-    const source = ctx.createMediaStreamSource(localStream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    audioAnalyserRef.current = analyser;
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    const tick = () => {
-      analyser.getByteFrequencyData(data);
-      const avg = data.reduce((s, v) => s + v, 0) / data.length;
-      setAudioLevel(Math.min(100, Math.round(avg * 2.5)));
-      audioAnimFrameRef.current = requestAnimationFrame(tick);
+    let cancelled = false;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // iOS/Android では suspended 状態で作られるため resume() してから接続
+    const start = () => {
+      if (cancelled) return;
+      const source = ctx.createMediaStreamSource(localStream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      audioAnalyserRef.current = analyser;
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        if (cancelled) return;
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((s, v) => s + v, 0) / data.length;
+        setAudioLevel(Math.min(100, Math.round(avg * 2.5)));
+        audioAnimFrameRef.current = requestAnimationFrame(tick);
+      };
+      tick();
     };
-    tick();
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(start).catch(() => {});
+    } else {
+      start();
+    }
     return () => {
+      cancelled = true;
       cancelAnimationFrame(audioAnimFrameRef.current);
-      ctx.close();
+      ctx.close().catch(() => {});
     };
   }, [localStream, micOn]);
 
@@ -1347,15 +1359,31 @@ export default function VideoCallPage() {
           {/* マイク・カメラ・設定 */}
           <div className="flex items-center gap-3">
             {/* マイクボタン: OFF時は赤背景+斜線アイコンで誰でも分かる */}
-            <button
-              onClick={() => setMicOn(!micOn)}
-              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
-              aria-label={micOn ? "マイクON" : "マイクOFF"}
-            >
-              {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
-              {/* OFFインジケーター */}
-              {!micOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
-            </button>
+            <div className="flex flex-col items-center gap-1">
+              <button
+                onClick={() => setMicOn(!micOn)}
+                className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
+                aria-label={micOn ? "マイクON" : "マイクOFF"}
+              >
+                {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+                {!micOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
+              </button>
+              {/* マイク音声レベルメーター */}
+              {micOn && (
+                <div className="flex items-end gap-[2px] h-3">
+                  {[20, 40, 60, 80, 100].map((threshold, i) => (
+                    <div
+                      key={i}
+                      className="w-[3px] rounded-sm transition-all duration-75"
+                      style={{
+                        height: `${(i + 1) * 20}%`,
+                        backgroundColor: audioLevel >= threshold ? '#00ff9d' : 'rgba(255,255,255,0.15)',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* カメラボタン: OFF時は赤背景+斜線アイコン */}
             <button
