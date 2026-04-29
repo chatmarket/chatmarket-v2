@@ -133,13 +133,15 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1.5">
-        {/* 待機タイトル（call_theme）を最上部に大きく表示 */}
-        {channel?.call_theme ? (
-          <p className="text-xs font-black text-foreground line-clamp-2 leading-tight">
-            {channel.call_theme}
+        {/* 待機タイトル（call_theme） */}
+        <p className="text-xs font-black text-foreground line-clamp-2 leading-tight">
+          {channel?.call_theme || "通話受付中"}
+        </p>
+        {/* 説明文（call_available_dates） */}
+        {channel?.call_available_dates && (
+          <p className="text-[10px] text-muted-foreground line-clamp-2 leading-tight">
+            {channel.call_available_dates}
           </p>
-        ) : (
-          <p className="text-xs font-black text-foreground truncate leading-tight">通話受付中</p>
         )}
         <Link to={`/channel/${cardChannelId}`}>
           <p className="text-[10px] text-muted-foreground truncate hover:text-primary transition-colors">{cardChannelName}</p>

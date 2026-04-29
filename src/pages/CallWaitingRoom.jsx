@@ -357,9 +357,12 @@ export default function CallWaitingRoom() {
 
   const handleStartWaiting = async () => {
     if (!title.trim()) { toast.error("タイトルを入力してください"); return; }
-    // Channelの call_theme を更新してTOPページに表示する
+    // Channelの call_theme（タイトル）と call_available_dates（説明文）を保存してTOPページに表示
     if (myChannel) {
-      await base44.entities.Channel.update(myChannel.id, { call_theme: title.trim() }).catch(() => {});
+      await base44.entities.Channel.update(myChannel.id, {
+        call_theme: title.trim(),
+        call_available_dates: description.trim() || null,
+      }).catch(() => {});
     }
     setIsWaiting(true);
     initialDoneRef.current = false;
