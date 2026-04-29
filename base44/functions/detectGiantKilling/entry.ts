@@ -7,7 +7,7 @@
  *
  * POST body: {} (引数不要、admin権限チェックなし・内部呼出し)
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest, createClient } from 'npm:@base44/sdk@0.8.25';
 
 // 管理設定のデフォルト値（DB上の AppSettings で上書き可能）
 const DEFAULT_ENABLED = true;
@@ -16,14 +16,14 @@ const DEFAULT_THRESHOLD_COINS = 50000; // 15分で5万コイン以上増加
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
     // 管理設定を読み込む（なければデフォルト）
     let enabled = DEFAULT_ENABLED;
     let windowMin = DEFAULT_WINDOW_MIN;
     let thresholdCoins = DEFAULT_THRESHOLD_COINS;
 
-    const settings = await base44.asServiceRole.entities.Channel
+    const settings = await base44.entities.Channel
       .filter({ id: "__giant_killing_settings__" })
       .catch(() => []);
     // settings はダミー；実際は Channel の special record ではなくシンプルな判定にする
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     const windowStart = new Date(now.getTime() - windowMs).toISOString();
 
     // 直近windowMin分のコイン消費を channel_owner_email でまとめる
-    const recentTxns = await base44.asServiceRole.entities.YellCoinTransaction.filter({
+    const recentTxns = await base44.entities.YellCoinTransaction.filter({
       type: 'send',
     });
 
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     });
 
     // 全チャンネルをmonthly_revenue_coins順で取得
-    const channels = await base44.asServiceRole.entities.Channel.list('-monthly_revenue_coins', 20);
+    const channels = await base44.entities.Channel.list('-monthly_revenue_coins', 20);
     if (channels.length < 4) return Response.json({ skipped: true, reason: 'not_enough_channels' });
 
     // 現在の売上ランキング（TOP5）
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     }
 
     // 直近30分以内に同チャンネルの通知がある場合はスキップ（重複防止）
-    const recentNotifs = await base44.asServiceRole.entities.Notification.filter({
+    const recentNotifs = await base44.entities.Notification.filter({
       type: 'giant_killing',
       channel_id: giantKillingChannel.id,
     });
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
     const title = `歴史が動いた！ ${giantKillingChannel.name} がTOP${rankAfter}に躍り出た！`;
     const message = `${rankBefore}位から${rankAfter}位へ！ ${windowMin}分以内に急上昇中！`;
 
-    await base44.asServiceRole.entities.Notification.create({
+    await base44.entities.Notification.create({
       user_email: 'broadcast',
       type: 'giant_killing',
       title,
