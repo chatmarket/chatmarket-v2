@@ -29,32 +29,35 @@ export function useSmartCameraSelection() {
         setVideoDevices(vDevices);
         setAudioDevices(aDevices);
 
-        // 2. カメラ選択: Safari では label が空になる場合があるため
-        //    ラベル名での判断より「最初に利用可能なデバイス」を優先するフォールバック付き
+        // 2. カメラ選択: インデックスベースで仮想カメラを回避
+        //    Safari ではラベルが空になるため、ラベル名での判断は補助的にのみ使用
         const isVirtualCamera = (label) => {
           const l = (label || '').toLowerCase();
           return l.includes('obs') || l.includes('virtual') || l.includes('manycam') || l.includes('xsplit') || l.includes('snap camera') || l.includes('droidcam') || l.includes('iriun');
         };
 
-        // Safariでラベルが取れない場合は全デバイスを物理カメラとして扱う
-        const labelsAvailable = vDevices.some(d => d.label && d.label.length > 0);
-        const physicalCameras = labelsAvailable
-          ? vDevices.filter(d => !isVirtualCamera(d.label))
-          : vDevices; // ラベル不明 → 全デバイスを候補に
-
+        // インデックスベース選択: index=0 を試し、それが仮想なら index=1 へ
+        // localStorage は仮想カメラが保存されていたらリセット
         let camId = localStorage.getItem('selectedCameraId');
         const savedDevice = vDevices.find(d => d.deviceId === camId);
-        // 保存済みデバイスが仮想カメラなら無視（ラベルが取れない場合はそのまま使用）
-        const savedIsVirtual = savedDevice && labelsAvailable && isVirtualCamera(savedDevice.label);
+        const savedIsVirtual = savedDevice && isVirtualCamera(savedDevice.label);
+
         if (!camId || !savedDevice || savedIsVirtual) {
-          // FaceTime > Built-in > その他物理カメラ > 最終手段で全デバイス先頭（必ず1台確保）
-          const pool = physicalCameras.length > 0 ? physicalCameras : vDevices;
-          let cam = pool.find(d => (d.label || '').toLowerCase().includes('facetime'));
-          if (!cam) cam = pool.find(d => (d.label || '').toLowerCase().includes('built-in'));
-          if (!cam) cam = pool[0]; // ラベル不問で最初のデバイスを強制使用
-          camId = cam?.deviceId || null;
+          // まず index=0 を試す。ラベルで仮想と判定できる場合のみ次へ
+          let selectedCam = vDevices[0];
+          for (let i = 0; i < vDevices.length; i++) {
+            const d = vDevices[i];
+            const label = d.label || '';
+            // ラベルが空 = Safari で匿名化 → そのまま使う（物理カメラの可能性が高い）
+            if (!label || !isVirtualCamera(label)) {
+              selectedCam = d;
+              break;
+            }
+            console.log(`[useSmartCameraSelection] ⏭ index=${i} is virtual (${label}), trying next...`);
+          }
+          camId = selectedCam?.deviceId || null;
           if (camId) localStorage.setItem('selectedCameraId', camId);
-          console.log('[useSmartCameraSelection] 📷 Camera selected:', cam?.label || `deviceId=${camId?.slice(0,8)}`);
+          console.log('[useSmartCameraSelection] 📷 Camera selected by index:', selectedCam?.label || `(no label) deviceId=${camId?.slice(0,8)}`);
         } else {
           console.log('[useSmartCameraSelection] 📷 Restored camera:', savedDevice.label || `deviceId=${camId?.slice(0,8)}`);
         }

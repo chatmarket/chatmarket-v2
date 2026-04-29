@@ -948,7 +948,7 @@ export default function VideoCallPage() {
   const isBroadcaster = user && call && user?.email === call?.callee_email;
 
   return (
-    <div className="bg-black flex flex-col" style={{ height: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="bg-black flex flex-col" style={{ height: '100dvh', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* ★ MobileVideoCallUI は一旦コメントアウト — 映像疎通テスト中 */}
       {/* {isMobile && <MobileVideoCallUI {...} />} */}
 
@@ -967,6 +967,10 @@ export default function VideoCallPage() {
           call={call}
           onAccept={async () => {
             try {
+              // ★ ユーザーアクション内で remoteVideo.play() を即座に発火（Safari autoplay対策）
+              if (remoteVideoRef.current) {
+                remoteVideoRef.current.play().catch(() => {});
+              }
               console.log('[VideoCallPage] ⚡ Streamer accepting call...');
               await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
               console.log('[VideoCallPage] ✅ Call accepted -> status: accepted');
@@ -996,9 +1000,9 @@ export default function VideoCallPage() {
       />
 
       {/* Main container: Video上部固定50% + Chat下部 */}
-       <div className="flex flex-col overflow-hidden" style={{ height: '100%' }}>
-         {/* Video call section — 画面上部50%固定・チャットに絶対に侵食させない */}
-         <div className="flex flex-col min-w-0" style={{ height: '50dvh', minHeight: '260px', maxHeight: '50dvh', flexShrink: 0, flexGrow: 0 }}>
+       <div className="flex flex-col" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+         {/* Video call section — 画面上部50%絶対固定。px単位で確保しvhの計算誤差を排除 */}
+         <div className="flex flex-col min-w-0" style={{ flexShrink: 0, flexGrow: 0, height: '50dvh', minHeight: '260px', maxHeight: '50dvh' }}>
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
@@ -1618,9 +1622,9 @@ export default function VideoCallPage() {
           </motion.button>
         </div>
 
-              {/* Chat section - 映像50%の残りを使用、固定heightで映像を侵食しない */}
+              {/* Chat section - コントロールバーの残りを全て使用・映像50%には絶対触れない */}
               {user && (
-                <div className="w-full border-t border-white/10 overflow-y-auto" style={{ height: "calc(50dvh - 120px)", minHeight: "200px", maxHeight: "400px", background: "#050505" }}>
+                <div className="w-full border-t border-white/10 overflow-y-auto" style={{ flex: 1, minHeight: 0, background: "#050505" }}>
                   {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
                 </div>
               )}
