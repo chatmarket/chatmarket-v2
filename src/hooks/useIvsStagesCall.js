@@ -193,6 +193,25 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         videoEl.volume = 1.0;
         videoEl.srcObject = mediaStream;
 
+        // ★ 音声の強制開通: AudioContext を使って音声を確実に流す
+        // ブラウザの autoplay policy で video.play() がブロックされても
+        // AudioContext 経由なら音声を通せる場合がある
+        try {
+          const audioTracks = mediaStream.getAudioTracks();
+          if (audioTracks.length > 0) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // suspended なら resume（iOS Safari対策）
+            if (audioCtx.state === 'suspended') {
+              audioCtx.resume().catch(() => {});
+            }
+            const source = audioCtx.createMediaStreamSource(mediaStream);
+            source.connect(audioCtx.destination);
+            console.log('[IVS Stages] 🔊 AudioContext connected to remote stream — audio forced open');
+          }
+        } catch (e) {
+          console.warn('[IVS Stages] ⚠️ AudioContext fallback failed:', e.message);
+        }
+
         // リトライ付き play() — 映像トラックが DOM に反映されるまで最大5回試みる
         let retryCount = 0;
         const MAX_RETRIES = 5;
@@ -201,10 +220,16 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
           const audioTracks = mediaStream.getAudioTracks();
           console.log(`[IVS Stages] 🎬 attemptPlay #${retryCount + 1} — video:${videoTracks.length} audio:${audioTracks.length}`);
 
+          // play前にも muted=false を再確認
+          videoEl.muted = false;
+          videoEl.volume = 1.0;
+
           const p = videoEl.play();
           if (p !== undefined) {
             p.then(() => {
-              console.log('[IVS Stages] ✅✅✅ Remote video PLAYING!');
+              // play成功後も muted が復活しないよう再設定
+              videoEl.muted = false;
+              console.log('[IVS Stages] ✅✅✅ Remote video PLAYING! muted=', videoEl.muted, 'volume=', videoEl.volume);
               // 映像トラックはあるが映像が出ない場合 → srcObject を再設定してリトライ
               if (videoTracks.length > 0 && videoEl.videoWidth === 0 && retryCount < MAX_RETRIES) {
                 retryCount++;
@@ -218,7 +243,10 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
               }
             }).catch(err => {
               console.warn('[IVS Stages] ⚠️ play() blocked:', err.name);
-              const retry = () => { videoEl.play().catch(() => {}); };
+              const retry = () => {
+                videoEl.muted = false;
+                videoEl.play().catch(() => {});
+              };
               document.addEventListener('click', retry, { once: true });
               document.addEventListener('touchstart', retry, { once: true });
             });

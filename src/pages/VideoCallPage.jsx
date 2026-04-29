@@ -236,11 +236,15 @@ export default function VideoCallPage() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  // 音声レベルインジケーター
+  // 音声レベルインジケーター（ローカル・リモート両方）
   const [audioLevel, setAudioLevel] = useState(0);
+  const [remoteAudioLevel, setRemoteAudioLevel] = useState(0);
   const audioAnalyserRef = useRef(null);
   const audioAnimFrameRef = useRef(null);
+  const remoteAnalyserRef = useRef(null);
+  const remoteAnimFrameRef = useRef(null);
 
+  // ローカルマイクの音声メーター
   useEffect(() => {
     if (!localStream || !micOn) {
       setAudioLevel(0);
@@ -267,6 +271,56 @@ export default function VideoCallPage() {
       ctx.close();
     };
   }, [localStream, micOn]);
+
+  // リモート音声メーター（相手の声が届いているか可視化）
+  useEffect(() => {
+    if (!remoteVideoRef.current || call?.status !== 'active') return;
+    const videoEl = remoteVideoRef.current;
+
+    const attachMeter = () => {
+      const stream = videoEl.srcObject;
+      if (!(stream instanceof MediaStream) || stream.getAudioTracks().length === 0) return;
+      if (remoteAnalyserRef.current) return; // 既に接続済み
+
+      try {
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        // ★ destination には繋がない（二重再生防止）
+        remoteAnalyserRef.current = analyser;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          analyser.getByteFrequencyData(data);
+          const avg = data.reduce((s, v) => s + v, 0) / data.length;
+          setRemoteAudioLevel(Math.min(100, Math.round(avg * 3)));
+          remoteAnimFrameRef.current = requestAnimationFrame(tick);
+        };
+        tick();
+        console.log('[AudioMeter] 🔊 Remote audio meter connected');
+      } catch (e) {
+        console.warn('[AudioMeter] Remote meter failed:', e.message);
+      }
+    };
+
+    // srcObject が既にある場合はすぐ接続、なければ待機
+    if (videoEl.srcObject) {
+      attachMeter();
+    } else {
+      const observer = setInterval(() => {
+        if (videoEl.srcObject) { attachMeter(); clearInterval(observer); }
+      }, 500);
+      return () => clearInterval(observer);
+    }
+
+    return () => {
+      if (remoteAnimFrameRef.current) cancelAnimationFrame(remoteAnimFrameRef.current);
+      if (remoteAnalyserRef.current) { remoteAnalyserRef.current = null; }
+      setRemoteAudioLevel(0);
+    };
+  }, [call?.status]);
 
   // 録画
   const [isRecording, setIsRecording] = useState(false);
@@ -782,52 +836,61 @@ export default function VideoCallPage() {
     if (!selectedYell || !call || !user) return;
     setYellSending(true);
 
-    // 視聴者のウォレットから減算
-    const senderWallets = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
-    const senderWallet = senderWallets[0];
-    if (!senderWallet || senderWallet.balance < selectedYell) {
-      toast.error("エールコインが不足しています。チャージしてください。");
-      setYellSending(false);
-      return;
-    }
-    await base44.entities.YellCoinWallet.update(senderWallet.id, {
-      balance: senderWallet.balance - selectedYell,
-      total_sent: (senderWallet.total_sent || 0) + selectedYell,
-    });
-
-    // ライバーのウォレットへ加算（85%相当）
-    const creatorCoins = Math.floor(selectedYell * 0.85);
-    const calleeWallets = await base44.entities.YellCoinWallet.filter({ user_email: call.callee_email });
-    if (calleeWallets[0]) {
-      await base44.entities.YellCoinWallet.update(calleeWallets[0].id, {
-        balance: (calleeWallets[0].balance || 0) + creatorCoins,
-      });
-    }
-
-    // 通話レコードにエールコイン合計を記録
-    await base44.entities.VideoCall.update(call.id, {
-      yell_coin_amount: (call.yell_coin_amount || 0) + selectedYell,
-    });
-
-    // トランザクション記録
-    await base44.entities.YellCoinTransaction.create({
-      user_email: user.email,
-      type: "send",
-      amount: selectedYell,
-      target_name: call.callee_name,
-      target_id: call.id,
-      service_type: "direct_chat",
-      service_id: call.id,
-      channel_id: call.callee_channel_id || "",
-      channel_owner_email: call.callee_email,
-    });
-
-    setCoinBalance(prev => Math.max(0, (prev || 0) - selectedYell));
-    setYellSending(false);
+    // ★ UI を即座に更新（楽観的更新）→ 画面フリーズ解消
+    const amount = selectedYell;
+    setCoinBalance(prev => Math.max(0, (prev || 0) - amount));
     setShowYellModal(false);
     setSelectedYell(null);
-    toast.success(`${selectedYell.toLocaleString()} コインのエールを送りました！`);
     addFloating("💰");
+    toast.success(`${amount.toLocaleString()} コインのエールを送りました！`);
+    setYellSending(false);
+
+    // バックグラウンドで非同期処理（UIをブロックしない）
+    (async () => {
+      try {
+        const senderWallets = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
+        const senderWallet = senderWallets[0];
+        if (!senderWallet || senderWallet.balance < amount) {
+          toast.error("エールコインが不足しています");
+          setCoinBalance(prev => (prev || 0) + amount); // ロールバック
+          return;
+        }
+
+        // 並列実行で高速化
+        const creatorCoins = Math.floor(amount * 0.85);
+        const [calleeWallets] = await Promise.all([
+          base44.entities.YellCoinWallet.filter({ user_email: call.callee_email }),
+          base44.entities.YellCoinWallet.update(senderWallet.id, {
+            balance: senderWallet.balance - amount,
+            total_sent: (senderWallet.total_sent || 0) + amount,
+          }),
+          base44.entities.VideoCall.update(call.id, {
+            yell_coin_amount: (call.yell_coin_amount || 0) + amount,
+          }),
+          base44.entities.YellCoinTransaction.create({
+            user_email: user.email,
+            type: "send",
+            amount,
+            target_name: call.callee_name,
+            target_id: call.id,
+            service_type: "direct_chat",
+            service_id: call.id,
+            channel_id: call.callee_channel_id || "",
+            channel_owner_email: call.callee_email,
+          }),
+        ]);
+
+        if (calleeWallets[0]) {
+          await base44.entities.YellCoinWallet.update(calleeWallets[0].id, {
+            balance: (calleeWallets[0].balance || 0) + creatorCoins,
+          });
+        }
+      } catch (e) {
+        console.error('[Yell] Payment error:', e);
+        toast.error("送金処理でエラーが発生しました");
+        setCoinBalance(prev => (prev || 0) + amount); // ロールバック
+      }
+    })();
   };
 
   const handleBlock = async () => {
@@ -1175,10 +1238,24 @@ export default function VideoCallPage() {
                 </div>
               </div>
             )}
-            {/* 通話中ステータス */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/60 backdrop-blur rounded-full px-3 py-1">
+            {/* 通話中ステータス + リモート音声メーター */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur rounded-full px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               <span className="text-primary text-xs font-bold">通話中</span>
+              {/* 相手の音声レベルメーター */}
+              <div className="flex items-end gap-[2px] h-3 ml-1">
+                {[0.3, 0.5, 0.7, 0.9, 1.0].map((threshold, i) => (
+                  <div
+                    key={i}
+                    className="w-[3px] rounded-sm transition-all duration-75"
+                    style={{
+                      height: `${(i + 1) * 20}%`,
+                      backgroundColor: remoteAudioLevel / 100 >= threshold ? '#00ff9d' : 'rgba(255,255,255,0.2)',
+                    }}
+                  />
+                ))}
+              </div>
+              <span className="text-[9px] text-white/40">相手の声</span>
             </div>
             {/* コイン残高（視聴者のみ） */}
             {isCaller && coinBalance !== null && (
