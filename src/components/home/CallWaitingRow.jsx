@@ -9,16 +9,17 @@ import ScrollRow from "./ScrollRow";
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
 
-  // call_enabled=true のチャンネルのみ表示（本番と同条件。ダミーも call_enabled=true に設定すれば表示される）
   const { data: allChannels = [] } = useQuery({
     queryKey: ["call-enabled-channels"],
-    queryFn: async () => {
-      const channels = await base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 100);
-      return channels;
-    },
+    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 100),
     staleTime: 30000,
     gcTime: 60000,
   });
+
+  // ログイン中ユーザーが owner のチャンネルIDセットを作成
+  const myChannelIds = new Set(
+    user ? allChannels.filter(ch => ch.owner_email === user.email).map(ch => ch.id) : []
+  );
 
   if (allChannels.length === 0) return (
     <section className="space-y-4">
@@ -41,7 +42,7 @@ export default function CallWaitingRow({ user }) {
   const rows = allChannels.length > 0
     ? [allChannels.slice(0, half), allChannels.slice(half)].filter(r => r.length > 0)
     : [];
-  const isOwnChannel = (channel) => user && channel.owner_email === user.email;
+  const isOwnChannel = (channel) => myChannelIds.has(channel.id);
 
   return (
     <section className="space-y-6">
