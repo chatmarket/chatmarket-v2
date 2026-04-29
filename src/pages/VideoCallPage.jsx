@@ -1023,7 +1023,11 @@ export default function VideoCallPage() {
           playsInline
           webkit-playsinline="true"
           x5-playsinline="true"
-          onLoadedMetadata={e => e.target.play().catch(() => {})}
+          onLoadedMetadata={e => {
+            e.target.muted = false;
+            e.target.volume = 1.0;
+            e.target.play().catch(() => {});
+          }}
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',

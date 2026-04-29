@@ -170,6 +170,11 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
             console.warn('[IVS Stages] ⚠️ No mediaStreamTrack on stream:', stageStream.streamType);
             return;
           }
+          // ★ 音声トラックのミュートを強制解除
+          if (track.kind === 'audio') {
+            track.enabled = true;
+            console.log(`[IVS Stages] 🔊 Audio track muted=${track.muted} enabled=${track.enabled} readyState=${track.readyState}`);
+          }
           // 重複追加を防ぐ
           const existingTrack = mediaStream.getTracks().find(t => t.id === track.id);
           if (!existingTrack) {
@@ -179,12 +184,14 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
           }
         });
 
-        console.log(`[IVS Stages] 📊 Total tracks in MediaStream: ${mediaStream.getTracks().length} (+${tracksAdded} new)`);
+        console.log(`[IVS Stages] 📊 Total tracks in MediaStream: ${mediaStream.getTracks().length} (+${tracksAdded} new) — audio:${mediaStream.getAudioTracks().length} video:${mediaStream.getVideoTracks().length}`);
 
         // video要素に強制アタッチ
-        videoEl.srcObject = mediaStream;
+        // ★ muted属性はHTMLの属性として残ると音が出ないため removeAttribute で完全除去
+        videoEl.removeAttribute('muted');
         videoEl.muted = false;
         videoEl.volume = 1.0;
+        videoEl.srcObject = mediaStream;
 
         // リトライ付き play() — 映像トラックが DOM に反映されるまで最大5回試みる
         let retryCount = 0;
