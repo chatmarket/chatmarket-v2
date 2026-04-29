@@ -130,7 +130,7 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
           <Button
             size="sm"
             className="w-full h-7 text-[11px] bg-green-600 hover:bg-green-500 gap-1"
-            onClick={() => navigate('/call-waiting')}
+            onClick={() => navigate('/call-waiting?autostart=1')}
           >
             <PhoneCall className="w-3 h-3" /> 通話待機画面へ
           </Button>

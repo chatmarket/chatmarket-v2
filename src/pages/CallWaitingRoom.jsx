@@ -182,6 +182,9 @@ export default function CallWaitingRoom() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // ?autostart=1 でTOPページから直接待機開始
+  const autostart = new URLSearchParams(window.location.search).get("autostart") === "1";
+
   // 設定フォーム
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -242,6 +245,14 @@ export default function CallWaitingRoom() {
         setUserPlan(plan);
         const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
         setMaxDuration(Math.min(30, features.maxDuration));
+
+        // autostart: タイトルをデフォルト設定して即待機開始
+        if (autostart) {
+          setTitle("通話受付中");
+          setIsWaiting(true);
+          initialDoneRef.current = false;
+          seenCallIds.current = new Set();
+        }
       }).catch(() => {});
       else base44.auth.redirectToLogin();
     });
