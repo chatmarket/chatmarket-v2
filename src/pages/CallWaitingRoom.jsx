@@ -179,6 +179,7 @@ function InlineChatPanel({ user, fromEmail, fromName }) {
 export default function CallWaitingRoom() {
   const [user, setUser] = useState(null);
   const [userPlan, setUserPlan] = useState("free");
+  const [myChannel, setMyChannel] = useState(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -245,6 +246,10 @@ export default function CallWaitingRoom() {
         setUserPlan(plan);
         const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
         setMaxDuration(Math.min(30, features.maxDuration));
+
+        // 自分のチャンネルを取得
+        const channels = await base44.entities.Channel.filter({ owner_email: u.email });
+        if (channels[0]) setMyChannel(channels[0]);
 
         // autostart: タイトルをデフォルト設定して即待機開始
         if (autostart) {
@@ -344,8 +349,12 @@ export default function CallWaitingRoom() {
     } catch {}
   };
 
-  const handleStartWaiting = () => {
+  const handleStartWaiting = async () => {
     if (!title.trim()) { toast.error("タイトルを入力してください"); return; }
+    // Channelの call_theme を更新してTOPページに表示する
+    if (myChannel) {
+      await base44.entities.Channel.update(myChannel.id, { call_theme: title.trim() }).catch(() => {});
+    }
     setIsWaiting(true);
     initialDoneRef.current = false;
     seenCallIds.current = new Set();
