@@ -4,80 +4,15 @@ import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-// サンプルライブストリーム（AWS通信なし・ダミー）
+// サンプルライブストリーム（外部画像なし・ダミー）
+// thumbnail_url / channel_avatar は null にしてコンポーネント側のフォールバックを使用
 const SAMPLE_LIVESTREAMS = [
-  {
-    id: "sample_1",
-    title: "朝のおはよう配信💖",
-    channel_name: "あおいのチャンネル",
-    channel_avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
-    thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06f70d504f0?w=400&q=80",
-    viewer_count: 342,
-    price: 200,
-    status: "live",
-    live_started_at: new Date().toISOString(),
-    stream_type: "ivs",
-  },
-  {
-    id: "sample_2",
-    title: "ゲーム配信🎮",
-    channel_name: "げーまーゆき",
-    channel_avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
-    thumbnail_url: "https://images.unsplash.com/photo-1538481143235-405ba17c9f2f?w=400&q=80",
-    viewer_count: 1205,
-    price: 300,
-    status: "live",
-    live_started_at: new Date().toISOString(),
-    stream_type: "ivs",
-  },
-  {
-    id: "sample_3",
-    title: "料理の時間🍳",
-    channel_name: "シェフたかし",
-    channel_avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
-    thumbnail_url: "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=400&q=80",
-    viewer_count: 567,
-    price: 150,
-    status: "live",
-    live_started_at: new Date().toISOString(),
-    stream_type: "ivs",
-  },
-  {
-    id: "sample_4",
-    title: "音楽ライブ🎵",
-    channel_name: "ミュージシャン太郎",
-    channel_avatar: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200&q=80",
-    thumbnail_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80",
-    viewer_count: 2341,
-    price: 500,
-    status: "live",
-    live_started_at: new Date().toISOString(),
-    stream_type: "ivs",
-  },
-  {
-    id: "sample_5",
-    title: "フィットネス配信💪",
-    channel_name: "トレーナーアキ",
-    channel_avatar: "https://images.unsplash.com/photo-1534126466717-e64a2a54ad41?w=200&q=80",
-    thumbnail_url: "https://images.unsplash.com/photo-1552258989-8bdab63c507b?w=400&q=80",
-    viewer_count: 876,
-    price: 250,
-    status: "live",
-    live_started_at: new Date().toISOString(),
-    stream_type: "ivs",
-  },
-  {
-    id: "sample_6",
-    title: "お絵描き配信✨",
-    channel_name: "イラストレーターまお",
-    channel_avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
-    thumbnail_url: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&q=80",
-    viewer_count: 654,
-    price: 180,
-    status: "live",
-    live_started_at: new Date().toISOString(),
-    stream_type: "ivs",
-  },
+  { id: "sample_1", title: "朝のおはよう配信💖", channel_name: "あおいのチャンネル", channel_avatar: null, thumbnail_url: null, viewer_count: 342, price: 200, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
+  { id: "sample_2", title: "ゲーム配信🎮", channel_name: "げーまーゆき", channel_avatar: null, thumbnail_url: null, viewer_count: 1205, price: 300, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
+  { id: "sample_3", title: "料理の時間🍳", channel_name: "シェフたかし", channel_avatar: null, thumbnail_url: null, viewer_count: 567, price: 150, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
+  { id: "sample_4", title: "音楽ライブ🎵", channel_name: "ミュージシャン太郎", channel_avatar: null, thumbnail_url: null, viewer_count: 2341, price: 500, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
+  { id: "sample_5", title: "フィットネス配信💪", channel_name: "トレーナーアキ", channel_avatar: null, thumbnail_url: null, viewer_count: 876, price: 250, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
+  { id: "sample_6", title: "お絵描き配信✨", channel_name: "イラストレーターまお", channel_avatar: null, thumbnail_url: null, viewer_count: 654, price: 180, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
 ];
 import { Radio, Play, Heart, ExternalLink, ChevronDown, ChevronUp, MessageCircle, Search, Zap, PhoneCall, PhoneOff, Settings, X } from "lucide-react";
 import { isBefore } from "date-fns";
@@ -88,7 +23,7 @@ import { useInViewTrigger } from "@/hooks/useInViewTrigger";
 const _RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
 const _now = new Date();
 const SHOW_RECRUIT_BANNER = isBefore(_now, _RECRUIT_DEADLINE);
-console.log('[RecruitBanner/Home] now:', _now.toISOString(), '| show:', SHOW_RECRUIT_BANNER);
+
 import VideoCard from "../components/cards/VideoCard";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
@@ -216,11 +151,7 @@ export default function Home() {
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels-all"],
-    queryFn: async () => {
-      const result = await base44.entities.Channel.list("-monthly_revenue_coins", 30);
-      console.log("[Home] Channels API response:", result);
-      return result;
-    },
+    queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 30),
     enabled: true,
     staleTime: 600000,
     gcTime: 1200000,
