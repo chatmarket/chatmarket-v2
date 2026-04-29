@@ -560,13 +560,18 @@ export default function VideoCallPage() {
     };
   }, [call?.status]);
 
-  // コイン残高取得
+  // コイン残高取得（通話状態に関わらず常時更新）
   useEffect(() => {
     if (!user) return;
-    base44.entities.YellCoinWallet.filter({ user_email: user.email }).then((wallets) => {
-      setCoinBalance(wallets[0]?.balance || 0);
-    });
-  }, [user, coinsConsumed]);
+    const fetchBalance = () => {
+      base44.entities.YellCoinWallet.filter({ user_email: user.email }).then((wallets) => {
+        setCoinBalance(wallets[0]?.balance || 0);
+      });
+    };
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 30000); // 30秒ごとに更新
+    return () => clearInterval(interval);
+  }, [user?.email, coinsConsumed]);
 
   // 課金ティック + 15分MVP課金トリガー（通話中・発信者のみ）
   useEffect(() => {
@@ -847,6 +852,14 @@ export default function VideoCallPage() {
 
   const handleSendYell = async () => {
     if (!selectedYell || !call || !user) return;
+
+    // 残高チェック（送信前に確認）
+    if (coinBalance !== null && coinBalance < selectedYell) {
+      setShowYellModal(false);
+      setShowLowBalanceModal(true);
+      return;
+    }
+
     setYellSending(true);
 
     // ★ UI を即座に更新（楽観的更新）→ 画面フリーズ解消
@@ -943,6 +956,9 @@ export default function VideoCallPage() {
     setTimeout(() => setExtendPaid(false), 1000);
     toast.success(`${extendMinutes}分延長しました！`);
   };
+
+  // 残高不足でのチャージ誘導モーダル
+  const [showLowBalanceModal, setShowLowBalanceModal] = useState(false);
 
   // ---- IVS Stages 接続ステータス ----
   const [ivsConnectStatus, setIvsConnectStatus] = useState(null); // null | 'reconnecting' | 'failed'
@@ -1361,8 +1377,8 @@ export default function VideoCallPage() {
             </button>
           </div>
 
-          {/* ステータスラベル（ON/OFF状態を文字でも表示） */}
-          <div className="flex flex-col items-center gap-0.5">
+          {/* 中央: ステータス + コイン残高 */}
+          <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-2">
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${micOn ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
                 {micOn ? "MIC ON" : "MIC OFF"}
@@ -1371,6 +1387,21 @@ export default function VideoCallPage() {
                 {camOn ? "CAM ON" : "CAM OFF"}
               </span>
             </div>
+            {/* コイン残高（caller のみ・常時表示） */}
+            {isCaller && coinBalance !== null && (
+              <button
+                onClick={() => navigate("/coin-charge")}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border transition-all ${
+                  coinBalance < 150
+                    ? "bg-red-500/20 border-red-500/50 text-red-400 animate-pulse"
+                    : "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                }`}
+              >
+                <Coins className="w-2.5 h-2.5" />
+                {coinBalance.toLocaleString()} コイン
+                {coinBalance < 150 && <span className="text-red-300 ml-0.5">残高不足</span>}
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -1678,6 +1709,40 @@ export default function VideoCallPage() {
             <Button onClick={handleSendYell} disabled={!selectedYell || yellSending} className="w-full bg-yellow-500/80 hover:bg-yellow-500 text-black font-bold">
               {yellSending ? "送信中..." : `¥${selectedYell?.toLocaleString() || 0} を送る`}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 残高不足チャージ誘導モーダル */}
+      <Dialog open={showLowBalanceModal} onOpenChange={setShowLowBalanceModal}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-yellow-400">
+              <Coins className="w-5 h-5" /> エールコインが不足しています
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-secondary rounded-xl p-4 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">現在の残高</span>
+              <span className="text-2xl font-black text-red-400">{(coinBalance || 0).toLocaleString()} コイン</span>
+            </div>
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-xs text-yellow-300">
+              エールコインをチャージして、応援の気持ちを届けましょう！
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowLowBalanceModal(false)}>
+                キャンセル
+              </Button>
+              <Button
+                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold gap-2"
+                onClick={() => {
+                  setShowLowBalanceModal(false);
+                  navigate("/coin-charge");
+                }}
+              >
+                <Coins className="w-4 h-4" /> コインをチャージ
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
