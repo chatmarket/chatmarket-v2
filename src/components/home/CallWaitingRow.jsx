@@ -80,6 +80,7 @@ export default function CallWaitingRow({ user }) {
 }
 
 function CallWaitingCard({ channel, onChat, isOwnChannel }) {
+  const navigate = useNavigate();
   const cardChannelId = channel.id;
   const cardChannelName = channel.name;
   
@@ -111,9 +112,18 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
           </p>
         )}
         {!isOwnChannel && (
-          <Button size="sm" className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1" onClick={onChat}>
-            <MessageCircle className="w-3 h-3" /> チャットで声をかける
-          </Button>
+          <div className="space-y-1.5">
+            <Button
+              size="sm"
+              className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1"
+              onClick={() => navigate(`/call-request/${cardChannelId}`)}
+            >
+              <PhoneCall className="w-3 h-3" /> 通話を申し込む
+            </Button>
+            <Button size="sm" variant="outline" className="w-full h-7 text-[11px] gap-1" onClick={onChat}>
+              <MessageCircle className="w-3 h-3" /> チャットで声をかける
+            </Button>
+          </div>
         )}
         {isOwnChannel && (
           <p className="text-[11px] text-green-400 text-center font-semibold">待機中（自分）</p>
