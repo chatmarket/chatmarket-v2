@@ -1209,7 +1209,11 @@ export default function VideoCallPage() {
               </div>
               {/* 最低高さ48px確保 */}
               <button
-                onClick={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
+                onClick={async () => {
+                  if (call) await base44.entities.VideoCall.update(call.id, { status: 'cancelled' }).catch(() => {});
+                  localStream?.getTracks().forEach(t => t.stop());
+                  navigate(-1);
+                }}
                 className="w-full rounded-2xl bg-red-600/80 border-2 border-red-500 text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
                 style={{ minHeight: 52 }}
               >
