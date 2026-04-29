@@ -22,6 +22,7 @@ import ExtensionRequestModal from "../components/call/ExtensionRequestModal";
 import ExtensionAcceptanceModal from "../components/call/ExtensionAcceptanceModal";
 import ExtensionConfirmationModal from "../components/call/ExtensionConfirmationModal";
 import ReconnectionNotification from "../components/call/ReconnectionNotification";
+import RemoteMuteIndicator from "../components/call/RemoteMuteIndicator";
 import IncomingCallScreen from "../components/call/IncomingCallScreen";
 import OutgoingCallScreen from "../components/call/OutgoingCallScreen";
 import MobileVideoCallUI from "../components/call/MobileVideoCallUI";
@@ -70,67 +71,8 @@ function getEffectiveDuration(channel, user) {
   return PLAN_DEFAULT_DURATION[plan] || 15;
 }
 
-// ---- Constants ----
-const YELL_AMOUNTS = [
-  { value: 200, color: "green", label: "¥200" },
-  { value: 500, color: "green", label: "¥500" },
-  { value: 1000, color: "yellow", label: "¥1,000" },
-  { value: 3000, color: "orange", label: "¥3,000" },
-  { value: 5000, color: "orange", label: "¥5,000" },
-  { value: 10000, color: "red", label: "¥10,000" },
-];
-
-const colorStyles = {
-  green: "bg-emerald-500/20 border-emerald-500/50 text-emerald-400",
-  yellow: "bg-yellow-500/20 border-yellow-500/50 text-yellow-400",
-  orange: "bg-orange-500/20 border-orange-500/50 text-orange-400",
-  red: "bg-red-500/20 border-red-500/50 text-red-400",
-};
-
-const EMOJIS = ["😊","😂","🥺","❤️","🔥","👏","💪","🎉","😎","🙏","👍","✨","😍","🤩","💯","🫶","😆","🥳","😘","💫"];
-
-const THROW_MARKS = [
-  { emoji: "🌹", label: "バラ" },
-  { emoji: "⭐", label: "スター" },
-  { emoji: "🎁", label: "プレゼント" },
-  { emoji: "🪄", label: "魔法" },
-  { emoji: "🦋", label: "蝶々" },
-  { emoji: "💎", label: "ダイヤ" },
-  { emoji: "🍀", label: "四葉" },
-  { emoji: "🎵", label: "音符" },
-];
-
-const FILTERS = [
-  { id: "none", label: "なし", style: "" },
-  { id: "beauty", label: "美肌", style: "brightness(1.1) contrast(0.9) saturate(1.1)" },
-  { id: "vivid", label: "ビビッド", style: "saturate(1.5) contrast(1.1)" },
-  { id: "cool", label: "クール", style: "hue-rotate(30deg) saturate(0.9)" },
-  { id: "warm", label: "温かみ", style: "sepia(0.3) saturate(1.2)" },
-  { id: "mono", label: "モノクロ", style: "grayscale(1)" },
-  { id: "blur-bg", label: "ぼかし", style: "blur(0px)" }, // simulated
-];
-
-const BACKGROUNDS = [
-  { id: "none", label: "なし", preview: null },
-  { id: "blur", label: "ぼかし", preview: "blur" },
-  { id: "office", label: "オフィス", preview: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80" },
-  { id: "cafe", label: "カフェ", preview: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&q=80" },
-  { id: "nature", label: "自然", preview: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80" },
-  { id: "studio", label: "スタジオ", preview: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80" },
-];
-
-const AUDIO_QUALITY = [
-  { id: "low", label: "低品質（省データ）" },
-  { id: "medium", label: "標準" },
-  { id: "high", label: "高品質" },
-];
-
-const VIDEO_QUALITY = [
-  { id: "360p", label: "360p（省データ）" },
-  { id: "480p", label: "480p（標準）" },
-  { id: "720p", label: "720p（HD）" },
-  { id: "1080p", label: "1080p（フルHD）" },
-];
+// ---- Constants (外部ファイルから import) ----
+import { YELL_AMOUNTS, colorStyles, EMOJIS, THROW_MARKS, FILTERS, BACKGROUNDS, AUDIO_QUALITY, VIDEO_QUALITY } from "../components/call/videoCallConstants";
 
 // ---- Floating emoji animation component ----
 function FloatingItem({ item, onDone, type = "emoji" }) {
@@ -184,6 +126,7 @@ export default function VideoCallPage() {
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [localStream, setLocalStream] = useState(null);
+  const muteUpdateTimerRef = useRef(null); // ミュート状態のDB同期タイマー
 
   // Panels
   const [activePanel, setActivePanel] = useState(null);
@@ -839,9 +782,28 @@ export default function VideoCallPage() {
     localStream.getVideoTracks().forEach((t) => (t.enabled = camOn));
   }, [camOn, localStream]);
 
+  // ミュート切替: トラック制御 + AudioContext 強制復旧 + DB同期
   useEffect(() => {
     if (!localStream) return;
     localStream.getAudioTracks().forEach((t) => (t.enabled = micOn));
+
+    // ミュート解除時: AudioContext を確実に resume（音切れバグ防止）
+    if (micOn) {
+      [localAudioCtxRef.current, remoteAudioCtxRef.current].forEach(ctx => {
+        if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+      });
+    }
+
+    // DB 同期（500ms デバウンス）— 相手画面のインジケーター用
+    if (!call?.id) return;
+    clearTimeout(muteUpdateTimerRef.current);
+    muteUpdateTimerRef.current = setTimeout(() => {
+      const isCaller = user?.email === call.caller_email;
+      base44.entities.VideoCall.update(call.id, isCaller
+        ? { caller_muted: !micOn }
+        : { callee_muted: !micOn }
+      ).catch(() => {});
+    }, 500);
   }, [micOn, localStream]);
 
   const handleStartWaiting = async () => {
@@ -1369,12 +1331,14 @@ export default function VideoCallPage() {
                 <span className="text-yellow-300 font-black text-xs">{coinBalance.toLocaleString()} コイン</span>
               </div>
             )}
-            {/* マイクOFF警告 */}
+            {/* 自分がミュート中の警告（一時離席） */}
             {!micOn && (
               <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-red-900/90 border border-red-500/60 rounded-xl px-4 py-2 flex items-center gap-2 text-red-300 text-xs font-bold backdrop-blur animate-pulse pointer-events-auto">
-                <MicOff className="w-4 h-4 shrink-0" /> マイクOFF
+                <MicOff className="w-4 h-4 shrink-0" /> マイクOFF（一時離席中）
               </div>
             )}
+            {/* 相手がミュート中のインジケーター */}
+            <RemoteMuteIndicator call={call} user={user} otherName={otherName} selfMuted={!micOn} />
             {/* 無音検知アラート（マイクON でも5秒間無音の場合） */}
             {micOn && showMicAlert && (
               <div
@@ -1434,16 +1398,18 @@ export default function VideoCallPage() {
         <div className="flex items-center justify-between px-4 border-b border-white/10 shrink-0" style={{ paddingTop: 10, paddingBottom: 10 }}>
           {/* マイク・カメラ・設定 */}
           <div className="flex items-center gap-3">
-            {/* マイクボタン: OFF時は赤背景+斜線アイコンで誰でも分かる */}
-            <div className="flex flex-col items-center gap-1">
-              <button
-                onClick={() => setMicOn(!micOn)}
-                className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
-                aria-label={micOn ? "マイクON" : "マイクOFF"}
-              >
-                {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
-                {!micOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
-              </button>
+          {/* マイクボタン: OFF時は赤背景+斜線アイコン+「一時離席」ラベル */}
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={() => setMicOn(!micOn)}
+              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
+              aria-label={micOn ? "マイクON" : "一時離席中（タップで復帰）"}
+              title={micOn ? "マイクON" : "一時離席中 — タップで音声復帰"}
+            >
+              {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+              {!micOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
+            </button>
+            {!micOn && <span className="text-[8px] text-red-400 font-bold leading-none">離席中</span>}
               {/* マイク音声レベルメーター */}
               {micOn && (
                 <div className="flex items-end gap-[2px] h-3">
