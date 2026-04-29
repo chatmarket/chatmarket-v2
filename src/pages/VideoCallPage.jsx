@@ -740,7 +740,22 @@ export default function VideoCallPage() {
         audioEnabled: aTracks[0]?.enabled,
       });
     }
+    // ページ離脱時にカメラ・マイクを確実に停止
+    return () => {
+      if (smartStream) {
+        smartStream.getTracks().forEach(t => t.stop());
+        console.log('[VideoCallPage] 🔒 Stopped all camera/mic tracks on unmount');
+      }
+    };
   }, [smartStream]);
+
+  // 通話が ended/declined/cancelled になったらカメラを即停止
+  useEffect(() => {
+    if (['ended', 'declined', 'cancelled'].includes(call?.status)) {
+      localStream?.getTracks().forEach(t => t.stop());
+      setLocalStream(null);
+    }
+  }, [call?.status]);
 
   useEffect(() => {
     if (!localStream) return;
