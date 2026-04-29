@@ -1049,15 +1049,23 @@ export default function VideoCallPage() {
         ) : (
         /* 相手映像（フルスクリーン） - ChimeがここにRemoteVideoをbindする */
         <div className="absolute inset-0 w-full h-full bg-black">
-          {/* iOS Safari: autoPlay + playsInline + muted=false の順序が重要 */}
+          {/* iOS Safari: autoPlay + playsInline が必須。接続直後のアスペクト比ズレ防止のため position+inset指定 */}
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
-            className="w-full h-full object-cover"
-            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+            onLoadedMetadata={(e) => { e.target.play().catch(() => {}); }}
+            style={{
+              position: 'absolute',
+              top: 0, left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              backgroundColor: '#000',
+            }}
           />
           {countdown !== null && (
             <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/70 backdrop-blur-sm">
@@ -1092,8 +1100,17 @@ export default function VideoCallPage() {
         {!isWaiting && (
           call?.status === 'active' ? (
             // 通話中: 右下PiP — スマホでも視認しやすいサイズ
-            <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-40 sm:h-52 rounded-xl overflow-hidden border-2 border-white/40 shadow-2xl bg-black/80 z-10" style={{ boxShadow: '0 0 16px rgba(0,255,157,0.3)' }}>
-              <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true" className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
+            <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-40 sm:h-52 rounded-xl overflow-hidden border-2 border-white/40 shadow-2xl bg-black z-10" style={{ boxShadow: '0 0 16px rgba(0,255,157,0.3)' }}>
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                webkit-playsinline="true"
+                onLoadedMetadata={(e) => { e.target.play().catch(() => {}); }}
+                className="w-full h-full"
+                style={{ objectFit: 'cover', width: '100%', height: '100%', filter: currentFilter?.style || "", display: 'block', backgroundColor: '#000' }}
+              />
               {!camOn && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                   <CameraOff className="w-5 h-5 text-muted-foreground" />
@@ -1106,8 +1123,17 @@ export default function VideoCallPage() {
           ) : (
             // 通話前: 中央に大きく自画像プレビュー
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full h-full relative">
-                <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true" className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
+              <div className="w-full h-full relative bg-black">
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  webkit-playsinline="true"
+                  onLoadedMetadata={(e) => { e.target.play().catch(() => {}); }}
+                  className="w-full h-full"
+                  style={{ objectFit: 'cover', width: '100%', height: '100%', filter: currentFilter?.style || "", display: 'block' }}
+                />
                 {!camOn && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 gap-4">
                     <CameraOff className="w-12 h-12 text-muted-foreground" />
@@ -1195,6 +1221,14 @@ export default function VideoCallPage() {
           <div className="absolute top-8 md:top-12 left-1/2 -translate-x-1/2 z-10 bg-red-900/90 border border-red-500/60 rounded-lg md:rounded-xl px-2 md:px-4 py-1.5 md:py-2 flex items-center gap-1.5 md:gap-2 text-red-300 text-[10px] md:text-sm font-bold backdrop-blur shadow-lg max-w-[90%]">
             <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 shrink-0" />
             <span className="truncate">NGワード検出: "{ngDetected}"</span>
+          </div>
+        )}
+
+        {/* ★ コイン残高 常時表示バッジ（発信者 caller のみ・通話中は常に見せる） */}
+        {call?.status === 'active' && user?.email === call?.caller_email && coinBalance !== null && (
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 bg-black/80 border border-yellow-500/60 rounded-full px-3 py-1.5 backdrop-blur shadow-lg">
+            <Coins className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+            <span className="text-yellow-300 font-black text-xs">{coinBalance.toLocaleString()} コイン</span>
           </div>
         )}
 
