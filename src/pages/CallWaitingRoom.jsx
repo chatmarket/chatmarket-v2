@@ -249,11 +249,17 @@ export default function CallWaitingRoom() {
 
         // 自分のチャンネルを取得
         const channels = await base44.entities.Channel.filter({ owner_email: u.email });
-        if (channels[0]) setMyChannel(channels[0]);
+        const ch = channels[0] || null;
+        if (ch) setMyChannel(ch);
 
         // autostart: タイトルをデフォルト設定して即待機開始
         if (autostart) {
-          setTitle("通話受付中");
+          const defaultTitle = "通話受付中";
+          setTitle(defaultTitle);
+          // call_theme を即時保存
+          if (ch) {
+            await base44.entities.Channel.update(ch.id, { call_theme: defaultTitle }).catch(() => {});
+          }
           setIsWaiting(true);
           initialDoneRef.current = false;
           seenCallIds.current = new Set();
@@ -361,10 +367,14 @@ export default function CallWaitingRoom() {
     toast.success("通話受付を開始しました！着信をお待ちください");
   };
 
-  const handleStopWaiting = () => {
+  const handleStopWaiting = async () => {
     setIsWaiting(false);
     setIncomingCall(null);
     stopCam();
+    // call_theme をクリアしてTOPページから非表示にする
+    if (myChannel) {
+      await base44.entities.Channel.update(myChannel.id, { call_theme: null }).catch(() => {});
+    }
     toast.info("通話受付を終了しました");
   };
 
