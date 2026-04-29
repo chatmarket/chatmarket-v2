@@ -744,18 +744,20 @@ export default function CallWaitingRoom() {
 
         {/* カメラOFF時のプレースホルダー */}
         {!showCam && (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card flex-col gap-4">
-            <PhoneCall className="w-20 h-20 text-primary/30" />
-            <p className="text-white/50 text-sm">カメラをONにしてください</p>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-card flex-col gap-3">
+            <PhoneCall className="w-16 h-16 text-primary/30" />
+            {title && (
+              <p className="text-white font-black text-base px-4 text-center line-clamp-2">{title}</p>
+            )}
+            <p className="text-white/50 text-sm">通話受付中</p>
           </div>
         )}
 
-        {/* 待機中のテキスト（待機時のみ） */}
-        {isWaiting && !showCam && (
-          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3 pointer-events-none">
-            <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-            <span className="text-white font-bold text-lg">着信待機中...</span>
-            <p className="text-white/50 text-sm">お客様がリクエストするのをお待ちしています</p>
+        {/* 待機中のテキスト（待機時のみ・カメラON時はオーバーレイとして下部に表示） */}
+        {isWaiting && showCam && (
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3 pointer-events-none">
+            {title && <p className="text-white font-black text-sm text-center truncate">{title}</p>}
+            <p className="text-white/60 text-xs text-center">通話受付中</p>
           </div>
         )}
 
