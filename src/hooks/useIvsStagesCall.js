@@ -21,11 +21,46 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
   const reconnectAttemptRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const remoteVideoTimeoutRef = useRef(null);
+  const audioCtxListRef = useRef([]); // 全AudioContext参照を保持（Watchdog用）
+  const audioWatchdogRef = useRef(null); // AudioWatchdog インターバル
 
   const MAX_RECONNECT_ATTEMPTS = 10;  // モバイル回線の不安定性に対応
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // AudioWatchdog: 1秒ごとに全AudioContextを監視しsuspendedなら即resume
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const startAudioWatchdog = useCallback(() => {
+    if (audioWatchdogRef.current) return; // 二重起動防止
+    audioWatchdogRef.current = setInterval(() => {
+      audioCtxListRef.current.forEach(ctx => {
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      });
+      // remoteVideoRef の video要素のミュート状態も常時監視
+      const videoEl = remoteVideoRef.current;
+      if (videoEl && videoEl.muted) {
+        videoEl.muted = false;
+        videoEl.volume = 1.0;
+      }
+      if (videoEl?.srcObject instanceof MediaStream) {
+        videoEl.srcObject.getAudioTracks().forEach(t => { if (!t.enabled) t.enabled = true; });
+      }
+    }, 1000);
+    console.log('[AudioWatchdog] 🛡️ Started — monitoring AudioContext & remote audio tracks every 1s');
+  }, [remoteVideoRef]);
+
+  const stopAudioWatchdog = useCallback(() => {
+    if (audioWatchdogRef.current) {
+      clearInterval(audioWatchdogRef.current);
+      audioWatchdogRef.current = null;
+    }
+    audioCtxListRef.current = [];
+  }, []);
+
   const cleanup = useCallback(() => {
     cancelledRef.current = true;
+    stopAudioWatchdog();
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     if (remoteVideoTimeoutRef.current) clearTimeout(remoteVideoTimeoutRef.current);
     if (stageRef.current) {
@@ -33,7 +68,7 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       stageRef.current = null;
       console.log('[IVS Stages] 🔒 Left stage (cleanup)');
     }
-  }, []);
+  }, [stopAudioWatchdog]);
 
   const join = useCallback(async (stagesToken, IVSClient, isReconnect = false) => {
     if (cancelledRef.current) return;
@@ -70,7 +105,7 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       }
       console.log('[IVS Stages] ✅✅✅ ALL API CLASSES VERIFIED - PROCEEDING TO JOIN');
 
-      // ローカルトラックをラップ（readyState に関係なく追加 — モバイル回線対応）
+      // ローカルトラックをラップ（音声トラックを先に追加して優先確保）
       const localStreams = [];
       const vt = localStream.getVideoTracks()[0];
       const at = localStream.getAudioTracks()[0];
@@ -80,20 +115,19 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         audio: at ? `${at.label} [${at.readyState}] [enabled:${at.enabled}]` : 'none',
       });
 
-      // 🔥 MOBILE FIX: readyState 'live' チェックを削除 — モバイルではトラック追加直後に
-      // readyState === 'live' になるまで待つ必要がある。
-      // Stages SDK は内部でトラック状態を監視し、自動的に publishing を開始する。
+      // 🔊 音声を先に追加して CPU 割り当て優先確保
+      if (at) {
+        at.enabled = true; // 強制ON
+        localStreams.push(new LocalStageStream(at, { simulcast: false }));
+        console.log('[IVS Stages] ✅ Audio track added FIRST (priority) readyState:', at.readyState);
+      } else {
+        console.warn('[IVS Stages] ⚠️ No audio track available');
+      }
       if (vt) {
-        localStreams.push(new LocalStageStream(vt));
+        localStreams.push(new LocalStageStream(vt, { simulcast: false }));
         console.log('[IVS Stages] ✅ Video track added to publish (readyState:', vt.readyState, ')');
       } else {
         console.warn('[IVS Stages] ⚠️ No video track available');
-      }
-      if (at) {
-        localStreams.push(new LocalStageStream(at));
-        console.log('[IVS Stages] ✅ Audio track added to publish (readyState:', at.readyState, ')');
-      } else {
-        console.warn('[IVS Stages] ⚠️ No audio track available');
       }
 
       if (localStreams.length === 0) {
@@ -193,24 +227,29 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         videoEl.volume = 1.0;
         videoEl.srcObject = mediaStream;
 
-        // ★ 音声の強制開通: AudioContext を使って音声を確実に流す
-        // ブラウザの autoplay policy で video.play() がブロックされても
-        // AudioContext 経由なら音声を通せる場合がある
-        try {
-          const audioTracks = mediaStream.getAudioTracks();
-          if (audioTracks.length > 0) {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            // suspended なら resume（iOS Safari対策）
-            if (audioCtx.state === 'suspended') {
-              audioCtx.resume().catch(() => {});
+        // ★ 音声の強制開通: queueMicrotask でメインスレッドを圧迫せず実行
+        queueMicrotask(() => {
+          try {
+            const audioTracks = mediaStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+              const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+              // Watchdog に登録して常時監視対象にする
+              audioCtxListRef.current.push(audioCtx);
+              // statechange で即 resume（外部からスリープさせられた場合も対応）
+              audioCtx.addEventListener('statechange', () => {
+                if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+              });
+              if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+              }
+              const source = audioCtx.createMediaStreamSource(mediaStream);
+              source.connect(audioCtx.destination);
+              console.log('[IVS Stages] 🔊 AudioContext connected + registered to Watchdog');
             }
-            const source = audioCtx.createMediaStreamSource(mediaStream);
-            source.connect(audioCtx.destination);
-            console.log('[IVS Stages] 🔊 AudioContext connected to remote stream — audio forced open');
+          } catch (e) {
+            console.warn('[IVS Stages] ⚠️ AudioContext fallback failed:', e.message);
           }
-        } catch (e) {
-          console.warn('[IVS Stages] ⚠️ AudioContext fallback failed:', e.message);
-        }
+        });
 
         // リトライ付き play() — 映像トラックが DOM に反映されるまで最大5回試みる
         let retryCount = 0;
@@ -332,6 +371,8 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       if (!cancelledRef.current) {
         stageRef.current = stage;
         reconnectAttemptRef.current = 0;
+        // AudioWatchdog 起動（stage参加成功時）
+        startAudioWatchdog();
         console.log('[IVS Stages] ✅ stage.join() completed. Waiting for remote participant...');
 
         // 🔥 MOBILE FIX: リモート映像受信の監視タイムアウト（30秒）
@@ -358,7 +399,7 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         scheduleReconnect(stagesToken, IVSClient);
       }
     }
-  }, [localStream, user, remoteVideoRef, onReconnected]);
+  }, [localStream, user, remoteVideoRef, onReconnected, startAudioWatchdog]);
 
   const scheduleReconnect = useCallback((stagesToken, IVSClient) => {
     if (cancelledRef.current) return;
