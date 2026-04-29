@@ -1011,168 +1011,197 @@ export default function VideoCallPage() {
 
       {/* ════════════════════════════════════════
           VIDEO AREA — 画面上部60%
+          ★ localVideoRef / remoteVideoRef は常時DOMに存在させる（IVS SDKのbind維持）
+          ★ 表示切替はCSSのみで行う
       ════════════════════════════════════════ */}
       <div ref={videoContainerRef} className="relative bg-black" style={{ height: '60dvh', minHeight: '280px', flexShrink: 0 }}>
 
-        {/* === PENDING: 視聴者（caller）=== 自分の映像フルスクリーン + 通話申請ボタン */}
+        {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          webkit-playsinline="true"
+          x5-playsinline="true"
+          onLoadedMetadata={e => e.target.play().catch(() => {})}
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            backgroundColor: '#000',
+            display: call?.status === 'active' ? 'block' : 'none',
+            zIndex: 1,
+          }}
+        />
+
+        {/* ── 常時マウント: ローカル映像（active時はワイプ右下、それ以外はフルスクリーン） ── */}
+        <video
+          ref={localVideoRef}
+          autoPlay
+          muted
+          playsInline
+          webkit-playsinline="true"
+          onLoadedMetadata={e => e.target.play().catch(() => {})}
+          style={call?.status === 'active' ? {
+            // active: 右下ワイプ
+            position: 'absolute',
+            bottom: 12, right: 12,
+            width: 112, height: 144,
+            objectFit: 'cover',
+            borderRadius: 12,
+            border: '2px solid rgba(255,255,255,0.4)',
+            boxShadow: '0 0 16px rgba(0,255,157,0.4)',
+            backgroundColor: '#000',
+            zIndex: 10,
+            filter: currentFilter?.style || '',
+          } : {
+            // pending / accepted: フルスクリーン
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            backgroundColor: '#000',
+            zIndex: 1,
+            filter: call?.status === 'pending' && !isCaller ? 'brightness(0.5)' : '',
+          }}
+        />
+
+        {/* active: カメラOFF時のワイプ黒幕 */}
+        {call?.status === 'active' && !camOn && (
+          <div className="absolute bg-black/80 flex items-center justify-center rounded-xl z-20"
+            style={{ bottom: 12, right: 12, width: 112, height: 144, borderRadius: 12 }}>
+            <CameraOff className="w-5 h-5 text-white/40" />
+          </div>
+        )}
+        {/* active: ワイプラベル */}
+        {call?.status === 'active' && (
+          <div className="absolute z-20 text-center" style={{ bottom: 14, right: 12, width: 112 }}>
+            <span className="text-[9px] text-white/70 bg-black/60 px-1.5 py-0.5 rounded-full">あなた</span>
+          </div>
+        )}
+
+        {/* pending / accepted: カメラOFF時のフルスクリーン黒幕 */}
+        {call?.status !== 'active' && !camOn && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
+            <CameraOff className="w-16 h-16 text-white/30" />
+          </div>
+        )}
+
+        {/* ── オーバーレイUI（状態別） ── */}
+
+        {/* PENDING caller: 承認待ち */}
         {call?.status === 'pending' && isCaller && (
-          <div className="absolute inset-0 bg-black">
-            <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true"
-              onLoadedMetadata={e => e.target.play().catch(() => {})}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            {!camOn && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/90">
-                <CameraOff className="w-16 h-16 text-white/30" />
-              </div>
-            )}
-            {/* 申請ボタンオーバーレイ */}
-            <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 bg-gradient-to-t from-black/80 via-transparent to-transparent">
-              <div className="text-center space-y-4 px-6 w-full max-w-sm">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                  <p className="text-white/70 text-sm font-bold">{call.callee_name} の承認を待っています...</p>
-                </div>
-                <motion.button
-                  animate={{ boxShadow: ["0 0 20px rgba(0,255,157,0.4)", "0 0 40px rgba(0,255,157,0.8)", "0 0 20px rgba(0,255,157,0.4)"] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  onClick={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
-                  className="w-full py-3 rounded-2xl bg-red-600/80 border border-red-500 text-white font-bold flex items-center justify-center gap-2"
-                >
-                  <PhoneOff className="w-5 h-5" /> キャンセル
-                </motion.button>
-              </div>
+          <div className="absolute inset-0 flex flex-col z-30" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 30%, transparent)' }}>
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur rounded-full px-4 py-1.5">
+              <span className="text-white/80 text-xs font-bold">📹 {call.callee_name} さんに通話申請中</span>
             </div>
-            {/* 📹 確認ラベル */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur rounded-full px-4 py-1.5 z-10">
-              <span className="text-white/80 text-xs font-bold">📹 あなたの映り — {call.callee_name} さんに通話申請中</span>
+            <div className="mt-auto pb-8 px-6 w-full max-w-sm mx-auto space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                <p className="text-white/70 text-sm font-bold">承認を待っています...</p>
+              </div>
+              <button
+                onClick={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
+                className="w-full py-3 rounded-2xl bg-red-600/80 border border-red-500 text-white font-bold flex items-center justify-center gap-2"
+              >
+                <PhoneOff className="w-5 h-5" /> キャンセル
+              </button>
             </div>
           </div>
         )}
 
-        {/* === PENDING: ライバー（callee）=== 着信承認UI */}
+        {/* PENDING callee: 着信UI */}
         {call?.status === 'pending' && !isCaller && (
-          <div className="absolute inset-0 bg-black">
-            <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true"
-              onLoadedMetadata={e => e.target.play().catch(() => {})}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.6)' }} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6">
-              <div className="text-center space-y-2">
-                <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}>
-                  <PhoneCall className="w-16 h-16 text-primary mx-auto" style={{ filter: 'drop-shadow(0 0 20px rgba(0,255,157,0.8))' }} />
-                </motion.div>
-                <p className="text-white font-black text-xl">{call.caller_name || call.caller_email}</p>
-                <p className="text-white/60 text-sm">からビデオ通話のリクエスト</p>
-              </div>
-              <div className="flex gap-4 w-full max-w-xs">
-                <button
-                  onClick={() => { base44.entities.VideoCall.update(call.id, { status: 'declined' }).catch(() => {}); navigate(-1); }}
-                  className="flex-1 py-4 rounded-2xl bg-red-600 text-white font-black flex items-center justify-center gap-2 text-lg"
-                >
-                  <PhoneOff className="w-6 h-6" />
-                </button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    if (remoteVideoRef.current) remoteVideoRef.current.play().catch(() => {});
-                    base44.entities.VideoCall.update(call.id, { status: 'accepted' }).catch(() => {});
-                    setTimeout(() => refetchCall(), 300);
-                    setTimeout(() => refetchCall(), 1000);
-                  }}
-                  className="flex-1 py-4 rounded-2xl text-black font-black flex items-center justify-center gap-2 text-lg"
-                  style={{ background: 'linear-gradient(135deg, #00ff9d, #00d4aa)', boxShadow: '0 0 30px rgba(0,255,157,0.6)' }}
-                >
-                  <Phone className="w-6 h-6" /> 応答
-                </motion.button>
-              </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-6 z-30">
+            <div className="text-center space-y-2">
+              <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}>
+                <PhoneCall className="w-16 h-16 text-primary mx-auto" style={{ filter: 'drop-shadow(0 0 20px rgba(0,255,157,0.8))' }} />
+              </motion.div>
+              <p className="text-white font-black text-xl">{call.caller_name || call.caller_email}</p>
+              <p className="text-white/60 text-sm">からビデオ通話のリクエスト</p>
+            </div>
+            <div className="flex gap-4 w-full max-w-xs">
+              <button
+                onClick={() => { base44.entities.VideoCall.update(call.id, { status: 'declined' }).catch(() => {}); navigate(-1); }}
+                className="flex-1 py-4 rounded-2xl bg-red-600 text-white font-black flex items-center justify-center text-lg"
+              >
+                <PhoneOff className="w-6 h-6" />
+              </button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  if (remoteVideoRef.current) remoteVideoRef.current.play().catch(() => {});
+                  base44.entities.VideoCall.update(call.id, { status: 'accepted' }).catch(() => {});
+                  setTimeout(() => refetchCall(), 300);
+                  setTimeout(() => refetchCall(), 1000);
+                }}
+                className="flex-1 py-4 rounded-2xl text-black font-black flex items-center justify-center gap-2 text-lg"
+                style={{ background: 'linear-gradient(135deg, #00ff9d, #00d4aa)', boxShadow: '0 0 30px rgba(0,255,157,0.6)' }}
+              >
+                <Phone className="w-6 h-6" /> 応答
+              </motion.button>
             </div>
           </div>
         )}
 
-        {/* === ACCEPTED: IVSトークン生成中 === */}
-        {(call?.status === 'accepted') && (
-          <div className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-4">
-            <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true"
-              onLoadedMetadata={e => e.target.play().catch(() => {})}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
-            <div className="relative z-10 text-center space-y-3">
+        {/* ACCEPTED: 接続中スピナー */}
+        {call?.status === 'accepted' && (
+          <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/50">
+            <div className="text-center space-y-3">
               <div className="w-14 h-14 rounded-full border-4 border-primary/40 border-t-primary animate-spin mx-auto" />
               <p className="text-white font-bold">接続中...</p>
             </div>
           </div>
         )}
 
-        {/* === ACTIVE: 相手映像フルスクリーン === */}
+        {/* ACTIVE: オーバーレイ各種 */}
         {call?.status === 'active' && (
-          <>
-            {/* 相手映像（リモート） */}
-            <video ref={remoteVideoRef} autoPlay playsInline webkit-playsinline="true" x5-playsinline="true"
-              onLoadedMetadata={e => e.target.play().catch(() => {})}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', backgroundColor: '#000' }} />
-
+          <div className="absolute inset-0 pointer-events-none z-20">
             {/* カウントダウン */}
             {countdown !== null && (
-              <div className="absolute inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center pointer-events-auto z-30">
                 <div className="text-center">
                   <p className="text-white text-xl font-bold mb-2">通話開始</p>
                   <p className="text-primary font-black" style={{ fontSize: 80, lineHeight: 1, textShadow: '0 0 30px rgba(0,255,157,0.8)' }}>{countdown}</p>
                 </div>
               </div>
             )}
-
-            {/* 自分のワイプ（右下） */}
-            <div className="absolute bottom-3 right-3 w-28 h-36 sm:w-36 sm:h-48 rounded-xl overflow-hidden border-2 border-white/40 bg-black z-10"
-              style={{ boxShadow: '0 0 16px rgba(0,255,157,0.4)' }}>
-              <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true"
-                onLoadedMetadata={e => e.target.play().catch(() => {})}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: currentFilter?.style || "" }} />
-              {!camOn && <div className="absolute inset-0 bg-black/80 flex items-center justify-center"><CameraOff className="w-5 h-5 text-white/40" /></div>}
-              <div className="absolute bottom-1 inset-x-0 text-center">
-                <span className="text-[9px] text-white/70 bg-black/60 px-1.5 py-0.5 rounded-full">あなた</span>
-              </div>
+            {/* 通話中ステータス */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/60 backdrop-blur rounded-full px-3 py-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-primary text-xs font-bold">通話中</span>
             </div>
-
-            {/* コイン残高バッジ（視聴者のみ） */}
+            {/* コイン残高（視聴者のみ） */}
             {isCaller && coinBalance !== null && (
-              <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-black/80 border border-yellow-500/60 rounded-full px-3 py-1.5 backdrop-blur">
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/80 border border-yellow-500/60 rounded-full px-3 py-1.5 backdrop-blur">
                 <Coins className="w-3.5 h-3.5 text-yellow-400" />
                 <span className="text-yellow-300 font-black text-xs">{coinBalance.toLocaleString()} コイン</span>
               </div>
             )}
-
-            {/* 通話中ステータス */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur rounded-full px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-primary text-xs font-bold">通話中</span>
-            </div>
-
             {/* マイクOFF警告 */}
             {!micOn && (
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 bg-red-900/90 border border-red-500/60 rounded-xl px-4 py-2 flex items-center gap-2 text-red-300 text-xs font-bold backdrop-blur animate-pulse">
+              <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-red-900/90 border border-red-500/60 rounded-xl px-4 py-2 flex items-center gap-2 text-red-300 text-xs font-bold backdrop-blur animate-pulse pointer-events-auto">
                 <MicOff className="w-4 h-4 shrink-0" /> マイクOFF
               </div>
             )}
-
-            {/* カウントダウン（30秒前） */}
+            {/* 30秒カウントダウン */}
             {remainingSeconds !== null && remainingSeconds <= 30 && remainingSeconds > 0 && (
-              <div className="absolute top-3 right-3 z-20 bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-center border border-cyan-500/30">
+              <div className="absolute top-3 right-3 bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-center border border-cyan-500/30">
                 <p className="font-black text-3xl leading-none" style={{ color: '#00ff9d', textShadow: '0 0 10px #00ff9d' }}>{String(remainingSeconds).padStart(2, '0')}</p>
                 <p className="text-[10px]" style={{ color: remainingSeconds <= 10 ? '#ff0055' : '#00ff9d' }}>秒</p>
               </div>
             )}
-
             {/* 延長バナー */}
             {showExtendBanner && !showExtendModal && (
-              <div className="absolute top-14 left-4 right-4 z-40 bg-black/90 backdrop-blur-xl border border-primary/40 rounded-2xl p-3 flex items-center gap-3">
+              <div className="absolute top-14 left-4 right-4 bg-black/90 backdrop-blur-xl border border-primary/40 rounded-2xl p-3 flex items-center gap-3 pointer-events-auto">
                 <Clock className="w-5 h-5 text-primary shrink-0" />
                 <p className="text-white text-sm font-bold flex-1">あと{remainingSeconds}秒 — 延長しますか？</p>
                 <button onClick={() => setShowExtendBanner(false)} className="text-white/40 text-xs px-2">終了</button>
                 <button onClick={() => setShowExtendModal(true)} className="text-xs font-bold px-3 py-1.5 rounded-xl border border-primary text-primary">延長</button>
               </div>
             )}
-
-            {/* IVS再接続バナー */}
+            {/* IVS再接続 */}
             {ivsConnectStatus === 'reconnecting' && (
-              <div className="absolute inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
                 <div className="text-center space-y-3">
                   <div className="w-12 h-12 rounded-full border-4 border-primary/40 border-t-primary animate-spin mx-auto" />
                   <p className="text-white font-bold">再接続中...</p>
@@ -1180,7 +1209,7 @@ export default function VideoCallPage() {
               </div>
             )}
             {ivsConnectStatus === 'failed' && (
-              <div className="absolute inset-0 z-30 bg-black/80 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center pointer-events-auto">
                 <div className="text-center space-y-3 px-6">
                   <AlertTriangle className="w-12 h-12 text-red-400 mx-auto" />
                   <p className="text-white font-bold">再接続に失敗しました</p>
@@ -1188,12 +1217,7 @@ export default function VideoCallPage() {
                 </div>
               </div>
             )}
-          </>
-        )}
-
-        {/* エールコインが未設定の場合は両方で remoteVideoRef を mount しておく（非表示） */}
-        {call?.status !== 'active' && (
-          <video ref={remoteVideoRef} autoPlay playsInline muted style={{ display: 'none' }} />
+          </div>
         )}
       </div>
 
