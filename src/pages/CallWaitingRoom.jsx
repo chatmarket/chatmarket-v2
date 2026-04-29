@@ -348,17 +348,19 @@ export default function CallWaitingRoom() {
 
   const handleAccept = async () => {
     if (!incomingCall) return;
+    const callId = incomingCall.id; // ★ setIncomingCall(null)前にIDを保存
     setAccepting(true);
     try {
       // recording_option フラグをDBに保存
-      await base44.entities.VideoCall.update(incomingCall.id, {
+      await base44.entities.VideoCall.update(callId, {
         status: "accepted",
         recording_option: recordingEnabled,
       });
-      console.log('[CallWaitingRoom] ✅ Call accepted, status updated to "accepted"');
+      console.log('[CallWaitingRoom] ✅ Call accepted, navigating to /video-call/' + callId);
       setIncomingCall(null);
-      // VideoCallPageへナビゲート（calleeはリモート映像受信待ち）
-      navigate(`/video-call/${incomingCall.id}`);
+      stopCam(); // カメラストリームを解放してVideoCallPageに引き継がせる
+      // ★ 即座にVideoCallPageへ遷移（遅延なし）
+      navigate(`/video-call/${callId}`);
     } catch (err) {
       console.error('[CallWaitingRoom] ❌ handleAccept error:', err);
       setAccepting(false);
