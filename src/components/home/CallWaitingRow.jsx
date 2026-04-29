@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PhoneCall, MessageCircle } from "lucide-react";
 import ScrollRow from "./ScrollRow";
+import { toast } from "sonner";
 
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ export default function CallWaitingRow({ user }) {
               <CallWaitingCard
                 key={channel.id}
                 channel={channel}
+                user={user}
                 onChat={() => handleChat(channel.id)}
                 isOwnChannel={isOwnChannel(channel)}
               />
@@ -80,11 +82,38 @@ export default function CallWaitingRow({ user }) {
   );
 }
 
-function CallWaitingCard({ channel, onChat, isOwnChannel }) {
+function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
   const navigate = useNavigate();
+  const [calling, setCalling] = useState(false);
   const cardChannelId = channel.id;
   const cardChannelName = channel.name;
-  
+
+  const handleInstantCall = async () => {
+    if (!user) { base44.auth.redirectToLogin(); return; }
+    if (calling) return;
+    setCalling(true);
+    try {
+      // VideoCallレコードを即座に作成して通話ページへ直行
+      const newCall = await base44.entities.VideoCall.create({
+        caller_email: user.email,
+        caller_name: user.full_name || user.email,
+        callee_email: channel.owner_email,
+        callee_name: channel.name,
+        callee_channel_id: cardChannelId,
+        status: "pending",
+        is_paid: false,
+        price: 0,
+        coin_price_per_15min: 150,
+        duration_minutes: 30,
+        message: "今すぐ通話リクエスト（待機中）",
+      });
+      navigate(`/video-call/${newCall.id}`);
+    } catch (err) {
+      toast.error("通話リクエストの作成に失敗しました");
+      setCalling(false);
+    }
+  };
+
   return (
     <div className="w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border bg-green-500/10 border-green-500/40">
       {/* Avatar */}
@@ -117,9 +146,10 @@ function CallWaitingCard({ channel, onChat, isOwnChannel }) {
             <Button
               size="sm"
               className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1"
-              onClick={() => navigate(`/call-request/${cardChannelId}`)}
+              onClick={handleInstantCall}
+              disabled={calling}
             >
-              <PhoneCall className="w-3 h-3" /> 通話を申し込む
+              <PhoneCall className="w-3 h-3" /> {calling ? "接続中..." : "今すぐ通話"}
             </Button>
             <Button size="sm" variant="outline" className="w-full h-7 text-[11px] gap-1" onClick={onChat}>
               <MessageCircle className="w-3 h-3" /> チャットで声をかける
