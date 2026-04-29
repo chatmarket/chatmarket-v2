@@ -1014,7 +1014,7 @@ export default function VideoCallPage() {
           ★ localVideoRef / remoteVideoRef は常時DOMに存在させる（IVS SDKのbind維持）
           ★ 表示切替はCSSのみで行う
       ════════════════════════════════════════ */}
-      <div ref={videoContainerRef} className="relative bg-black" style={{ height: '60dvh', minHeight: '280px', flexShrink: 0 }}>
+      <div ref={videoContainerRef} className="relative bg-black" style={{ height: '60dvh', minHeight: '280px', flexShrink: 0, paddingTop: 'env(safe-area-inset-top)' }}>
 
         {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
         <video
@@ -1091,17 +1091,19 @@ export default function VideoCallPage() {
         {/* PENDING caller: 承認待ち */}
         {call?.status === 'pending' && isCaller && (
           <div className="absolute inset-0 flex flex-col z-30" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 30%, transparent)' }}>
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur rounded-full px-4 py-1.5">
+            <div className="absolute bg-black/60 backdrop-blur rounded-full px-4 py-2 left-1/2 -translate-x-1/2" style={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}>
               <span className="text-white/80 text-xs font-bold">📹 {call.callee_name} さんに通話申請中</span>
             </div>
-            <div className="mt-auto pb-8 px-6 w-full max-w-sm mx-auto space-y-4">
+            <div className="mt-auto px-6 w-full max-w-sm mx-auto space-y-4" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
               <div className="flex items-center justify-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
                 <p className="text-white/70 text-sm font-bold">承認を待っています...</p>
               </div>
+              {/* 最低高さ48px確保 */}
               <button
                 onClick={() => { localStream?.getTracks().forEach(t => t.stop()); navigate(-1); }}
-                className="w-full py-3 rounded-2xl bg-red-600/80 border border-red-500 text-white font-bold flex items-center justify-center gap-2"
+                className="w-full rounded-2xl bg-red-600/80 border-2 border-red-500 text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                style={{ minHeight: 52 }}
               >
                 <PhoneOff className="w-5 h-5" /> キャンセル
               </button>
@@ -1119,12 +1121,15 @@ export default function VideoCallPage() {
               <p className="text-white font-black text-xl">{call.caller_name || call.caller_email}</p>
               <p className="text-white/60 text-sm">からビデオ通話のリクエスト</p>
             </div>
+            {/* 拒否/応答ボタン: 最低64px高さで誤タップ防止 */}
             <div className="flex gap-4 w-full max-w-xs">
               <button
                 onClick={() => { base44.entities.VideoCall.update(call.id, { status: 'declined' }).catch(() => {}); navigate(-1); }}
-                className="flex-1 py-4 rounded-2xl bg-red-600 text-white font-black flex items-center justify-center text-lg"
+                className="flex-1 rounded-2xl bg-red-600 text-white font-black flex items-center justify-center active:scale-95 transition-transform border-2 border-red-500"
+                style={{ minHeight: 64 }}
+                aria-label="拒否"
               >
-                <PhoneOff className="w-6 h-6" />
+                <PhoneOff className="w-7 h-7" />
               </button>
               <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -1134,10 +1139,11 @@ export default function VideoCallPage() {
                   setTimeout(() => refetchCall(), 300);
                   setTimeout(() => refetchCall(), 1000);
                 }}
-                className="flex-1 py-4 rounded-2xl text-black font-black flex items-center justify-center gap-2 text-lg"
-                style={{ background: 'linear-gradient(135deg, #00ff9d, #00d4aa)', boxShadow: '0 0 30px rgba(0,255,157,0.6)' }}
+                className="flex-1 rounded-2xl text-black font-black flex items-center justify-center gap-2 text-lg"
+                style={{ background: 'linear-gradient(135deg, #00ff9d, #00d4aa)', boxShadow: '0 0 30px rgba(0,255,157,0.6)', minHeight: 64 }}
+                aria-label="応答"
               >
-                <Phone className="w-6 h-6" /> 応答
+                <Phone className="w-7 h-7" /> 応答
               </motion.button>
             </div>
           </div>
@@ -1226,40 +1232,76 @@ export default function VideoCallPage() {
       ════════════════════════════════════════ */}
       <div className="flex flex-col bg-black border-t border-white/10" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
-        {/* コントロールバー */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
-          {/* マイク・カメラ */}
-          <div className="flex items-center gap-2">
-            <button onClick={() => setMicOn(!micOn)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${micOn ? "bg-white/10" : "bg-red-500"}`}>
-              {micOn ? <Mic className="w-4 h-4 text-white" /> : <MicOff className="w-4 h-4 text-white" />}
+        {/* コントロールバー — 全ボタン最低48px(Apple HIG準拠) */}
+        <div className="flex items-center justify-between px-4 border-b border-white/10 shrink-0" style={{ paddingTop: 10, paddingBottom: 10 }}>
+          {/* マイク・カメラ・設定 */}
+          <div className="flex items-center gap-3">
+            {/* マイクボタン: OFF時は赤背景+斜線アイコンで誰でも分かる */}
+            <button
+              onClick={() => setMicOn(!micOn)}
+              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${micOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
+              aria-label={micOn ? "マイクON" : "マイクOFF"}
+            >
+              {micOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+              {/* OFFインジケーター */}
+              {!micOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
             </button>
-            <button onClick={() => setCamOn(!camOn)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${camOn ? "bg-white/10" : "bg-red-500"}`}>
-              {camOn ? <Camera className="w-4 h-4 text-white" /> : <CameraOff className="w-4 h-4 text-white" />}
+
+            {/* カメラボタン: OFF時は赤背景+斜線アイコン */}
+            <button
+              onClick={() => setCamOn(!camOn)}
+              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
+              aria-label={camOn ? "カメラON" : "カメラOFF"}
+            >
+              {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
+              {!camOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
             </button>
+
             {/* 設定 */}
-            <button onClick={() => togglePanel(activePanel === "settings" ? null : "settings")}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${activePanel === "settings" ? "bg-primary/20 border border-primary/40" : "bg-white/10"}`}>
-              <Settings className={`w-4 h-4 ${activePanel === "settings" ? "text-primary" : "text-white/70"}`} />
+            <button
+              onClick={() => togglePanel(activePanel === "settings" ? null : "settings")}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${activePanel === "settings" ? "bg-primary/20 border-2 border-primary/60" : "bg-white/10 hover:bg-white/20"}`}
+              aria-label="設定"
+            >
+              <Settings className={`w-5 h-5 ${activePanel === "settings" ? "text-primary" : "text-white/70"}`} />
             </button>
           </div>
 
-          {/* エールコイン（視聴者のみ・通話中のみ） */}
-          {isCaller && call?.status === 'active' && (
-            <button onClick={() => setShowYellPanel(!showYellPanel)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-all font-bold text-xs ${showYellPanel ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-400" : "bg-white/10 border-white/20 text-white/70"}`}>
-              <Coins className="w-4 h-4" /> エール
-            </button>
-          )}
+          {/* ステータスラベル（ON/OFF状態を文字でも表示） */}
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${micOn ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+                {micOn ? "MIC ON" : "MIC OFF"}
+              </span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${camOn ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+                {camOn ? "CAM ON" : "CAM OFF"}
+              </span>
+            </div>
+          </div>
 
-          {/* 通話終了 */}
-          <motion.button onClick={handleEndCall}
-            animate={{ boxShadow: ["0 0 15px rgba(255,0,85,0.5)", "0 0 30px rgba(255,0,85,0.9)", "0 0 15px rgba(255,0,85,0.5)"] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-500">
-            <PhoneOff className="w-5 h-5 text-white" />
-          </motion.button>
+          <div className="flex items-center gap-2">
+            {/* エールコイン（視聴者のみ・通話中のみ） */}
+            {isCaller && call?.status === 'active' && (
+              <button
+                onClick={() => setShowYellPanel(!showYellPanel)}
+                className={`h-12 px-3 rounded-xl border-2 transition-all font-bold text-xs flex items-center gap-1.5 ${showYellPanel ? "bg-yellow-500/20 border-yellow-500/60 text-yellow-400" : "bg-white/10 border-white/20 text-white/70 hover:border-yellow-500/40"}`}
+                aria-label="エールコインを送る"
+              >
+                <Coins className="w-4 h-4" /> エール
+              </button>
+            )}
+
+            {/* 通話終了 — 最大サイズで誤タップ防止 */}
+            <motion.button
+              onClick={handleEndCall}
+              animate={{ boxShadow: ["0 0 15px rgba(255,0,85,0.5)", "0 0 30px rgba(255,0,85,0.9)", "0 0 15px rgba(255,0,85,0.5)"] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-400 hover:bg-red-500 active:scale-95 transition-transform"
+              aria-label="通話を終了する"
+            >
+              <PhoneOff className="w-6 h-6 text-white" />
+            </motion.button>
+          </div>
         </div>
 
         {/* エールコインパネル */}
