@@ -1490,9 +1490,6 @@ export default function VideoCallPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-bold text-sm truncate">{calleeChannel.name}</p>
-                {calleeChannel.description && (
-                  <p className="text-white/50 text-xs truncate">{calleeChannel.description}</p>
-                )}
               </div>
               <button
                 onClick={() => navigate(`/channel/${call.callee_channel_id}`)}
@@ -1501,6 +1498,13 @@ export default function VideoCallPage() {
                 チャンネルへ
               </button>
             </div>
+            {/* チャンネル説明文 */}
+            {calleeChannel.description && (
+              <div className="bg-white/5 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] text-white/40 font-bold mb-1">📝 ライバーの説明</p>
+                <p className="text-white/80 text-xs leading-relaxed whitespace-pre-wrap">{calleeChannel.description}</p>
+              </div>
+            )}
             {/* 通話テーマ（タイトル） */}
             {calleeChannel.call_theme && (
               <div className="bg-white/5 rounded-xl px-3 py-2.5">
