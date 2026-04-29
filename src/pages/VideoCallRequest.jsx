@@ -10,55 +10,38 @@ import {
   PhoneCall, ArrowLeft, Info, AlertCircle, Calendar, Clock, Coins, CheckCircle2, Phone
 } from "lucide-react";
 import { toast } from "sonner";
+import { resolveUserPlan, getPrimaryPlanId } from "@/lib/userPlan";
 
 function makeThreadId(emailA, emailB) {
   return [emailA, emailB].sort().join("__");
 }
 
-// プランチェック（FREEも通話可能）
-function getUserPlan(user) {
-  if (!user) return null;
-  if (user.plan === "call-anser") return "call-anser";
-  if (user.plan === "basic") return "basic";
-  if (user.role === "admin") return "basic"; // adminは開発確認用
-  return "free"; // FREEプランも通話可能
-}
-
-// 収益率
-function getRevenueShare(plan) {
-  if (plan === "basic" || plan === "call-anser") return 0.85;
-  return 0.70;
-}
-
 // プラン別定数（バックエンドと同期）
 const PLAN_MATRIX = {
-  free:       { min_coins: 200, creator_rate: 0.70, platform_rate: 0.30 },
-  basic:      { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
+  free:         { min_coins: 200, creator_rate: 0.70, platform_rate: 0.30 },
+  basic:        { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
   "call-anser": { min_coins: 150, creator_rate: 0.85, platform_rate: 0.15 },
 };
 
-function getPlanMatrix(plan) {
-  return PLAN_MATRIX[plan] || PLAN_MATRIX.free;
+function getPlanMatrix(planId) {
+  return PLAN_MATRIX[planId] || PLAN_MATRIX.free;
 }
 
 // CALL&ANSERプラン: 1日の無料通話上限（分）
 const FREE_CALL_DAILY_LIMIT_MIN = 60;
-const FREE_CALL_SLOT_MIN = 10; // 10分単位
-const FREE_CALL_MAX_SLOTS = 6; // 最大6スロット（10分×6=60分）
+const FREE_CALL_SLOT_MIN = 10;
+const FREE_CALL_MAX_SLOTS = 6;
 
-// コイン単価計算（15分換算）
 function calcCoinPer15(minutes, coinPrice) {
   return Math.round((coinPrice / minutes) * 15);
 }
 
-// 10分刻み選択肢を取得（price設定済みのもの）
 function getAvailableDurations(channel) {
   const options = [];
   [10, 20, 30, 40, 50, 60].forEach((min) => {
     const price = channel[`call_price_${min}min`] || 0;
     if (price > 0) options.push({ minutes: min, price });
   });
-  // 旧形式（15/45/75/90/105/120min）の後方互換
   [15, 45, 75, 90, 105, 120].forEach((min) => {
     const price = channel[`call_price_${min}min`] || 0;
     if (price > 0) options.push({ minutes: min, price });
@@ -67,18 +50,13 @@ function getAvailableDurations(channel) {
   return options;
 }
 
-// フリートライアル判定
-function isTrialChannel(channel) {
-  const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
-  return FREE_TRIAL_EMAILS.includes(channel?.owner_email);
-}
-
 export default function VideoCallRequest() {
   const { channelId } = useParams();
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [userLoaded, setUserLoaded] = useState(false);
+  const [planInfo, setPlanInfo] = useState(null);
   const [channel, setChannel] = useState(null);
   const [message, setMessage] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);
@@ -88,7 +66,12 @@ export default function VideoCallRequest() {
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
-        base44.auth.me().then((u) => { setUser(u); setUserLoaded(true); }).catch(() => setUserLoaded(true));
+        base44.auth.me().then(async (u) => {
+          setUser(u);
+          const info = await resolveUserPlan(u);
+          setPlanInfo(info);
+          setUserLoaded(true);
+        }).catch(() => setUserLoaded(true));
       } else {
         base44.auth.redirectToLogin();
       }
@@ -119,8 +102,8 @@ export default function VideoCallRequest() {
   });
 
   const threadId = user && channel ? makeThreadId(user.email, channel.owner_email) : null;
-  const userPlan = getUserPlan(user);
-  const revenueShare = getRevenueShare(userPlan);
+  const userPlan = planInfo ? getPrimaryPlanId(planInfo) : 'free';
+  const revenueShare = planInfo?.revenueRate ?? 0.70;
   const availableDurations = channel ? getAvailableDurations(channel) : [];
 
   // FREEプランの場合、デフォルト料金を設定
@@ -240,8 +223,8 @@ export default function VideoCallRequest() {
   // 未ログインガード（FREEプランは全員アクセス可のため削除、認証チェックのみ）
 
 
-  // 通話受付オフガード（フリートライアルは受付中扱い）
-  if (!channel.call_enabled && !isTrialChannel(channel)) {
+  // 通話受付オフガード
+  if (!channel.call_enabled) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
         <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto">

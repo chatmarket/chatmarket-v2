@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
+import { resolveUserPlan } from "@/lib/userPlan";
 import { Button } from "@/components/ui/button";
 import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown, Ticket, Users } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -251,25 +252,22 @@ const COMBOS = [
   { ids: ["basic", "digital-ticket"], label: "BASIC＋チケット", discount: 0 },
 ];
 
-const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
-const FREE_TRIAL_EMAILS = ["haru.24@icloud.com"];
-
 export default function PlanSelect() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-
-  // 管理者メールの場合は全プラン加入
+  const [planInfo, setPlanInfo] = useState(null);
   const [selected, setSelected] = useState(new Set());
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
-        base44.auth.me().then((u) => {
+        base44.auth.me().then(async (u) => {
           setUser(u);
-          if (ADMIN_EMAILS.includes(u.email)) {
+          const info = await resolveUserPlan(u);
+          setPlanInfo(info);
+          // admin・キャンペーン対象者は全プランを表示用に選択済みにする
+          if (info.isAdmin || info.isCampaign) {
             setSelected(new Set(["basic", "vod", "ppv", "call-anser", "mini-school", "enterprise", "crowdfunding", "digital-ticket"]));
-          } else if (FREE_TRIAL_EMAILS.includes(u.email)) {
-            setSelected(new Set(["basic", "vod", "ppv", "call-anser"]));
           }
         });
       }
@@ -277,10 +275,7 @@ export default function PlanSelect() {
   }, []);
 
   const togglePlan = (id) => {
-    // 管理者メール・フリートライアルメールは選択不可
-    if (ADMIN_EMAILS.includes(user?.email) || FREE_TRIAL_EMAILS.includes(user?.email)) {
-      return;
-    }
+    if (planInfo?.isAdmin || planInfo?.isCampaign) return;
 
     const plan = PLANS.find((p) => p.id === id);
     setSelected((prev) => {
@@ -306,8 +301,8 @@ export default function PlanSelect() {
   };
 
   const selectedPlans = PLANS.filter((p) => selected.has(p.id));
-  const totalPrice = FREE_TRIAL_EMAILS.includes(user?.email) 
-    ? 0 
+  const totalPrice = (planInfo?.isAdmin || planInfo?.isCampaign)
+    ? 0
     : selectedPlans.filter((p) => !p.comingSoon).reduce((sum, p) => sum + p.price, 0);
 
   const handleApply = async () => {
@@ -323,16 +318,21 @@ export default function PlanSelect() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-      {ADMIN_EMAILS.includes(user?.email) && (
+      {planInfo?.isAdmin && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
           <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>
-          <p className="text-xs text-primary/80">全プラン（BASIC・VOD・PPV・CALL&ANSER・ミニスクール・エンタープライズ・クラウドファンディング）が自動的に加入状態になり、全プランの詳細を確認できます。</p>
+          <p className="text-xs text-primary/80">全プランが自動的に開放されています。全機能をテストできます。</p>
         </div>
       )}
-      {FREE_TRIAL_EMAILS.includes(user?.email) && (
+      {planInfo?.isCampaign && !planInfo?.isAdmin && (
         <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4">
-          <p className="text-sm font-bold text-blue-400 mb-1">フリートライアル</p>
-          <p className="text-xs text-blue-300">BASIC・VOD・PPV・CALL&ANSERプランが無料で利用できます。</p>
+          <p className="text-sm font-bold text-blue-400 mb-1">🎉 キャンペーン適用中</p>
+          <p className="text-xs text-blue-300">
+            全プランが無料で利用できます。
+            {planInfo.campaignExpiresAt && (
+              <span className="font-bold text-blue-200"> 有効期限: {planInfo.campaignExpiresAt.toLocaleDateString('ja-JP')}</span>
+            )}
+          </p>
         </div>
       )}
 
@@ -364,8 +364,8 @@ export default function PlanSelect() {
             <button
               key={combo.label}
               onClick={() => applyCombo(combo.ids)}
-              disabled={ADMIN_EMAILS.includes(user?.email)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={planInfo?.isAdmin || planInfo?.isCampaign}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {combo.label}
             </button>
@@ -387,8 +387,8 @@ export default function PlanSelect() {
                       togglePlan(plan.id);
                     }
                   }}
-                  className={`hover:no-underline py-4 ${plan.comingSoon || ADMIN_EMAILS.includes(user?.email) ? "cursor-not-allowed" : ""}`}
-                  disabled={ADMIN_EMAILS.includes(user?.email)}
+                  className={`hover:no-underline py-4 ${plan.comingSoon || planInfo?.isAdmin || planInfo?.isCampaign ? "cursor-not-allowed" : ""}`}
+                  disabled={planInfo?.isAdmin || planInfo?.isCampaign}
                 >
                   <div className="flex items-center gap-4 text-left flex-1">
                     {/* Checkbox */}
