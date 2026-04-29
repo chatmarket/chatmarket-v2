@@ -186,15 +186,31 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         videoEl.muted = false;
         videoEl.volume = 1.0;
 
+        // リトライ付き play() — 映像トラックが DOM に反映されるまで最大5回試みる
+        let retryCount = 0;
+        const MAX_RETRIES = 5;
         const attemptPlay = () => {
+          const videoTracks = mediaStream.getVideoTracks();
+          const audioTracks = mediaStream.getAudioTracks();
+          console.log(`[IVS Stages] 🎬 attemptPlay #${retryCount + 1} — video:${videoTracks.length} audio:${audioTracks.length}`);
+
           const p = videoEl.play();
           if (p !== undefined) {
             p.then(() => {
-              console.log('[IVS Stages] ✅✅✅ Remote video PLAYING — video+audio connected successfully!');
-              console.log('[IVS Stages] Video tracks:', mediaStream.getVideoTracks().length, '| Audio tracks:', mediaStream.getAudioTracks().length);
+              console.log('[IVS Stages] ✅✅✅ Remote video PLAYING!');
+              // 映像トラックはあるが映像が出ない場合 → srcObject を再設定してリトライ
+              if (videoTracks.length > 0 && videoEl.videoWidth === 0 && retryCount < MAX_RETRIES) {
+                retryCount++;
+                console.warn(`[IVS Stages] ⚠️ videoWidth=0, re-attaching srcObject (retry ${retryCount})...`);
+                videoEl.srcObject = null;
+                setTimeout(() => {
+                  videoEl.srcObject = mediaStream;
+                  videoEl.load();
+                  attemptPlay();
+                }, 500 * retryCount);
+              }
             }).catch(err => {
-              console.warn('[IVS Stages] ⚠️ play() blocked:', err.name, '— waiting for user gesture...');
-              // autoplay policy: 最初のユーザー操作で再試行
+              console.warn('[IVS Stages] ⚠️ play() blocked:', err.name);
               const retry = () => { videoEl.play().catch(() => {}); };
               document.addEventListener('click', retry, { once: true });
               document.addEventListener('touchstart', retry, { once: true });
@@ -202,12 +218,18 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
           }
         };
 
-        // readyState チェック — loadedmetadata 待ちが必要な場合
         if (videoEl.readyState >= 2) {
           attemptPlay();
         } else {
           videoEl.addEventListener('loadedmetadata', attemptPlay, { once: true });
-          console.log('[IVS Stages] ⏳ Waiting for loadedmetadata before play()...');
+          // loadedmetadata が来なくてもフォールバックで300ms後に試みる
+          setTimeout(() => {
+            if (videoEl.paused) {
+              console.log('[IVS Stages] ⏩ loadedmetadata fallback play()');
+              attemptPlay();
+            }
+          }, 300);
+          console.log('[IVS Stages] ⏳ Waiting for loadedmetadata...');
         }
       });
 

@@ -948,7 +948,7 @@ export default function VideoCallPage() {
   const isBroadcaster = user && call && user?.email === call?.callee_email;
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="bg-black flex flex-col" style={{ height: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* ★ MobileVideoCallUI は一旦コメントアウト — 映像疎通テスト中 */}
       {/* {isMobile && <MobileVideoCallUI {...} />} */}
 
@@ -995,10 +995,10 @@ export default function VideoCallPage() {
         measureInterval={3000}
       />
 
-      {/* Main container: Video + Chat */}
-       <div className="flex-1 flex flex-col overflow-hidden">
-         {/* Video call section */}
-         <div className="flex-1 flex flex-col min-w-0">
+      {/* Main container: Video上部固定50% + Chat下部 */}
+       <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+         {/* Video call section — 画面上部50%固定 */}
+         <div className="flex flex-col min-w-0" style={{ height: '50dvh', minHeight: '280px', flexShrink: 0 }}>
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
@@ -1082,8 +1082,8 @@ export default function VideoCallPage() {
         {/* 自分の映像 — 通話前は中央大表示、通話中はPiP右下 */}
         {!isWaiting && (
           call?.status === 'active' ? (
-            // 通話中: 右下PiP
-            <div className="absolute bottom-4 right-4 w-28 h-36 md:w-36 md:h-48 rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl bg-black/80 z-10">
+            // 通話中: 右下PiP — スマホでも視認しやすいサイズ
+            <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-40 sm:h-52 rounded-xl overflow-hidden border-2 border-white/40 shadow-2xl bg-black/80 z-10" style={{ boxShadow: '0 0 16px rgba(0,255,157,0.3)' }}>
               <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
               {!camOn && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80">

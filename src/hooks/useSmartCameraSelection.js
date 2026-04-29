@@ -29,19 +29,28 @@ export function useSmartCameraSelection() {
         setVideoDevices(vDevices);
         setAudioDevices(aDevices);
 
-        // 2. カメラ: localStorage に保存済みなら使用、なければ内蔵カメラを優先
+        // 2. カメラ: 仮想カメラ（OBS/Virtual）を除外して物理カメラを最優先選択
+        // localStorage に保存済みでも仮想カメラなら無視して物理カメラを選び直す
+        const isVirtualCamera = (label) => {
+          const l = label.toLowerCase();
+          return l.includes('obs') || l.includes('virtual') || l.includes('manycam') || l.includes('xsplit') || l.includes('snap camera') || l.includes('droidcam') || l.includes('iriun');
+        };
+        const physicalCameras = vDevices.filter(d => !isVirtualCamera(d.label));
+
         let camId = localStorage.getItem('selectedCameraId');
-        if (!camId || !vDevices.find(d => d.deviceId === camId)) {
-          // FaceTime > Built-in > その他（OBSは除外してデフォルトを選ぶが、選択肢には残す）
-          let cam = vDevices.find(d => d.label.toLowerCase().includes('facetime'));
-          if (!cam) cam = vDevices.find(d => d.label.toLowerCase().includes('built-in'));
-          if (!cam) cam = vDevices.find(d => !d.label.toLowerCase().includes('obs'));
-          if (!cam) cam = vDevices[0];
+        const savedDevice = vDevices.find(d => d.deviceId === camId);
+        // 保存済みデバイスが仮想カメラなら無視
+        if (!camId || !savedDevice || isVirtualCamera(savedDevice.label)) {
+          // FaceTime > Built-in > その他物理カメラ > 最終手段で全デバイス先頭
+          const pool = physicalCameras.length > 0 ? physicalCameras : vDevices;
+          let cam = pool.find(d => d.label.toLowerCase().includes('facetime'));
+          if (!cam) cam = pool.find(d => d.label.toLowerCase().includes('built-in'));
+          if (!cam) cam = pool[0];
           camId = cam?.deviceId || null;
           if (camId) localStorage.setItem('selectedCameraId', camId);
-          console.log('[useSmartCameraSelection] 📷 Default camera:', cam?.label);
+          console.log('[useSmartCameraSelection] 📷 Physical camera selected:', cam?.label);
         } else {
-          console.log('[useSmartCameraSelection] 📷 Restored camera from localStorage:', vDevices.find(d => d.deviceId === camId)?.label);
+          console.log('[useSmartCameraSelection] 📷 Restored physical camera:', savedDevice.label);
         }
         setSelectedCameraId(camId);
 
