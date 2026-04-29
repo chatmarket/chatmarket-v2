@@ -359,23 +359,22 @@ export default function CallWaitingRoom() {
     toast.info("通話受付を終了しました");
   };
 
-  const handleAccept = async () => {
-    if (!incomingCall) return;
-    const callId = incomingCall.id;
-    setAccepting(true);
-    setIncomingCall(null);
+  const handleAccept = (callToAccept) => {
+    const target = callToAccept || incomingCall;
+    if (!target) return;
+    const callId = target.id;
 
-    // DB更新とカメラ解放・画面遷移を分離：DBエラーが起きても必ず遷移する
+    // ★ 最優先: 何があっても即座にビデオ画面へ飛ぶ
+    setIncomingCall(null);
+    setAccepting(true);
+    stopCam();
+    navigate(`/video-call/${callId}`);
+
+    // DB更新は fire-and-forget（結果を待たない）
     base44.entities.VideoCall.update(callId, {
       status: "accepted",
       recording_option: recordingEnabled,
-    }).catch((err) => {
-      console.warn('[CallWaitingRoom] ⚠️ VideoCall update error (continuing anyway):', err);
-    });
-
-    console.log('[CallWaitingRoom] ✅ Navigating to /video-call/' + callId);
-    stopCam();
-    navigate(`/video-call/${callId}`);
+    }).catch(() => {});
   };
 
   const handleDecline = async () => {
@@ -795,8 +794,8 @@ export default function CallWaitingRoom() {
               <Button onClick={handleDecline} variant="outline" size="sm" className="gap-1 border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs">
                 断る
               </Button>
-              <Button onClick={handleAccept} disabled={accepting} size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-black text-xs font-bold">
-                {accepting ? "接続中..." : "承認"}
+              <Button onClick={() => handleAccept(incomingCall)} disabled={accepting} size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-black text-xs font-bold">
+                {accepting ? "移動中..." : "承認"}
               </Button>
             </div>
           </motion.div>

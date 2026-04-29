@@ -965,20 +965,15 @@ export default function VideoCallPage() {
       {call?.status === 'pending' && user?.email === call?.callee_email && (
         <IncomingCallScreen
           call={call}
-          onAccept={async () => {
-            try {
-              // ★ ユーザーアクション内で remoteVideo.play() を即座に発火（Safari autoplay対策）
-              if (remoteVideoRef.current) {
-                remoteVideoRef.current.play().catch(() => {});
-              }
-              console.log('[VideoCallPage] ⚡ Streamer accepting call...');
-              await base44.entities.VideoCall.update(call.id, { status: 'accepted' });
-              console.log('[VideoCallPage] ✅ Call accepted -> status: accepted');
-              setTimeout(() => refetchCall(), 500);
-            } catch (err) {
-              console.error('[VideoCallPage] ❌ Accept failed:', err);
-              toast.error('承認に失敗しました');
+          onAccept={() => {
+            // ★ Safari autoplay対策: ユーザーアクション内で即play()
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.play().catch(() => {});
             }
+            // ★ DB更新は fire-and-forget — 結果を待たずに refetch で状態反映
+            base44.entities.VideoCall.update(call.id, { status: 'accepted' }).catch(() => {});
+            setTimeout(() => refetchCall(), 300);
+            setTimeout(() => refetchCall(), 1000);
           }}
           onDecline={() => {
             if (autoAcceptTimeoutRef.current) clearTimeout(autoAcceptTimeoutRef.current);
