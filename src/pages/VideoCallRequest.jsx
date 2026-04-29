@@ -272,12 +272,23 @@ export default function VideoCallRequest() {
 
       </div>
 
-      {/* 配信者スケジュール */}
+      {/* 通話テーマ */}
+      {channel.call_theme && (
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3 flex items-start gap-2">
+          <PhoneCall className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-xs text-primary mb-0.5">📞 通話テーマ・内容</p>
+            <p className="text-sm font-bold text-foreground">{channel.call_theme}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 配信者スケジュール・説明文 */}
       {channel.call_available_dates && (
         <div className="bg-secondary rounded-xl p-3 mb-4 flex items-start gap-2 text-sm">
           <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-xs text-primary mb-0.5">通話可能スケジュール（配信者設定）</p>
+            <p className="font-semibold text-xs text-primary mb-0.5">説明・通話可能スケジュール</p>
             <p className="text-xs text-foreground whitespace-pre-wrap">{channel.call_available_dates}</p>
           </div>
         </div>
