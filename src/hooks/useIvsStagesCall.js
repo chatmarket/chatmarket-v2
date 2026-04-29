@@ -300,15 +300,19 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         console.log('[IVS Stages] ✅ stage.join() completed. Waiting for remote participant...');
 
         // 🔥 MOBILE FIX: リモート映像受信の監視タイムアウト（30秒）
-        // useRef で管理してクリーンアップ時に clearTimeout する
+        // 映像が既に再生中 or srcObject が存在する場合は再接続しない
         remoteVideoTimeoutRef.current = setTimeout(() => {
-          if (!cancelledRef.current) {
-            console.warn('[IVS Stages] ⏱️ Remote video timeout (30s). Checking connection state...');
-            if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
-              console.error('[IVS Stages] ❌ Remote video not received after 30s. Reconnecting...');
-              scheduleReconnect(stagesToken, IVSClient);
-            }
+          if (cancelledRef.current) return;
+          const videoEl = remoteVideoRef.current;
+          if (!videoEl) return;
+          const hasStream = videoEl.srcObject instanceof MediaStream && videoEl.srcObject.getTracks().length > 0;
+          const isPlaying = !videoEl.paused && videoEl.readyState >= 2;
+          if (hasStream || isPlaying) {
+            console.log('[IVS Stages] ✅ Remote video timeout check: stream is active, no reconnect needed.');
+            return;
           }
+          console.warn('[IVS Stages] ⏱️ Remote video timeout (30s). No stream received — reconnecting...');
+          scheduleReconnect(stagesToken, IVSClient);
         }, 30000);
       } else {
         stage.leave();
