@@ -1399,6 +1399,47 @@ export default function VideoCallPage() {
           </div>
         )}
 
+        {/* ══ pending caller: タイトル・説明・プロフィール表示エリア ══ */}
+        {call?.status === 'pending' && isCaller && calleeChannel && (
+          <div className="border-b border-white/10 px-4 py-3 shrink-0 overflow-y-auto space-y-3" style={{ maxHeight: '40vh' }}>
+            {/* チャンネルプロフィール */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/20">
+                {calleeChannel.avatar_url
+                  ? <img src={calleeChannel.avatar_url} alt={calleeChannel.name} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-black text-sm">{calleeChannel.name?.[0]}</div>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-sm truncate">{calleeChannel.name}</p>
+                {calleeChannel.description && (
+                  <p className="text-white/50 text-xs truncate">{calleeChannel.description}</p>
+                )}
+              </div>
+              <button
+                onClick={() => navigate(`/channel/${call.callee_channel_id}`)}
+                className="text-xs text-primary border border-primary/40 px-2.5 py-1 rounded-full hover:bg-primary/10 transition-all shrink-0"
+              >
+                チャンネルへ
+              </button>
+            </div>
+            {/* 通話テーマ（タイトル） */}
+            {calleeChannel.call_theme && (
+              <div className="bg-white/5 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] text-primary/70 font-bold mb-1">📞 通話テーマ</p>
+                <p className="text-white text-sm font-bold leading-snug">{calleeChannel.call_theme}</p>
+              </div>
+            )}
+            {/* 通話可能日時・説明文 */}
+            {calleeChannel.call_available_dates && (
+              <div className="bg-white/5 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] text-white/40 font-bold mb-1">📅 説明・対応日時</p>
+                <p className="text-white/80 text-xs leading-relaxed whitespace-pre-wrap">{calleeChannel.call_available_dates}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 設定パネル（インライン） */}
         {activePanel === "settings" && (
           <div className="border-b border-white/10 px-4 py-3 shrink-0 space-y-3">
