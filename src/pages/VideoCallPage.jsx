@@ -1323,13 +1323,25 @@ export default function VideoCallPage() {
         {/* 設定パネル（インライン） */}
         {activePanel === "settings" && (
           <div className="border-b border-white/10 px-4 py-3 shrink-0 space-y-3">
-            {videoDevices.length > 1 && (
+            {videoDevices.length > 0 && (
               <div>
                 <label className="text-xs text-white/50 mb-1 block">📹 カメラ</label>
                 <select value={selectedCameraId || ""} onChange={e => switchCamera(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs focus:outline-none">
                   {videoDevices.map((d, i) => <option key={d.deviceId} value={d.deviceId} className="bg-black">{d.label || `カメラ ${i+1}`}</option>)}
                 </select>
+                {/* 物理カメラ強制切り替えボタン */}
+                <button
+                  onClick={async () => {
+                    const VIRTUAL_KW = ['obs', 'virtual', 'manycam', 'xsplit', 'snap camera', 'droidcam', 'iriun', 'mmhmm', 'camo'];
+                    const physicals = videoDevices.filter(d => !VIRTUAL_KW.some(k => (d.label||'').toLowerCase().includes(k)));
+                    const target = physicals.find(d => d.deviceId !== selectedCameraId) || physicals[0];
+                    if (target) { await switchCamera(target.deviceId); }
+                  }}
+                  className="mt-1.5 w-full px-3 py-2 rounded-lg bg-primary/20 border border-primary/40 text-primary text-xs font-bold hover:bg-primary/30 transition-all"
+                >
+                  📷 物理カメラへ強制切り替え
+                </button>
               </div>
             )}
             {audioDevices.length > 1 && (

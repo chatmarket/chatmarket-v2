@@ -3,12 +3,45 @@ import { useEffect, useState } from 'react';
 /**
  * 1対1通話用のカメラ・マイク選択 hook
  *
- * デフォルト: PC内蔵カメラ（FaceTime / Built-in）を優先して自動選択
- * 選択肢: OBS Virtual Camera も含む全デバイスをリストアップ
- * ユーザーが localStorage でデバイスを切り替え可能
- *
- * ★ AWS通信網（IVS Stages）は一切変更しない
+ * ★ 仮想カメラ（OBS等）を確実に回避し、物理カメラを優先起動
+ * ★ ラベル名が空でも実際にストリームを取得して解像度で物理カメラを判定
+ * ★ 失敗したら次のデバイスへリトライループ
  */
+
+const VIRTUAL_KEYWORDS = ['obs', 'virtual', 'manycam', 'xsplit', 'snap camera', 'droidcam', 'iriun', 'mmhmm', 'camo'];
+const PHYSICAL_KEYWORDS = ['facetime', 'built-in', 'integrated', 'internal', 'usb', 'webcam', 'hd camera', 'truedepth'];
+
+function isVirtualCamera(label) {
+  const l = (label || '').toLowerCase();
+  return VIRTUAL_KEYWORDS.some(k => l.includes(k));
+}
+
+function isKnownPhysical(label) {
+  const l = (label || '').toLowerCase();
+  return PHYSICAL_KEYWORDS.some(k => l.includes(k));
+}
+
+// デバイスを実際に起動して解像度を取得（物理カメラは通常 640x480 以上を返す）
+async function probeCamera(deviceId) {
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    const track = s.getVideoTracks()[0];
+    const settings = track.getSettings();
+    s.getTracks().forEach(t => t.stop());
+    const width = settings.width || 0;
+    const height = settings.height || 0;
+    console.log(`[probeCamera] deviceId=${deviceId.slice(0,8)} → ${width}x${height}`);
+    // 物理カメラは通常 320x240 以上を返す。OBS仮想は 0x0 や失敗することが多い
+    return { ok: true, width, height };
+  } catch (e) {
+    console.warn(`[probeCamera] deviceId=${deviceId.slice(0,8)} failed:`, e.message);
+    return { ok: false, width: 0, height: 0 };
+  }
+}
+
 export function useSmartCameraSelection() {
   const [stream, setStream] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +54,10 @@ export function useSmartCameraSelection() {
   useEffect(() => {
     const initializeDevices = async () => {
       try {
-        // 1. デバイス一覧取得（OBS含む全デバイス）
+        // 1. まず権限を取得してラベルを確定させる
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
+        if (tempStream) tempStream.getTracks().forEach(t => t.stop());
+
         const devices = await navigator.mediaDevices.enumerateDevices();
         const vDevices = devices.filter(d => d.kind === 'videoinput');
         const aDevices = devices.filter(d => d.kind === 'audioinput');
@@ -29,59 +65,72 @@ export function useSmartCameraSelection() {
         setVideoDevices(vDevices);
         setAudioDevices(aDevices);
 
-        // 2. カメラ選択: インデックスベースで仮想カメラを回避
-        //    Safari ではラベルが空になるため、ラベル名での判断は補助的にのみ使用
-        const isVirtualCamera = (label) => {
-          const l = (label || '').toLowerCase();
-          return l.includes('obs') || l.includes('virtual') || l.includes('manycam') || l.includes('xsplit') || l.includes('snap camera') || l.includes('droidcam') || l.includes('iriun');
-        };
+        console.log('[useSmartCameraSelection] 📋 Video devices:', vDevices.map((d, i) => `[${i}] ${d.label || '(no label)'}`));
 
-        // インデックスベース選択: index=0 を試し、それが仮想なら index=1 へ
-        // localStorage は仮想カメラが保存されていたらリセット
-        let camId = localStorage.getItem('selectedCameraId');
-        const savedDevice = vDevices.find(d => d.deviceId === camId);
-        const savedIsVirtual = savedDevice && isVirtualCamera(savedDevice.label);
+        // 2. localStorage に保存済みかつ仮想でないカメラを優先
+        const savedId = localStorage.getItem('selectedCameraId');
+        const savedDevice = vDevices.find(d => d.deviceId === savedId);
+        if (savedDevice && !isVirtualCamera(savedDevice.label)) {
+          console.log('[useSmartCameraSelection] 📷 Using saved camera:', savedDevice.label);
+          setSelectedCameraId(savedId);
+          const s = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: savedId } },
+            audio: aDevices[0] ? { deviceId: { exact: aDevices[0].deviceId } } : true,
+          });
+          setStream(s);
+          setSelectedMicId(s.getAudioTracks()[0]?.getSettings()?.deviceId || aDevices[0]?.deviceId || null);
+          return;
+        }
 
-        if (!camId || !savedDevice || savedIsVirtual) {
-          // まず index=0 を試す。ラベルで仮想と判定できる場合のみ次へ
-          let selectedCam = vDevices[0];
-          for (let i = 0; i < vDevices.length; i++) {
-            const d = vDevices[i];
-            const label = d.label || '';
-            // ラベルが空 = Safari で匿名化 → そのまま使う（物理カメラの可能性が高い）
-            if (!label || !isVirtualCamera(label)) {
-              selectedCam = d;
+        // 3. 候補を優先順位でソート:
+        //    ① ラベルで物理カメラと確定できるもの
+        //    ② ラベルが空（権限未取得 or Safariの匿名化）
+        //    ③ 仮想でないもの
+        //    ④ 仮想カメラ（最後の手段）
+        const sorted = [...vDevices].sort((a, b) => {
+          const aPhys = isKnownPhysical(a.label) ? 0 : isVirtualCamera(a.label) ? 3 : (!a.label ? 1 : 2);
+          const bPhys = isKnownPhysical(b.label) ? 0 : isVirtualCamera(b.label) ? 3 : (!b.label ? 1 : 2);
+          return aPhys - bPhys;
+        });
+
+        console.log('[useSmartCameraSelection] 📋 Sorted candidates:', sorted.map(d => d.label || `(no label) ${d.deviceId.slice(0,8)}`));
+
+        // 4. リトライループ: 候補を順番に試して成功したものを使用
+        let chosenStream = null;
+        let chosenId = null;
+        for (const dev of sorted) {
+          const probe = await probeCamera(dev.deviceId);
+          if (probe.ok && probe.width >= 160) {
+            // 実際のストリームを取得
+            const micId = localStorage.getItem('selectedMicId') || aDevices[0]?.deviceId;
+            const s = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: dev.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+              audio: micId ? { deviceId: { exact: micId } } : true,
+            }).catch(() => null);
+            if (s) {
+              chosenStream = s;
+              chosenId = dev.deviceId;
+              console.log(`[useSmartCameraSelection] ✅ Using camera: "${dev.label || '(no label)'}" ${probe.width}x${probe.height}`);
               break;
             }
-            console.log(`[useSmartCameraSelection] ⏭ index=${i} is virtual (${label}), trying next...`);
           }
-          camId = selectedCam?.deviceId || null;
-          if (camId) localStorage.setItem('selectedCameraId', camId);
-          console.log('[useSmartCameraSelection] 📷 Camera selected by index:', selectedCam?.label || `(no label) deviceId=${camId?.slice(0,8)}`);
-        } else {
-          console.log('[useSmartCameraSelection] 📷 Restored camera:', savedDevice.label || `deviceId=${camId?.slice(0,8)}`);
         }
-        setSelectedCameraId(camId);
 
-        // 3. マイク: localStorage に保存済みなら使用、なければ内蔵マイクを優先
-        let micId = localStorage.getItem('selectedMicId');
-        if (!micId || !aDevices.find(d => d.deviceId === micId)) {
-          let mic = aDevices.find(d => !d.label.toLowerCase().includes('obs'));
-          if (!mic) mic = aDevices[0];
-          micId = mic?.deviceId || null;
-          if (micId) localStorage.setItem('selectedMicId', micId);
-          console.log('[useSmartCameraSelection] 🎤 Default mic:', mic?.label);
+        // 5. 全て失敗したら最後の手段（デバイス指定なし）
+        if (!chosenStream) {
+          console.warn('[useSmartCameraSelection] ⚠️ All probes failed, using default');
+          chosenStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          chosenId = chosenStream.getVideoTracks()[0]?.getSettings()?.deviceId || null;
         }
+
+        if (chosenId) localStorage.setItem('selectedCameraId', chosenId);
+        setSelectedCameraId(chosenId);
+        setStream(chosenStream);
+
+        const micId = chosenStream.getAudioTracks()[0]?.getSettings()?.deviceId || aDevices[0]?.deviceId || null;
         setSelectedMicId(micId);
+        if (micId) localStorage.setItem('selectedMicId', micId);
 
-        // 4. ストリーム取得
-        const constraints = {
-          video: camId ? { deviceId: { exact: camId } } : true,
-          audio: micId ? { deviceId: { exact: micId } } : true,
-        };
-        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-        setStream(newStream);
-        console.log('[useSmartCameraSelection] ✅ Stream initialized');
       } catch (err) {
         console.error('[useSmartCameraSelection] ❌ Device init failed:', err);
         setError(err);
