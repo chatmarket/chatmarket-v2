@@ -996,9 +996,9 @@ export default function VideoCallPage() {
       />
 
       {/* Main container: Video上部固定50% + Chat下部 */}
-       <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-         {/* Video call section — 画面上部50%固定 */}
-         <div className="flex flex-col min-w-0" style={{ height: '50dvh', minHeight: '280px', flexShrink: 0 }}>
+       <div className="flex flex-col overflow-hidden" style={{ height: '100%' }}>
+         {/* Video call section — 画面上部50%固定・チャットに絶対に侵食させない */}
+         <div className="flex flex-col min-w-0" style={{ height: '50dvh', minHeight: '260px', maxHeight: '50dvh', flexShrink: 0, flexGrow: 0 }}>
       {/* Floating items */}
       {floatingItems.map((f) => (
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
@@ -1575,7 +1575,7 @@ export default function VideoCallPage() {
 
       {/* Bottom controls */}
       </div>
-      <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20 flex flex-col gap-3">
+      <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 z-20 flex flex-col gap-3 flex-shrink-0">
         {/* Settings icon - gear at right for access to all features */}
         {call?.status === "active" && (
           <div className="flex justify-end">
@@ -1618,9 +1618,9 @@ export default function VideoCallPage() {
           </motion.button>
         </div>
 
-              {/* Chat section - Below video (3倍サイズ) */}
+              {/* Chat section - 映像50%の残りを使用、固定heightで映像を侵食しない */}
               {user && (
-                <div className="w-full border-t border-white/10 flex-shrink-0 overflow-y-auto" style={{ height: "576px", background: "#050505" }}>
+                <div className="w-full border-t border-white/10 overflow-y-auto" style={{ height: "calc(50dvh - 120px)", minHeight: "200px", maxHeight: "400px", background: "#050505" }}>
                   {call ? <CallChatPanel call={call} user={user} /> : <div className="flex items-center justify-center h-full text-white/30 text-xs">通話開始後にチャット利用可</div>}
                 </div>
               )}

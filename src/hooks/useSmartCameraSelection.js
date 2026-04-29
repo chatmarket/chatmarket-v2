@@ -29,28 +29,34 @@ export function useSmartCameraSelection() {
         setVideoDevices(vDevices);
         setAudioDevices(aDevices);
 
-        // 2. カメラ: 仮想カメラ（OBS/Virtual）を除外して物理カメラを最優先選択
-        // localStorage に保存済みでも仮想カメラなら無視して物理カメラを選び直す
+        // 2. カメラ選択: Safari では label が空になる場合があるため
+        //    ラベル名での判断より「最初に利用可能なデバイス」を優先するフォールバック付き
         const isVirtualCamera = (label) => {
-          const l = label.toLowerCase();
+          const l = (label || '').toLowerCase();
           return l.includes('obs') || l.includes('virtual') || l.includes('manycam') || l.includes('xsplit') || l.includes('snap camera') || l.includes('droidcam') || l.includes('iriun');
         };
-        const physicalCameras = vDevices.filter(d => !isVirtualCamera(d.label));
+
+        // Safariでラベルが取れない場合は全デバイスを物理カメラとして扱う
+        const labelsAvailable = vDevices.some(d => d.label && d.label.length > 0);
+        const physicalCameras = labelsAvailable
+          ? vDevices.filter(d => !isVirtualCamera(d.label))
+          : vDevices; // ラベル不明 → 全デバイスを候補に
 
         let camId = localStorage.getItem('selectedCameraId');
         const savedDevice = vDevices.find(d => d.deviceId === camId);
-        // 保存済みデバイスが仮想カメラなら無視
-        if (!camId || !savedDevice || isVirtualCamera(savedDevice.label)) {
-          // FaceTime > Built-in > その他物理カメラ > 最終手段で全デバイス先頭
+        // 保存済みデバイスが仮想カメラなら無視（ラベルが取れない場合はそのまま使用）
+        const savedIsVirtual = savedDevice && labelsAvailable && isVirtualCamera(savedDevice.label);
+        if (!camId || !savedDevice || savedIsVirtual) {
+          // FaceTime > Built-in > その他物理カメラ > 最終手段で全デバイス先頭（必ず1台確保）
           const pool = physicalCameras.length > 0 ? physicalCameras : vDevices;
-          let cam = pool.find(d => d.label.toLowerCase().includes('facetime'));
-          if (!cam) cam = pool.find(d => d.label.toLowerCase().includes('built-in'));
-          if (!cam) cam = pool[0];
+          let cam = pool.find(d => (d.label || '').toLowerCase().includes('facetime'));
+          if (!cam) cam = pool.find(d => (d.label || '').toLowerCase().includes('built-in'));
+          if (!cam) cam = pool[0]; // ラベル不問で最初のデバイスを強制使用
           camId = cam?.deviceId || null;
           if (camId) localStorage.setItem('selectedCameraId', camId);
-          console.log('[useSmartCameraSelection] 📷 Physical camera selected:', cam?.label);
+          console.log('[useSmartCameraSelection] 📷 Camera selected:', cam?.label || `deviceId=${camId?.slice(0,8)}`);
         } else {
-          console.log('[useSmartCameraSelection] 📷 Restored physical camera:', savedDevice.label);
+          console.log('[useSmartCameraSelection] 📷 Restored camera:', savedDevice.label || `deviceId=${camId?.slice(0,8)}`);
         }
         setSelectedCameraId(camId);
 
