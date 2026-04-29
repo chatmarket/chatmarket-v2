@@ -1049,7 +1049,16 @@ export default function VideoCallPage() {
         ) : (
         /* 相手映像（フルスクリーン） - ChimeがここにRemoteVideoをbindする */
         <div className="absolute inset-0 w-full h-full bg-black">
-          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          {/* iOS Safari: autoPlay + playsInline + muted=false の順序が重要 */}
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            webkit-playsinline="true"
+            x5-playsinline="true"
+            className="w-full h-full object-cover"
+            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          />
           {countdown !== null && (
             <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/70 backdrop-blur-sm">
               <div className="text-center space-y-4">
@@ -1084,7 +1093,7 @@ export default function VideoCallPage() {
           call?.status === 'active' ? (
             // 通話中: 右下PiP — スマホでも視認しやすいサイズ
             <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-40 sm:h-52 rounded-xl overflow-hidden border-2 border-white/40 shadow-2xl bg-black/80 z-10" style={{ boxShadow: '0 0 16px rgba(0,255,157,0.3)' }}>
-              <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
+              <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true" className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
               {!camOn && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                   <CameraOff className="w-5 h-5 text-muted-foreground" />
@@ -1098,7 +1107,7 @@ export default function VideoCallPage() {
             // 通話前: 中央に大きく自画像プレビュー
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-full h-full relative">
-                <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
+                <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true" className="w-full h-full object-cover" style={{ filter: currentFilter?.style || "" }} />
                 {!camOn && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 gap-4">
                     <CameraOff className="w-12 h-12 text-muted-foreground" />
