@@ -217,25 +217,27 @@ export default function CallWaitingRoom() {
         setUser(u);
         let plan = u?.plan || (u?.role === "admin" ? "call-anser" : "free");
 
-        // キャンペーン判定：登録から4ヶ月以内 かつ 全ユーザー数が300名以内
-        try {
-          const allUsers = await base44.entities.User.list("-created_date", 300);
-          const count = allUsers.length;
-          setTotalUserCount(count);
-          if (count <= CAMPAIGN_LIMIT && u?.created_date) {
-            const registeredAt = new Date(u.created_date);
-            const campaignEnd = new Date(registeredAt);
-            campaignEnd.setMonth(campaignEnd.getMonth() + 4);
-            const now = new Date();
-            if (now < campaignEnd) {
-              setIsCampaignUser(true);
-              const msLeft = campaignEnd - now;
-              const monthsLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24 * 30));
-              setCampaignMonthsLeft(monthsLeft);
-              plan = "call-anser"; // 全機能開放
+        // キャンペーン判定：admin は常に全機能開放。一般ユーザーは登録から4ヶ月以内
+        if (u?.role === 'admin') {
+          setIsCampaignUser(false);
+          plan = "call-anser";
+        } else {
+          try {
+            if (u?.created_date) {
+              const registeredAt = new Date(u.created_date);
+              const campaignEnd = new Date(registeredAt);
+              campaignEnd.setMonth(campaignEnd.getMonth() + 4);
+              const now = new Date();
+              if (now < campaignEnd) {
+                setIsCampaignUser(true);
+                const msLeft = campaignEnd - now;
+                const monthsLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24 * 30));
+                setCampaignMonthsLeft(monthsLeft);
+                plan = "call-anser";
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
 
         setUserPlan(plan);
         const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
@@ -348,24 +350,21 @@ export default function CallWaitingRoom() {
 
   const handleAccept = async () => {
     if (!incomingCall) return;
-    const callId = incomingCall.id; // ★ setIncomingCall(null)前にIDを保存
+    const callId = incomingCall.id;
     setAccepting(true);
-    try {
-      // recording_option フラグをDBに保存
-      await base44.entities.VideoCall.update(callId, {
-        status: "accepted",
-        recording_option: recordingEnabled,
-      });
-      console.log('[CallWaitingRoom] ✅ Call accepted, navigating to /video-call/' + callId);
-      setIncomingCall(null);
-      stopCam(); // カメラストリームを解放してVideoCallPageに引き継がせる
-      // ★ 即座にVideoCallPageへ遷移（遅延なし）
-      navigate(`/video-call/${callId}`);
-    } catch (err) {
-      console.error('[CallWaitingRoom] ❌ handleAccept error:', err);
-      setAccepting(false);
-      toast.error('通話承認に失敗しました');
-    }
+    setIncomingCall(null);
+
+    // DB更新とカメラ解放・画面遷移を分離：DBエラーが起きても必ず遷移する
+    base44.entities.VideoCall.update(callId, {
+      status: "accepted",
+      recording_option: recordingEnabled,
+    }).catch((err) => {
+      console.warn('[CallWaitingRoom] ⚠️ VideoCall update error (continuing anyway):', err);
+    });
+
+    console.log('[CallWaitingRoom] ✅ Navigating to /video-call/' + callId);
+    stopCam();
+    navigate(`/video-call/${callId}`);
   };
 
   const handleDecline = async () => {
