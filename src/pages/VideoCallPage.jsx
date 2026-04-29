@@ -272,56 +272,6 @@ export default function VideoCallPage() {
     };
   }, [localStream, micOn]);
 
-  // リモート音声メーター（相手の声が届いているか可視化）
-  useEffect(() => {
-    if (!remoteVideoRef.current || call?.status !== 'active') return;
-    const videoEl = remoteVideoRef.current;
-
-    const attachMeter = () => {
-      const stream = videoEl.srcObject;
-      if (!(stream instanceof MediaStream) || stream.getAudioTracks().length === 0) return;
-      if (remoteAnalyserRef.current) return; // 既に接続済み
-
-      try {
-        const ctx = new AudioContext();
-        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        // ★ destination には繋がない（二重再生防止）
-        remoteAnalyserRef.current = analyser;
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        const tick = () => {
-          analyser.getByteFrequencyData(data);
-          const avg = data.reduce((s, v) => s + v, 0) / data.length;
-          setRemoteAudioLevel(Math.min(100, Math.round(avg * 3)));
-          remoteAnimFrameRef.current = requestAnimationFrame(tick);
-        };
-        tick();
-        console.log('[AudioMeter] 🔊 Remote audio meter connected');
-      } catch (e) {
-        console.warn('[AudioMeter] Remote meter failed:', e.message);
-      }
-    };
-
-    // srcObject が既にある場合はすぐ接続、なければ待機
-    if (videoEl.srcObject) {
-      attachMeter();
-    } else {
-      const observer = setInterval(() => {
-        if (videoEl.srcObject) { attachMeter(); clearInterval(observer); }
-      }, 500);
-      return () => clearInterval(observer);
-    }
-
-    return () => {
-      if (remoteAnimFrameRef.current) cancelAnimationFrame(remoteAnimFrameRef.current);
-      if (remoteAnalyserRef.current) { remoteAnalyserRef.current = null; }
-      setRemoteAudioLevel(0);
-    };
-  }, [call?.status]);
-
   // 録画
   const [isRecording, setIsRecording] = useState(false);
   const [recordingPipelineId, setRecordingPipelineId] = useState(null);
@@ -561,6 +511,54 @@ export default function VideoCallPage() {
       setShowInsufficientModal(true);
     }
   }, [call?.status, call?.auto_disconnected]);
+
+  // リモート音声メーター（相手の声が届いているか可視化）
+  useEffect(() => {
+    if (!remoteVideoRef.current || call?.status !== 'active') return;
+    const videoEl = remoteVideoRef.current;
+
+    const attachMeter = () => {
+      const stream = videoEl.srcObject;
+      if (!(stream instanceof MediaStream) || stream.getAudioTracks().length === 0) return;
+      if (remoteAnalyserRef.current) return;
+
+      try {
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        remoteAnalyserRef.current = analyser;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          analyser.getByteFrequencyData(data);
+          const avg = data.reduce((s, v) => s + v, 0) / data.length;
+          setRemoteAudioLevel(Math.min(100, Math.round(avg * 3)));
+          remoteAnimFrameRef.current = requestAnimationFrame(tick);
+        };
+        tick();
+        console.log('[AudioMeter] 🔊 Remote audio meter connected');
+      } catch (e) {
+        console.warn('[AudioMeter] Remote meter failed:', e.message);
+      }
+    };
+
+    if (videoEl.srcObject) {
+      attachMeter();
+    } else {
+      const observer = setInterval(() => {
+        if (videoEl.srcObject) { attachMeter(); clearInterval(observer); }
+      }, 500);
+      return () => clearInterval(observer);
+    }
+
+    return () => {
+      if (remoteAnimFrameRef.current) cancelAnimationFrame(remoteAnimFrameRef.current);
+      if (remoteAnalyserRef.current) { remoteAnalyserRef.current = null; }
+      setRemoteAudioLevel(0);
+    };
+  }, [call?.status]);
 
   // コイン残高取得
   useEffect(() => {
