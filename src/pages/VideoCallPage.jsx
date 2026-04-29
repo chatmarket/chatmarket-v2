@@ -243,18 +243,26 @@ export default function VideoCallPage() {
   const audioAnimFrameRef = useRef(null);
   const remoteAnalyserRef = useRef(null);
   const remoteAnimFrameRef = useRef(null);
+  const localAudioCtxRef = useRef(null); // AudioContext参照を保持（自動復旧用）
 
-  // ローカルマイクの音声メーター（スマートフォン対応: AudioContext を resume してから起動）
+  // 無音検知アラート
+  const [showMicAlert, setShowMicAlert] = useState(false);
+  const silenceCountRef = useRef(0);
+
+  // ローカルマイクの音声メーター（スマートフォン対応 + AudioContext 自動復旧）
   useEffect(() => {
     if (!localStream || !micOn) {
       setAudioLevel(0);
+      silenceCountRef.current = 0;
       if (audioAnimFrameRef.current) cancelAnimationFrame(audioAnimFrameRef.current);
-      if (audioAnalyserRef.current) { try { audioAnalyserRef.current.context?.close(); } catch {} audioAnalyserRef.current = null; }
+      if (localAudioCtxRef.current) { localAudioCtxRef.current.close().catch(() => {}); localAudioCtxRef.current = null; }
+      audioAnalyserRef.current = null;
       return;
     }
     let cancelled = false;
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // iOS/Android では suspended 状態で作られるため resume() してから接続
+    localAudioCtxRef.current = ctx;
+
     const start = () => {
       if (cancelled) return;
       const source = ctx.createMediaStreamSource(localStream);
@@ -265,22 +273,50 @@ export default function VideoCallPage() {
       const data = new Uint8Array(analyser.frequencyBinCount);
       const tick = () => {
         if (cancelled) return;
+        // AudioContext がスリープしていたら即座に復旧
+        if (ctx.state === 'suspended') { ctx.resume().catch(() => {}); }
         analyser.getByteFrequencyData(data);
         const avg = data.reduce((s, v) => s + v, 0) / data.length;
-        setAudioLevel(Math.min(100, Math.round(avg * 2.5)));
+        const level = Math.min(100, Math.round(avg * 2.5));
+        setAudioLevel(level);
+        // 無音検知: 5秒(約300フレーム)連続でゼロならアラート
+        if (level === 0) {
+          silenceCountRef.current += 1;
+          if (silenceCountRef.current >= 300) { setShowMicAlert(true); }
+        } else {
+          silenceCountRef.current = 0;
+          setShowMicAlert(false);
+        }
         audioAnimFrameRef.current = requestAnimationFrame(tick);
       };
       tick();
     };
+
     if (ctx.state === 'suspended') {
       ctx.resume().then(start).catch(() => {});
     } else {
       start();
     }
+
+    // ページが非表示→表示に戻ったとき AudioContext を resume
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // AudioContext が外部からスリープさせられたら自動復旧
+    ctx.addEventListener('statechange', () => {
+      if (!cancelled && ctx.state === 'suspended') { ctx.resume().catch(() => {}); }
+    });
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(audioAnimFrameRef.current);
       ctx.close().catch(() => {});
+      localAudioCtxRef.current = null;
     };
   }, [localStream, micOn]);
 
@@ -524,10 +560,12 @@ export default function VideoCallPage() {
     }
   }, [call?.status, call?.auto_disconnected]);
 
-  // リモート音声メーター（相手の声が届いているか可視化）
+  // リモート音声メーター（相手の声が届いているか可視化 + AudioContext自動復旧）
+  const remoteAudioCtxRef = useRef(null);
   useEffect(() => {
     if (!remoteVideoRef.current || call?.status !== 'active') return;
     const videoEl = remoteVideoRef.current;
+    let cancelled = false;
 
     const attachMeter = () => {
       const stream = videoEl.srcObject;
@@ -535,7 +573,8 @@ export default function VideoCallPage() {
       if (remoteAnalyserRef.current) return;
 
       try {
-        const ctx = new AudioContext();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        remoteAudioCtxRef.current = ctx;
         if (ctx.state === 'suspended') ctx.resume().catch(() => {});
         const source = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -544,30 +583,51 @@ export default function VideoCallPage() {
         remoteAnalyserRef.current = analyser;
         const data = new Uint8Array(analyser.frequencyBinCount);
         const tick = () => {
+          if (cancelled) return;
+          if (ctx.state === 'suspended') ctx.resume().catch(() => {});
           analyser.getByteFrequencyData(data);
           const avg = data.reduce((s, v) => s + v, 0) / data.length;
           setRemoteAudioLevel(Math.min(100, Math.round(avg * 3)));
           remoteAnimFrameRef.current = requestAnimationFrame(tick);
         };
         tick();
+        ctx.addEventListener('statechange', () => {
+          if (!cancelled && ctx.state === 'suspended') ctx.resume().catch(() => {});
+        });
         console.log('[AudioMeter] 🔊 Remote audio meter connected');
       } catch (e) {
         console.warn('[AudioMeter] Remote meter failed:', e.message);
       }
     };
 
-    if (videoEl.srcObject) {
-      attachMeter();
-    } else {
-      const observer = setInterval(() => {
-        if (videoEl.srcObject) { attachMeter(); clearInterval(observer); }
-      }, 500);
-      return () => clearInterval(observer);
-    }
+    const observer = setInterval(() => {
+      if (cancelled) { clearInterval(observer); return; }
+      if (videoEl.srcObject) { attachMeter(); }
+      // リモート音声トラックが意図せず muted になっていたら強制ON
+      const stream = videoEl.srcObject;
+      if (stream instanceof MediaStream) {
+        stream.getAudioTracks().forEach(track => {
+          if (!track.enabled) { track.enabled = true; console.log('[AudioGuard] 🔧 Remote audio track re-enabled'); }
+        });
+        // video要素がミュートされていたら解除
+        if (videoEl.muted) { videoEl.muted = false; videoEl.volume = 1.0; }
+      }
+    }, 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && remoteAudioCtxRef.current?.state === 'suspended') {
+        remoteAudioCtxRef.current.resume().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
+      cancelled = true;
+      clearInterval(observer);
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (remoteAnimFrameRef.current) cancelAnimationFrame(remoteAnimFrameRef.current);
-      if (remoteAnalyserRef.current) { remoteAnalyserRef.current = null; }
+      remoteAnalyserRef.current = null;
+      if (remoteAudioCtxRef.current) { remoteAudioCtxRef.current.close().catch(() => {}); remoteAudioCtxRef.current = null; }
       setRemoteAudioLevel(0);
     };
   }, [call?.status]);
@@ -1313,6 +1373,18 @@ export default function VideoCallPage() {
             {!micOn && (
               <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-red-900/90 border border-red-500/60 rounded-xl px-4 py-2 flex items-center gap-2 text-red-300 text-xs font-bold backdrop-blur animate-pulse pointer-events-auto">
                 <MicOff className="w-4 h-4 shrink-0" /> マイクOFF
+              </div>
+            )}
+            {/* 無音検知アラート（マイクON でも5秒間無音の場合） */}
+            {micOn && showMicAlert && (
+              <div
+                className="absolute left-3 right-3 bg-orange-900/95 border border-orange-500/70 rounded-xl px-4 py-2.5 flex items-center gap-2 text-orange-200 text-xs font-bold backdrop-blur pointer-events-auto"
+                style={{ top: 48 }}
+                onClick={() => { if (localAudioCtxRef.current?.state === 'suspended') localAudioCtxRef.current.resume().catch(() => {}); setShowMicAlert(false); silenceCountRef.current = 0; }}
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 text-orange-400" />
+                <span className="flex-1">マイクを再確認してください（音声が検出されません）</span>
+                <span className="text-orange-400 underline cursor-pointer">再試行</span>
               </div>
             )}
             {/* 30秒カウントダウン */}
