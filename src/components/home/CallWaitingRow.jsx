@@ -9,15 +9,15 @@ import ScrollRow from "./ScrollRow";
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
 
-  // call_enabled=true のチャンネルのみ表示（実際に待機中のライバーのみ）
+  // 全チャンネルを表示（call_enabledに関係なく掲載。実稼働・ダミー問わず表示OK）
   const { data: allChannels = [] } = useQuery({
-    queryKey: ["call-enabled-channels"],
+    queryKey: ["all-channels-waiting-row"],
     queryFn: async () => {
-      const channels = await base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 100);
+      const channels = await base44.entities.Channel.list("-updated_date", 100);
       return channels;
     },
-    staleTime: 30000,
-    gcTime: 60000,
+    staleTime: 60000,
+    gcTime: 120000,
   });
 
   if (allChannels.length === 0) return (
