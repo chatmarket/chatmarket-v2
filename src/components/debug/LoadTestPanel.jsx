@@ -16,10 +16,21 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     yellCount: 0,
     msgCount: 0,
   });
+  const [logs, setLogs] = useState([]);
+  const [showLogs, setShowLogs] = useState(false);
 
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
   const rafRef = useRef(null);
+  const pollingRef = useRef(null);
+
+  // ──────────────────────────────────────────────────────────
+  // ログ追加（内部）
+  // ──────────────────────────────────────────────────────────
+  const addLog = (msg, level = 'info') => {
+    setLogs(prev => [...prev.slice(-9), { msg, level, ts: new Date().toLocaleTimeString() }]);
+    console.log(`[LoadTest] ${level.toUpperCase()}: ${msg}`);
+  };
 
   // ──────────────────────────────────────────────────────────
   // FPS計測ループ
@@ -55,17 +66,49 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   const measureLag = async () => {
     const start = performance.now();
     try {
-      await fetch('/api/ping', {
+      const res = await fetch('/api/ping', {
         method: 'POST',
         body: JSON.stringify({ ts: start }),
+        headers: { 'Content-Type': 'application/json' },
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const lag = Math.round(performance.now() - start);
       setMetrics(prev => ({ ...prev, lag }));
-    } catch {}
+    } catch (err) {
+      addLog(`Ping failed: ${err.message}`, 'error');
+      setMetrics(prev => ({ ...prev, lag: 9999 }));
+    }
+  };
+
+  // ──────────────────────────────────────────────────────────
+  // ボット状態ポーリング（メトリクス取得）
+  // ──────────────────────────────────────────────────────────
+  const pollBotStatus = async () => {
+    try {
+      const res = await fetch('/api/loadTestBot?action=status');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.metrics) {
+          setMetrics(prev => ({
+            ...prev,
+            yellCount: data.metrics.yellsSent || 0,
+            msgCount: data.metrics.messagesSent || 0,
+          }));
+        }
+        if (data.metrics?.errors?.length > 0) {
+          data.metrics.errors.slice(-3).forEach(err => addLog(err, 'warn'));
+        }
+      }
+    } catch (err) {
+      addLog(`Status poll failed: ${err.message}`, 'error');
+    }
   };
 
   useEffect(() => {
-    if (!running) return;
+    if (!running) {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      return;
+    }
 
     // FPS計測開始
     rafRef.current = requestAnimationFrame(measureFPS);
@@ -76,10 +119,14 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     // ネットワーク遅延計測（2秒ごと）
     const lagInterval = setInterval(measureLag, 2000);
 
+    // ボット状態ポーリング（3秒ごと）
+    pollingRef.current = setInterval(pollBotStatus, 3000);
+
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       clearInterval(memInterval);
       clearInterval(lagInterval);
+      if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [running]);
 
@@ -88,38 +135,65 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   // ──────────────────────────────────────────────────────────
   const handleStart = async () => {
     setRunning(true);
+    setLogs([]);
+    addLog('Starting load test...', 'info');
+    
     try {
       const res = await fetch('/api/loadTestBot', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'start_combined',
-          stream_id: streamId,
+          stream_id: streamId || 'test_stream',
           duration_seconds: 30,
           user_count: 100,
           mode: 'dummy',
         }),
       });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      }
+
       const data = await res.json();
-      console.log('[LoadTestPanel] Bot started:', data);
+      addLog(`✅ Bot started: ${data.message}`, 'info');
+      addLog(`Mode: ${data.mode} | Users: ${data.users}`, 'info');
       onStart?.(data);
+
+      // 即座にボット状態ポーリング開始
+      pollBotStatus();
     } catch (err) {
-      console.error('[LoadTestPanel] Start failed:', err);
+      addLog(`❌ Start failed: ${err.message}`, 'error');
       setRunning(false);
     }
   };
 
   const handleStop = async () => {
-    setRunning(false);
+    addLog('Stopping load test...', 'info');
+    
     try {
       const res = await fetch('/api/loadTestBot', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'stop' }),
       });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
       const data = await res.json();
-      console.log('[LoadTestPanel] Bot stopped:', data);
+      addLog(`✅ Bot stopped`, 'info');
+      addLog(`Yells: ${data.metrics?.yellsSent || 0} | Messages: ${data.metrics?.messagesSent || 0}`, 'info');
+      
+      if (data.metrics?.errors?.length > 0) {
+        addLog(`Errors: ${data.metrics.errors.length}`, 'warn');
+      }
+
       onStop?.(data);
+      setRunning(false);
     } catch (err) {
-      console.error('[LoadTestPanel] Stop failed:', err);
+      addLog(`❌ Stop failed: ${err.message}`, 'error');
     }
   };
 
@@ -189,15 +263,51 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
             className={`font-bold ${
               metrics.lag > 200 ? 'text-red-400' :
               metrics.lag > 100 ? 'text-yellow-400' :
+              metrics.lag === 9999 ? 'text-red-500' :
               'text-green-400'
             }`}
             key={metrics.lag}
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
           >
-            {metrics.lag} ms
+            {metrics.lag === 9999 ? 'Err' : `${metrics.lag} ms`}
           </motion.span>
         </div>
+
+        {/* ボット統計 */}
+        {running && (
+          <>
+            <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
+              <span className="text-white/60">💰 Yells</span>
+              <motion.span className="font-bold text-yellow-400" key={metrics.yellCount} initial={{ scale: 1.2 }} animate={{ scale: 1 }}>
+                {metrics.yellCount}
+              </motion.span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-white/60">💬 Msgs</span>
+              <motion.span className="font-bold text-cyan-400" key={metrics.msgCount} initial={{ scale: 1.2 }} animate={{ scale: 1 }}>
+                {metrics.msgCount}
+              </motion.span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ログパネル（ワンクリック展開） */}
+      <div className="mb-3 text-[9px] space-y-1 max-h-24 overflow-y-auto bg-black/50 rounded px-2 py-1">
+        {logs.length === 0 ? (
+          <div className="text-white/30">No logs yet</div>
+        ) : (
+          logs.map((log, i) => (
+            <div key={i} className={`font-mono ${
+              log.level === 'error' ? 'text-red-400' :
+              log.level === 'warn' ? 'text-yellow-300' :
+              'text-white/60'
+            }`}>
+              <span className="text-white/40">{log.ts}</span> {log.msg}
+            </div>
+          ))
+        )}
       </div>
 
       {/* ボタン */}
