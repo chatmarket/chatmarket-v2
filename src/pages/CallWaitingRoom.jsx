@@ -302,8 +302,16 @@ export default function CallWaitingRoom() {
     if (!user?.email) return;
     const unsub = base44.entities.VideoCall.subscribe((event) => {
       const d = event.data;
-      if (d?.callee_email === user.email && d?.status === "pending") {
+      if (!d || d.callee_email !== user.email) return;
+
+      if (d.status === "pending") {
         queryClient.invalidateQueries({ queryKey: ["waiting-room-pending-v3", user.email] });
+      }
+
+      // 発信者がキャンセルした場合、着信UIを即座に消去
+      if (["cancelled", "declined", "ended"].includes(d.status)) {
+        setIncomingCall(prev => (prev?.id === d.id ? null : prev));
+        seenCallIds.current.add(d.id);
       }
     });
     return unsub;
