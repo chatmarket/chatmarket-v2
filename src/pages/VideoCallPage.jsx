@@ -76,25 +76,26 @@ import { YELL_AMOUNTS, colorStyles, EMOJIS, THROW_MARKS, FILTERS, BACKGROUNDS, A
 
 // ---- Floating emoji animation component ----
 function FloatingItem({ item, onDone, type = "emoji" }) {
+  const xOffset = (Math.random() - 0.5) * 160; // ランダム横ばらけ
   useEffect(() => {
-    const t = setTimeout(onDone, 2200);
+    const t = setTimeout(onDone, 2500);
     return () => clearTimeout(t);
   }, [onDone]);
 
   return (
     <motion.div
-      className="pointer-events-none select-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-      style={{ position: 'fixed', zIndex: 9999 }}
-      initial={{ opacity: 1, y: 0, scale: 0.8 }}
-      animate={{ opacity: 0, y: -150, scale: 1.2 }}
-      transition={{ duration: 2, ease: "easeOut" }}
+      className="pointer-events-none select-none"
+      style={{ position: 'fixed', left: `calc(50% + ${xOffset}px)`, top: '40%', zIndex: 10000, transform: 'translateX(-50%)' }}
+      initial={{ opacity: 1, y: 0, scale: 0.6 }}
+      animate={{ opacity: 0, y: -200, scale: 1.4 }}
+      transition={{ duration: 2.2, ease: "easeOut" }}
     >
       {type === "coin" ? (
-        <div className="text-5xl font-black text-yellow-400 drop-shadow-2xl animate-bounce" style={{ textShadow: "0 0 20px rgba(255,215,0,1)" }}>
-          💰 {item}
+        <div className="text-6xl font-black drop-shadow-2xl" style={{ textShadow: "0 0 30px rgba(255,215,0,1), 0 0 60px rgba(255,165,0,0.8)" }}>
+          💰
         </div>
       ) : (
-        <div className="text-6xl animate-bounce">{item}</div>
+        <div className="text-5xl">{item}</div>
       )}
     </motion.div>
   );
@@ -417,15 +418,6 @@ export default function VideoCallPage() {
     const calleeId = call.callee_email;
     const isCaller = user.email === callerId;
     const isCallee = user.email === calleeId;
-
-    console.log('[VideoCallPage] 🔍 Call state check:', {
-      call_id: call.id,
-      status: call.status,
-      user_email: user.email,
-      is_caller: isCaller,
-      is_callee: isCallee,
-      countdown_started: countdownStartedRef.current
-    });
 
     // Caller のみ: accepted → IVS Stages token 生成 → active に遷移
     if (isCaller && call.status === 'accepted' && !countdownStartedRef.current) {
@@ -1114,23 +1106,38 @@ export default function VideoCallPage() {
 
   useEffect(() => { chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
-  // ★ ライバー側: エール受信をリアルタイム検知してトースト+アニメ表示
+  // ★ エール受信購読 — user確定後すぐ開始（通話状態に依存しない）
   useEffect(() => {
-    if (!call?.id || !user) return;
-    const isCallee = user.email === call.callee_email;
-    if (!isCallee) return; // ライバー側のみ
-
-    const unsub = base44.entities.YellCoinTransaction.subscribe((event) => {
-      if (event.type === "create" && event.data?.channel_owner_email === user.email && event.data?.service_id === call.id) {
-        const amount = event.data.amount || 0;
-        const senderEmail = event.data.user_email || "";
-        console.log(`[Yell] 🎉 Received ${amount} coins from ${senderEmail}`);
-        addFloating("💰", "coin");
-        toast.success(`💰 ${amount.toLocaleString()} コインのエールを受け取りました！`, { duration: 5000 });
-      }
+    if (!user) return;
+    const playCoinSound = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [[0,1600],[0.1,2400],[0.2,2000]].forEach(([dl,fr]) => {
+          const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination);
+          o.type="sine"; o.frequency.setValueAtTime(fr,ctx.currentTime+dl);
+          g.gain.setValueAtTime(0.35,ctx.currentTime+dl); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dl+0.6);
+          o.start(ctx.currentTime+dl); o.stop(ctx.currentTime+dl+0.6);
+        }); setTimeout(()=>ctx.close(),1500);
+      } catch {}
+    };
+    const unsub = base44.entities.YellCoinTransaction.subscribe((ev) => {
+      const d = ev.data;
+      if (ev.type !== "create" || d?.channel_owner_email !== user.email) return;
+      const amount = d.amount || 0;
+      playCoinSound();
+      addFloating("💰","coin");
+      setTimeout(()=>addFloating("🪙","emoji"),130);
+      setTimeout(()=>addFloating("✨","emoji"),260);
+      setTimeout(()=>addFloating("🎉","emoji"),390);
+      setTimeout(()=>addFloating("💛","emoji"),520);
+      setCoinBalance(prev=>(prev!==null ? prev+Math.floor(amount*0.85) : prev));
+      toast.success(`🎉 +${amount.toLocaleString()} コインのエール受信！獲得: ${Math.floor(amount*0.85)}コイン`,{
+        duration:6000,
+        style:{background:'linear-gradient(135deg,#7c4a00,#b8860b)',border:'2px solid #ffd700',color:'#fff9c4',fontWeight:'bold',boxShadow:'0 0 24px rgba(255,215,0,0.7)'},
+      });
     });
-    return () => unsub();
-  }, [call?.id, user?.email, call?.callee_email]);
+    return ()=>unsub();
+  }, [user?.email]);
 
   const handleChatSend = async () => {
     if (!chatInput.trim() || !call || !user || !threadId || chatSending) return;
@@ -1170,11 +1177,7 @@ export default function VideoCallPage() {
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
       ))}
 
-      {/* ════════════════════════════════════════
-          VIDEO AREA — 画面上部60%
-          ★ localVideoRef / remoteVideoRef は常時DOMに存在させる（IVS SDKのbind維持）
-          ★ 表示切替はCSSのみで行う
-      ════════════════════════════════════════ */}
+      {/* VIDEO AREA */}
       <div ref={videoContainerRef} className="relative bg-black" style={{ height: '60dvh', minHeight: '280px', flexShrink: 0, paddingTop: 'env(safe-area-inset-top)' }}>
 
         {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
@@ -1424,12 +1427,10 @@ export default function VideoCallPage() {
         )}
       </div>
 
-      {/* ════════════════════════════════════════
-          BOTTOM AREA — コントロール + チャット + エールコイン
-      ════════════════════════════════════════ */}
+      {/* BOTTOM AREA */}
       <div className="flex flex-col bg-black border-t border-white/10" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
-        {/* コントロールバー — 全ボタン最低48px(Apple HIG準拠) */}
+        {/* コントロールバー */}
         <div className="flex items-center justify-between px-4 border-b border-white/10 shrink-0" style={{ paddingTop: 10, paddingBottom: 10 }}>
           {/* マイク・カメラ・設定 */}
           <div className="flex items-center gap-3">
