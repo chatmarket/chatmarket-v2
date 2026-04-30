@@ -450,53 +450,57 @@ export default function CallProfilePage() {
       ══════════════════════════════════ */}
       {!isEditing && !isOwnChannel && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-50 px-4 py-3 backdrop-blur-xl"
-          style={{ background: "linear-gradient(to top, hsl(120 5% 4%) 60%, hsl(120 5% 4% / 0.85) 100%)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          className="fixed bottom-0 left-0 right-0 z-50 px-4 pt-3 pb-safe backdrop-blur-xl"
+          style={{
+            background: "linear-gradient(to top, hsl(120 5% 4%) 70%, hsl(120 5% 4% / 0.92) 100%)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+          }}
         >
           <div className="max-w-2xl mx-auto space-y-2">
+            {/* ① 今すぐ通話ボタン */}
             <motion.button
               whileTap={{ scale: 0.97 }}
               animate={channel.call_enabled ? {
-                boxShadow: [
-                  "0 0 16px rgba(0,255,157,0.4)",
-                  "0 0 36px rgba(0,255,157,0.8)",
-                  "0 0 16px rgba(0,255,157,0.4)",
-                ],
+                boxShadow: ["0 0 16px rgba(0,255,157,0.4)", "0 0 36px rgba(0,255,157,0.8)", "0 0 16px rgba(0,255,157,0.4)"],
               } : {}}
               transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
               onClick={handleStartCall}
               disabled={calling || !channel.call_enabled}
               className="w-full rounded-2xl font-black text-lg flex items-center justify-center gap-3 disabled:opacity-40 transition-all"
               style={{
-                height: 64,
-                background: channel.call_enabled
-                  ? "linear-gradient(135deg, #00ff9d, #00c97a)"
-                  : "rgba(255,255,255,0.08)",
+                height: 60,
+                background: channel.call_enabled ? "linear-gradient(135deg, #00ff9d, #00c97a)" : "rgba(255,255,255,0.08)",
                 color: channel.call_enabled ? "#000" : "#666",
               }}
             >
               <PhoneCall className="w-6 h-6" />
               {calling ? "接続中..." : channel.call_enabled ? "今すぐ通話を開始する" : "現在受付停止中"}
             </motion.button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="h-9 gap-1.5 text-xs font-bold"
-                onClick={() => {
-                  if (!user) { base44.auth.redirectToLogin(); return; }
-                  setShowRequestModal(true);
-                }}
-              >
-                <CalendarDays className="w-3.5 h-3.5 text-primary" /> 予約リクエスト
-              </Button>
-              <Button
-                variant="ghost"
-                className="h-9 gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
-                onClick={handleChat}
-              >
-                <MessageCircle className="w-3.5 h-3.5" /> チャット
-              </Button>
-            </div>
+
+            {/* ② 予約リクエストボタン */}
+            <button
+              onClick={() => { if (!user) { base44.auth.redirectToLogin(); return; } setShowRequestModal(true); }}
+              className="w-full rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 border-primary/50 text-primary hover:bg-primary/10 active:scale-98"
+              style={{ height: 48 }}
+            >
+              <CalendarDays className="w-4 h-4" /> 日程を予約してから通話する
+            </button>
+
+            {/* ③ チャット（安心導線・フル幅） */}
+            <button
+              onClick={handleChat}
+              className="w-full rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition-all"
+              style={{
+                height: 44,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.6)",
+              }}
+            >
+              <MessageCircle className="w-4 h-4" />
+              ビデオ通話を始める前にチャットで対応可能か問い合わせる
+            </button>
           </div>
         </div>
       )}
