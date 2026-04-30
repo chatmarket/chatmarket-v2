@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
     // ★ 最小ログ出力（本番環境向けパフォーマンス重視）
     const yellCount = logs.filter(l => l.msg.includes('[YellBurst]') || l.msg.includes('coins')).length;
     const chatCount = logs.filter(l => l.msg.includes('[ChatFlood]')).length;
+    const ivsCount = logs.filter(l => l.msg.includes('[IVS Stages]')).length;
     
     // 爆撃テスト時のみ詳細出力
     if (yellCount > 0 || chatCount > 0) {
