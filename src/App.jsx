@@ -82,6 +82,31 @@ import CallProfilePage from '@/pages/CallProfilePage';
 import ChannelProfileEdit from '@/pages/ChannelProfileEdit';
 
 export default function App() {
+  // ★ 認証状態で /api/track へのログ送信を開始
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const user = await response.json();
+          // トークンをローカルストレージに保存（LogViewer が使用）
+          const authHeader = response.headers.get('Authorization');
+          if (authHeader) {
+            window.localStorage.setItem('auth_token', authHeader.replace('Bearer ', ''));
+          }
+          console.log('[App] ✅ Auth confirmed:', user.email);
+          
+          // ログバッファを即座に送信
+          if (window.__sendLogs) {
+            window.__sendLogs(authHeader);
+          }
+        }
+      } catch (e) {
+        console.warn('[App] Auth check failed:', e.message);
+      }
+    })();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>

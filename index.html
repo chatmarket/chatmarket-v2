@@ -128,101 +128,39 @@
     <!-- ★ vConsole: スマホ画面でブラウザログ直視 -->
     <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
     <script>
-      // 開発環境でのみ vConsole 有効化（Staging / localhost）
       if (window.location.hostname.includes('localhost') || 
           window.location.hostname.includes('staging') ||
           window.location.hostname.includes('127.0.0.1')) {
         new window.VConsole();
-        console.log('[vConsole] 🎮 Enabled for mobile debug');
+        console.log('[vConsole] 🎮 Enabled');
       }
     </script>
 
-    <!-- ★ ログ収集 + /api/track 送信（開発環境でも有効） -->
+    <!-- ★ ログ送信初期化（認証付き POST） -->
     <script>
-      (function() {
-        // 環境判定
-        var isDev = window.location.hostname.includes('localhost') || 
-                    window.location.hostname.includes('staging') ||
-                    window.location.hostname.includes('127.0.0.1');
-        var isProd = !isDev;
-
-        // ログバッファ
-        var logBuffer = [];
-        var maxLogs = 100;
-
-        // console.log / warn / error をキャプチャ
-        var originalLog = console.log;
-        var originalWarn = console.warn;
-        var originalError = console.error;
-
-        function captureLog(level, args) {
-          var msg = args.map(function(a) {
-            return typeof a === 'object' ? JSON.stringify(a) : String(a);
-          }).join(' ');
-          
-          logBuffer.push({
-            ts: new Date().toISOString(),
-            level: level,
-            msg: msg
-          });
-
-          if (logBuffer.length > maxLogs) {
-            logBuffer.shift();
-          }
-        }
-
-        console.log = function(...args) {
-          captureLog('info', args);
-          originalLog.apply(console, args);
+      window.__logBuffer = [];
+      window.__sendLogs = function(token) {
+        if (window.__logBuffer.length === 0) return Promise.resolve();
+        
+        const payload = {
+          path: window.location.pathname,
+          hostname: window.location.hostname,
+          logs: window.__logBuffer.splice(0, 100),
+          timestamp: new Date().toISOString()
         };
 
-        console.warn = function(...args) {
-          captureLog('warn', args);
-          originalWarn.apply(console, args);
-        };
-
-        console.error = function(...args) {
-          captureLog('error', args);
-          originalError.apply(console, args);
-        };
-
-        // 定期送信（本番 + 開発両方）
-        setInterval(function() {
-          if (logBuffer.length === 0) return;
-
-          try {
-            var payload = {
-              path: window.location.pathname,
-              hostname: window.location.hostname,
-              isDev: isDev,
-              logs: logBuffer.slice(),
-              timestamp: new Date().toISOString()
-            };
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/track', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-Request-ID', Math.random().toString(36).substr(2, 9));
-            
-            xhr.onload = function() {
-              if (xhr.status === 200 || xhr.status === 201) {
-                console.log('[LogTracker] ✅ Logs sent:', logBuffer.length);
-                logBuffer = [];
-              }
-            };
-            
-            xhr.onerror = function() {
-              console.warn('[LogTracker] ⚠️ Send failed, retry later');
-            };
-
-            xhr.send(JSON.stringify(payload));
-          } catch(e) {
-            console.warn('[LogTracker] Error:', e.message);
-          }
-        }, 5000); // 5秒ごとに送信
-
-        console.log('[LogTracker] 📡 Initialized - logs will auto-send every 5s');
-      })();
+        return fetch('/api/track', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+            'X-Request-ID': Math.random().toString(36).substr(2, 9)
+          },
+          body: JSON.stringify(payload)
+        }).catch(e => {
+          console.warn('[LogTracker] Send error:', e.message);
+        });
+      };
     </script>
     <!-- Amazon IVS Web Broadcast SDK v1.33.0 (Stages統合 - sort bugfix版) -->
     <script src="https://web-broadcast.live-video.net/1.33.0/amazon-ivs-web-broadcast.js"></script>

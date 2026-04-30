@@ -23,8 +23,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// ★ 開発環境ではログ送信許可 / 本番環境では遮断なし（サーバー側で制御）
-// 既存のインターセプター完全削除 → /api/track POST を自由に通す
+
 
 // ★ SW強制クリア＆再登録停止（キャッシュが修正を妨害しないよう）
 if ('serviceWorker' in navigator) {

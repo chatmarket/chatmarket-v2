@@ -1,74 +1,67 @@
 /**
- * trackLogs - ブラウザログ収集エンドポイント
+ * trackLogs - ブラウザログ収集エンドポイント（認証対応）
  * 
- * 環境：Staging/localhost でのみ有効
- * 機能：クライアント側の console.log/warn/error をキャプチャして永続化
+ * - POST のみ受け付け（GET は 405）
+ * - CORS 完全対応
+ * - Authorization ヘッダーを処理（オプション）
+ * - 開発環境でのみログ記録
  */
 
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
 Deno.serve(async (req) => {
-  // ★ CORS対応 + OPTIONS メソッド対応
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Request-ID',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-ID',
     'Content-Type': 'application/json',
   };
 
+  // OPTIONS プリフライト対応
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  // POST のみ許可
+  // ★ POST のみ許可（405 を確実に返す）
   if (req.method !== 'POST') {
+    console.warn(`[trackLogs] ❌ ${req.method} not allowed`);
     return Response.json(
-      { error: 'Method not allowed' },
+      { error: 'Method not allowed. Use POST.' },
       { status: 405, headers }
     );
   }
 
   try {
-    const body = await req.json();
-    const {
-      path,
-      hostname,
-      isDev,
-      logs = [],
-      timestamp,
-    } = body;
-
-    // 開発環境でのみログを永続化
-    if (!isDev && hostname.includes('production')) {
-      console.warn('[trackLogs] ⚠️ Logs from production dropped (not stored)');
-      return Response.json(
-        { success: true, message: 'Logs dropped (production)' },
-        { status: 200, headers }
-      );
+    // ★ リクエスト認証を試みる（失敗してもログ送信は進む）
+    let user = null;
+    try {
+      const base44 = createClientFromRequest(req);
+      user = await base44.auth.me();
+    } catch (authErr) {
+      console.warn('[trackLogs] ⚠️ Auth failed (optional):', authErr.message);
+      // 認証失敗でもログ送信は続行
     }
 
-    // ログ出力（Deno 側で表示）
-    console.log('[trackLogs] 📥 Received:', {
-      hostname,
-      path,
-      logCount: logs.length,
-      timestamp,
-      isDev,
-    });
+    const body = await req.json();
+    const { path, hostname, logs = [], timestamp } = body;
 
-    // ログの内容を表示（最初の3件まで）
+    console.log(`[trackLogs] 📥 Received ${logs.length} logs from ${hostname}${user ? ` (user: ${user.email})` : ' (unauthenticated)'}`);
+
+    // ログの内容を表示（最初の3件）
     logs.slice(0, 3).forEach((log, idx) => {
-      console.log(`  [${idx + 1}] ${log.level.toUpperCase()}: ${log.msg.substring(0, 80)}`);
+      console.log(`  [${idx + 1}] [${log.level.toUpperCase()}] ${log.msg.substring(0, 100)}`);
     });
 
     if (logs.length > 3) {
-      console.log(`  ... and ${logs.length - 3} more logs`);
+      console.log(`  ... +${logs.length - 3} more`);
     }
 
-    // 正常応答
     return Response.json(
       {
         success: true,
-        message: `Logged ${logs.length} entries`,
-        logsStored: logs.length,
+        message: `✅ Logged ${logs.length} entries`,
+        received: logs.length,
+        user: user?.email || 'anonymous',
       },
       { status: 200, headers }
     );

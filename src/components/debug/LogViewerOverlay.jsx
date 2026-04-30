@@ -23,7 +23,7 @@ export default function LogViewerOverlay({ isDev = true }) {
   const [filter, setFilter] = useState('all'); // all | info | warn | error
   const logsEndRef = useRef(null);
 
-  // console をキャプチャ
+  // console をキャプチャ + グローバルバッファに追加
   useEffect(() => {
     if (!isDev) return;
 
@@ -36,15 +36,24 @@ export default function LogViewerOverlay({ isDev = true }) {
         .map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a)))
         .join(' ');
 
-      setLogs(prev => [
-        ...prev.slice(-99),
-        {
-          id: Date.now() + Math.random(),
-          ts: new Date().toLocaleTimeString('ja-JP'),
+      const logEntry = {
+        id: Date.now() + Math.random(),
+        ts: new Date().toLocaleTimeString('ja-JP'),
+        level,
+        msg,
+      };
+
+      // UI 更新用
+      setLogs(prev => [...prev.slice(-99), logEntry]);
+
+      // グローバルバッファに追加（/api/track 送信用）
+      if (window.__logBuffer) {
+        window.__logBuffer.push({
+          ts: new Date().toISOString(),
           level,
           msg,
-        },
-      ]);
+        });
+      }
     };
 
     console.log = function (...args) {
@@ -62,9 +71,26 @@ export default function LogViewerOverlay({ isDev = true }) {
       originalError.apply(console, args);
     };
 
-    console.log('[LogViewer] 📊 Initialized');
+    originalLog('[LogViewer] 📊 Initialized with buffer sync');
+
+    // 定期送信（5秒ごと）
+    const sendInterval = setInterval(async () => {
+      if (window.__sendLogs && window.__logBuffer && window.__logBuffer.length > 0) {
+        try {
+          // 認証トークンを試みて取得
+          let token = '';
+          if (window.localStorage && window.localStorage.getItem('auth_token')) {
+            token = window.localStorage.getItem('auth_token');
+          }
+          await window.__sendLogs(token);
+        } catch (e) {
+          originalWarn('[LogViewer] Send failed:', e.message);
+        }
+      }
+    }, 5000);
 
     return () => {
+      clearInterval(sendInterval);
       console.log = originalLog;
       console.warn = originalWarn;
       console.error = originalError;
