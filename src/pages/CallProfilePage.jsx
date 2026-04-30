@@ -141,14 +141,10 @@ export default function CallProfilePage() {
   const priceOptions = getPriceOptions();
   const isOwnChannel = user?.email === channel.owner_email;
 
-  // 自分がライバー（チャンネル持ち）で、相手が視聴者（チャンネルなし）の場合のみ制限
-  // ライバー→ライバーは双方向OK、ライバー→視聴者は「逆課金注意」表示のみ
-  const isCallerALiver = !!myChannel && !isOwnChannel;
-  const targetHasChannel = !!channel?.owner_email; // channelが存在する＝相手はライバー
-  // 相手がライバーなら制限なし。相手が視聴者（チャンネルはあるが）の場合は警告のみ表示
-  // → 実際は全員発信可能、ライバーが視聴者へ発信する場合のみ「逆課金」警告を出す
-  const canCallerCall = true; // 常に発信可能
-  const showReverseCostWarning = isCallerALiver; // ライバーが発信する場合は警告表示
+  // 自分が「通話受付中（call_enabled: true）」のライバーとして活動している場合のみ逆課金警告を表示
+  // チャンネルの有無ではなく、実際に通話受付をしているかどうかで判定
+  const canCallerCall = true; // 全員発信可能
+  const showReverseCostWarning = !isOwnChannel && myChannel?.call_enabled === true;
   const desc = isEditing ? editDesc : (channel.description || "");
   const DESC_LIMIT = 200;
   const isLongDesc = desc.length > DESC_LIMIT;
