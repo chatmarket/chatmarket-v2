@@ -15,9 +15,12 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     lag: 0,
     yellCount: 0,
     msgCount: 0,
+    memoryPeak: 0, // ピークメモリ
+    memoryRecovery: 0, // 停止後の復帰率
   });
   const [logs, setLogs] = useState([]);
   const [showLogs, setShowLogs] = useState(false);
+  const memoryAtStartRef = useRef(0); // ボット開始時のメモリ
 
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
@@ -52,12 +55,35 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   };
 
   // ──────────────────────────────────────────────────────────
-  // メモリ使用量計測
+  // メモリ使用量計測（ピーク追跡 + 復帰率計算）
   // ──────────────────────────────────────────────────────────
   const measureMemory = () => {
     if (performance.memory) {
       const used = Math.round(performance.memory.usedJSHeapSize / 1048576); // MB
-      setMetrics(prev => ({ ...prev, memory: used }));
+      
+      // ピークメモリ更新
+      setMetrics(prev => {
+        const newPeak = Math.max(prev.memoryPeak, used);
+        
+        // ボット停止後の復帰率計算
+        let recovery = 0;
+        if (memoryAtStartRef.current > 0 && !running) {
+          // (現在 - スタート時) / (ピーク - スタート時) × 100
+          const current = used;
+          const peak = newPeak;
+          const baseline = memoryAtStartRef.current;
+          const increase = peak - baseline;
+          const current_increase = current - baseline;
+          recovery = increase > 0 ? Math.max(0, 100 - (current_increase / increase * 100)) : 100;
+        }
+        
+        return {
+          ...prev,
+          memory: used,
+          memoryPeak: newPeak,
+          memoryRecovery: recovery,
+        };
+      });
     }
   };
 
@@ -135,8 +161,14 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   // ボット起動
   // ──────────────────────────────────────────────────────────
   const handleStart = async () => {
+    // ★ ボット開始時のメモリベースラインを記録
+    if (performance.memory) {
+      memoryAtStartRef.current = Math.round(performance.memory.usedJSHeapSize / 1048576);
+    }
+    
     setRunning(true);
     setLogs([]);
+    setMetrics(prev => ({ ...prev, memoryPeak: 0, memoryRecovery: 0 })); // リセット
     addLog('Starting load test...', 'info');
     
     try {
@@ -269,9 +301,28 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
           >
-            {metrics.memory} MB
+            {metrics.memory} MB {metrics.memoryPeak > 0 && `(peak: ${metrics.memoryPeak} MB)`}
           </motion.span>
         </div>
+
+        {/* メモリ復帰率（停止後） */}
+        {!running && metrics.memoryRecovery > 0 && (
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
+            <span className="text-white/60 text-[10px]">Recovery</span>
+            <motion.span
+              className={`font-bold text-[10px] ${
+                metrics.memoryRecovery >= 80 ? 'text-green-400' :
+                metrics.memoryRecovery >= 60 ? 'text-yellow-400' :
+                'text-red-400'
+              }`}
+              key={metrics.memoryRecovery}
+              initial={{ scale: 1.2 }}
+              animate={{ scale: 1 }}
+            >
+              {Math.round(metrics.memoryRecovery)}%
+            </motion.span>
+          </div>
+        )}
 
         {/* Lag */}
         <div className="flex items-center justify-between gap-2">
