@@ -18,41 +18,16 @@ export function useIvsStagesCall({
   const reconnectAttemptRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const remoteVideoTimeoutRef = useRef(null);
-  const audioCtxListRef = useRef([]);
-  const audioWatchdogRef = useRef(null);
-
-  const startAudioWatchdog = useCallback(() => {
-    if (audioWatchdogRef.current) return;
-    audioWatchdogRef.current = setInterval(() => {
-      audioCtxListRef.current.forEach(ctx => {
-        if (ctx?.state === 'suspended') ctx.resume().catch(() => {});
-      });
-      const videoEl = remoteVideoRef.current;
-      if (!videoEl) return;
-      if (videoEl.muted) { videoEl.muted = false; videoEl.volume = 1.0; }
-      if (videoEl.srcObject instanceof MediaStream) {
-        videoEl.srcObject.getAudioTracks().forEach(t => { if (!t.enabled) t.enabled = true; });
-      }
-    }, 1000);
-    console.log('[AudioWatchdog] 🛡️ Started');
-  }, [remoteVideoRef]);
-
-  const stopAudioWatchdog = useCallback(() => {
-    if (audioWatchdogRef.current) { clearInterval(audioWatchdogRef.current); audioWatchdogRef.current = null; }
-    audioCtxListRef.current = [];
-  }, []);
 
   const cleanup = useCallback(() => {
     cancelledRef.current = true;
-    stopAudioWatchdog();
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     if (remoteVideoTimeoutRef.current) clearTimeout(remoteVideoTimeoutRef.current);
     if (stageRef.current) {
       stageRef.current.leave();
       stageRef.current = null;
-      console.log('[IVS Stages] 🔒 Left stage (cleanup)');
     }
-  }, [stopAudioWatchdog]);
+  }, []);
 
   const scheduleReconnectRef = useRef(null);
 
@@ -60,45 +35,26 @@ export function useIvsStagesCall({
     if (cancelledRef.current) return;
 
     try {
-      console.log(`[IVS Stages] 🚀 ${isReconnect ? `Reconnect #${reconnectAttemptRef.current}` : 'Joining'} as ${user?.email}`);
+      console.log(`[IVS Stages] 🚀 ${isReconnect ? 'Reconnect' : 'Joining'} as ${user?.email}`);
 
-      const IVSClient = window.IVSBroadcastClient;
-      if (!IVSClient) {
-        console.error('[IVS Stages] ❌ IVSBroadcastClient not found');
-        return;
-      }
-
-      const { Stage, LocalStageStream, SubscribeType, StageEvents } = IVSClient;
-
-      if (!Stage || !LocalStageStream || !StageEvents) {
-        console.error('[IVS Stages] ❌ Missing SDK classes');
-        return;
-      }
+      const { Stage, LocalStageStream, SubscribeType, StageEvents } = window.IVSBroadcastClient;
 
       const vt = localStream?.getVideoTracks()[0];
       const at = localStream?.getAudioTracks()[0];
 
       if (!vt && !at) {
-        console.error('[IVS Stages] ❌ No tracks to publish!');
+        console.error('[IVS Stages] ❌ No tracks');
         return;
       }
 
-      console.log('[IVS Stages] 📹 Tracks:', {
-        video: vt ? `${vt.label} [${vt.readyState}]` : 'none',
-        audio: at ? `${at.label} [${at.readyState}]` : 'none',
-      });
-
+      // Create streams
       const publishStreams = [];
       if (at) {
         at.enabled = true;
-        const audioStream = new LocalStageStream(at, { simulcast: false });
-        audioStream.streamType = 0; // audio
-        publishStreams.push(audioStream);
+        publishStreams.push(new LocalStageStream(at));
       }
       if (vt) {
-        const videoStream = new LocalStageStream(vt, { simulcast: false });
-        videoStream.streamType = 1; // video
-        publishStreams.push(videoStream);
+        publishStreams.push(new LocalStageStream(vt));
       }
 
       const strategy = {
@@ -110,154 +66,69 @@ export function useIvsStagesCall({
       const stage = new Stage(stagesToken, strategy);
 
       stage.on(StageEvents.STAGE_PARTICIPANT_STREAMS_ADDED, (participant, streams) => {
-        console.log('[IVS Stages] 🎬 STREAMS_ADDED:', {
-          participantId: participant.id,
-          isLocal: participant.isLocal,
-          streamCount: streams.length,
-        });
-
         if (participant.isLocal || cancelledRef.current) return;
 
         const videoEl = remoteVideoRef.current;
-        if (!videoEl) { console.error('[IVS Stages] ❌ remoteVideoRef is null'); return; }
+        if (!videoEl) return;
 
         let mediaStream = videoEl.srcObject instanceof MediaStream ? videoEl.srcObject : new MediaStream();
-
-        streams.forEach(stageStream => {
-          const track = stageStream.mediaStreamTrack;
-          if (!track) return;
-          if (track.kind === 'audio') track.enabled = true;
-          if (!mediaStream.getTracks().find(t => t.id === track.id)) {
+        streams.forEach(s => {
+          const track = s.mediaStreamTrack;
+          if (track && !mediaStream.getTracks().find(t => t.id === track.id)) {
             mediaStream.addTrack(track);
-            console.log(`[IVS Stages] ✅ Track added: ${track.kind} [${track.readyState}]`);
           }
         });
 
-        videoEl.removeAttribute('muted');
         videoEl.muted = false;
         videoEl.volume = 1.0;
         videoEl.srcObject = mediaStream;
-
-        queueMicrotask(() => {
-          try {
-            if (mediaStream.getAudioTracks().length > 0) {
-              const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-              audioCtxListRef.current.push(audioCtx);
-              audioCtx.addEventListener('statechange', () => {
-                if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-              });
-              if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-              const source = audioCtx.createMediaStreamSource(mediaStream);
-              source.connect(audioCtx.destination);
-              console.log('[IVS Stages] 🔊 AudioContext connected');
-            }
-          } catch (e) {
-            console.warn('[IVS Stages] ⚠️ AudioContext failed:', e.message);
-          }
-        });
-
-        let retryCount = 0;
-        const attemptPlay = () => {
-          videoEl.muted = false;
-          videoEl.volume = 1.0;
-          videoEl.play().then(() => {
-            videoEl.muted = false;
-            console.log('[IVS Stages] ✅ Remote video PLAYING! videoWidth:', videoEl.videoWidth);
-            if (videoEl.videoWidth === 0 && mediaStream.getVideoTracks().length > 0 && retryCount < 5) {
-              retryCount++;
-              console.warn(`[IVS Stages] ⚠️ videoWidth=0, retry ${retryCount}...`);
-              videoEl.srcObject = null;
-              setTimeout(() => { videoEl.srcObject = mediaStream; videoEl.load(); attemptPlay(); }, 500 * retryCount);
-            }
-          }).catch(err => {
-            console.warn('[IVS Stages] ⚠️ play() blocked:', err.name);
-            const retry = () => { videoEl.muted = false; videoEl.play().catch(() => {}); };
-            document.addEventListener('click', retry, { once: true });
-            document.addEventListener('touchstart', retry, { once: true });
-          });
-        };
-
-        if (videoEl.readyState >= 2) {
-          attemptPlay();
-        } else {
-          videoEl.addEventListener('loadedmetadata', attemptPlay, { once: true });
-          setTimeout(() => { if (videoEl.paused) attemptPlay(); }, 300);
-        }
-      });
-
-      stage.on(StageEvents.STAGE_PARTICIPANT_STREAMS_REMOVED, (participant, streams) => {
-        if (participant.isLocal || cancelledRef.current) return;
-        const videoEl = remoteVideoRef.current;
-        if (videoEl?.srcObject instanceof MediaStream) {
-          streams.forEach(s => { if (s.mediaStreamTrack) videoEl.srcObject.removeTrack(s.mediaStreamTrack); });
-          if (videoEl.srcObject.getTracks().length === 0) videoEl.srcObject = null;
-        }
+        videoEl.play().catch(() => {});
+        console.log('[IVS Stages] ✅ Remote video attached');
       });
 
       stage.on(StageEvents.STAGE_CONNECTION_STATE_CHANGED, (state) => {
-        console.log('[IVS Stages] 🔄 Connection state:', state);
         if ((state === 'disconnected' || state === 'failed') && !cancelledRef.current) {
           stageRef.current = null;
           scheduleReconnectRef.current?.();
         }
         if (state === 'connected') {
-          console.log('[IVS Stages] ✅ Connected!', isReconnect ? '(reconnect)' : '(initial)');
-          if (isReconnect) { reconnectAttemptRef.current = 0; onReconnected?.(); toast.success('通話に再接続しました'); }
+          if (isReconnect) { reconnectAttemptRef.current = 0; onReconnected?.(); toast.success('再接続成功'); }
         }
       });
 
-      stage.on(StageEvents.STAGE_PARTICIPANT_JOINED, (p) => console.log('[IVS Stages] 👤 Joined:', p.id, 'local:', p.isLocal));
-      stage.on(StageEvents.STAGE_PARTICIPANT_LEFT, (p) => console.log('[IVS Stages] 👋 Left:', p.id));
-
-      console.log('[IVS Stages] ⏳ stage.join()...');
+      console.log('[IVS Stages] ⏳ Joining...');
       await stage.join();
 
       if (!cancelledRef.current) {
         stageRef.current = stage;
-        reconnectAttemptRef.current = 0;
-        startAudioWatchdog();
-        console.log('[IVS Stages] ✅ join() done. Waiting for remote participant...');
-
+        console.log('[IVS Stages] ✅ Connected');
         remoteVideoTimeoutRef.current = setTimeout(() => {
-          if (cancelledRef.current) return;
-          const videoEl = remoteVideoRef.current;
-          if (!videoEl) return;
-          const hasStream = videoEl.srcObject instanceof MediaStream && videoEl.srcObject.getTracks().length > 0;
-          const isPlaying = !videoEl.paused && videoEl.readyState >= 2;
-          if (hasStream || isPlaying) { console.log('[IVS Stages] ✅ Remote video active, no timeout reconnect.'); return; }
-          console.warn('[IVS Stages] ⏱️ Remote video timeout (30s) — reconnecting...');
-          scheduleReconnectRef.current?.();
+          if (!cancelledRef.current) scheduleReconnectRef.current?.();
         }, 30000);
       } else {
         stage.leave();
       }
     } catch (e) {
-      console.error('[IVS Stages] ❌ Join error:', e.name, e.message);
+      console.error('[IVS Stages] ❌ Error:', e.message);
       if (!cancelledRef.current) scheduleReconnectRef.current?.();
     }
-  }, [localStream, user, remoteVideoRef, onReconnected, startAudioWatchdog]);
+  }, [localStream, user, remoteVideoRef, onReconnected]);
 
   const scheduleReconnect = useCallback(() => {
     if (cancelledRef.current) return;
     reconnectAttemptRef.current += 1;
-    const attempt = reconnectAttemptRef.current;
 
-    if (attempt > MAX_RECONNECT_ATTEMPTS) {
-      console.error('[IVS Stages] ❌❌ Max reconnect attempts reached.');
+    if (reconnectAttemptRef.current > MAX_RECONNECT_ATTEMPTS) {
       onReconnectFailed?.();
-      toast.error('通話の再接続に失敗しました。通話を終了してください。');
       return;
     }
 
-    const delayMs = attempt <= 6 ? Math.min(1000 * Math.pow(2, attempt - 1), 30000) : 30000;
-    console.log(`[IVS Stages] 🔄 Reconnect ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms`);
-
-    if (attempt <= 3) { onReconnecting?.(attempt); toast.warning(`再接続中... (${attempt}/${MAX_RECONNECT_ATTEMPTS})`); }
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
+    if (reconnectAttemptRef.current <= 3) onReconnecting?.(reconnectAttemptRef.current);
 
     reconnectTimerRef.current = setTimeout(() => {
-      console.log(`[IVS Stages] 🔄 Reconnecting #${attempt}...`);
       join(call?.chime_attendee_caller || call?.chime_attendee_callee, true);
-    }, delayMs);
+    }, delay);
   }, [join, onReconnecting, onReconnectFailed, call?.chime_attendee_caller, call?.chime_attendee_callee]);
 
   useEffect(() => {
@@ -267,33 +138,12 @@ export function useIvsStagesCall({
   useEffect(() => {
     if (!enabled || !call || !localStream || !user) return;
 
-    const stagesToken = user.email === call.caller_email
-      ? call.chime_attendee_caller
-      : call.chime_attendee_callee;
-
-    console.log('[IVS Stages] 🔑 Token check:', {
-      role: user.email === call.caller_email ? 'caller' : 'callee',
-      hasCallerToken: !!call.chime_attendee_caller,
-      hasCalleeToken: !!call.chime_attendee_callee,
-      tokenPrefix: stagesToken ? stagesToken.slice(0, 30) + '...' : 'NULL',
-    });
-
-    if (!stagesToken) {
-      console.error('[IVS Stages] ❌ No token');
-      return;
-    }
-
-    const vTracks = localStream.getVideoTracks();
-    const aTracks = localStream.getAudioTracks();
-    if (vTracks.length === 0 && aTracks.length === 0) {
-      console.error('[IVS Stages] ❌ No local tracks!');
-      return;
-    }
+    const token = user.email === call.caller_email ? call.chime_attendee_caller : call.chime_attendee_callee;
+    if (!token) return;
 
     cancelledRef.current = false;
     reconnectAttemptRef.current = 0;
-
-    join(stagesToken, false);
+    join(token, false);
 
     return cleanup;
   }, [enabled, call?.id, call?.chime_attendee_caller, call?.chime_attendee_callee, localStream, user?.email, join, cleanup]);
