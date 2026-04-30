@@ -451,47 +451,48 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
     // Stages API は IVSBroadcastClient 自体または IVSBroadcastClient.Stage に存在する
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const rawClient = window.IVSBroadcastClient;
-    console.log('[IVS Stages] 🔍 window.IVSBroadcastClient:', typeof rawClient);
-    console.log('[IVS Stages] 🔍 keys:', rawClient ? Object.keys(rawClient).join(', ') : 'N/A');
-
     if (!rawClient) {
-      console.error('[IVS Stages] ❌ SDK not loaded. Check index.html script tag for amazon-ivs-web-broadcast.js');
+      console.error('[IVS Stages] ❌ SDK not loaded.');
       return;
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // IVS SDK v1.34.0: Stage/StageEvents は IVSBroadcastClient の直下に存在するが
-    // ビルドによっては window 直下に公開される場合もある。
-    // 優先順位: rawClient > rawClient 内部 > window
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    let IVSClient = null;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // IVS SDK v1.34.0: Stage/StageEvents/LocalStageStream/SubscribeType
+    // の場所を確実に特定する。
+    // ログで確認: LocalStageStream は rawClient に存在するが Stage は見当たらない。
+    // → SDK は Stage クラスを "function" 型で公開している。
+    //   typeof チェックで確実に探す。
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
-    // 候補1: IVSBroadcastClient 自体に Stage がある
-    if (rawClient.Stage && rawClient.StageEvents) {
-      IVSClient = rawClient;
-      console.log('[IVS Stages] ✅ Stage API found on IVSBroadcastClient directly');
-    }
-    // 候補2: window に直接公開されている
-    else if (window.Stage && window.StageEvents) {
-      IVSClient = window;
-      console.log('[IVS Stages] ✅ Stage API found on window directly');
-    }
-    // 候補3: IVSBroadcastClient のネストされたプロパティを全探索
-    else {
+    // Stage クラスを探す関数（typeof === 'function' で判定）
+    const findStageClass = () => {
+      // 候補1: rawClient 直下
+      if (typeof rawClient.Stage === 'function') return rawClient;
+      // 候補2: window 直下
+      if (typeof window.Stage === 'function') return window;
+      // 候補3: rawClient の全キーを走査してネストを探す
       for (const key of Object.keys(rawClient)) {
         const val = rawClient[key];
-        if (val && typeof val === 'object' && val.Stage && val.StageEvents) {
-          IVSClient = val;
-          console.log('[IVS Stages] ✅ Stage API found nested under IVSBroadcastClient.' + key);
-          break;
+        if (val && typeof val === 'object' && typeof val.Stage === 'function') {
+          console.log('[IVS Stages] ✅ Stage found nested at IVSBroadcastClient.' + key);
+          return val;
         }
       }
-    }
+      return null;
+    };
+
+    const IVSClient = findStageClass();
+
+    console.log('[IVS Stages] 🔍 Stage location:', IVSClient
+      ? (IVSClient === rawClient ? 'IVSBroadcastClient' : IVSClient === window ? 'window' : 'nested')
+      : 'NOT FOUND'
+    );
+    console.log('[IVS Stages] 🔍 Available top-level keys:', Object.keys(rawClient).filter(k =>
+      ['Stage','StageEvents','LocalStageStream','SubscribeType','StageConnectionState'].includes(k)
+    ).join(', ') || '(none of the expected keys)');
 
     if (!IVSClient) {
-      console.error('[IVS Stages] ❌ Stage/StageEvents not found anywhere!');
-      console.error('[IVS Stages] IVSBroadcastClient keys:', Object.keys(rawClient).join(', '));
-      console.error('[IVS Stages] window Stage:', typeof window.Stage, '| window StageEvents:', typeof window.StageEvents);
+      console.error('[IVS Stages] ❌ Stage class not found in SDK. All keys:', Object.keys(rawClient).join(', '));
       return;
     }
 
