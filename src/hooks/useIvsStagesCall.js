@@ -1,86 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
-/**
- * IVS Stages を使った1対1ビデオ通話フック
- *
- * - window.IVSBroadcastClient は index.html で読み込み済み
- * - トークンは VideoCall.chime_attendee_caller / chime_attendee_callee に格納
- * - リモート映像を remoteVideoRef.current.srcObject にバインドする
- * - 切断時は最大10回・指数バックオフで自動再接続する
- *
- * Stage クラスの探索:
- *   IVS SDK v1.34.0 は IVSBroadcastClient に Stage を直接または
- *   ネストして公開する。typeof === 'function' で確実に特定する。
- */
-
 const MAX_RECONNECT_ATTEMPTS = 10;
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// IVS SDK から Stage クラスを確実に見つける
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ★ LOCATION DETECTION FOR IMMEDIATE REFLECTION
-// テスト時にログに出た location を自動でメモリに記録し、次回呼び出しで優先参照
-let DETECTED_IVS_LOCATION = null;
-
-function resolveIVSClient() {
-  const rawClient = window.IVSBroadcastClient;
-  if (!rawClient) return null;
-
-  // 前回検出した location があれば優先（テスト反映時の即時活用用）
-  if (DETECTED_IVS_LOCATION) {
-    console.log('[IVS Stages] 🎯 Using detected location:', DETECTED_IVS_LOCATION);
-    return DETECTED_IVS_LOCATION === 'IVSBroadcastClient'
-      ? rawClient
-      : DETECTED_IVS_LOCATION === 'window'
-        ? window
-        : rawClient[DETECTED_IVS_LOCATION] || null;
-  }
-
-  // 候補1: IVSBroadcastClient 直下
-  if (typeof rawClient.Stage === 'function') {
-    DETECTED_IVS_LOCATION = 'IVSBroadcastClient';
-    console.log('╔═══════════════════════════════════════════════════╗');
-    console.log('║ 📍 STAGE LOCATION DETECTED                        ║');
-    console.log('╠═══════════════════════════════════════════════════╣');
-    console.log('║ PATH: window.IVSBroadcastClient.Stage             ║');
-    console.log('║ ACTION: Fix → Set DETECTED_IVS_LOCATION =         ║');
-    console.log('║         "IVSBroadcastClient" in resolveIVSClient  ║');
-    console.log('╚═══════════════════════════════════════════════════╝');
-    return rawClient;
-  }
-  // 候補2: window 直下
-  if (typeof window.Stage === 'function') {
-    DETECTED_IVS_LOCATION = 'window';
-    console.log('╔═══════════════════════════════════════════════════╗');
-    console.log('║ 📍 STAGE LOCATION DETECTED                        ║');
-    console.log('╠═══════════════════════════════════════════════════╣');
-    console.log('║ PATH: window.Stage                                ║');
-    console.log('║ ACTION: Fix → Set DETECTED_IVS_LOCATION =         ║');
-    console.log('║         "window" in resolveIVSClient              ║');
-    console.log('╚═══════════════════════════════════════════════════╝');
-    return window;
-  }
-  // 候補3: IVSBroadcastClient のネストを全探索
-  for (const key of Object.keys(rawClient)) {
-    const val = rawClient[key];
-    if (val && typeof val === 'object' && typeof val.Stage === 'function') {
-      DETECTED_IVS_LOCATION = key;
-      console.log('╔═══════════════════════════════════════════════════╗');
-      console.log('║ 📍 STAGE LOCATION DETECTED                        ║');
-      console.log('╠═══════════════════════════════════════════════════╣');
-      console.log('║ PATH: window.IVSBroadcastClient.' + key.padEnd(28) + '║');
-      console.log('║ ACTION: Fix → Set DETECTED_IVS_LOCATION =         ║');
-      console.log('║         "' + key + '" in resolveIVSClient' + ' '.repeat(Math.max(0, 15 - key.length)) + '║');
-      console.log('╚═══════════════════════════════════════════════════╝');
-      return val;
-    }
-  }
-
-  // 見つからない場合は詳細ログを出力
-  console.error('[IVS Stages] ❌ Stage not found. All IVSBroadcastClient keys:', Object.keys(rawClient).join(', '));
-  return null;
-}
 
 export function useIvsStagesCall({
   call,
@@ -100,9 +21,6 @@ export function useIvsStagesCall({
   const audioCtxListRef = useRef([]);
   const audioWatchdogRef = useRef(null);
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // AudioWatchdog: suspended な AudioContext を常時 resume
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const startAudioWatchdog = useCallback(() => {
     if (audioWatchdogRef.current) return;
     audioWatchdogRef.current = setInterval(() => {
@@ -136,29 +54,24 @@ export function useIvsStagesCall({
     }
   }, [stopAudioWatchdog]);
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // join() — Stage に参加してリモート映像をバインドする
-  // ※ scheduleReconnect との循環を避けるため ref で保持
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const scheduleReconnectRef = useRef(null); // 循環依存を ref で解決
+  const scheduleReconnectRef = useRef(null);
 
-  const join = useCallback(async (stagesToken, IVSClient, isReconnect = false) => {
+  const join = useCallback(async (stagesToken, isReconnect = false) => {
     if (cancelledRef.current) return;
 
     try {
       console.log(`[IVS Stages] 🚀 ${isReconnect ? `Reconnect #${reconnectAttemptRef.current}` : 'Joining'} as ${user?.email}`);
 
+      const IVSClient = window.IVSBroadcastClient;
+      if (!IVSClient) {
+        console.error('[IVS Stages] ❌ IVSBroadcastClient not found');
+        return;
+      }
+
       const { Stage, LocalStageStream, SubscribeType, StageEvents } = IVSClient;
 
-      console.log('[IVS Stages] 🔍 API check:', {
-        Stage: typeof Stage,
-        LocalStageStream: typeof LocalStageStream,
-        SubscribeType: typeof SubscribeType,
-        StageEvents: typeof StageEvents,
-      });
-
       if (!Stage || !LocalStageStream || !StageEvents) {
-        console.error('[IVS Stages] ❌ Missing SDK classes! Keys:', Object.keys(IVSClient).join(', '));
+        console.error('[IVS Stages] ❌ Missing SDK classes');
         return;
       }
 
@@ -175,22 +88,13 @@ export function useIvsStagesCall({
         audio: at ? `${at.label} [${at.readyState}]` : 'none',
       });
 
-      // ★ CRITICAL FIX: streamType を明示的に数値で付与してから SDK に渡す
-      // SDK内部の sort() は streamType (0=audio, 1=video) が数値であることを前提とする
-      // LocalStageStream インスタンスを一度だけ生成し同じ参照を返し続ける（毎回 new NG）
-      const StreamType = IVSClient.StreamType || { AUDIO: 0, VIDEO: 1 };
       const publishStreams = [];
       if (at) {
         at.enabled = true;
-        const audioStream = new LocalStageStream(at, { simulcast: false });
-        // streamType が未定義の場合は強制設定
-        if (audioStream.streamType === undefined) audioStream.streamType = StreamType.AUDIO ?? 0;
-        publishStreams.push(audioStream);
+        publishStreams.push(new LocalStageStream(at, { simulcast: false }));
       }
       if (vt) {
-        const videoStream = new LocalStageStream(vt, { simulcast: false });
-        if (videoStream.streamType === undefined) videoStream.streamType = StreamType.VIDEO ?? 1;
-        publishStreams.push(videoStream);
+        publishStreams.push(new LocalStageStream(vt, { simulcast: false }));
       }
 
       const strategy = {
@@ -201,13 +105,11 @@ export function useIvsStagesCall({
 
       const stage = new Stage(stagesToken, strategy);
 
-      // リモートストリーム受信 → video要素へバインド
       stage.on(StageEvents.STAGE_PARTICIPANT_STREAMS_ADDED, (participant, streams) => {
         console.log('[IVS Stages] 🎬 STREAMS_ADDED:', {
           participantId: participant.id,
           isLocal: participant.isLocal,
           streamCount: streams.length,
-          streamTypes: streams.map(s => s.mediaStreamTrack?.kind),
         });
 
         if (participant.isLocal || cancelledRef.current) return;
@@ -227,14 +129,11 @@ export function useIvsStagesCall({
           }
         });
 
-        console.log(`[IVS Stages] 📊 Tracks in stream: audio=${mediaStream.getAudioTracks().length} video=${mediaStream.getVideoTracks().length}`);
-
         videoEl.removeAttribute('muted');
         videoEl.muted = false;
         videoEl.volume = 1.0;
         videoEl.srcObject = mediaStream;
 
-        // AudioContext でリモート音声を強制開通
         queueMicrotask(() => {
           try {
             if (mediaStream.getAudioTracks().length > 0) {
@@ -253,7 +152,6 @@ export function useIvsStagesCall({
           }
         });
 
-        // play() — リトライ付き
         let retryCount = 0;
         const attemptPlay = () => {
           videoEl.muted = false;
@@ -261,7 +159,6 @@ export function useIvsStagesCall({
           videoEl.play().then(() => {
             videoEl.muted = false;
             console.log('[IVS Stages] ✅ Remote video PLAYING! videoWidth:', videoEl.videoWidth);
-            // videoWidth=0 の場合は srcObject を再セットしてリトライ
             if (videoEl.videoWidth === 0 && mediaStream.getVideoTracks().length > 0 && retryCount < 5) {
               retryCount++;
               console.warn(`[IVS Stages] ⚠️ videoWidth=0, retry ${retryCount}...`);
@@ -297,7 +194,7 @@ export function useIvsStagesCall({
         console.log('[IVS Stages] 🔄 Connection state:', state);
         if ((state === 'disconnected' || state === 'failed') && !cancelledRef.current) {
           stageRef.current = null;
-          scheduleReconnectRef.current?.(stagesToken, IVSClient);
+          scheduleReconnectRef.current?.();
         }
         if (state === 'connected') {
           console.log('[IVS Stages] ✅ Connected!', isReconnect ? '(reconnect)' : '(initial)');
@@ -317,7 +214,6 @@ export function useIvsStagesCall({
         startAudioWatchdog();
         console.log('[IVS Stages] ✅ join() done. Waiting for remote participant...');
 
-        // 30秒以内にリモート映像が来なければ再接続
         remoteVideoTimeoutRef.current = setTimeout(() => {
           if (cancelledRef.current) return;
           const videoEl = remoteVideoRef.current;
@@ -326,19 +222,18 @@ export function useIvsStagesCall({
           const isPlaying = !videoEl.paused && videoEl.readyState >= 2;
           if (hasStream || isPlaying) { console.log('[IVS Stages] ✅ Remote video active, no timeout reconnect.'); return; }
           console.warn('[IVS Stages] ⏱️ Remote video timeout (30s) — reconnecting...');
-          scheduleReconnectRef.current?.(stagesToken, IVSClient);
+          scheduleReconnectRef.current?.();
         }, 30000);
       } else {
         stage.leave();
       }
     } catch (e) {
       console.error('[IVS Stages] ❌ Join error:', e.name, e.message);
-      if (!cancelledRef.current) scheduleReconnectRef.current?.(stagesToken, IVSClient);
+      if (!cancelledRef.current) scheduleReconnectRef.current?.();
     }
   }, [localStream, user, remoteVideoRef, onReconnected, startAudioWatchdog]);
 
-  // scheduleReconnect を ref に保持（join との循環依存を断ち切る）
-  const scheduleReconnect = useCallback((stagesToken, IVSClient) => {
+  const scheduleReconnect = useCallback(() => {
     if (cancelledRef.current) return;
     reconnectAttemptRef.current += 1;
     const attempt = reconnectAttemptRef.current;
@@ -357,26 +252,16 @@ export function useIvsStagesCall({
 
     reconnectTimerRef.current = setTimeout(() => {
       console.log(`[IVS Stages] 🔄 Reconnecting #${attempt}...`);
-      join(stagesToken, IVSClient, true);
+      join(call?.chime_attendee_caller || call?.chime_attendee_callee, true);
     }, delayMs);
-  }, [join, onReconnecting, onReconnectFailed]);
+  }, [join, onReconnecting, onReconnectFailed, call?.chime_attendee_caller, call?.chime_attendee_callee]);
 
-  // ref を常に最新の scheduleReconnect に向ける（循環依存なし）
   useEffect(() => {
     scheduleReconnectRef.current = scheduleReconnect;
   }, [scheduleReconnect]);
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // メインエフェクト: enabled になったら IVSClient を解決して join
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   useEffect(() => {
     if (!enabled || !call || !localStream || !user) return;
-
-    const IVSClient = resolveIVSClient();
-    if (!IVSClient) {
-      console.error('[IVS Stages] ❌ Cannot proceed — Stage class not found in SDK.');
-      return;
-    }
 
     const stagesToken = user.email === call.caller_email
       ? call.chime_attendee_caller
@@ -390,7 +275,7 @@ export function useIvsStagesCall({
     });
 
     if (!stagesToken) {
-      console.error('[IVS Stages] ❌ No token. caller:', !!call.chime_attendee_caller, '| callee:', !!call.chime_attendee_callee);
+      console.error('[IVS Stages] ❌ No token');
       return;
     }
 
@@ -404,8 +289,8 @@ export function useIvsStagesCall({
     cancelledRef.current = false;
     reconnectAttemptRef.current = 0;
 
-    join(stagesToken, IVSClient, false);
+    join(stagesToken, false);
 
     return cleanup;
-  }, [enabled, call?.id, call?.chime_attendee_caller, call?.chime_attendee_callee, localStream, user?.email]);
+  }, [enabled, call?.id, call?.chime_attendee_caller, call?.chime_attendee_callee, localStream, user?.email, join, cleanup]);
 }
