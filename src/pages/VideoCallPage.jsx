@@ -1109,8 +1109,10 @@ export default function VideoCallPage() {
 
   // ★ エール受信購読 — call.status === 'active' になった直後に確実に起動
   // user と call が揃った瞬間から購読を開始し、映像接続と同期する
+  // ★ CRITICAL: call.status === 'active' でのみ購読を開始（DB更新と画面同期）
   useEffect(() => {
-    if (!user || !call) return;
+    if (!user || !call || call.status !== 'active') return;
+    
     const playCoinSound = () => {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1139,7 +1141,7 @@ export default function VideoCallPage() {
       });
     });
     return ()=>unsub();
-  }, [user?.email]);
+  }, [user?.email, call?.status]);
 
   const handleChatSend = async () => {
     if (!chatInput.trim() || !call || !user || !threadId || chatSending) return;
@@ -1183,7 +1185,7 @@ export default function VideoCallPage() {
       <div className="relative bg-black w-full" style={{ flexShrink: 0 }}>
       <div ref={videoContainerRef} className="w-full" style={{ paddingTop: '56.25%', position: 'relative', backgroundColor: '#000', overflow: 'hidden' }}>
 
-        {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
+        {/* ── 常時マウント: リモート映像（active時のみ表示）— 16:9比率死守 ── */}
         <video
           ref={remoteVideoRef}
           autoPlay
@@ -1202,6 +1204,7 @@ export default function VideoCallPage() {
             objectPosition: 'center center',
             backgroundColor: '#000',
             verticalAlign: 'middle',
+            overflow: 'hidden',
             display: call?.status === 'active' ? 'block' : 'none',
             zIndex: 1,
           }}

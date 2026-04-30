@@ -19,32 +19,48 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // IVS SDK から Stage クラスを確実に見つける
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ★ LOCATION DETECTION FOR IMMEDIATE REFLECTION
+// テスト時にログに出た location を自動でメモリに記録し、次回呼び出しで優先参照
+let DETECTED_IVS_LOCATION = null;
+
 function resolveIVSClient() {
   const rawClient = window.IVSBroadcastClient;
   if (!rawClient) return null;
 
+  // 前回検出した location があれば優先（テスト反映時の即時活用用）
+  if (DETECTED_IVS_LOCATION) {
+    console.log('[IVS Stages] 🎯 Using detected location:', DETECTED_IVS_LOCATION);
+    return DETECTED_IVS_LOCATION === 'IVSBroadcastClient'
+      ? rawClient
+      : DETECTED_IVS_LOCATION === 'window'
+        ? window
+        : rawClient[DETECTED_IVS_LOCATION] || null;
+  }
+
   // 候補1: IVSBroadcastClient 直下
   if (typeof rawClient.Stage === 'function') {
-    console.log('[IVS Stages] ✅ Stage @ IVSBroadcastClient');
+    DETECTED_IVS_LOCATION = 'IVSBroadcastClient';
+    console.log('[IVS Stages] 📍 Stage location DETECTED @ IVSBroadcastClient');
     return rawClient;
   }
   // 候補2: window 直下
   if (typeof window.Stage === 'function') {
-    console.log('[IVS Stages] ✅ Stage @ window');
+    DETECTED_IVS_LOCATION = 'window';
+    console.log('[IVS Stages] 📍 Stage location DETECTED @ window');
     return window;
   }
   // 候補3: IVSBroadcastClient のネストを全探索
   for (const key of Object.keys(rawClient)) {
     const val = rawClient[key];
     if (val && typeof val === 'object' && typeof val.Stage === 'function') {
-      console.log('[IVS Stages] ✅ Stage @ IVSBroadcastClient.' + key);
+      DETECTED_IVS_LOCATION = key;
+      console.log('[IVS Stages] 📍 Stage location DETECTED @ IVSBroadcastClient.' + key);
       return val;
     }
   }
 
   // 見つからない場合は詳細ログを出力
   console.error('[IVS Stages] ❌ Stage not found. All IVSBroadcastClient keys:', Object.keys(rawClient).join(', '));
-  console.error('[IVS Stages] ❌ window.Stage type:', typeof window.Stage);
   return null;
 }
 
