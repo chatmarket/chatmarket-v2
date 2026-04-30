@@ -1359,8 +1359,8 @@ export default function VideoCallPage() {
               </div>
               <span className="text-[9px] text-white/40">相手の声</span>
             </div>
-            {/* コイン残高（視聴者のみ） */}
-            {isCaller && coinBalance !== null && (
+            {/* コイン残高（両者に表示） */}
+            {coinBalance !== null && (
               <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/80 border border-yellow-500/60 rounded-full px-3 py-1.5 backdrop-blur">
                 <Coins className="w-3.5 h-3.5 text-yellow-400" />
                 <span className="text-yellow-300 font-black text-xs">{coinBalance.toLocaleString()} コイン</span>
@@ -1492,8 +1492,8 @@ export default function VideoCallPage() {
                 {camOn ? "CAM ON" : "CAM OFF"}
               </span>
             </div>
-            {/* コイン残高（caller のみ・常時表示） */}
-            {isCaller && coinBalance !== null && (
+            {/* コイン残高（両者に表示） */}
+            {coinBalance !== null && (
               <button
                 onClick={() => navigate("/coin-charge")}
                 className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border transition-all ${
@@ -1504,7 +1504,7 @@ export default function VideoCallPage() {
               >
                 <Coins className="w-2.5 h-2.5" />
                 {coinBalance.toLocaleString()} コイン
-                {coinBalance < 150 && <span className="text-red-300 ml-0.5">残高不足</span>}
+                {isCaller && coinBalance < 150 && <span className="text-red-300 ml-0.5">残高不足</span>}
               </button>
             )}
           </div>
