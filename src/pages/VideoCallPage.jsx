@@ -83,7 +83,8 @@ function FloatingItem({ item, onDone, type = "emoji" }) {
 
   return (
     <motion.div
-      className="pointer-events-none fixed z-50 select-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      className="pointer-events-none select-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      style={{ position: 'fixed', zIndex: 9999 }}
       initial={{ opacity: 1, y: 0, scale: 0.8 }}
       animate={{ opacity: 0, y: -150, scale: 1.2 }}
       transition={{ duration: 2, ease: "easeOut" }}
@@ -898,6 +899,7 @@ export default function VideoCallPage() {
 
     // ★ UI を即座に更新（楽観的更新）→ 画面フリーズ解消
     const amount = selectedYell;
+    const senderName = user.full_name || user.email;
     setCoinBalance(prev => Math.max(0, (prev || 0) - amount));
     setShowYellModal(false);
     setSelectedYell(null);
@@ -927,6 +929,7 @@ export default function VideoCallPage() {
           base44.entities.VideoCall.update(call.id, {
             yell_coin_amount: (call.yell_coin_amount || 0) + amount,
           }),
+          // ★ YellCoinTransactionを作成（ライバー側がsubscribeで受信する）
           base44.entities.YellCoinTransaction.create({
             user_email: user.email,
             type: "send",
@@ -938,12 +941,26 @@ export default function VideoCallPage() {
             channel_id: call.callee_channel_id || "",
             channel_owner_email: call.callee_email,
           }),
+          // ★ チャット欄にシステムメッセージを投稿（両者に届く）
+          base44.entities.DirectChat.create({
+            from_email: "system",
+            from_name: "💰 エール通知",
+            to_channel_owner_email: call.callee_email,
+            to_channel_id: call.callee_channel_id || "",
+            to_channel_name: call.callee_name || "",
+            content: `🎉 ${senderName} さんから ${amount.toLocaleString()} コインのエールが届きました！`,
+            yell_coin: amount,
+            thread_id: threadId,
+          }),
         ]);
+
+        console.log(`[Yell] ✅ Sent ${amount} coins from ${user.email} to ${call.callee_email}`);
 
         if (calleeWallets[0]) {
           await base44.entities.YellCoinWallet.update(calleeWallets[0].id, {
             balance: (calleeWallets[0].balance || 0) + creatorCoins,
           });
+          console.log(`[Yell] ✅ Callee wallet updated: +${creatorCoins} coins`);
         }
       } catch (e) {
         console.error('[Yell] Payment error:', e);
@@ -1096,6 +1113,24 @@ export default function VideoCallPage() {
   }, [threadId]);
 
   useEffect(() => { chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
+
+  // ★ ライバー側: エール受信をリアルタイム検知してトースト+アニメ表示
+  useEffect(() => {
+    if (!call?.id || !user) return;
+    const isCallee = user.email === call.callee_email;
+    if (!isCallee) return; // ライバー側のみ
+
+    const unsub = base44.entities.YellCoinTransaction.subscribe((event) => {
+      if (event.type === "create" && event.data?.channel_owner_email === user.email && event.data?.service_id === call.id) {
+        const amount = event.data.amount || 0;
+        const senderEmail = event.data.user_email || "";
+        console.log(`[Yell] 🎉 Received ${amount} coins from ${senderEmail}`);
+        addFloating("💰", "coin");
+        toast.success(`💰 ${amount.toLocaleString()} コインのエールを受け取りました！`, { duration: 5000 });
+      }
+    });
+    return () => unsub();
+  }, [call?.id, user?.email, call?.callee_email]);
 
   const handleChatSend = async () => {
     if (!chatInput.trim() || !call || !user || !threadId || chatSending) return;
@@ -1606,6 +1641,17 @@ export default function VideoCallPage() {
           )}
           {chatMessages.map(msg => {
             const isMe = msg.from_email === user?.email;
+            const isYell = msg.from_email === "system" && msg.yell_coin > 0;
+            if (isYell) {
+              return (
+                <div key={msg.id} className="flex justify-center">
+                  <div className="rounded-2xl px-4 py-2 text-xs font-bold text-center"
+                    style={{ background: 'linear-gradient(135deg, rgba(234,179,8,0.3), rgba(234,179,8,0.1))', border: '1px solid rgba(234,179,8,0.5)', boxShadow: '0 0 12px rgba(234,179,8,0.3)', color: '#fde047' }}>
+                    {msg.content}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm ${isMe ? "text-black font-semibold" : "bg-white/10 text-white"}`}
