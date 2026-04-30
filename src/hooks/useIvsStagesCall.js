@@ -91,10 +91,14 @@ export function useIvsStagesCall({
       const publishStreams = [];
       if (at) {
         at.enabled = true;
-        publishStreams.push(new LocalStageStream(at, { simulcast: false }));
+        const audioStream = new LocalStageStream(at, { simulcast: false });
+        audioStream.streamType = 0; // audio
+        publishStreams.push(audioStream);
       }
       if (vt) {
-        publishStreams.push(new LocalStageStream(vt, { simulcast: false }));
+        const videoStream = new LocalStageStream(vt, { simulcast: false });
+        videoStream.streamType = 1; // video
+        publishStreams.push(videoStream);
       }
 
       const strategy = {
