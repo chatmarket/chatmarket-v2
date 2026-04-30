@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PhoneCall, MessageCircle } from "lucide-react";
+import { PhoneCall, MessageCircle, User } from "lucide-react";
 import ScrollRow from "./ScrollRow";
 import { toast } from "sonner";
 
@@ -151,10 +151,9 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
             <Button
               size="sm"
               className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1"
-              onClick={handleInstantCall}
-              disabled={calling}
+              onClick={() => navigate(`/call-profile/${cardChannelId}`)}
             >
-              <PhoneCall className="w-3 h-3" /> {calling ? "接続中..." : "今すぐ通話"}
+              <User className="w-3 h-3" /> プロフィールを見る
             </Button>
             <Button size="sm" variant="outline" className="w-full h-7 text-[11px] gap-1" onClick={onChat}>
               <MessageCircle className="w-3 h-3" /> チャットで声をかける
