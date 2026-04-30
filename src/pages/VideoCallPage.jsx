@@ -1665,8 +1665,8 @@ export default function VideoCallPage() {
           <div ref={chatBottomRef} />
         </div>
 
-        {/* チャット入力欄 */}
-        <div className="px-3 py-3 border-t border-white/10 flex gap-2 items-center shrink-0">
+        {/* チャット入力欄 — safe-area-inset-bottom で最下部見切れ対応 */}
+        <div className="px-3 border-t border-white/10 flex gap-2 items-center shrink-0" style={{ paddingTop: '12px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <input
             type="text"
             value={chatInput}
