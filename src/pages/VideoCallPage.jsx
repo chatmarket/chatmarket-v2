@@ -1162,7 +1162,7 @@ export default function VideoCallPage() {
   const isCaller = user && call && user.email === call.caller_email;
 
   return (
-    <div className="bg-black flex flex-col" style={{ height: '100dvh', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="bg-black flex flex-col" style={{ height: '100dvh', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', minHeight: 0 }}>
 
       {/* ABR Manager */}
       <AdaptiveBitrateManager
@@ -1177,8 +1177,8 @@ export default function VideoCallPage() {
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
       ))}
 
-      {/* VIDEO AREA */}
-      <div ref={videoContainerRef} className="relative bg-black" style={{ height: '60dvh', minHeight: '280px', flexShrink: 0, paddingTop: 'env(safe-area-inset-top)' }}>
+      {/* VIDEO AREA — 16:9固定、レターボックス背景黒 */}
+      <div ref={videoContainerRef} className="relative bg-black w-full" style={{ aspectRatio: '16/9', maxHeight: '56dvh', flexShrink: 0 }}>
 
         {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
         <video
@@ -1195,7 +1195,7 @@ export default function VideoCallPage() {
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
             backgroundColor: '#000',
             display: call?.status === 'active' ? 'block' : 'none',
             zIndex: 1,
@@ -1211,22 +1211,22 @@ export default function VideoCallPage() {
           webkit-playsinline="true"
           onLoadedMetadata={e => e.target.play().catch(() => {})}
           style={call?.status === 'active' ? {
-            // active: 右下ワイプ
+            // active: 右下ワイプ（contain でアスペクト比保持）
             position: 'absolute',
-            bottom: 12, right: 12,
-            width: 112, height: 144,
+            bottom: 8, right: 8,
+            width: 88, height: 88,
             objectFit: 'cover',
-            borderRadius: 12,
+            borderRadius: 10,
             border: '2px solid rgba(255,255,255,0.4)',
-            boxShadow: '0 0 16px rgba(0,255,157,0.4)',
+            boxShadow: '0 0 12px rgba(0,255,157,0.4)',
             backgroundColor: '#000',
             zIndex: 10,
             filter: currentFilter?.style || '',
           } : {
-            // pending / accepted: フルスクリーン
+            // pending / accepted: 16:9コンテナ内でcontain表示
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
             backgroundColor: '#000',
             zIndex: 1,
             filter: call?.status === 'pending' && !isCaller ? 'brightness(0.5)' : '',
