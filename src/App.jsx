@@ -78,6 +78,7 @@ import ObsGuide from '@/pages/ObsGuide';
 import CoinCharge from '@/pages/CoinCharge';
 import AffiliateAnalytics from '@/pages/AffiliateAnalytics';
 import CallProfilePage from '@/pages/CallProfilePage';
+import ChannelProfileEdit from '@/pages/ChannelProfileEdit';
 
 export default function App() {
   return (
@@ -156,6 +157,7 @@ export default function App() {
             <Route path="/coin-charge" element={<CoinCharge />} />
             <Route path="/admin/affiliate" element={<AffiliateAnalytics />} />
             <Route path="/call-profile/:channelId" element={<CallProfilePage />} />
+            <Route path="/channel-profile-edit" element={<ChannelProfileEdit />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>

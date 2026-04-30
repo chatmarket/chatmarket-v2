@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, ShoppingBag, MessageSquare, Users, Zap, Globe, TrendingUp
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, ShoppingBag, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -191,6 +191,16 @@ export default function AppLayout() {
             <Link to="/my-channel" onClick={onCloseFn}>
               <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground")}>
                 <User className="w-4 h-4 shrink-0" />マイチャンネル
+              </div>
+            </Link>
+            <Link to="/channel-profile-edit" onClick={onCloseFn}>
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                isActive("/channel-profile-edit")
+                  ? "bg-primary/20 text-primary"
+                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              )}>
+                <Pencil className="w-4 h-4 shrink-0" />チャンネルLP編集
               </div>
             </Link>
             <Link to="/settings" onClick={onCloseFn}>
