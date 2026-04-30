@@ -12,6 +12,14 @@ const STATUS_OPTIONS = [
   { value: "closed",    label: "× 対応不可",  color: "text-red-400",    bg: "bg-red-500/20 border-red-500/40" },
 ];
 
+const SPECIAL_LABEL_OPTIONS = [
+  { value: null,       emoji: "—",  label: "なし" },
+  { value: "hot",      emoji: "🔥", label: "人気枠",    color: "#ff6b35" },
+  { value: "recommend",emoji: "⭐", label: "おすすめ",  color: "#ffd700" },
+  { value: "limited",  emoji: "⚡", label: "残りわずか", color: "#a78bfa" },
+  { value: "new",      emoji: "✨", label: "新枠",      color: "#38bdf8" },
+];
+
 const STATUS_DISPLAY = {
   available: { label: "○", text: "text-green-400", bg: "bg-green-500/20 border-green-500/40" },
   busy:      { label: "△", text: "text-yellow-400", bg: "bg-yellow-500/20 border-yellow-500/40" },
@@ -31,6 +39,7 @@ export default function CallScheduleEditor({ schedule = [], onChange }) {
   const [selected, setSelected] = useState(null);
   const [editLabel, setEditLabel] = useState("");
   const [editStatus, setEditStatus] = useState("available");
+  const [editSpecialLabel, setEditSpecialLabel] = useState(null);
 
   const scheduleMap = {};
   schedule.forEach(s => { if (s.date) scheduleMap[s.date] = s; });
@@ -54,12 +63,15 @@ export default function CallScheduleEditor({ schedule = [], onChange }) {
     const existing = scheduleMap[key];
     setEditLabel(existing?.label || "");
     setEditStatus(existing?.status || "available");
+    setEditSpecialLabel(existing?.special_label || null);
   };
 
   const handleSaveEntry = () => {
     if (!selected) return;
     const updated = schedule.filter(s => s.date !== selected);
-    updated.push({ date: selected, label: editLabel, status: editStatus });
+    const entry = { date: selected, label: editLabel, status: editStatus };
+    if (editSpecialLabel) entry.special_label = editSpecialLabel;
+    updated.push(entry);
     updated.sort((a, b) => a.date.localeCompare(b.date));
     onChange(updated);
     setSelected(null);
@@ -138,6 +150,22 @@ export default function CallScheduleEditor({ schedule = [], onChange }) {
                 {opt.label}
               </button>
             ))}
+          </div>
+          {/* 特別ラベル */}
+          <div>
+            <p className="text-[10px] text-muted-foreground font-bold mb-1.5">特別ラベル（任意）</p>
+            <div className="grid grid-cols-5 gap-1.5">
+              {SPECIAL_LABEL_OPTIONS.map(opt => (
+                <button
+                  key={String(opt.value)}
+                  onClick={() => setEditSpecialLabel(opt.value)}
+                  className={`flex flex-col items-center gap-0.5 py-2 rounded-lg border text-xs transition-all ${editSpecialLabel === opt.value ? "border-white/50 bg-white/10" : "border-border bg-secondary"}`}
+                >
+                  <span className="text-base leading-none">{opt.emoji}</span>
+                  <span className="text-[9px] text-muted-foreground leading-none">{opt.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <input
             type="text"

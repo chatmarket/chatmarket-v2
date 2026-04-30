@@ -133,8 +133,12 @@ export default function CallProfilePage() {
   const DESC_LIMIT = 200;
   const isLongDesc = desc.length > DESC_LIMIT;
 
+  // 今日・明日のキー
+  const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
+  const tomorrowKey = (() => { const d = new Date(); d.setDate(d.getDate()+1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-28">
 
       {/* ══════════════════════════════════
           1. カバー画像エリア（最上部）
@@ -192,25 +196,61 @@ export default function CallProfilePage() {
       ══════════════════════════════════ */}
       <div className="max-w-2xl mx-auto px-4">
         <div className="flex items-end gap-4 -mt-14 mb-5 relative z-10">
-          {/* アバター */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 bg-secondary"
-            style={{
-              border: "3px solid hsl(160 84% 39%)",
-              boxShadow: "0 0 24px hsl(160 84% 39% / 0.4), 0 8px 32px rgba(0,0,0,0.6)",
-            }}
-          >
-            {channel.avatar_url ? (
-              <img src={channel.avatar_url} alt={channel.name} className="w-full h-full object-cover" />
+          {/* アバター（待機中はキラキラONLINEエフェクト） */}
+          <div className="relative shrink-0">
+            {/* 外側パルスリング（待機中のみ） */}
+            {channel.call_enabled && (
+              <>
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  animate={{ scale: [1, 1.18, 1], opacity: [0.6, 0, 0.6] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ border: "3px solid hsl(160 84% 39%)", zIndex: 0 }}
+                />
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  animate={{ scale: [1, 1.32, 1], opacity: [0.3, 0, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                  style={{ border: "2px solid hsl(160 84% 39%)", zIndex: 0 }}
+                />
+              </>
+            )}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-24 h-24 rounded-2xl overflow-hidden bg-secondary relative z-10"
+              style={{
+                border: "3px solid hsl(160 84% 39%)",
+                boxShadow: channel.call_enabled
+                  ? "0 0 32px hsl(160 84% 39% / 0.7), 0 8px 32px rgba(0,0,0,0.6)"
+                  : "0 0 24px hsl(160 84% 39% / 0.4), 0 8px 32px rgba(0,0,0,0.6)",
+              }}
+            >
+              {channel.avatar_url ? (
+                <img src={channel.avatar_url} alt={channel.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, hsl(160 84% 39% / 0.3), hsl(160 84% 39% / 0.1))" }}>
+                  <span className="text-4xl font-black text-primary">{channel.name?.[0]}</span>
+                </div>
+              )}
+            </motion.div>
+            {/* ONLINE / OFFLINE バッジ */}
+            {channel.call_enabled ? (
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black whitespace-nowrap"
+                style={{ background: "linear-gradient(135deg, #00ff9d, #00c97a)", color: "#000", boxShadow: "0 0 10px rgba(0,255,157,0.8)" }}
+              >
+                ✦ ONLINE
+              </motion.div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, hsl(160 84% 39% / 0.3), hsl(160 84% 39% / 0.1))" }}>
-                <span className="text-4xl font-black text-primary">{channel.name?.[0]}</span>
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap bg-muted text-muted-foreground">
+                OFFLINE
               </div>
             )}
-          </motion.div>
+          </div>
 
           <div className="pb-1 flex-1">
             <h1 className="text-2xl font-black text-foreground leading-tight">{channel.name}</h1>
@@ -395,53 +435,68 @@ export default function CallProfilePage() {
           <span>安心・安全な通話。運営が監視。問題は通報できます。</span>
         </div>
 
-        {/* ══════════════════════════════════
-            9. 通話開始ボタン（最下部・固定CTA）
-        ══════════════════════════════════ */}
-        {!isEditing && (
-          !isOwnChannel ? (
-            <div className="space-y-3 pb-10">
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                animate={channel.call_enabled ? {
-                  boxShadow: ["0 0 20px rgba(0,255,157,0.3)", "0 0 40px rgba(0,255,157,0.6)", "0 0 20px rgba(0,255,157,0.3)"]
-                } : {}}
-                transition={{ duration: 2, repeat: Infinity }}
-                onClick={handleStartCall}
-                disabled={calling || !channel.call_enabled}
-                className="w-full rounded-2xl font-black text-lg text-black flex items-center justify-center gap-3 disabled:opacity-40 transition-all"
-                style={{
-                  height: 68,
-                  background: channel.call_enabled
-                    ? "linear-gradient(135deg, #00ff9d, #00d4aa)"
-                    : "rgba(255,255,255,0.08)",
-                  color: channel.call_enabled ? "#000" : "#666",
-                }}
-              >
-                <PhoneCall className="w-6 h-6" />
-                {calling ? "接続中..." : channel.call_enabled ? "今すぐ通話を開始する" : "現在受付停止中"}
-              </motion.button>
-
-              <Button
-                variant="outline"
-                className="w-full h-12 gap-2 text-sm font-bold border-white/20 hover:border-primary/40"
-                onClick={handleChat}
-              >
-                <MessageCircle className="w-4 h-4" /> まずチャットで声をかける
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3 pb-10">
-              <Button
-                className="w-full h-14 bg-green-600 hover:bg-green-500 gap-2 font-bold text-base"
-                onClick={() => navigate("/call-waiting?autostart=1")}
-              >
-                <PhoneCall className="w-5 h-5" /> 通話待機画面へ
-              </Button>
-            </div>
-          )
-        )}
       </div>
+
+      {/* ══════════════════════════════════
+          固定フッターCTA（常時追従）
+      ══════════════════════════════════ */}
+      {!isEditing && !isOwnChannel && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 px-4 py-3 backdrop-blur-xl"
+          style={{ background: "linear-gradient(to top, hsl(120 5% 4%) 60%, hsl(120 5% 4% / 0.85) 100%)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="max-w-2xl mx-auto space-y-2">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              animate={channel.call_enabled ? {
+                boxShadow: [
+                  "0 0 16px rgba(0,255,157,0.4)",
+                  "0 0 36px rgba(0,255,157,0.8)",
+                  "0 0 16px rgba(0,255,157,0.4)",
+                ],
+              } : {}}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              onClick={handleStartCall}
+              disabled={calling || !channel.call_enabled}
+              className="w-full rounded-2xl font-black text-lg flex items-center justify-center gap-3 disabled:opacity-40 transition-all"
+              style={{
+                height: 64,
+                background: channel.call_enabled
+                  ? "linear-gradient(135deg, #00ff9d, #00c97a)"
+                  : "rgba(255,255,255,0.08)",
+                color: channel.call_enabled ? "#000" : "#666",
+              }}
+            >
+              <PhoneCall className="w-6 h-6" />
+              {calling ? "接続中..." : channel.call_enabled ? "今すぐ通話を開始する" : "現在受付停止中"}
+            </motion.button>
+            <Button
+              variant="ghost"
+              className="w-full h-9 gap-2 text-xs font-bold text-muted-foreground hover:text-foreground"
+              onClick={handleChat}
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> まずチャットで声をかける
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 自分のチャンネル固定フッター */}
+      {!isEditing && isOwnChannel && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 px-4 py-3 backdrop-blur-xl"
+          style={{ background: "linear-gradient(to top, hsl(120 5% 4%) 60%, hsl(120 5% 4% / 0.85) 100%)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="max-w-2xl mx-auto">
+            <Button
+              className="w-full h-14 bg-green-600 hover:bg-green-500 gap-2 font-bold text-base"
+              onClick={() => navigate("/call-waiting?autostart=1")}
+            >
+              <PhoneCall className="w-5 h-5" /> 通話待機画面へ
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

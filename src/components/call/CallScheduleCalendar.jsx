@@ -12,6 +12,14 @@ const STATUS_CONFIG = {
   closed:    { label: "×", bg: "bg-red-500/20",    border: "border-red-500/40",    text: "text-red-400",    dot: "bg-red-400" },
 };
 
+// 特別ラベルの設定
+const SPECIAL_LABELS = {
+  hot:       { emoji: "🔥", text: "人気枠", color: "#ff6b35" },
+  recommend: { emoji: "⭐", text: "おすすめ", color: "#ffd700" },
+  limited:   { emoji: "⚡", text: "残りわずか", color: "#a78bfa" },
+  new:       { emoji: "✨", text: "新枠", color: "#38bdf8" },
+};
+
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -27,6 +35,10 @@ export default function CallScheduleCalendar({ schedule = [] }) {
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selected, setSelected] = useState(null);
+
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+  const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,"0")}-${String(tomorrow.getDate()).padStart(2,"0")}`;
 
   // schedule を {date: entry} のマップに変換
   const scheduleMap = {};
@@ -88,6 +100,9 @@ export default function CallScheduleCalendar({ schedule = [] }) {
             const isSelected = selected === key;
             const dayOfWeek = (firstDay + day - 1) % 7;
 
+            const specialLabelKey = entry?.special_label;
+            const specialCfg = specialLabelKey ? SPECIAL_LABELS[specialLabelKey] : null;
+
             return (
               <button
                 key={key}
@@ -104,6 +119,22 @@ export default function CallScheduleCalendar({ schedule = [] }) {
                 </span>
                 {cfg && (
                   <span className={`text-[10px] font-black mt-0.5 ${cfg.text}`}>{cfg.label}</span>
+                )}
+                {/* 特別ラベルバッジ */}
+                {specialCfg && (
+                  <span
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black rounded-full px-1 py-0 whitespace-nowrap leading-4"
+                    style={{ background: specialCfg.color, color: "#000" }}
+                  >
+                    {specialCfg.emoji}
+                  </span>
+                )}
+                {/* 今日・明日インジケーター（特別ラベルがない場合） */}
+                {!specialCfg && (key === todayKey) && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black bg-primary text-primary-foreground rounded-full px-1 py-0 whitespace-nowrap leading-4">今日</span>
+                )}
+                {!specialCfg && (key === tomorrowKey) && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black bg-blue-500 text-white rounded-full px-1 py-0 whitespace-nowrap leading-4">明日</span>
                 )}
               </button>
             );
