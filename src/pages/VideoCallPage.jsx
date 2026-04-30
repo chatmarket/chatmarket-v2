@@ -18,6 +18,7 @@ import MessageModal from "../components/chat/MessageModal";
 import CallSettingsPanel from "../components/call/CallSettingsPanel";
 import CallChatPanel from "../components/call/CallChatPanel";
 import AdaptiveBitrateManager from "../components/call/AdaptiveBitrateManager";
+import CallIsolationValidator from "../components/debug/CallIsolationValidator";
 import WaitingScreenDisplay from "../components/call/WaitingScreenDisplay";
 import ExtensionRequestModal from "../components/call/ExtensionRequestModal";
 import ExtensionAcceptanceModal from "../components/call/ExtensionAcceptanceModal";
@@ -1186,6 +1187,11 @@ export default function VideoCallPage() {
         onQualityChange={(newQuality) => { setVideoQuality(newQuality); setAbrEnabled(false); setTimeout(() => setAbrEnabled(true), 5000); }}
         measureInterval={3000}
       />
+
+      {/* ★ 隔離検証（通話中のみ） */}
+      {call?.status === 'active' && (
+        <CallIsolationValidator remoteVideoRef={remoteVideoRef} call={call} enabled={true} />
+      )}
 
       {/* Floating items */}
       {floatingItems.map((f) => (

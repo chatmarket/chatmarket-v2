@@ -23,6 +23,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   const lastTimeRef = useRef(performance.now());
   const rafRef = useRef(null);
   const pollingRef = useRef(null);
+  const abortControllerRef = useRef(null); // リクエスト中断制御
 
   // ──────────────────────────────────────────────────────────
   // ログ追加（内部）
@@ -169,14 +170,26 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   };
 
   const handleStop = async () => {
-    addLog('Stopping load test...', 'info');
+    addLog('Stopping load test... (強制中断中)', 'warn');
+    setRunning(false); // UI即座に停止表示
+    
+    // 全ポーリング・計測タイマーを即座に中止
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    
+    // バックエンド停止リクエスト（タイムアウト5秒）
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     try {
       const res = await fetch('/api/loadTestBot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'stop' }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
@@ -191,9 +204,13 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
       }
 
       onStop?.(data);
-      setRunning(false);
     } catch (err) {
-      addLog(`❌ Stop failed: ${err.message}`, 'error');
+      if (err.name === 'AbortError') {
+        addLog(`⚠️ Stop timeout（バックエンドが応答しない）- UI側は停止済み`, 'error');
+      } else {
+        addLog(`❌ Stop failed: ${err.message}`, 'error');
+      }
+      // UI側は既に停止済みなのでonStopは不要
     }
   };
 
