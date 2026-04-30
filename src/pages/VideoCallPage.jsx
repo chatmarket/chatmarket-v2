@@ -1177,8 +1177,9 @@ export default function VideoCallPage() {
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
       ))}
 
-      {/* VIDEO AREA — 16:9固定、レターボックス背景黒 */}
-      <div ref={videoContainerRef} className="relative bg-black w-full" style={{ aspectRatio: '16/9', maxHeight: '56dvh', flexShrink: 0 }}>
+      {/* VIDEO AREA — 16:9固定（paddingトリックで確実に比率維持） */}
+      <div className="relative bg-black w-full" style={{ flexShrink: 0 }}>
+      <div ref={videoContainerRef} className="relative bg-black w-full" style={{ paddingTop: '56.25%' }}>
 
         {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
         <video
@@ -1427,6 +1428,7 @@ export default function VideoCallPage() {
         )}
       </div>
 
+      </div>{/* /paddingTop wrapper */}
       {/* BOTTOM AREA */}
       <div className="flex flex-col bg-black border-t border-white/10" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
