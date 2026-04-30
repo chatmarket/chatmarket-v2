@@ -101,26 +101,53 @@
     </style>
     <!-- ★ SW強制クリア v2: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
     <script>
-      // バージョントークン: 変更するたびにキャッシュが無効化される
-      var CACHE_VERSION = '20260427-hlsonly';
+      // 強制キャッシュ削除（デプロイ時）
+      var CACHE_VERSION = '20260430-v2-unified';
       var stored = localStorage.getItem('cm_cache_ver');
       if (stored !== CACHE_VERSION) {
-        localStorage.setItem('cm_cache_ver', CACHE_VERSION);
-        // 全SW解除
+        // 全SW登録解除
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(regs) {
-            regs.forEach(function(reg) { reg.unregister(); });
+            regs.forEach(function(reg) { 
+              reg.unregister().catch(function() {});
+              console.log('[CacheClean] SW unregistered:', reg.scope);
+            });
           });
         }
         // 全キャッシュ削除
         if ('caches' in window) {
           caches.keys().then(function(names) {
-            names.forEach(function(name) { caches.delete(name); });
+            names.forEach(function(name) { 
+              caches.delete(name);
+              console.log('[CacheClean] Cache cleared:', name);
+            });
           });
         }
-        // 初回のみリロード（無限ループ防止）
-        if (!sessionStorage.getItem('cm_reloaded_' + CACHE_VERSION)) {
-          sessionStorage.setItem('cm_reloaded_' + CACHE_VERSION, '1');
+        // localStorage / sessionStorage クリア（URL記憶削除）
+        Object.keys(localStorage).forEach(function(key) {
+          if (key.startsWith('cm_') || key.startsWith('http')) {
+            localStorage.removeItem(key);
+          }
+        });
+        Object.keys(sessionStorage).forEach(function(key) {
+          if (key.startsWith('cm_')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+        // IndexedDB クリア
+        if (indexedDB) {
+          indexedDB.databases().then(function(dbs) {
+            dbs.forEach(function(db) {
+              indexedDB.deleteDatabase(db.name);
+              console.log('[CacheClean] IDB deleted:', db.name);
+            });
+          }).catch(function() {});
+        }
+        // バージョン更新
+        localStorage.setItem('cm_cache_ver', CACHE_VERSION);
+        // 1回のみリロード
+        if (!sessionStorage.getItem('cm_reloaded')) {
+          sessionStorage.setItem('cm_reloaded', '1');
           window.location.reload(true);
         }
       }

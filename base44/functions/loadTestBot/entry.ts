@@ -173,45 +173,55 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers });
   }
 
+  const env = Deno.env.get('ENVIRONMENT') || 'unknown';
+  console.log(`[loadTestBot] 🚀 START | env=${env}`);
+
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
     // ── 認証チェック ──
     if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: admin only' }, { status: 403, headers });
+      console.warn(`[loadTestBot] ❌ FORBIDDEN | env=${env} | user=${user?.email || 'none'}`);
+      return Response.json({ error: 'Forbidden: admin only', env: env }, { status: 403, headers });
     }
 
     // ── 環境チェック ──
-    const isProduction = Deno.env.get('ENVIRONMENT') === 'production';
+    const isProduction = env === 'production';
     if (isProduction) {
+      console.warn(`[loadTestBot] ❌ PRODUCTION BLOCKED | env=${env}`);
       return Response.json({
         error: 'LoadTestBot disabled in production',
         warning: 'This tool is Staging-only for safety',
-      }, { status: 403 });
+        env: env,
+      }, { status: 403, headers });
     }
 
     const body = await req.json();
     const { action, duration_seconds = 30, stream_id, user_count = 100, mode = 'dummy' } = body;
 
     if (!action || !stream_id) {
-      return Response.json({ error: 'action and stream_id required' }, { status: 400, headers });
+      console.warn(`[loadTestBot] ❌ INVALID_REQUEST | env=${env}`);
+      return Response.json({ error: 'action and stream_id required', env: env }, { status: 400, headers });
     }
 
     // ── stop アクション ──
     if (action === 'stop') {
       botRunning = false;
       botMetrics.endTime = new Date().toISOString();
+      console.log(`[loadTestBot] ✅ STOP | env=${env} | yells=${botMetrics.yellsSent} | msgs=${botMetrics.messagesSent}`);
       return Response.json({
         success: true,
         message: 'Bot stopped',
+        env: env,
         metrics: botMetrics,
       }, { headers });
     }
 
     // ── 新規実行（重複実行防止） ──
     if (botRunning) {
-      return Response.json({ error: 'Bot already running' }, { status: 409, headers });
+      console.warn(`[loadTestBot] ⚠️ ALREADY_RUNNING | env=${env}`);
+      return Response.json({ error: 'Bot already running', env: env }, { status: 409, headers });
     }
 
     botRunning = true;
@@ -240,16 +250,17 @@ Deno.serve(async (req) => {
       }
     })();
 
+    console.log(`[loadTestBot] ✅ STARTED | env=${env} | action=${action} | users=${user_count} | duration=${duration_seconds}s`);
     return Response.json({
       success: true,
       message: `Bot started: ${action} for ${duration_seconds}s`,
+      env: env,
       mode: mode,
       users: user_count,
       stream_id: stream_id,
-      poll_metrics_url: '/api/loadTestBot?action=status',
     }, { headers });
   } catch (error) {
-    console.error('[LoadTestBot] Error:', error.message);
-    return Response.json({ error: error.message }, { status: 500, headers });
+    console.error(`[loadTestBot] ❌ ERROR | env=${env} | error=${error.message}`);
+    return Response.json({ error: error.message, env: env }, { status: 500, headers });
   }
 });

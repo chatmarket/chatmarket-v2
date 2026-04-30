@@ -27,13 +27,14 @@ Deno.serve(async (req) => {
     );
   }
 
+  const env = Deno.env.get('ENVIRONMENT') || 'unknown';
+  console.log(`[trackLogs] 🚀 START | env=${env}`);
+
   try {
     // ★ 認証スキップ（コールドスタート高速化）
-    // 実装予定：Authorization ヘッダーがあればベアトークン検証のみ
     let user = null;
     const authHeader = req.headers.get('Authorization');
     if (authHeader) {
-      // 本当に必要な場合のみ SDK を import
       try {
         const { createClientFromRequest } = await import('npm:@base44/sdk@0.8.25');
         const base44 = createClientFromRequest(req);
@@ -59,12 +60,14 @@ Deno.serve(async (req) => {
       console.log(`[trackLogs] ✅ ${logs.length}L from ${hostname}`);
     }
 
+    console.log(`[trackLogs] ✅ SUCCESS | env=${env} | ${logs.length}L | user=${user?.email || 'anon'}`);
     return Response.json(
       {
         success: true,
         message: `✅ Logged ${logs.length} entries`,
         received: logs.length,
         user: user?.email || 'anonymous',
+        env: env,
         bombardment: {
           yells: yellCount,
           chats: chatCount,
@@ -75,9 +78,9 @@ Deno.serve(async (req) => {
       { status: 200, headers }
     );
   } catch (error) {
-    console.error('[trackLogs] ❌ Error:', error.message);
+    console.error('[trackLogs] ❌ ERROR | env=${env} | error=${error.message}');
     return Response.json(
-      { error: error.message },
+      { error: error.message, env: env },
       { status: 500, headers }
     );
   }
