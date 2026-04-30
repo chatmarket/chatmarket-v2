@@ -65,7 +65,11 @@ export function useIvsStagesCall({
           videoEl.srcObject = ms;
           videoEl.muted = false;
           videoEl.volume = 1.0;
-          videoEl.play().catch(() => {});
+          // iOS対応: 自動再生にはmutedが必須なため、再度assignして確保
+          videoEl.onloadedmetadata = () => {
+            if (videoEl.play) videoEl.play().catch(() => {});
+          };
+          if (videoEl.readyState >= 1) videoEl.play().catch(() => {});
           console.log('[IVS Stages] ✅ Remote video attached');
         });
 
