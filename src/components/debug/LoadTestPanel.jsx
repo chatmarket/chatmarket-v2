@@ -108,28 +108,32 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   };
 
   // ──────────────────────────────────────────────────────────
-  // ボット状態ポーリング（メトリクス取得）
-  // ──────────────────────────────────────────────────────────
-  const pollBotStatus = async () => {
-    try {
-      const res = await fetch('/api/loadTestBot?action=status');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.metrics) {
-          setMetrics(prev => ({
-            ...prev,
-            yellCount: data.metrics.yellsSent || 0,
-            msgCount: data.metrics.messagesSent || 0,
-          }));
-        }
-        if (data.metrics?.errors?.length > 0) {
-          data.metrics.errors.slice(-3).forEach(err => addLog(err, 'warn'));
-        }
-      }
-    } catch (err) {
-      addLog(`Status poll failed: ${err.message}`, 'error');
-    }
-  };
+   // ボット状態ポーリング（メトリクス取得）
+   // ──────────────────────────────────────────────────────────
+   const pollBotStatus = async () => {
+     try {
+       const res = await fetch('/api/loadTestBot', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ action: 'status', stream_id: streamId || 'test_stream' }),
+       });
+       if (res.ok) {
+         const data = await res.json();
+         if (data.metrics) {
+           setMetrics(prev => ({
+             ...prev,
+             yellCount: data.metrics.yellsSent || 0,
+             msgCount: data.metrics.messagesSent || 0,
+           }));
+         }
+         if (data.metrics?.errors?.length > 0) {
+           data.metrics.errors.slice(-3).forEach(err => addLog(err, 'warn'));
+         }
+       }
+     } catch (err) {
+       // ポーリング失敗時は **黙って無視** - リトライ厳禁（スマホ熱暴走防止）
+     }
+   };
 
   useEffect(() => {
     if (!running) {
