@@ -8,7 +8,7 @@
     },
     "description": {
       "type": "string",
-      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u8aac\u660e"
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u8aac\u660e\uff08\u6700\u59271000\u6587\u5b57\uff09"
     },
     "avatar_url": {
       "type": "string",
@@ -133,7 +133,14 @@
     },
     "call_available_dates": {
       "type": "string",
-      "description": "\u901a\u8a71\u53ef\u80fd\u306a\u65e5\u6642\u30fb\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb\uff08\u30d5\u30ea\u30fc\u30c6\u30ad\u30b9\u30c8\uff09"
+      "description": "\u901a\u8a71\u53ef\u80fd\u306a\u65e5\u6642\u30fb\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb\uff08\u30d5\u30ea\u30fc\u30c6\u30ad\u30b9\u30c8\u30fb\u6700\u59271000\u6587\u5b57\uff09"
+    },
+    "call_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\u9031\u6b21\u901a\u8a71\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb [{date: YYYY-MM-DD, label: string, status: 'available'|'busy'|'closed'}]"
     },
     "ng_words": {
       "type": "array",
