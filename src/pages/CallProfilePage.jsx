@@ -5,12 +5,14 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import {
   PhoneCall, MessageCircle, ArrowLeft, Shield, Coins,
-  ChevronDown, ChevronUp, Star, Clock, Edit3, Save, X
+  ChevronDown, ChevronUp, Star, Clock, Edit3, Save, X, CalendarDays
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import CallScheduleCalendar from "@/components/call/CallScheduleCalendar";
 import CallScheduleEditor from "@/components/call/CallScheduleEditor";
+import AppointmentRequestModal from "@/components/appointment/AppointmentRequestModal";
+import AppointmentDashboard from "@/components/appointment/AppointmentDashboard";
 
 export default function CallProfilePage() {
   const { channelId } = useParams();
@@ -20,6 +22,7 @@ export default function CallProfilePage() {
   const [user, setUser] = useState(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   // 編集用ローカルステート
   const [editDesc, setEditDesc] = useState("");
@@ -428,7 +431,12 @@ export default function CallProfilePage() {
         </div>
 
         {/* ══════════════════════════════════
-            8. 安心・安全バッジ
+            8. 予約ダッシュボード（自分 or 相手の予約一覧）
+        ══════════════════════════════════ */}
+        {user && <AppointmentDashboard channel={channel} user={user} />}
+
+        {/* ══════════════════════════════════
+            9. 安心・安全バッジ
         ══════════════════════════════════ */}
         <div className="flex items-center gap-2 mb-8 text-xs text-muted-foreground">
           <Shield className="w-3.5 h-3.5 text-green-400 shrink-0" />
@@ -470,15 +478,37 @@ export default function CallProfilePage() {
               <PhoneCall className="w-6 h-6" />
               {calling ? "接続中..." : channel.call_enabled ? "今すぐ通話を開始する" : "現在受付停止中"}
             </motion.button>
-            <Button
-              variant="ghost"
-              className="w-full h-9 gap-2 text-xs font-bold text-muted-foreground hover:text-foreground"
-              onClick={handleChat}
-            >
-              <MessageCircle className="w-3.5 h-3.5" /> まずチャットで声をかける
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="h-9 gap-1.5 text-xs font-bold"
+                onClick={() => {
+                  if (!user) { base44.auth.redirectToLogin(); return; }
+                  setShowRequestModal(true);
+                }}
+              >
+                <CalendarDays className="w-3.5 h-3.5 text-primary" /> 予約リクエスト
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-9 gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
+                onClick={handleChat}
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> チャット
+              </Button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* 予約リクエストモーダル */}
+      {showRequestModal && user && (
+        <AppointmentRequestModal
+          channel={channel}
+          user={user}
+          onClose={() => setShowRequestModal(false)}
+          onSent={() => queryClient.invalidateQueries({ queryKey: ["appointments"] })}
+        />
       )}
 
       {/* 自分のチャンネル固定フッター */}

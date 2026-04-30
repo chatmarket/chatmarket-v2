@@ -1,0 +1,81 @@
+{
+  "name": "Appointment",
+  "type": "object",
+  "description": "\u9451\u5b9a\u4e88\u7d04\u30ea\u30af\u30a8\u30b9\u30c8",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u306e\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "channel_owner_email": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u306e\u30e1\u30fc\u30eb"
+    },
+    "requester_email": {
+      "type": "string",
+      "description": "\u30ea\u30af\u30a8\u30b9\u30c8\u8005\u306e\u30e1\u30fc\u30eb"
+    },
+    "requester_name": {
+      "type": "string",
+      "description": "\u30ea\u30af\u30a8\u30b9\u30c8\u8005\u306e\u540d\u524d"
+    },
+    "requested_date": {
+      "type": "string",
+      "description": "\u5e0c\u671b\u65e5 (YYYY-MM-DD)"
+    },
+    "requested_time": {
+      "type": "string",
+      "description": "\u5e0c\u671b\u6642\u9593 (HH:MM)"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 30,
+      "description": "\u5e0c\u671b\u6642\u9593\uff08\u5206\uff09"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u30ea\u30af\u30a8\u30b9\u30c8\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "counter_proposed"
+      ],
+      "default": "pending",
+      "description": "\u4e88\u7d04\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "counter_date": {
+      "type": "string",
+      "description": "\u518d\u63d0\u6848\u65e5 (YYYY-MM-DD)"
+    },
+    "counter_time": {
+      "type": "string",
+      "description": "\u518d\u63d0\u6848\u6642\u9593 (HH:MM)"
+    },
+    "counter_message": {
+      "type": "string",
+      "description": "\u518d\u63d0\u6848\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "confirmed_date": {
+      "type": "string",
+      "description": "\u78ba\u5b9a\u65e5 (YYYY-MM-DD)"
+    },
+    "confirmed_time": {
+      "type": "string",
+      "description": "\u78ba\u5b9a\u6642\u9593 (HH:MM)"
+    }
+  },
+  "required": [
+    "channel_id",
+    "requester_email",
+    "requested_date",
+    "requested_time"
+  ]
+}
