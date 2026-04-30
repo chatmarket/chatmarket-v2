@@ -56,6 +56,34 @@ export default function YellMessageModal({ coins, user, streamId, channelId, onC
         color: coins >= 500 ? "red" : coins >= 100 ? "orange" : coins >= 50 ? "yellow" : "green",
       });
 
+      // ライバーへの収益反映
+      if (channelId) {
+        const channels = await base44.entities.Channel.filter({ id: channelId });
+        const ch = channels[0];
+
+        // CreatorEarning 記録（ライバー収益ログ）
+        if (ch) {
+          await base44.entities.CreatorEarning.create({
+            creator_email: ch.owner_email,
+            channel_id: channelId,
+            channel_name: ch.name,
+            sender_email: user.email,
+            sender_name: user.full_name || "匿名",
+            coin_amount: coins,
+            yen_equivalent: coins * 1.1,
+            service_type: "superchat",
+            service_id: streamId,
+            message: message || "応援しています！",
+            is_settled: false,
+          }).catch(() => {});
+
+          // チャンネルの月間収益コインを加算
+          await base44.entities.Channel.update(ch.id, {
+            monthly_revenue_coins: (ch.monthly_revenue_coins || 0) + coins,
+          }).catch(() => {});
+        }
+      }
+
       toast.success(`🎉 ${coins}コインのエール送信！`);
       onClose();
     } catch (e) {
