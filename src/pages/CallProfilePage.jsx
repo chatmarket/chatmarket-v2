@@ -141,7 +141,7 @@ export default function CallProfilePage() {
   const tomorrowKey = (() => { const d = new Date(); d.setDate(d.getDate()+1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-56">
 
       {/* ══════════════════════════════════
           1. カバー画像エリア（最上部）
@@ -487,19 +487,20 @@ export default function CallProfilePage() {
               <CalendarDays className="w-4 h-4" /> 日程を予約してから通話する
             </button>
 
-            {/* ③ チャット（安心導線・フル幅） */}
+            {/* ③ チャット（目立つ安心導線） */}
             <button
               onClick={handleChat}
-              className="w-full rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition-all"
+              className="w-full rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-98"
               style={{
-                height: 44,
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "rgba(255,255,255,0.6)",
+                height: 52,
+                background: "linear-gradient(135deg, rgba(56,189,248,0.18), rgba(56,189,248,0.08))",
+                border: "1.5px solid rgba(56,189,248,0.5)",
+                color: "rgba(147,219,250,1)",
+                boxShadow: "0 0 16px rgba(56,189,248,0.15)",
               }}
             >
-              <MessageCircle className="w-4 h-4" />
-              ビデオ通話を始める前にチャットで対応可能か問い合わせる
+              <MessageCircle className="w-5 h-5 shrink-0" style={{ color: "#38bdf8" }} />
+              <span>ビデオ通話を始める前にチャットで<br className="sm:hidden" />対応可能か問い合わせる</span>
             </button>
           </div>
         </div>
