@@ -141,13 +141,14 @@ export default function CallProfilePage() {
   const priceOptions = getPriceOptions();
   const isOwnChannel = user?.email === channel.owner_email;
 
-  // ライバー（自分もチャンネルを持つ）が他ライバーのページを見ているか
+  // 自分がライバー（チャンネル持ち）で、相手が視聴者（チャンネルなし）の場合のみ制限
+  // ライバー→ライバーは双方向OK、ライバー→視聴者は「逆課金注意」表示のみ
   const isCallerALiver = !!myChannel && !isOwnChannel;
-  // call&anserプランかどうか
-  const userPlan = user?.plan || (user?.role === "admin" ? "call-anser" : "free");
-  const isCallAnserPlan = userPlan === "call-anser" || user?.role === "admin";
-  // ライバーが視聴者へ発信できるか（call&anserプランのみ可）
-  const canCallerCall = !isCallerALiver || isCallAnserPlan;
+  const targetHasChannel = !!channel?.owner_email; // channelが存在する＝相手はライバー
+  // 相手がライバーなら制限なし。相手が視聴者（チャンネルはあるが）の場合は警告のみ表示
+  // → 実際は全員発信可能、ライバーが視聴者へ発信する場合のみ「逆課金」警告を出す
+  const canCallerCall = true; // 常に発信可能
+  const showReverseCostWarning = isCallerALiver; // ライバーが発信する場合は警告表示
   const desc = isEditing ? editDesc : (channel.description || "");
   const DESC_LIMIT = 200;
   const isLongDesc = desc.length > DESC_LIMIT;
@@ -496,14 +497,13 @@ export default function CallProfilePage() {
               }}
             >
               <PhoneCall className="w-6 h-6" />
-              {calling ? "接続中..." : !channel.call_enabled ? "現在受付停止中" : !canCallerCall ? "ライバーは発信不可（CALL&ANSERのみ）" : "今すぐ通話を開始する"}
+              {calling ? "接続中..." : !channel.call_enabled ? "現在受付停止中" : showReverseCostWarning ? "発信する（コインが課金されます）" : "今すぐ通話を開始する"}
             </motion.button>
 
-            {/* ライバー制限の説明 */}
-            {isCallerALiver && !isCallAnserPlan && channel.call_enabled && (
-              <p className="text-center text-xs text-muted-foreground px-2">
-                ライバーが他ライバーに発信するには <span className="text-primary font-bold">CALL&ANSERプラン</span> への加入が必要です
-                <button onClick={() => navigate("/plan-select")} className="ml-1.5 text-primary underline font-bold">プランを見る →</button>
+            {/* ライバーが発信する場合の逆課金警告 */}
+            {showReverseCostWarning && channel.call_enabled && (
+              <p className="text-center text-xs text-yellow-400/80 px-2 leading-relaxed">
+                ⚠️ ライバーとして発信する場合、<span className="font-bold">あなた側にコインが課金</span>されます。相談・打ち合わせ目的での利用を想定しています。
               </p>
             )}
 
