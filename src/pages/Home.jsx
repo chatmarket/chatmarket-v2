@@ -19,6 +19,7 @@ import { isBefore } from "date-fns";
 import { toast } from "sonner";
 import { t } from "@/lib/i18n";
 import { useInViewTrigger } from "@/hooks/useInViewTrigger";
+import LoadTestPanel from "@/components/debug/LoadTestPanel";
 
 const _RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
 const _now = new Date();
@@ -246,6 +247,8 @@ export default function Home() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 md:px-4 lg:px-8 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-12 lg:space-y-14 overflow-x-hidden">
+      {/* 負荷テストパネル（backend側で本番環境チェック） */}
+      <LoadTestPanel streamId="test_stream" />
       <MetaHelmet page="home" />
 
       {/* ジャイアント・キリング速報バナー（グローバル固定） */}
