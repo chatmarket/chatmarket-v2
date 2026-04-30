@@ -1211,13 +1211,13 @@ export default function VideoCallPage() {
           webkit-playsinline="true"
           onLoadedMetadata={e => e.target.play().catch(() => {})}
           style={call?.status === 'active' ? {
-            // active: 右下ワイプ（contain でアスペクト比保持）
+            // active: 右下ワイプ（縦長4:3、スマホカメラ比率）
             position: 'absolute',
             bottom: 8, right: 8,
-            width: 88, height: 88,
+            width: 72, height: 96,
             objectFit: 'cover',
-            borderRadius: 10,
-            border: '2px solid rgba(255,255,255,0.4)',
+            borderRadius: 8,
+            border: '2px solid rgba(255,255,255,0.5)',
             boxShadow: '0 0 12px rgba(0,255,157,0.4)',
             backgroundColor: '#000',
             zIndex: 10,
@@ -1235,15 +1235,15 @@ export default function VideoCallPage() {
 
         {/* active: カメラOFF時のワイプ黒幕 */}
         {call?.status === 'active' && !camOn && (
-          <div className="absolute bg-black/80 flex items-center justify-center rounded-xl z-20"
-            style={{ bottom: 12, right: 12, width: 112, height: 144, borderRadius: 12 }}>
-            <CameraOff className="w-5 h-5 text-white/40" />
+          <div className="absolute bg-black/80 flex items-center justify-center z-20"
+            style={{ bottom: 8, right: 8, width: 72, height: 96, borderRadius: 8 }}>
+            <CameraOff className="w-4 h-4 text-white/40" />
           </div>
         )}
         {/* active: ワイプラベル */}
         {call?.status === 'active' && (
-          <div className="absolute z-20 text-center" style={{ bottom: 14, right: 12, width: 112 }}>
-            <span className="text-[9px] text-white/70 bg-black/60 px-1.5 py-0.5 rounded-full">あなた</span>
+          <div className="absolute z-20 text-center" style={{ bottom: 10, right: 8, width: 72 }}>
+            <span className="text-[8px] text-white/70 bg-black/60 px-1 py-0.5 rounded-full">あなた</span>
           </div>
         )}
 
