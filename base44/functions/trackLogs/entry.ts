@@ -8,7 +8,7 @@
 Deno.serve(async (req) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-ID',
     'Content-Type': 'application/json',
   };
@@ -18,11 +18,11 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers });
   }
 
-  // ★ POST のみ許可（405 を確実に返す）
-  if (req.method !== 'POST') {
+  // GET・POST のみ許可
+  if (!['GET', 'POST'].includes(req.method)) {
     console.warn(`[trackLogs] ❌ ${req.method} not allowed`);
     return Response.json(
-      { error: 'Method not allowed. Use POST.' },
+      { error: `${req.method} not allowed` },
       { status: 405, headers }
     );
   }

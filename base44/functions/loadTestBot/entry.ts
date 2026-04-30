@@ -163,7 +163,7 @@ async function runChatFlood(base44, streamId, dummyUsers, durationSeconds, mode)
 Deno.serve(async (req) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
   };
@@ -173,8 +173,16 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers });
   }
 
+  // GET・POST のみ許可
+  if (!['GET', 'POST'].includes(req.method)) {
+    return Response.json(
+      { error: `${req.method} not allowed` },
+      { status: 405, headers }
+    );
+  }
+
   const env = Deno.env.get('ENVIRONMENT') || 'unknown';
-  console.log(`[loadTestBot] 🚀 START | env=${env}`);
+  console.log(`[loadTestBot] 🚀 START | method=${req.method} | env=${env}`);
 
   try {
     const base44 = createClientFromRequest(req);
