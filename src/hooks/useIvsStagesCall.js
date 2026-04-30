@@ -175,11 +175,23 @@ export function useIvsStagesCall({
         audio: at ? `${at.label} [${at.readyState}]` : 'none',
       });
 
-      // ★ CRITICAL: join前にインスタンスを一度だけ生成し同じ参照を返す
-      //   毎回 new LocalStageStream() すると SDK 内部の sort() がクラッシュする
+      // ★ CRITICAL FIX: streamType を明示的に数値で付与してから SDK に渡す
+      // SDK内部の sort() は streamType (0=audio, 1=video) が数値であることを前提とする
+      // LocalStageStream インスタンスを一度だけ生成し同じ参照を返し続ける（毎回 new NG）
+      const StreamType = IVSClient.StreamType || { AUDIO: 0, VIDEO: 1 };
       const publishStreams = [];
-      if (at) { at.enabled = true; publishStreams.push(new LocalStageStream(at, { simulcast: false })); }
-      if (vt) { publishStreams.push(new LocalStageStream(vt, { simulcast: false })); }
+      if (at) {
+        at.enabled = true;
+        const audioStream = new LocalStageStream(at, { simulcast: false });
+        // streamType が未定義の場合は強制設定
+        if (audioStream.streamType === undefined) audioStream.streamType = StreamType.AUDIO ?? 0;
+        publishStreams.push(audioStream);
+      }
+      if (vt) {
+        const videoStream = new LocalStageStream(vt, { simulcast: false });
+        if (videoStream.streamType === undefined) videoStream.streamType = StreamType.VIDEO ?? 1;
+        publishStreams.push(videoStream);
+      }
 
       const strategy = {
         stageStreamsToPublish: () => publishStreams,
