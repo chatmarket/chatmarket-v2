@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Mic, MicOff, Camera, CameraOff, CheckCircle2, AlertCircle, Zap, Radio, Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import CanvasVideoEffect from "@/components/broadcast/CanvasVideoEffect";
+import EffectPanel from "@/components/broadcast/EffectPanel";
 
 /**
  * BrowserBroadcaster — シンプルな放送機材
@@ -30,6 +32,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [broadcastStatus, setBroadcastStatus] = useState(null); // null | "connecting" | "live" | "error"
   const [broadcastError, setBroadcastError] = useState(null);
   
+  const [effectKey, setEffectKey] = useState("none");
+  const canvasEffectRef = useRef(null);
+  const canvasStreamRef = useRef(null); // Canvasから生成したストリーム（音声付き）
+
   const [error, setError] = useState(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [showMicEnableButton, setShowMicEnableButton] = useState(true);
@@ -287,11 +293,23 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       throw new Error('No local stream available');
     }
 
+    // エフェクトがある場合はCanvasストリーム+音声トラックを合成して送信
+    let broadcastStream = streamRef.current;
+    if (canvasStreamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks();
+      const videoTracks = canvasStreamRef.current.getVideoTracks();
+      if (videoTracks.length > 0) {
+        const merged = new MediaStream([...videoTracks, ...audioTracks]);
+        broadcastStream = merged;
+        console.log('[BrowserBroadcaster] 🎨 Using Canvas effect stream for broadcast');
+      }
+    }
+
     const pc = new RTCPeerConnection();
 
-    // ローカルストリーム追加
-    streamRef.current.getTracks().forEach((track) => {
-      pc.addTrack(track, streamRef.current);
+    // ストリーム追加
+    broadcastStream.getTracks().forEach((track) => {
+      pc.addTrack(track, broadcastStream);
       console.log(`[BrowserBroadcaster] ✅ Track added: ${track.kind}`);
     });
 
@@ -421,6 +439,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       {/* 左側：ビデオプレイヤー */}
       <div className="flex-1 flex flex-col gap-4">
         <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16/9" }}>
+          {/* 元映像（エフェクトなし時に表示 / エフェクトあり時は非表示でCanvasに描画） */}
           <video
             ref={videoRef}
             autoPlay={true}
@@ -428,15 +447,26 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             playsInline={true}
             controls={false}
             style={{
-              width: '100%',
-              height: '100%',
+              position: 'absolute', inset: 0,
+              width: '100%', height: '100%',
               objectFit: 'cover',
-              opacity: 1,
-              zIndex: 5,
-              display: 'block',
+              display: effectKey === "none" ? 'block' : 'none',
               backgroundColor: '#000',
+              zIndex: 5,
             }}
           />
+          {/* Canvasエフェクトプレビュー（エフェクト選択時のみ表示） */}
+          {effectKey !== "none" && (
+            <CanvasVideoEffect
+              ref={canvasEffectRef}
+              sourceRef={videoRef}
+              effectKey={effectKey}
+              onStream={(stream) => { canvasStreamRef.current = stream; }}
+              width={1280}
+              height={720}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 5 }}
+            />
+          )}
 
           {!isBroadcasting && (
             <div className="absolute inset-0 pointer-events-none">
@@ -477,6 +507,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       {/* 右側パネル：コントロール + チャット + コイン */}
       <div className="w-full lg:w-80 flex flex-col gap-4 max-h-screen overflow-y-auto">
+        {/* エフェクトパネル */}
+        <EffectPanel value={effectKey} onChange={setEffectKey} />
+
         {/* デバイス設定 */}
         <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3 shadow-lg">
           <h3 className="font-bold text-white text-sm flex items-center gap-2">
