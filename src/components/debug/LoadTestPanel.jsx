@@ -95,17 +95,22 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
      if (now - lastErrorTimeRef.current < 3000) return; // エラーから3秒は実行禁止
      
      const start = performance.now();
+     const controller = new AbortController();
+     const timeout = setTimeout(() => controller.abort(), 3000);
+     
      try {
-       const baseUrl = window.location.origin;
-       const res = await fetch(`${baseUrl}/api/ping`, {
+       const res = await fetch('/api/ping', {
          method: 'POST',
          body: JSON.stringify({ ts: start }),
          headers: { 'Content-Type': 'application/json' },
+         signal: controller.signal,
        });
+       clearTimeout(timeout);
        if (!res.ok) throw new Error(`HTTP ${res.status}`);
        const lag = Math.round(performance.now() - start);
        setMetrics(prev => ({ ...prev, lag }));
      } catch (err) {
+       clearTimeout(timeout);
        lastErrorTimeRef.current = Date.now();
        setMetrics(prev => ({ ...prev, lag: 9999 }));
      }
@@ -117,14 +122,18 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
    const pollBotStatus = async () => {
      const now = Date.now();
      if (now - lastErrorTimeRef.current < 3000) return; // エラーから3秒は実行禁止
-     
+
+     const controller = new AbortController();
+     const timeout = setTimeout(() => controller.abort(), 3000);
+
      try {
-       const baseUrl = window.location.origin;
-       const res = await fetch(`${baseUrl}/api/loadTestBot`, {
+       const res = await fetch('/api/loadTestBot', {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({ action: 'status', stream_id: streamId || 'test_stream' }),
+         signal: controller.signal,
        });
+       clearTimeout(timeout);
        if (res.ok) {
          const data = await res.json();
          if (data.metrics) {
@@ -136,6 +145,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
          }
        }
      } catch (err) {
+       clearTimeout(timeout);
        lastErrorTimeRef.current = Date.now();
      }
    };
@@ -174,99 +184,80 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     if (performance.memory) {
       memoryAtStartRef.current = Math.round(performance.memory.usedJSHeapSize / 1048576);
     }
-    
+
     setRunning(true);
     setLogs([]);
     setMetrics(prev => ({ ...prev, memoryPeak: 0, memoryRecovery: 0 })); // リセット
     addLog('Starting load test...', 'info');
-    
-    // ★ ログ送信ガード：既存ログを即座に /api/track に送信
-    if (window.__sendLogs) {
+
+    // ★ 非同期処理で完全分離（メインスレッドをロックしない）
+    (async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
       try {
-        let token = '';
-        if (window.localStorage && window.localStorage.getItem('auth_token')) {
-          token = window.localStorage.getItem('auth_token');
+        const res = await fetch('/api/loadTestBot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'start_combined',
+            stream_id: streamId || 'test_stream',
+            duration_seconds: 30,
+            user_count: 100,
+            mode: 'dummy',
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
         }
-        await window.__sendLogs(token);
-        addLog('📤 Pre-test logs sent to /api/track', 'info');
-      } catch (e) {
-        addLog(`⚠️ Pre-test send failed: ${e.message}`, 'warn');
+
+        const data = await res.json();
+        addLog(`✅ Bot started`, 'info');
+        onStart?.(data);
+      } catch (err) {
+        clearTimeout(timeout);
+        addLog(`❌ Start failed`, 'error');
+        setRunning(false);
       }
-    }
-    
-    try {
-       const baseUrl = window.location.origin;
-       const res = await fetch(`${baseUrl}/api/loadTestBot`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
-           action: 'start_combined',
-           stream_id: streamId || 'test_stream',
-           duration_seconds: 30,
-           user_count: 100,
-           mode: 'dummy',
-         }),
-       });
-
-       if (!res.ok) {
-         throw new Error(`HTTP ${res.status}`);
-       }
-
-       const data = await res.json();
-       addLog(`✅ Bot started`, 'info');
-       onStart?.(data);
-
-       // 即座にボット状態ポーリング開始
-       pollBotStatus();
-     } catch (err) {
-       addLog(`❌ Start failed`, 'error');
-       setRunning(false);
-     }
+    })();
   };
 
   const handleStop = async () => {
-    addLog('Stopping load test... (強制中断中)', 'warn');
+    addLog('Stopping load test...', 'warn');
     setRunning(false); // UI即座に停止表示
-    
+
     // 全ポーリング・計測タイマーを即座に中止
     if (pollingRef.current) clearInterval(pollingRef.current);
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    
-    // バックエンド停止リクエスト（タイムアウト5秒）
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    try {
-       const baseUrl = window.location.origin;
-       const res = await fetch(`${baseUrl}/api/loadTestBot`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ action: 'stop', stream_id: streamId || 'test_stream' }),
-         signal: controller.signal,
-       });
 
-       clearTimeout(timeoutId);
+    // ★ 非同期処理で完全分離（メインスレッドをロックしない）
+    (async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
 
-       if (!res.ok) {
-         throw new Error(`HTTP ${res.status}`);
-       }
+      try {
+        const res = await fetch('/api/loadTestBot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'stop', stream_id: streamId || 'test_stream' }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
 
-       const data = await res.json();
-       addLog(`✅ Bot stopped`, 'info');
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
 
-       // ★ テスト完了ログを /api/track に送信（最終検証）
-       if (window.__sendLogs) {
-         let token = '';
-         if (window.localStorage && window.localStorage.getItem('auth_token')) {
-           token = window.localStorage.getItem('auth_token');
-         }
-         await window.__sendLogs(token);
-       }
-
-       onStop?.(data);
-     } catch (err) {
-       // エラー時は黙って処理（ログはUI更新のみ）
-     }
+        const data = await res.json();
+        addLog(`✅ Bot stopped`, 'info');
+        onStop?.(data);
+      } catch (err) {
+        clearTimeout(timeout);
+      }
+    })();
   };
 
   // ──────────────────────────────────────────────────────────
