@@ -106,7 +106,6 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       console.log('[IVS Stages] ✅✅✅ ALL API CLASSES VERIFIED - PROCEEDING TO JOIN');
 
       // ローカルトラックをラップ（音声トラックを先に追加して優先確保）
-      const localStreams = [];
       const vt = localStream.getVideoTracks()[0];
       const at = localStream.getAudioTracks()[0];
 
@@ -115,34 +114,42 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         audio: at ? `${at.label} [${at.readyState}] [enabled:${at.enabled}]` : 'none',
       });
 
-      // 🔊 音声を先に追加して CPU 割り当て優先確保
-      if (at) {
-        at.enabled = true; // 強制ON
-        localStreams.push(new LocalStageStream(at, { simulcast: false }));
-        console.log('[IVS Stages] ✅ Audio track added FIRST (priority) readyState:', at.readyState);
-      } else {
-        console.warn('[IVS Stages] ⚠️ No audio track available');
-      }
-      if (vt) {
-        localStreams.push(new LocalStageStream(vt, { simulcast: false }));
-        console.log('[IVS Stages] ✅ Video track added to publish (readyState:', vt.readyState, ')');
-      } else {
-        console.warn('[IVS Stages] ⚠️ No video track available');
-      }
-
-      if (localStreams.length === 0) {
+      if (!at && !vt) {
         console.error('[IVS Stages] ❌ No tracks to publish! Aborting join.');
         return;
       }
 
+      // ★ CRITICAL FIX: stageStreamsToPublish は SDK から何度も呼ばれる。
+      // 毎回 localStream から最新のトラックを取得して新しい LocalStageStream を生成する。
+      // クロージャでキャプチャした古い配列を返すと SDK 内部の sort() がクラッシュする。
       const strategy = {
-        stageStreamsToPublish: () => localStreams,
+        stageStreamsToPublish: () => {
+          const streams = [];
+          const currentAt = localStream.getAudioTracks()[0];
+          const currentVt = localStream.getVideoTracks()[0];
+          // 🔊 音声を先に追加して CPU 割り当て優先確保
+          if (currentAt && currentAt.readyState === 'live') {
+            currentAt.enabled = true;
+            streams.push(new LocalStageStream(currentAt, { simulcast: false }));
+          }
+          if (currentVt && currentVt.readyState === 'live') {
+            streams.push(new LocalStageStream(currentVt, { simulcast: false }));
+          }
+          console.log('[IVS Stages] stageStreamsToPublish called → returning', streams.length, 'streams');
+          return streams;
+        },
         shouldPublishParticipant: () => true,
         shouldSubscribeToParticipant: (participant) => {
           console.log('[IVS Stages] shouldSubscribeToParticipant:', participant.id, 'isLocal:', participant.isLocal);
           return participant.isLocal ? SubscribeType.NONE : SubscribeType.AUDIO_VIDEO;
         },
       };
+
+      // 初回ログ（join前の確認用）
+      if (at) console.log('[IVS Stages] ✅ Audio track will be published. readyState:', at.readyState);
+      else console.warn('[IVS Stages] ⚠️ No audio track available at join time');
+      if (vt) console.log('[IVS Stages] ✅ Video track will be published. readyState:', vt.readyState);
+      else console.warn('[IVS Stages] ⚠️ No video track available at join time');
 
       // 🔥 ICE SERVER CONFIGURATION — CRITICAL FOR MOBILE CONNECTIVITY
       // STUN: NAT穿孔 / TURN: Relay通信（Wi-Fi・企業ネットワーク対応）
