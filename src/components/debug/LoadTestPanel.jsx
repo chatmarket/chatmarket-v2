@@ -387,6 +387,17 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
                 {metrics.msgCount}
               </motion.span>
             </div>
+            {/* ★ ログバッファ容量表示（爆撃時の負荷管理） */}
+            <div className="flex items-center justify-between gap-2 text-[10px]">
+              <span className="text-white/60">📊 LogBuf</span>
+              <span className={`font-bold ${
+                window.__logBuffer?.length > 400 ? 'text-red-400' :
+                window.__logBuffer?.length > 200 ? 'text-yellow-400' :
+                'text-green-400'
+              }`}>
+                {window.__logBuffer?.length || 0}/500
+              </span>
+            </div>
           </>
         )}
       </div>

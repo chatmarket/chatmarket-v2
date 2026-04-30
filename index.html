@@ -136,19 +136,30 @@
       }
     </script>
 
-    <!-- ★ ログ送信初期化（認証付き POST） -->
+    <!-- ★ ログ送信初期化（バッファリング + 容量管理） -->
     <script>
       window.__logBuffer = [];
+      window.__logConfig = {
+        maxBufferSize: 500,      // 最大バッファ：500ログ（超過時は古い方を削除）
+        batchSize: 100,          // 1回の送信：100ログ単位
+        sendInterval: 5000,      // 5秒ごとに送信
+        isSending: false         // 送信中フラグ（重複送信防止）
+      };
+
       window.__sendLogs = function(token) {
-        if (window.__logBuffer.length === 0) return Promise.resolve();
+        if (window.__logBuffer.length === 0 || window.__logConfig.isSending) return Promise.resolve();
+        
+        // 最大100ログまでをバッチ送信
+        const batch = window.__logBuffer.splice(0, window.__logConfig.batchSize);
         
         const payload = {
           path: window.location.pathname,
           hostname: window.location.hostname,
-          logs: window.__logBuffer.splice(0, 100),
+          logs: batch,
           timestamp: new Date().toISOString()
         };
 
+        window.__logConfig.isSending = true;
         return fetch('/api/track', {
           method: 'POST',
           headers: {
@@ -159,7 +170,20 @@
           body: JSON.stringify(payload)
         }).catch(e => {
           console.warn('[LogTracker] Send error:', e.message);
+        }).finally(() => {
+          window.__logConfig.isSending = false;
         });
+      };
+
+      // ★ バッファ溢れ対策：容量チェック関数
+      window.__checkBufferCapacity = function() {
+        const cfg = window.__logConfig;
+        if (window.__logBuffer.length > cfg.maxBufferSize) {
+          // 古いログから削除（FIFO）
+          const excess = window.__logBuffer.length - cfg.maxBufferSize;
+          window.__logBuffer.splice(0, excess);
+          console.warn(`[LogBuffer] Overflow: removed ${excess} old logs`);
+        }
       };
     </script>
     <!-- Amazon IVS Web Broadcast SDK v1.33.0 (Stages統合 - sort bugfix版) -->

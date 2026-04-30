@@ -53,6 +53,10 @@ export default function LogViewerOverlay({ isDev = true }) {
           level,
           msg,
         });
+        // バッファ溢れ対策
+        if (window.__checkBufferCapacity) {
+          window.__checkBufferCapacity();
+        }
       }
     };
 
@@ -73,7 +77,7 @@ export default function LogViewerOverlay({ isDev = true }) {
 
     originalLog('[LogViewer] 📊 Initialized with buffer sync');
 
-    // 定期送信（5秒ごと）
+    // 定期送信（設定間隔ごと）
     const sendInterval = setInterval(async () => {
       if (window.__sendLogs && window.__logBuffer && window.__logBuffer.length > 0) {
         try {
@@ -83,11 +87,15 @@ export default function LogViewerOverlay({ isDev = true }) {
             token = window.localStorage.getItem('auth_token');
           }
           await window.__sendLogs(token);
+          // バッファ容量チェック（爆撃時のオーバーフロー防止）
+          if (window.__checkBufferCapacity) {
+            window.__checkBufferCapacity();
+          }
         } catch (e) {
           originalWarn('[LogViewer] Send failed:', e.message);
         }
       }
-    }, 5000);
+    }, window.__logConfig?.sendInterval || 5000);
 
     return () => {
       clearInterval(sendInterval);
