@@ -163,10 +163,10 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
         {isOwnChannel && (
           <Button
             size="sm"
-            className="w-full h-7 text-[11px] bg-green-600 hover:bg-green-500 gap-1"
-            onClick={() => navigate('/call-waiting?autostart=1')}
+            className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1"
+            onClick={() => navigate(`/call-profile/${cardChannelId}`)}
           >
-            <PhoneCall className="w-3 h-3" /> 通話待機画面へ
+            <User className="w-3 h-3" /> プロフィールを見る
           </Button>
         )}
       </div>
