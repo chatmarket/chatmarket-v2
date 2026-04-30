@@ -31,9 +31,17 @@ export default function CallProfilePage() {
   const [editAvailableDates, setEditAvailableDates] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // ユーザーのチャンネル（= 自分がライバーかどうか判定用）
+  const [myChannel, setMyChannel] = useState(null);
+
   useEffect(() => {
     base44.auth.isAuthenticated().then((authed) => {
-      if (authed) base44.auth.me().then(setUser).catch(() => {});
+      if (authed) base44.auth.me().then(async (u) => {
+        setUser(u);
+        // 自分のチャンネルを取得（ライバー判定用）
+        const channels = await base44.entities.Channel.filter({ owner_email: u.email });
+        setMyChannel(channels[0] || null);
+      }).catch(() => {});
     });
   }, []);
 
@@ -132,6 +140,14 @@ export default function CallProfilePage() {
 
   const priceOptions = getPriceOptions();
   const isOwnChannel = user?.email === channel.owner_email;
+
+  // ライバー（自分もチャンネルを持つ）が他ライバーのページを見ているか
+  const isCallerALiver = !!myChannel && !isOwnChannel;
+  // call&anserプランかどうか
+  const userPlan = user?.plan || (user?.role === "admin" ? "call-anser" : "free");
+  const isCallAnserPlan = userPlan === "call-anser" || user?.role === "admin";
+  // ライバーが視聴者へ発信できるか（call&anserプランのみ可）
+  const canCallerCall = !isCallerALiver || isCallAnserPlan;
   const desc = isEditing ? editDesc : (channel.description || "");
   const DESC_LIMIT = 200;
   const isLongDesc = desc.length > DESC_LIMIT;
@@ -460,23 +476,36 @@ export default function CallProfilePage() {
           <div className="max-w-2xl mx-auto space-y-2">
             {/* ① 今すぐ通話ボタン */}
             <motion.button
-              whileTap={{ scale: 0.97 }}
-              animate={channel.call_enabled ? {
+              whileTap={{ scale: canCallerCall ? 0.97 : 1 }}
+              animate={channel.call_enabled && canCallerCall ? {
                 boxShadow: ["0 0 16px rgba(0,255,157,0.4)", "0 0 36px rgba(0,255,157,0.8)", "0 0 16px rgba(0,255,157,0.4)"],
               } : {}}
               transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              onClick={handleStartCall}
-              disabled={calling || !channel.call_enabled}
-              className="w-full rounded-2xl font-black text-lg flex items-center justify-center gap-3 disabled:opacity-40 transition-all"
+              onClick={canCallerCall ? handleStartCall : () => toast.error("CALL&ANSERプランに加入するとライバー同士の通話が可能になります")}
+              disabled={calling || !channel.call_enabled || (!canCallerCall && false)}
+              className="w-full rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all"
               style={{
                 height: 60,
-                background: channel.call_enabled ? "linear-gradient(135deg, #00ff9d, #00c97a)" : "rgba(255,255,255,0.08)",
-                color: channel.call_enabled ? "#000" : "#666",
+                background: !channel.call_enabled
+                  ? "rgba(255,255,255,0.08)"
+                  : canCallerCall
+                    ? "linear-gradient(135deg, #00ff9d, #00c97a)"
+                    : "rgba(255,255,255,0.06)",
+                color: !channel.call_enabled || !canCallerCall ? "#666" : "#000",
+                opacity: calling ? 0.6 : 1,
               }}
             >
               <PhoneCall className="w-6 h-6" />
-              {calling ? "接続中..." : channel.call_enabled ? "今すぐ通話を開始する" : "現在受付停止中"}
+              {calling ? "接続中..." : !channel.call_enabled ? "現在受付停止中" : !canCallerCall ? "ライバーは発信不可（CALL&ANSERのみ）" : "今すぐ通話を開始する"}
             </motion.button>
+
+            {/* ライバー制限の説明 */}
+            {isCallerALiver && !isCallAnserPlan && channel.call_enabled && (
+              <p className="text-center text-xs text-muted-foreground px-2">
+                ライバーが他ライバーに発信するには <span className="text-primary font-bold">CALL&ANSERプラン</span> への加入が必要です
+                <button onClick={() => navigate("/plan-select")} className="ml-1.5 text-primary underline font-bold">プランを見る →</button>
+              </p>
+            )}
 
             {/* ② 予約リクエストボタン */}
             <button
