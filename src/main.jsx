@@ -23,53 +23,8 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// グローバルレベルで /app-logs/ へのリクエストを遮断（fetch と axios 両方）
-if (typeof window !== 'undefined') {
-  // === fetch インターセプション ===
-  const originalFetch = window.fetch;
-  window.fetch = function(...args) {
-    let url = String(args[0] || '');
-    if (args[0] instanceof Request) {
-      url = args[0].url;
-    }
-    
-    if (url.includes('/app-logs/')) {
-      console.log('[FETCH_INTERCEPT] Blocked /app-logs/ request');
-      return Promise.resolve(new Response(JSON.stringify({}), { 
-        status: 200, 
-        headers: { 'Content-Type': 'application/json' } 
-      }));
-    }
-    return originalFetch.apply(this, args);
-  };
-
-  // === axios インターセプション（SDK が axios を使う場合）===
-  // window.axios が存在する場合の対応
-  if (window.axios) {
-    window.axios.interceptors.request.use((config) => {
-      if (config.url && config.url.includes('/app-logs/')) {
-        console.log('[AXIOS_INTERCEPT] Blocked /app-logs/ request');
-        return Promise.reject(new Error('Blocked'));
-      }
-      return config;
-    }, (error) => Promise.reject(error));
-  }
-
-  // SDK のいかなるリクエストメソッドも /app-logs/ をターゲットにさせない
-  const blockAppLogs = (originalMethod) => {
-    return function(...args) {
-      const [url] = args;
-      if (typeof url === 'string' && url.includes('/app-logs/')) {
-        console.log('[METHOD_OVERRIDE] Blocked /app-logs/ via method override');
-        return Promise.resolve(new Response(JSON.stringify({}), { 
-          status: 200, 
-          headers: { 'Content-Type': 'application/json' } 
-        }));
-      }
-      return originalMethod.apply(this, args);
-    };
-  };
-}
+// ★ 開発環境ではログ送信許可 / 本番環境では遮断なし（サーバー側で制御）
+// 既存のインターセプター完全削除 → /api/track POST を自由に通す
 
 // ★ SW強制クリア＆再登録停止（キャッシュが修正を妨害しないよう）
 if ('serviceWorker' in navigator) {

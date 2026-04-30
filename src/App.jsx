@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/components/layout/AppLayout';
 import PageNotFound from '@/lib/PageNotFound';
 import ErrorHandler from '@/components/ErrorHandler';
+import LogViewerOverlay from '@/components/debug/LogViewerOverlay';
 
 // Add page imports here
 import Home from '@/pages/Home';
@@ -164,6 +165,7 @@ export default function App() {
         </Routes>
         <ErrorHandler />
         <Toaster />
+        <LogViewerOverlay isDev={true} />
       </Router>
     </QueryClientProvider>
   );
