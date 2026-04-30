@@ -1179,7 +1179,7 @@ export default function VideoCallPage() {
 
       {/* VIDEO AREA — 16:9固定（paddingトリックで確実に比率維持） */}
       <div className="relative bg-black w-full" style={{ flexShrink: 0 }}>
-      <div ref={videoContainerRef} className="relative bg-black w-full" style={{ paddingTop: '56.25%' }}>
+      <div ref={videoContainerRef} className="w-full" style={{ paddingTop: '56.25%', position: 'relative', backgroundColor: '#000', overflow: 'hidden' }}>
 
         {/* ── 常時マウント: リモート映像（active時のみ表示） ── */}
         <video
@@ -1194,10 +1194,12 @@ export default function VideoCallPage() {
             e.target.play().catch(() => {});
           }}
           style={{
-            position: 'absolute', inset: 0,
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
             width: '100%', height: '100%',
             objectFit: 'contain',
+            objectPosition: 'center center',
             backgroundColor: '#000',
+            verticalAlign: 'middle',
             display: call?.status === 'active' ? 'block' : 'none',
             zIndex: 1,
           }}
@@ -1224,11 +1226,13 @@ export default function VideoCallPage() {
             zIndex: 10,
             filter: currentFilter?.style || '',
           } : {
-            // pending / accepted: 16:9コンテナ内でcontain表示
-            position: 'absolute', inset: 0,
+            // pending / accepted: 16:9コンテナ内でcontain＋中央表示
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
             width: '100%', height: '100%',
             objectFit: 'contain',
+            objectPosition: 'center center',
             backgroundColor: '#000',
+            verticalAlign: 'middle',
             zIndex: 1,
             filter: call?.status === 'pending' && !isCaller ? 'brightness(0.5)' : '',
           }}
