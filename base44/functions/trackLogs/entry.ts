@@ -47,13 +47,23 @@ Deno.serve(async (req) => {
 
     console.log(`[trackLogs] 📥 Received ${logs.length} logs from ${hostname}${user ? ` (user: ${user.email})` : ' (unauthenticated)'}`);
 
-    // ログの内容を表示（最初の3件）
-    logs.slice(0, 3).forEach((log, idx) => {
+    // ★ 爆撃テスト検証：yell/chat ログをカウント
+    const yellCount = logs.filter(l => l.msg.includes('[YellBurst]') || l.msg.includes('coins')).length;
+    const chatCount = logs.filter(l => l.msg.includes('[ChatFlood]') || l.msg.includes('💬')).length;
+    const ivsCount = logs.filter(l => l.msg.includes('[IVS Stages]')).length;
+    
+    if (yellCount > 0 || chatCount > 0) {
+      console.log(`🔥 BOMBARDMENT DETECTED:`);
+      console.log(`   💰 Yells: ${yellCount} | 💬 Chats: ${chatCount} | 📡 IVS: ${ivsCount}`);
+    }
+
+    // ログの内容を表示（最初の5件）
+    logs.slice(0, 5).forEach((log, idx) => {
       console.log(`  [${idx + 1}] [${log.level.toUpperCase()}] ${log.msg.substring(0, 100)}`);
     });
 
-    if (logs.length > 3) {
-      console.log(`  ... +${logs.length - 3} more`);
+    if (logs.length > 5) {
+      console.log(`  ... +${logs.length - 5} more`);
     }
 
     return Response.json(
@@ -62,6 +72,12 @@ Deno.serve(async (req) => {
         message: `✅ Logged ${logs.length} entries`,
         received: logs.length,
         user: user?.email || 'anonymous',
+        bombardment: {
+          yells: yellCount,
+          chats: chatCount,
+          ivsEvents: ivsCount,
+          isActive: yellCount > 0 || chatCount > 0
+        }
       },
       { status: 200, headers }
     );

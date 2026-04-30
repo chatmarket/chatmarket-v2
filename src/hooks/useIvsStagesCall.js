@@ -71,6 +71,13 @@ export function useIvsStagesCall({
           };
           if (videoEl.readyState >= 1) videoEl.play().catch(() => {});
           console.log('[IVS Stages] ✅ Remote video attached');
+          if (window.__logBuffer) {
+            window.__logBuffer.push({
+              ts: new Date().toISOString(),
+              level: 'info',
+              msg: '[IVS Stages] Remote video stream attached'
+            });
+          }
         });
 
         stage.on(StageEvents.STAGE_CONNECTION_STATE_CHANGED, (state) => {
@@ -82,11 +89,26 @@ export function useIvsStagesCall({
         });
 
         console.log('[IVS Stages] ⏳ joining...');
+        if (window.__logBuffer) {
+          window.__logBuffer.push({
+            ts: new Date().toISOString(),
+            level: 'info',
+            msg: '[IVS Stages] Starting stage join...'
+          });
+        }
         await stage.join();
 
         if (!cancelledRef.current) {
           stageRef.current = stage;
           console.log('[IVS Stages] ✅ joined OK');
+          // ログバッファに追加（/api/track 送信用）
+          if (window.__logBuffer) {
+            window.__logBuffer.push({
+              ts: new Date().toISOString(),
+              level: 'info',
+              msg: '[IVS Stages] ✅ Stage joined successfully'
+            });
+          }
         } else {
           stage.leave();
         }

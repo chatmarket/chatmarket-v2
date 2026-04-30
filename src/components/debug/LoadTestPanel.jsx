@@ -171,6 +171,20 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     setMetrics(prev => ({ ...prev, memoryPeak: 0, memoryRecovery: 0 })); // リセット
     addLog('Starting load test...', 'info');
     
+    // ★ ログ送信ガード：既存ログを即座に /api/track に送信
+    if (window.__sendLogs) {
+      try {
+        let token = '';
+        if (window.localStorage && window.localStorage.getItem('auth_token')) {
+          token = window.localStorage.getItem('auth_token');
+        }
+        await window.__sendLogs(token);
+        addLog('📤 Pre-test logs sent to /api/track', 'info');
+      } catch (e) {
+        addLog(`⚠️ Pre-test send failed: ${e.message}`, 'warn');
+      }
+    }
+    
     try {
       const res = await fetch('/api/loadTestBot', {
         method: 'POST',
@@ -191,6 +205,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
       const data = await res.json();
       addLog(`✅ Bot started: ${data.message}`, 'info');
       addLog(`Mode: ${data.mode} | Users: ${data.users}`, 'info');
+      addLog('🔥 100-user bombardment initiated - logging all yells/chats', 'info');
       onStart?.(data);
 
       // 即座にボット状態ポーリング開始
@@ -233,6 +248,21 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
       
       if (data.metrics?.errors?.length > 0) {
         addLog(`Errors: ${data.metrics.errors.length}`, 'warn');
+      }
+
+      // ★ テスト完了ログを /api/track に送信（最終検証）
+      if (window.__sendLogs) {
+        try {
+          addLog('📤 Sending bombardment logs to /api/track...', 'info');
+          let token = '';
+          if (window.localStorage && window.localStorage.getItem('auth_token')) {
+            token = window.localStorage.getItem('auth_token');
+          }
+          await window.__sendLogs(token);
+          addLog('✅ Bombardment data successfully logged to /api/track', 'info');
+        } catch (e) {
+          addLog(`⚠️ Final send failed: ${e.message}`, 'warn');
+        }
       }
 
       onStop?.(data);
