@@ -141,7 +141,7 @@ export default function CallProfilePage() {
   const tomorrowKey = (() => { const d = new Date(); d.setDate(d.getDate()+1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
 
   return (
-    <div className="min-h-screen bg-background pb-56">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}>
 
       {/* ══════════════════════════════════
           1. カバー画像エリア（最上部）
