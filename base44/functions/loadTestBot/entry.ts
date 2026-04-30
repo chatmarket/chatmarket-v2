@@ -161,13 +161,25 @@ async function runChatFlood(base44, streamId, dummyUsers, durationSeconds, mode)
 // メインハンドラー
 // ──────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json',
+  };
+
+  // OPTIONS プリフライト対応
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
     // ── 認証チェック ──
     if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: admin only' }, { status: 403 });
+      return Response.json({ error: 'Forbidden: admin only' }, { status: 403, headers });
     }
 
     // ── 環境チェック ──
@@ -183,7 +195,7 @@ Deno.serve(async (req) => {
     const { action, duration_seconds = 30, stream_id, user_count = 100, mode = 'dummy' } = body;
 
     if (!action || !stream_id) {
-      return Response.json({ error: 'action and stream_id required' }, { status: 400 });
+      return Response.json({ error: 'action and stream_id required' }, { status: 400, headers });
     }
 
     // ── stop アクション ──
@@ -194,12 +206,12 @@ Deno.serve(async (req) => {
         success: true,
         message: 'Bot stopped',
         metrics: botMetrics,
-      });
+      }, { headers });
     }
 
     // ── 新規実行（重複実行防止） ──
     if (botRunning) {
-      return Response.json({ error: 'Bot already running' }, { status: 409 });
+      return Response.json({ error: 'Bot already running' }, { status: 409, headers });
     }
 
     botRunning = true;
@@ -235,9 +247,9 @@ Deno.serve(async (req) => {
       users: user_count,
       stream_id: stream_id,
       poll_metrics_url: '/api/loadTestBot?action=status',
-    });
+    }, { headers });
   } catch (error) {
     console.error('[LoadTestBot] Error:', error.message);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500, headers });
   }
 });

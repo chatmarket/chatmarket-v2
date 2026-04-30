@@ -27,6 +27,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   const rafRef = useRef(null);
   const pollingRef = useRef(null);
   const abortControllerRef = useRef(null); // リクエスト中断制御
+  const lastErrorTimeRef = useRef(0); // 前回エラー時刻（3秒インターバル用）
 
   // ──────────────────────────────────────────────────────────
   // ログ追加（内部）
@@ -90,6 +91,9 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   // ネットワーク遅延計測（ping）
   // ──────────────────────────────────────────────────────────
   const measureLag = async () => {
+     const now = Date.now();
+     if (now - lastErrorTimeRef.current < 3000) return; // エラーから3秒は実行禁止
+     
      const start = performance.now();
      try {
        const baseUrl = window.location.origin;
@@ -102,6 +106,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
        const lag = Math.round(performance.now() - start);
        setMetrics(prev => ({ ...prev, lag }));
      } catch (err) {
+       lastErrorTimeRef.current = Date.now();
        setMetrics(prev => ({ ...prev, lag: 9999 }));
      }
    };
@@ -110,6 +115,9 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
    // ボット状態ポーリング（メトリクス取得）
    // ──────────────────────────────────────────────────────────
    const pollBotStatus = async () => {
+     const now = Date.now();
+     if (now - lastErrorTimeRef.current < 3000) return; // エラーから3秒は実行禁止
+     
      try {
        const baseUrl = window.location.origin;
        const res = await fetch(`${baseUrl}/api/loadTestBot`, {
@@ -128,7 +136,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
          }
        }
      } catch (err) {
-       // ポーリング失敗時は **黙って無視** - リトライ厳禁（スマホ熱暴走防止）
+       lastErrorTimeRef.current = Date.now();
      }
    };
 
