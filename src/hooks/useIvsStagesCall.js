@@ -40,13 +40,25 @@ function resolveIVSClient() {
   // 候補1: IVSBroadcastClient 直下
   if (typeof rawClient.Stage === 'function') {
     DETECTED_IVS_LOCATION = 'IVSBroadcastClient';
-    console.log('[IVS Stages] 📍 Stage location DETECTED @ IVSBroadcastClient');
+    console.log('╔═══════════════════════════════════════════════════╗');
+    console.log('║ 📍 STAGE LOCATION DETECTED                        ║');
+    console.log('╠═══════════════════════════════════════════════════╣');
+    console.log('║ PATH: window.IVSBroadcastClient.Stage             ║');
+    console.log('║ ACTION: Fix → Set DETECTED_IVS_LOCATION =         ║');
+    console.log('║         "IVSBroadcastClient" in resolveIVSClient  ║');
+    console.log('╚═══════════════════════════════════════════════════╝');
     return rawClient;
   }
   // 候補2: window 直下
   if (typeof window.Stage === 'function') {
     DETECTED_IVS_LOCATION = 'window';
-    console.log('[IVS Stages] 📍 Stage location DETECTED @ window');
+    console.log('╔═══════════════════════════════════════════════════╗');
+    console.log('║ 📍 STAGE LOCATION DETECTED                        ║');
+    console.log('╠═══════════════════════════════════════════════════╣');
+    console.log('║ PATH: window.Stage                                ║');
+    console.log('║ ACTION: Fix → Set DETECTED_IVS_LOCATION =         ║');
+    console.log('║         "window" in resolveIVSClient              ║');
+    console.log('╚═══════════════════════════════════════════════════╝');
     return window;
   }
   // 候補3: IVSBroadcastClient のネストを全探索
@@ -54,7 +66,13 @@ function resolveIVSClient() {
     const val = rawClient[key];
     if (val && typeof val === 'object' && typeof val.Stage === 'function') {
       DETECTED_IVS_LOCATION = key;
-      console.log('[IVS Stages] 📍 Stage location DETECTED @ IVSBroadcastClient.' + key);
+      console.log('╔═══════════════════════════════════════════════════╗');
+      console.log('║ 📍 STAGE LOCATION DETECTED                        ║');
+      console.log('╠═══════════════════════════════════════════════════╣');
+      console.log('║ PATH: window.IVSBroadcastClient.' + key.padEnd(28) + '║');
+      console.log('║ ACTION: Fix → Set DETECTED_IVS_LOCATION =         ║');
+      console.log('║         "' + key + '" in resolveIVSClient' + ' '.repeat(Math.max(0, 15 - key.length)) + '║');
+      console.log('╚═══════════════════════════════════════════════════╝');
       return val;
     }
   }

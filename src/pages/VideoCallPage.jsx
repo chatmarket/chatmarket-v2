@@ -1128,17 +1128,28 @@ export default function VideoCallPage() {
       const d = ev.data;
       if (ev.type !== "create" || d?.channel_owner_email !== user.email) return;
       const amount = d.amount || 0;
+      
+      // ★ CRITICAL: トースト＋アニメーション完全同期（1ミリの遅延なし）
+      console.log('[Yell] 🎉 RECEIVED:', { amount, from: d.user_email, timestamp: new Date().toISOString() });
+      
+      // 音声 + トースト を同時発火
       playCoinSound();
-      addFloating("💰","coin");
-      setTimeout(()=>addFloating("🪙","emoji"),130);
-      setTimeout(()=>addFloating("✨","emoji"),260);
-      setTimeout(()=>addFloating("🎉","emoji"),390);
-      setTimeout(()=>addFloating("💛","emoji"),520);
-      setCoinBalance(prev=>(prev!==null ? prev+Math.floor(amount*0.85) : prev));
-      toast.success(`🎉 +${amount.toLocaleString()} コインのエール受信！獲得: ${Math.floor(amount*0.85)}コイン`,{
-        duration:6000,
-        style:{background:'linear-gradient(135deg,#7c4a00,#b8860b)',border:'2px solid #ffd700',color:'#fff9c4',fontWeight:'bold',boxShadow:'0 0 24px rgba(255,215,0,0.7)'},
+      toast.success(`🎉 +${amount.toLocaleString()} コインのエール受信！獲得: ${Math.floor(amount*0.85)}コイン`, {
+        duration: 6000,
+        style: { background: 'linear-gradient(135deg,#7c4a00,#b8860b)', border: '2px solid #ffd700', color: '#fff9c4', fontWeight: 'bold', boxShadow: '0 0 24px rgba(255,215,0,0.7)' },
       });
+      
+      // 同時にアニメーション開始（queueMicrotask で遅延を最小化）
+      queueMicrotask(() => {
+        addFloating("💰", "coin");
+        setTimeout(() => addFloating("🪙", "emoji"), 130);
+        setTimeout(() => addFloating("✨", "emoji"), 260);
+        setTimeout(() => addFloating("🎉", "emoji"), 390);
+        setTimeout(() => addFloating("💛", "emoji"), 520);
+      });
+      
+      // 残高更新（DBとUI同期）
+      setCoinBalance(prev => (prev !== null ? prev + Math.floor(amount * 0.85) : prev));
     });
     return ()=>unsub();
   }, [user?.email, call?.status]);
@@ -1533,12 +1544,13 @@ export default function VideoCallPage() {
               </button>
             )}
 
-            {/* 通話終了 — 最大サイズで誤タップ防止 */}
+            {/* 通話終了 — 最大サイズで誤タップ防止 + z-index確保 */}
             <motion.button
               onClick={handleEndCall}
               animate={{ boxShadow: ["0 0 15px rgba(255,0,85,0.5)", "0 0 30px rgba(255,0,85,0.9)", "0 0 15px rgba(255,0,85,0.5)"] }}
               transition={{ duration: 1.5, repeat: Infinity }}
               className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center border-2 border-red-400 hover:bg-red-500 active:scale-95 transition-transform"
+              style={{ position: 'relative', zIndex: 40 }}
               aria-label="通話を終了する"
             >
               <PhoneOff className="w-6 h-6 text-white" />
