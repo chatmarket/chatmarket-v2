@@ -1107,9 +1107,10 @@ export default function VideoCallPage() {
 
   useEffect(() => { chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
-  // ★ エール受信購読 — user確定後すぐ開始（通話状態に依存しない）
+  // ★ エール受信購読 — call.status === 'active' になった直後に確実に起動
+  // user と call が揃った瞬間から購読を開始し、映像接続と同期する
   useEffect(() => {
-    if (!user) return;
+    if (!user || !call) return;
     const playCoinSound = () => {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
