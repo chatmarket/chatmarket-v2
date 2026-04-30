@@ -105,13 +105,23 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       }
       console.log('[IVS Stages] ✅✅✅ ALL API CLASSES VERIFIED - PROCEEDING TO JOIN');
 
-      // ローカルトラックをラップ（音声トラックを先に追加して優先確保）
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // ★ CRITICAL FIX for "Cannot read properties of undefined (reading 'sort')"
+      //
+      // IVS SDK v1.34.0 は stageStreamsToPublish() の戻り値を内部でソートする。
+      // このとき LocalStageStream インスタンスの内部プロパティ(_streamType等)を参照する。
+      //
+      // NG: 毎回 new LocalStageStream() を生成 → SDK が同一インスタンスを期待するのに
+      //     別インスタンスが返るため内部状態が undefined になり sort() がクラッシュ
+      //
+      // OK: join() 前に一度だけインスタンスを生成し、同じ参照を返し続ける
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       const vt = localStream.getVideoTracks()[0];
       const at = localStream.getAudioTracks()[0];
 
-      console.log('[IVS Stages] 📹 Adding tracks to publish:', {
-        video: vt ? `${vt.label} [${vt.readyState}] [enabled:${vt.enabled}]` : 'none',
-        audio: at ? `${at.label} [${at.readyState}] [enabled:${at.enabled}]` : 'none',
+      console.log('[IVS Stages] 📹 Tracks at join time:', {
+        video: vt ? `${vt.label} [${vt.readyState}]` : 'none',
+        audio: at ? `${at.label} [${at.readyState}]` : 'none',
       });
 
       if (!at && !vt) {
@@ -119,37 +129,26 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
         return;
       }
 
-      // ★ CRITICAL FIX: stageStreamsToPublish は SDK から何度も呼ばれる。
-      // 毎回 localStream から最新のトラックを取得して新しい LocalStageStream を生成する。
-      // クロージャでキャプチャした古い配列を返すと SDK 内部の sort() がクラッシュする。
+      // ★ インスタンスを一度だけ生成（SDK が同一参照を期待するため）
+      const publishStreams = [];
+      if (at) {
+        at.enabled = true;
+        publishStreams.push(new LocalStageStream(at, { simulcast: false }));
+        console.log('[IVS Stages] ✅ Audio LocalStageStream created. readyState:', at.readyState);
+      }
+      if (vt) {
+        publishStreams.push(new LocalStageStream(vt, { simulcast: false }));
+        console.log('[IVS Stages] ✅ Video LocalStageStream created. readyState:', vt.readyState);
+      }
+
       const strategy = {
-        stageStreamsToPublish: () => {
-          const streams = [];
-          const currentAt = localStream.getAudioTracks()[0];
-          const currentVt = localStream.getVideoTracks()[0];
-          // 🔊 音声を先に追加して CPU 割り当て優先確保
-          if (currentAt && currentAt.readyState === 'live') {
-            currentAt.enabled = true;
-            streams.push(new LocalStageStream(currentAt, { simulcast: false }));
-          }
-          if (currentVt && currentVt.readyState === 'live') {
-            streams.push(new LocalStageStream(currentVt, { simulcast: false }));
-          }
-          console.log('[IVS Stages] stageStreamsToPublish called → returning', streams.length, 'streams');
-          return streams;
-        },
+        // 同じ配列参照を返し続ける（毎回 new しない）
+        stageStreamsToPublish: () => publishStreams,
         shouldPublishParticipant: () => true,
         shouldSubscribeToParticipant: (participant) => {
-          console.log('[IVS Stages] shouldSubscribeToParticipant:', participant.id, 'isLocal:', participant.isLocal);
           return participant.isLocal ? SubscribeType.NONE : SubscribeType.AUDIO_VIDEO;
         },
       };
-
-      // 初回ログ（join前の確認用）
-      if (at) console.log('[IVS Stages] ✅ Audio track will be published. readyState:', at.readyState);
-      else console.warn('[IVS Stages] ⚠️ No audio track available at join time');
-      if (vt) console.log('[IVS Stages] ✅ Video track will be published. readyState:', vt.readyState);
-      else console.warn('[IVS Stages] ⚠️ No video track available at join time');
 
       // 🔥 ICE SERVER CONFIGURATION — CRITICAL FOR MOBILE CONNECTIVITY
       // STUN: NAT穿孔 / TURN: Relay通信（Wi-Fi・企業ネットワーク対応）
@@ -460,27 +459,40 @@ export function useIvsStagesCall({ call, localStream, remoteVideoRef, user, enab
       return;
     }
 
-    // Stages API の場所を探す: rawClient.Stage または rawClient 自体
-    let IVSClient = rawClient;
-    console.log('╔════════════════════════════════════════════════════╗');
-    console.log('║ 🔎 STAGE API LOCATION CHECK                       ║');
-    console.log('╚════════════════════════════════════════════════════╝');
-    console.log('[IVS Stages] Checking rawClient.Stage:', typeof rawClient.Stage);
-    console.log('[IVS Stages] Checking rawClient.StageEvents:', typeof rawClient.StageEvents);
-
-    if (!rawClient.Stage && !rawClient.StageEvents) {
-      console.warn('[IVS Stages] ⚠️ Stage API not found on IVSBroadcastClient. Searching window...');
-      if (window.Stage && window.StageEvents) {
-        IVSClient = window;
-        console.log('[IVS Stages] ✅✅ FOUND: Stage API on window directly');
-      } else {
-        console.error('[IVS Stages] ❌❌ CRITICAL: Stage / StageEvents not found anywhere!');
-        console.error('[IVS Stages] ❌ SDK version mismatch or amazon-ivs-web-broadcast.js not loaded');
-        console.error('[IVS Stages] Available on window:', Object.keys(window).filter(k => k.toLowerCase().includes('ivs') || k.toLowerCase().includes('stage')).join(', '));
-        return;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // IVS SDK v1.34.0: Stage/StageEvents は IVSBroadcastClient の直下に存在するが
+    // ビルドによっては window 直下に公開される場合もある。
+    // 優先順位: rawClient > rawClient 内部 > window
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let IVSClient = null;
+    
+    // 候補1: IVSBroadcastClient 自体に Stage がある
+    if (rawClient.Stage && rawClient.StageEvents) {
+      IVSClient = rawClient;
+      console.log('[IVS Stages] ✅ Stage API found on IVSBroadcastClient directly');
+    }
+    // 候補2: window に直接公開されている
+    else if (window.Stage && window.StageEvents) {
+      IVSClient = window;
+      console.log('[IVS Stages] ✅ Stage API found on window directly');
+    }
+    // 候補3: IVSBroadcastClient のネストされたプロパティを全探索
+    else {
+      for (const key of Object.keys(rawClient)) {
+        const val = rawClient[key];
+        if (val && typeof val === 'object' && val.Stage && val.StageEvents) {
+          IVSClient = val;
+          console.log('[IVS Stages] ✅ Stage API found nested under IVSBroadcastClient.' + key);
+          break;
+        }
       }
-    } else {
-      console.log('[IVS Stages] ✅✅ Stage API FOUND on IVSBroadcastClient');
+    }
+
+    if (!IVSClient) {
+      console.error('[IVS Stages] ❌ Stage/StageEvents not found anywhere!');
+      console.error('[IVS Stages] IVSBroadcastClient keys:', Object.keys(rawClient).join(', '));
+      console.error('[IVS Stages] window Stage:', typeof window.Stage, '| window StageEvents:', typeof window.StageEvents);
+      return;
     }
 
     const stagesToken = user.email === call.caller_email
