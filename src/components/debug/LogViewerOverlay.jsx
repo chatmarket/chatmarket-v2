@@ -43,21 +43,8 @@ export default function LogViewerOverlay({ isDev = true }) {
         msg,
       };
 
-      // UI 更新用
+      // UI 更新のみ（外部送信・バッファ参照は全て削除）
       setLogs(prev => [...prev.slice(-99), logEntry]);
-
-      // グローバルバッファに追加（/api/track 送信用）
-      if (window.__logBuffer) {
-        window.__logBuffer.push({
-          ts: new Date().toISOString(),
-          level,
-          msg,
-        });
-        // バッファ溢れ対策
-        if (window.__checkBufferCapacity) {
-          window.__checkBufferCapacity();
-        }
-      }
     };
 
     console.log = function (...args) {
@@ -77,28 +64,7 @@ export default function LogViewerOverlay({ isDev = true }) {
 
     originalLog('[LogViewer] 📊 Initialized with buffer sync');
 
-    // 定期送信（設定間隔ごと）
-    const sendInterval = setInterval(async () => {
-      if (window.__sendLogs && window.__logBuffer && window.__logBuffer.length > 0) {
-        try {
-          // 認証トークンを試みて取得
-          let token = '';
-          if (window.localStorage && window.localStorage.getItem('auth_token')) {
-            token = window.localStorage.getItem('auth_token');
-          }
-          await window.__sendLogs(token);
-          // バッファ容量チェック（爆撃時のオーバーフロー防止）
-          if (window.__checkBufferCapacity) {
-            window.__checkBufferCapacity();
-          }
-        } catch (e) {
-          originalWarn('[LogViewer] Send failed:', e.message);
-        }
-      }
-    }, window.__logConfig?.sendInterval || 5000);
-
     return () => {
-      clearInterval(sendInterval);
       console.log = originalLog;
       console.warn = originalWarn;
       console.error = originalError;

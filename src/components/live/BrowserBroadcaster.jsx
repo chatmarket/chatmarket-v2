@@ -318,13 +318,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     await pc.setLocalDescription(offer);
     console.log('[BrowserBroadcaster] 📤 Offer created, sending to WHIP...');
 
-    // WHIP エンドポイント URL を構築（streamId をパラメータとして追加）
-    const whipUrl = new URL(WHIP_ENDPOINT);
-    whipUrl.searchParams.append('streamId', streamId);
+    // WHIP エンドポイント URL を構築（new URL は末尾スラッシュを付けるので文字列結合）
+    const whipUrl = `${WHIP_ENDPOINT}?streamId=${streamId}`;
     
-    console.log('[BrowserBroadcaster] 📮 Posting to:', whipUrl.toString());
+    console.log('[BrowserBroadcaster] 📮 Posting to:', whipUrl);
 
-    const response = await fetch(whipUrl.toString(), {
+    const response = await fetch(whipUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/sdp' },
       body: offer.sdp,
