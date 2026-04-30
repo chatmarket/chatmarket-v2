@@ -232,7 +232,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
       const res = await fetch('/api/loadTestBot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'stop' }),
+        body: JSON.stringify({ action: 'stop', stream_id: streamId || 'test_stream' }),
         signal: controller.signal,
       });
 
