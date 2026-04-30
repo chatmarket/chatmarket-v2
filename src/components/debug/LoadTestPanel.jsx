@@ -32,9 +32,8 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   // ログ追加（内部）
   // ──────────────────────────────────────────────────────────
   const addLog = (msg, level = 'info') => {
-    setLogs(prev => [...prev.slice(-9), { msg, level, ts: new Date().toLocaleTimeString() }]);
-    console.log(`[LoadTest] ${level.toUpperCase()}: ${msg}`);
-  };
+     setLogs(prev => [...prev.slice(-9), { msg, level, ts: new Date().toLocaleTimeString() }]);
+   };
 
   // ──────────────────────────────────────────────────────────
   // FPS計測ループ
@@ -91,28 +90,29 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   // ネットワーク遅延計測（ping）
   // ──────────────────────────────────────────────────────────
   const measureLag = async () => {
-    const start = performance.now();
-    try {
-      const res = await fetch('/api/ping', {
-        method: 'POST',
-        body: JSON.stringify({ ts: start }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const lag = Math.round(performance.now() - start);
-      setMetrics(prev => ({ ...prev, lag }));
-    } catch (err) {
-      addLog(`Ping failed: ${err.message}`, 'error');
-      setMetrics(prev => ({ ...prev, lag: 9999 }));
-    }
-  };
+     const start = performance.now();
+     try {
+       const baseUrl = window.location.origin;
+       const res = await fetch(`${baseUrl}/api/ping`, {
+         method: 'POST',
+         body: JSON.stringify({ ts: start }),
+         headers: { 'Content-Type': 'application/json' },
+       });
+       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+       const lag = Math.round(performance.now() - start);
+       setMetrics(prev => ({ ...prev, lag }));
+     } catch (err) {
+       setMetrics(prev => ({ ...prev, lag: 9999 }));
+     }
+   };
 
   // ──────────────────────────────────────────────────────────
    // ボット状態ポーリング（メトリクス取得）
    // ──────────────────────────────────────────────────────────
    const pollBotStatus = async () => {
      try {
-       const res = await fetch('/api/loadTestBot', {
+       const baseUrl = window.location.origin;
+       const res = await fetch(`${baseUrl}/api/loadTestBot`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({ action: 'status', stream_id: streamId || 'test_stream' }),
@@ -125,9 +125,6 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
              yellCount: data.metrics.yellsSent || 0,
              msgCount: data.metrics.messagesSent || 0,
            }));
-         }
-         if (data.metrics?.errors?.length > 0) {
-           data.metrics.errors.slice(-3).forEach(err => addLog(err, 'warn'));
          }
        }
      } catch (err) {
@@ -190,34 +187,33 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     }
     
     try {
-      const res = await fetch('/api/loadTestBot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'start_combined',
-          stream_id: streamId || 'test_stream',
-          duration_seconds: 30,
-          user_count: 100,
-          mode: 'dummy',
-        }),
-      });
+       const baseUrl = window.location.origin;
+       const res = await fetch(`${baseUrl}/api/loadTestBot`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           action: 'start_combined',
+           stream_id: streamId || 'test_stream',
+           duration_seconds: 30,
+           user_count: 100,
+           mode: 'dummy',
+         }),
+       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-      }
+       if (!res.ok) {
+         throw new Error(`HTTP ${res.status}`);
+       }
 
-      const data = await res.json();
-      addLog(`✅ Bot started: ${data.message}`, 'info');
-      addLog(`Mode: ${data.mode} | Users: ${data.users}`, 'info');
-      addLog('🔥 100-user bombardment initiated - logging all yells/chats', 'info');
-      onStart?.(data);
+       const data = await res.json();
+       addLog(`✅ Bot started`, 'info');
+       onStart?.(data);
 
-      // 即座にボット状態ポーリング開始
-      pollBotStatus();
-    } catch (err) {
-      addLog(`❌ Start failed: ${err.message}`, 'error');
-      setRunning(false);
-    }
+       // 即座にボット状態ポーリング開始
+       pollBotStatus();
+     } catch (err) {
+       addLog(`❌ Start failed`, 'error');
+       setRunning(false);
+     }
   };
 
   const handleStop = async () => {
@@ -233,51 +229,36 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     try {
-      const res = await fetch('/api/loadTestBot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'stop', stream_id: streamId || 'test_stream' }),
-        signal: controller.signal,
-      });
+       const baseUrl = window.location.origin;
+       const res = await fetch(`${baseUrl}/api/loadTestBot`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ action: 'stop', stream_id: streamId || 'test_stream' }),
+         signal: controller.signal,
+       });
 
-      clearTimeout(timeoutId);
+       clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+       if (!res.ok) {
+         throw new Error(`HTTP ${res.status}`);
+       }
 
-      const data = await res.json();
-      addLog(`✅ Bot stopped`, 'info');
-      addLog(`Yells: ${data.metrics?.yellsSent || 0} | Messages: ${data.metrics?.messagesSent || 0}`, 'info');
-      
-      if (data.metrics?.errors?.length > 0) {
-        addLog(`Errors: ${data.metrics.errors.length}`, 'warn');
-      }
+       const data = await res.json();
+       addLog(`✅ Bot stopped`, 'info');
 
-      // ★ テスト完了ログを /api/track に送信（最終検証）
-      if (window.__sendLogs) {
-        try {
-          addLog('📤 Sending bombardment logs to /api/track...', 'info');
-          let token = '';
-          if (window.localStorage && window.localStorage.getItem('auth_token')) {
-            token = window.localStorage.getItem('auth_token');
-          }
-          await window.__sendLogs(token);
-          addLog('✅ Bombardment data successfully logged to /api/track', 'info');
-        } catch (e) {
-          addLog(`⚠️ Final send failed: ${e.message}`, 'warn');
-        }
-      }
+       // ★ テスト完了ログを /api/track に送信（最終検証）
+       if (window.__sendLogs) {
+         let token = '';
+         if (window.localStorage && window.localStorage.getItem('auth_token')) {
+           token = window.localStorage.getItem('auth_token');
+         }
+         await window.__sendLogs(token);
+       }
 
-      onStop?.(data);
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        addLog(`⚠️ Stop timeout（バックエンドが応答しない）- UI側は停止済み`, 'error');
-      } else {
-        addLog(`❌ Stop failed: ${err.message}`, 'error');
-      }
-      // UI側は既に停止済みなのでonStopは不要
-    }
+       onStop?.(data);
+     } catch (err) {
+       // エラー時は黙って処理（ログはUI更新のみ）
+     }
   };
 
   // ──────────────────────────────────────────────────────────
