@@ -92,17 +92,15 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
   // ──────────────────────────────────────────────────────────
   const measureLag = async () => {
      const now = Date.now();
-     if (now - lastErrorTimeRef.current < 3000) return; // エラーから3秒は実行禁止
+     if (now - lastErrorTimeRef.current < 10000) return; // エラーから10秒は実行禁止（物理的リトライ削除）
      
      const start = performance.now();
      const controller = new AbortController();
      const timeout = setTimeout(() => controller.abort(), 3000);
      
      try {
-       const res = await fetch('/api/ping', {
-         method: 'POST',
-         body: JSON.stringify({ ts: start }),
-         headers: { 'Content-Type': 'application/json' },
+       const res = await fetch('/api/ping?ts=' + start, {
+         method: 'GET',
          signal: controller.signal,
        });
        clearTimeout(timeout);
@@ -121,16 +119,14 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
    // ──────────────────────────────────────────────────────────
    const pollBotStatus = async () => {
      const now = Date.now();
-     if (now - lastErrorTimeRef.current < 3000) return; // エラーから3秒は実行禁止
+     if (now - lastErrorTimeRef.current < 10000) return; // エラーから10秒は実行禁止（物理的リトライ削除）
 
      const controller = new AbortController();
      const timeout = setTimeout(() => controller.abort(), 3000);
 
      try {
-       const res = await fetch('/api/loadTestBot', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ action: 'status', stream_id: streamId || 'test_stream' }),
+       const res = await fetch('/api/loadTestBot?action=status&stream_id=' + (streamId || 'test_stream'), {
+         method: 'GET',
          signal: controller.signal,
        });
        clearTimeout(timeout);
@@ -188,7 +184,7 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
     setRunning(true);
     setLogs([]);
     setMetrics(prev => ({ ...prev, memoryPeak: 0, memoryRecovery: 0 })); // リセット
-    addLog('Starting load test...', 'info');
+    addLog('Starting load test (GET)...', 'info');
 
     // ★ 非同期処理で完全分離（メインスレッドをロックしない）
     (async () => {
@@ -196,16 +192,16 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
       const timeout = setTimeout(() => controller.abort(), 5000);
 
       try {
-        const res = await fetch('/api/loadTestBot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'start_combined',
-            stream_id: streamId || 'test_stream',
-            duration_seconds: 30,
-            user_count: 100,
-            mode: 'dummy',
-          }),
+        const params = new URLSearchParams({
+          action: 'start_combined',
+          stream_id: streamId || 'test_stream',
+          duration_seconds: 30,
+          user_count: 100,
+          mode: 'dummy',
+        });
+
+        const res = await fetch('/api/loadTestBot?' + params.toString(), {
+          method: 'GET',
           signal: controller.signal,
         });
         clearTimeout(timeout);
@@ -215,11 +211,11 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
         }
 
         const data = await res.json();
-        addLog(`✅ Bot started`, 'info');
+        addLog(`✅ Bot started (env=${data.env})`, 'info');
         onStart?.(data);
       } catch (err) {
         clearTimeout(timeout);
-        addLog(`❌ Start failed`, 'error');
+        addLog(`❌ Start failed: ${err.message}`, 'error');
         setRunning(false);
       }
     })();
@@ -239,10 +235,13 @@ export default function LoadTestPanel({ streamId, onStart, onStop }) {
       const timeout = setTimeout(() => controller.abort(), 3000);
 
       try {
-        const res = await fetch('/api/loadTestBot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'stop', stream_id: streamId || 'test_stream' }),
+        const params = new URLSearchParams({
+          action: 'stop',
+          stream_id: streamId || 'test_stream',
+        });
+
+        const res = await fetch('/api/loadTestBot?' + params.toString(), {
+          method: 'GET',
           signal: controller.signal,
         });
         clearTimeout(timeout);

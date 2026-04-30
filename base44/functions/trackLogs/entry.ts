@@ -8,7 +8,7 @@
 Deno.serve(async (req) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-ID',
     'Content-Type': 'application/json',
   };
@@ -18,14 +18,18 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers });
   }
 
-  // GET・POST のみ許可
-  if (!['GET', 'POST'].includes(req.method)) {
-    console.warn(`[trackLogs] ❌ ${req.method} not allowed`);
+  // GET のみ許可
+  if (req.method !== 'GET') {
+    console.warn(`[trackLogs] ❌ ${req.method} not allowed (GET only)`);
     return Response.json(
-      { error: `${req.method} not allowed` },
+      { error: `${req.method} not allowed. Use GET.` },
       { status: 405, headers }
     );
   }
+
+  const url = new URL(req.url);
+  const action = url.searchParams.get('action') || 'log';
+  const logs = action === 'log' ? (url.searchParams.get('logs') ? JSON.parse(url.searchParams.get('logs')) : []) : [];
 
   const env = Deno.env.get('ENVIRONMENT') || 'unknown';
   console.log(`[trackLogs] 🚀 START | env=${env}`);
@@ -44,8 +48,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    const body = await req.json();
-    const { path, hostname, logs = [], timestamp } = body;
+    const path = url.searchParams.get('path') || window?.location?.pathname || '/';
+    const hostname = url.searchParams.get('hostname') || window?.location?.hostname || 'unknown';
 
     // ★ 最小ログ出力（本番環境向けパフォーマンス重視）
     const yellCount = logs.filter(l => l.msg.includes('[YellBurst]') || l.msg.includes('coins')).length;

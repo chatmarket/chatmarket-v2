@@ -163,7 +163,7 @@ async function runChatFlood(base44, streamId, dummyUsers, durationSeconds, mode)
 Deno.serve(async (req) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
   };
@@ -173,16 +173,24 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers });
   }
 
-  // GET・POST のみ許可
-  if (!['GET', 'POST'].includes(req.method)) {
+  // GET のみ許可
+  if (req.method !== 'GET') {
+    console.warn(`[loadTestBot] ❌ ${req.method} not allowed (GET only)`);
     return Response.json(
-      { error: `${req.method} not allowed` },
+      { error: `${req.method} not allowed. Use GET.` },
       { status: 405, headers }
     );
   }
 
   const env = Deno.env.get('ENVIRONMENT') || 'unknown';
-  console.log(`[loadTestBot] 🚀 START | method=${req.method} | env=${env}`);
+  const url = new URL(req.url);
+  const action = url.searchParams.get('action') || 'status';
+  const streamId = url.searchParams.get('stream_id') || 'test_stream';
+  const durationSeconds = parseInt(url.searchParams.get('duration_seconds')) || 30;
+  const userCount = parseInt(url.searchParams.get('user_count')) || 100;
+  const mode = url.searchParams.get('mode') || 'dummy';
+
+  console.log(`[loadTestBot] 🚀 START | GET | env=${env} | action=${action}`);
 
   try {
     const base44 = createClientFromRequest(req);
@@ -226,6 +234,18 @@ Deno.serve(async (req) => {
       }, { headers });
     }
 
+    // ── status アクション ──
+    if (action === 'status') {
+      console.log(`[loadTestBot] 📊 STATUS | env=${env} | running=${botRunning}`);
+      return Response.json({
+        success: true,
+        message: 'Bot status',
+        env: env,
+        running: botRunning,
+        metrics: botMetrics,
+      }, { headers });
+    }
+
     // ── 新規実行（重複実行防止） ──
     if (botRunning) {
       console.warn(`[loadTestBot] ⚠️ ALREADY_RUNNING | env=${env}`);
@@ -238,19 +258,19 @@ Deno.serve(async (req) => {
     botMetrics.errors = [];
     botMetrics.startTime = new Date().toISOString();
 
-    const dummyUsers = generateDummyUsers(user_count);
+    const dummyUsers = generateDummyUsers(userCount);
 
     // ── 非同期でボット実行（レスポンスを返す） ──
     (async () => {
       try {
         if (action === 'start_yell_burst') {
-          await runYellBurst(base44, stream_id, dummyUsers, duration_seconds, mode);
+          await runYellBurst(base44, streamId, dummyUsers, durationSeconds, mode);
         } else if (action === 'start_chat_flood') {
-          await runChatFlood(base44, stream_id, dummyUsers, duration_seconds, mode);
+          await runChatFlood(base44, streamId, dummyUsers, durationSeconds, mode);
         } else if (action === 'start_combined') {
           await Promise.all([
-            runYellBurst(base44, stream_id, dummyUsers, duration_seconds, mode),
-            runChatFlood(base44, stream_id, dummyUsers, duration_seconds, mode),
+            runYellBurst(base44, streamId, dummyUsers, durationSeconds, mode),
+            runChatFlood(base44, streamId, dummyUsers, durationSeconds, mode),
           ]);
         }
       } finally {
@@ -258,14 +278,14 @@ Deno.serve(async (req) => {
       }
     })();
 
-    console.log(`[loadTestBot] ✅ STARTED | env=${env} | action=${action} | users=${user_count} | duration=${duration_seconds}s`);
+    console.log(`[loadTestBot] ✅ STARTED | env=${env} | action=${action} | users=${userCount} | duration=${durationSeconds}s`);
     return Response.json({
       success: true,
-      message: `Bot started: ${action} for ${duration_seconds}s`,
+      message: `Bot started: ${action} for ${durationSeconds}s`,
       env: env,
       mode: mode,
-      users: user_count,
-      stream_id: stream_id,
+      users: userCount,
+      stream_id: streamId,
     }, { headers });
   } catch (error) {
     console.error(`[loadTestBot] ❌ ERROR | env=${env} | error=${error.message}`);
