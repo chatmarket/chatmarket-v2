@@ -40,6 +40,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [showMicEnableButton, setShowMicEnableButton] = useState(true);
   const [micWarning, setMicWarning] = useState(null);
+  const [testConfirmed, setTestConfirmed] = useState(false); // テスト完了フラグ
   const silenceCounterRef = useRef(0);
 
   // 【最初にデバイス列挙】
@@ -417,6 +418,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       startMicMeter(stream);
       enumerateDevices();
       setShowMicEnableButton(false);
+      setTestConfirmed(true); // テスト成功 → 配信ボタンを解除
     }).catch((err) => {
       console.error('[BrowserBroadcaster] Mic enable failed:', err.name, err.message);
       setError('マイク取得に失敗しました: ' + err.message);
@@ -602,17 +604,35 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
         </div>
 
-        {/* 配信ボタン */}
+        {/* テスト完了バナー / 未完了ガイド */}
+        {!isBroadcasting && (
+          testConfirmed ? (
+            <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 rounded-xl px-4 py-3">
+              <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+              <div>
+                <p className="text-xs font-black text-green-400">テスト完了 — 配信可能です！</p>
+                <p className="text-[10px] text-green-400/70">カメラ・マイクの確認が取れました</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
+              <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
+              <p className="text-xs text-yellow-400/80">先に「カメラ・マイクテスト」で<br/>映像と音声を確認してください</p>
+            </div>
+          )
+        )}
+
+        {/* 配信ボタン — テスト完了まで無効 */}
         <button
           onClick={handleStartBroadcast}
-          disabled={isBroadcasting || micLevel === 0}
+          disabled={isBroadcasting || !testConfirmed}
           className={`w-full py-3 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all shadow-lg ${
             broadcastStatus === "live"
               ? "bg-gradient-to-r from-green-500 to-green-600"
               : broadcastStatus === "connecting"
               ? "bg-gradient-to-r from-yellow-500 to-yellow-600 animate-pulse"
-              : micLevel === 0
-              ? "bg-gray-600 cursor-not-allowed opacity-50"
+              : !testConfirmed
+              ? "bg-gray-600 cursor-not-allowed opacity-40"
               : "bg-red-500 hover:bg-red-600"
           }`}
         >
@@ -694,25 +714,35 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         </div>
       )}
 
-      {/* マイク有効化ボタン（中央） */}
+      {/* カメラ・マイクテストオーバーレイ */}
       {showMicEnableButton && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur">
-          <div className="flex flex-col items-center gap-6 bg-gradient-to-br from-zinc-900 to-black rounded-2xl p-8 border border-primary/30 shadow-2xl max-w-sm">
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-              <Mic className="w-8 h-8 text-primary animate-pulse" />
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur">
+          <div className="flex flex-col items-center gap-6 bg-gradient-to-br from-zinc-900 to-black rounded-2xl p-8 border border-primary/30 shadow-2xl max-w-sm w-full mx-4">
+            <div className="flex gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center">
+                <Camera className="w-7 h-7 text-primary" />
+              </div>
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center">
+                <Mic className="w-7 h-7 text-primary animate-pulse" />
+              </div>
             </div>
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-black text-white">マイクを有効にする</h2>
-              <p className="text-sm text-muted-foreground">
-                ボタンを押してマイクの接続を開始してください
+              <h2 className="text-2xl font-black text-white">カメラ・マイクテスト</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                ボタンを押すと<span className="text-white font-bold">あなたの顔が映り</span>、<br/>
+                声に合わせて<span className="text-white font-bold">音量メーターが動きます</span>。<br/>
+                確認できたら配信を開始できます。
               </p>
             </div>
             <button
               onClick={handleMicEnable}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-black text-lg transition-all shadow-lg"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-black font-black text-lg transition-all shadow-lg flex items-center justify-center gap-2"
             >
-              マイクを有効にする
+              <Camera className="w-5 h-5" /> テスト開始（顔を映す）
             </button>
+            <p className="text-[10px] text-muted-foreground text-center">
+              ※ テスト完了後、配信開始ボタンが有効になります
+            </p>
           </div>
         </div>
       )}
