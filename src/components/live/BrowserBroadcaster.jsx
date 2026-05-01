@@ -505,9 +505,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
 
           {isBroadcasting && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500/80 backdrop-blur px-3 py-2 rounded-lg border border-red-400/50 animate-pulse">
-              <Radio className="w-4 h-4 text-white animate-pulse" />
-              <span className="text-xs font-semibold text-white">配信中</span>
+            <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+              {/* 大きな配信中バッジ */}
+              <div className="flex items-center gap-2 bg-red-600 px-4 py-2.5 rounded-xl border-2 border-red-400 shadow-2xl shadow-red-500/60"
+                style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
+                <span className="w-3 h-3 rounded-full bg-white animate-ping" />
+                <span className="text-base font-black text-white tracking-widest">🔴 配信中</span>
+              </div>
+              {/* ON AIR サブラベル */}
+              <span className="text-xs font-black text-red-400 tracking-widest uppercase bg-black/70 px-2 py-0.5 rounded-full">ON AIR</span>
             </div>
           )}
         </div>
