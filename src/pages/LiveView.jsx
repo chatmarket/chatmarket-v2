@@ -251,14 +251,7 @@ function LiveViewInner() {
 
       <TipOverlay tips={activeTips} />
 
-      {activeCall && (
-        <Link to={`/call/${activeCall.id}`}>
-          <Button className="absolute top-3 right-3 z-20 bg-green-500 hover:bg-green-600 gap-2 animate-pulse shadow-lg shadow-green-500/50">
-            <Radio className="w-4 h-4" />
-            通話中
-          </Button>
-        </Link>
-      )}
+      {/* 配信ページでは「通話中」ボタンを表示しない（配信と通話は別機能） */}
 
       {stream.status === "live" && (
         <div className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none">

@@ -6,8 +6,9 @@
  */
 import React, { useEffect, useRef, useState } from "react";
 
-const MAX_RETRY = 3;
-const RETRY_DELAY_MS = 2500;
+// リトライ上限なし（配信が始まるまで自動再接続し続ける）
+const MAX_RETRY = Infinity;
+const RETRY_DELAY_MS = 3000;
 
 export default function ViewerStream({ stream }) {
   const videoRef = useRef(null);
@@ -53,17 +54,14 @@ export default function ViewerStream({ stream }) {
 
   function retry() {
     if (destroyedRef.current) return;
-    if (retryRef.current >= MAX_RETRY) {
-      setFatalError(true);
-      setLoading(false);
-      return;
-    }
     retryRef.current += 1;
-    console.log(`[ViewerStream] retry ${retryRef.current}/${MAX_RETRY}`);
+    // 回数が増えるほど待機時間を伸ばす（最大15秒）
+    const delay = Math.min(RETRY_DELAY_MS * Math.ceil(retryRef.current / 3), 15000);
+    console.log(`[ViewerStream] retry #${retryRef.current} in ${delay}ms`);
     destroyHls();
     setTimeout(() => {
       if (!destroyedRef.current) initPlayer();
-    }, RETRY_DELAY_MS);
+    }, delay);
   }
 
   async function initPlayer() {
@@ -195,31 +193,15 @@ export default function ViewerStream({ stream }) {
 
   return (
     <div className="w-full h-full relative bg-black rounded-xl overflow-hidden">
-      {loading && !fatalError && (
+      {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3 pointer-events-none">
           <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           <p className="text-white/40 text-xs">
-            {retryRef.current > 0 ? `再接続中... (${retryRef.current}/${MAX_RETRY})` : "映像を読み込み中..."}
+            {retryRef.current > 0 ? `配信接続中... (${retryRef.current}回目)` : "映像を読み込み中..."}
           </p>
-        </div>
-      )}
-
-      {fatalError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3 p-4">
-          <p className="text-red-400 text-sm text-center">映像の読み込みに失敗しました</p>
-          {debugMode && (
-            <div className="bg-red-950/80 border border-red-700 rounded p-2 text-xs font-mono text-red-200 max-w-xs">
-              <p className="mb-1">🔍 デバッグ情報:</p>
-              <p>配信者が配信開始したか確認</p>
-              <p>コンソール(F12)のエラーコードを確認</p>
-            </div>
+          {retryRef.current > 5 && (
+            <p className="text-white/30 text-xs">配信開始をお待ちください</p>
           )}
-          <button
-            onClick={manualRetry}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm"
-          >
-            再試行
-          </button>
         </div>
       )}
 

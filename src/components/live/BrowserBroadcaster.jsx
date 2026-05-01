@@ -61,9 +61,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         console.log('[BrowserBroadcaster] 📷 Default camera:', defaultCam.label);
       }
       if (micDevices.length > 0 && !selectedMic) {
-        // デフォルト: 内蔵マイク優先（OBSは除外してデフォルトにしないが選択肢には残す）
-        let defaultMic = micDevices.find(d => !d.label.toLowerCase().includes('obs'));
-        if (!defaultMic) defaultMic = micDevices[0];
+        // デフォルト: Built-in > 内蔵 > MacBook内蔵 > FaceTime > (OBS除外) > 先頭
+        const label = (d) => d.label.toLowerCase();
+        let defaultMic =
+          micDevices.find(d => label(d).includes('built-in')) ||
+          micDevices.find(d => label(d).includes('内蔵')) ||
+          micDevices.find(d => label(d).includes('macbook')) ||
+          micDevices.find(d => label(d).includes('facetime')) ||
+          micDevices.find(d => !label(d).includes('obs')) ||
+          micDevices[0];
         setSelectedMic(defaultMic.deviceId);
         console.log('[BrowserBroadcaster] 🎤 Default mic:', defaultMic.label);
       }
