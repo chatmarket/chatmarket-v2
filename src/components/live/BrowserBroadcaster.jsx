@@ -224,8 +224,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     });
   }, [selectedCamera, isBroadcasting]);
 
-  // 【配信開始】streamId 確認 → メーター動作確認 → 状態更新 → WHIP 接続
+  // 【配信開始】認証確認 → streamId 確認 → WHIP 接続
   const handleStartBroadcast = async () => {
+    // ログイン確認（未ログインでは WHIP を叩かない）
+    const isAuth = await base44.auth.isAuthenticated().catch(() => false);
+    if (!isAuth) {
+      base44.auth.redirectToLogin();
+      return;
+    }
+
     if (!streamId) {
       setError('配信IDが見つかりません');
       setShowErrorDialog(true);
@@ -272,74 +279,62 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【WHIP 接続】1対多配信専用
+  // 【WHIP 接続】IVS Advanced チャンネル専用
+  // 仕様: https://<ingest-endpoint>/whip に POST + Authorization: Bearer <streamKey>
   const connectToWhip = async () => {
-    // Advanced チャネル用 WHIP エンドポイント（固定）
-    const WHIP_ENDPOINT = "https://27b83d82b8a7.global-bm.whip.live-video.net";
-    
-    console.log('[BrowserBroadcaster] 🌐 [1対多 配信] WHIP Endpoint:', WHIP_ENDPOINT);
-    console.log('[BrowserBroadcaster] 📡 StreamId:', streamId);
-    
-    if (!streamId) {
-      console.error('[BrowserBroadcaster] ❌ streamId is null or empty!');
-      throw new Error('配信 ID が見つかりません');
-    }
-    
-    console.log('[BrowserBroadcaster] 🔗 [1対多 WHIP] Connecting to:', `${WHIP_ENDPOINT}?streamId=${streamId}`);
+    // IVS Advanced チャンネル固定値（createLiveStream と同じ値）
+    const INGEST_HOST = "27b83d82b8a7.global-contribute.live-video.net";
+    const STREAM_KEY = "sk_ap-northeast-1_iYbETprO3ixW_1iEQD65hcKx0Mi253OGFyRzkYkaRAc";
+    const WHIP_URL = `https://${INGEST_HOST}/whip`;
+
+    console.log('[BrowserBroadcaster] 🔗 WHIP URL:', WHIP_URL);
 
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
-      throw new Error('No local stream available');
+      throw new Error('カメラ・マイクが取得できていません');
     }
 
-    // エフェクトがある場合はCanvasストリーム+音声トラックを合成して送信
+    // エフェクトがある場合はCanvasストリーム+音声トラックを合成
     let broadcastStream = streamRef.current;
     if (canvasStreamRef.current) {
       const audioTracks = streamRef.current.getAudioTracks();
       const videoTracks = canvasStreamRef.current.getVideoTracks();
       if (videoTracks.length > 0) {
-        const merged = new MediaStream([...videoTracks, ...audioTracks]);
-        broadcastStream = merged;
-        console.log('[BrowserBroadcaster] 🎨 Using Canvas effect stream for broadcast');
+        broadcastStream = new MediaStream([...videoTracks, ...audioTracks]);
       }
     }
 
-    const pc = new RTCPeerConnection();
-
-    // ストリーム追加
-    broadcastStream.getTracks().forEach((track) => {
-      pc.addTrack(track, broadcastStream);
-      console.log(`[BrowserBroadcaster] ✅ Track added: ${track.kind}`);
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
     });
 
-    // Offer 生成 → WHIP に POST
+    broadcastStream.getTracks().forEach((track) => {
+      pc.addTrack(track, broadcastStream);
+    });
+
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    console.log('[BrowserBroadcaster] 📤 Offer created, sending to WHIP...');
 
-    // WHIP エンドポイント URL を構築（new URL は末尾スラッシュを付けるので文字列結合）
-    const whipUrl = `${WHIP_ENDPOINT}?streamId=${streamId}`;
-    
-    console.log('[BrowserBroadcaster] 📮 Posting to:', whipUrl);
-
-    const response = await fetch(whipUrl, {
+    // IVS WHIP: Bearer トークン = Stream Key
+    const response = await fetch(WHIP_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/sdp' },
+      headers: {
+        'Content-Type': 'application/sdp',
+        'Authorization': `Bearer ${STREAM_KEY}`,
+      },
       body: offer.sdp,
     });
 
     if (!response.ok) {
-      console.error('[BrowserBroadcaster] ❌ WHIP POST failed:', response.status, response.statusText);
-      const errorText = await response.text();
-      console.error('[BrowserBroadcaster] Error details:', errorText);
-      throw new Error(`WHIP error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text().catch(() => '');
+      console.error('[BrowserBroadcaster] ❌ WHIP failed:', response.status, errorText);
+      throw new Error(`WHIP error: ${response.status} ${errorText.slice(0, 100)}`);
     }
 
     const answerSdp = await response.text();
-    const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp });
-    await pc.setRemoteDescription(answer);
+    await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: answerSdp }));
 
     whipClientRef.current = pc;
-    console.log('[BrowserBroadcaster] ✅ WHIP connected — broadcasting to world');
+    console.log('[BrowserBroadcaster] ✅ WHIP connected!');
   };
 
   // 【マイク有効化ボタン（中央）】ユーザー操作で初実行
