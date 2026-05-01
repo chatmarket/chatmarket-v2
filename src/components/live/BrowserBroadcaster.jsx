@@ -128,9 +128,6 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           const newLevel = Math.min(100, Math.round((rms / 255) * 100));
           setMicLevel(newLevel);
           
-          // RMS をコンソール垂れ流し
-          console.log(`[BrowserBroadcaster] 🎤 RMS: ${rms.toFixed(4)} | Level: ${newLevel}%`);
-          
           // 無音検知（0.1秒 = ~6フレーム）
           if (rms < 1) {
             silenceCounterRef.current += 1;
@@ -247,22 +244,22 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     setBroadcastError(null);
 
     try {
-      // ライブストリーム状態を更新
-      await base44.entities.LiveStream.update(streamId, {
-        status: "live",
-        live_started_at: new Date().toISOString(),
-      });
-      console.log('[BrowserBroadcaster] ✅ LiveStream status updated');
-
-      if (channelId) {
-        await base44.entities.Channel.update(channelId, { is_live: true });
-        console.log('[BrowserBroadcaster] ✅ Channel is_live updated');
-      }
-
-      // WHIP 接続
+      // WHIP 接続（カメラプレビューは既に映っている状態で実行）
       console.log('[BrowserBroadcaster] 🔌 Connecting to WHIP...');
       setIsBroadcasting(true);
       await connectToWhip();
+
+      // WHIP 接続成功後にDBを更新
+      await base44.entities.LiveStream.update(streamId, {
+        status: "live",
+        live_started_at: new Date().toISOString(),
+      }).catch(err => console.warn('[BrowserBroadcaster] LiveStream update failed (non-fatal):', err.message));
+
+      if (channelId) {
+        await base44.entities.Channel.update(channelId, { is_live: true })
+          .catch(err => console.warn('[BrowserBroadcaster] Channel update failed (non-fatal):', err.message));
+      }
+
       setBroadcastStatus("live");
       toast.success("✅ 配信開始 — 世界へ放送中");
     } catch (err) {
@@ -270,6 +267,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setBroadcastStatus("error");
       setBroadcastError(err.message);
       setIsBroadcasting(false);
+      // ★ 配信失敗してもカメラプレビューは継続（streamRef はそのまま）
       setShowErrorDialog(true);
     }
   };
