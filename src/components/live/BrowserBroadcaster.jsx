@@ -43,7 +43,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [testConfirmed, setTestConfirmed] = useState(false); // テスト完了フラグ
   const silenceCounterRef = useRef(0);
 
-  // 【最初にデバイス列挙】
+  // refで最新のselectedCamera/Micを参照（useCallback再生成ループを防ぐ）
+  const selectedCameraRef = useRef(selectedCamera);
+  const selectedMicRef = useRef(selectedMic);
+  useEffect(() => { selectedCameraRef.current = selectedCamera; }, [selectedCamera]);
+  useEffect(() => { selectedMicRef.current = selectedMic; }, [selectedMic]);
+
+  // 【デバイス列挙 — 依存配列なし、refで参照】
   const enumerateDevices = useCallback(async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -53,16 +59,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setCameras(cameraDevices);
       setMicrophones(micDevices);
       
-      if (cameraDevices.length > 0 && !selectedCamera) {
-        // デフォルト: FaceTime > Built-in > OBS含む残り全デバイス（選択肢には全部残す）
+      // 未選択の場合のみデフォルトをセット（ループ防止：既に選択済みなら何もしない）
+      if (cameraDevices.length > 0 && !selectedCameraRef.current) {
         let defaultCam = cameraDevices.find(d => d.label.toLowerCase().includes('facetime'));
         if (!defaultCam) defaultCam = cameraDevices.find(d => d.label.toLowerCase().includes('built-in'));
         if (!defaultCam) defaultCam = cameraDevices[0];
         setSelectedCamera(defaultCam.deviceId);
         console.log('[BrowserBroadcaster] 📷 Default camera:', defaultCam.label);
       }
-      if (micDevices.length > 0 && !selectedMic) {
-        // デフォルト: Built-in > 内蔵 > MacBook内蔵 > FaceTime > (OBS除外) > 先頭
+      if (micDevices.length > 0 && !selectedMicRef.current) {
         const label = (d) => d.label.toLowerCase();
         let defaultMic =
           micDevices.find(d => label(d).includes('built-in')) ||
@@ -77,7 +82,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     } catch (err) {
       console.error('[BrowserBroadcaster] Device enumeration error:', err);
     }
-  }, [selectedCamera, selectedMic]);
+  }, []); // 依存配列を空にしてループを完全防止
 
   // 【マイクメーター独立稼働】映像と無関係に、ストリーム → AudioContext → 周波数解析 → React state
   const startMicMeter = useCallback((stream) => {
@@ -204,32 +209,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (selectedMic) sessionStorage.setItem('selectedMic', selectedMic);
   }, [selectedMic]);
 
-  // 【カメラ変更時に即座に反映】
-  useEffect(() => {
-    if (!streamRef.current || isBroadcasting) return;
-    
-    console.log('[BrowserBroadcaster] 📹 Camera selection changed, restarting video track');
-    
-    // 既存のビデオトラックを停止
-    streamRef.current.getVideoTracks().forEach((t) => t.stop());
-    
-    // 新しいカメラで再取得
-    navigator.mediaDevices.getUserMedia({
-      video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
-      audio: false, // オーディオは既に取得済みなので不要
-    }).then((videoStream) => {
-      const newVideoTrack = videoStream.getVideoTracks()[0];
-      if (newVideoTrack && streamRef.current) {
-        streamRef.current.addTrack(newVideoTrack);
-        if (videoRef.current) {
-          videoRef.current.srcObject = streamRef.current;
-        }
-        console.log('[BrowserBroadcaster] ✅ Video track replaced');
-      }
-    }).catch((err) => {
-      console.error('[BrowserBroadcaster] Camera switch failed:', err);
-    });
-  }, [selectedCamera, isBroadcasting]);
+  // ★ カメラ変更useEffectを廃止 — handleMicEnableを再呼び出しするとMic restartループになるため
+  // カメラ変更はデバイスセレクト後に「再テスト開始」ボタンで対応
 
   // 【配信開始】認証確認 → streamId 確認 → WHIP 接続
   const handleStartBroadcast = async () => {
@@ -370,18 +351,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     
     // 古いストリームを完全破棄
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => {
-        t.stop();
-        console.log('[BrowserBroadcaster] 🛑 Track stopped:', t.kind);
-      });
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    
-    // 初めて AudioContext を作成（ユーザー操作のタイミングで）
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      console.log('[BrowserBroadcaster] ✅ AudioContext created on user click');
+    // analyzerRefをリセット（多重接続防止）
+    analyzerRef.current = null;
+
+    // AudioContextは毎回新規作成（再起動時の音声断絶を防ぐ）
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
     }
+    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    console.log('[BrowserBroadcaster] ✅ AudioContext created on user click');
     
     // AudioContext を確実に resume（Safari ユーザージェスチャー認証）
     try {
@@ -540,7 +522,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             <label className="text-xs font-semibold text-muted-foreground">カメラ</label>
             <select
               value={selectedCamera || ""}
-              onChange={(e) => setSelectedCamera(e.target.value)}
+              onChange={(e) => { setSelectedCamera(e.target.value); if (testConfirmed) handleMicEnable(); }}
               disabled={isBroadcasting}
               className="w-full px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
             >
@@ -553,21 +535,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-muted-foreground">マイク</label>
-              <button
-                type="button"
-                onClick={handleMicRestart}
-                disabled={isBroadcasting || showMicEnableButton}
-                className="text-[10px] text-primary hover:text-primary/80 font-bold disabled:opacity-50 transition-colors"
-                title="マイクを再初期化"
-              >
-                🔄 再起動
-              </button>
-            </div>
+            <label className="text-xs font-semibold text-muted-foreground">マイク</label>
             <select
               value={selectedMic || ""}
-              onChange={(e) => setSelectedMic(e.target.value)}
+              onChange={(e) => { setSelectedMic(e.target.value); if (testConfirmed) handleMicEnable(); }}
               disabled={isBroadcasting}
               className="w-full px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
             >
