@@ -373,54 +373,58 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       console.warn('[BrowserBroadcaster] AudioContext resume warning:', err);
     }
     
-    // ストリーム取得（真っさらな状態）
-    navigator.mediaDevices.getUserMedia({
-      video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
-      audio: selectedMic
-        ? {
-            deviceId: { exact: selectedMic },
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          }
-        : {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
-    }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ Stream acquired - tracks:', stream.getTracks().map(t => t.kind));
-      streamRef.current = stream;
-
-      // ★ 1ミリの遅延もなく即座にsrcObjectをセット
-      const vid = videoRef.current;
-      if (vid) {
-        vid.srcObject = stream;
-        vid.muted = true;
-        vid.play().catch((err) => {
-          console.warn('[BrowserBroadcaster] Video play warning:', err.name);
-        });
-        console.log('[BrowserBroadcaster] ✅ srcObject set immediately on videoRef');
-      } else {
-        console.error('[BrowserBroadcaster] ❌ videoRef.current is NULL at srcObject assignment!');
-      }
-
-      const videoTrack = stream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks()[0];
-      
-      setCameraReady(!!videoTrack && videoTrack.enabled);
-      setMicReady(!!audioTrack && audioTrack.enabled);
-      console.log('[BrowserBroadcaster] ✅ Camera ready:', !!videoTrack, 'Mic ready:', !!audioTrack);
-
-      startMicMeter(stream);
-      enumerateDevices();
-      setShowMicEnableButton(false);
-      setTestConfirmed(true); // テスト成功 → 配信ボタンを解除
-    }).catch((err) => {
+    // ストリーム取得（async/awaitで一本化 — .then内でawaitが使えない問題を解消）
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
+        audio: selectedMic
+          ? { deviceId: { exact: selectedMic }, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+          : { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+    } catch (err) {
       console.error('[BrowserBroadcaster] Mic enable failed:', err.name, err.message);
       setError('マイク取得に失敗しました: ' + err.message);
       setShowErrorDialog(true);
-    });
+      return;
+    }
+
+    console.log('[BrowserBroadcaster] ✅ Stream acquired - tracks:', stream.getTracks().map(t => t.kind));
+    streamRef.current = stream;
+
+    // ★ 100ms バッファ後に srcObject をセット → AbortError・チラつき防止
+    const vid = videoRef.current;
+    if (vid) {
+      // 既に再生中なら先に止める（play()の多重発火防止）
+      if (!vid.paused) vid.pause();
+      vid.srcObject = null; // 一度クリアして確実にリセット
+      await new Promise(r => setTimeout(r, 100)); // 1080p安定待ち（100ms）
+      vid.srcObject = stream;
+      vid.muted = true;
+      // play()は一度だけ呼び、Promiseを完全に待つ
+      try {
+        await vid.play();
+        console.log('[BrowserBroadcaster] ✅ Video playing stably');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('[BrowserBroadcaster] Video play error:', err.name, err.message);
+        }
+        // AbortError は静かに無視（autoPlayが自動リトライする）
+      }
+    } else {
+      console.error('[BrowserBroadcaster] ❌ videoRef.current is NULL at srcObject assignment!');
+    }
+
+    const videoTrack = stream.getVideoTracks()[0];
+    const audioTrack = stream.getAudioTracks()[0];
+    setCameraReady(!!videoTrack && videoTrack.enabled);
+    setMicReady(!!audioTrack && audioTrack.enabled);
+    console.log('[BrowserBroadcaster] ✅ Camera ready:', !!videoTrack, 'Mic ready:', !!audioTrack);
+
+    startMicMeter(stream);
+    enumerateDevices();
+    setShowMicEnableButton(false);
+    setTestConfirmed(true);
   };
 
   // 【マイク再起動ボタン】ストリーム完全破棄 + 再初期化
@@ -450,11 +454,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           <video
             ref={(el) => {
               videoRef.current = el;
-              // refが確定した瞬間にstreamがあれば即紐付け
-              if (el && streamRef.current) {
-                el.srcObject = streamRef.current;
-                el.play().catch(() => {});
-              }
+              // refコールバックからは play() を呼ばない（handleMicEnableが制御する）
             }}
             autoPlay
             muted
