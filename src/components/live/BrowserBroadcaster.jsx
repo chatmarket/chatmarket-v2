@@ -84,92 +84,73 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   }, []); // 依存配列を空にしてループを完全防止
 
-  // 【マイクメーター独立稼働】映像と無関係に、ストリーム → AudioContext → 周波数解析 → React state
+  // 【マイクメーター】source → analyser のみ（destinationには繋がない！繋ぐとChrome/Safariがフィードバック検出してゼロ出力になる）
   const startMicMeter = useCallback((stream) => {
-    if (!stream) {
-      console.warn('[BrowserBroadcaster] startMicMeter: stream is null');
+    if (!stream || !audioContextRef.current) {
+      console.warn('[BrowserBroadcaster] startMicMeter: missing stream or AudioContext');
       return;
     }
-    
-    // AudioContext は handleMicEnable で既に作成済みと仮定
-    if (!audioContextRef.current) {
-      console.warn('[BrowserBroadcaster] startMicMeter: AudioContext not initialized yet');
+
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      console.warn('[BrowserBroadcaster] No audio tracks found');
       return;
     }
-    
-    try {
-      const audioTracks = stream.getAudioTracks();
-      if (audioTracks.length === 0) {
-        console.warn('[BrowserBroadcaster] No audio tracks');
-        return;
-      }
-      console.log('[BrowserBroadcaster] ✅ Audio track found, initializing meter');
+    console.log('[BrowserBroadcaster] ✅ Audio track found:', audioTracks[0].label, 'enabled:', audioTracks[0].enabled);
 
-      const ctx = audioContextRef.current;
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
+    const ctx = audioContextRef.current;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+    // ★ 毎回新規作成（analyzerRefはhandleMicEnableでリセット済み）
+    // ★ destination に繋がない — 解析専用ルート（ハウリング防止）
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024; // 高精度
+    analyser.smoothingTimeConstant = 0.3; // 追従を速く
+    source.connect(analyser);
+    // ↑ analyser.connect(ctx.destination) は意図的に省略
+    analyzerRef.current = analyser;
+    console.log('[BrowserBroadcaster] ✅ Analyser connected (no destination — meter-only mode)');
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    let meterLoopId = null;
+    let logThrottle = 0;
+
+    const meterTick = () => {
+      if (!analyzerRef.current) return;
+      analyzerRef.current.getByteFrequencyData(dataArray);
+
+      // 単純平均（感度高）× 4倍スケールで0-100に正規化
+      const avg = dataArray.reduce((s, v) => s + v, 0) / dataArray.length;
+      const newLevel = Math.min(100, Math.round(avg * 4));
+      setMicLevel(newLevel);
+
+      // 生値ログ（10秒に1回だけ出力）
+      logThrottle++;
+      if (logThrottle % 600 === 0) {
+        console.log(`[MicMeter] avg=${avg.toFixed(2)} level=${newLevel}% ctx=${ctx.state}`);
       }
 
-      // アナライザー設定
-      if (!analyzerRef.current) {
-        const source = ctx.createMediaStreamSource(stream);
-        analyzerRef.current = ctx.createAnalyser();
-        analyzerRef.current.fftSize = 256;
-        source.connect(analyzerRef.current);
-        analyzerRef.current.connect(ctx.destination);
-        console.log('[BrowserBroadcaster] ✅ Analyser connected');
-      }
-
-      // メーター解析ループ（state 更新を明示的に行う）
-      let meterLoopId = null;
-      const dataArray = new Uint8Array(analyzerRef.current.frequencyBinCount);
-      
-      const meterTick = () => {
-        try {
-          if (!analyzerRef.current) {
-            console.warn('[BrowserBroadcaster] Analyser lost');
-            return;
-          }
-          analyzerRef.current.getByteFrequencyData(dataArray);
-          
-          // RMS（二乗平均平方根）を計算
-          const sumSquares = dataArray.reduce((sum, val) => sum + val * val, 0);
-          const rms = Math.sqrt(sumSquares / dataArray.length);
-          
-          // 標準倍率（0-100%範囲に正規化）
-          const newLevel = Math.min(100, Math.round((rms / 255) * 100));
-          setMicLevel(newLevel);
-          
-          // 無音検知（0.1秒 = ~6フレーム）
-          if (rms < 1) {
-            silenceCounterRef.current += 1;
-            if (silenceCounterRef.current > 6) {
-              setMicWarning('マイクの音が届いていません！');
-            }
-          } else {
-            silenceCounterRef.current = 0;
-            if (newLevel > 5) {
-              setMicWarning(null);
-            }
-          }
-          
-          meterLoopId = requestAnimationFrame(meterTick);
-        } catch (err) {
-          console.error('[BrowserBroadcaster] Meter loop error:', err);
+      // 無音判定は5秒（300フレーム）に延長（起動直後の誤検知を防ぐ）
+      if (avg < 0.5) {
+        silenceCounterRef.current += 1;
+        if (silenceCounterRef.current > 300) {
+          setMicWarning('マイクの音が届いていません！');
         }
-      };
-      
-      meterLoopId = requestAnimationFrame(meterTick);
-      console.log('[BrowserBroadcaster] ✅ Mic meter started — loop active');
+      } else {
+        silenceCounterRef.current = 0;
+        setMicWarning(null);
+      }
 
-      // Cleanup function を返す（不要になった時に loop 停止）
-      return () => {
-        if (meterLoopId) cancelAnimationFrame(meterLoopId);
-        console.log('[BrowserBroadcaster] Meter loop stopped');
-      };
-    } catch (err) {
-      console.error('[BrowserBroadcaster] Mic meter init error:', err.message);
-    }
+      meterLoopId = requestAnimationFrame(meterTick);
+    };
+
+    meterLoopId = requestAnimationFrame(meterTick);
+    console.log('[BrowserBroadcaster] ✅ Mic meter started — loop active');
+
+    return () => {
+      if (meterLoopId) cancelAnimationFrame(meterLoopId);
+    };
   }, []);
 
   // 【初期化：Permission Dialog → デバイス確定 → ビデオ → マイクメーター】
