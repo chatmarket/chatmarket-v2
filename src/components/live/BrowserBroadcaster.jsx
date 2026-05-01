@@ -286,14 +286,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   };
 
   // 【WHIP 接続】IVS Advanced チャンネル専用
-  // 仕様: https://<ingest-endpoint>/whip に POST + Authorization: Bearer <streamKey>
+  // ERR_EMPTY_RESPONSE 対策: ICE gathering 完了後にのみ SDP を送信する
   const connectToWhip = async () => {
-    // IVS Advanced チャンネル固定値（createLiveStream と同じ値）
     const INGEST_HOST = "27b83d82b8a7.global-contribute.live-video.net";
     const STREAM_KEY = "sk_ap-northeast-1_iYbETprO3ixW_1iEQD65hcKx0Mi253OGFyRzkYkaRAc";
     const WHIP_URL = `https://${INGEST_HOST}/whip`;
-
-    console.log('[BrowserBroadcaster] 🔗 WHIP URL:', WHIP_URL);
 
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
       throw new Error('カメラ・マイクが取得できていません');
@@ -302,45 +299,68 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     // エフェクトがある場合はCanvasストリーム+音声トラックを合成
     let broadcastStream = streamRef.current;
     if (canvasStreamRef.current) {
-      const audioTracks = streamRef.current.getAudioTracks();
-      const videoTracks = canvasStreamRef.current.getVideoTracks();
-      if (videoTracks.length > 0) {
-        broadcastStream = new MediaStream([...videoTracks, ...audioTracks]);
-      }
+      const vTracks = canvasStreamRef.current.getVideoTracks();
+      const aTracks = streamRef.current.getAudioTracks();
+      if (vTracks.length > 0) broadcastStream = new MediaStream([...vTracks, ...aTracks]);
     }
 
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
     });
 
-    broadcastStream.getTracks().forEach((track) => {
-      pc.addTrack(track, broadcastStream);
-    });
+    broadcastStream.getTracks().forEach((track) => pc.addTrack(track, broadcastStream));
 
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    // IVS WHIP: Bearer トークン = Stream Key
+    // ★ ICE gathering が complete になるまで待つ（ERR_EMPTY_RESPONSE の根本解決）
+    const completeSdp = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('ICE gathering timeout (10s)')), 10000);
+      if (pc.iceGatheringState === 'complete') {
+        clearTimeout(timeout);
+        resolve(pc.localDescription.sdp);
+        return;
+      }
+      pc.addEventListener('icegatheringstatechange', () => {
+        if (pc.iceGatheringState === 'complete') {
+          clearTimeout(timeout);
+          resolve(pc.localDescription.sdp);
+        }
+      });
+    });
+
+    // ★ IVS 向け SDP クレンジング（不要行を除去してサーバーの拒否を防ぐ）
+    const cleanSdp = completeSdp
+      .split('\r\n')
+      .filter(line => !line.startsWith('a=extmap-allow-mixed')) // Chrome拡張属性をIVSが拒否
+      .join('\r\n');
+
+    console.log('[BrowserBroadcaster] 🔗 WHIP URL:', WHIP_URL);
+    console.log('[BrowserBroadcaster] 📤 Sending SDP (', cleanSdp.length, 'bytes)');
+
     const response = await fetch(WHIP_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/sdp',
         'Authorization': `Bearer ${STREAM_KEY}`,
       },
-      body: offer.sdp,
+      body: cleanSdp,
     });
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       console.error('[BrowserBroadcaster] ❌ WHIP failed:', response.status, errorText);
-      throw new Error(`WHIP error: ${response.status} ${errorText.slice(0, 100)}`);
+      throw new Error(`WHIP error: ${response.status} ${errorText.slice(0, 200)}`);
     }
 
     const answerSdp = await response.text();
+    console.log('[BrowserBroadcaster] ✅ WHIP answer received:', answerSdp.length, 'bytes');
     await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: answerSdp }));
 
     whipClientRef.current = pc;
-    console.log('[BrowserBroadcaster] ✅ WHIP connected!');
+    console.log('[BrowserBroadcaster] ✅ WHIP connected — broadcasting!');
   };
 
   // 【マイク有効化ボタン（中央）】ユーザー操作で初実行
@@ -386,12 +406,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
             autoGainControl: false,
           },
     }).then((stream) => {
-      console.log('[BrowserBroadcaster] ✅ Stream acquired on user gesture - tracks:', stream.getTracks().map(t => t.kind));
+      console.log('[BrowserBroadcaster] ✅ Stream acquired - tracks:', stream.getTracks().map(t => t.kind));
       streamRef.current = stream;
-      
+
+      // ★ サーバー通信より先にプレビューを表示（ERR_EMPTY_RESPONSE でも顔は映る）
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.muted = true; // スピーカーからの音出力を防ぐ
+        videoRef.current.muted = true;
         videoRef.current.play().catch((err) => {
           console.warn('[BrowserBroadcaster] Video play warning:', err.name);
         });
