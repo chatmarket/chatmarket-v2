@@ -285,12 +285,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【WHIP 接続】IVS Advanced チャンネル専用
-  // ERR_EMPTY_RESPONSE 対策: ICE gathering 完了後にのみ SDP を送信する
+  // 【WHIP 接続】バックエンドプロキシ経由（CORS / Sandbox ドメイン問題を完全回避）
   const connectToWhip = async () => {
     const INGEST_HOST = "27b83d82b8a7.global-contribute.live-video.net";
     const STREAM_KEY = "sk_ap-northeast-1_iYbETprO3ixW_1iEQD65hcKx0Mi253OGFyRzkYkaRAc";
-    const WHIP_URL = `https://${INGEST_HOST}/whip`;
 
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
       throw new Error('カメラ・マイクが取得できていません');
@@ -315,7 +313,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    // ★ ICE gathering が complete になるまで待つ（ERR_EMPTY_RESPONSE の根本解決）
+    // ICE gathering が complete になるまで待つ
     const completeSdp = await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('ICE gathering timeout (10s)')), 10000);
       if (pc.iceGatheringState === 'complete') {
@@ -331,32 +329,23 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       });
     });
 
-    // ★ IVS 向け SDP クレンジング（不要行を除去してサーバーの拒否を防ぐ）
-    const cleanSdp = completeSdp
-      .split('\r\n')
-      .filter(line => !line.startsWith('a=extmap-allow-mixed')) // Chrome拡張属性をIVSが拒否
-      .join('\r\n');
+    console.log('[BrowserBroadcaster] 📤 Sending SDP via backend proxy (', completeSdp.length, 'bytes)');
 
-    console.log('[BrowserBroadcaster] 🔗 WHIP URL:', WHIP_URL);
-    console.log('[BrowserBroadcaster] 📤 Sending SDP (', cleanSdp.length, 'bytes)');
-
-    const response = await fetch(WHIP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/sdp',
-        'Authorization': `Bearer ${STREAM_KEY}`,
-      },
-      body: cleanSdp,
+    // ★ バックエンドプロキシ経由で IVS に転送（CORS/Sandbox 問題を完全回避、SDP クレンジングもサーバー側で実施）
+    const res = await base44.functions.invoke('whipProxy', {
+      sdp: completeSdp,
+      ingest_endpoint: INGEST_HOST,
+      stream_key: STREAM_KEY,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      console.error('[BrowserBroadcaster] ❌ WHIP failed:', response.status, errorText);
-      throw new Error(`WHIP error: ${response.status} ${errorText.slice(0, 200)}`);
+    if (!res?.data?.answer_sdp) {
+      const errMsg = res?.data?.error || res?.data?.detail || 'WHIPプロキシからの応答がありません';
+      throw new Error(`WHIP error: ${errMsg}`);
     }
 
-    const answerSdp = await response.text();
-    console.log('[BrowserBroadcaster] ✅ WHIP answer received:', answerSdp.length, 'bytes');
+    const answerSdp = res.data.answer_sdp;
+
+    console.log('[BrowserBroadcaster] ✅ WHIP answer received via proxy:', answerSdp.length, 'bytes');
     await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: answerSdp }));
 
     whipClientRef.current = pc;
