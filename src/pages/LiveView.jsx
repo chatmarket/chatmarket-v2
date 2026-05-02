@@ -21,6 +21,7 @@ import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
 import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx";
 import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
 import LivePaywall from "../components/live/LivePaywall.jsx";
+import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -188,9 +189,9 @@ function LiveViewInner() {
       {/* 映像エリア — プレミアムスタイル */}
       <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
         <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", position: "relative" }}>
-          {/* PPV 門番（チケット制でない配信） */}
+          {/* PPV 門番（チケット制でない配信）— Stripe統合版 */}
           {!stream.is_ticket_enabled && !coinAllowed && (
-            <LivePaywall
+            <LivePaywallStripe
               stream={stream}
               user={user}
               onAllowed={() => setCoinAllowed(true)}

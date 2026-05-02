@@ -30,6 +30,7 @@ export default function ViewerStream({ stream }) {
   const playbackUrl = stream?.ivs_playback_url;
   const noPlayLoadingRef = useRef(0); // ローディングが続いた時間（秒）
   const autoReloadTimerRef = useRef(null);
+  const mediaSourceStartTimeRef = useRef(Date.now()); // 映像ロード開始時刻（ミリ秒精度同期）
 
   useEffect(() => {
     if (!playbackUrl) return;
@@ -40,11 +41,12 @@ export default function ViewerStream({ stream }) {
     setFatalError(false);
     setShowManualPlay(false);
     noPlayLoadingRef.current = 0;
+    mediaSourceStartTimeRef.current = Date.now(); // ★ ミリ秒精度ロード時刻を記録
 
     // videoRefがDOMにマウントされるまで少し待つ
     const initTimer = setTimeout(() => {
       if (!destroyedRef.current) initPlayer();
-    }, 100);
+    }, 50); // ★ 100ms → 50ms に短縮（最速起動）
 
     // ★ 自動リロード: 30秒以上ローディングが続いた場合、ソース再読み込み
     autoReloadTimerRef.current = setInterval(() => {
@@ -135,16 +137,16 @@ export default function ViewerStream({ stream }) {
 
       const hls = new Hls({
         lowLatencyMode: true,
-        liveSyncDuration: 0.5,
-        liveMaxLatencyDuration: 2,
+        // ★ ミリ秒同期: ライブ配信最前線を確保（1080pでも遅延なし）
+        liveSyncDuration: 0.3,            // デフォルト3秒 → 300msに短縮
+        liveMaxLatencyDuration: 1,        // バッファ上限1秒（追いかけ再生発動）
         liveBackBufferLength: 0,
-        maxBufferLength: 1,
-        maxMaxBufferLength: 2,
-        maxBufferSize: 2 * 1000 * 1000,
+        maxBufferLength: 0.5,             // バッファ長最小化
+        maxMaxBufferLength: 1,
+        maxBufferSize: 1 * 1000 * 1000,   // 1MBに制限（高速スタート）
         backBufferLength: 0,
-        startLevel: -1,
-        // ★ ABR自動調整: 回線が細い場合は積極的に解像度を下げる（止まらないこと最優先）
-        abrBandWidthFactor: 0.6,          // 帯域幅推定に対して60%で適応（デフォルト95%より保守的）
+        startLevel: -1,                   // 自動画質選択（1080p推奨をhls.jsに任せる）
+        abrBandWidthFactor: 0.6,          // 帯域幅推定に対して60%で適応（止まらないこと最優先）
         abrMaxWithRealBitrate: true,      // 実測値をベースに天井を決定
         fragLoadingTimeOut: 12000,
         fragLoadingMaxRetry: 6,           // フラグメントは粘る
@@ -164,12 +166,14 @@ export default function ViewerStream({ stream }) {
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (destroyedRef.current) return;
-        console.log("[ViewerStream] manifest parsed, playing");
+        const timeToPlayReady = Date.now() - mediaSourceStartTimeRef.current;
+        console.log(`[ViewerStream] ⚡ Manifest parsed in ${timeToPlayReady}ms — playing immediately`);
         setLoading(false);
         setFatalError(false);
         setShowManualPlay(false);
-        noPlayLoadingRef.current = 0; // ローディング時間カウンタリセット
+        noPlayLoadingRef.current = 0;
         if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
+        // ★ 即座に再生開始（バッファ待ち最小化）
         vid.play().catch(() => {
           vid.muted = true;
           vid.play().catch((e) => {
