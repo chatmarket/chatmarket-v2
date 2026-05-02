@@ -94,8 +94,8 @@ export default function Recruit() {
   const isProTier = followerCount >= 10000;
 
   const campaignLabel = isProTier
-    ? `🎯 Pro特典：全有料プラン3ヶ月完全無料（要審査）`
-    : `🎁 Standard特典：全有料プラン初月完全無料`;
+    ? `🎯 Pro特典：全有料プラン24ヶ月完全無料（要審査）`
+    : `🎁 Standard特典：全有料プラン12ヶ月完全無料`;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -346,7 +346,7 @@ export default function Recruit() {
                 <Crown className="w-3 h-3" /> インフルエンサー特典
               </div>
               <div className="pt-2 space-y-1">
-                <p className="text-yellow-400 font-black text-3xl">3ヶ月間 完全無料</p>
+                <p className="text-yellow-400 font-black text-3xl">24ヶ月間 完全無料</p>
                 <p className="text-sm font-bold text-yellow-300">全有料プラン（{TOTAL_VALUE}/月相当）</p>
               </div>
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 space-y-2 text-sm">
@@ -358,7 +358,7 @@ export default function Recruit() {
                 </ul>
               </div>
               <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-xl p-3 text-center">
-                <p className="text-yellow-300 font-black text-lg">3ヶ月で最大 {TOTAL_VALUE} × 3ヶ月 FREE</p>
+                <p className="text-yellow-300 font-black text-lg">24ヶ月で最大 {TOTAL_VALUE} × 24ヶ月 FREE</p>
               </div>
               <div className="text-xs text-muted-foreground text-center">
                 先着限定・埋まり次第終了
@@ -375,7 +375,7 @@ export default function Recruit() {
                 🎁 新規登録者 全員対象
               </div>
               <div className="pt-2 space-y-1">
-                <p className="text-primary font-black text-3xl">初月 完全無料</p>
+                <p className="text-primary font-black text-3xl">12ヶ月間 完全無料</p>
                 <p className="text-sm font-bold text-primary/80">全有料プラン（{TOTAL_VALUE}/月相当）</p>
               </div>
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-2 text-sm">
@@ -387,7 +387,7 @@ export default function Recruit() {
                 </ul>
               </div>
               <div className="bg-primary/20 border border-primary/40 rounded-xl p-3 text-center">
-                <p className="text-primary font-black text-lg">初月 {TOTAL_VALUE} FREE</p>
+                <p className="text-primary font-black text-lg">12ヶ月で最大 {TOTAL_VALUE} × 12ヶ月 FREE</p>
               </div>
               <p className="text-xs text-muted-foreground text-center">先着300名限定・埋まり次第終了</p>
             </motion.div>
@@ -621,8 +621,8 @@ export default function Recruit() {
               <h3 className="text-xl font-black text-primary">申し込み受付完了！</h3>
               <p className="text-sm text-muted-foreground">
                 {isProTier
-                  ? `Pro特典（全プラン3ヶ月無料）の申請を受け付けました。審査結果をメールでお知らせします。`
-                  : `Standard特典（全プラン初月無料）が適用されます。メールをご確認ください。`}
+                  ? `Pro特典（全プラン24ヶ月無料）の申請を受け付けました。審査結果をメールでお知らせします。`
+                  : `Standard特典（全プラン12ヶ月無料）が適用されます。メールをご確認ください。`}
               </p>
               <Button onClick={() => navigate("/")} className="bg-primary text-black font-bold">
                 ChatMarketを始める →
@@ -717,7 +717,7 @@ export default function Recruit() {
                 {submitting ? "送信中..." : (
                   <>
                     <Zap className="w-5 h-5" />
-                    {isProTier ? "全プラン3ヶ月無料で申し込む（Pro）" : `全プラン初月無料で申し込む`}
+                    {isProTier ? "全プラン24ヶ月無料で申し込む（Pro）" : `全プラン12ヶ月無料で申し込む`}
                   </>
                 )}
               </Button>
