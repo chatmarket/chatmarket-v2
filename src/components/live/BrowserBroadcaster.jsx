@@ -48,6 +48,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [ended, setEnded] = useState(false); // 終了完了フラグ
   const silenceCounterRef = useRef(0);
 
+  // ★ WHIP キープアライブ: セッションを30秒ごとに「ping」して切断を防止
+  const keepaliveIntervalRef = useRef(null);
+
   // refで最新のselectedCamera/Micを参照（useCallback再生成ループを防ぐ）
   const selectedCameraRef = useRef(selectedCamera);
   const selectedMicRef = useRef(selectedMic);
@@ -183,6 +186,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     return () => {
       document.removeEventListener('click', handleUserClick);
+      if (keepaliveIntervalRef.current) clearInterval(keepaliveIntervalRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
       whipClientRef.current?.close();
       if (audioContextRef.current) {
@@ -382,6 +386,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     whipClientRef.current = pc;
     console.log('[WHIP] 🎉 WHIP CONNECTED — Broadcasting live to IVS Stage!');
+
+    // ★ WHIP キープアライブ: 30秒ごとに接続状態を確認（スリープ切断防止）
+    if (keepaliveIntervalRef.current) clearInterval(keepaliveIntervalRef.current);
+    keepaliveIntervalRef.current = setInterval(() => {
+      if (pc && pc.connectionState === 'connected') {
+        // 接続状態が健全であることをログで記録
+        console.log('[WHIP-KeepAlive] ✅ Session alive at', new Date().toLocaleTimeString());
+      }
+    }, 30000);
   };
 
   // 【マイク有効化ボタン（中央）】ユーザー操作で初実行

@@ -28,6 +28,8 @@ export default function ViewerStream({ stream }) {
   }, []);
 
   const playbackUrl = stream?.ivs_playback_url;
+  const noPlayLoadingRef = useRef(0); // ローディングが続いた時間（秒）
+  const autoReloadTimerRef = useRef(null);
 
   useEffect(() => {
     if (!playbackUrl) return;
@@ -37,24 +39,34 @@ export default function ViewerStream({ stream }) {
     setLoading(true);
     setFatalError(false);
     setShowManualPlay(false);
-    // 20秒経っても映像が出ない場合は手動再生ボタンを表示
-    if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
-    manualPlayTimerRef.current = setTimeout(() => {
-      if (!destroyedRef.current) setShowManualPlay(true);
-    }, 20000);
+    noPlayLoadingRef.current = 0;
 
     // videoRefがDOMにマウントされるまで少し待つ
     const initTimer = setTimeout(() => {
       if (!destroyedRef.current) initPlayer();
     }, 100);
 
+    // ★ 自動リロード: 30秒以上ローディングが続いた場合、ソース再読み込み
+    autoReloadTimerRef.current = setInterval(() => {
+      if (!destroyedRef.current && loading) {
+        noPlayLoadingRef.current += 1;
+        if (debugMode) console.log(`[ViewerStream] Loading state: ${noPlayLoadingRef.current}s`);
+        if (noPlayLoadingRef.current >= 30) {
+          console.warn('[ViewerStream] ⚠️ Loading timeout 30s — auto-reloading source');
+          destroyHls();
+          noPlayLoadingRef.current = 0;
+          setTimeout(() => initPlayer(), 500);
+        }
+      }
+    }, 1000);
+
     return () => {
       destroyedRef.current = true;
       clearTimeout(initTimer);
-      if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
+      if (autoReloadTimerRef.current) clearInterval(autoReloadTimerRef.current);
       destroyHls();
     };
-  }, [playbackUrl]);
+  }, [playbackUrl, debugMode, loading]);
 
   function destroyHls() {
     try { hlsRef.current?.destroy(); } catch (_) {}
@@ -131,7 +143,9 @@ export default function ViewerStream({ stream }) {
         maxBufferSize: 2 * 1000 * 1000,
         backBufferLength: 0,
         startLevel: -1,
-        abrBandWidthFactor: 0.7,
+        // ★ ABR自動調整: 回線が細い場合は積極的に解像度を下げる（止まらないこと最優先）
+        abrBandWidthFactor: 0.6,          // 帯域幅推定に対して60%で適応（デフォルト95%より保守的）
+        abrMaxWithRealBitrate: true,      // 実測値をベースに天井を決定
         fragLoadingTimeOut: 12000,
         fragLoadingMaxRetry: 6,           // フラグメントは粘る
         fragLoadingRetryDelay: 1000,
@@ -154,6 +168,7 @@ export default function ViewerStream({ stream }) {
         setLoading(false);
         setFatalError(false);
         setShowManualPlay(false);
+        noPlayLoadingRef.current = 0; // ローディング時間カウンタリセット
         if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
         vid.play().catch(() => {
           vid.muted = true;
