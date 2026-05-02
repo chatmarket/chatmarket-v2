@@ -258,15 +258,6 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       throw new Error('カメラ・マイクが取得できていません');
     }
 
-    // streamIdからIVS設定を取得
-    const streams = await base44.entities.LiveStream.filter({ id: streamId });
-    const liveStream = streams[0];
-    if (!liveStream?.ivs_ingest_endpoint || !liveStream?.ivs_stream_key) {
-      throw new Error('IVS設定が見つかりません（ivs_ingest_endpoint / ivs_stream_key）');
-    }
-    const whipUrl = `https://${liveStream.ivs_ingest_endpoint}/whip`;
-    const streamKey = liveStream.ivs_stream_key;
-
     // エフェクトがある場合はCanvasストリーム+音声トラックを合成
     let broadcastStream = streamRef.current;
     if (canvasStreamRef.current) {
@@ -302,16 +293,24 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       });
     });
 
-    // Step1: プロキシでSDPクレンジング
+    // Step1: プロキシでSDPクレンジング + IVS設定取得
     console.log('[BrowserBroadcaster] 🧹 Cleaning SDP via proxy...');
-    const cleanRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
-    if (!cleanRes?.data?.cleaned_sdp) {
-      throw new Error('SDPクレンジング失敗: ' + (cleanRes?.data?.error || '不明'));
-    }
-    const cleanedSdp = cleanRes.data.cleaned_sdp;
+    const proxyRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp, stream_id: streamId });
+
+    if (!proxyRes?.data) throw new Error('whipProxy: レスポンスなし');
+    if (proxyRes.data.error) throw new Error('whipProxy: ' + proxyRes.data.error);
+
+    const cleanedSdp = proxyRes.data.cleaned_sdp;
+    const whipUrl = proxyRes.data.whip_url;
+    const streamKey = proxyRes.data.stream_key;
+
+    if (!cleanedSdp) throw new Error('whipProxy: cleaned_sdpなし');
+    if (!whipUrl || !streamKey) throw new Error('IVS設定が取得できません');
 
     // Step2: ブラウザから直接IVSへWHIPリクエスト
-    console.log('[BrowserBroadcaster] 📤 Sending WHIP to IVS:', whipUrl, '(', cleanedSdp.length, 'bytes)');
+    console.log('[BrowserBroadcaster] 📤 Sending WHIP to IVS:', whipUrl, `(${cleanedSdp.length} bytes)`);
+    console.log('[BrowserBroadcaster] Authorization: Bearer', streamKey.slice(0, 20) + '...');
+
     const ivsRes = await fetch(whipUrl, {
       method: 'POST',
       headers: {
@@ -321,9 +320,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       body: cleanedSdp,
     });
 
+    console.log('[BrowserBroadcaster] IVS response status:', ivsRes.status);
     if (!ivsRes.ok) {
       const errText = await ivsRes.text().catch(() => '');
-      throw new Error(`IVS WHIP error: ${ivsRes.status} ${errText.slice(0, 200)}`);
+      console.error('[BrowserBroadcaster] IVS error body:', errText);
+      throw new Error(`IVS WHIP ${ivsRes.status}: ${errText.slice(0, 200)}`);
     }
 
     const answerSdp = await ivsRes.text();

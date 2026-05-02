@@ -1,10 +1,14 @@
 /**
- * whipProxy - SDPクレンジングのみ実施してブラウザに返す
+ * whipProxy - SDPクレンジングのみ。WHIPはブラウザ直送。
  *
- * WHIPリクエスト自体はブラウザから直接IVSへ送る。
- * 理由: DenoのrustlsがIVSのTLS close_notify欠落を拒否するため、
- *       Denoからの直接転送は不可能。
- *       IVSのWHIPエンドポイントはCORSを許可しているのでブラウザ直送が正解。
+ * 結論: DenoからIVSへの直接転送は以下の理由で不可能:
+ *   1. 標準fetch → rustls が TLS close_notify なし切断を拒否
+ *   2. node:https → Denoサンドボックスで制限
+ *   3. Deno.connectTls → IVSがHTTP/2必須のため HTTP/1.1 raw TCP では応答なし
+ *
+ * 解決策: プロキシはSDPクレンジングのみ実施し、クリーン済みSDPをブラウザに返す。
+ * ブラウザがIVSへ直接POST。IVSはCORSを許可しているため動作する。
+ * ERR_EMPTY_RESPONSEの原因は別にある（下記を参照）。
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
@@ -42,16 +46,32 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { sdp } = body;
-    if (!sdp) {
-      return Response.json({ error: 'sdp is required' }, { status: 400, headers: corsHeaders });
-    }
+    const { sdp, stream_id } = body;
+
+    if (!sdp) return Response.json({ error: 'sdp is required' }, { status: 400, headers: corsHeaders });
 
     const cleanedSdp = cleanSdpForIvs(sdp);
     console.log(`[whipProxy] SDP cleaned: ${sdp.length} → ${cleanedSdp.length} bytes`);
 
-    // クリーン済みSDPをブラウザに返す。ブラウザが直接IVSへPOSTする。
-    return Response.json({ cleaned_sdp: cleanedSdp }, { status: 200, headers: corsHeaders });
+    // stream_idが渡された場合はIVS設定も返す（ブラウザ側でURLとkeyを組み立て）
+    let whipUrl = null;
+    let streamKey = null;
+    if (stream_id) {
+      const streams = await base44.asServiceRole.entities.LiveStream.filter({ id: stream_id });
+      const liveStream = streams[0];
+      if (liveStream?.ivs_ingest_endpoint && liveStream?.ivs_stream_key) {
+        whipUrl = `https://${liveStream.ivs_ingest_endpoint}/whip`;
+        streamKey = liveStream.ivs_stream_key;
+        console.log(`[whipProxy] IVS endpoint: ${whipUrl}`);
+        console.log(`[whipProxy] Stream key prefix: ${streamKey.slice(0, 20)}...`);
+      }
+    }
+
+    return Response.json({
+      cleaned_sdp: cleanedSdp,
+      whip_url: whipUrl,
+      stream_key: streamKey,
+    }, { status: 200, headers: corsHeaders });
 
   } catch (error) {
     console.error('[whipProxy] Error:', error.message);
