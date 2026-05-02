@@ -20,6 +20,7 @@ import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
 import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
 import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx";
 import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
+import LivePaywall from "../components/live/LivePaywall.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -50,6 +51,8 @@ function LiveViewInner() {
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [ticketChecked, setTicketChecked] = useState(false);
+  // 旧PPV（price > 0 かつ is_ticket_enabled=false）の視聴許可フラグ
+  const [coinAllowed, setCoinAllowed] = useState(false);
   const [activeTips, setActiveTips] = useState([]);
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -110,20 +113,25 @@ function LiveViewInner() {
   }, [stream?.channel_id]);
 
   useEffect(() => {
-    if (!stream || !user) return;
+    if (!stream) return;
 
-    // チケット販売が有効な場合、購入済みかチェック
     if (stream.is_ticket_enabled) {
+      // チケット制: 購入済みかチェック
       const purchases = stream.ticket_purchases || [];
-      const purchased = purchases.some((p) => p.user_email === user.email);
+      const purchased = user ? purchases.some((p) => p.user_email === user.email) : false;
       setHasPurchased(purchased);
       setTicketChecked(true);
-    } else {
-      // チケット不要（既存PPV価格システムまたは無料）
+    } else if ((stream.price ?? 0) > 0) {
+      // 旧PPV（コイン消費型）: LivePaywall が制御するため ticketChecked=true で通過させる
       setHasPurchased(true);
       setTicketChecked(true);
+    } else {
+      // 無料配信
+      setHasPurchased(true);
+      setTicketChecked(true);
+      setCoinAllowed(true);
     }
-  }, [stream, user?.email]);
+  }, [stream?.id, stream?.is_ticket_enabled, stream?.price, user?.email]);
 
   const toggleFullscreen = () => setIsFullscreen((prev) => !prev);
 
@@ -184,7 +192,15 @@ function LiveViewInner() {
 
       {/* 映像エリア — プレミアムスタイル */}
       <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
-        <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)" }}>
+        <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", position: "relative" }}>
+          {/* 旧PPV 門番（チケット制でない有料配信） */}
+          {!stream.is_ticket_enabled && (stream.price ?? 0) > 0 && !coinAllowed && (
+            <LivePaywall
+              stream={stream}
+              user={user}
+              onAllowed={() => setCoinAllowed(true)}
+            />
+          )}
           {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
             <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
           ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
