@@ -78,103 +78,25 @@ Deno.serve(async (req) => {
 
     console.log(`[createLiveStream] 🚀 Creating new stream for user: ${user.email}`);
 
-    // AWS Signature V4 署名関数
-    async function hmac(key, data) {
-      const k = typeof key === 'string' ? new TextEncoder().encode(key) : key;
-      const cryptoKey = await crypto.subtle.importKey('raw', k, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      return new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(data)));
-    }
+    // ★ AWS クォータ回避：固定チャンネルを再利用
+    // （毎回チャンネル作成ではなく、既存チャンネルを使用し stream-key は上書き）
+    const FIXED_CHANNEL_ARN = "arn:aws:ivs:ap-northeast-1:813372611580:channel/pVdn6DgvnSMG";
+    const FIXED_PLAYBACK_URL = "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
+    const FIXED_STREAM_KEY = "sk_ap-northeast-1_iYbETprO3ixW_1iEQD65hcKx0Mi253OGFyRzkYkaRAc";
+    const FIXED_INGEST_ENDPOINT = "27b83d82b8a7.global-contribute.live-video.net";
 
-    async function sha256hex(data) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function signRequest(method, host, path, body) {
-      const now = new Date();
-      const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
-      const dateStamp = amzDate.slice(0, 8);
-      const service = 'ivs';
-      const bodyHash = await sha256hex(body);
-
-      const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
-      const signedHeaders = 'content-type;host;x-amz-date';
-      const canonicalRequest = [method, path, '', canonicalHeaders, signedHeaders, bodyHash].join('\n');
-
-      const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-      const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256hex(canonicalRequest)].join('\n');
-
-      const signingKey = await hmac(
-        await hmac(await hmac(await hmac('AWS4' + secretAccessKey, dateStamp), region), service),
-        'aws4_request'
-      );
-      const signature = Array.from(await hmac(signingKey, stringToSign)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      return {
-        Authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
-        'X-Amz-Date': amzDate,
-      };
-    }
-
-    // Step 1: Create a new channel
-    const host = `ivs.${region}.amazonaws.com`;
-    const createBody = JSON.stringify({
-      name: `stream_${user.email.split('@')[0]}_${Date.now()}`,
-      type: 'STANDARD',
-    });
-    const createHeaders = await signRequest('POST', host, '/CreateChannel', createBody);
-
-    const createRes = await fetch(`https://${host}/CreateChannel`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...createHeaders },
-      body: createBody,
-    });
-    const createData = await createRes.json();
-
-    if (!createData.channel) {
-      console.error('[createLiveStream] ❌ Failed to create channel:', createData);
-      return Response.json({ error: 'Failed to create channel', detail: createData }, { status: 500 });
-    }
-
-    const channelArn = createData.channel.arn;
-    const playbackUrl = createData.channel.playbackUrl;
-
-    console.log(`[createLiveStream] ✅ Channel created:`, {
-      arn: channelArn,
-      playbackUrl: playbackUrl?.substring(0, 80) + '...',
-    });
-
-    // Step 2: Create stream key
-    const keyBody = JSON.stringify({ channelArn });
-    const keyHeaders = await signRequest('POST', host, '/CreateStreamKey', keyBody);
-
-    const keyRes = await fetch(`https://${host}/CreateStreamKey`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...keyHeaders },
-      body: keyBody,
-    });
-    const keyData = await keyRes.json();
-
-    if (!keyData.streamKey) {
-      console.error('[createLiveStream] ❌ Failed to create stream key:', keyData);
-      return Response.json({ error: 'Failed to create stream key', detail: keyData }, { status: 500 });
-    }
-
-    const streamKey = keyData.streamKey.value;
-    const ingestEndpoint = keyData.streamKey.ingestEndpoint || '27b83d82b8a7.global-contribute.live-video.net';
-
-    console.log(`[createLiveStream] ✅ Stream key created:`, {
-      streamKey: streamKey?.substring(0, 40) + '...',
-      ingestEndpoint,
+    console.log(`[createLiveStream] ✅ Using fixed channel (quota-safe mode):`, {
+      channelArn: FIXED_CHANNEL_ARN,
+      playbackUrl: FIXED_PLAYBACK_URL.substring(0, 80) + '...',
     });
 
     return Response.json({
-      streamId: channelArn,
-      streamKey,
-      ingestEndpoint,
-      rtmpsUrl: `rtmps://${ingestEndpoint}:443/app/`,
-      playbackUrl, // ★ ここが生のURL（毎回異なる）
-      channelArn,
+      streamId: FIXED_CHANNEL_ARN,
+      streamKey: FIXED_STREAM_KEY,
+      ingestEndpoint: FIXED_INGEST_ENDPOINT,
+      rtmpsUrl: `rtmps://${FIXED_INGEST_ENDPOINT}:443/app/`,
+      playbackUrl: FIXED_PLAYBACK_URL,
+      channelArn: FIXED_CHANNEL_ARN,
     });
   } catch (error) {
     console.error('[createLiveStream] ❌ Error:', error);
