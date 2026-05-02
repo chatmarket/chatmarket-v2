@@ -29,6 +29,7 @@ export default function GoLive() {
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [manualStreamKey, setManualStreamKey] = useState("");
   const [manualIngestEndpoint, setManualIngestEndpoint] = useState("");
+  const [broadcastModeTab, setBroadcastModeTab] = useState("browser"); // "obs" | "browser"
 
   const [form, setForm] = useState({
     title: "",
@@ -208,10 +209,15 @@ export default function GoLive() {
     sessionStorage.setItem("liveStreamId", newStream.id);
     
     console.log(`[GoLive] ✅ [1対多 配信] Stored streamId: ${newStream.id}`);
-    
-    // 配信方式選択モーダルを表示（liveStreamId セット後）
-    setShowModeSelect(true);
-    setMode(null); // モーダルを確実に表示させるためモードをリセット
+
+    // ブラウザ配信の場合はモーダルなしで直接遷移
+    if (broadcastModeTab === "browser") {
+      localStorage.setItem("broadcastMode", "browser");
+    } else {
+      localStorage.removeItem("broadcastMode");
+      setShowModeSelect(true);
+      setMode(null);
+    }
   };
 
   // 配信方式選択画面（OBS vs ブラウザ）
@@ -493,7 +499,49 @@ export default function GoLive() {
         <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
       </div>
 
+      {/* 配信方式タブ */}
+      <div className="flex gap-2 mb-6 p-1 bg-secondary rounded-xl">
+        <button
+          type="button"
+          onClick={() => setBroadcastModeTab("browser")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-black transition-all ${
+            broadcastModeTab === "browser"
+              ? "bg-green-500 text-white shadow-lg"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Smartphone className="w-4 h-4" />
+          ブラウザから配信
+        </button>
+        <button
+          type="button"
+          onClick={() => setBroadcastModeTab("obs")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-black transition-all ${
+            broadcastModeTab === "obs"
+              ? "bg-primary text-primary-foreground shadow-lg"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Radio className="w-4 h-4" />
+          OBSで配信
+        </button>
+      </div>
+
+      {/* ブラウザ配信説明 */}
+      {broadcastModeTab === "browser" && (
+        <div className="space-y-2 bg-green-500/10 border border-green-500/30 rounded-2xl p-5 mb-6">
+          <p className="text-sm font-bold text-green-400">🌐 ブラウザから直接配信（WHIP/WebRTC）</p>
+          <p className="text-xs text-muted-foreground">タイトルを入力して「ライブ配信スタート」を押すと、即座にカメラ・マイクが起動してAWSへ映像を送信します。</p>
+          <ul className="text-xs text-green-400/80 space-y-1 mt-2">
+            <li>✅ ソフトウェア不要 — ブラウザのみ</li>
+            <li>✅ スマホ・PC対応</li>
+            <li>✅ 超低遅延（WebRTC）</li>
+          </ul>
+        </div>
+      )}
+
       {/* OBS 配信キー自動生成・表示 */}
+      {broadcastModeTab === "obs" && (
       <div className="space-y-4 bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-6">
         <p className="text-sm font-bold text-primary">🎬 OBS で配信する</p>
         <p className="text-xs text-muted-foreground">タイトル、価格、配信スタートを押すと表示されます（スマホと同時配信OK）</p>
@@ -561,6 +609,7 @@ export default function GoLive() {
           → OBS設定ガイド
         </a>
       </div>
+      )}
 
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
         {/* サムネイル */}
@@ -788,17 +837,26 @@ export default function GoLive() {
         <Button
           type="submit"
           disabled={creating || !form.title}
-          className="w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 bg-red-500 hover:bg-red-600"
+          className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${
+            broadcastModeTab === "browser"
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-red-500 hover:bg-red-600"
+          }`}
         >
           {creating ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
               準備中...
             </>
+          ) : broadcastModeTab === "browser" ? (
+            <>
+              <Smartphone className="w-5 h-5" />
+              ブラウザで配信開始
+            </>
           ) : (
             <>
               <Radio className="w-5 h-5" />
-              ライブ配信スタート
+              ライブ配信スタート（OBS）
             </>
           )}
         </Button>
