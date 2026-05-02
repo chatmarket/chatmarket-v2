@@ -209,8 +209,9 @@ export default function GoLive() {
     
     console.log(`[GoLive] ✅ [1対多 配信] Stored streamId: ${newStream.id}`);
     
-    // 配信方式選択UI表示
+    // 配信方式選択モーダルを表示（liveStreamId セット後）
     setShowModeSelect(true);
+    setMode(null); // モーダルを確実に表示させるためモードをリセット
   };
 
   // 配信方式選択画面（OBS vs ブラウザ）
@@ -385,24 +386,84 @@ export default function GoLive() {
     );
   }
 
-  // ブラウザ配信画面
-  if (liveStreamId && localStorage.getItem("broadcastMode") === "browser") {
+  // 配信方式選択モーダル（liveStreamId 取得後に表示）
+  if (showModeSelect && liveStreamId) {
     return (
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 h-screen flex flex-col">
-        <BrowserBroadcaster
-          streamId={liveStreamId}
-          channelId={channels[0]?.id}
-          onEnd={() => {
-            localStorage.removeItem("broadcastMode");
-            navigate("/creator-dashboard");
-          }}
-        />
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+        <div className="bg-card border border-border rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-black mb-2">配信方式を選択</h2>
+            <p className="text-muted-foreground">OBSかブラウザから選んでください</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* OBS配信 */}
+            <button
+              onClick={() => {
+                localStorage.removeItem("broadcastMode");
+                setShowModeSelect(false);
+              }}
+              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                <Radio className="w-7 h-7 text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white">OBS配信</p>
+                <p className="text-xs text-muted-foreground mt-1">RTMPSで高画質</p>
+                <p className="text-[10px] text-zinc-500 mt-2">ゲーム・プロ向け</p>
+              </div>
+            </button>
+
+            {/* ブラウザ配信 */}
+            <button
+              onClick={() => {
+                localStorage.setItem("broadcastMode", "browser");
+                setShowModeSelect(false);
+              }}
+              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-green-500/40 hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                <Smartphone className="w-7 h-7 text-green-400" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white">ブラウザ配信</p>
+                <p className="text-xs text-muted-foreground mt-1">スマホ・PCから即配信</p>
+                <p className="text-[10px] text-zinc-500 mt-2">初心者・雑談向け</p>
+              </div>
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowModeSelect(false);
+              setLiveStreamId(null);
+            }}
+            className="w-full py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-semibold"
+          >
+            キャンセル
+          </button>
+        </div>
       </div>
     );
   }
 
-  // OBS配信画面
-  if (liveStreamId) {
+  // ブラウザ配信画面（モーダルで「ブラウザ配信」選択後）
+  if (liveStreamId && localStorage.getItem("broadcastMode") === "browser") {
+    return (
+      <BrowserBroadcaster
+        streamId={liveStreamId}
+        channelId={channels[0]?.id}
+        onEnd={() => {
+          localStorage.removeItem("broadcastMode");
+          navigate("/creator-dashboard");
+        }}
+      />
+    );
+  }
+
+  // OBS配信画面（モーダルで「OBS配信」選択後）
+  if (liveStreamId && !showModeSelect) {
     return (
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -418,70 +479,6 @@ export default function GoLive() {
           onEnd={() => navigate("/creator-dashboard")}
           thumbnailUrl={thumbnailUrl}
         />
-      </div>
-    );
-  }
-
-  // 配信方式選択モーダル
-  if (showModeSelect) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-        <div className="bg-card border border-border rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-black mb-2">配信方式を選択</h2>
-            <p className="text-muted-foreground">OBSかブラウザから選んでください</p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            {/* OBS配信 */}
-            <button
-              onClick={() => {
-                localStorage.removeItem("broadcastMode");
-                setShowModeSelect(false);
-                setMode(MODE_LIVE);
-              }}
-              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                <Radio className="w-7 h-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-black text-white">OBS配信</p>
-                <p className="text-xs text-muted-foreground mt-1">RTMPSで高画質・高音質配信</p>
-                <p className="text-[10px] text-zinc-500 mt-2">推奨：ゲーム、教育、プロフェッショナル</p>
-              </div>
-            </button>
-
-            {/* ブラウザ配信 */}
-            <button
-              onClick={() => {
-                localStorage.setItem("broadcastMode", "browser");
-                setShowModeSelect(false);
-                setMode(MODE_LIVE);
-              }}
-              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-green-500/40 hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                <Smartphone className="w-7 h-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-black text-white">ブラウザ配信</p>
-                <p className="text-xs text-muted-foreground mt-1">スマホ・PCから即配信</p>
-                <p className="text-[10px] text-zinc-500 mt-2">推奨：初心者、雑談、日常配信</p>
-              </div>
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
-              setShowModeSelect(false);
-              setLiveStreamId(null);
-            }}
-            className="w-full py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-semibold"
-          >
-            キャンセル
-          </button>
-        </div>
       </div>
     );
   }
