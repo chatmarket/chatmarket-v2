@@ -651,7 +651,7 @@ export default function Recruit() {
               <div className="space-y-1.5">
                 <Label className="flex items-center gap-1.5">
                   SNSフォロワー数（合算）
-                  <span className="text-xs text-muted-foreground">1万超で3ヶ月無料</span>
+                  <span className="text-xs text-muted-foreground">1万超で24ヶ月無料</span>
                 </Label>
                 <Input
                   type="number"
@@ -664,8 +664,8 @@ export default function Recruit() {
                 {followerCount > 0 && (
                   <p className={`text-xs font-semibold ${isProTier ? "text-yellow-400" : "text-muted-foreground"}`}>
                     {isProTier
-                      ? "⭐ Pro特典対象！全プラン3ヶ月無料（要審査）"
-                      : `フォロワー ${(10000 - followerCount).toLocaleString()} 人でPro特典（3ヶ月無料）適用`}
+                      ? "⭐ Pro特典対象！全プラン24ヶ月無料（要審査）"
+                      : `フォロワー ${(10000 - followerCount).toLocaleString()} 人でPro特典（24ヶ月無料）適用`}
                   </p>
                 )}
               </div>
