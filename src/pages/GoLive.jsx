@@ -142,6 +142,12 @@ export default function GoLive() {
     setManualStreamKey(ivsData.streamKey);
     setManualIngestEndpoint(ivsData.rtmpsUrl);
 
+    // ★ 生URL確認ログ
+    console.log(`[GoLive] 🎬 New playback URL generated:`, {
+      full_url: ivsData.playbackUrl,
+      url_preview: ivsData.playbackUrl?.substring(0, 100) + '...',
+    });
+
     let channel = channels[0];
     if (!channel) {
       channel = await base44.entities.Channel.create({
