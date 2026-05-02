@@ -49,6 +49,17 @@ class LiveViewErrorBoundary extends React.Component {
 function LiveViewInner() {
   const { streamId, id: idParam } = useParams();
   const id = streamId || idParam;
+  
+  // ★ Stream ID パラメータが正確に渡されているか即座に検証ログ
+  useEffect(() => {
+    console.log(`[LiveView] 🔍 URL Parameter Check:`, {
+      streamId_param: streamId,
+      id_param: idParam,
+      resolved_id: id,
+      timestamp: new Date().toISOString(),
+    });
+  }, [streamId, idParam, id]);
+  
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [ticketChecked, setTicketChecked] = useState(false);
@@ -72,7 +83,28 @@ function LiveViewInner() {
 
   useEffect(() => {
     const unsub = base44.entities.SuperChat.subscribe((event) => {
-      if (event.type !== "create" || event.data?.livestream_id !== id) return;
+      if (event.type !== "create") return;
+      
+      // ★ 全スーパーチャット受信を検証ログ（diagnostics）
+      console.log(`[LiveView] 💰 SuperChat received:`, {
+        event_id: event.id,
+        livestream_id: event.data?.livestream_id,
+        expected_id: id,
+        match: event.data?.livestream_id === id,
+        user: event.data?.user_name,
+        amount: event.data?.amount,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // 正確な stream ID でのみフィルタリング
+      if (event.data?.livestream_id !== id) {
+        console.log(`[LiveView] ⚠️ SuperChat filtered (stream ID mismatch):`, {
+          received_id: event.data?.livestream_id,
+          expected_id: id,
+        });
+        return;
+      }
+      
       const item = { ...event.data, id: event.id };
       if (!item.gift_id) {
         setActiveTips((prev) => [...prev.slice(-4), item]);

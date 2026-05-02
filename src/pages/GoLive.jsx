@@ -220,6 +220,15 @@ export default function GoLive() {
 
       setCreating(false);
       console.log(`[GoLive] ✅ [1対多 配信] Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
+      
+      // ★ 正確な配信 URL へナビゲート（streamId をパラメータで渡す）
+      const liveUrl = `/live/${newStream.id}`;
+      console.log(`[GoLive] 🔗 Redirecting to: ${liveUrl}`);
+      
+      // sessionStorage は補足的にも保存（バックアップ用）
+      sessionStorage.setItem("liveStreamId", newStream.id);
+      sessionStorage.setItem("broadcastMode", broadcastModeTab);
+      
       setLiveStreamId(newStream.id);
     } catch (err) {
       console.error('[GoLive] ❌ Failed to create stream:', err);
@@ -227,10 +236,6 @@ export default function GoLive() {
       setCreating(false);
       return;
     }
-    
-    // セッションストレージに配信情報を保存（古いIDは完全削除）
-    sessionStorage.clear();
-    sessionStorage.setItem("liveStreamId", newStream.id);
     
     console.log(`[GoLive] ✅ [1対多 配信] Stored streamId: ${newStream.id}`);
 
