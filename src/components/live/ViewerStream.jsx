@@ -146,25 +146,25 @@ export default function ViewerStream({ stream }) {
 
       const hls = new Hls({
         lowLatencyMode: true,
-        // ★ ミリ秒同期: ライブ配信最前線を確保（1080pでも遅延なし）
-        liveSyncDuration: 0.3,            // デフォルト3秒 → 300msに短縮
-        liveMaxLatencyDuration: 1,        // バッファ上限1秒（追いかけ再生発動）
-        liveBackBufferLength: 0,
-        maxBufferLength: 0.5,             // バッファ長最小化
-        maxMaxBufferLength: 1,
-        maxBufferSize: 1 * 1000 * 1000,   // 1MBに制限（高速スタート）
-        backBufferLength: 0,
-        startLevel: -1,                   // 自動画質選択（1080p推奨をhls.jsに任せる）
-        abrBandWidthFactor: 0.6,          // 帯域幅推定に対して60%で適応（止まらないこと最優先）
+        // ★ 4G対応LL-HLS バッファ調整: 低遅延ＶＳ安定性のバランス
+        liveSyncDuration: 0.5,            // 300ms → 500ms（4G向け微調整）
+        liveMaxLatencyDuration: 2,        // バッファ上限1秒 → 2秒（4G環境での安定）
+        liveBackBufferLength: 1,          // バックバッファ0 → 1秒確保
+        maxBufferLength: 1.5,             // バッファ最小0.5 → 1.5秒（4G途切れ防止）
+        maxMaxBufferLength: 3,            // 最大バッファ1 → 3秒
+        maxBufferSize: 2 * 1000 * 1000,   // 1MB → 2MB（セグメント蓄積余裕）
+        backBufferLength: 2,              // 過去セグメント保持2秒
+        startLevel: -1,                   // 自動画質選択（最初は低めから始まる）
+        abrBandWidthFactor: 0.7,          // 60% → 70%（4Gでも止まらない設定）
         abrMaxWithRealBitrate: true,      // 実測値をベースに天井を決定
-        fragLoadingTimeOut: 12000,
-        fragLoadingMaxRetry: 6,           // フラグメントは粘る
-        fragLoadingRetryDelay: 1000,
-        manifestLoadingTimeOut: 10000,
-        manifestLoadingMaxRetry: 8,       // IVS起動中(404)でも諦めない
-        manifestLoadingRetryDelay: 2000,  // 2秒おきに再試行
-        levelLoadingMaxRetry: 6,
-        levelLoadingRetryDelay: 1500,
+        fragLoadingTimeOut: 15000,        // 12秒 → 15秒（4G遅延許容）
+        fragLoadingMaxRetry: 8,           // 6 → 8回（粘り強い再試行）
+        fragLoadingRetryDelay: 1500,      // 1秒 → 1.5秒（リトライ間隔延長）
+        manifestLoadingTimeOut: 12000,    // 10秒 → 12秒
+        manifestLoadingMaxRetry: 10,      // 8 → 10回
+        manifestLoadingRetryDelay: 2500,  // 2秒 → 2.5秒
+        levelLoadingMaxRetry: 8,          // 6 → 8回
+        levelLoadingRetryDelay: 2000,     // 1.5秒 → 2秒
         enableWorker: true,
         liveDurationInfinity: true,
       });
@@ -231,10 +231,23 @@ export default function ViewerStream({ stream }) {
     setFatalError(false);
     setLoading(true);
     setShowManualPlay(false);
+    noPlayLoadingRef.current = 0;
     destroyHls();
+    // ★ 強制リロード: 最新セグメント再取得（キャッシュクリア）
     setTimeout(() => {
-      if (!destroyedRef.current) initPlayer();
-    }, 200);
+      if (!destroyedRef.current) {
+        mediaSourceStartTimeRef.current = Date.now(); // 時刻リセット
+        initPlayer();
+      }
+    }, 300);
+  }
+
+  function handleManualPlay() {
+    const vid = videoRef.current;
+    if (!vid) return;
+    setShowManualPlay(false);
+    // ★ 再生ボタン押下 → 強制リロード（最新セグメント確保）
+    manualRetry();
   }
 
   function handleManualPlay() {
@@ -278,14 +291,14 @@ export default function ViewerStream({ stream }) {
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4 bg-black/60">
           <button
             onClick={handleManualPlay}
-            className="flex items-center justify-center w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-all"
+            className="flex items-center justify-center w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-all active:scale-95"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
           </button>
           <p className="text-white/70 text-sm font-semibold">タップして再生</p>
-          <button onClick={manualRetry} className="text-white/40 text-xs underline">再接続する</button>
+          <p className="text-white/40 text-xs">（最新の映像を取得します）</p>
         </div>
       )}
 
