@@ -92,7 +92,25 @@
 
   body {
     @apply bg-background text-foreground font-inter;
+    /* iPhone ノッチ・Dynamic Island 対応 */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* PWA Standalone / フルスクリーン時: safe-area を確保しつつ body余白を除去 */
+  @media (display-mode: standalone) {
+    body {
+      /* standalone では OS が safe-area を管理するため上書き */
+    }
+  }
+
+  /* 固定配置要素用ユーティリティ: ノッチに被らないオフセット */
+  .safe-top    { padding-top:    env(safe-area-inset-top,    0px); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-left   { padding-left:   env(safe-area-inset-left,   0px); }
+  .safe-right  { padding-right:  env(safe-area-inset-right,  0px); }
 
   /* Neon animations for Home page */
   @keyframes neonWhiteFlicker {

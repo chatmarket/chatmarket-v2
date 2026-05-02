@@ -262,7 +262,10 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
           {/* ステータスバッジ（OBS 配信中のみ表示） */}
           {isOBSLive && (
-            <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap z-10">
+            <div
+              className="absolute flex items-center gap-2 flex-wrap z-10"
+              style={{ top: `calc(0.75rem + env(safe-area-inset-top, 0px))`, left: `calc(0.75rem + env(safe-area-inset-left, 0px))` }}
+            >
               <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
               </span>

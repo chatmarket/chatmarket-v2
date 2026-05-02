@@ -556,7 +556,14 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
 
           {isBroadcasting && (
-            <div className="absolute top-2 right-2 landscape:top-3 landscape:right-3 flex flex-col items-end gap-1.5" style={{ zIndex: 20 }}>
+            <div
+              className="absolute flex flex-col items-end gap-1.5"
+              style={{
+                zIndex: 20,
+                top: `calc(0.75rem + env(safe-area-inset-top, 0px))`,
+                right: `calc(0.75rem + env(safe-area-inset-right, 0px))`,
+              }}
+            >
               {/* LIVE バッジ */}
               <div className="flex items-center gap-1.5 bg-red-600 px-3 py-1.5 landscape:px-4 landscape:py-2 rounded-xl border-2 border-red-400 shadow-xl shadow-red-500/50"
                 style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
