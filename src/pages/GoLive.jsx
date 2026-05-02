@@ -150,17 +150,28 @@ export default function GoLive() {
 
     let channel = channels[0];
     if (!channel) {
-      channel = await base44.entities.Channel.create({
-        name: user.full_name + "のチャンネル",
-        owner_email: user.email,
-      });
+      try {
+        channel = await base44.entities.Channel.create({
+          name: user.full_name + "のチャンネル",
+          owner_email: user.email,
+        });
+      } catch (err) {
+        console.error('[GoLive] ❌ Failed to create channel:', err);
+        toast.error('チャンネル作成に失敗しました。');
+        setCreating(false);
+        return;
+      }
     }
 
     let thumbnail_url = "";
     if (thumbnailFile) {
-      const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
-      thumbnail_url = res.file_url;
-      setThumbnailUrl(thumbnail_url);
+      try {
+        const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
+        thumbnail_url = res.file_url;
+        setThumbnailUrl(thumbnail_url);
+      } catch (err) {
+        console.warn('[GoLive] ⚠️ Thumbnail upload failed, continuing without:', err);
+      }
     }
 
     // 価格から画質を自動決定
@@ -174,41 +185,48 @@ export default function GoLive() {
     console.log(`[GoLive] Price: ${form.price}, Auto Quality: ${autoQuality}`);
 
     const isLiveNow = !form.scheduled_at;
-    const newStream = await base44.entities.LiveStream.create({
-      title: form.title,
-      description: form.description,
-      channel_id: channel.id,
-      channel_name: channel.name,
-      channel_avatar: channel.avatar_url,
-      thumbnail_url,
-      status: isLiveNow ? "live" : "scheduled",
-      scheduled_at: form.scheduled_at || null,
-      available_time: form.availableTime || "",
-      price: form.price,
-      viewer_count: 0,
-      stream_type: "ivs",
-      ivs_playback_url: ivsData.playbackUrl || "",
-      ivs_stream_key: ivsData.streamKey || "",
-      ivs_ingest_endpoint: ivsData.ingestEndpoint || "",
-      max_bitrate_restriction: autoQuality,
-      live_started_at: isLiveNow ? new Date().toISOString() : null,
-      cost_input_yen: 0,
-      cost_output_yen: 0,
-      total_viewer_minutes: 0,
-      revenue_coins: 0,
-      // チケット販売設定
-      is_ticket_enabled: ticketEnabled,
-      ticket_price_yen: ticketEnabled ? Math.max(minTicketPrice, ticketPriceYen) : 0,
-      ticket_duration_minutes: ticketEnabled ? ticketDurationMinutes : 0,
-      ticket_total_revenue_yen: 0,
-      ticket_purchases: [],
-    });
+    let newStream;
+    try {
+      newStream = await base44.entities.LiveStream.create({
+        title: form.title,
+        description: form.description,
+        channel_id: channel.id,
+        channel_name: channel.name,
+        channel_avatar: channel.avatar_url,
+        thumbnail_url,
+        status: isLiveNow ? "live" : "scheduled",
+        scheduled_at: form.scheduled_at || null,
+        available_time: form.availableTime || "",
+        price: parseInt(form.price) || 0,
+        viewer_count: 0,
+        stream_type: "ivs",
+        ivs_playback_url: ivsData.playbackUrl || "",
+        ivs_stream_key: ivsData.streamKey || "",
+        ivs_ingest_endpoint: ivsData.ingestEndpoint || "",
+        max_bitrate_restriction: autoQuality,
+        live_started_at: isLiveNow ? new Date().toISOString() : null,
+        cost_input_yen: 0,
+        cost_output_yen: 0,
+        total_viewer_minutes: 0,
+        revenue_coins: 0,
+        is_ticket_enabled: ticketEnabled,
+        ticket_price_yen: ticketEnabled ? Math.max(minTicketPrice, ticketPriceYen) : 0,
+        ticket_duration_minutes: ticketEnabled ? ticketDurationMinutes : 0,
+        ticket_total_revenue_yen: 0,
+        ticket_purchases: [],
+      });
 
-    await base44.entities.Channel.update(channel.id, { is_live: true });
+      await base44.entities.Channel.update(channel.id, { is_live: true });
 
-    setCreating(false);
-    console.log(`[GoLive] ✅ [1対多 配信] Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
-    setLiveStreamId(newStream.id);
+      setCreating(false);
+      console.log(`[GoLive] ✅ [1対多 配信] Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
+      setLiveStreamId(newStream.id);
+    } catch (err) {
+      console.error('[GoLive] ❌ Failed to create stream:', err);
+      toast.error('配信作成に失敗しました: ' + err.message);
+      setCreating(false);
+      return;
+    }
     
     // セッションストレージに配信情報を保存（古いIDは完全削除）
     sessionStorage.clear();
