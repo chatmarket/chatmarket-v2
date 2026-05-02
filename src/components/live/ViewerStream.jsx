@@ -99,16 +99,20 @@ export default function ViewerStream({ stream }) {
   async function initPlayer() {
     const vid = videoRef.current;
     if (!vid) {
-      console.warn("[ViewerStream] videoRef is null, retrying...");
+      console.warn("[ViewerStream] ❌ videoRef is null, retrying...");
       retry();
       return;
     }
 
+    console.log("[ViewerStream] 🎥 initPlayer called with URL:", playbackUrl?.substring(0, 60) + "...");
+
     // iOS Safari ネイティブHLS
     if (vid.canPlayType("application/vnd.apple.mpegurl")) {
+      console.log("[ViewerStream] 📱 Native HLS detected (iOS Safari)");
       // 毎回リスナーをクリーンにセット（once:true だと retry 後に再リッスンできない）
       const onCanPlay = () => {
         if (destroyedRef.current) return;
+        console.log("[ViewerStream] ✅ Native HLS canplay event");
         setLoading(false);
         vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
       };
@@ -116,7 +120,7 @@ export default function ViewerStream({ stream }) {
         if (destroyedRef.current) return;
         const code = vid.error?.code ?? 'N/A';
         const msg  = vid.error?.message ?? '';
-        console.warn(`[ViewerStream] native HLS error code=${code} msg=${msg}`);
+        console.warn(`[ViewerStream] ❌ Native HLS error code=${code} msg=${msg}`);
         vid.removeEventListener("canplay", onCanPlay);
         vid.removeEventListener("error", onError);
         retry();
@@ -127,6 +131,7 @@ export default function ViewerStream({ stream }) {
       vid.addEventListener("error", onError);
       vid.src = playbackUrl;
       vid.load();
+      console.log("[ViewerStream] 📡 Native HLS source set:", playbackUrl.substring(0, 60) + "...");
       return;
     }
 
@@ -176,7 +181,8 @@ export default function ViewerStream({ stream }) {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (destroyedRef.current) return;
         const timeToPlayReady = Date.now() - mediaSourceStartTimeRef.current;
-        console.log(`[ViewerStream] ⚡ Manifest parsed in ${timeToPlayReady}ms — playing immediately`);
+        console.log(`[ViewerStream] ✅ Manifest parsed in ${timeToPlayReady}ms`);
+        console.log(`[ViewerStream] 📊 Playback URL endpoint: ${playbackUrl.split('?')[0]}`);
         setLoading(false);
         setFatalError(false);
         setShowManualPlay(false);
@@ -188,12 +194,12 @@ export default function ViewerStream({ stream }) {
         if (playPromise !== undefined) {
           playPromise
             .catch((err) => {
-              console.warn("[ViewerStream] autoplay failed, muting and retrying:", err);
+              console.warn("[ViewerStream] ⚠️ Autoplay failed, muting and retrying:", err.name);
               vid.muted = true;
               return vid.play();
             })
             .catch((e) => {
-              console.warn("[ViewerStream] muted autoplay also failed, showing manual play button:", e);
+              console.warn("[ViewerStream] ⚠️ Muted autoplay also failed, showing manual play button");
               setShowManualPlay(true);
             });
         }

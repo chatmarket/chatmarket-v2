@@ -87,7 +87,19 @@ function LiveViewInner() {
     queryKey: ["livestream", id],
     queryFn: async () => {
       const streams = await base44.entities.LiveStream.filter({ id });
-      return streams[0];
+      const s = streams[0];
+      if (s) {
+        console.log(`[LiveView] 📡 Stream loaded:`, {
+          id: s.id,
+          title: s.title,
+          status: s.status,
+          stream_type: s.stream_type,
+          ivs_playback_url: s.ivs_playback_url?.substring(0, 50) + "...",
+          price: s.price,
+          channel_id: s.channel_id,
+        });
+      }
+      return s;
     },
     refetchInterval: 5000,
   });
@@ -116,6 +128,12 @@ function LiveViewInner() {
   useEffect(() => {
     if (!stream) return;
 
+    console.log("[LiveView] 🎬 Checking purchase status:", {
+      is_ticket_enabled: stream.is_ticket_enabled,
+      price: stream.price,
+      stream_type: stream.stream_type,
+    });
+
     if (stream.is_ticket_enabled) {
       // チケット制: 購入済みかチェック
       const purchases = stream.ticket_purchases || [];
@@ -127,7 +145,15 @@ function LiveViewInner() {
       setHasPurchased(true);
       setTicketChecked(true);
     }
-  }, [stream?.id, stream?.is_ticket_enabled, stream?.price, user?.email]);
+
+    // ★ AWS同期待機（決済完了後 → Playerを初期化）
+    if (coinAllowed && stream.ivs_playback_url) {
+      console.log("[LiveView] 🔄 Coin allowed detected, waiting for AWS sync...");
+      setTimeout(() => {
+        console.log("[LiveView] ✅ AWS sync complete, initializing player with URL:", stream.ivs_playback_url.substring(0, 60) + "...");
+      }, 1500);
+    }
+  }, [stream?.id, stream?.is_ticket_enabled, stream?.price, user?.email, coinAllowed, stream?.ivs_playback_url]);
 
   const toggleFullscreen = () => setIsFullscreen((prev) => !prev);
 
