@@ -531,7 +531,7 @@ export default function GoLive() {
       {broadcastModeTab === "browser" && (
         <div className="space-y-2 bg-green-500/10 border border-green-500/30 rounded-2xl p-5 mb-6">
           <p className="text-sm font-bold text-green-400">🌐 ブラウザから直接配信（WHIP/WebRTC）</p>
-          <p className="text-xs text-muted-foreground">タイトルを入力して「ライブ配信スタート」を押すと、即座にカメラ・マイクが起動してAWSへ映像を送信します。</p>
+          <p className="text-xs text-muted-foreground">タイトルを入力して「ライブ配信スタート」を押すと、即座にカメラ・マイクが起動して視聴者へ映像を送信します。</p>
           <ul className="text-xs text-green-400/80 space-y-1 mt-2">
             <li>✅ ソフトウェア不要 — ブラウザのみ</li>
             <li>✅ スマホ・PC対応</li>
