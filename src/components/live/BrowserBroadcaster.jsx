@@ -373,7 +373,15 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     console.log('[WHIP] Raw SDP size:', rawSdp.length, 'bytes');
 
     // whipProxy が SDPクレンジング + IVS転送 + アンサー返却を一括処理
-    const proxyRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
+    let proxyRes;
+    try {
+      proxyRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
+    } catch (err) {
+      console.error('[WHIP] ❌ whipProxy invocation failed:', err.message);
+      throw new Error('WHIP proxy error: ' + err.message);
+    }
+
+    console.log('[WHIP] Response status:', proxyRes?.status, 'data keys:', Object.keys(proxyRes?.data || {}));
 
     if (!proxyRes?.data) throw new Error('whipProxy: レスポンスなし');
     if (proxyRes.data.error) throw new Error(proxyRes.data.error);
@@ -382,7 +390,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     console.log('[WHIP] ✅ Answer SDP received:', proxyRes.data.answer_sdp.length, 'bytes');
     console.log('[WHIP] Answer preview:', proxyRes.data.answer_sdp.slice(0, 150));
 
-    await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: proxyRes.data.answer_sdp }));
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: proxyRes.data.answer_sdp }));
+      console.log('[WHIP] ✅ Remote SDP description set successfully');
+    } catch (err) {
+      console.error('[WHIP] ❌ Failed to set remote description:', err.message);
+      throw err;
+    }
 
     whipClientRef.current = pc;
     console.log('[WHIP] 🎉 WHIP CONNECTED — Broadcasting live to IVS Stage!');
