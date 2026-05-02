@@ -41,6 +41,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [showMicEnableButton, setShowMicEnableButton] = useState(true);
   const [micWarning, setMicWarning] = useState(null);
   const [testConfirmed, setTestConfirmed] = useState(false); // テスト完了フラグ
+  const [micAudioConfirmed, setMicAudioConfirmed] = useState(false); // 実際に音を拾ったか
+  const [effectOpen, setEffectOpen] = useState(false); // エフェクトアコーディオン
   const silenceCounterRef = useRef(0);
 
   // refで最新のselectedCamera/Micを参照（useCallback再生成ループを防ぐ）
@@ -129,6 +131,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       logThrottle++;
       if (logThrottle % 600 === 0) {
         console.log(`[MicMeter] avg=${avg.toFixed(2)} level=${newLevel}% ctx=${ctx.state}`);
+      }
+
+      // ★ avg > 1.5 で「実際に音を拾っている」と判定 → マイク合格
+      if (avg > 1.5) {
+        setMicAudioConfirmed(true);
       }
 
       // 無音判定は5秒（300フレーム）に延長（起動直後の誤検知を防ぐ）
@@ -390,8 +397,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     const videoTrack = stream.getVideoTracks()[0];
     const audioTrack = stream.getAudioTracks()[0];
     setCameraReady(!!videoTrack && videoTrack.enabled);
+    // micReadyはデバイス存在のみ（音量確認はmicAudioConfirmedで別管理）
     setMicReady(!!audioTrack && audioTrack.enabled);
-    console.log('[BrowserBroadcaster] ✅ Camera ready:', !!videoTrack, 'Mic ready:', !!audioTrack);
+    setMicAudioConfirmed(false); // リセット — 声を拾うまで合格にしない
+    console.log('[BrowserBroadcaster] ✅ Camera ready:', !!videoTrack, 'Mic track exists:', !!audioTrack);
 
     startMicMeter(stream);
     enumerateDevices();
@@ -480,8 +489,27 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
       {/* 右側パネル：コントロール + チャット + コイン */}
       <div className="w-full lg:w-80 flex flex-col gap-4 max-h-screen overflow-y-auto">
-        {/* エフェクトパネル */}
-        <EffectPanel value={effectKey} onChange={setEffectKey} />
+        {/* エフェクトパネル — アコーディオン */}
+        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setEffectOpen(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-white hover:bg-zinc-800 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-base">✨</span>
+              映像エフェクト
+              {effectKey !== "none" && (
+                <span className="text-xs font-black text-primary bg-primary/20 px-2 py-0.5 rounded-full">ON</span>
+              )}
+            </span>
+            <span className={`text-muted-foreground transition-transform ${effectOpen ? "rotate-180" : ""}`}>▼</span>
+          </button>
+          {effectOpen && (
+            <div className="px-4 pb-4">
+              <EffectPanel value={effectKey} onChange={setEffectKey} compact />
+            </div>
+          )}
+        </div>
 
         {/* デバイス設定 */}
         <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3 shadow-lg">
@@ -544,20 +572,34 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
               <span className="text-muted-foreground">カメラ {cameraReady ? "✅" : "❌"}</span>
             </div>
             <div className="flex items-center gap-2">
-              {micReady ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <AlertCircle className="w-4 h-4 text-red-400" />}
-              <span className="text-muted-foreground">マイク {micReady ? "✅" : "❌"}</span>
+              {micAudioConfirmed
+                ? <CheckCircle2 className="w-4 h-4 text-green-400" />
+                : micReady
+                ? <AlertCircle className="w-4 h-4 text-yellow-400" />
+                : <AlertCircle className="w-4 h-4 text-red-400" />}
+              <span className="text-muted-foreground">
+                マイク {micAudioConfirmed ? "✅ 音声確認済" : micReady ? "⚠️ 声を出して確認" : "❌"}
+              </span>
             </div>
           </div>
         </div>
 
         {/* テスト完了バナー / 未完了ガイド */}
         {!isBroadcasting && (
-          testConfirmed ? (
+          testConfirmed && micAudioConfirmed ? (
             <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 rounded-xl px-4 py-3">
               <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
               <div>
                 <p className="text-xs font-black text-green-400">テスト完了 — 配信可能です！</p>
-                <p className="text-[10px] text-green-400/70">カメラ・マイクの確認が取れました</p>
+                <p className="text-[10px] text-green-400/70">カメラ・マイクの音声を確認しました</p>
+              </div>
+            </div>
+          ) : testConfirmed && !micAudioConfirmed ? (
+            <div className="flex items-center gap-2 bg-orange-500/15 border border-orange-500/40 rounded-xl px-4 py-3">
+              <AlertCircle className="w-5 h-5 text-orange-400 shrink-0" />
+              <div>
+                <p className="text-xs font-black text-orange-400">マイクに向かって声を出してください</p>
+                <p className="text-[10px] text-orange-400/70">音が届いてから配信ボタンが有効になります</p>
               </div>
             </div>
           ) : (
@@ -568,16 +610,16 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           )
         )}
 
-        {/* 配信ボタン — テスト完了まで無効 */}
+        {/* 配信ボタン — テスト完了 + マイク音声確認まで無効 */}
         <button
           onClick={handleStartBroadcast}
-          disabled={isBroadcasting || !testConfirmed}
+          disabled={isBroadcasting || !testConfirmed || !micAudioConfirmed}
           className={`w-full py-3 rounded-xl text-white font-black flex items-center justify-center gap-2 transition-all shadow-lg ${
             broadcastStatus === "live"
               ? "bg-gradient-to-r from-green-500 to-green-600"
               : broadcastStatus === "connecting"
               ? "bg-gradient-to-r from-yellow-500 to-yellow-600 animate-pulse"
-              : !testConfirmed
+              : !testConfirmed || !micAudioConfirmed
               ? "bg-gray-600 cursor-not-allowed opacity-40"
               : "bg-red-500 hover:bg-red-600"
           }`}
