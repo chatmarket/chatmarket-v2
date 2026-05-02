@@ -121,15 +121,10 @@ function LiveViewInner() {
       const purchased = user ? purchases.some((p) => p.user_email === user.email) : false;
       setHasPurchased(purchased);
       setTicketChecked(true);
-    } else if ((stream.price ?? 0) > 0) {
+    } else {
       // 旧PPV（コイン消費型）: LivePaywall が制御するため ticketChecked=true で通過させる
       setHasPurchased(true);
       setTicketChecked(true);
-    } else {
-      // 無料配信
-      setHasPurchased(true);
-      setTicketChecked(true);
-      setCoinAllowed(true);
     }
   }, [stream?.id, stream?.is_ticket_enabled, stream?.price, user?.email]);
 
@@ -193,8 +188,8 @@ function LiveViewInner() {
       {/* 映像エリア — プレミアムスタイル */}
       <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
         <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", position: "relative" }}>
-          {/* 旧PPV 門番（チケット制でない有料配信） */}
-          {!stream.is_ticket_enabled && (stream.price ?? 0) > 0 && !coinAllowed && (
+          {/* PPV 門番（チケット制でない配信） */}
+          {!stream.is_ticket_enabled && !coinAllowed && (
             <LivePaywall
               stream={stream}
               user={user}
