@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +17,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // ---- キャンペーン設定 ----
 const CAMPAIGN_START = new Date("2026-04-16T20:00:00+09:00");
-const PRO_SLOTS_TOTAL = 300;
 
 // 全有料プラン一覧
 const ALL_PLANS = [
@@ -62,14 +60,6 @@ export default function Recruit() {
   const [user, setUser] = useState(null);
   const countdown = useCountdown(CAMPAIGN_START.getTime());
   const formRef = useRef(null);
-
-  // 実際の申し込み数を取得して残り枠を計算
-  const { data: applications = [] } = useQuery({
-    queryKey: ["recruit-applications-count"],
-    queryFn: () => base44.entities.BlogPost.filter({ channel_id: "recruit_application" }),
-    refetchInterval: 30000,
-  });
-  const slotsRemaining = Math.max(0, PRO_SLOTS_TOTAL - applications.length);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
