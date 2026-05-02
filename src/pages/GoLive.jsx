@@ -45,7 +45,7 @@ export default function GoLive() {
 
   const TICKET_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120];
   const minTicketPrice = Math.ceil((ticketDurationMinutes / 15) * 150);
-  const [manualWhipEndpoint, setManualWhipEndpoint] = useState("");
+
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -437,6 +437,7 @@ export default function GoLive() {
             <button
               onClick={() => {
                 localStorage.removeItem("broadcastMode");
+                setShowModeSelect(false);
                 setMode(MODE_LIVE);
               }}
               className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
@@ -455,9 +456,10 @@ export default function GoLive() {
             <button
               onClick={() => {
                 localStorage.setItem("broadcastMode", "browser");
+                setShowModeSelect(false);
                 setMode(MODE_LIVE);
               }}
-              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-green-500/40 hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
             >
               <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
                 <Smartphone className="w-7 h-7 text-primary" />
@@ -646,18 +648,6 @@ export default function GoLive() {
             <option value="2時間">2時間（最大）</option>
           </select>
           <p className="text-xs text-muted-foreground">最大2時間まで設定できます</p>
-        </div>
-
-        {/* WHIP エンドポイント手動入力 */}
-        <div className="space-y-2">
-          <Label className="text-cyan-400 font-bold">🌐 WHIPエンドポイント（手動）</Label>
-          <Input
-            value={manualWhipEndpoint || "https://27b83d82b8a7.global-bm.whip.live-video.net"}
-            onChange={(e) => setManualWhipEndpoint(e.target.value)}
-            placeholder="https://27b83d82b8a7.global-bm.whip.live-video.net"
-            className="bg-secondary border-2 border-cyan-500/50 focus:border-cyan-500 font-mono text-xs"
-          />
-          <p className="text-xs text-cyan-300">💡 ✅ デフォルト: 27b83d82b8a7.global-bm.whip.live-video.net</p>
         </div>
 
         {/* 価格 */}
