@@ -12,9 +12,9 @@ const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
 const PLAN_INFO = {
   free:          { name: "FREEプラン",                     price: 0,     badge: "無料スタート",       badgeColor: "bg-gray-500/20 text-gray-300" },
   basic:         { name: "BASICプラン",                    price: 3300,  badge: "1対1ビデオ通話",     badgeColor: "bg-blue-500/20 text-blue-300" },
-  "call-anser":  { name: "CALL＆ANSERプラン",              price: 6600,  badge: "双方向有料通話",      badgeColor: "bg-cyan-500/20 text-cyan-300" },
-  vod:           { name: "VODプラン",                      price: 9900,  badge: "動画販売",           badgeColor: "bg-primary/20 text-primary" },
-  ppv:           { name: "PPVプラン",                      price: 9900,  badge: "有料ライブ配信",      badgeColor: "bg-red-500/20 text-red-300" },
+  "call-anser":  { name: "CALL＆ANSERプラン",              price: 3300,  badge: "双方向有料通話",      badgeColor: "bg-cyan-500/20 text-cyan-300" },
+  vod:           { name: "VODプラン",                      price: 3300,  badge: "動画販売",           badgeColor: "bg-primary/20 text-primary" },
+  ppv:           { name: "PPVプラン",                      price: 3300,  badge: "有料ライブ配信",      badgeColor: "bg-red-500/20 text-red-300" },
   crowdfunding:  { name: "BASIC＋クラウドファンディング",   price: 12000, badge: "クラウドファンディング", badgeColor: "bg-red-500/20 text-red-300" },
 };
 
