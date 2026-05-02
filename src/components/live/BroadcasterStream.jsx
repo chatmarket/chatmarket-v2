@@ -184,11 +184,11 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   };
 
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-4 bg-zinc-950 rounded-xl overflow-hidden">
-      {/* 左側: 映像プレビュー */}
+    <div className="w-full flex flex-col landscape:flex-row lg:flex-row gap-2 landscape:gap-2 bg-zinc-950 rounded-xl overflow-hidden">
+      {/* 左側: 映像プレビュー — landscape時に flex-[2] で映像優先 */}
       <div
         ref={videoContainerRef}
-        className="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800"
+        className="flex-1 landscape:flex-[2] flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800"
         style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
       >
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
@@ -383,8 +383,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         )}
       </div>
 
-      {/* 右側: 視聴者数グラフ + チャット */}
-      <div className="w-full lg:w-80 flex flex-col gap-4">
+      {/* 右側: 視聴者数グラフ + チャット — landscape時に flex-[1] */}
+      <div className="w-full lg:w-80 landscape:flex-[1] landscape:w-auto landscape:max-h-screen landscape:overflow-y-auto flex flex-col gap-2 landscape:gap-2">
         <ViewerCountGraph streamId={streamId} isLive={isLive} />
 
         <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
