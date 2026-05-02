@@ -43,6 +43,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const [testConfirmed, setTestConfirmed] = useState(false); // テスト完了フラグ
   const [micAudioConfirmed, setMicAudioConfirmed] = useState(false); // 実際に音を拾ったか
   const [effectOpen, setEffectOpen] = useState(false); // エフェクトアコーディオン
+  const [showEndConfirm, setShowEndConfirm] = useState(false); // 配信終了確認ダイアログ
+  const [ending, setEnding] = useState(false); // 終了処理中フラグ
+  const [ended, setEnded] = useState(false); // 終了完了フラグ
   const silenceCounterRef = useRef(0);
 
   // refで最新のselectedCamera/Micを参照（useCallback再生成ループを防ぐ）
@@ -199,6 +202,63 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
   // ★ カメラ変更useEffectを廃止 — handleMicEnableを再呼び出しするとMic restartループになるため
   // カメラ変更はデバイスセレクト後に「再テスト開始」ボタンで対応
+
+  // 【配信終了処理】完全クリーンアップ
+  const handleEndBroadcast = async () => {
+    setEnding(true);
+    setShowEndConfirm(false);
+
+    // 1. WHIP接続を切断
+    try {
+      if (whipClientRef.current) {
+        whipClientRef.current.close();
+        whipClientRef.current = null;
+        console.log('[BrowserBroadcaster] ✅ WHIP connection closed');
+      }
+    } catch (err) {
+      console.warn('[BrowserBroadcaster] WHIP close error:', err);
+    }
+
+    // 2. カメラ・マイクを停止
+    try {
+      streamRef.current?.getTracks().forEach((t) => { t.stop(); });
+      streamRef.current = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      console.log('[BrowserBroadcaster] ✅ Camera/Mic stopped');
+    } catch (err) {
+      console.warn('[BrowserBroadcaster] Stream stop error:', err);
+    }
+
+    // 3. AudioContextを閉じる
+    try {
+      if (audioContextRef.current) {
+        await audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    } catch (err) {}
+
+    // 4. IVS DB ステータスを 'ended' に更新
+    try {
+      if (streamId) {
+        await base44.entities.LiveStream.update(streamId, {
+          status: "ended",
+          live_ended_at: new Date().toISOString(),
+        });
+      }
+      if (channelId) {
+        await base44.entities.Channel.update(channelId, { is_live: false });
+      }
+      console.log('[BrowserBroadcaster] ✅ DB status updated to ended');
+    } catch (err) {
+      console.warn('[BrowserBroadcaster] DB update error:', err);
+    }
+
+    setEnding(false);
+    setEnded(true);
+    setIsBroadcasting(false);
+    setBroadcastStatus(null);
+    toast.success("配信を終了しました！お疲れ様でした 🎉");
+  };
 
   // 【配信開始】認証確認 → streamId 確認 → WHIP 接続
   const handleStartBroadcast = async () => {
@@ -426,6 +486,27 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     handleMicEnable();
   };
 
+  // 終了完了画面
+  if (ended) {
+    return (
+      <div className="w-full min-h-screen bg-zinc-950 flex items-center justify-center p-6">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-10 max-w-sm w-full text-center space-y-5 shadow-2xl">
+          <div className="text-6xl">🎉</div>
+          <h2 className="text-2xl font-black text-white">お疲れ様でした！</h2>
+          <p className="text-sm text-zinc-400">配信が正常に終了しました。<br/>視聴者のみなさんありがとうございました。</p>
+          <div className="flex flex-col gap-3 pt-2">
+            <button
+              onClick={() => { onEnd?.(); }}
+              className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-black font-black text-base transition-all"
+            >
+              ダッシュボードへ
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen bg-zinc-950 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 relative">
       {/* 左側：ビデオプレイヤー */}
@@ -482,6 +563,13 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
                 <span className="text-base font-black text-white tracking-widest">🔴 配信中</span>
               </div>
               <span className="text-xs font-black text-red-400 tracking-widest uppercase bg-black/70 px-2 py-0.5 rounded-full">ON AIR</span>
+              {/* 配信終了ボタン（配信中のみ表示） */}
+              <button
+                onClick={() => setShowEndConfirm(true)}
+                className="mt-1 flex items-center gap-2 bg-black/80 hover:bg-red-900/80 border-2 border-red-500/70 hover:border-red-400 px-4 py-2 rounded-xl text-red-400 hover:text-red-300 font-black text-sm transition-all shadow-lg"
+              >
+                ⏹ 配信を終了する
+              </button>
             </div>
           )}
         </div>
@@ -664,6 +752,44 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
           </div>
         </div>
       </div>
+
+      {/* 配信終了確認ダイアログ */}
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-card border border-red-500/40 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl space-y-4">
+            <div className="text-center">
+              <div className="text-4xl mb-3">⏹</div>
+              <h2 className="font-black text-white text-xl">配信を終了しますか？</h2>
+              <p className="text-sm text-zinc-400 mt-2">カメラ・マイクが停止され、<br/>視聴者への映像配信が終了します。</p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowEndConfirm(false)}
+                className="flex-1 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-white font-bold text-sm"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleEndBroadcast}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-sm"
+              >
+                終了する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 終了処理中オーバーレイ */}
+      {ending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-white/20 border-t-red-400 rounded-full animate-spin mx-auto" />
+            <p className="text-white font-bold">配信を終了中...</p>
+            <p className="text-zinc-500 text-sm">カメラ・マイクを停止しています</p>
+          </div>
+        </div>
+      )}
 
       {/* エラーダイアログ */}
       {showErrorDialog && (

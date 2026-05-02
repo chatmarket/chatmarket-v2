@@ -18,6 +18,8 @@ export default function ViewerStream({ stream }) {
   const [loading, setLoading] = useState(true);
   const [fatalError, setFatalError] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [showManualPlay, setShowManualPlay] = useState(false);
+  const manualPlayTimerRef = useRef(null);
 
   // 【修正】クエリパラメータから debug=true を検出
   useEffect(() => {
@@ -34,6 +36,12 @@ export default function ViewerStream({ stream }) {
     retryRef.current = 0;
     setLoading(true);
     setFatalError(false);
+    setShowManualPlay(false);
+    // 20秒経っても映像が出ない場合は手動再生ボタンを表示
+    if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
+    manualPlayTimerRef.current = setTimeout(() => {
+      if (!destroyedRef.current) setShowManualPlay(true);
+    }, 20000);
 
     // videoRefがDOMにマウントされるまで少し待つ
     const initTimer = setTimeout(() => {
@@ -43,6 +51,7 @@ export default function ViewerStream({ stream }) {
     return () => {
       destroyedRef.current = true;
       clearTimeout(initTimer);
+      if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
       destroyHls();
     };
   }, [playbackUrl]);
@@ -144,9 +153,14 @@ export default function ViewerStream({ stream }) {
         console.log("[ViewerStream] manifest parsed, playing");
         setLoading(false);
         setFatalError(false);
+        setShowManualPlay(false);
+        if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
         vid.play().catch(() => {
           vid.muted = true;
-          vid.play().catch((e) => console.warn("[ViewerStream] play failed:", e));
+          vid.play().catch((e) => {
+            console.warn("[ViewerStream] autoplay failed, showing manual play button:", e);
+            setShowManualPlay(true);
+          });
         });
       });
 
@@ -181,10 +195,22 @@ export default function ViewerStream({ stream }) {
     retryRef.current = 0;
     setFatalError(false);
     setLoading(true);
+    setShowManualPlay(false);
     destroyHls();
     setTimeout(() => {
       if (!destroyedRef.current) initPlayer();
     }, 200);
+  }
+
+  function handleManualPlay() {
+    const vid = videoRef.current;
+    if (!vid) return;
+    setShowManualPlay(false);
+    vid.muted = false;
+    vid.play().catch(() => {
+      vid.muted = true;
+      vid.play().catch(() => manualRetry());
+    });
   }
 
   if (!playbackUrl) {
@@ -200,7 +226,7 @@ export default function ViewerStream({ stream }) {
 
   return (
     <div className="w-full h-full relative bg-black rounded-xl overflow-hidden">
-      {loading && (
+      {loading && !showManualPlay && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3 pointer-events-none">
           <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           <p className="text-white/40 text-xs">
@@ -209,6 +235,22 @@ export default function ViewerStream({ stream }) {
           {retryRef.current > 5 && (
             <p className="text-white/30 text-xs">配信開始をお待ちください</p>
           )}
+        </div>
+      )}
+
+      {/* 手動再生ボタン — 自動再生失敗 or 20秒経過時に表示 */}
+      {showManualPlay && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4 bg-black/60">
+          <button
+            onClick={handleManualPlay}
+            className="flex items-center justify-center w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </button>
+          <p className="text-white/70 text-sm font-semibold">タップして再生</p>
+          <button onClick={manualRetry} className="text-white/40 text-xs underline">再接続する</button>
         </div>
       )}
 
