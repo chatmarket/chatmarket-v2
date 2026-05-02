@@ -54,28 +54,30 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
     }
   }, []);
 
-  // コイン消費して視聴開始
+  // コイン消費して視聴開始（アトミック処理）
   const handleConsume = async () => {
     if (!wallet || wallet.balance < price) return;
     setConsuming(true);
     try {
-      const newBalance = wallet.balance - price;
-      await base44.entities.YellCoinWallet.update(wallet.id, { balance: newBalance });
-      await base44.entities.YellCoinTransaction.create({
-        user_email: user.email,
-        type: "send",
-        amount: price,
-        target_name: stream.channel_name || "",
-        target_id: stream.id,
-        service_type: "superchat",
-        service_id: stream.id,
+      const res = await base44.functions.invoke("consumeCoinsForViewing", {
+        stream_id: stream.id,
+        price,
         channel_id: stream.channel_id,
         channel_owner_email: stream.channel_owner_email || "",
+        channel_name: stream.channel_name || "",
       });
-      toast.success("視聴開始！");
-      onAllowed();
+      if (res.data?.success) {
+        setWallet((prev) => ({ ...prev, balance: res.data.new_balance }));
+        toast.success("視聴開始！");
+        onAllowed();
+      } else {
+        toast.error(res.data?.error || "視聴できませんでした");
+      }
     } catch (e) {
-      toast.error("エラーが発生しました: " + e.message);
+      const msg = e.message || "決済に失敗しました";
+      toast.error(msg.includes("402") || msg.includes("不足") 
+        ? "コインが足りません。チャージしてください"
+        : "決済に失敗しました。電波の良い場所で再度お試しください");
     } finally {
       setConsuming(false);
     }
