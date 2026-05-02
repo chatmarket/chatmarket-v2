@@ -282,9 +282,7 @@ export default function Recruit() {
             className="inline-flex items-center gap-3 bg-red-500/10 border border-red-500/40 rounded-xl px-5 py-3 text-sm"
           >
             <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse inline-block" />
-            <span className="text-red-300 font-bold">残り枠：</span>
-            <span className="text-red-400 font-black text-xl">{slotsRemaining}</span>
-            <span className="text-red-300 font-bold">名 / {PRO_SLOTS_TOTAL}名</span>
+            <span className="text-red-300 font-bold">限定人数に達し次第終了</span>
           </motion.div>
         </div>
       </section>
@@ -464,12 +462,20 @@ export default function Recruit() {
           <div className="mt-10 bg-card border border-border/50 rounded-2xl p-6 space-y-4">
             <h3 className="font-black text-lg text-center">収益還元率の比較</h3>
             <p className="text-xs text-muted-foreground text-center">FREEプランから始めて、有料プランでさらに高還元を目指せます</p>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
                 { label: "FREEプラン", rate: 70, color: "#10b981", bg: "bg-emerald-500", plan: "1対1通話・エールコイン" },
-                { label: "BASICプラン（月間¥0〜¥100万）", rate: 85, color: "#00ff9d", bg: "bg-primary", plan: "基本還元率" },
-                { label: "BASICプラン（月間¥100万超）", rate: 90, color: "#f59e0b", bg: "bg-amber-500", plan: "プログレッシブ還元" },
-                { label: "BASICプラン（月間¥300万超）", rate: 95, color: "#ef4444", bg: "bg-red-500", plan: "MAX還元率" },
+                { label: "BASIC（月間¥100万以下）", rate: 85, color: "#00ff9d", bg: "bg-primary", plan: "基本還元率" },
+                { label: "BASIC（月間¥100万超）", rate: 86, color: "#60a5fa", bg: "bg-blue-400", plan: "プログレッシブ還元 STEP1" },
+                { label: "BASIC（月間¥300万超）", rate: 87, color: "#818cf8", bg: "bg-indigo-400", plan: "STEP2" },
+                { label: "BASIC（月間¥600万超）", rate: 88, color: "#a78bfa", bg: "bg-violet-400", plan: "STEP3" },
+                { label: "BASIC（月間¥900万超）", rate: 89, color: "#c084fc", bg: "bg-purple-400", plan: "STEP4" },
+                { label: "BASIC（月間¥1,200万超）", rate: 90, color: "#e879f9", bg: "bg-fuchsia-400", plan: "STEP5" },
+                { label: "BASIC（月間¥1,500万超）", rate: 91, color: "#f472b6", bg: "bg-pink-400", plan: "STEP6" },
+                { label: "BASIC（月間¥1,650万超）", rate: 92, color: "#fb923c", bg: "bg-orange-400", plan: "STEP7" },
+                { label: "BASIC（月間¥1,800万超）", rate: 93, color: "#facc15", bg: "bg-yellow-400", plan: "STEP8" },
+                { label: "BASIC（月間¥1,950万超）", rate: 94, color: "#f59e0b", bg: "bg-amber-500", plan: "STEP9" },
+                { label: "BASIC（月間¥2,000万以上）", rate: 95, color: "#ef4444", bg: "bg-red-500", plan: "MAX還元率" },
               ].map((item, i) => (
                 <div key={i} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
