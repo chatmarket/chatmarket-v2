@@ -361,7 +361,7 @@ export default function Recruit() {
                 <p className="text-yellow-300 font-black text-lg">3ヶ月で最大 {TOTAL_VALUE} × 3ヶ月 FREE</p>
               </div>
               <div className="text-xs text-muted-foreground text-center">
-                限定<span className="text-yellow-400 font-black text-sm"> {slotsRemaining} </span>名枠（先着順・埋まり次第終了）
+                先着限定・埋まり次第終了
               </div>
             </motion.div>
 
@@ -789,7 +789,7 @@ export default function Recruit() {
       {/* ===== Footer CTA ===== */}
       <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-br from-amber-500/10 to-background border-t border-amber-500/20">
         <div className="max-w-xl mx-auto text-center space-y-5">
-          <p className="text-amber-400 font-bold text-sm">{slotsRemaining}名限定枠 残りわずか</p>
+          <p className="text-amber-400 font-bold text-sm">限定人数に達し次第終了</p>
           <h2 className="text-3xl font-black">今すぐ全プラン無料でデビュー</h2>
           <p className="text-muted-foreground text-sm">{TOTAL_VALUE}/月相当が、今だけタダ。</p>
           <Button
