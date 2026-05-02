@@ -248,13 +248,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【WHIP 接続】SDPクレンジングはプロキシ、WHIPリクエストはブラウザから直接送信
-  // 理由: DenoのrustlsがIVSのTLS close_notify欠落を拒否して500エラーになるため
+  // 【WHIP 接続】SDPクレンジング + IVS転送を全てバックエンドプロキシに委任
+  // 理由: IVSはブラウザ直送POSTをCORSで拒否（ERR_EMPTY_RESPONSE）するため、
+  //       プロキシが allowInsecure で TLS close_notify 問題もねじ伏せる
   const connectToWhip = async () => {
-    const INGEST_HOST = "27b83d82b8a7.global-contribute.live-video.net";
-    const STREAM_KEY = "sk_ap-northeast-1_iYbETprO3ixW_1iEQD65hcKx0Mi253OGFyRzkYkaRAc";
-    const WHIP_URL = `https://${INGEST_HOST}/whip`;
-
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
       throw new Error('カメラ・マイクが取得できていません');
     }
@@ -294,32 +291,23 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       });
     });
 
-    // ★ Step1: バックエンドでSDPクレンジングのみ実施
-    console.log('[BrowserBroadcaster] 🧹 Cleaning SDP via proxy...');
-    const cleanRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
-    if (!cleanRes?.data?.cleaned_sdp) {
-      throw new Error('SDPクレンジング失敗: ' + (cleanRes?.data?.error || '不明'));
+    // ★ プロキシに SDP を送り、クレンジング + IVS転送 + SDPアンサー受け取りを一括委任
+    console.log('[BrowserBroadcaster] 📤 Sending SDP to whipProxy (', rawSdp.length, 'bytes)');
+    const proxyRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
+
+    if (!proxyRes?.data) {
+      throw new Error('whipProxy: レスポンスなし');
     }
-    const cleanedSdp = cleanRes.data.cleaned_sdp;
-
-    // ★ Step2: ブラウザから直接IVSへWHIPリクエスト（TLS問題を完全回避）
-    console.log('[BrowserBroadcaster] 📤 Sending WHIP directly from browser to IVS (', cleanedSdp.length, 'bytes)');
-    const ivsRes = await fetch(WHIP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/sdp',
-        'Authorization': `Bearer ${STREAM_KEY}`,
-      },
-      body: cleanedSdp,
-    });
-
-    if (!ivsRes.ok) {
-      const errText = await ivsRes.text().catch(() => '');
-      throw new Error(`IVS WHIP error: ${ivsRes.status} ${errText.slice(0, 200)}`);
+    if (proxyRes.data.error) {
+      throw new Error('whipProxy エラー: ' + proxyRes.data.error);
     }
 
-    const answerSdp = await ivsRes.text();
-    console.log('[BrowserBroadcaster] ✅ WHIP answer received directly:', answerSdp.length, 'bytes');
+    const answerSdp = proxyRes.data.answer_sdp;
+    if (!answerSdp) {
+      throw new Error('whipProxy: SDPアンサーが返ってきません — ' + JSON.stringify(proxyRes.data));
+    }
+
+    console.log('[BrowserBroadcaster] ✅ WHIP answer received via proxy:', answerSdp.length, 'bytes');
     await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: answerSdp }));
 
     whipClientRef.current = pc;
