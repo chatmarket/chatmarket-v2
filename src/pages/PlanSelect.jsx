@@ -17,11 +17,11 @@ const PLANS = [
     revenueShare: "70%",
     color: "from-gray-500/20 to-gray-600/10 border-gray-500/30",
     iconColor: "text-gray-300",
-    badge: "無料スタート",
-    badgeColor: "bg-gray-500/20 text-gray-300",
-    description: "クレジットカード不要。基本機能をすべて無料でご利用いただけます。",
-    features: ["無料で今すぐ始められる", "1対1の有料ビデオ通話機能", "視聴者からエールコイン受取", "チャンネルページ作成"],
-    exclusive: true, // 他と組み合わせ不可（選ぶと他が外れる）
+    badge: "初期費用・月額 0円でお試し開始",
+    badgeColor: "bg-emerald-500/20 text-emerald-300",
+    description: "クレジットカード不要。1対1の有料ビデオ通話で今すぐ収益化をお試しいただけます。",
+    features: ["初期費用・月額 0円でお試し開始", "1対1の有料ビデオ通話機能（収益還元率70%）", "視聴者からエールコイン受取", "チャンネルページ作成"],
+    exclusive: true,
   },
   {
     id: "basic",
@@ -376,10 +376,100 @@ export default function PlanSelect() {
         </div>
       </div>
 
-      {/* プラン一覧 */}
+      {/* ===== FREE プラン 大カード（試食コーナー） ===== */}
+      {(() => {
+        const freePlan = PLANS.find(p => p.id === "free");
+        const isSelected = selected.has("free");
+        return (
+          <div
+            onClick={() => !planInfo?.isAdmin && !planInfo?.isCampaign && togglePlan("free")}
+            className={`relative rounded-2xl border-2 p-6 cursor-pointer transition-all space-y-4 ${
+              isSelected
+                ? "border-emerald-400/70 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 shadow-lg shadow-emerald-500/10"
+                : "border-border/50 hover:border-emerald-400/40 bg-card"
+            }`}
+          >
+            {/* 試食バナー */}
+            <div className="absolute -top-4 left-6 bg-emerald-500 text-black px-4 py-1 rounded-full text-xs font-black flex items-center gap-1.5">
+              🍽️ まずは無料でお試し — 試食コーナー
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-start gap-6 pt-2">
+              {/* 左：メッセージ＋価格 */}
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                    isSelected ? "bg-emerald-500 border-emerald-500" : "border-muted-foreground"
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">初期費用・月額 0円でお試し開始</span>
+                </div>
+
+                <div>
+                  <p className="text-2xl font-black">FREEプラン</p>
+                  <p className="text-muted-foreground text-sm mt-1">料理で言えば「まずはお一口、無料でどうぞ。味には自信があります」という試食コーナー。気に入ったら有料プランへ。</p>
+                </div>
+
+                {/* 1対1通話 訴求バッジ */}
+                <div className="inline-flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/40 rounded-xl px-4 py-2.5">
+                  <PhoneCall className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-black text-emerald-300">1対1の有料ビデオ通話 対応</p>
+                    <p className="text-xs text-emerald-400/70">収益還元率 <span className="font-black text-emerald-300">70%</span> — 今すぐ収益化体験</p>
+                  </div>
+                </div>
+
+                <ul className="space-y-1.5 text-sm">
+                  {freePlan.features.map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-foreground/80">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 右：価格＋矢印 */}
+              <div className="flex flex-col items-center gap-3 md:min-w-[160px]">
+                <div className="text-center">
+                  <p className="text-5xl font-black text-emerald-400">¥0</p>
+                  <p className="text-xs text-muted-foreground">/月（ずっと無料）</p>
+                </div>
+                <div className="text-center text-xs text-muted-foreground">
+                  <p className="text-amber-400 font-bold">気に入ったら↓</p>
+                  <p>有料プランで本注文</p>
+                </div>
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const isAuth = await base44.auth.isAuthenticated();
+                    if (!isAuth) { base44.auth.redirectToLogin("/plan-confirm?plans=free"); return; }
+                    navigate("/plan-confirm?plans=free");
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-black text-sm transition-all"
+                >
+                  無料で始める
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 試食→本注文 矢印ブリッジ */}
+      <div className="flex items-center gap-3 py-1">
+        <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/40 to-amber-500/40" />
+        <div className="text-xs font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-1.5">
+          ↓ 味に納得したら「本注文（有料プラン）」へ ↓
+        </div>
+        <div className="flex-1 h-px bg-gradient-to-l from-emerald-500/40 to-amber-500/40" />
+      </div>
+
+      {/* プラン一覧（FREEを除く） */}
       <div className="space-y-3">
-        <Accordion type="multiple" defaultValue={["free", "basic", "call-anser", "vod", "ppv"]} className="space-y-2">
-          {PLANS.map((plan) => {
+        <Accordion type="multiple" defaultValue={["basic", "call-anser", "vod", "ppv"]} className="space-y-2">
+          {PLANS.filter(p => p.id !== "free").map((plan) => {
             const Icon = plan.icon;
             const isSelected = selected.has(plan.id);
             return (

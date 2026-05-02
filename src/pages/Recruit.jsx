@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   TrendingUp, Video, PhoneCall, Zap, CheckCircle2, ArrowRight,
-  Coins, ChevronDown, Flame, Gift, Crown
+  Coins, ChevronDown, Flame, Gift, Crown, Check
 } from "lucide-react";
 import RevenueModel from "@/components/recruit/RevenueModel";
 import MetaHelmet from "@/components/layout/MetaHelmet";
@@ -23,11 +23,11 @@ const PRO_SLOTS_TOTAL = 300;
 // 全有料プラン一覧
 const ALL_PLANS = [
   { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話で 最大85〜95%を稼ぐ" },
-  { name: "CALL&ANSER", price: "¥6,600",  color: "#00d4ff", desc: "通話：15分で 150円以上 稼ぐ（上限なし）" },
-  { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売で 収益化" },
-  { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信で 最大95%還元" },
+  { name: "CALL&ANSER", price: "¥3,300",  color: "#00d4ff", desc: "通話：15分で 150円以上 稼ぐ（上限なし）" },
+  { name: "VOD",        price: "¥3,300",  color: "#f59e0b", desc: "動画アーカイブ販売で 収益化" },
+  { name: "PPV",        price: "¥3,300",  color: "#ff6b6b", desc: "有料ライブ配信で 最大95%還元" },
 ];
-const TOTAL_VALUE = "¥29,700"; // 月額合計
+const TOTAL_VALUE = "¥13,200"; // 月額合計（各¥3,300×4）
 
 function useCountdown(targetDate) {
   const [diff, setDiff] = useState(targetDate - Date.now());
@@ -393,6 +393,108 @@ export default function Recruit() {
               </div>
               <p className="text-xs text-muted-foreground text-center">先着300名限定・埋まり次第終了</p>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 試食コーナー → 本注文 ステップ図 ===== */}
+      <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-secondary/30 to-background">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full px-4 py-1 text-xs font-bold">
+              🍽️ まずは無料でお試し
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black mt-4">試食コーナーから<br className="sm:hidden" />本注文へ</h2>
+            <p className="text-muted-foreground mt-2 text-sm max-w-xl mx-auto">
+              「料理で言えば、まずはお一口、無料でどうぞ。味には自信があります。」<br/>
+              FREEプランで1対1通話の収益化を体験し、気に入ったら有料プランへ。
+            </p>
+          </div>
+
+          {/* ステップ図 */}
+          <div className="flex flex-col md:flex-row items-stretch gap-0 md:gap-0">
+            {/* STEP 1: 無料登録 */}
+            <div className="flex-1 relative bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border-2 border-emerald-500/50 rounded-2xl md:rounded-r-none p-6 space-y-3"
+              style={{ boxShadow: "0 0 20px rgba(16,185,129,0.15)" }}>
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-black px-3 py-0.5 rounded-full text-xs font-black">STEP 1</div>
+              <div className="text-4xl text-center pt-2">🍽️</div>
+              <p className="text-center font-black text-lg text-emerald-300">無料登録</p>
+              <p className="text-center text-xs text-muted-foreground">クレジットカード不要<br/>今すぐ始められる</p>
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
+                <p className="text-2xl font-black text-emerald-400">¥0</p>
+                <p className="text-xs text-emerald-400/70">FREEプラン</p>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-emerald-400" />1対1ビデオ通話</li>
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-emerald-400" />収益還元率 70%</li>
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-emerald-400" />エールコイン受取</li>
+              </ul>
+            </div>
+
+            {/* 矢印 */}
+            <div className="flex md:flex-col items-center justify-center px-4 py-4 md:py-0">
+              <div className="flex md:flex-col items-center gap-1">
+                <div className="text-amber-400 font-black text-xs text-center hidden md:block">味に<br/>納得</div>
+                <ArrowRight className="w-6 h-6 text-amber-400 rotate-90 md:rotate-0" />
+                <div className="text-amber-400 font-black text-xs text-center hidden md:block">本注文</div>
+              </div>
+            </div>
+
+            {/* STEP 2: 有料プランへ */}
+            <div className="flex-1 relative bg-gradient-to-br from-amber-500/15 to-orange-600/5 border-2 border-amber-500/50 rounded-2xl md:rounded-l-none p-6 space-y-3"
+              style={{ boxShadow: "0 0 20px rgba(245,158,11,0.15)" }}>
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-black px-3 py-0.5 rounded-full text-xs font-black">STEP 2</div>
+              <div className="text-4xl text-center pt-2">🚀</div>
+              <p className="text-center font-black text-lg text-amber-300">本注文（有料プラン）</p>
+              <p className="text-center text-xs text-muted-foreground">気に入ったら<br/>フル機能へアップグレード</p>
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
+                <p className="text-xs text-gray-400 line-through">各 ¥6,600〜¥9,900</p>
+                <p className="text-2xl font-black text-red-400">各 ¥3,300</p>
+                <p className="text-xs text-amber-400/70">システム拡充中特別価格</p>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-amber-400" />還元率 最大95%（BASIC）</li>
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-amber-400" />1対多ライブ配信（PPV）</li>
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-amber-400" />動画販売・アーカイブ（VOD）</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* 収益還元率 70% → 95% グラフ */}
+          <div className="mt-10 bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+            <h3 className="font-black text-lg text-center">収益還元率の比較</h3>
+            <p className="text-xs text-muted-foreground text-center">FREEプランから始めて、有料プランでさらに高還元を目指せます</p>
+            <div className="space-y-4">
+              {[
+                { label: "FREEプラン", rate: 70, color: "#10b981", bg: "bg-emerald-500", plan: "1対1通話・エールコイン" },
+                { label: "BASICプラン（月間¥0〜¥100万）", rate: 85, color: "#00ff9d", bg: "bg-primary", plan: "基本還元率" },
+                { label: "BASICプラン（月間¥100万超）", rate: 90, color: "#f59e0b", bg: "bg-amber-500", plan: "プログレッシブ還元" },
+                { label: "BASICプラン（月間¥300万超）", rate: 95, color: "#ef4444", bg: "bg-red-500", plan: "MAX還元率" },
+              ].map((item, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-foreground/80">{item.label}</span>
+                    <span className="font-black" style={{ color: item.color }}>{item.rate}%</span>
+                  </div>
+                  <div className="w-full h-5 bg-secondary rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${item.rate}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
+                      className={`h-full rounded-full ${item.bg}`}
+                      style={{ boxShadow: `0 0 8px ${item.color}66` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{item.plan}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
+              <p className="text-xs text-emerald-300 font-semibold">
+                ✅ まずはFREEプランで70%還元を体験 → 有料プランで最大95%へ
+              </p>
+            </div>
           </div>
         </div>
       </section>
