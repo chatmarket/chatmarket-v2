@@ -89,19 +89,31 @@ function LiveViewInner() {
       const streams = await base44.entities.LiveStream.filter({ id });
       const s = streams[0];
       if (s) {
-        console.log(`[LiveView] 📡 Stream loaded:`, {
+        console.log(`[LiveView] 📡 Stream loaded - Full details:`, {
           id: s.id,
           title: s.title,
           status: s.status,
           stream_type: s.stream_type,
-          ivs_playback_url: s.ivs_playback_url?.substring(0, 50) + "...",
+          ivs_playback_url_full: s.ivs_playback_url, // ★ 生トークン確認
+          ivs_playback_url_preview: s.ivs_playback_url?.substring(0, 80) + "...",
           price: s.price,
           channel_id: s.channel_id,
+          timestamp: new Date().toISOString(),
         });
+        // エンドポイント解析
+        if (s.ivs_playback_url) {
+          const url = new URL(s.ivs_playback_url);
+          console.log(`[LiveView] 🔍 Playback URL breakdown:`, {
+            protocol: url.protocol,
+            hostname: url.hostname,
+            pathname: url.pathname,
+            search: url.search.substring(0, 50) + "...",
+          });
+        }
       }
       return s;
     },
-    refetchInterval: 5000,
+    refetchInterval: 1000, // ★ 5秒 → 1秒に短縮（ステータス同期加速）
   });
 
   const { data: activeCall } = useQuery({

@@ -41,6 +41,18 @@ export default function ViewerStream({ stream }) {
   const autoReloadTimerRef = useRef(null);
   const mediaSourceStartTimeRef = useRef(Date.now()); // 映像ロード開始時刻（ミリ秒精度同期）
 
+  // ★ URLが変わったら即座にログ出力（同期ロジック検証）
+  useEffect(() => {
+    if (playbackUrl) {
+      console.log(`[ViewerStream] 🔗 Playback URL received:`, {
+        url_full: playbackUrl,
+        url_preview: playbackUrl.substring(0, 80) + "...",
+        length: playbackUrl.length,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [playbackUrl]);
+
   useEffect(() => {
     if (!playbackUrl) return;
 
@@ -233,15 +245,18 @@ export default function ViewerStream({ stream }) {
   }
 
   function manualRetry() {
+    console.log("[ViewerStream] 🔄 Manual retry initiated - full URL refresh");
     retryRef.current = 0;
     setFatalError(false);
     setLoading(true);
     setShowManualPlay(false);
     noPlayLoadingRef.current = 0;
     destroyHls();
-    // ★ 強制リロード: 最新セグメント再取得（キャッシュクリア）
+    
+    // ★ 強制リロード: URLから完全に再読み込み（キャッシュ完全クリア）
     setTimeout(() => {
       if (!destroyedRef.current) {
+        console.log("[ViewerStream] 🚀 Reinitializing player from scratch with fresh URL:", playbackUrl?.substring(0, 80) + "...");
         mediaSourceStartTimeRef.current = Date.now(); // 時刻リセット
         initPlayer();
       }
@@ -251,8 +266,9 @@ export default function ViewerStream({ stream }) {
   function handleManualPlay() {
     const vid = videoRef.current;
     if (!vid) return;
+    console.log("[ViewerStream] 👆 Manual play button pressed - triggering full refresh");
     setShowManualPlay(false);
-    // ★ 再生ボタン押下 → 強制リロード（最新セグメント確保）
+    // ★ 再生ボタン押下 → URLの再取得＋強制リロード（システム全体の再初期化）
     manualRetry();
   }
 
@@ -292,19 +308,25 @@ export default function ViewerStream({ stream }) {
         </div>
       )}
 
-      {/* 手動再生ボタン — 自動再生失敗 or 20秒経過時に表示 */}
+      {/* 強力な再生ボタン — URLから完全リフレッシュ */}
       {showManualPlay && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4 bg-black/60">
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4 bg-black/60 backdrop-blur">
           <button
             onClick={handleManualPlay}
-            className="flex items-center justify-center w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-all active:scale-95"
+            className="flex items-center justify-center w-20 h-20 rounded-full bg-white/25 hover:bg-white/40 border-2 border-white/80 transition-all active:scale-95 shadow-xl"
+            title="URLを再取得して映像を再開始"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
           </button>
-          <p className="text-white/70 text-sm font-semibold">タップして再生</p>
-          <p className="text-white/40 text-xs">（最新の映像を取得します）</p>
+          <div className="text-center space-y-1">
+            <p className="text-white/90 text-sm font-semibold">映像を再開始</p>
+            <p className="text-white/50 text-xs">URLをリフレッシュして接続し直します</p>
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-yellow-300/70 bg-yellow-900/20 px-3 py-1.5 rounded-lg border border-yellow-900/40">
+            <span>⚙️</span> 再接続中...
+          </div>
         </div>
       )}
 
