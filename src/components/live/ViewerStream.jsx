@@ -74,20 +74,27 @@ export default function ViewerStream({ stream }) {
 
     // iOS Safari ネイティブHLS
     if (vid.canPlayType("application/vnd.apple.mpegurl")) {
-      vid.src = playbackUrl;
-      vid.load();
+      // 毎回リスナーをクリーンにセット（once:true だと retry 後に再リッスンできない）
       const onCanPlay = () => {
         if (destroyedRef.current) return;
         setLoading(false);
         vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
       };
-      const onError = () => {
+      const onError = (e) => {
         if (destroyedRef.current) return;
-        console.warn("[ViewerStream] native HLS error");
+        const code = vid.error?.code ?? 'N/A';
+        const msg  = vid.error?.message ?? '';
+        console.warn(`[ViewerStream] native HLS error code=${code} msg=${msg}`);
+        vid.removeEventListener("canplay", onCanPlay);
+        vid.removeEventListener("error", onError);
         retry();
       };
-      vid.addEventListener("canplay", onCanPlay, { once: true });
-      vid.addEventListener("error", onError, { once: true });
+      vid.removeEventListener("canplay", onCanPlay);
+      vid.removeEventListener("error", onError);
+      vid.addEventListener("canplay", onCanPlay);
+      vid.addEventListener("error", onError);
+      vid.src = playbackUrl;
+      vid.load();
       return;
     }
 
@@ -116,10 +123,14 @@ export default function ViewerStream({ stream }) {
         backBufferLength: 0,
         startLevel: -1,
         abrBandWidthFactor: 0.7,
-        fragLoadingTimeOut: 10000,
-        fragLoadingMaxRetry: 2,
-        manifestLoadingTimeOut: 8000,
-        manifestLoadingMaxRetry: 2,
+        fragLoadingTimeOut: 12000,
+        fragLoadingMaxRetry: 6,           // フラグメントは粘る
+        fragLoadingRetryDelay: 1000,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 8,       // IVS起動中(404)でも諦めない
+        manifestLoadingRetryDelay: 2000,  // 2秒おきに再試行
+        levelLoadingMaxRetry: 6,
+        levelLoadingRetryDelay: 1500,
         enableWorker: true,
         liveDurationInfinity: true,
       });
@@ -151,16 +162,12 @@ export default function ViewerStream({ stream }) {
 
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (destroyedRef.current) return;
-        if (!data.fatal) return;
-        console.warn(`[ViewerStream] fatal: ${data.type}/${data.details}`);
-        if (debugMode) {
-          console.error('[ViewerStream] 🔍 DEBUG ERROR INFO:', {
-            errorType: data.type,
-            errorDetails: data.details,
-            errorCode: data.response?.code || 'N/A',
-            errorMessage: data.response?.message || 'N/A',
-          });
+        // non-fatal もログ（IVS起動待ちの404等を可視化）
+        if (!data.fatal) {
+          console.log(`[ViewerStream] non-fatal ${data.type}/${data.details} http=${data.response?.code}`);
+          return;
         }
+        console.warn(`[ViewerStream] fatal: ${data.type}/${data.details} http=${data.response?.code}`);
         retry();
       });
 
