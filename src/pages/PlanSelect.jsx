@@ -5,6 +5,8 @@ import { resolveUserPlan } from "@/lib/userPlan";
 import { Button } from "@/components/ui/button";
 import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, ShoppingCart, X, GraduationCap, Building2, ChevronDown, Ticket, Users } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getStripeLinkByPlan } from "@/lib/stripeLinks";
+import { toast } from "sonner";
 
 // 単体プランの定義
 const PLANS = [
@@ -309,14 +311,38 @@ export default function PlanSelect() {
     : selectedPlans.filter((p) => !p.comingSoon).reduce((sum, p) => sum + p.price, 0);
 
   const handleApply = async () => {
-    const ids = [...selected].join(",");
+    const ids = Array.from(selected);
     const isAuth = await base44.auth.isAuthenticated();
     if (!isAuth) {
-      // ログイン後にプラン確認ページへ戻る
-      base44.auth.redirectToLogin(`/plan-confirm?plans=${ids}`);
+      base44.auth.redirectToLogin(`/plan-confirm?plans=${ids.join(",")}`);
       return;
     }
-    navigate(`/plan-confirm?plans=${ids}`);
+    
+    // FREEプランの場合はシステム内で即座に権限付与
+    if (ids.length === 1 && ids[0] === "free") {
+      try {
+        await base44.auth.updateMe({ plan_subscribed: "free", free_plan_activated_at: new Date().toISOString() });
+        toast.success("FREEプランを有効にしました！");
+        navigate("/creator-dashboard");
+        return;
+      } catch (err) {
+        toast.error("無料プラン有効化に失敗しました");
+      }
+    }
+    
+    // 有料プラン（複数月を自動判定）
+    const months = planInfo?.isCampaign ? 24 : 12;
+    const planId = ids[0]; // 複数選択時は先頭のプラン
+    const stripeLink = getStripeLinkByPlan(planId, months);
+    
+    if (!stripeLink) {
+      toast.error(`${planId} プランのStripeリンクが見つかりません`);
+      return;
+    }
+    
+    // successUrlで戻ってくる時に自動認識させるためのフラグを付与
+    const returnUrl = `${window.location.origin}/plan-confirm?plans=${ids.join(",")}&stripe_success=true`;
+    window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
   };
 
   return (
@@ -572,13 +598,33 @@ export default function PlanSelect() {
                   <Button 
                     onClick={async (e) => {
                       e.stopPropagation();
-                      const ids = plan.id;
                       const isAuth = await base44.auth.isAuthenticated();
                       if (!isAuth) {
-                        base44.auth.redirectToLogin(`/plan-confirm?plans=${ids}`);
+                        base44.auth.redirectToLogin(`/plan-confirm?plans=${plan.id}`);
                         return;
                       }
-                      navigate(`/plan-confirm?plans=${ids}`);
+
+                      // FREE プランは即座に有効化
+                      if (plan.id === "free") {
+                        try {
+                          await base44.auth.updateMe({ plan_subscribed: "free", free_plan_activated_at: new Date().toISOString() });
+                          toast.success("FREEプランを有効にしました！");
+                          navigate("/creator-dashboard");
+                        } catch (err) {
+                          toast.error("無料プラン有効化に失敗しました");
+                        }
+                        return;
+                      }
+
+                      // 有料プランはStripe決済へ
+                      const months = planInfo?.isCampaign ? 24 : 12;
+                      const stripeLink = getStripeLinkByPlan(plan.id, months);
+                      if (!stripeLink) {
+                        toast.error(`${plan.name}のStripeリンクが見つかりません`);
+                        return;
+                      }
+                      const returnUrl = `${window.location.origin}/plan-confirm?plans=${plan.id}&stripe_success=true`;
+                      window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
                     }}
                     disabled={plan.comingSoon}
                     className="w-full gap-2 bg-primary hover:bg-primary/90"

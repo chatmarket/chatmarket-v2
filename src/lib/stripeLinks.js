@@ -1,53 +1,52 @@
 /**
  * Stripe決済リンク一元管理
- * 社長からStripe設定が届いたら、ここに流し込むだけで全決済ボタンが自動対応
- * 環境変数形式: VITE_STRIPE_<PRODUCT>_URL=https://buy.stripe.com/...
+ * 社長から渡されたリンクをここで厳密に管理
+ * 
+ * プラン × 期間別に8本のリンク
  */
 
 const STRIPE_LINKS = {
-  // コイン購入
-  coin_1000: import.meta.env.VITE_STRIPE_COIN_1000_URL || null,
-  coin_5000: import.meta.env.VITE_STRIPE_COIN_5000_URL || null,
-  coin_10000: import.meta.env.VITE_STRIPE_COIN_10000_URL || null,
+  // 【12ヶ月無料：オープン記念リンク】
+  basic_12m: "https://buy.stripe.com/6oUeVe2o62fR6kr0WI3ks04",
+  call_12m: "https://buy.stripe.com/00w28s8Mu6w74cj48U3ks05",
+  ppv_12m: "https://buy.stripe.com/7sY8wQ5Ai6w7107cFq3ks06",
+  vod_12m: "https://buy.stripe.com/14AdRa7IqdYzdMTaxi3ks07",
 
-  // チケット購入（動的に生成される場合は null）
-  ticket: import.meta.env.VITE_STRIPE_TICKET_URL || null,
-
-  // ファンクラブ
-  fanclub_standard: import.meta.env.VITE_STRIPE_FANCLUB_STANDARD_URL || null,
-  fanclub_premium: import.meta.env.VITE_STRIPE_FANCLUB_PREMIUM_URL || null,
-  fanclub_diamond: import.meta.env.VITE_STRIPE_FANCLUB_DIAMOND_URL || null,
-
-  // PPV（有料ライブ）
-  ppv: import.meta.env.VITE_STRIPE_PPV_URL || null,
-
-  // VOD
-  vod: import.meta.env.VITE_STRIPE_VOD_URL || null,
+  // 【24ヶ月無料：Invitationリンク】
+  basic_24m: "https://buy.stripe.com/dRm5kE3sa07J6kr20M3ks03",
+  call_24m: "https://buy.stripe.com/14A00ke6O7Ab9wDdJu3ks02",
+  ppv_24m: "https://buy.stripe.com/28E14o9Qy2fR24b48U3ks00",
+  vod_24m: "https://buy.stripe.com/eVq3cw4we07JcIPaxi3ks01",
 };
 
 /**
- * 指定されたStripeリンクを取得
- * @param {string} productKey - 商品キー (e.g., "coin_1000", "fanclub_premium")
- * @returns {string|null} - Stripeリンク or null
+ * リンク取得（キーベース）
+ * @param key - basic_12m, call_24m など
  */
-export function getStripeLink(productKey) {
-  return STRIPE_LINKS[productKey] || null;
+export function getStripeLink(key) {
+  return STRIPE_LINKS[key] || null;
 }
 
 /**
- * 全Stripeリンクを取得（デバッグ用）
+ * 特定プランのリンク取得（プラン名 + 期間）
+ * @param planName - "basic", "call", "ppv", "vod"
+ * @param months - 12 or 24
+ */
+export function getStripeLinkByPlan(planName, months = 12) {
+  const key = `${planName}_${months}m`;
+  return getStripeLink(key);
+}
+
+/**
+ * 全リンク取得
  */
 export function getAllStripeLinks() {
   return STRIPE_LINKS;
 }
 
 /**
- * Stripeリンクが設定されているかチェック
- * @param {string} productKey
- * @returns {boolean}
+ * リンク存在確認
  */
-export function hasStripeLink(productKey) {
-  return !!STRIPE_LINKS[productKey];
+export function hasStripeLink(key) {
+  return !!STRIPE_LINKS[key];
 }
-
-export default STRIPE_LINKS;

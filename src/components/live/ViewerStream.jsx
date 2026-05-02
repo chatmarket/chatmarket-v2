@@ -27,6 +27,15 @@ export default function ViewerStream({ stream }) {
     setDebugMode(params.get('debug') === 'true');
   }, []);
 
+  // ★ 手動再生ボタン自動トリガー（20秒無再生で自動表示）
+  useEffect(() => {
+    if (!stream?.ivs_playback_url || loading === false) return;
+    manualPlayTimerRef.current = setTimeout(() => {
+      if (loading && !fatalError) setShowManualPlay(true);
+    }, 20000);
+    return () => { if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current); };
+  }, [loading, stream?.ivs_playback_url]);
+
   const playbackUrl = stream?.ivs_playback_url;
   const noPlayLoadingRef = useRef(0); // ローディングが続いた時間（秒）
   const autoReloadTimerRef = useRef(null);
@@ -48,18 +57,18 @@ export default function ViewerStream({ stream }) {
       if (!destroyedRef.current) initPlayer();
     }, 50); // ★ 100ms → 50ms に短縮（最速起動）
 
-    // ★ 自動リロード: 30秒以上ローディングが続いた場合、ソース再読み込み
+    // ★ 自動リロード: 20秒以上ローディングが続いた場合、ソース再読み込み（スマホ対応）
     autoReloadTimerRef.current = setInterval(() => {
-      if (!destroyedRef.current && loading) {
-        noPlayLoadingRef.current += 1;
-        if (debugMode) console.log(`[ViewerStream] Loading state: ${noPlayLoadingRef.current}s`);
-        if (noPlayLoadingRef.current >= 30) {
-          console.warn('[ViewerStream] ⚠️ Loading timeout 30s — auto-reloading source');
-          destroyHls();
-          noPlayLoadingRef.current = 0;
-          setTimeout(() => initPlayer(), 500);
-        }
+    if (!destroyedRef.current && loading) {
+      noPlayLoadingRef.current += 1;
+      if (debugMode) console.log(`[ViewerStream] Loading state: ${noPlayLoadingRef.current}s`);
+      if (noPlayLoadingRef.current >= 20) {
+        console.warn('[ViewerStream] ⚠️ Loading timeout 20s — auto-reloading source');
+        destroyHls();
+        noPlayLoadingRef.current = 0;
+        setTimeout(() => initPlayer(), 300);
       }
+    }
     }, 1000);
 
     return () => {
@@ -173,14 +182,21 @@ export default function ViewerStream({ stream }) {
         setShowManualPlay(false);
         noPlayLoadingRef.current = 0;
         if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
-        // ★ 即座に再生開始（バッファ待ち最小化）
-        vid.play().catch(() => {
-          vid.muted = true;
-          vid.play().catch((e) => {
-            console.warn("[ViewerStream] autoplay failed, showing manual play button:", e);
-            setShowManualPlay(true);
-          });
-        });
+        
+        // ★ 再生開始（muted優先でSafari対応）
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .catch((err) => {
+              console.warn("[ViewerStream] autoplay failed, muting and retrying:", err);
+              vid.muted = true;
+              return vid.play();
+            })
+            .catch((e) => {
+              console.warn("[ViewerStream] muted autoplay also failed, showing manual play button:", e);
+              setShowManualPlay(true);
+            });
+        }
       });
 
       // 追いかけ再生: ライブエッジから1.5秒以上遅れたら自動追従

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, ArrowLeft, ExternalLink, Video, Radio, PhoneCall, Play, Heart, Phone, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { getStripeLinkByPlan } from "@/lib/stripeLinks";
 
 const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
 
@@ -18,19 +19,12 @@ const PLAN_INFO = {
   crowdfunding:  { name: "BASIC＋クラウドファンディング",   price: 12000, badge: "クラウドファンディング", badgeColor: "bg-red-500/20 text-red-300" },
 };
 
-// Stripe決済リンク（プランごと）
-const PAYMENT_LINKS = {
-  basic:        "https://buy.stripe.com/placeholder_basic",
-  "call-anser": "https://buy.stripe.com/placeholder_call_anser",
-  vod:          "https://buy.stripe.com/placeholder_vod",
-  ppv:          "https://buy.stripe.com/placeholder_ppv",
-};
-
 export default function PlanConfirm() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const params = new URLSearchParams(window.location.search);
   const planIds = (params.get("plans") || "").split(",").filter(Boolean);
+  const stripeSuccess = params.get("stripe_success") === "true";
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -40,6 +34,27 @@ export default function PlanConfirm() {
     });
   }, []);
 
+  // Stripe決済成功時：プランを自動有効化
+  useEffect(() => {
+    if (stripeSuccess && user && planIds.length > 0) {
+      const activatePlans = async () => {
+        try {
+          const planInfo = {
+            subscribed_plans: planIds,
+            subscription_activated_at: new Date().toISOString(),
+            last_payment_status: "completed",
+          };
+          await base44.auth.updateMe(planInfo);
+          toast.success("プランが有効になりました！");
+          setTimeout(() => navigate("/creator-dashboard"), 2000);
+        } catch (err) {
+          toast.error("プラン有効化に失敗しました");
+        }
+      };
+      activatePlans();
+    }
+  }, [stripeSuccess, user, planIds]);
+
   const selectedPlans = planIds.map((id) => ({ id, ...PLAN_INFO[id] })).filter((p) => p.name);
   const totalPrice = selectedPlans.reduce((sum, p) => sum + p.price, 0);
 
@@ -48,12 +63,26 @@ export default function PlanConfirm() {
   const hasCrowdfunding = planIds.includes("crowdfunding");
   const paidPlans = selectedPlans.filter((p) => p.price > 0 && p.id !== "crowdfunding");
 
-  const handleFreeStart = () => navigate("/go-live");
+  const handleFreeStart = async () => {
+    try {
+      await base44.auth.updateMe({ plan_subscribed: "free", free_plan_activated_at: new Date().toISOString() });
+      navigate("/creator-dashboard");
+    } catch (err) {
+      toast.error("プラン有効化に失敗しました");
+    }
+  };
+
   const handleCrowdfunding = () => navigate("/crowdfunding/new");
+
   const handlePaidPlan = (planId) => {
-    const url = PAYMENT_LINKS[planId];
-    if (url) window.open(url, "_blank");
-    else toast.info("決済リンクは近日公開予定です");
+    const months = 12; // デフォルト：12ヶ月
+    const stripeLink = getStripeLinkByPlan(planId, months);
+    if (stripeLink) {
+      const returnUrl = `${window.location.origin}/plan-confirm?plans=${planId}&stripe_success=true`;
+      window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
+    } else {
+      toast.error("決済リンクが見つかりません");
+    }
   };
 
   if (selectedPlans.length === 0) {
