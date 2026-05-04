@@ -298,9 +298,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     try {
       // WHIP 接続（カメラプレビューは既に映っている状態で実行）
-      console.log('[BrowserBroadcaster] 🔌 Connecting to RTMPS...');
+      console.log('[BrowserBroadcaster] 🔌 Connecting via WHIP Direct Ingest to chatmarket-main...');
       setIsBroadcasting(true);
-      await connectToRtmps();
+      await connectToWhip();
 
       // WHIP 接続成功後にDBを更新 + playbackUrl を保存
       // ★ ブラウザ発信は固定チャンネルを使用しているため、playbackUrl も固定値
@@ -343,11 +343,10 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // ★ DEPRECATED: connectToWhip は廃止（IVS Stage コスト削減）
-  // 【新・RTMPS接続】
-  // ブラウザの WebRTC ストリームを RTMPS（標準チャンネル）に トランスコード
-  // OBS・ブラウザ両対応 → 単一 IVS Channel に統一 → コスト50%削減
-  const connectToRtmps = async () => {
+  // ★ WHIP Direct Ingest（最小コスト方式）
+  // ブラウザの WebRTC → IVS chatmarket-main に直接送信
+  // Stage・Composition 廃止 → $0.005/分のみ（最安）
+  const connectToWhip = async () => {
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
       throw new Error('カメラ・マイクが取得できていません');
     }
