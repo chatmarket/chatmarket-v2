@@ -160,6 +160,9 @@ export default function StreamingManual() {
           </button>
           <h1 className="text-3xl font-black text-white">配信マニュアル</h1>
           <p className="text-muted-foreground text-sm mt-2">OBS・Larix・Prism Live Studio の配信方法をわかりやすく解説</p>
+          <div className="mt-4 bg-orange-500/15 border border-orange-500/30 rounded-lg px-3 py-2">
+            <p className="text-sm font-semibold text-orange-300">💡 有料生配信を行うには、配信専用アプリを経由して配信を行います</p>
+          </div>
         </div>
       </div>
 
@@ -218,8 +221,14 @@ export default function StreamingManual() {
           ))}
         </div>
 
+        {/* 重要な案内 */}
+        <div className="mt-16 bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 space-y-2 mb-12">
+          <p className="text-lg font-black text-blue-400">ℹ️ 有料生配信について</p>
+          <p className="text-sm text-blue-200/80 leading-relaxed">有料生配信（チケット販売・PPV配信）を行うには、下記の配信専用アプリを経由して配信を行う必要があります。これにより、安全で安定した配信環境が実現されます。</p>
+        </div>
+
         {/* 詳細ガイド */}
-        <div className="mt-16 space-y-12">
+        <div className="space-y-12">
           {guides.map((guide) => (
             <div key={guide.id} className="border-l-4 border-primary/50 pl-6 space-y-6">
               <h3 className="text-2xl font-black text-white">{guide.name} で配信する</h3>
