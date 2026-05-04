@@ -14,7 +14,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const INPUT_COST_PER_MIN = 30 / 60;          // 0.5円/分
 const OUTPUT_COST_PER_VIEWER_PER_MIN = 5 / 60; // 0.0833円/視聴者/分
-const AUTO_STOP_ZERO_VIEWER_MINUTES = 60;
+const AUTO_STOP_ZERO_VIEWER_MINUTES_DEFAULT = 5;
+const AUTO_STOP_ZERO_VIEWER_MINUTES_TEST = 60;
+const TEST_ACCOUNT_EMAIL = 'ono@onestep-corp.com';
 
 Deno.serve(async (req) => {
   try {
@@ -49,6 +51,9 @@ Deno.serve(async (req) => {
       updates.total_viewer_minutes = (stream.total_viewer_minutes || 0) + viewerCount;
 
       // --- オートストップ判定 ---
+      const isTestAccount = stream.created_by === TEST_ACCOUNT_EMAIL;
+      const autoStopMinutes = isTestAccount ? AUTO_STOP_ZERO_VIEWER_MINUTES_TEST : AUTO_STOP_ZERO_VIEWER_MINUTES_DEFAULT;
+
       if (viewerCount === 0) {
         if (!stream.zero_viewer_since) {
           // 視聴者0人になった時刻を記録
@@ -57,7 +62,7 @@ Deno.serve(async (req) => {
           const zeroSince = new Date(stream.zero_viewer_since);
           const zeroMinutes = (now - zeroSince) / 1000 / 60;
 
-          if (zeroMinutes >= AUTO_STOP_ZERO_VIEWER_MINUTES) {
+          if (zeroMinutes >= autoStopMinutes) {
             // 強制終了
             updates.status = 'ended';
             updates.live_ended_at = now.toISOString();
