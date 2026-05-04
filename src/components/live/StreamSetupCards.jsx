@@ -137,10 +137,16 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
                   <p className="font-black text-white text-sm">Prism Live Studio</p>
                   <p className="text-[11px] text-purple-400/80 font-semibold">エフェクト重視・映え配信</p>
                 </div>
-                <a href="https://prismlive.com/" target="_blank" rel="noopener noreferrer"
-                  className="ml-auto text-[10px] font-black bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 border border-purple-500/40 px-2.5 py-1.5 rounded-lg transition-all">
-                  ↗ 公式サイト
-                </a>
+                <div className="ml-auto flex gap-1">
+                  <a href="https://apps.apple.com/app/prism-live-studio/id1486655309" target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] font-black bg-black hover:bg-zinc-900 text-white border border-zinc-700 px-2 py-1.5 rounded-lg transition-all">
+                    🍎 iOS
+                  </a>
+                  <a href="https://play.google.com/store/apps/details?id=com.prism.livestudio" target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] font-black bg-purple-700/60 hover:bg-purple-700 text-white border border-purple-600 px-2 py-1.5 rounded-lg transition-all">
+                    🤖 Android
+                  </a>
+                </div>
               </div>
               <div className="flex flex-wrap gap-1.5 px-5 py-2.5">
                 {["美顔フィルター", "ステッカー", "バーチャル背景", "iOS/Android"].map((f) => (
