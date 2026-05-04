@@ -254,8 +254,8 @@ function LiveViewInner() {
       {/* 映像エリア — プレミアムスタイル */}
       <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
         <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", position: "relative" }}>
-          {/* PPV 門番（チケット制でない配信）— Stripe統合版 */}
-          {!stream.is_ticket_enabled && !coinAllowed && (
+          {/* PPV 門番（チケット制でない有料配信のみ）*/}
+          {!stream.is_ticket_enabled && stream.price > 0 && !coinAllowed && (
             <LivePaywallStripe
               stream={stream}
               user={user}
@@ -266,10 +266,8 @@ function LiveViewInner() {
             <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
           ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
             <iframe src={stream.youtube_url} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
-          ) : stream.status === "live" && (stream.price <= 0 || coinAllowed) ? (
+          ) : stream.status === "live" && ticketChecked && (stream.price <= 0 || coinAllowed) ? (
             <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
-          ) : stream.status === "live" && stream.price > 0 && !coinAllowed ? (
-            null
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-950">
               <p className="text-muted-foreground">
