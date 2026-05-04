@@ -47,6 +47,31 @@ class LiveViewErrorBoundary extends React.Component {
   }
 }
 
+/** PWA/ブラウザ両対応: safe-area-inset-top をJSで取得するhook */
+function useSafeAreaTop() {
+  const [safeTop, setSafeTop] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      // CSSから env(safe-area-inset-top) を読み取る（最も確実な方法）
+      const el = document.createElement("div");
+      el.style.cssText = "position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;pointer-events:none;visibility:hidden;";
+      document.body.appendChild(el);
+      const val = parseInt(window.getComputedStyle(el).top, 10) || 0;
+      document.body.removeChild(el);
+      setSafeTop(val);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    // orientationchange後に再測定
+    window.addEventListener("orientationchange", () => setTimeout(measure, 200));
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, []);
+  return safeTop;
+}
+
 function LiveViewInner() {
   const { streamId, id: idParam } = useParams();
   const id = streamId || idParam;
@@ -77,6 +102,7 @@ function LiveViewInner() {
   const [isMuted, setIsMuted] = useState(false);
   const [coinBalance, setCoinBalance] = useState(null);
   const videoContainerRef = useRef(null);
+  const safeTop = useSafeAreaTop();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -240,7 +266,7 @@ function LiveViewInner() {
       {/* ═══ STICKY HEADER — safe-area対応 ═══ */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
-        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingTop: safeTop,
         background: "rgba(10,10,15,0.75)",
         backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -318,7 +344,7 @@ function LiveViewInner() {
       )}
 
       {/* ═══ 映像エリア — 16:9 YouTube風 ═══ */}
-      <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 58px)", left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
+      <div style={{ position: "absolute", top: safeTop + 58, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
         {/* 16:9 映像コンテナ */}
         <div ref={videoContainerRef} style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)", position: "relative", background: "#000", flexShrink: 0 }}>
           {/* PPV 門番 */}
