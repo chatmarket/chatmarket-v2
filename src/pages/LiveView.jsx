@@ -86,25 +86,22 @@ function LiveViewInner() {
     const unsub = base44.entities.SuperChat.subscribe((event) => {
       if (event.type !== "create") return;
       
-      // ★ 全スーパーチャット受信を検証ログ（diagnostics）
+      // ★ DB検証済みIDを優先、なければURLパラメータIDで比較
+      const effectiveId = verifiedStreamIdRef.current || id;
+      const incomingId = event.data?.livestream_id;
+      const isMatch = incomingId === effectiveId || incomingId === id;
+
       console.log(`[LiveView] 💰 SuperChat received:`, {
         event_id: event.id,
-        livestream_id: event.data?.livestream_id,
-        expected_id: id,
-        match: event.data?.livestream_id === id,
+        livestream_id: incomingId,
+        url_param_id: id,
+        verified_id: verifiedStreamIdRef.current,
+        isMatch,
         user: event.data?.user_name,
         amount: event.data?.amount,
-        timestamp: new Date().toISOString(),
       });
       
-      // 正確な stream ID でのみフィルタリング
-      if (event.data?.livestream_id !== id) {
-        console.log(`[LiveView] ⚠️ SuperChat filtered (stream ID mismatch):`, {
-          received_id: event.data?.livestream_id,
-          expected_id: id,
-        });
-        return;
-      }
+      if (!isMatch) return;
       
       const item = { ...event.data, id: event.id };
       if (!item.gift_id) {
@@ -116,6 +113,9 @@ function LiveViewInner() {
     return unsub;
   }, [id]);
 
+  // ★ DBから検証済みの正確なstream IDを保持するref
+  const verifiedStreamIdRef = useRef(null);
+
   const { data: stream, isLoading } = useQuery({
     queryKey: ["livestream", id],
     queryFn: async () => {
@@ -125,12 +125,17 @@ function LiveViewInner() {
       
       // ★ 常にフルURLをコンソールに出力（視聴者側デバッグの核心）
       console.log(`[LiveView] 📡 DB fetch result:`, {
-        stream_id: s?.id,
+        url_param_id: id,
+        db_stream_id: s?.id,
+        id_match: s?.id === id,
         status: s?.status,
-        playback_url_FULL: s?.ivs_playback_url,   // ← これが昨日のURLか今日のURLか確認
+        playback_url_FULL: s?.ivs_playback_url,
         stream_type: s?.stream_type,
         fetched_at: new Date().toISOString(),
       });
+
+      // ★ DBで検証されたIDを保存（投げ銭・チャット等の宛先に使用）
+      if (s?.id) verifiedStreamIdRef.current = s.id;
 
       return s || null;
     },
@@ -328,7 +333,7 @@ function LiveViewInner() {
 
       {/* エール通知ポップアップ */}
       {stream.status === "live" && (
-        <YellNotificationPopup streamId={id} speechEnabled={speechEnabled} />
+        <YellNotificationPopup streamId={stream.id} speechEnabled={speechEnabled} />
       )}
 
       <TipOverlay tips={activeTips} />
@@ -348,12 +353,12 @@ function LiveViewInner() {
                   <p className="text-xs font-black text-yellow-300">投げ銭TOP</p>
                 </div>
                 <div className="px-2 py-2 max-h-40 overflow-y-auto">
-                  <YellRanking streamId={id} />
+                  <YellRanking streamId={stream.id} />
                 </div>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-1.5 sm:py-2 space-y-1 min-h-[60px] sm:min-h-[100px] max-h-[120px] sm:max-h-[180px]">
-              <LiveChatDisplay streamId={id} />
+              <LiveChatDisplay streamId={stream.id} />
             </div>
           </div>
 
@@ -361,12 +366,13 @@ function LiveViewInner() {
           <div className="pointer-events-auto absolute bottom-0 left-0 right-0"
             style={{ background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)", paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
             {/* チャット入力 */}
-            <ViewerChatInput streamId={id} user={user} />
+            <ViewerChatInput streamId={stream.id} user={user} />
 
             {/* エールボタン — 親指エリア配置（下部両脇） */}
             <div className="px-2 sm:px-3 pb-3 sm:pb-4 flex justify-between items-end gap-1 sm:gap-2">
               <div className="flex gap-1 sm:gap-1.5 flex-wrap justify-start flex-1">
-                <YellButtons streamId={id} user={user} channelId={stream.channel_id} />
+                {/* ★ stream.id = DBで検証済みの正確なID。URLパラメータidではなくこちらを使用 */}
+                <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
               </div>
               <div className="flex items-center gap-1">
                 <VideoControls videoRef={null} showQuality={false} />
