@@ -282,9 +282,7 @@ function LiveViewInner() {
             </button>
             {/* ブランドロゴ */}
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #10b981, #059669)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              </div>
+              <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f9139d1_1ldpi.png" alt="ChatMarket" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, objectFit: "contain" }} />
               <span style={{ color: "white", fontWeight: 900, fontSize: 15, letterSpacing: "-0.3px" }}>chatmarket</span>
             </div>
             {stream.status === "live" && (

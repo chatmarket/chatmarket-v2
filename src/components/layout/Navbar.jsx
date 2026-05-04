@@ -16,7 +16,7 @@ import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
 import NotificationBell from "./NotificationBell";
 
-const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
+const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f9139d1_1ldpi.png";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
@@ -64,7 +64,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={LOGO_URL} alt="ChatMarket" className="w-9 h-9 object-contain" />
+          <img src={LOGO_URL} alt="ChatMarket" className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
           <span className="text-lg font-bold tracking-tight hidden sm:block">
             Chat<span className="text-primary">Market</span>
           </span>
