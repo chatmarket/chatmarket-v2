@@ -9,6 +9,8 @@ import { base44 } from "@/api/base44Client";
 
 const RETRY_DELAY_MS = 3000;
 const DB_REFRESH_EVERY = 3; // 3回リトライごとにDBから再取得
+const URL_POLL_INTERVAL_MS = 300;  // ① URL未確定時のポーリング間隔
+const URL_POLL_MAX_ATTEMPTS = 10;  // ① 最大10回
 
 export default function ViewerStream({ stream }) {
   const videoRef = useRef(null);
@@ -17,9 +19,43 @@ export default function ViewerStream({ stream }) {
   const destroyedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [showManualPlay, setShowManualPlay] = useState(false);
+  const [urlPolling, setUrlPolling] = useState(false);
 
   // ★ playbackUrl は state で管理 — DBから強制再取得できるよう
   const [playbackUrl, setPlaybackUrl] = useState(stream?.ivs_playback_url || null);
+
+  // ① URLが空の場合: 300ms×最大10回ポーリングしてURLを待つ
+  useEffect(() => {
+    if (playbackUrl || !stream?.id || destroyedRef.current) return;
+
+    let attempts = 0;
+    setUrlPolling(true);
+    console.log(`[ViewerStream] 🔍 No URL yet — polling DB (300ms × max ${URL_POLL_MAX_ATTEMPTS})`);
+
+    const poll = setInterval(async () => {
+      if (destroyedRef.current) { clearInterval(poll); return; }
+      attempts++;
+      try {
+        const records = await base44.entities.LiveStream.filter({ id: stream.id });
+        const fresh = records[0];
+        const url = fresh?.ivs_playback_url;
+        console.log(`[ViewerStream] 🔍 Poll #${attempts}: url=${url ? "OK" : "empty"}, status=${fresh?.status}`);
+        if (url) {
+          clearInterval(poll);
+          setUrlPolling(false);
+          setPlaybackUrl(url);
+        } else if (attempts >= URL_POLL_MAX_ATTEMPTS) {
+          clearInterval(poll);
+          setUrlPolling(false);
+          console.warn(`[ViewerStream] ⚠️ URL未取得 — ${URL_POLL_MAX_ATTEMPTS}回試みたが空のまま`);
+        }
+      } catch (e) {
+        console.error("[ViewerStream] Poll error:", e);
+      }
+    }, URL_POLL_INTERVAL_MS);
+
+    return () => { clearInterval(poll); setUrlPolling(false); };
+  }, [stream?.id, playbackUrl]);
 
   // stream props が更新されたら最新URLに追従
   useEffect(() => {
@@ -198,13 +234,18 @@ export default function ViewerStream({ stream }) {
     };
   }, [playbackUrl]); // ← loading を依存配列から除去（無限ループ防止）
 
-  // playbackUrl なし（DBにURLが入っていない）
+  // playbackUrl なし（DBにURLが入っていない）— ポーリング中
   if (!playbackUrl) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-black">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
-          <p className="text-white/50 text-sm">配信URLを取得中...</p>
+          <p className="text-white/50 text-sm">
+            {urlPolling ? "配信開始を待機中... (自動確認中)" : "配信URLを取得中..."}
+          </p>
+          {urlPolling && (
+            <p className="text-yellow-400/70 text-xs">🔍 300ms間隔でDBを確認しています</p>
+          )}
           <p className="text-white/30 text-xs font-mono">{stream?.id ? `stream: ${stream.id.slice(0,8)}...` : "stream ID なし"}</p>
         </div>
       </div>

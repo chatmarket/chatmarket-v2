@@ -19,6 +19,26 @@ export default function YellMessageModal({ coins, user, streamId, channelId, onC
     setSending(true);
 
     try {
+      // ② 投げ銭宛先の整合性チェック — DBの最新stream IDと一致するか確認
+      const latestStreams = await base44.entities.LiveStream.filter({ id: streamId });
+      const latestStream = latestStreams[0];
+      if (!latestStream) {
+        toast.error("⚠️ 配信が見つかりません。ページを再読み込みしてください。");
+        setSending(false);
+        return;
+      }
+      if (latestStream.status !== "live") {
+        toast.error("⚠️ この配信はすでに終了しています。投げ銭を中断しました。");
+        setSending(false);
+        return;
+      }
+      if (latestStream.channel_id !== channelId) {
+        toast.error(`⚠️ 投げ銭の宛先が一致しません。ページを再読み込みしてください。\n（期待: ${channelId?.slice(0,8)} / 実際: ${latestStream.channel_id?.slice(0,8)}）`);
+        console.error(`[YellMessageModal] ❌ ID mismatch! streamId=${streamId}, expected channelId=${channelId}, actual=${latestStream.channel_id}`);
+        setSending(false);
+        return;
+      }
+
       const total = calcTotal(coins);
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
       const wallet = wallets[0];
