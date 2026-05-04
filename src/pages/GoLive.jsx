@@ -201,6 +201,7 @@ export default function GoLive() {
         viewer_count: 0,
         stream_type: "ivs",
         ivs_playback_url: ivsData.playbackUrl || "",
+        ivs_channel_arn: ivsData.channelArn || "",
         ivs_stream_key: ivsData.streamKey || "",
         ivs_ingest_endpoint: ivsData.ingestEndpoint || "",
         max_bitrate_restriction: autoQuality,

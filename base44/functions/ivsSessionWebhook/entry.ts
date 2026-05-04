@@ -39,9 +39,11 @@ Deno.serve(async (req) => {
 
     const eventType  = body["detail-type"] || "";
     const detail     = body.detail || {};
-    const channelArn = detail.channel_arn || detail.channelArn || "";
+    // AWSはARNを resources 配列で送ってくる
+    const channelArn = (body.resources && body.resources[0]) || detail.channel_arn || detail.channelArn || "";
+    const eventName  = detail.event_name || "";
 
-    console.log(`[ivsSessionWebhook] eventType="${eventType}", state="${detail.state}", channelArn="${channelArn}"`);
+    console.log(`[ivsSessionWebhook] eventType="${eventType}", event_name="${eventName}", channelArn="${channelArn}"`);
 
     if (eventType !== "IVS Stream State Change") {
       console.log(`[ivsSessionWebhook] ℹ️ Unhandled event type: ${eventType}`);
@@ -51,7 +53,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     // ─── 3a. Stream Start → "live" ──────────────────────────────────────
-    if (detail.state === "Start") {
+    if (eventName === "Stream Start") {
       console.log(`[ivsSessionWebhook] 🟢 Stream START — ARN: ${channelArn}`);
 
       // scheduled のものを優先して検索、なければ ended 以外全件
@@ -94,7 +96,7 @@ Deno.serve(async (req) => {
     }
 
     // ─── 3b. Stream End → "ended" ───────────────────────────────────────
-    if (detail.state === "End") {
+    if (eventName === "Stream End" || eventName === "Session Ended") {
       console.log(`[ivsSessionWebhook] 🔴 Stream END — ARN: ${channelArn}`);
 
       const streams = await base44.asServiceRole.entities.LiveStream.filter({
@@ -125,9 +127,9 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, stream_id: stream.id, action: "ended" });
     }
 
-    // ─── その他の state（無視） ─────────────────────────────────────────
-    console.log(`[ivsSessionWebhook] ℹ️ Unhandled state: ${detail.state}`);
-    return Response.json({ message: "state not handled", state: detail.state });
+    // ─── その他のイベント（無視） ──────────────────────────────────────
+    console.log(`[ivsSessionWebhook] ℹ️ Unhandled event_name: ${eventName}`);
+    return Response.json({ message: "event_name not handled", event_name: eventName });
 
   } catch (error) {
     console.error("[ivsSessionWebhook] ❌ Error:", error);
