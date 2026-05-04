@@ -76,6 +76,7 @@ import VideoEngineComparison from '@/pages/VideoEngineComparison';
 import LandingPage from '@/pages/LandingPage';
 import VodAnalytics from '@/pages/VodAnalytics';
 import ObsGuide from '@/pages/ObsGuide';
+import StreamingManual from '@/pages/StreamingManual';
 import CoinCharge from '@/pages/CoinCharge';
 import AffiliateAnalytics from '@/pages/AffiliateAnalytics';
 import CallProfilePage from '@/pages/CallProfilePage';
@@ -157,6 +158,7 @@ export default function App() {
             <Route path="/video-engine" element={<VideoEngineComparison />} />
             <Route path="/landing" element={<LandingPage />} />
             <Route path="/obs-guide" element={<ObsGuide />} />
+            <Route path="/streaming-manual" element={<StreamingManual />} />
             <Route path="/coin-charge" element={<CoinCharge />} />
             <Route path="/admin/affiliate" element={<AffiliateAnalytics />} />
             <Route path="/call-profile/:channelId" element={<CallProfilePage />} />

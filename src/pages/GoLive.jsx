@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Radio, Loader2, Image, CheckCircle2, Copy, Smartphone } from "lucide-react";
+import { Radio, Loader2, Image, CheckCircle2, Copy, Smartphone, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
@@ -252,6 +252,23 @@ export default function GoLive() {
           <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
         </div>
         <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
+      </div>
+
+      {/* ── 配信マニュアルへのバナー ── */}
+      <div className="mb-8">
+        <a href="/streaming-manual" className="block group">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 to-primary/10 border-2 border-primary/40 hover:border-primary/60 transition-all p-6 hover:shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-primary uppercase tracking-widest">📘 配信マニュアル</p>
+                <h2 className="text-xl font-black text-white mt-2">OBS・Larix・Prism Live Studio の詳しい使い方</h2>
+                <p className="text-muted-foreground text-sm mt-2">初心者でも迷わず配信できるよう、手順をわかりやすく整理しました。ダウンロード方法・接続方法・よくあるトラブルもカバー。</p>
+              </div>
+              <ArrowRight className="w-6 h-6 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </a>
       </div>
 
       {/* ── 配信マニュアル（PC / スマホ 2本柱）+ トラブル ── */}
