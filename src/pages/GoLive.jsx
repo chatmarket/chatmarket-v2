@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 import StreamKeySecurityDisplay from "../components/live/StreamKeySecurityDisplay";
+import TroubleshootingGuide from "../components/live/TroubleshootingGuide";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
@@ -253,8 +254,8 @@ export default function GoLive() {
         <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
       </div>
 
-      {/* ── 配信マニュアル（PC / スマホ 2本柱） ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      {/* ── 配信マニュアル（PC / スマホ 2本柱）+ トラブル ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {/* PC OBS */}
         <div className="space-y-3 bg-primary/10 border border-primary/30 rounded-2xl p-4">
           <div className="flex items-center gap-2">
@@ -291,6 +292,11 @@ export default function GoLive() {
               </a>
             </div>
           )}
+        </div>
+
+        {/* トラブルシューティング */}
+        <div className="space-y-3 bg-orange-500/5 border border-orange-500/25 rounded-2xl p-4">
+          <TroubleshootingGuide />
         </div>
       </div>
 
