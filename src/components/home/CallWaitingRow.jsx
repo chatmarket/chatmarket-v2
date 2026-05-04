@@ -32,27 +32,15 @@ export default function CallWaitingRow({ user }) {
     user ? allChannels.filter(ch => ch.owner_email === user.email).map(ch => ch.id) : []
   );
 
-  if (allChannels.length === 0) return (
-    <section className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="w-2.5 h-2.5 rounded-full bg-green-400/40 shrink-0" />
-        <h2 className="text-xl font-bold">1対1ビデオ通話　待機中</h2>
-      </div>
-      <div className="bg-card border border-border/50 rounded-xl p-5 text-center space-y-3">
-        <p className="text-sm text-muted-foreground">チャンネルデータを読み込み中...</p>
-      </div>
-    </section>
-  );
-
   const handleChat = (channelId) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
     navigate(`/chat/${channelId}`);
   };
 
-  const half = Math.ceil(allChannels.length / 2);
-  const rows = allChannels.length > 0
-    ? [allChannels.slice(0, half), allChannels.slice(half)].filter(r => r.length > 0)
-    : [];
+  // 実チャンネル + ゴーストを合わせて表示（ゴーストは末尾に追加）
+  const displayChannels = [...allChannels, ...GHOST_CHANNELS];
+  const half = Math.ceil(displayChannels.length / 2);
+  const rows = [displayChannels.slice(0, half), displayChannels.slice(half)].filter(r => r.length > 0);
   const isOwnChannel = (channel) => myChannelIds.has(channel.id);
 
   return (
@@ -71,18 +59,18 @@ export default function CallWaitingRow({ user }) {
         <span className="text-blue-300 font-semibold"> BASIC・CALL&ANSER</span>：💬メッセージ＋📞通話申し込み可（収益率85%）
       </p>
 
-      {/* 全チャンネル表示（フィルタなし） */}
       {rows.map((row, idx) => (
         <ScrollRow key={idx} cardWidth={200}>
           {row.map((channel) => {
-            // console.log(`[CallWaitingCard RENDER] id=${channel.id}, name=${channel.name}`);
+            const isGhost = channel.id.startsWith("ghost-");
             return (
               <CallWaitingCard
                 key={channel.id}
                 channel={channel}
                 user={user}
-                onChat={() => handleChat(channel.id)}
+                onChat={() => !isGhost && handleChat(channel.id)}
                 isOwnChannel={isOwnChannel(channel)}
+                isGhost={isGhost}
               />
             );
           })}
@@ -92,7 +80,7 @@ export default function CallWaitingRow({ user }) {
   );
 }
 
-function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
+function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
   const navigate = useNavigate();
   const [calling, setCalling] = useState(false);
   const cardChannelId = channel.id;
@@ -156,7 +144,13 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
         <Link to={`/channel/${cardChannelId}`}>
           <p className="text-[10px] text-muted-foreground truncate hover:text-primary transition-colors">{cardChannelName}</p>
         </Link>
-        {!isOwnChannel && (
+        {isGhost ? (
+          <div className="space-y-1.5">
+            <Button size="sm" className="w-full h-7 text-[11px] bg-primary/50 gap-1 cursor-not-allowed opacity-60" disabled>
+              <User className="w-3 h-3" /> 準備中...
+            </Button>
+          </div>
+        ) : !isOwnChannel ? (
           <div className="space-y-1.5">
             <Button
               size="sm"
@@ -169,8 +163,7 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel }) {
               <MessageCircle className="w-3 h-3" /> チャットで声をかける
             </Button>
           </div>
-        )}
-        {isOwnChannel && (
+        ) : (
           <Button
             size="sm"
             className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1"
