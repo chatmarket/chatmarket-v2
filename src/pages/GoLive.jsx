@@ -96,6 +96,15 @@ export default function GoLive() {
     ? `rtmps://${manualIngestEndpoint}:443/app/${manualStreamKey}`
     : "";
 
+  // ライブ配信開始ボタン処理
+  const handleStartLive = () => {
+    if (canUseLiveStream) {
+      setMode(MODE_LIVE);
+    } else {
+      navigate("/plan-select");
+    }
+  };
+
   const handleStart = async (e) => {
     e.preventDefault();
     if (!form.title) return;
@@ -196,7 +205,7 @@ export default function GoLive() {
         </div>
         <div className="w-full grid grid-cols-1 gap-4">
           <button
-            onClick={() => setMode(MODE_LIVE)}
+            onClick={handleStartLive}
             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
