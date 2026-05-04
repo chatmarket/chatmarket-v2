@@ -44,29 +44,46 @@ function cleanSdp(sdp) {
 
 async function getWhipCredentials(userEmail) {
   const stageArn = Deno.env.get('IVS_STAGES_ARN');
-  if (!stageArn) throw new Error('IVS_STAGES_ARN not configured');
+  if (!stageArn) throw new Error('❌ IVS_STAGES_ARN not configured');
 
-  const [stageRes, tokenRes] = await Promise.all([
-    ivsClient.send(new GetStageCommand({ arn: stageArn })),
-    ivsClient.send(new CreateParticipantTokenCommand({
-      stageArn,
-      userId: userEmail,
-      capabilities: ['PUBLISH'],
-      duration: 240,
-      attributes: { role: 'broadcaster', email: userEmail },
-    })),
-  ]);
+  console.log('[whipProxy] 🔐 Getting WHIP credentials from IVS Stage:', {
+    stageArn: stageArn.substring(0, 50) + '...',
+    userEmail,
+  });
 
-  const whipUrl = stageRes.stage?.endpoints?.whip;
-  const token = tokenRes.participantToken?.token;
+  try {
+    const [stageRes, tokenRes] = await Promise.all([
+      ivsClient.send(new GetStageCommand({ arn: stageArn })),
+      ivsClient.send(new CreateParticipantTokenCommand({
+        stageArn,
+        userId: userEmail,
+        capabilities: ['PUBLISH'],
+        duration: 240,
+        attributes: { role: 'broadcaster', email: userEmail },
+      })),
+    ]);
 
-  if (!whipUrl) throw new Error('WHIP endpoint not found on IVS Stage');
-  if (!token) throw new Error('Failed to create IVS participant token');
+    const whipUrl = stageRes.stage?.endpoints?.whip;
+    const token = tokenRes.participantToken?.token;
 
-  console.log(`[whipProxy] WHIP URL: ${whipUrl}`);
-  console.log(`[whipProxy] Token: ${token.slice(0, 30)}...`);
+    if (!whipUrl) throw new Error('❌ WHIP endpoint not found on IVS Stage');
+    if (!token) throw new Error('❌ Failed to create IVS participant token');
 
-  return { whipUrl, token };
+    console.log(`[whipProxy] ✅ WHIP credentials acquired:`, {
+      whipUrl: whipUrl.substring(0, 60) + '...',
+      tokenSlice: token.slice(0, 30) + '...',
+      stageEndpoints: Object.keys(stageRes.stage?.endpoints || {}),
+    });
+
+    return { whipUrl, token };
+  } catch (err) {
+    console.error('[whipProxy] ❌ Credential acquisition failed:', {
+      error: err.message,
+      name: err.name,
+      stageArn: stageArn.substring(0, 50) + '...',
+    });
+    throw err;
+  }
 }
 
 // IVS の 307 リダイレクトを手動でフォロー（Authorization ヘッダーを保持）

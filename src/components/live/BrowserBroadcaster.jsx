@@ -287,6 +287,12 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
 
     console.log('[BrowserBroadcaster] 🚀 Starting broadcast for streamId:', streamId);
+    console.log('[BrowserBroadcaster] 📋 Broadcast environment check:', {
+      streamId,
+      channelId,
+      ivsStageConfigured: '（確認中...）',
+      timestamp: new Date().toISOString(),
+    });
     setBroadcastStatus("connecting");
     setBroadcastError(null);
 
@@ -393,17 +399,45 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     // whipProxy が SDPクレンジング + IVS転送 + アンサー返却を一括処理
     let proxyRes;
     try {
+      console.log('[WHIP] 📤 Invoking whipProxy with SDP:', {
+        sdpSize: rawSdp.length,
+        timestamp: new Date().toISOString(),
+      });
       proxyRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
+      console.log('[WHIP] ✅ whipProxy returned:', {
+        status: proxyRes?.status,
+        hasAnswerSdp: !!proxyRes?.data?.answer_sdp,
+        hasWhipUrl: !!proxyRes?.data?.whip_url,
+        errorMsg: proxyRes?.data?.error,
+      });
     } catch (err) {
-      console.error('[WHIP] ❌ whipProxy invocation failed:', err.message);
-      throw new Error('WHIP proxy error: ' + err.message);
+      console.error('[WHIP] ❌ whipProxy invocation failed:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        isAuthError: err.message?.includes('401') || err.message?.includes('403'),
+        isNetworkError: err.message?.includes('ECONNREFUSED') || err.message?.includes('timeout'),
+      });
+      throw new Error('whipProxy エラー: ' + (err.response?.data?.error || err.message));
     }
 
     console.log('[WHIP] Response status:', proxyRes?.status, 'data keys:', Object.keys(proxyRes?.data || {}));
 
-    if (!proxyRes?.data) throw new Error('whipProxy: レスポンスなし');
-    if (proxyRes.data.error) throw new Error(proxyRes.data.error);
-    if (!proxyRes.data.answer_sdp) throw new Error('whipProxy: SDPアンサーなし — ' + JSON.stringify(proxyRes.data));
+    if (!proxyRes?.data) {
+      const msg = 'whipProxy がレスポンスを返していません。中継サーバーが応答していない可能性があります。';
+      console.error('[WHIP] ' + msg, proxyRes);
+      throw new Error(msg);
+    }
+    if (proxyRes.data.error) {
+      const msg = `whipProxy エラー: ${proxyRes.data.error}（認証失敗 or IVS Stage未接続の可能性）`;
+      console.error('[WHIP] ' + msg);
+      throw new Error(msg);
+    }
+    if (!proxyRes.data.answer_sdp) {
+      const msg = `whipProxy: SDP アンサーを受け取れませんでした。AWS IVS Stage が正常に動作していない可能性があります。応答: ${JSON.stringify(proxyRes.data).substring(0, 200)}`;
+      console.error('[WHIP] ' + msg);
+      throw new Error(msg);
+    }
 
     console.log('[WHIP] ✅ Answer SDP received:', proxyRes.data.answer_sdp.length, 'bytes');
     console.log('[WHIP] Answer preview:', proxyRes.data.answer_sdp.slice(0, 150));
