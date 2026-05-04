@@ -3,31 +3,51 @@ import { useEffect, useRef, useState } from "react";
 /**
  * useStreamSpeech
  * チャットやエールを音声で読み上げるカスタムフック
+ * Web Speech API の複数音声対応
  * 
  * 使用例:
- * const { isSpeaking, toggleSpeech } = useStreamSpeech();
+ * const { isSpeaking, speak, voices, selectedVoice, setSelectedVoice } = useStreamSpeech();
  */
 export default function useStreamSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voices, setVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState(null);
   const synth = useRef(null);
 
   useEffect(() => {
     // ブラウザの音声合成APIを初期化
     if (typeof window !== "undefined") {
       synth.current = window.speechSynthesis;
-    }
-  }, []);
 
-  const speak = (text) => {
+      // 利用可能な音声を取得
+      const updateVoices = () => {
+        const availableVoices = synth.current.getVoices();
+        // 日本語の音声をフィルタ
+        const japaneseVoices = availableVoices.filter((v) => v.lang.startsWith("ja"));
+        setVoices(japaneseVoices.length > 0 ? japaneseVoices : availableVoices);
+        
+        // デフォルト音声を選択
+        if (japaneseVoices.length > 0 && !selectedVoice) {
+          setSelectedVoice(japaneseVoices[0]);
+        }
+      };
+
+      // 音声リストの読み込み完了時
+      synth.current.onvoiceschanged = updateVoices;
+      updateVoices();
+    }
+  }, [selectedVoice]);
+
+  const speak = (text, voiceOverride = null) => {
     if (!synth.current) return;
 
-    // 既存の読み上げをキャンセル
     synth.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "ja-JP";
-    utterance.rate = 1.2; // 速度1.2倍
+    utterance.rate = 1.2;
     utterance.pitch = 1;
+    utterance.voice = voiceOverride || selectedVoice;
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
@@ -49,5 +69,5 @@ export default function useStreamSpeech() {
     }
   };
 
-  return { isSpeaking, speak, cancel, toggleSpeech };
+  return { isSpeaking, speak, cancel, toggleSpeech, voices, selectedVoice, setSelectedVoice };
 }

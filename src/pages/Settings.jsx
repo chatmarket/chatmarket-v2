@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key, Crown, Coins } from "lucide-react";
+import { Save, Loader2, User, CreditCard, Building, Camera, Tag, PhoneCall, Lock, AlertCircle, Upload, Check, Shield, Key, Crown, Coins, Volume2 } from "lucide-react";
+import useStreamSpeech from "@/hooks/useStreamSpeech";
 import CoinPurchasePanel from "../components/yell/CoinPurchasePanel";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,6 +17,8 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
+  const { voices, selectedVoice, setSelectedVoice, speak } = useStreamSpeech();
+  const [testSpeechLoading, setTestSpeechLoading] = useState(false);
 
   const [profile, setProfile] = useState({
     nickname: "",
@@ -266,6 +269,9 @@ export default function Settings() {
           </TabsTrigger>
           <TabsTrigger value="recovery" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
             <Key className="w-4 h-4" /> 復旧設定
+          </TabsTrigger>
+          <TabsTrigger value="speech" className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3">
+            <Volume2 className="w-4 h-4" /> 読み上げ
           </TabsTrigger>
         </TabsList>
 
@@ -979,6 +985,79 @@ export default function Settings() {
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             保存する
           </Button>
+          </TabsContent>
+
+          {/* Speech Settings Tab */}
+          <TabsContent value="speech" className="space-y-5">
+            <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-sm space-y-2">
+              <p className="font-semibold flex items-center gap-1.5">
+                <Volume2 className="w-4 h-4 text-primary" /> 配信中の読み上げ音声
+              </p>
+              <p className="text-xs text-muted-foreground">チャットとエール通知を読み上げる音声を選択できます（Web Speech API利用・無料）</p>
+            </div>
+
+            {voices.length > 0 ? (
+              <div className="bg-card rounded-xl border border-border/50 p-5 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="voice-select" className="text-sm font-semibold">
+                    音声を選択
+                  </Label>
+                  <select
+                    id="voice-select"
+                    value={selectedVoice?.name || ""}
+                    onChange={(e) => {
+                      const voice = voices.find((v) => v.name === e.target.value);
+                      if (voice) setSelectedVoice(voice);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-input focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+                  >
+                    {voices.map((voice) => (
+                      <option key={voice.name} value={voice.name}>
+                        {voice.name} ({voice.lang})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setTestSpeechLoading(true);
+                    speak("これはテスト音声です。この声でチャットとエール通知が読み上げられます。");
+                    setTimeout(() => setTestSpeechLoading(false), 3000);
+                  }}
+                  disabled={testSpeechLoading}
+                  variant="outline"
+                  className="w-full gap-2"
+                >
+                  {testSpeechLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      再生中...
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4" />
+                      テスト再生
+                    </>
+                  )}
+                </Button>
+
+                <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-3 flex gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>
+                    選択した音声は自動保存されます。配信中のチャットやエール通知がこの声で読み上げられます。ライバーがカメラを見ていても、音で反応できるようになります。
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-amber-300">音声が利用できません</p>
+                  <p className="text-xs text-amber-200/70 mt-0.5">お使いのブラウザで利用可能な音声がありません。Chrome、Safari、Firefoxなど別のブラウザをお試しください。</p>
+                </div>
+              </div>
+            )}
           </TabsContent>
           </Tabs>
           </div>
