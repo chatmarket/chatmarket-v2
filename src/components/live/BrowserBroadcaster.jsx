@@ -306,8 +306,19 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
         ivs_playback_url: FIXED_PLAYBACK_URL, // ★ 視聴者側で映像が表示されるようにplaybackUrlを保存
       };
       
-      await base44.entities.LiveStream.update(streamId, updatePayload)
-        .catch(err => console.warn('[BrowserBroadcaster] LiveStream update failed (non-fatal):', err.message));
+      console.log('[BrowserBroadcaster] 💾 Saving playback URL to DB:', {
+        streamId,
+        playbackUrl: FIXED_PLAYBACK_URL,
+        status: "live",
+      });
+      
+      const updated = await base44.entities.LiveStream.update(streamId, updatePayload)
+        .catch(err => {
+          console.error('[BrowserBroadcaster] ❌ DB update failed:', err);
+          throw err;
+        });
+      
+      console.log('[BrowserBroadcaster] ✅ DB updated successfully. Payload:', updatePayload);
 
       if (channelId) {
         await base44.entities.Channel.update(channelId, { is_live: true })

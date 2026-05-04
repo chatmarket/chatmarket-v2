@@ -32,7 +32,11 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
 
     let attempts = 0;
     setUrlPolling(true);
-    console.log(`[ViewerStream] 🔍 No URL yet — polling DB (300ms × max ${URL_POLL_MAX_ATTEMPTS})`);
+    console.log(`[ViewerStream] 🔍 No URL yet — polling DB (300ms × max ${URL_POLL_MAX_ATTEMPTS})`, {
+      streamId: stream.id,
+      streamStatus: stream.status,
+      timestamp: new Date().toISOString(),
+    });
 
     const poll = setInterval(async () => {
       if (destroyedRef.current) { clearInterval(poll); return; }
@@ -41,18 +45,29 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
         const records = await base44.entities.LiveStream.filter({ id: stream.id });
         const fresh = records[0];
         const url = fresh?.ivs_playback_url;
-        console.log(`[ViewerStream] 🔍 Poll #${attempts}: url=${url ? "OK" : "empty"}, status=${fresh?.status}`);
+        console.log(`[ViewerStream] 🔍 Poll #${attempts}:`, {
+          hasUrl: !!url,
+          urlValue: url ? url.substring(0, 80) + '...' : 'EMPTY',
+          streamStatus: fresh?.status,
+          freshData: {
+            id: fresh?.id,
+            title: fresh?.title,
+            status: fresh?.status,
+          },
+          timestamp: new Date().toISOString(),
+        });
         if (url) {
+          console.log('[ViewerStream] ✅ PlaybackUrl acquired on poll #' + attempts);
           clearInterval(poll);
           setUrlPolling(false);
           setPlaybackUrl(url);
         } else if (attempts >= URL_POLL_MAX_ATTEMPTS) {
           clearInterval(poll);
           setUrlPolling(false);
-          console.warn(`[ViewerStream] ⚠️ URL未取得 — ${URL_POLL_MAX_ATTEMPTS}回試みたが空のまま`);
+          console.error(`[ViewerStream] ❌ CRITICAL: URL未取得 — ${URL_POLL_MAX_ATTEMPTS}回試みたが空のまま。配信ステータス: ${fresh?.status}`);
         }
       } catch (e) {
-        console.error("[ViewerStream] Poll error:", e);
+        console.error("[ViewerStream] ❌ Poll error:", e.message, {streamId: stream.id, attempt: attempts});
       }
     }, URL_POLL_INTERVAL_MS);
 
@@ -230,7 +245,12 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
 
       player.addEventListener("error", (error) => {
         if (destroyedRef.current) return;
-        console.error(`[ViewerStream] ❌ IVS Player Error:`, error);
+        console.error(`[ViewerStream] ❌ IVS Player Error:`, {
+          errorObj: error,
+          playerState: player.getState?.(),
+          url: url.substring(0, 80) + '...',
+          timestamp: new Date().toISOString(),
+        });
         retry(url);
       });
 
@@ -320,10 +340,22 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (destroyedRef.current) return;
         if (!data.fatal) {
-          console.log(`[ViewerStream] non-fatal ${data.details} http=${data.response?.code}`);
+          console.log(`[ViewerStream] non-fatal hls.js error:`, {
+            details: data.details,
+            httpStatus: data.response?.code,
+            httpUrl: data.response?.url,
+            url: data.url,
+          });
           return;
         }
-        console.warn(`[ViewerStream] ❌ fatal ${data.details}`);
+        console.error(`[ViewerStream] ❌ FATAL hls.js error:`, {
+          details: data.details,
+          httpStatus: data.response?.code,
+          httpUrl: data.response?.url,
+          errorMsg: data.msg,
+          type: data.type,
+          timestamp: new Date().toISOString(),
+        });
         retry(url);
       });
 

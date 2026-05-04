@@ -160,15 +160,24 @@ function LiveViewInner() {
       const s = streams[0];
       
       // ★ 常にフルURLをコンソールに出力（視聴者側デバッグの核心）
-      console.log(`[LiveView] 📡 DB fetch result:`, {
+      const debugInfo = {
         url_param_id: id,
         db_stream_id: s?.id,
         id_match: s?.id === id,
         status: s?.status,
         playback_url_FULL: s?.ivs_playback_url,
+        playback_url_exists: !!s?.ivs_playback_url,
         stream_type: s?.stream_type,
         fetched_at: new Date().toISOString(),
-      });
+        title: s?.title,
+        channel_id: s?.channel_id,
+      };
+      console.log(`[LiveView] 📡 DB fetch result:`, debugInfo);
+      
+      // ★ 視聴者が playback_url なしで読み込み永遠ループに陥っていないか警告
+      if (s?.status === 'live' && !s?.ivs_playback_url) {
+        console.error('[LiveView] 🚨 CRITICAL: Stream is LIVE but playback_url is MISSING!', debugInfo);
+      }
 
       // ★ DBで検証されたIDを保存（投げ銭・チャット等の宛先に使用）
       if (s?.id) verifiedStreamIdRef.current = s.id;
