@@ -90,7 +90,7 @@ export default function YellButtons({ streamId, user, channelId }) {
             onMouseEnter={() => setHoveredCoins(coins)}
             onMouseLeave={() => setHoveredCoins(null)}
             whileTap={{ scale: 0.82 }}
-            animate={bursting === coins ? { scale: [1, 1.25, 1] } : hoveredCoins === coins ? { scale: 1.1 } : {}}
+            animate={bursting === coins ? { scale: [1, 1.25, 1] } : hoveredCoins === coins ? { scale: 1.12 } : {}}
             transition={{ duration: 0.3 }}
             className={`
               relative flex flex-col items-center justify-center
@@ -102,11 +102,13 @@ export default function YellButtons({ streamId, user, channelId }) {
             `}
             style={{
               boxShadow: bursting === coins
-                ? `0 0 32px 12px ${glow}, inset 0 1px 12px rgba(255,255,255,0.4)`
+                ? `0 0 40px 16px ${glow}, inset 0 2px 16px rgba(255,255,255,0.5), inset 0 -2px 8px rgba(0,0,0,0.3)`
                 : hoveredCoins === coins
-                ? `0 8px 24px ${glow}, inset 0 1px 8px rgba(255,255,255,0.35)`
-                : `0 4px 12px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.3)`,
-              border: `2px solid ${hoveredCoins === coins ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)"}`,
+                ? `0 12px 32px ${glow}, inset 0 2px 12px rgba(255,255,255,0.4), 0 0 24px ${glow}`
+                : `0 6px 16px rgba(0,0,0,0.6), inset 0 1px 3px rgba(255,255,255,0.35)`,
+              border: hoveredCoins === coins || bursting === coins 
+                ? `3px solid rgba(255,215,0,0.8)`
+                : `2.5px solid rgba(255,215,0,0.4)`,
             }}
           >
             <Coins className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 mb-0.5" />

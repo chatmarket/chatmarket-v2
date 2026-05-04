@@ -267,9 +267,9 @@ function LiveViewInner() {
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
         paddingTop: safeTop,
-        background: "rgba(10,10,15,0.75)",
+        background: "linear-gradient(180deg, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.85) 100%)",
         backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "1px solid rgba(16,185,129,0.1)",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px" }}>
           {/* 左: 戻るボタン + ロゴ + LIVE バッジ */}
@@ -281,9 +281,9 @@ function LiveViewInner() {
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             </button>
             {/* ブランドロゴ */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f9139d1_1ldpi.png" alt="ChatMarket" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, objectFit: "contain" }} />
-              <span style={{ color: "white", fontWeight: 900, fontSize: 15, letterSpacing: "-0.3px" }}>chatmarket</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f9139d1_1ldpi.png" alt="ChatMarket" style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0, objectFit: "contain" }} />
+              <span style={{ color: "#10b981", fontWeight: 900, fontSize: 14, letterSpacing: "-0.3px", textShadow: "0 0 8px rgba(16,185,129,0.3)" }}>chatmarket</span>
             </div>
             {stream.status === "live" && (
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -302,17 +302,17 @@ function LiveViewInner() {
           {/* 右: コイン残高 + マイページ */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {user && coinBalance !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 20, padding: "4px 10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 20, padding: "5px 12px", boxShadow: "0 0 12px rgba(16,185,129,0.15)" }}>
                 <span style={{ fontSize: 13 }}>🪙</span>
-                <span style={{ color: "#fbbf24", fontWeight: 900, fontSize: 13 }}>{coinBalance.toLocaleString()}</span>
+                <span style={{ color: "#10b981", fontWeight: 900, fontSize: 13 }}>{coinBalance.toLocaleString()}</span>
               </div>
             )}
             {user ? (
-              <a href="/settings" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white", textDecoration: "none" }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <a href="/settings" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", textDecoration: "none", transition: "all 0.2s" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </a>
             ) : (
-              <button onClick={() => base44.auth.redirectToLogin()} style={{ display: "flex", alignItems: "center", gap: 4, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", borderRadius: 8, padding: "6px 12px", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              <button onClick={() => base44.auth.redirectToLogin()} style={{ display: "flex", alignItems: "center", gap: 4, background: "linear-gradient(135deg,#10b981,#059669)", border: "1px solid rgba(16,185,129,0.5)", borderRadius: 10, padding: "6px 12px", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: "0 0 12px rgba(16,185,129,0.2)" }}>
                 ログイン
               </button>
             )}
@@ -344,7 +344,7 @@ function LiveViewInner() {
       {/* ═══ 映像エリア — 16:9 YouTube風 ═══ */}
       <div style={{ position: "absolute", top: safeTop + 58, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
         {/* 16:9 映像コンテナ */}
-        <div ref={videoContainerRef} style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)", position: "relative", background: "#000", flexShrink: 0 }}>
+        <div ref={videoContainerRef} style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", aspectRatio: "16/9", borderRadius: 20, overflow: "hidden", position: "relative", flexShrink: 0, background: "linear-gradient(135deg, #0a0f0a 0%, #0d1117 50%, #0a0a0f 100%)", boxShadow: "0 0 60px rgba(16,185,129,0.15), 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 20px rgba(255,255,255,0.05)" }}>
           {/* PPV 門番 */}
           {!stream.is_ticket_enabled && stream.price > 0 && !coinAllowed && (
             <LivePaywallStripe stream={stream} user={user} onAllowed={() => setCoinAllowed(true)} />
@@ -379,7 +379,7 @@ function LiveViewInner() {
 
           {/* コントロールバー */}
           {stream.status === "live" && (
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)", padding: "20px 12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)", padding: "20px 12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {/* 音量ボタン */}
                 <button
@@ -424,13 +424,13 @@ function LiveViewInner() {
               <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column-reverse", gap: 4 }}>
                 <LiveChatDisplay streamId={stream.id} />
               </div>
-              <div style={{ width: 150, flexShrink: 0 }}>
-                <div style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 10, overflow: "hidden" }}>
-                  <div style={{ padding: "6px 10px", borderBottom: "1px solid rgba(251,191,36,0.15)", display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: 12 }}>🏆</span>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "#fde68a" }}>投げ銭TOP</span>
+              <div style={{ width: 160, flexShrink: 0 }}>
+                <div style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.04) 100%)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 14, overflow: "hidden", boxShadow: "0 0 20px rgba(16,185,129,0.1), inset 0 1px 8px rgba(255,255,255,0.05)" }}>
+                  <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(16,185,129,0.15)", display: "flex", alignItems: "center", gap: 4, background: "linear-gradient(90deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%)" }}>
+                    <span style={{ fontSize: 13 }}>🏆</span>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "#10b981" }}>投げ銭 TOP</span>
                   </div>
-                  <div style={{ padding: "4px 8px", maxHeight: 120, overflowY: "auto" }}>
+                  <div style={{ padding: "6px 8px", maxHeight: 130, overflowY: "auto" }}>
                     <YellRanking streamId={stream.id} />
                   </div>
                 </div>
@@ -440,23 +440,25 @@ function LiveViewInner() {
             {/* ═══ ボトムナビ — safe-area + 投げ銭ボタン ═══ */}
             <div style={{
               flexShrink: 0,
-              background: "rgba(10,10,15,0.82)",
+              background: "linear-gradient(180deg, rgba(10,10,15,0.7) 0%, rgba(10,10,15,0.95) 100%)",
               backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-              borderTop: "1px solid rgba(255,255,255,0.07)",
-              paddingBottom: "env(safe-area-inset-bottom, 8px)",
+              borderTop: "1px solid rgba(16,185,129,0.1)",
+              paddingBottom: `max(8px, env(safe-area-inset-bottom, 8px))`,
+              paddingLeft: `max(14px, env(safe-area-inset-left, 14px))`,
+              paddingRight: `max(14px, env(safe-area-inset-right, 14px))`,
             }}>
               {/* チャット入力行 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px 4px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px 4px" }}>
                 <ViewerChatInput streamId={stream.id} user={user} />
               </div>
               {/* アクションバー: ホームボタン / 投げ銭(中央・目立つ) / ミュート・読み上げ */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 14px 6px", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px 8px", gap: 8 }}>
                 {/* ホームへ */}
-                <a href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: "rgba(255,255,255,0.5)", textDecoration: "none", flexShrink: 0 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <a href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: "rgba(255,255,255,0.6)", textDecoration: "none", flexShrink: 0, transition: "all 0.2s" }}>
+                   <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                   </div>
-                  <span style={{ fontSize: 9, fontWeight: 600 }}>ホーム</span>
+                  <span style={{ fontSize: 8.5, fontWeight: 600 }}>ホーム</span>
                 </a>
 
                 {/* エールボタン群（中央） */}
@@ -468,21 +470,21 @@ function LiveViewInner() {
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <button
                     onClick={() => setIsMuted(v => !v)}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: isMuted ? "#fbbf24" : "rgba(255,255,255,0.5)", padding: 0 }}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: isMuted ? "#fbbf24" : "rgba(255,255,255,0.6)", padding: 0, transition: "all 0.2s" }}
                   >
-                    <div style={{ width: 38, height: 38, borderRadius: 12, background: isMuted ? "rgba(251,191,36,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${isMuted ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.12)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {isMuted ? <VolumeX style={{ width: 17, height: 17 }} /> : <Volume2 style={{ width: 17, height: 17 }} />}
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: isMuted ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${isMuted ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {isMuted ? <VolumeX style={{ width: 18, height: 18 }} /> : <Volume2 style={{ width: 18, height: 18 }} />}
                     </div>
-                    <span style={{ fontSize: 9, fontWeight: 600 }}>{isMuted ? "ミュート" : "音声"}</span>
+                    <span style={{ fontSize: 8.5, fontWeight: 600 }}>{isMuted ? "ミュート" : "音声"}</span>
                   </button>
                   <button
                     onClick={() => setSpeechEnabled(v => !v)}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: speechEnabled ? "#10b981" : "rgba(255,255,255,0.5)", padding: 0 }}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: speechEnabled ? "#10b981" : "rgba(255,255,255,0.6)", padding: 0, transition: "all 0.2s" }}
                   >
-                    <div style={{ width: 38, height: 38, borderRadius: 12, background: speechEnabled ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${speechEnabled ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.12)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: speechEnabled ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${speechEnabled ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
                       🔊
                     </div>
-                    <span style={{ fontSize: 9, fontWeight: 600 }}>読み上げ</span>
+                    <span style={{ fontSize: 8.5, fontWeight: 600 }}>読み上げ</span>
                   </button>
                 </div>
               </div>
