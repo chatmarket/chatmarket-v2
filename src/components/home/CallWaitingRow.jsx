@@ -7,6 +7,16 @@ import { PhoneCall, MessageCircle, User } from "lucide-react";
 import ScrollRow from "./ScrollRow";
 import { toast } from "sonner";
 
+// ゴーストサンプル — AWSに一切通信しないダミーカード（実際の通話不可）
+const GHOST_CHANNELS = [
+  { id: "ghost-1", name: "ゆいか", call_theme: "恋愛相談・悩み聞きます💕", call_available_dates: "毎日20時〜深夜", avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", tags: ["恋愛", "相談"] },
+  { id: "ghost-2", name: "りょう", call_theme: "ビジネス・副業相談🔥", call_available_dates: "平日19時〜22時", avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", tags: ["ビジネス"] },
+  { id: "ghost-3", name: "さくら", call_theme: "英会話・語学練習🌸", call_available_dates: "土日終日OK", avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", tags: ["英語", "語学"] },
+  { id: "ghost-4", name: "たくみ", call_theme: "プログラミング・ITなんでも💻", call_available_dates: "毎晩21時〜", avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop", tags: ["IT", "プログラミング"] },
+  { id: "ghost-5", name: "みお", call_theme: "メンタルケア・話し相手🌙", call_available_dates: "深夜0時〜3時も対応", avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop", tags: ["メンタル"] },
+  { id: "ghost-6", name: "けんじ", call_theme: "筋トレ・ダイエット指導💪", call_available_dates: "朝6時〜・夜22時〜", avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", tags: ["筋トレ"] },
+];
+
 export default function CallWaitingRow({ user }) {
   const navigate = useNavigate();
 
