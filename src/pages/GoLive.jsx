@@ -58,6 +58,8 @@ export default function GoLive() {
   const { data: ppvSubscription = null, isLoading: ppvLoading } = useQuery({
     queryKey: ["ppv-subscription", user?.email],
     queryFn: async () => {
+      // テストアカウント自動付与
+      if (user?.email === 'ono@onestep-corp.com') return { plan_id: "ppv", status: "active" };
       const subs = await base44.entities.PlanSubscription.filter({ user_email: user.email, plan_id: "ppv", status: "active" });
       return subs[0] || null;
     },
@@ -67,6 +69,8 @@ export default function GoLive() {
   const { data: campaignGrantee = null, isLoading: campaignLoading } = useQuery({
     queryKey: ["campaign-live-grantee", user?.email],
     queryFn: async () => {
+      // テストアカウント自動付与
+      if (user?.email === 'ono@onestep-corp.com') return { email: user.email, reason: "test_account" };
       const grantees = await base44.entities.CampaignLiveGrantee.filter({ email: user.email });
       const grantee = grantees[0];
       if (grantee && new Date(grantee.expires_at) > new Date()) return grantee;
