@@ -22,6 +22,7 @@ import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx"
 import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
 import LivePaywall from "../components/live/LivePaywall.jsx";
 import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
+import YellRanking from "../components/live/YellRanking.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -350,6 +351,18 @@ function LiveViewInner() {
           {/* チャット背景 — Blur + 高級感 */}
           <div className="pointer-events-auto absolute bottom-0 left-0 right-0 max-h-[50vh] md:max-h-1/2 flex flex-col"
             style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)", backdropFilter: "blur(12px)" }}>
+            {/* 投げ銭ランキング（右側に小さく） */}
+            <div className="absolute right-2 bottom-28 sm:bottom-32 w-44 sm:w-52 pointer-events-auto">
+              <div className="bg-black/70 border border-yellow-500/30 rounded-xl overflow-hidden backdrop-blur">
+                <div className="flex items-center gap-1.5 px-3 py-2 border-b border-yellow-500/20">
+                  <span className="text-sm">🏆</span>
+                  <p className="text-xs font-black text-yellow-300">投げ銭TOP</p>
+                </div>
+                <div className="px-2 py-2 max-h-40 overflow-y-auto">
+                  <YellRanking streamId={id} />
+                </div>
+              </div>
+            </div>
             <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-1.5 sm:py-2 space-y-1 min-h-[60px] sm:min-h-[100px] max-h-[120px] sm:max-h-[180px]">
               <LiveChatDisplay streamId={id} />
             </div>

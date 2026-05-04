@@ -11,6 +11,7 @@ import ViewerCountGraph from "./ViewerCountGraph";
 import MicLevelMeter from "./MicLevelMeter";
 import LiveChatDisplay from "./LiveChatDisplay";
 import LiveYellDisplay from "./LiveYellDisplay";
+import YellRanking from "./YellRanking";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
@@ -405,6 +406,18 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             <LiveYellDisplay streamId={streamId} latestYell={latestYell} />
+          </div>
+        </div>
+
+        {/* 投げ銭ランキング */}
+        <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
+            <span className="text-base">🏆</span>
+            <p className="text-sm font-bold text-white">投げ銭ランキング</p>
+            <span className="text-[10px] text-zinc-500 ml-auto">この配信</span>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 py-3">
+            <YellRanking streamId={streamId} />
           </div>
         </div>
       </div>
