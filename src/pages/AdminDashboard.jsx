@@ -30,6 +30,7 @@ import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList
 import RecruitApplicationManagement from "../components/admin/RecruitApplicationManagement";
 import PurchaseReportTab from "../components/admin/PurchaseReportTab";
 import CopyrightReportManager from "../components/admin/CopyrightReportManager";
+import NgWordManagement from "../components/admin/NgWordManagement";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -453,6 +454,9 @@ export default function AdminDashboard() {
               <div className="flex gap-0 border-r border-border/30">
                 <TabsTrigger value="copyright" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Music className="w-4 h-4" /> 著作権料
+                </TabsTrigger>
+                <TabsTrigger value="ng-words" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <ShieldAlert className="w-4 h-4" /> NGワード
                 </TabsTrigger>
               </div>
 
@@ -884,6 +888,11 @@ export default function AdminDashboard() {
         {/* 著作権料レポートタブ */}
         <TabsContent value="copyright" className="space-y-6">
           <CopyrightReportManager />
+        </TabsContent>
+
+        {/* NGワード管理タブ */}
+        <TabsContent value="ng-words" className="space-y-6">
+          <NgWordManagement />
         </TabsContent>
 
         {/* ユーザー管理タブ */}

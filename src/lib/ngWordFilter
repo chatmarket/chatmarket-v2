@@ -1,0 +1,41 @@
+/**
+ * NGワードフィルタリング関数
+ * コメント投稿時に不適切な言葉をチェック
+ */
+
+export const checkNgWords = (text, ngWords = []) => {
+  if (!ngWords || ngWords.length === 0) {
+    return { isBlocked: false, blockedWord: null };
+  }
+
+  const lowerText = text.toLowerCase();
+
+  for (const word of ngWords) {
+    const lowerWord = word.toLowerCase();
+    if (lowerText.includes(lowerWord)) {
+      return {
+        isBlocked: true,
+        blockedWord: word,
+      };
+    }
+  }
+
+  return { isBlocked: false, blockedWord: null };
+};
+
+/**
+ * テキストからNGワードをマスク（*に置換）
+ */
+export const maskNgWords = (text, ngWords = []) => {
+  if (!ngWords || ngWords.length === 0) {
+    return text;
+  }
+
+  let result = text;
+  for (const word of ngWords) {
+    const regex = new RegExp(word, "gi");
+    result = result.replace(regex, "*".repeat(word.length));
+  }
+
+  return result;
+};
