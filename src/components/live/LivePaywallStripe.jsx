@@ -23,8 +23,37 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [consuming, setConsuming] = useState(false);
   const [bypassingLink, setBypassingLink] = useState(null); // Stripe直リン先中のプランキー
+  const [recentPurchase, setRecentPurchase] = useState(null); // 15分以内の支払い履歴
 
   const price = stream?.price ?? 0;
+
+  // 15分以内の支払い履歴を検出
+  useEffect(() => {
+    if (!user || !stream?.id || price <= 0) return;
+    
+    base44.entities.Purchase.filter({ 
+      item_type: "livestream", 
+      item_id: stream.id, 
+      buyer_email: user.email 
+    }).then((purchases) => {
+      if (purchases.length === 0) return;
+      
+      const latest = purchases[0]; // 最新の購入
+      const purchasedAt = new Date(latest.created_date).getTime();
+      const now = new Date().getTime();
+      const diffMinutes = (now - purchasedAt) / 1000 / 60;
+      
+      console.log(`[LivePaywall] 支払い履歴チェック:`, { 
+        経過分: diffMinutes.toFixed(1), 
+        再入場無料: diffMinutes < 15 
+      });
+      
+      // 15分以内なら再入場無料
+      if (diffMinutes < 15) {
+        setRecentPurchase({ ...latest, remainingMinutes: Math.ceil(15 - diffMinutes) });
+      }
+    }).catch(() => {});
+  }, [user?.email, stream?.id, price]);
 
   // 無料配信は即通過
   useEffect(() => {
@@ -98,6 +127,30 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
 
   // 無料配信はこのコンポーネント自体を表示しない
   if (price <= 0) return null;
+
+  // 15分以内の再入場無料を検出
+  if (recentPurchase && recentPurchase.remainingMinutes > 0) {
+    return (
+      <PaywallShell stream={stream} price={price}>
+        <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">✅</span>
+            <div>
+              <p className="font-black text-green-400">再入場無料</p>
+              <p className="text-xs text-green-300/80">支払いから {recentPurchase.remainingMinutes} 分以内です</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => { onAllowed(); }}
+            className="w-full h-11 sm:h-12 bg-green-600 hover:bg-green-700 text-white font-black text-sm sm:text-base gap-2"
+          >
+            <span>▶️</span> 視聴を再開する
+          </Button>
+          <p className="text-[10px] text-green-300/60 text-center">追加課金なし・コイン消費なし</p>
+        </div>
+      </PaywallShell>
+    );
+  }
 
   // 未ログイン
   if (!user) {
