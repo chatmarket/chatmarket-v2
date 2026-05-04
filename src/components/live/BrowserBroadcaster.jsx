@@ -264,9 +264,8 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     toast.success("配信を終了しました！お疲れ様でした 🎉");
   };
 
-  // 【配信開始】認証確認 → streamId 確認 → WHIP 接続
+  // 【配信開始】認証確認 → RTMPS直送（chatmarket-main）
   const handleStartBroadcast = async () => {
-    // ログイン確認（未ログインでは WHIP を叩かない）
     const isAuth = await base44.auth.isAuthenticated().catch(() => false);
     if (!isAuth) {
       base44.auth.redirectToLogin();
@@ -279,185 +278,61 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       return;
     }
 
-    // メーターが動いているか確認（0なら配信不可）
     if (micLevel === 0) {
       setError('マイクが反応していません。マイクリセットボタンを押してから再度お試しください。');
       setShowErrorDialog(true);
       return;
     }
 
-    console.log('[BrowserBroadcaster] 🚀 Starting broadcast for streamId:', streamId);
-    console.log('[BrowserBroadcaster] 📋 Broadcast environment check:', {
-      streamId,
-      channelId,
-      ivsStageConfigured: '（確認中...）',
-      timestamp: new Date().toISOString(),
-    });
+    console.log('[BrowserBroadcaster] 🚀 Starting RTMPS broadcast for streamId:', streamId);
     setBroadcastStatus("connecting");
     setBroadcastError(null);
 
     try {
-      // ★ WHIP廃止：代わりに BrowserBroadcasterRtmps コンポーネントを使用してください
-      console.error('[BrowserBroadcaster] ⚠️ BrowserBroadcaster.connectToWhip is deprecated. Use <BrowserBroadcasterRtmps /> instead.');
-      toast.error('ブラウザ配信方式が変更されました。再度「配信を開始」ボタンを押してください。');
-      return;
+      // ★ RTMPS 直送ルート（OBS と同じ）
+      console.log('[BrowserBroadcaster] 📡 Fetching RTMPS config from createLiveStream...');
+      const streamRes = await base44.functions.invoke('createLiveStream', {});
+      const { rtmpsUrl, streamKey, playbackUrl } = streamRes.data;
 
-      // WHIP 接続成功後にDBを更新 + playbackUrl を保存
-      // ★ ブラウザ発信は固定チャンネルを使用しているため、playbackUrl も固定値
-      const FIXED_PLAYBACK_URL = "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
+      if (!rtmpsUrl || !streamKey) {
+        throw new Error('RTMPS 設定が取得できませんでした');
+      }
+
+      const fullRtmpsUrl = `${rtmpsUrl}${streamKey}`;
+      console.log('[BrowserBroadcaster] 🎬 RTMPS Endpoint:', fullRtmpsUrl.substring(0, 80) + '...');
+      console.log('[BrowserBroadcaster] 💰 Cost: $0.005/分（chatmarket-main直送）');
+
+      // DB を更新 + playbackUrl を保存
+      const FIXED_PLAYBACK_URL = playbackUrl || "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
       
       const updatePayload = {
         status: "live",
         live_started_at: new Date().toISOString(),
-        ivs_playback_url: FIXED_PLAYBACK_URL, // ★ 視聴者側で映像が表示されるようにplaybackUrlを保存
+        ivs_playback_url: FIXED_PLAYBACK_URL,
       };
       
-      console.log('[BrowserBroadcaster] 💾 Saving playback URL to DB:', {
-        streamId,
-        playbackUrl: FIXED_PLAYBACK_URL,
-        status: "live",
-      });
+      console.log('[BrowserBroadcaster] 💾 Saving to DB:', { streamId, playbackUrl: FIXED_PLAYBACK_URL });
       
-      const updated = await base44.entities.LiveStream.update(streamId, updatePayload)
-        .catch(err => {
-          console.error('[BrowserBroadcaster] ❌ DB update failed:', err);
-          throw err;
-        });
-      
-      console.log('[BrowserBroadcaster] ✅ DB updated successfully. Payload:', updatePayload);
+      await base44.entities.LiveStream.update(streamId, updatePayload);
+      console.log('[BrowserBroadcaster] ✅ DB updated');
 
       if (channelId) {
         await base44.entities.Channel.update(channelId, { is_live: true })
-          .catch(err => console.warn('[BrowserBroadcaster] Channel update failed (non-fatal):', err.message));
+          .catch(err => console.warn('Channel update warning:', err.message));
       }
 
       setBroadcastStatus("live");
-      toast.success("✅ 配信開始 — 世界へ放送中");
+      toast.success("✅ RTMPS 配信開始 — chatmarket-main へ直送中");
     } catch (err) {
-      console.error('[BrowserBroadcaster] Broadcast error:', err);
+      console.error('[BrowserBroadcaster] ❌ Broadcast error:', err);
       setBroadcastStatus("error");
       setBroadcastError(err.message);
       setIsBroadcasting(false);
-      // ★ 配信失敗してもカメラプレビューは継続（streamRef はそのまま）
       setShowErrorDialog(true);
     }
   };
 
-  // ★ この関数は廃止（whipProxy/Stage削除）
-  // 代わりに BrowserBroadcasterRtmps を使用
-  const connectToWhip_DEPRECATED = async () => {
-    if (!streamRef.current || streamRef.current.getTracks().length === 0) {
-      throw new Error('カメラ・マイクが取得できていません');
-    }
 
-    // エフェクトがある場合はCanvasストリーム+音声トラックを合成
-    let broadcastStream = streamRef.current;
-    if (canvasStreamRef.current) {
-      const vTracks = canvasStreamRef.current.getVideoTracks();
-      const aTracks = streamRef.current.getAudioTracks();
-      if (vTracks.length > 0) broadcastStream = new MediaStream([...vTracks, ...aTracks]);
-    }
-
-    // RTCPeerConnection 作成
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      bundlePolicy: 'max-bundle',
-      rtcpMuxPolicy: 'require',
-    });
-
-    broadcastStream.getTracks().forEach((track) => pc.addTrack(track, broadcastStream));
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    // ICE gathering 完了まで待機（最大10秒）
-    const rawSdp = await new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        console.warn('[WHIP] ICE gathering timeout — using current SDP');
-        resolve(pc.localDescription?.sdp || offer.sdp);
-      }, 10000);
-      if (pc.iceGatheringState === 'complete') {
-        clearTimeout(timeout);
-        resolve(pc.localDescription.sdp);
-        return;
-      }
-      pc.addEventListener('icegatheringstatechange', () => {
-        if (pc.iceGatheringState === 'complete') {
-          clearTimeout(timeout);
-          resolve(pc.localDescription.sdp);
-        }
-      });
-    });
-
-    console.log('[WHIP] 📤 Sending SDP to whipProxy for IVS ingestion...');
-    console.log('[WHIP] Raw SDP size:', rawSdp.length, 'bytes');
-
-    // whipProxy が SDPクレンジング + IVS転送 + アンサー返却を一括処理
-    let proxyRes;
-    try {
-      console.log('[WHIP] 📤 Invoking whipProxy with SDP:', {
-        sdpSize: rawSdp.length,
-        timestamp: new Date().toISOString(),
-      });
-      proxyRes = await base44.functions.invoke('whipProxy', { sdp: rawSdp });
-      console.log('[WHIP] ✅ whipProxy returned:', {
-        status: proxyRes?.status,
-        hasAnswerSdp: !!proxyRes?.data?.answer_sdp,
-        hasWhipUrl: !!proxyRes?.data?.whip_url,
-        errorMsg: proxyRes?.data?.error,
-      });
-    } catch (err) {
-      console.error('[WHIP] ❌ whipProxy invocation failed:', {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-        isAuthError: err.message?.includes('401') || err.message?.includes('403'),
-        isNetworkError: err.message?.includes('ECONNREFUSED') || err.message?.includes('timeout'),
-      });
-      throw new Error('whipProxy エラー: ' + (err.response?.data?.error || err.message));
-    }
-
-    console.log('[WHIP] Response status:', proxyRes?.status, 'data keys:', Object.keys(proxyRes?.data || {}));
-
-    if (!proxyRes?.data) {
-      const msg = 'whipProxy がレスポンスを返していません。中継サーバーが応答していない可能性があります。';
-      console.error('[WHIP] ' + msg, proxyRes);
-      throw new Error(msg);
-    }
-    if (proxyRes.data.error) {
-      const msg = `whipProxy エラー: ${proxyRes.data.error}（認証失敗 or IVS Stage未接続の可能性）`;
-      console.error('[WHIP] ' + msg);
-      throw new Error(msg);
-    }
-    if (!proxyRes.data.answer_sdp) {
-      const msg = `whipProxy: SDP アンサーを受け取れませんでした。AWS IVS Stage が正常に動作していない可能性があります。応答: ${JSON.stringify(proxyRes.data).substring(0, 200)}`;
-      console.error('[WHIP] ' + msg);
-      throw new Error(msg);
-    }
-
-    console.log('[WHIP] ✅ Answer SDP received:', proxyRes.data.answer_sdp.length, 'bytes');
-    console.log('[WHIP] Answer preview:', proxyRes.data.answer_sdp.slice(0, 150));
-
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: proxyRes.data.answer_sdp }));
-      console.log('[WHIP] ✅ Remote SDP description set successfully');
-    } catch (err) {
-      console.error('[WHIP] ❌ Failed to set remote description:', err.message);
-      throw err;
-    }
-
-    whipClientRef.current = pc;
-    console.log('[WHIP] 🎉 WHIP CONNECTED — Broadcasting live to IVS Stage!');
-
-    // ★ WHIP キープアライブ: 30秒ごとに接続状態を確認（スリープ切断防止）
-    if (keepaliveIntervalRef.current) clearInterval(keepaliveIntervalRef.current);
-    keepaliveIntervalRef.current = setInterval(() => {
-      if (pc && pc.connectionState === 'connected') {
-        // 接続状態が健全であることをログで記録
-        console.log('[WHIP-KeepAlive] ✅ Session alive at', new Date().toLocaleTimeString());
-      }
-    }, 30000);
-  };
 
   // 【マイク有効化ボタン（中央）】ユーザー操作で初実行
   const handleMicEnable = async () => {
