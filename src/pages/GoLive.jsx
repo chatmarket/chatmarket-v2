@@ -9,6 +9,7 @@ import { Radio, Loader2, Image, CheckCircle2, Copy, Smartphone } from "lucide-re
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
+import StreamKeySecurityDisplay from "../components/live/StreamKeySecurityDisplay";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
@@ -257,40 +258,7 @@ export default function GoLive() {
             <p className="text-sm font-black text-primary">PC配信（OBS Studio）</p>
           </div>
           <p className="text-[11px] text-muted-foreground">高画質・多機能な配信ならこちら。シーン切り替え・BGM・ゲーム実況も可能。</p>
-          {manualIngestEndpoint && manualStreamKey ? (
-            <div className="space-y-2">
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">サーバーURL</label>
-                <div className="flex gap-1.5 items-center">
-                  <input type="text" readOnly value={`rtmps://${manualIngestEndpoint}:443/app/`} className="flex-1 bg-background font-mono text-[10px] rounded px-2 py-1.5 border border-border" />
-                  <Button type="button" size="sm" variant="secondary" className="h-7 px-2"
-                    onClick={() => { navigator.clipboard.writeText(`rtmps://${manualIngestEndpoint}:443/app/`); toast.success("コピーしました"); }}>
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ストリームキー</label>
-                <div className="flex gap-1.5 items-center">
-                  <input type="text" readOnly value={manualStreamKey} className="flex-1 bg-background font-mono text-[10px] rounded px-2 py-1.5 border border-border" />
-                  <Button type="button" size="sm" variant="secondary" className="h-7 px-2"
-                    onClick={() => { navigator.clipboard.writeText(manualStreamKey); toast.success("コピーしました"); }}>
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-green-400 text-[10px] font-bold">
-                <CheckCircle2 className="w-3 h-3" /> 取得完了 — OBSに貼り付けて配信開始
-              </div>
-            </div>
-          ) : (
-            <div className="text-[11px] text-muted-foreground text-center py-4 bg-zinc-900/30 rounded-lg">
-              下の「配信スタート」を押すと表示されます
-            </div>
-          )}
-          <a href="/obs-guide" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 font-semibold underline underline-offset-2">
-            → OBS設定ガイド
-          </a>
+          <StreamKeySecurityDisplay user={user} streamKey={manualStreamKey} ingestEndpoint={manualIngestEndpoint} isSmartphone={false} />
         </div>
 
         {/* スマホ Larix / Prism */}
@@ -300,47 +268,25 @@ export default function GoLive() {
             <p className="text-sm font-black text-green-400">スマホ配信（Larix / Prism）</p>
           </div>
           <p className="text-[11px] text-muted-foreground">スマホ1台でどこでも配信。アプリにURLを貼るだけで即開始。</p>
-
-          {fullRtmpsUrl ? (
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-green-400 uppercase tracking-widest">アプリ用URL（コピーして貼るだけ）</label>
-              <div className="flex gap-1.5 items-center">
-                <input type="text" readOnly value={fullRtmpsUrl} className="flex-1 bg-zinc-900 font-mono text-[10px] rounded px-2 py-1.5 border border-green-500/40 text-green-300" />
-                <Button type="button" className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white font-black text-[11px] whitespace-nowrap"
-                  onClick={() => { navigator.clipboard.writeText(fullRtmpsUrl); toast.success("スマホ用URLをコピーしました"); }}>
-                  <Copy className="w-3 h-3 mr-1" />コピー
-                </Button>
-              </div>
-              <div className="bg-zinc-900/50 rounded-lg p-2.5 border border-green-500/20 space-y-1.5">
-                <p className="text-[10px] font-bold text-white">手順（3ステップ）：</p>
-                <ol className="space-y-1 text-[10px] text-muted-foreground">
-                  <li><span className="font-bold text-green-400">1.</span> アプリをインストール</li>
-                  <li><span className="font-bold text-green-400">2.</span> 「+」→「RTMPS」を選択</li>
-                  <li><span className="font-bold text-green-400">3.</span> ↑のURLを貼り付けて「Go Live」</li>
-                </ol>
-              </div>
-            </div>
-          ) : (
-            <div className="text-[11px] text-muted-foreground text-center py-4 bg-zinc-900/30 rounded-lg">
-              下の「配信スタート」を押すと表示されます
-            </div>
-          )}
+          <StreamKeySecurityDisplay user={user} fullRtmpsUrl={fullRtmpsUrl} isSmartphone={true} />
 
           {/* アプリリンク */}
-          <div className="flex gap-2 flex-wrap">
-            <a href="https://apps.apple.com/app/larix-broadcaster/id1535549341" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
-              🍎 Larix (iOS)
-            </a>
-            <a href="https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
-              🤖 Larix (Android)
-            </a>
-            <a href="https://prismlive.com/" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
-              📡 Prism Live
-            </a>
-          </div>
+          {fullRtmpsUrl && (
+            <div className="flex gap-2 flex-wrap">
+              <a href="https://apps.apple.com/app/larix-broadcaster/id1535549341" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
+                🍎 Larix (iOS)
+              </a>
+              <a href="https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
+                🤖 Larix (Android)
+              </a>
+              <a href="https://prismlive.com/" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
+                📡 Prism Live
+              </a>
+            </div>
+          )}
         </div>
       </div>
 
