@@ -96,6 +96,11 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
             transition={{ duration: 0.2 }}
             className="space-y-3"
           >
+            {/* スマホ配信の選択ガイド */}
+            <div className="text-center px-2 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-[11px] font-semibold text-blue-300">📱 アプリが２つあるので、<br/>お好きな方を選んで使用してください</p>
+            </div>
+
             {/* Larix */}
             <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-blue-500/5">
               <div className="flex items-center gap-4 px-5 pt-5 pb-4 border-b border-blue-500/15">
@@ -125,11 +130,6 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
               <div className="px-5 py-4">
                 <StreamKeySecurityDisplay user={user} fullRtmpsUrl={fullRtmpsUrl} isSmartphone={true} />
               </div>
-            </div>
-
-            {/* スマホ配信の選択ガイド */}
-            <div className="text-center px-2 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-[11px] font-semibold text-blue-300">📱 アプリが２つあるので、<br/>お好きな方を選んで使用してください</p>
             </div>
 
             {/* Prism */}
