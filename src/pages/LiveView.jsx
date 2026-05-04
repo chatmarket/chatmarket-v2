@@ -23,6 +23,7 @@ import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
 import LivePaywall from "../components/live/LivePaywall.jsx";
 import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
 import YellRanking from "../components/live/YellRanking.jsx";
+import StreamInfoPanel from "../components/live/StreamInfoPanel.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -415,6 +416,9 @@ function LiveViewInner() {
             </div>
           )}
         </div>
+
+        {/* ═══ StreamInfoPanel — 映像直下に表示 ═══ */}
+        <StreamInfoPanel stream={stream} />
 
         {/* チャット・エールエリア */}
         {stream.status === "live" && (
