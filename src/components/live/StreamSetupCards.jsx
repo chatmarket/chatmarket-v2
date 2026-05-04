@@ -112,7 +112,7 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
                     🍎 iOS
                   </a>
                   <a href="https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster" target="_blank" rel="noopener noreferrer"
-                    className="text-[10px] font-black bg-emerald-700/80 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1.5 rounded-lg transition-all">
+                    className="text-[8px] font-black bg-emerald-700/80 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1.5 rounded-lg transition-all">
                     🤖 Android
                   </a>
                 </div>
