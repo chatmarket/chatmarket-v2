@@ -154,7 +154,69 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
       return;
     }
 
-    // hls.js (Android Chrome / Desktop)
+    // Amazon IVS Web Player SDK (低遅延優先)
+    try {
+      const IVSPlayer = (await import("amazon-ivs-player")).default;
+      if (destroyedRef.current) return;
+      
+      const player = IVSPlayer.create();
+      player.attachHTMLVideoElement(videoRef.current);
+
+      // ★ 低遅延モード有効 + 極限バッファ設定
+      player.setAutoplay(true);
+      player.setMuted(isMuted);
+      player.load(url);
+      
+      console.log(`[ViewerStream] 🚀 Amazon IVS Web Player initialized - Low Latency Mode ENABLED`);
+
+      const onStateChange = () => {
+        const state = player.getState();
+        const buffered = player.getBuffered();
+        const currentTime = videoRef.current?.currentTime || 0;
+        const duration = videoRef.current?.duration || 0;
+        const latency = Math.max(0, duration - currentTime);
+        
+        console.log(`[ViewerStream] 📊 Buffer State:`, {
+          playerState: state,
+          currentBuffer_sec: buffered?.length > 0 ? buffered[buffered.length - 1].end - currentTime : 0,
+          currentTime_sec: currentTime.toFixed(2),
+          duration_sec: duration.toFixed(2),
+          networkLatency_sec: latency.toFixed(2),
+          timestamp: new Date().toISOString(),
+        });
+
+        if (state === "PLAYING") {
+          setLoading(false);
+          setShowManualPlay(false);
+        }
+      };
+
+      player.addEventListener("statechange", onStateChange);
+      player.addEventListener("loadedmetadata", () => {
+        if (destroyedRef.current) return;
+        console.log(`[ViewerStream] ✅ IVS Player Ready - attempting autoplay`);
+        videoRef.current?.play().catch(() => {
+          console.warn("[ViewerStream] Autoplay blocked - falling back to muted");
+          player.setMuted(true);
+          onMutedChange?.(true);
+          videoRef.current?.play().catch(() => setShowManualPlay(true));
+        });
+      });
+
+      player.addEventListener("error", (error) => {
+        if (destroyedRef.current) return;
+        console.error(`[ViewerStream] ❌ IVS Player Error:`, error);
+        retry(url);
+      });
+
+      hlsRef.current = player;
+      return;
+
+    } catch (e) {
+      console.log("[ViewerStream] IVS Player not available, falling back to hls.js");
+    }
+
+    // Fallback: hls.js (超低遅延バッファ)
     try {
       const { default: Hls } = await import("hls.js");
       if (destroyedRef.current) return;
@@ -162,10 +224,10 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
 
       const hls = new Hls({
         lowLatencyMode: true,
-        liveSyncDuration: 1,
-        liveMaxLatencyDuration: 4,
-        maxBufferLength: 3,
-        maxMaxBufferLength: 6,
+        liveSyncDuration: 0.5,
+        liveMaxLatencyDuration: 2,
+        maxBufferLength: 1.5,
+        maxMaxBufferLength: 3,
         fragLoadingTimeOut: 15000,
         fragLoadingMaxRetry: 6,
         manifestLoadingTimeOut: 12000,
@@ -196,8 +258,15 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
 
       hls.on(Hls.Events.FRAG_CHANGED, () => {
         if (!hls.liveSyncPosition || !vid) return;
-        if (hls.liveSyncPosition - vid.currentTime > 2) {
-          vid.currentTime = hls.liveSyncPosition - 0.3;
+        const gap = hls.liveSyncPosition - vid.currentTime;
+        console.log(`[ViewerStream] 📊 hls.js Buffer:`, {
+          syncPosition: hls.liveSyncPosition.toFixed(2),
+          currentTime: vid.currentTime.toFixed(2),
+          buffer_gap_sec: gap.toFixed(2),
+          timestamp: new Date().toISOString(),
+        });
+        if (gap > 2) {
+          vid.currentTime = hls.liveSyncPosition - 0.5;
         }
       });
 
