@@ -14,6 +14,70 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+/**
+ * フォロワーへプッシュ通知とメール通知を送信
+ */
+async function notifyFollowersAsync(base44, stream) {
+  const channelId = stream.channel_id;
+  const streamTitle = stream.title || "新しい配信";
+  const streamUrl = `https://${Deno.env.get("VERCEL_URL") || "localhost:5173"}/live/${stream.id}`;
+
+  console.log(`[notifyFollowersAsync] 🔔 Fetching followers for channel: ${channelId}`);
+
+  // フォロワーを取得
+  const followers = await base44.asServiceRole.entities.ChannelFollow.filter({
+    channel_id: channelId,
+  });
+
+  if (!followers || followers.length === 0) {
+    console.log(`[notifyFollowersAsync] ℹ️ No followers for channel ${channelId}`);
+    return;
+  }
+
+  console.log(`[notifyFollowersAsync] 📢 Found ${followers.length} followers`);
+
+  // フォロワーごとに通知を送信（非同期並列）
+  const promises = followers.map(async (follow) => {
+    const followerEmail = follow.follower_email;
+    const followerName = follow.channel_name;
+
+    try {
+      // 1. Notification エンティティに記録
+      await base44.asServiceRole.entities.Notification.create({
+        user_email: followerEmail,
+        type: "new_video",
+        title: "お気に入りのライバーが配信を開始しました！",
+        message: `${followerName} が「${streamTitle}」の配信を開始しました`,
+        link: streamUrl,
+        is_read: false,
+        channel_id: channelId,
+        channel_name: followerName,
+      }).catch(err => console.error(`[notifyFollowersAsync] Failed to create notification: ${err}`));
+
+      // 2. メール送信（Core.SendEmail インテグレーション）
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: followerEmail,
+        subject: `【ChatMarket】${followerName}が配信を開始しました！`,
+        body: `
+<h2>お気に入りのライバーが配信を開始しました！</h2>
+<p><strong>${followerName}</strong> が新しい配信を開始しました。</p>
+<h3>配信タイトル</h3>
+<p>${streamTitle}</p>
+<p><a href="${streamUrl}" style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:bold;">配信を視聴する</a></p>
+<p style="color:#999;font-size:12px;">このメールはお気に入り通知設定に基づいて送信されています。</p>
+        `,
+      }).catch(err => console.error(`[notifyFollowersAsync] Failed to send email to ${followerEmail}: ${err}`));
+
+      console.log(`[notifyFollowersAsync] ✅ Notified: ${followerEmail}`);
+    } catch (err) {
+      console.error(`[notifyFollowersAsync] ❌ Error notifying ${followerEmail}:`, err);
+    }
+  });
+
+  await Promise.all(promises);
+  console.log(`[notifyFollowersAsync] ✅ All follower notifications sent`);
+}
+
 Deno.serve(async (req) => {
   try {
     // ─── 1. シークレット厳格検証（スキップ禁止） ───────────────────────
@@ -92,6 +156,12 @@ Deno.serve(async (req) => {
       }
 
       console.log(`[ivsSessionWebhook] ✅ Marked LIVE: ${stream.id} "${stream.title}"`);
+
+      // ─── フォロワー通知（非同期で実行、エラーが本処理をブロックしない） ───
+      notifyFollowersAsync(base44, stream).catch(err => {
+        console.error("[ivsSessionWebhook] ⚠️ Follower notification failed:", err);
+      });
+
       return Response.json({ success: true, stream_id: stream.id, action: "started" });
     }
 
