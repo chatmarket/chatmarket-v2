@@ -1,0 +1,109 @@
+{
+  "name": "IvsChannelRegistry",
+  "type": "object",
+  "description": "AWS IVS \u30c1\u30e3\u30cd\u30eb\u306e\u81ea\u52d5\u751f\u6210\u30fb\u5272\u308a\u5f53\u3066\u7ba1\u7406\u30ec\u30b8\u30b9\u30c8\u30ea\uff08\u30b9\u30b1\u30fc\u30eb\u5bfe\u5fdc\uff09",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u306e\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9"
+    },
+    "channel_arn": {
+      "type": "string",
+      "description": "AWS IVS \u30c1\u30e3\u30cd\u30eb ARN\uff08\u4e00\u610f\u30ad\u30fc\uff09"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30cd\u30eb\u8868\u793a\u540d"
+    },
+    "stream_key": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u7528\u30b9\u30c8\u30ea\u30fc\u30e0\u30ad\u30fc\uff08\u79d8\u5bc6\u30fb\u5b89\u5168\u4fdd\u7ba1\uff09"
+    },
+    "ingest_endpoint": {
+      "type": "string",
+      "description": "RTMPS \u30a4\u30f3\u30b8\u30a7\u30b9\u30c8\u30a8\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8"
+    },
+    "playback_url": {
+      "type": "string",
+      "description": "HLS \u518d\u751f URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "archived"
+      ],
+      "default": "active",
+      "description": "\u30c1\u30e3\u30cd\u30eb\u306e\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "region": {
+      "type": "string",
+      "default": "ap-northeast-1",
+      "description": "AWS \u30ea\u30fc\u30b8\u30e7\u30f3"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30c1\u30e3\u30cd\u30eb\u4f5c\u6210\u65e5\u6642"
+    },
+    "last_used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6700\u5f8c\u306b\u4f7f\u7528\u3057\u305f\u65e5\u6642"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u7ba1\u7406\u30e1\u30e2"
+    }
+  },
+  "required": [
+    "user_email",
+    "channel_arn",
+    "stream_key",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
