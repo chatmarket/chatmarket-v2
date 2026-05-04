@@ -127,6 +127,11 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
               </div>
             </div>
 
+            {/* スマホ配信の選択ガイド */}
+            <div className="text-center px-2 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-[11px] font-semibold text-blue-300">📱 アプリが２つあるので、<br/>お好きな方を選んで使用してください</p>
+            </div>
+
             {/* Prism */}
             <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-purple-500/5">
               <div className="flex items-center gap-4 px-5 pt-4 pb-3 border-b border-purple-500/15">
