@@ -96,43 +96,7 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
             transition={{ duration: 0.2 }}
             className="space-y-3"
           >
-            {/* スマホ配信の選択ガイド */}
-            <div className="text-center px-2 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-[11px] font-semibold text-blue-300">📱 アプリが２つあるので、<br/>お好きな方を選んで使用してください</p>
-            </div>
-
-            {/* Larix */}
-            <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-blue-500/5">
-              <div className="flex items-center gap-4 px-5 pt-5 pb-4 border-b border-blue-500/15">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-2xl shrink-0">
-                  📡
-                </div>
-                <div>
-                  <p className="font-black text-white text-base">Larix Broadcaster</p>
-                  <p className="text-[11px] text-blue-400/80 font-semibold">シンプル & 低遅延</p>
-                </div>
-                <div className="ml-auto flex gap-1.5">
-                  <a href="https://apps.apple.com/app/larix-broadcaster/id1535549341" target="_blank" rel="noopener noreferrer"
-                    className="text-[10px] font-black bg-black hover:bg-zinc-900 text-white border border-zinc-700 px-2.5 py-1.5 rounded-lg transition-all">
-                    🍎 iOS
-                  </a>
-                  <a href="https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster" target="_blank" rel="noopener noreferrer"
-                    className="text-[8px] font-black bg-emerald-700/80 hover:bg-emerald-700 text-white border border-emerald-600 px-2.5 py-1.5 rounded-lg transition-all">
-                    🤖 Android
-                  </a>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5 px-5 py-3 border-b border-zinc-800/50">
-                {["無料", "低遅延", "安定性◎", "RTMPS対応", "シンプル設定"].map((f) => (
-                  <span key={f} className="text-[10px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700/60 px-2 py-0.5 rounded-full">{f}</span>
-                ))}
-              </div>
-              <div className="px-5 py-4">
-                <StreamKeySecurityDisplay user={user} fullRtmpsUrl={fullRtmpsUrl} isSmartphone={true} />
-              </div>
-            </div>
-
-            {/* Prism */}
+{/* Prism */}
             <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-purple-500/5">
               <div className="flex items-center gap-4 px-5 pt-4 pb-3 border-b border-purple-500/15">
                 <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-xl shrink-0">

@@ -51,58 +51,6 @@ export default function StreamingManual() {
       }
     },
     {
-      id: "larix",
-      name: "Larix Broadcaster",
-      type: "スマホ対応",
-      icon: "📱",
-      color: "from-green-600 to-green-700",
-      description: "スマホ1台で配信。どこでも手軽に配信できます。iOS/Android 両対応。",
-      features: [
-        "スマホのカメラで即配信",
-        "WiFi・4G 両対応",
-        "画面ミラーリング可能",
-        "低遅延配信",
-        "複数配信先に同時配信可"
-      ],
-      steps: [
-        {
-          step: 1,
-          title: "Larix Broadcaster をインストール",
-          content: "App Store（iOS）または Google Play Store（Android）から『Larix Broadcaster』をダウンロード"
-        },
-        {
-          step: 2,
-          title: "アプリを開く",
-          content: "Larix を開く → 『+』ボタンをタップ"
-        },
-        {
-          step: 3,
-          title: "配信方式を選択",
-          content: "『RTMPS』を選択（ChatMarket 用）"
-        },
-        {
-          step: 4,
-          title: "URL をペースト",
-          content: "ChatMarket で『クリックしてコピー』を押したスマホ用 URL を、アプリに貼り付け"
-        },
-        {
-          step: 5,
-          title: "配信開始",
-          content: "『Go Live』ボタンをタップ → カメラ・マイク許可を与える → 配信開始"
-        }
-      ],
-      download: {
-        ios: {
-          link: "https://apps.apple.com/app/larix-broadcaster/id1535549341",
-          text: "App Store で Larix をダウンロード →"
-        },
-        android: {
-          link: "https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster",
-          text: "Google Play で Larix をダウンロード →"
-        }
-      }
-    },
-    {
       id: "prism",
       name: "Prism Live Studio",
       type: "スマホ対応",
@@ -169,7 +117,7 @@ export default function StreamingManual() {
       {/* メインコンテンツ */}
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {guides.map((guide) => (
+          {guides.filter(guide => guide.id !== 'larix').map((guide) => (
             <div key={guide.id} className="space-y-6">
               {/* カード */}
               <div className={`bg-gradient-to-br ${guide.color} rounded-2xl p-6 text-white shadow-lg`}>
@@ -229,7 +177,7 @@ export default function StreamingManual() {
 
         {/* 詳細ガイド */}
         <div className="space-y-12">
-          {guides.map((guide) => (
+          {guides.filter(guide => guide.id !== 'larix').map((guide) => (
             <div key={guide.id} className="border-l-4 border-primary/50 pl-6 space-y-6">
               <h3 className="text-2xl font-black text-white">{guide.name} で配信する</h3>
 
