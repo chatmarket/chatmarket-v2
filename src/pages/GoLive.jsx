@@ -126,13 +126,9 @@ export default function GoLive() {
 
     setCreating(true);
     
-    // 古いデータをクリア
-    sessionStorage.removeItem("liveStreamId");
-    setManualStreamKey("");
-    setManualIngestEndpoint("");
-
-    // IVS チャンネル作成（バックエンド）
-    const ivsRes = await base44.functions.invoke('createLiveStream', { isArchiveSaved: false });
+    // ★ createLiveStream は1回だけ呼び出し（リロード課金ゼロ）
+    console.log('[GoLive] 🚀 Fetching fixed chatmarket-main RTMPS config (one-time only)...');
+    const ivsRes = await base44.functions.invoke('createLiveStream', {});
     if (!ivsRes?.data?.streamId) {
       toast.error('配信枠の作成に失敗しました。');
       setCreating(false);
@@ -143,11 +139,9 @@ export default function GoLive() {
     setManualStreamKey(ivsData.streamKey);
     setManualIngestEndpoint(ivsData.rtmpsUrl);
 
-    // ★ 生URL確認ログ
-    console.log(`[GoLive] 🎬 New playback URL generated:`, {
-      full_url: ivsData.playbackUrl,
-      url_preview: ivsData.playbackUrl?.substring(0, 100) + '...',
-    });
+    // ★ 固定playback_url を確認
+    const FIXED_PLAYBACK_URL = ivsData.playbackUrl || "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
+    console.log(`[GoLive] ✅ Fixed playback URL (will be saved to DB):`, FIXED_PLAYBACK_URL);
 
     let channel = channels[0];
     if (!channel) {
@@ -175,19 +169,18 @@ export default function GoLive() {
       }
     }
 
-    // 価格から画質を自動決定
     const getQualityFromPrice = (price) => {
-      if (price === 0) return "1080p"; // 無料は最高画質
-      if (price >= 150) return "1080p"; // FHD
-      if (price >= 55) return "720p";   // HD
-      return "480p";                    // SD
+      if (price === 0) return "1080p";
+      if (price >= 150) return "1080p";
+      if (price >= 55) return "720p";
+      return "480p";
     };
     const autoQuality = getQualityFromPrice(form.price);
-    console.log(`[GoLive] Price: ${form.price}, Auto Quality: ${autoQuality}`);
 
     const isLiveNow = !form.scheduled_at;
     let newStream;
     try {
+      // ★ 固定playback_urlをDB保存（視聴者が常に同じURLで再生）
       newStream = await base44.entities.LiveStream.create({
         title: form.title,
         description: form.description,
@@ -201,7 +194,7 @@ export default function GoLive() {
         price: parseInt(form.price) || 0,
         viewer_count: 0,
         stream_type: "ivs",
-        ivs_playback_url: ivsData.playbackUrl || "",
+        ivs_playback_url: FIXED_PLAYBACK_URL,
         ivs_channel_arn: ivsData.channelArn || "",
         ivs_stream_key: ivsData.streamKey || "",
         ivs_ingest_endpoint: ivsData.ingestEndpoint || "",
@@ -221,13 +214,12 @@ export default function GoLive() {
       await base44.entities.Channel.update(channel.id, { is_live: true });
 
       setCreating(false);
-      console.log(`[GoLive] ✅ [1対多 配信] Created stream ID: ${newStream.id} with quality: ${autoQuality}`);
+      console.log(`[GoLive] ✅ Stream created with fixed playback URL`, {
+        streamId: newStream.id,
+        playbackUrl: FIXED_PLAYBACK_URL,
+        quality: autoQuality,
+      });
       
-      // ★ 正確な配信 URL へナビゲート（streamId をパラメータで渡す）
-      const liveUrl = `/live/${newStream.id}`;
-      console.log(`[GoLive] 🔗 Redirecting to: ${liveUrl}`);
-      
-      // sessionStorage は補足的にも保存（バックアップ用）
       sessionStorage.setItem("liveStreamId", newStream.id);
       sessionStorage.setItem("broadcastMode", broadcastModeTab);
       
