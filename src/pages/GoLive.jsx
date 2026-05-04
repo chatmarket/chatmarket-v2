@@ -239,9 +239,11 @@ export default function GoLive() {
     
     console.log(`[GoLive] ✅ [1対多 配信] Stored streamId: ${newStream.id}`);
 
-    // ブラウザ配信の場合はモーダルなしで直接遷移
+    // ★ broadcastModeTab に応じて遷移
     if (broadcastModeTab === "browser") {
       localStorage.setItem("broadcastMode", "browser");
+      // ブラウザ配信: そのまま liveStreamId を state にセット → BrowserBroadcaster 画面へ
+      // (setLiveStreamId 済み)
     } else {
       localStorage.removeItem("broadcastMode");
       setShowModeSelect(true);
