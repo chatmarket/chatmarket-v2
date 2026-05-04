@@ -255,39 +255,31 @@ export default function VodManagement() {
             </select>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50 text-muted-foreground text-xs">
-                  <th className="text-left py-3 px-4">タイトル</th>
-                  <th className="text-right py-3 px-4">価格</th>
-                  <th className="text-right py-3 px-4">視聴数</th>
-                  <th className="text-right py-3 px-4">販売数</th>
-                  <th className="text-right py-3 px-4">売上</th>
-                  <th className="text-center py-3 px-4">ステータス</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredVideos.map((v) => {
-                  const sales = purchases.filter((p) => p.item_id === v.id).length;
-                  const revenue = purchases.filter((p) => p.item_id === v.id).reduce((sum, p) => sum + (p.amount || 0), 0);
-                  return (
-                    <tr key={v.id} className="border-b border-border/30 hover:bg-secondary/50 transition-colors">
-                      <td className="py-3 px-4 font-medium truncate max-w-xs">{v.title}</td>
-                      <td className="text-right py-3 px-4">{v.is_free ? "無料" : `¥${v.price?.toLocaleString() || 0}`}</td>
-                      <td className="text-right py-3 px-4">{v.view_count || 0}</td>
-                      <td className="text-right py-3 px-4 text-blue-400 font-bold">{sales}</td>
-                      <td className="text-right py-3 px-4 text-green-400 font-bold">¥{revenue.toLocaleString()}</td>
-                      <td className="text-center py-3 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full ${v.moderation_status === "approved" ? "bg-green-500/20 text-green-400" : v.moderation_status === "pending" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
-                          {v.moderation_status === "approved" ? "✓ 承認" : v.moderation_status === "pending" ? "⏳ 審査中" : "✗ 却下"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="space-y-4">
+            {filteredVideos.map((v) => {
+              const sales = purchases.filter((p) => p.item_id === v.id).length;
+              const revenue = purchases.filter((p) => p.item_id === v.id).reduce((sum, p) => sum + (p.amount || 0), 0);
+              return (
+                <div key={v.id} className="bg-card border border-border/50 rounded-xl p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-base text-foreground">{v.title}</h3>
+                      {v.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.description}</p>
+                      )}
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full shrink-0 ${v.moderation_status === "approved" ? "bg-green-500/20 text-green-400" : v.moderation_status === "pending" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
+                      {v.moderation_status === "approved" ? "✓ 承認" : v.moderation_status === "pending" ? "⏳ 審査中" : "✗ 却下"}
+                    </span>
+                  </div>
+                  <div className="flex gap-4 text-sm text-muted-foreground flex-wrap">
+                    <span>{v.is_free ? "無料" : `¥${v.price?.toLocaleString() || 0}`}</span>
+                    <span>視聴: {v.view_count || 0}</span>
+                    <span className="text-blue-400 font-bold">売上: ¥{revenue.toLocaleString()}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </TabsContent>
 
