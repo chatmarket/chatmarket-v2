@@ -1,14 +1,14 @@
 /**
- * ViewerStream — シンプルHLSプレイヤー
- * - videoRef が確実にマウントされてから初期化
- * - 自動リトライ最大3回
- * - グローバル汚染なし
+ * ViewerStream — HLSプレイヤー
+ * - 3回リトライ失敗 → DBから playbackUrl を強制再取得
+ * - playbackUrl が変わったら即座に再初期化
+ * - iOS Safari ネイティブHLS / hls.js 両対応
  */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { base44 } from "@/api/base44Client";
 
-// リトライ上限なし（配信が始まるまで自動再接続し続ける）
-const MAX_RETRY = Infinity;
 const RETRY_DELAY_MS = 3000;
+const DB_REFRESH_EVERY = 3; // 3回リトライごとにDBから再取得
 
 export default function ViewerStream({ stream }) {
   const videoRef = useRef(null);
@@ -16,279 +16,196 @@ export default function ViewerStream({ stream }) {
   const retryRef = useRef(0);
   const destroyedRef = useRef(false);
   const [loading, setLoading] = useState(true);
-  const [fatalError, setFatalError] = useState(false);
-  const [debugMode, setDebugMode] = useState(false);
   const [showManualPlay, setShowManualPlay] = useState(false);
-  const manualPlayTimerRef = useRef(null);
 
-  // 【修正】クエリパラメータから debug=true を検出
+  // ★ playbackUrl は state で管理 — DBから強制再取得できるよう
+  const [playbackUrl, setPlaybackUrl] = useState(stream?.ivs_playback_url || null);
+
+  // stream props が更新されたら最新URLに追従
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setDebugMode(params.get('debug') === 'true');
-  }, []);
+    if (stream?.ivs_playback_url && stream.ivs_playback_url !== playbackUrl) {
+      console.log(`[ViewerStream] 🔄 Stream prop updated — new URL:`, stream.ivs_playback_url);
+      setPlaybackUrl(stream.ivs_playback_url);
+    }
+  }, [stream?.ivs_playback_url]);
 
-  // ★ 手動再生ボタン自動トリガー（20秒無再生で自動表示）
-  useEffect(() => {
-    if (!stream?.ivs_playback_url || loading === false) return;
-    manualPlayTimerRef.current = setTimeout(() => {
-      if (loading && !fatalError) setShowManualPlay(true);
-    }, 20000);
-    return () => { if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current); };
-  }, [loading, stream?.ivs_playback_url]);
-
-  const playbackUrl = stream?.ivs_playback_url;
-  const noPlayLoadingRef = useRef(0); // ローディングが続いた時間（秒）
-  const autoReloadTimerRef = useRef(null);
-  const mediaSourceStartTimeRef = useRef(Date.now()); // 映像ロード開始時刻（ミリ秒精度同期）
-
-  // ★ URLが変わったら即座にログ出力（同期ロジック検証）
-  useEffect(() => {
-    if (playbackUrl) {
-      console.log(`[ViewerStream] 🔗 Playback URL received:`, {
-        url_full: playbackUrl,
-        url_preview: playbackUrl.substring(0, 80) + "...",
-        length: playbackUrl.length,
-        timestamp: new Date().toISOString(),
+  // ★ DBから最新の playbackUrl を強制再取得
+  const refreshUrlFromDB = useCallback(async () => {
+    if (!stream?.id) return;
+    console.log(`[ViewerStream] 🔃 Force-refreshing playbackUrl from DB for stream: ${stream.id}`);
+    try {
+      const records = await base44.entities.LiveStream.filter({ id: stream.id });
+      const fresh = records[0];
+      if (!fresh) { console.warn("[ViewerStream] ❌ Stream not found in DB"); return; }
+      console.log(`[ViewerStream] ✅ Fresh URL from DB:`, {
+        url: fresh.ivs_playback_url,
+        status: fresh.status,
+        stream_id: fresh.id,
       });
-    }
-  }, [playbackUrl]);
-
-  useEffect(() => {
-    if (!playbackUrl) return;
-
-    destroyedRef.current = false;
-    retryRef.current = 0;
-    setLoading(true);
-    setFatalError(false);
-    setShowManualPlay(false);
-    noPlayLoadingRef.current = 0;
-    mediaSourceStartTimeRef.current = Date.now(); // ★ ミリ秒精度ロード時刻を記録
-
-    // videoRefがDOMにマウントされるまで少し待つ
-    const initTimer = setTimeout(() => {
-      if (!destroyedRef.current) initPlayer();
-    }, 50); // ★ 100ms → 50ms に短縮（最速起動）
-
-    // ★ 自動リロード: 20秒以上ローディングが続いた場合、ソース再読み込み（スマホ対応）
-    autoReloadTimerRef.current = setInterval(() => {
-    if (!destroyedRef.current && loading) {
-      noPlayLoadingRef.current += 1;
-      if (debugMode) console.log(`[ViewerStream] Loading state: ${noPlayLoadingRef.current}s`);
-      if (noPlayLoadingRef.current >= 20) {
-        console.warn('[ViewerStream] ⚠️ Loading timeout 20s — auto-reloading source');
+      if (fresh.ivs_playback_url && fresh.ivs_playback_url !== playbackUrl) {
+        setPlaybackUrl(fresh.ivs_playback_url);
+      } else if (fresh.ivs_playback_url) {
+        // 同じURLでも強制リセットしてHLSを再初期化
         destroyHls();
-        noPlayLoadingRef.current = 0;
-        setTimeout(() => initPlayer(), 300);
+        retryRef.current = 0;
+        setTimeout(() => { if (!destroyedRef.current) initPlayer(fresh.ivs_playback_url); }, 300);
       }
+    } catch (e) {
+      console.error("[ViewerStream] DB refresh failed:", e);
     }
-    }, 1000);
-
-    return () => {
-      destroyedRef.current = true;
-      clearTimeout(initTimer);
-      if (autoReloadTimerRef.current) clearInterval(autoReloadTimerRef.current);
-      destroyHls();
-    };
-  }, [playbackUrl, debugMode, loading]);
+  }, [stream?.id, playbackUrl]);
 
   function destroyHls() {
     try { hlsRef.current?.destroy(); } catch (_) {}
     hlsRef.current = null;
   }
 
-  function retry() {
+  function retry(urlToUse) {
     if (destroyedRef.current) return;
     retryRef.current += 1;
-    // 回数が増えるほど待機時間を伸ばす（最大15秒）
-    const delay = Math.min(RETRY_DELAY_MS * Math.ceil(retryRef.current / 3), 15000);
-    console.log(`[ViewerStream] retry #${retryRef.current} in ${delay}ms`);
-    destroyHls();
-    setTimeout(() => {
-      if (!destroyedRef.current) initPlayer();
-    }, delay);
-  }
+    const count = retryRef.current;
+    console.log(`[ViewerStream] 🔁 retry #${count}`);
 
-  async function initPlayer() {
-    const vid = videoRef.current;
-    if (!vid) {
-      console.warn("[ViewerStream] ❌ videoRef is null, retrying...");
-      retry();
+    // ★ 3回ごとにDBから再取得
+    if (count % DB_REFRESH_EVERY === 0) {
+      console.log(`[ViewerStream] 🔃 ${count} retries — triggering DB refresh`);
+      refreshUrlFromDB();
       return;
     }
 
-    console.log("[ViewerStream] 🎥 initPlayer called with URL:", playbackUrl?.substring(0, 60) + "...");
+    const delay = Math.min(RETRY_DELAY_MS * Math.ceil(count / 3), 12000);
+    destroyHls();
+    setTimeout(() => {
+      if (!destroyedRef.current) initPlayer(urlToUse);
+    }, delay);
+  }
+
+  async function initPlayer(url) {
+    const vid = videoRef.current;
+    if (!vid) { console.warn("[ViewerStream] ❌ videoRef is null"); return; }
+
+    // ★ 常にフル URL をコンソールに出力（昨日のURLか今日のURLか一目でわかる）
+    console.log(`[ViewerStream] 🎥 initPlayer — URL FULL:`, url);
+    console.log(`[ViewerStream] 🕐 Timestamp: ${new Date().toISOString()}`);
 
     // iOS Safari ネイティブHLS
     if (vid.canPlayType("application/vnd.apple.mpegurl")) {
-      console.log("[ViewerStream] 📱 Native HLS detected (iOS Safari)");
-      // 毎回リスナーをクリーンにセット（once:true だと retry 後に再リッスンできない）
+      console.log("[ViewerStream] 📱 iOS Native HLS");
       const onCanPlay = () => {
         if (destroyedRef.current) return;
-        console.log("[ViewerStream] ✅ Native HLS canplay event");
         setLoading(false);
+        setShowManualPlay(false);
         vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
       };
-      const onError = (e) => {
+      const onError = () => {
         if (destroyedRef.current) return;
-        const code = vid.error?.code ?? 'N/A';
-        const msg  = vid.error?.message ?? '';
-        console.warn(`[ViewerStream] ❌ Native HLS error code=${code} msg=${msg}`);
+        console.warn(`[ViewerStream] ❌ Native HLS error code=${vid.error?.code}`);
         vid.removeEventListener("canplay", onCanPlay);
         vid.removeEventListener("error", onError);
-        retry();
+        retry(url);
       };
       vid.removeEventListener("canplay", onCanPlay);
       vid.removeEventListener("error", onError);
       vid.addEventListener("canplay", onCanPlay);
       vid.addEventListener("error", onError);
-      vid.src = playbackUrl;
+      vid.src = url;
       vid.load();
-      console.log("[ViewerStream] 📡 Native HLS source set:", playbackUrl.substring(0, 60) + "...");
       return;
     }
 
-    // hls.js
+    // hls.js (Android Chrome / Desktop)
     try {
-      const HlsModule = await import("hls.js");
-      const Hls = HlsModule.default;
-
+      const { default: Hls } = await import("hls.js");
       if (destroyedRef.current) return;
-
-      if (!Hls.isSupported()) {
-        console.error("[ViewerStream] hls.js not supported");
-        setFatalError(true);
-        setLoading(false);
-        return;
-      }
+      if (!Hls.isSupported()) { console.error("[ViewerStream] hls.js not supported"); return; }
 
       const hls = new Hls({
         lowLatencyMode: true,
-        // ★ 4G対応LL-HLS バッファ調整: 低遅延ＶＳ安定性のバランス
-        liveSyncDuration: 0.5,            // 300ms → 500ms（4G向け微調整）
-        liveMaxLatencyDuration: 2,        // バッファ上限1秒 → 2秒（4G環境での安定）
-        liveBackBufferLength: 1,          // バックバッファ0 → 1秒確保
-        maxBufferLength: 1.5,             // バッファ最小0.5 → 1.5秒（4G途切れ防止）
-        maxMaxBufferLength: 3,            // 最大バッファ1 → 3秒
-        maxBufferSize: 2 * 1000 * 1000,   // 1MB → 2MB（セグメント蓄積余裕）
-        backBufferLength: 2,              // 過去セグメント保持2秒
-        startLevel: -1,                   // 自動画質選択（最初は低めから始まる）
-        abrBandWidthFactor: 0.7,          // 60% → 70%（4Gでも止まらない設定）
-        abrMaxWithRealBitrate: true,      // 実測値をベースに天井を決定
-        fragLoadingTimeOut: 15000,        // 12秒 → 15秒（4G遅延許容）
-        fragLoadingMaxRetry: 8,           // 6 → 8回（粘り強い再試行）
-        fragLoadingRetryDelay: 1500,      // 1秒 → 1.5秒（リトライ間隔延長）
-        manifestLoadingTimeOut: 12000,    // 10秒 → 12秒
-        manifestLoadingMaxRetry: 10,      // 8 → 10回
-        manifestLoadingRetryDelay: 2500,  // 2秒 → 2.5秒
-        levelLoadingMaxRetry: 8,          // 6 → 8回
-        levelLoadingRetryDelay: 2000,     // 1.5秒 → 2秒
+        liveSyncDuration: 1,
+        liveMaxLatencyDuration: 4,
+        maxBufferLength: 3,
+        maxMaxBufferLength: 6,
+        fragLoadingTimeOut: 15000,
+        fragLoadingMaxRetry: 6,
+        manifestLoadingTimeOut: 12000,
+        manifestLoadingMaxRetry: 8,
+        manifestLoadingRetryDelay: 2000,
         enableWorker: true,
         liveDurationInfinity: true,
       });
 
       hlsRef.current = hls;
-      hls.loadSource(playbackUrl);
+      hls.loadSource(url);
       hls.attachMedia(vid);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (destroyedRef.current) return;
-        const timeToPlayReady = Date.now() - mediaSourceStartTimeRef.current;
-        console.log(`[ViewerStream] ✅ Manifest parsed in ${timeToPlayReady}ms`);
-        console.log(`[ViewerStream] 📊 Playback URL endpoint: ${playbackUrl.split('?')[0]}`);
+        console.log(`[ViewerStream] ✅ Manifest parsed — playing`);
         setLoading(false);
-        setFatalError(false);
         setShowManualPlay(false);
-        noPlayLoadingRef.current = 0;
-        if (manualPlayTimerRef.current) clearTimeout(manualPlayTimerRef.current);
-        
-        // ★ 再生開始（muted優先でSafari対応）
-        const playPromise = vid.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .catch((err) => {
-              console.warn("[ViewerStream] ⚠️ Autoplay failed, muting and retrying:", err.name);
-              vid.muted = true;
-              return vid.play();
-            })
-            .catch((e) => {
-              console.warn("[ViewerStream] ⚠️ Muted autoplay also failed, showing manual play button");
-              setShowManualPlay(true);
-            });
-        }
+        vid.play().catch(() => { vid.muted = true; vid.play().catch(() => setShowManualPlay(true)); });
       });
 
-      // 追いかけ再生: ライブエッジから1.5秒以上遅れたら自動追従
       hls.on(Hls.Events.FRAG_CHANGED, () => {
-        if (destroyedRef.current || !vid) return;
-        if (!hls.liveSyncPosition) return;
-        const lag = hls.liveSyncPosition - vid.currentTime;
-        if (lag > 1.5) {
-          vid.currentTime = hls.liveSyncPosition - 0.2;
+        if (!hls.liveSyncPosition || !vid) return;
+        if (hls.liveSyncPosition - vid.currentTime > 2) {
+          vid.currentTime = hls.liveSyncPosition - 0.3;
         }
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (destroyedRef.current) return;
-        // non-fatal もログ（IVS起動待ちの404等を可視化）
         if (!data.fatal) {
-          console.log(`[ViewerStream] non-fatal ${data.type}/${data.details} http=${data.response?.code}`);
+          console.log(`[ViewerStream] non-fatal ${data.details} http=${data.response?.code}`);
           return;
         }
-        console.warn(`[ViewerStream] fatal: ${data.type}/${data.details} http=${data.response?.code}`);
-        retry();
+        console.warn(`[ViewerStream] ❌ fatal ${data.details}`);
+        retry(url);
       });
 
     } catch (e) {
-      console.error("[ViewerStream] hls.js import/init error:", e);
-      if (!destroyedRef.current) retry();
+      console.error("[ViewerStream] hls.js error:", e);
+      if (!destroyedRef.current) retry(url);
     }
   }
 
-  function manualRetry() {
-    console.log("[ViewerStream] 🔄 Manual retry initiated - full URL refresh");
+  // playbackUrl が変わるたびに再初期化
+  useEffect(() => {
+    if (!playbackUrl) return;
+
+    destroyedRef.current = false;
     retryRef.current = 0;
-    setFatalError(false);
     setLoading(true);
     setShowManualPlay(false);
-    noPlayLoadingRef.current = 0;
-    destroyHls();
-    
-    // ★ 強制リロード: URLから完全に再読み込み（キャッシュ完全クリア）
-    setTimeout(() => {
-      if (!destroyedRef.current) {
-        console.log("[ViewerStream] 🚀 Reinitializing player from scratch with fresh URL:", playbackUrl?.substring(0, 80) + "...");
-        mediaSourceStartTimeRef.current = Date.now(); // 時刻リセット
-        initPlayer();
+
+    const t = setTimeout(() => {
+      if (!destroyedRef.current) initPlayer(playbackUrl);
+    }, 50);
+
+    // ★ 15秒ごとに生存確認 — ローディングが続いていたら自動リフレッシュ
+    const watchdog = setInterval(() => {
+      if (!destroyedRef.current && loading) {
+        console.warn("[ViewerStream] ⏰ Watchdog: still loading after 15s — DB refresh");
+        refreshUrlFromDB();
       }
-    }, 300);
-  }
+    }, 15000);
 
-  function handleManualPlay() {
-    const vid = videoRef.current;
-    if (!vid) return;
-    console.log("[ViewerStream] 👆 Manual play button pressed - triggering full refresh");
-    setShowManualPlay(false);
-    // ★ 再生ボタン押下 → URLの再取得＋強制リロード（システム全体の再初期化）
-    manualRetry();
-  }
+    return () => {
+      destroyedRef.current = true;
+      clearTimeout(t);
+      clearInterval(watchdog);
+      destroyHls();
+    };
+  }, [playbackUrl]); // ← loading を依存配列から除去（無限ループ防止）
 
-  function handleManualPlay() {
-    const vid = videoRef.current;
-    if (!vid) return;
-    setShowManualPlay(false);
-    vid.muted = false;
-    vid.play().catch(() => {
-      vid.muted = true;
-      vid.play().catch(() => manualRetry());
-    });
-  }
-
+  // playbackUrl なし（DBにURLが入っていない）
   if (!playbackUrl) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-black">
-        <div className="text-center space-y-2">
-          <p className="text-white/50 text-sm">映像URLがありません</p>
-          {debugMode && <p className="text-red-400 text-xs font-mono">playbackUrl is undefined</p>}
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
+          <p className="text-white/50 text-sm">配信URLを取得中...</p>
+          <p className="text-white/30 text-xs font-mono">{stream?.id ? `stream: ${stream.id.slice(0,8)}...` : "stream ID なし"}</p>
         </div>
       </div>
     );
@@ -302,31 +219,24 @@ export default function ViewerStream({ stream }) {
           <p className="text-white/40 text-xs">
             {retryRef.current > 0 ? `配信接続中... (${retryRef.current}回目)` : "映像を読み込み中..."}
           </p>
-          {retryRef.current > 5 && (
-            <p className="text-white/30 text-xs">配信開始をお待ちください</p>
+          {retryRef.current >= DB_REFRESH_EVERY && (
+            <p className="text-yellow-400/60 text-xs">🔃 最新URLを再取得中...</p>
           )}
         </div>
       )}
 
-      {/* 強力な再生ボタン — URLから完全リフレッシュ */}
       {showManualPlay && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4 bg-black/60 backdrop-blur">
           <button
-            onClick={handleManualPlay}
+            onClick={() => { setShowManualPlay(false); refreshUrlFromDB(); }}
             className="flex items-center justify-center w-20 h-20 rounded-full bg-white/25 hover:bg-white/40 border-2 border-white/80 transition-all active:scale-95 shadow-xl"
-            title="URLを再取得して映像を再開始"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
           </button>
-          <div className="text-center space-y-1">
-            <p className="text-white/90 text-sm font-semibold">映像を再開始</p>
-            <p className="text-white/50 text-xs">URLをリフレッシュして接続し直します</p>
-          </div>
-          <div className="flex items-center gap-1 text-[10px] text-yellow-300/70 bg-yellow-900/20 px-3 py-1.5 rounded-lg border border-yellow-900/40">
-            <span>⚙️</span> 再接続中...
-          </div>
+          <p className="text-white/90 text-sm font-semibold">タップして映像を開始</p>
+          <p className="text-white/40 text-xs">最新の配信URLを再取得します</p>
         </div>
       )}
 
@@ -335,7 +245,6 @@ export default function ViewerStream({ stream }) {
         autoPlay
         playsInline
         className="w-full h-full object-contain"
-        style={{ opacity: fatalError ? 0 : 1 }}
       />
     </div>
   );
