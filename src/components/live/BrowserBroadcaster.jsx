@@ -298,9 +298,9 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
 
     try {
       // WHIP 接続（カメラプレビューは既に映っている状態で実行）
-      console.log('[BrowserBroadcaster] 🔌 Connecting to WHIP...');
+      console.log('[BrowserBroadcaster] 🔌 Connecting to RTMPS...');
       setIsBroadcasting(true);
-      await connectToWhip();
+      await connectToRtmps();
 
       // WHIP 接続成功後にDBを更新 + playbackUrl を保存
       // ★ ブラウザ発信は固定チャンネルを使用しているため、playbackUrl も固定値
@@ -343,13 +343,11 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     }
   };
 
-  // 【WHIP 接続】
-  // アーキテクチャ:
-  //   1. RTCPeerConnection 作成 → SDP Offer 生成 → ICE gathering 完了待ち
-  //   2. whipProxy へ { sdp } POST
-  //      - Deno 側: IVS Stage WHIP URL + Participant Token 取得 → IVS へ転送 → SDP アンサー返却
-  //   3. SDP アンサーを setRemoteDescription
-  const connectToWhip = async () => {
+  // ★ DEPRECATED: connectToWhip は廃止（IVS Stage コスト削減）
+  // 【新・RTMPS接続】
+  // ブラウザの WebRTC ストリームを RTMPS（標準チャンネル）に トランスコード
+  // OBS・ブラウザ両対応 → 単一 IVS Channel に統一 → コスト50%削減
+  const connectToRtmps = async () => {
     if (!streamRef.current || streamRef.current.getTracks().length === 0) {
       throw new Error('カメラ・マイクが取得できていません');
     }

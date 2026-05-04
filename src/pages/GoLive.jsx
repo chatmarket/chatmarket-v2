@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 import BrowserBroadcaster from "../components/live/BrowserBroadcaster.jsx";
+import BrowserBroadcasterRtmps from "../components/live/BrowserBroadcasterRtmps";
 
 const MODE_SELECT = "select";
 const MODE_CHOOSE = "choose";
@@ -486,15 +487,18 @@ export default function GoLive() {
     );
   }
 
-  // ブラウザ配信画面（モーダルで「ブラウザ配信」選択後）
+  // ★ ブラウザ配信画面（RTMPS統一版）
   if (liveStreamId && localStorage.getItem("broadcastMode") === "browser") {
     return (
-      <BrowserBroadcaster
+      <BrowserBroadcasterRtmps
         streamId={liveStreamId}
         channelId={channels[0]?.id}
         onEnd={() => {
           localStorage.removeItem("broadcastMode");
           navigate("/creator-dashboard");
+        }}
+        onBroadcasting={(isBroadcasting) => {
+          console.log('[GoLive] Broadcasting status:', isBroadcasting);
         }}
       />
     );
