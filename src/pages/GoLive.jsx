@@ -479,21 +479,10 @@ export default function GoLive() {
     );
   }
 
-  // ★ ブラウザ配信画面（RTMPS統一版）
+  // ★ ブラウザ配信はOBS画面経由で対応（直送は復雑のため）
   if (liveStreamId && localStorage.getItem("broadcastMode") === "browser") {
-    return (
-      <BrowserBroadcasterRtmps
-        streamId={liveStreamId}
-        channelId={channels[0]?.id}
-        onEnd={() => {
-          localStorage.removeItem("broadcastMode");
-          navigate("/creator-dashboard");
-        }}
-        onBroadcasting={(isBroadcasting) => {
-          console.log('[GoLive] Broadcasting status:', isBroadcasting);
-        }}
-      />
-    );
+    localStorage.removeItem("broadcastMode");
+    // OBS画面と同じ画面を表示
   }
 
   // OBS配信画面（モーダルで「OBS配信」選択後）

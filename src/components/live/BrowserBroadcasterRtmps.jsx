@@ -14,17 +14,24 @@ import { toast } from "sonner";
 import { CheckCircle2, AlertCircle, Camera, Loader2, Zap } from "lucide-react";
 
 export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, onBroadcasting }) {
-  const videoRef = useRef(null);
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
-  const [broadcastStatus, setBroadcastStatus] = useState(null);
-  const [broadcastError, setBroadcastError] = useState(null);
-  const [cameraReady, setCameraReady] = useState(false);
-  const [micReady, setMicReady] = useState(false);
-  const [micLevel, setMicLevel] = useState(0);
-  const [showTestPrompt, setShowTestPrompt] = useState(true);
-  const streamRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const analyzerRef = useRef(null);
+   // ★ ブラウザ発信：RTMPS直送は『OBS配信画面経由』で行う
+   // 直接呼び出しされた場合は、OBS画面にフォールバック
+   React.useEffect(() => {
+     console.log('[BrowserBroadcasterRtmps] ⚠️ This component is DEPRECATED for direct use.');
+     console.log('[BrowserBroadcasterRtmps] 📝 Redo: Use OBS broadcast screen instead.');
+   }, []);
+
+   const videoRef = useRef(null);
+   const [isBroadcasting, setIsBroadcasting] = useState(false);
+   const [broadcastStatus, setBroadcastStatus] = useState(null);
+   const [broadcastError, setBroadcastError] = useState(null);
+   const [cameraReady, setCameraReady] = useState(false);
+   const [micReady, setMicReady] = useState(false);
+   const [micLevel, setMicLevel] = useState(0);
+   const [showTestPrompt, setShowTestPrompt] = useState(true);
+   const streamRef = useRef(null);
+   const audioContextRef = useRef(null);
+   const analyzerRef = useRef(null);
 
   const initializeMedia = async () => {
     try {
@@ -72,46 +79,10 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
   };
 
   const handleStartBroadcast = async () => {
-    if (!streamRef.current) {
-      toast.error('ストリーム取得失敗');
-      return;
-    }
-
-    setIsBroadcasting(true);
-    setBroadcastStatus('connecting');
-
-    try {
-      console.log('[BrowserRTMPS] 📋 Fetching RTMPS config (chatmarket-main channel)...');
-      const streamRes = await base44.functions.invoke('createLiveStream', {});
-      const { rtmpsUrl, streamKey } = streamRes.data;
-
-      if (!rtmpsUrl || !streamKey) {
-        throw new Error('RTMPS 設定が不完全です');
-      }
-
-      const fullUrl = `${rtmpsUrl}${streamKey}`;
-      console.log('[BrowserRTMPS] 🚀 RTMPS Endpoint:', fullUrl.substring(0, 80) + '...');
-      console.log('[BrowserRTMPS] 💰 Cost: $0.005/分 (Stage/Composition廃止)');
-
-      // OBS と同じエンドポイントへ直送
-      setBroadcastStatus('live');
-      onBroadcasting?.(true);
-      toast.success('✅ RTMPS 配信開始 — chatmarket-main へ直送中');
-
-      await base44.entities.LiveStream.update(streamId, {
-        status: 'live',
-        live_started_at: new Date().toISOString(),
-        ivs_playback_url: "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8",
-      });
-      console.log('[BrowserRTMPS] ✅ DB updated');
-    } catch (err) {
-      console.error('[BrowserRTMPS] ❌ Error:', err.message);
-      setBroadcastStatus('error');
-      setBroadcastError(err.message);
-      toast.error('配信開始失敗: ' + err.message);
-      setIsBroadcasting(false);
-    }
-  };
+     // ★ RTMPS直送は実装復雑 → OBS画面経由で対応
+     toast.error('⚠️ ブラウザ発信は現在OBS画面経由をご利用ください');
+     console.warn('[BrowserRTMPS] ⚠️ RTMPS direct send from browser requires complex setup. Use OBS broadcast screen.');
+   };
 
   const handleEndBroadcast = async () => {
     setIsBroadcasting(false);
