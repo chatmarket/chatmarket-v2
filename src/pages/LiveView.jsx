@@ -266,8 +266,10 @@ function LiveViewInner() {
             <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
           ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
             <iframe src={stream.youtube_url} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
-          ) : stream.status === "live" ? (
+          ) : stream.status === "live" && (stream.price <= 0 || coinAllowed) ? (
             <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
+          ) : stream.status === "live" && stream.price > 0 && !coinAllowed ? (
+            null
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-950">
               <p className="text-muted-foreground">
