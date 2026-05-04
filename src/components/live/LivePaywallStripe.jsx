@@ -260,19 +260,19 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
 /** 共通シェル: 映像の上に重なるモーダル風レイアウト */
 function PaywallShell({ stream, price, children }) {
   return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4">
-      <div className="w-full max-w-md sm:max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl p-3 sm:p-6 space-y-3 sm:space-y-4 shadow-2xl max-h-[95vh] overflow-y-auto">
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4 sm:p-6">
+      <div className="w-full max-w-xs bg-zinc-900 border border-zinc-700 rounded-2xl p-4 sm:p-5 space-y-2.5 sm:space-y-3 shadow-2xl">
         {/* ヘッダー */}
-        <div className="text-center space-y-1">
-          <div className="text-4xl mb-2">🔒</div>
-          <h2 className="font-black text-white text-lg">有料配信</h2>
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            「{stream?.title || "この配信"}」の視聴には<br />
-            <span className="text-yellow-400 font-black text-xl">{price.toLocaleString()} コイン</span>
-            {" "}が必要です
+        <div className="text-center space-y-0.5 mb-1.5">
+          <div className="text-3xl">🔒</div>
+          <h2 className="font-black text-white text-base">有料配信</h2>
+          <p className="text-xs text-zinc-400 leading-tight">
+            視聴には
+            <span className="text-yellow-400 font-black text-sm block">{price.toLocaleString()} コイン</span>
+            が必要です
           </p>
         </div>
-        <div className="border-t border-zinc-700" />
+        <div className="border-t border-zinc-700/50" />
         {children}
       </div>
     </div>
