@@ -95,15 +95,17 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return unsubscribeYell;
   }, [streamId]);
 
-  // 視聴者数取得（定期ポーリング）
+  // 視聴者数取得（配信中のみ、30秒ごと・最大5回に削減）
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId || !isOBSLive) return;
     
+    let fetchCount = 0;
     const fetchViewerCount = async () => {
       try {
         const streams = await base44.entities.LiveStream.filter({ id: streamId });
         if (streams[0]?.viewer_count !== undefined) {
           setViewerCount(streams[0].viewer_count);
+          fetchCount++;
         }
       } catch (err) {
         console.error('[BroadcasterStream] Failed to fetch viewer count:', err);
@@ -111,19 +113,22 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
 
     fetchViewerCount();
-    const interval = setInterval(fetchViewerCount, 5000);
+    // 初回 + 30秒ごと最大5回（150秒で停止）
+    const interval = setInterval(() => {
+      if (fetchCount < 5) fetchViewerCount();
+      else clearInterval(interval);
+    }, 30000);
     return () => clearInterval(interval);
-  }, [streamId]);
+  }, [streamId, isOBSLive]);
 
-  // 画質設定（1回だけ、以降は実行しない）
+  // 画質設定（初回1回限定・AWS読み取り1回で完結）
   useEffect(() => {
-    if (!streamId || streamQuality) return; // 既に設定済みなら実行しない
+    if (!streamId || streamQuality) return;
     
     const fetchStreamQuality = async () => {
       try {
         const streams = await base44.entities.LiveStream.filter({ id: streamId });
         if (streams[0]?.max_bitrate_restriction) {
-          console.log('[BroadcasterStream] StreamQuality set to:', streams[0].max_bitrate_restriction);
           setStreamQuality(streams[0].max_bitrate_restriction);
         }
       } catch (err) {
@@ -132,7 +137,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     };
 
     fetchStreamQuality();
-  }, [streamId]); // 🚨 streamQuality を依存配列から削除（無限ループ防止）
+  }, [streamId]);
 
   // 配信開始（OBS 配信開始に遷移）
   const handleGoLive = async () => {

@@ -66,6 +66,8 @@ export default function GoLive() {
       return subs[0] || null;
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュ（本来は加入状態が変わらない）
+    gcTime: 30 * 60 * 1000,    // 30分間保持
   });
 
   const { data: campaignGrantee = null, isLoading: campaignLoading } = useQuery({
@@ -79,6 +81,8 @@ export default function GoLive() {
       return null;
     },
     enabled: !!user,
+    staleTime: 10 * 60 * 1000, // 10分間キャッシュ
+    gcTime: 60 * 60 * 1000,     // 1時間保持
   });
 
   const isTestAccount = user?.email === 'ono@onestep-corp.com';
