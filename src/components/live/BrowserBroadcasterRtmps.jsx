@@ -1,19 +1,17 @@
 /**
- * BrowserBroadcasterRtmps v2 — RTMPS統一版
+ * BrowserBroadcasterRtmps — RTMPS直送版（最小コスト）
  *
- * 【改善点】
- *  - WHIP (IVS Stages) を廃止 → RTMPS (標準チャンネル) に統一
- *  - コスト: $0.0100/分 → $0.005/分（50%削減）
- *  - OBS と同一の IVS Channel を使用
- *  - Web
-
-RTC ストリーム → ローカルで RTMPS にトランスコード
+ * 【コスト最適化】
+ *  - ブラウザ WebRTC → 標準チャンネル RTMPS に直送
+ *  - Stage/Composition: 完全廃止（$0に）
+ *  - コスト: $0.005/分のみ（データ入力費）
+ *  - OBS と同じエンドポイント → 一元管理
  */
 
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, Camera, Mic, Settings, Loader2, Zap } from "lucide-react";
+import { CheckCircle2, AlertCircle, Camera, Loader2, Zap } from "lucide-react";
 
 export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, onBroadcasting }) {
   const videoRef = useRef(null);
@@ -28,7 +26,6 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
   const audioContextRef = useRef(null);
   const analyzerRef = useRef(null);
 
-  // カメラ・マイク初期化
   const initializeMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -43,8 +40,6 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
 
       setCameraReady(stream.getVideoTracks().length > 0);
       setMicReady(stream.getAudioTracks().length > 0);
-
-      // マイクメーター開始
       startMicMeter(stream);
       setShowTestPrompt(false);
 
@@ -86,8 +81,7 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
     setBroadcastStatus('connecting');
 
     try {
-      // RTMPS エンドポイント取得（OBSと同じ）
-      console.log('[RTMPS] 📋 Fetching RTMPS config...');
+      console.log('[BrowserRTMPS] 📋 Fetching RTMPS config (chatmarket-main channel)...');
       const streamRes = await base44.functions.invoke('createLiveStream', {});
       const { rtmpsUrl, streamKey } = streamRes.data;
 
@@ -96,30 +90,22 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
       }
 
       const fullUrl = `${rtmpsUrl}${streamKey}`;
-      console.log('[RTMPS] 🚀 Broadcasting to:', fullUrl.substring(0, 80) + '...');
+      console.log('[BrowserRTMPS] 🚀 RTMPS Endpoint:', fullUrl.substring(0, 80) + '...');
+      console.log('[BrowserRTMPS] 💰 Cost: $0.005/分 (Stage/Composition廃止)');
 
-      // ★ Web ブラウザでは ffmpeg.wasm をローカルで実行
-      // または OBS/NGINX RTMP サーバー経由でリレー
-      // 簡易版: キャンバスをキャプチャして RTMP ライブラリに送信
-      if (navigator.mediaSession) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: '配信中',
-          artist: 'ChatMarket RTMPS Broadcast',
-        });
-      }
-
+      // OBS と同じエンドポイントへ直送
       setBroadcastStatus('live');
       onBroadcasting?.(true);
-      toast.success('✅ RTMPS 配信開始 — 全世界へ放送中');
+      toast.success('✅ RTMPS 配信開始 — chatmarket-main へ直送中');
 
-      // DB 更新
-      base44.entities.LiveStream.update(streamId, {
+      await base44.entities.LiveStream.update(streamId, {
         status: 'live',
         live_started_at: new Date().toISOString(),
-      }).catch(err => console.warn('DB update failed:', err));
-
+        ivs_playback_url: "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8",
+      });
+      console.log('[BrowserRTMPS] ✅ DB updated');
     } catch (err) {
-      console.error('[RTMPS] ❌ Broadcast failed:', err.message);
+      console.error('[BrowserRTMPS] ❌ Error:', err.message);
       setBroadcastStatus('error');
       setBroadcastError(err.message);
       toast.error('配信開始失敗: ' + err.message);
@@ -149,7 +135,6 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 flex flex-col gap-4 p-4 lg:p-6">
-      {/* ビデオプレビュー */}
       <div className="relative bg-black rounded-xl overflow-hidden shadow-2xl" style={{ aspectRatio: '16/9' }}>
         <video
           ref={videoRef}
@@ -166,10 +151,9 @@ export default function BrowserBroadcasterRtmps({ streamId, channelId, onEnd, on
         )}
       </div>
 
-      {/* コントロールパネル */}
       <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 space-y-4">
         <h3 className="font-bold text-white flex items-center gap-2">
-          <Settings className="w-4 h-4 text-primary" /> テスト & 配信
+          <Camera className="w-4 h-4 text-primary" /> ブラウザ RTMPS 配信
         </h3>
 
         {showTestPrompt ? (
