@@ -1,19 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Radio, Loader2, Image, CheckCircle2, Users, Clock, Copy, Smartphone } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Radio, Loader2, Image, CheckCircle2, Copy, Smartphone } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
-import BrowserBroadcaster from "../components/live/BrowserBroadcaster.jsx";
-import BrowserBroadcasterRtmps from "../components/live/BrowserBroadcasterRtmps";
 
 const MODE_SELECT = "select";
-const MODE_CHOOSE = "choose";
 const MODE_LIVE = "live";
 
 export default function GoLive() {
@@ -25,12 +22,10 @@ export default function GoLive() {
   const [creating, setCreating] = useState(false);
   const [liveStreamId, setLiveStreamId] = useState(null);
   const [ivsStream, setIvsStream] = useState(null);
-  const [showModeSelect, setShowModeSelect] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [manualStreamKey, setManualStreamKey] = useState("");
   const [manualIngestEndpoint, setManualIngestEndpoint] = useState("");
-  const [broadcastModeTab, setBroadcastModeTab] = useState("browser"); // "obs" | "browser"
 
   const [form, setForm] = useState({
     title: "",
@@ -40,7 +35,6 @@ export default function GoLive() {
     price: "",
   });
 
-  // チケット販売設定
   const [ticketEnabled, setTicketEnabled] = useState(false);
   const [ticketDurationMinutes, setTicketDurationMinutes] = useState(60);
   const [ticketPriceYen, setTicketPriceYen] = useState(600);
@@ -48,22 +42,11 @@ export default function GoLive() {
   const TICKET_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120];
   const minTicketPrice = Math.ceil((ticketDurationMinutes / 15) * 150);
 
-
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) {
-        base44.auth.me().then(setUser).catch(() => {});
-      }
-      // 選択画面は未ログインでも表示し、アクション時にリダイレクト
+      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
   }, []);
-
-  const requireAuth = (fn) => {
-    base44.auth.isAuthenticated().then((isAuth) => {
-      if (!isAuth) { base44.auth.redirectToLogin(); return; }
-      fn();
-    });
-  };
 
   const { data: channels = [] } = useQuery({
     queryKey: ["my-channels", user?.email],
@@ -71,63 +54,46 @@ export default function GoLive() {
     enabled: !!user,
   });
 
-  // PPVプラン加入確認（1対多数配信の要件）
   const { data: ppvSubscription = null, isLoading: ppvLoading } = useQuery({
     queryKey: ["ppv-subscription", user?.email],
     queryFn: async () => {
-      const subs = await base44.entities.PlanSubscription.filter({
-        user_email: user.email,
-        plan_id: "ppv",
-        status: "active",
-      });
+      const subs = await base44.entities.PlanSubscription.filter({ user_email: user.email, plan_id: "ppv", status: "active" });
       return subs[0] || null;
     },
     enabled: !!user,
   });
 
-  // キャンペーン対象者確認（期間限定で1対多数配信が無料）
   const { data: campaignGrantee = null, isLoading: campaignLoading } = useQuery({
     queryKey: ["campaign-live-grantee", user?.email],
     queryFn: async () => {
-      const grantees = await base44.entities.CampaignLiveGrantee.filter({
-        email: user.email,
-      });
+      const grantees = await base44.entities.CampaignLiveGrantee.filter({ email: user.email });
       const grantee = grantees[0];
-      // 有効期限内かチェック
-      if (grantee && new Date(grantee.expires_at) > new Date()) {
-        return grantee;
-      }
+      if (grantee && new Date(grantee.expires_at) > new Date()) return grantee;
       return null;
     },
     enabled: !!user,
   });
 
-  // テストアカウント判定（全プラン加入状態）
   const isTestAccount = user?.email === 'ono@onestep-corp.com';
-
-  // 1対多数配信利用可能判定（PPV加入 OR キャンペーン対象 OR テストアカウント）
   const canUseLiveStream = isTestAccount || !!ppvSubscription || !!campaignGrantee;
 
-  // PPVプラン加入者 or テストアカウントなら即時フォーム画面へスキップ
   useEffect(() => {
     if (!modeInitialized && user && !ppvLoading && !campaignLoading) {
-      if (canUseLiveStream) {
-        setMode(MODE_LIVE);
-      }
+      if (canUseLiveStream) setMode(MODE_LIVE);
       setModeInitialized(true);
     }
   }, [user, ppvLoading, campaignLoading, canUseLiveStream, modeInitialized]);
 
-
+  // 完全RTMPS URL（スマホアプリ用）
+  const fullRtmpsUrl = manualIngestEndpoint && manualStreamKey
+    ? `rtmps://${manualIngestEndpoint}:443/app/${manualStreamKey}`
+    : "";
 
   const handleStart = async (e) => {
     e.preventDefault();
     if (!form.title) return;
-
     setCreating(true);
-    
-    // ★ createLiveStream は1回だけ呼び出し（リロード課金ゼロ）
-    console.log('[GoLive] 🚀 Fetching fixed chatmarket-main RTMPS config (one-time only)...');
+
     const ivsRes = await base44.functions.invoke('createLiveStream', {});
     if (!ivsRes?.data?.streamId) {
       toast.error('配信枠の作成に失敗しました。');
@@ -137,21 +103,17 @@ export default function GoLive() {
     const ivsData = ivsRes.data;
     setIvsStream(ivsData);
     setManualStreamKey(ivsData.streamKey);
-    setManualIngestEndpoint(ivsData.rtmpsUrl);
+    // ingestEndpointはホスト名のみ保存（rtmps://なし）
+    const host = ivsData.rtmpsUrl.replace("rtmps://", "").replace(":443/app/", "");
+    setManualIngestEndpoint(host);
 
-    // ★ 固定playback_url を確認
     const FIXED_PLAYBACK_URL = ivsData.playbackUrl || "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
-    console.log(`[GoLive] ✅ Fixed playback URL (will be saved to DB):`, FIXED_PLAYBACK_URL);
 
     let channel = channels[0];
     if (!channel) {
       try {
-        channel = await base44.entities.Channel.create({
-          name: user.full_name + "のチャンネル",
-          owner_email: user.email,
-        });
+        channel = await base44.entities.Channel.create({ name: user.full_name + "のチャンネル", owner_email: user.email });
       } catch (err) {
-        console.error('[GoLive] ❌ Failed to create channel:', err);
         toast.error('チャンネル作成に失敗しました。');
         setCreating(false);
         return;
@@ -164,9 +126,7 @@ export default function GoLive() {
         const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
         thumbnail_url = res.file_url;
         setThumbnailUrl(thumbnail_url);
-      } catch (err) {
-        console.warn('[GoLive] ⚠️ Thumbnail upload failed, continuing without:', err);
-      }
+      } catch (err) {}
     }
 
     const getQualityFromPrice = (price) => {
@@ -176,12 +136,10 @@ export default function GoLive() {
       return "480p";
     };
     const autoQuality = getQualityFromPrice(form.price);
-
     const isLiveNow = !form.scheduled_at;
-    let newStream;
+
     try {
-      // ★ 固定playback_urlをDB保存（視聴者が常に同じURLで再生）
-      newStream = await base44.entities.LiveStream.create({
+      const newStream = await base44.entities.LiveStream.create({
         title: form.title,
         description: form.description,
         channel_id: channel.id,
@@ -212,180 +170,16 @@ export default function GoLive() {
       });
 
       await base44.entities.Channel.update(channel.id, { is_live: true });
-
       setCreating(false);
-      console.log(`[GoLive] ✅ Stream created with fixed playback URL`, {
-        streamId: newStream.id,
-        playbackUrl: FIXED_PLAYBACK_URL,
-        quality: autoQuality,
-      });
-      
       sessionStorage.setItem("liveStreamId", newStream.id);
-      sessionStorage.setItem("broadcastMode", broadcastModeTab);
-      
       setLiveStreamId(newStream.id);
     } catch (err) {
-      console.error('[GoLive] ❌ Failed to create stream:', err);
       toast.error('配信作成に失敗しました: ' + err.message);
       setCreating(false);
-      return;
-    }
-    
-    console.log(`[GoLive] ✅ [1対多 配信] Stored streamId: ${newStream.id}`);
-
-    // ★ broadcastModeTab に応じて遷移
-    if (broadcastModeTab === "browser") {
-      localStorage.setItem("broadcastMode", "browser");
-      // ブラウザ配信: そのまま liveStreamId を state にセット → BrowserBroadcaster 画面へ
-      // (setLiveStreamId 済み)
-    } else {
-      localStorage.removeItem("broadcastMode");
-      setShowModeSelect(true);
-      setMode(null);
     }
   };
 
-  // 配信方式選択画面（OBS vs ブラウザ）
-  if (mode === MODE_CHOOSE) {
-    // 1対多数配信利用可能確認
-    if (!canUseLiveStream) {
-      return (
-        <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
-          <div className="text-6xl">🔒</div>
-          <h1 className="text-2xl font-black">1対多数配信はPPVプラン加入が必須です</h1>
-          <p className="text-muted-foreground">1対多数のライブ配信とチケット制予約配信を利用するにはPPVプラン（¥9,900/月）への加入が必須です。</p>
-          <button 
-            onClick={() => navigate("/plan-select")}
-            className="bg-primary text-black font-black px-8 py-3 rounded-xl hover:bg-primary/90">
-            PPVプランを確認する
-          </button>
-          <div className="bg-red-500/10 border-2 border-red-500 rounded-2xl p-5 space-y-2">
-            <p className="text-red-500 font-black text-xl">⚠️ PPVプラン加入後に配信画面へ進めます</p>
-            <p className="text-red-400 text-sm font-semibold">PPVプランを購入しないと、生配信（予約チケット制・即時配信）はご利用いただけません。</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-12 flex flex-col items-center gap-8">
-        <div className="text-center mb-2">
-          <h1 className="text-2xl font-black text-white mb-1">配信方式を選択</h1>
-          <p className="text-muted-foreground text-sm">どちらで配信しますか？</p>
-        </div>
-        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* OBS配信 */}
-          <div className="flex flex-col gap-4">
-            <button
-              onClick={() => setMode(MODE_LIVE)}
-              className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/70 hover:bg-primary/5 transition-all group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                <Radio className="w-7 h-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-black text-white text-base mb-1">OBS で配信</p>
-                <p className="text-muted-foreground text-xs leading-relaxed">RTMPSで高画質・高音質。プロフェッショナルな配信。</p>
-              </div>
-              <span className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-black text-center transition-colors">
-                OBS で開始
-              </span>
-            </button>
-            
-            {/* OBS 機材コンサルティング */}
-            <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-primary/20 rounded-2xl p-5 space-y-4">
-              <div>
-                <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">📹 OBS 推奨機材</p>
-                <p className="text-xs text-muted-foreground">外部ソフトで本格配信する人向け</p>
-              </div>
-              
-              {/* OBS 機材リスト */}
-              <div className="space-y-2">
-                {[
-                  { name: "キャプチャーボード", desc: "ゲーム・映像入力用", url: "https://www.amazon.co.jp/s?k=キャプチャーボード" },
-                  { name: "コンデンサーマイク", desc: "高音質音声取得", url: "https://www.amazon.co.jp/s?k=コンデンサーマイク+USB" },
-                  { name: "XLRマイク + オーディオインターフェース", desc: "プロ音声品質", url: "https://www.amazon.co.jp/s?k=オーディオインターフェース" },
-                  { name: "三脚 + リングライト", desc: "固定・照明用", url: "https://www.amazon.co.jp/s?k=三脚+リングライト" },
-                ].map((item, i) => (
-                  <a
-                    key={i}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-primary/40 transition-all group"
-                  >
-                    <div className="text-lg">🛒</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white group-hover:text-primary transition-colors truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                    </div>
-                    <div className="text-lg opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ブラウザ配信 */}
-          <div className="flex flex-col gap-4">
-            <button
-              onClick={() => {
-                localStorage.setItem("broadcastMode", "browser");
-                setMode(MODE_LIVE);
-              }}
-              className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border bg-card hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
-                <Smartphone className="w-7 h-7 text-green-400" />
-              </div>
-              <div className="text-center">
-                <p className="font-black text-white text-base mb-1">ブラウザで配信</p>
-                <p className="text-muted-foreground text-xs leading-relaxed">スマホ・PCから即配信。セットアップ不要。</p>
-              </div>
-              <span className="w-full py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-black text-center transition-colors">
-                ブラウザで開始
-              </span>
-            </button>
-            
-            {/* ブラウザ 機材コンサルティング */}
-            <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-green-500/20 rounded-2xl p-5 space-y-4">
-              <div>
-                <p className="text-xs font-black text-green-400 uppercase tracking-widest mb-1">📱 ブラウザ 推奨機材</p>
-                <p className="text-xs text-muted-foreground">すぐに始めたい初心者向け</p>
-              </div>
-              
-              {/* ブラウザ 機材リスト */}
-              <div className="space-y-2">
-                {[
-                  { name: "Webカメラ (1080p)", desc: "USB直挿し対応", url: "https://www.amazon.co.jp/s?k=Webカメラ+1080p" },
-                  { name: "USB マイク", desc: "ワンステップで接続", url: "https://www.amazon.co.jp/s?k=USBマイク" },
-                  { name: "ポップフィルター", desc: "音声品質向上", url: "https://www.amazon.co.jp/s?k=ポップフィルター" },
-                  { name: "スマートフォンホルダー", desc: "スマホ配信用", url: "https://www.amazon.co.jp/s?k=スマートフォンホルダー+三脚" },
-                ].map((item, i) => (
-                  <a
-                    key={i}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-green-500/40 transition-all group"
-                  >
-                    <div className="text-lg">🛒</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white group-hover:text-green-400 transition-colors truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                    </div>
-                    <div className="text-lg opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // モード選択画面（ライブ配信のみ）
+  // モード選択画面
   if (mode === MODE_SELECT) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center gap-6">
@@ -394,11 +188,10 @@ export default function GoLive() {
           <p className="text-muted-foreground text-sm">用途に合わせて選んでください</p>
         </div>
         <div className="w-full grid grid-cols-1 gap-4">
-          {/* 1対多ライブ配信 */}
-           <button
-             onClick={() => setMode(MODE_CHOOSE)}
-             className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
-           >
+          <button
+            onClick={() => setMode(MODE_LIVE)}
+            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
+          >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
               <Radio className="w-8 h-8 text-red-400" />
             </div>
@@ -410,83 +203,13 @@ export default function GoLive() {
               ライブ配信を開始
             </span>
           </button>
-
-
         </div>
       </div>
     );
   }
 
-  // 配信方式選択モーダル（liveStreamId 取得後に表示）
-  if (showModeSelect && liveStreamId) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-        <div className="bg-card border border-border rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-black mb-2">配信方式を選択</h2>
-            <p className="text-muted-foreground">OBSかブラウザから選んでください</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* OBS配信 */}
-            <button
-              onClick={() => {
-                localStorage.removeItem("broadcastMode");
-                setShowModeSelect(false);
-              }}
-              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                <Radio className="w-7 h-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-black text-white">OBS配信</p>
-                <p className="text-xs text-muted-foreground mt-1">RTMPSで高画質</p>
-                <p className="text-[10px] text-zinc-500 mt-2">ゲーム・プロ向け</p>
-              </div>
-            </button>
-
-            {/* ブラウザ配信 */}
-            <button
-              onClick={() => {
-                localStorage.setItem("broadcastMode", "browser");
-                setShowModeSelect(false);
-              }}
-              className="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-green-500/40 hover:border-green-500/70 hover:bg-green-500/5 transition-all group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
-                <Smartphone className="w-7 h-7 text-green-400" />
-              </div>
-              <div className="text-center">
-                <p className="font-black text-white">ブラウザ配信</p>
-                <p className="text-xs text-muted-foreground mt-1">スマホ・PCから即配信</p>
-                <p className="text-[10px] text-zinc-500 mt-2">初心者・雑談向け</p>
-              </div>
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
-              setShowModeSelect(false);
-              setLiveStreamId(null);
-            }}
-            className="w-full py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-semibold"
-          >
-            キャンセル
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ★ ブラウザ配信はOBS画面経由で対応（直送は復雑のため）
-  if (liveStreamId && localStorage.getItem("broadcastMode") === "browser") {
-    localStorage.removeItem("broadcastMode");
-    // OBS画面と同じ画面を表示
-  }
-
-  // ★ 統一画面：OBS & ブラウザ両対応（同じBroadcasterStream使用）
-  if (liveStreamId && !showModeSelect) {
+  // 配信画面（BroadcasterStream）
+  if (liveStreamId) {
     return (
       <div className="w-full">
         <BroadcasterStream
@@ -500,6 +223,21 @@ export default function GoLive() {
     );
   }
 
+  // 利用不可
+  if (!canUseLiveStream && modeInitialized) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
+        <div className="text-6xl">🔒</div>
+        <h1 className="text-2xl font-black">1対多数配信はPPVプラン加入が必須です</h1>
+        <p className="text-muted-foreground">1対多数のライブ配信とチケット制予約配信を利用するにはPPVプラン（¥9,900/月）への加入が必須です。</p>
+        <button onClick={() => navigate("/plan-select")} className="bg-primary text-black font-black px-8 py-3 rounded-xl hover:bg-primary/90">
+          PPVプランを確認する
+        </button>
+      </div>
+    );
+  }
+
+  // ── 配信セットアップフォーム ──
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12 h-screen overflow-y-auto">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
@@ -510,168 +248,101 @@ export default function GoLive() {
         <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
       </div>
 
-      {/* 配信方式タブ */}
-      <div className="flex gap-2 mb-6 p-1 bg-secondary rounded-xl">
-        <button
-          type="button"
-          onClick={() => setBroadcastModeTab("browser")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-black transition-all ${
-            broadcastModeTab === "browser"
-              ? "bg-green-500 text-white shadow-lg"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Smartphone className="w-4 h-4" />
-          ブラウザから配信
-        </button>
-        <button
-          type="button"
-          onClick={() => setBroadcastModeTab("obs")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-black transition-all ${
-            broadcastModeTab === "obs"
-              ? "bg-primary text-primary-foreground shadow-lg"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Radio className="w-4 h-4" />
-          OBSで配信
-        </button>
-      </div>
-
-      {/* ブラウザ配信説明 */}
-      {broadcastModeTab === "browser" && (
-        <div className="space-y-2 bg-green-500/10 border border-green-500/30 rounded-2xl p-5 mb-6">
-          <p className="text-sm font-bold text-green-400">🌐 ブラウザから直接配信（WHIP/WebRTC）</p>
-          <p className="text-xs text-muted-foreground">タイトルを入力して「ライブ配信スタート」を押すと、即座にカメラ・マイクが起動して視聴者へ映像を送信します。</p>
-          <ul className="text-xs text-green-400/80 space-y-1 mt-2">
-            <li>✅ ソフトウェア不要 — ブラウザのみ</li>
-            <li>✅ スマホ・PC対応</li>
-            <li>✅ 超低遅延（WebRTC）</li>
-          </ul>
-        </div>
-      )}
-
-      {/* OBS 配信キー自動生成・表示 */}
-      {broadcastModeTab === "obs" && (
-      <div className="space-y-4 bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-6">
-        <p className="text-sm font-bold text-primary">🎬 OBS で配信する</p>
-        <p className="text-xs text-muted-foreground">タイトル、価格、配信スタートを押すと表示されます（スマホと同時配信OK）</p>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">RTMPS Server URL</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                readOnly
-                value={manualIngestEndpoint || "作成後に表示"}
-                className="flex-1 bg-background font-mono text-xs rounded-md px-3 py-2 border border-border"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  if (manualIngestEndpoint) {
-                    navigator.clipboard.writeText(manualIngestEndpoint);
-                    toast.success("コピーしました");
-                  }
-                }}
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </Button>
-            </div>
+      {/* ── 配信マニュアル（PC / スマホ 2本柱） ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* PC OBS */}
+        <div className="space-y-3 bg-primary/10 border border-primary/30 rounded-2xl p-4">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-primary" />
+            <p className="text-sm font-black text-primary">PC配信（OBS Studio）</p>
           </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">Stream Key</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                readOnly
-                value={manualStreamKey || "作成後に表示"}
-                className="flex-1 bg-background font-mono text-xs rounded-md px-3 py-2 border border-border"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  if (manualStreamKey) {
-                    navigator.clipboard.writeText(manualStreamKey);
-                    toast.success("コピーしました");
-                  }
-                }}
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-        {manualIngestEndpoint && manualStreamKey && (
-          <div className="flex items-center gap-2 text-green-400 text-xs font-bold">
-            <CheckCircle2 className="w-4 h-4" /> OBS キー取得完了 ✅
-          </div>
-        )}
-        <a
-          href="https://live-chat-market.com/obs-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-semibold underline underline-offset-2 transition-colors"
-        >
-          → OBS設定ガイド
-        </a>
-      </div>
-      )}
-
-      {/* スマホアプリ用配信（Larix Broadcaster等） */}
-      {broadcastModeTab === "obs" && (
-      <div className="space-y-4 bg-green-500/10 border border-green-500/30 rounded-2xl p-5 mb-6">
-        <p className="text-sm font-bold text-green-400">📱 スマホアプリで配信する（Larix Broadcaster など）</p>
-        <p className="text-xs text-muted-foreground">App Store または Google Play から「Larix Broadcaster」をダウンロードして、下のURLをそのまま貼り付けるだけで配信開始。</p>
-
-        {manualIngestEndpoint && manualStreamKey ? (
-          <>
-            {/* 完全RTMPS URL */}
-            <div className="space-y-1.5 bg-zinc-900 rounded-lg p-3 border border-green-500/50">
-              <label className="block text-xs font-bold text-green-400 uppercase tracking-widest">📋 アプリに貼り付けるURL</label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  readOnly
-                  value={`rtmps://${manualIngestEndpoint}:443/app/${manualStreamKey}`}
-                  className="flex-1 bg-background font-mono text-xs rounded-md px-3 py-2 border border-green-500/40 text-green-300"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white font-black whitespace-nowrap"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`rtmps://${manualIngestEndpoint}:443/app/${manualStreamKey}`);
-                    toast.success("スマホ用URLをコピーしました");
-                  }}
-                >
-                  <Copy className="w-3.5 h-3.5 mr-1" /> コピー
-                </Button>
+          <p className="text-[11px] text-muted-foreground">高画質・多機能な配信ならこちら。シーン切り替え・BGM・ゲーム実況も可能。</p>
+          {manualIngestEndpoint && manualStreamKey ? (
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">サーバーURL</label>
+                <div className="flex gap-1.5 items-center">
+                  <input type="text" readOnly value={`rtmps://${manualIngestEndpoint}:443/app/`} className="flex-1 bg-background font-mono text-[10px] rounded px-2 py-1.5 border border-border" />
+                  <Button type="button" size="sm" variant="secondary" className="h-7 px-2"
+                    onClick={() => { navigator.clipboard.writeText(`rtmps://${manualIngestEndpoint}:443/app/`); toast.success("コピーしました"); }}>
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ストリームキー</label>
+                <div className="flex gap-1.5 items-center">
+                  <input type="text" readOnly value={manualStreamKey} className="flex-1 bg-background font-mono text-[10px] rounded px-2 py-1.5 border border-border" />
+                  <Button type="button" size="sm" variant="secondary" className="h-7 px-2"
+                    onClick={() => { navigator.clipboard.writeText(manualStreamKey); toast.success("コピーしました"); }}>
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-green-400 text-[10px] font-bold">
+                <CheckCircle2 className="w-3 h-3" /> 取得完了 — OBSに貼り付けて配信開始
               </div>
             </div>
-
-            {/* 手順 */}
-            <div className="bg-zinc-900/50 rounded-lg p-3 border border-green-500/20 space-y-2">
-              <p className="text-xs font-bold text-white">使い方（3ステップ）：</p>
-              <ol className="space-y-1.5 text-xs text-muted-foreground">
-                <li><span className="font-bold text-green-400">1.</span> Larix Broadcaster をインストール</li>
-                <li><span className="font-bold text-green-400">2.</span> 「+」 → 「RTMPS」を選択</li>
-                <li><span className="font-bold text-green-400">3.</span> ↑のURLをペーストして「Go Live」</li>
-              </ol>
-              <p className="text-[10px] text-green-400/70 mt-2">💡 複数スマホから同時配信可能。OBSと並行してもOK。</p>
+          ) : (
+            <div className="text-[11px] text-muted-foreground text-center py-4 bg-zinc-900/30 rounded-lg">
+              下の「配信スタート」を押すと表示されます
             </div>
-          </>
-        ) : (
-          <div className="text-xs text-muted-foreground text-center py-3 bg-zinc-900/30 rounded-lg">
-            タイトルと価格を入力して「ライブ配信スタート」を押すと表示されます
+          )}
+          <a href="/obs-guide" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 font-semibold underline underline-offset-2">
+            → OBS設定ガイド
+          </a>
+        </div>
+
+        {/* スマホ Larix / Prism */}
+        <div className="space-y-3 bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
+          <div className="flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-green-400" />
+            <p className="text-sm font-black text-green-400">スマホ配信（Larix / Prism）</p>
           </div>
-        )}
+          <p className="text-[11px] text-muted-foreground">スマホ1台でどこでも配信。アプリにURLを貼るだけで即開始。</p>
+
+          {fullRtmpsUrl ? (
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-green-400 uppercase tracking-widest">アプリ用URL（コピーして貼るだけ）</label>
+              <div className="flex gap-1.5 items-center">
+                <input type="text" readOnly value={fullRtmpsUrl} className="flex-1 bg-zinc-900 font-mono text-[10px] rounded px-2 py-1.5 border border-green-500/40 text-green-300" />
+                <Button type="button" className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white font-black text-[11px] whitespace-nowrap"
+                  onClick={() => { navigator.clipboard.writeText(fullRtmpsUrl); toast.success("スマホ用URLをコピーしました"); }}>
+                  <Copy className="w-3 h-3 mr-1" />コピー
+                </Button>
+              </div>
+              <div className="bg-zinc-900/50 rounded-lg p-2.5 border border-green-500/20 space-y-1.5">
+                <p className="text-[10px] font-bold text-white">手順（3ステップ）：</p>
+                <ol className="space-y-1 text-[10px] text-muted-foreground">
+                  <li><span className="font-bold text-green-400">1.</span> アプリをインストール</li>
+                  <li><span className="font-bold text-green-400">2.</span> 「+」→「RTMPS」を選択</li>
+                  <li><span className="font-bold text-green-400">3.</span> ↑のURLを貼り付けて「Go Live」</li>
+                </ol>
+              </div>
+            </div>
+          ) : (
+            <div className="text-[11px] text-muted-foreground text-center py-4 bg-zinc-900/30 rounded-lg">
+              下の「配信スタート」を押すと表示されます
+            </div>
+          )}
+
+          {/* アプリリンク */}
+          <div className="flex gap-2 flex-wrap">
+            <a href="https://apps.apple.com/app/larix-broadcaster/id1535549341" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
+              🍎 Larix (iOS)
+            </a>
+            <a href="https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
+              🤖 Larix (Android)
+            </a>
+            <a href="https://prismlive.com/" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
+              📡 Prism Live
+            </a>
+          </div>
+        </div>
       </div>
-      )}
 
       <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
         {/* サムネイル */}
@@ -696,25 +367,15 @@ export default function GoLive() {
         {/* タイトル */}
         <div className="space-y-2">
           <Label className="text-red-400 font-bold">配信タイトル *</Label>
-          <Input
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            placeholder="配信タイトルを入力"
-            className="bg-secondary border-2 border-red-500/50 focus:border-red-500"
-            required
-          />
+          <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder="配信タイトルを入力" className="bg-secondary border-2 border-red-500/50 focus:border-red-500" required />
         </div>
 
         {/* 説明 */}
         <div className="space-y-2">
           <Label>説明</Label>
-          <Textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="配信の説明を入力"
-            className="bg-secondary border-0 resize-none"
-            rows={3}
-          />
+          <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="配信の説明を入力" className="bg-secondary border-0 resize-none" rows={3} />
         </div>
 
         {/* 予定日時 */}
@@ -722,33 +383,23 @@ export default function GoLive() {
           <div className="flex items-center justify-between gap-3">
             <Label>予定日時（任意）</Label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={!form.scheduled_at}
+              <input type="checkbox" checked={!form.scheduled_at}
                 onChange={(e) => setForm({ ...form, scheduled_at: e.target.checked ? "" : new Date().toISOString().slice(0, 16) })}
-                className="w-4 h-4 accent-primary rounded"
-              />
+                className="w-4 h-4 accent-primary rounded" />
               <span className="text-sm text-primary font-semibold">即配信</span>
             </label>
           </div>
           {form.scheduled_at && (
-            <Input
-              type="datetime-local"
-              value={form.scheduled_at}
-              onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
-              className="bg-secondary border-0"
-            />
+            <Input type="datetime-local" value={form.scheduled_at}
+              onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} className="bg-secondary border-0" />
           )}
         </div>
 
-        {/* 対応可能時間 */}
+        {/* 配信予定時間 */}
         <div className="space-y-2">
           <Label>配信予定時間</Label>
-          <select
-            value={form.availableTime}
-            onChange={(e) => setForm({ ...form, availableTime: e.target.value })}
-            className="w-full h-9 rounded-md bg-secondary border-0 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
+          <select value={form.availableTime} onChange={(e) => setForm({ ...form, availableTime: e.target.value })}
+            className="w-full h-9 rounded-md bg-secondary border-0 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
             <option value="">選択してください</option>
             <option value="30分">30分</option>
             <option value="1時間">1時間</option>
@@ -761,23 +412,16 @@ export default function GoLive() {
         {/* 価格 */}
         <div className="space-y-2">
           <Label className="text-red-400 font-bold">視聴価格（コイン）*</Label>
-          <Input
-            type="number"
-            min={0}
-            value={form.price}
+          <Input type="number" min={0} value={form.price}
             onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-            className="bg-secondary border-2 border-red-500/50 focus:border-red-500"
-            required
-          />
+            className="bg-secondary border-2 border-red-500/50 focus:border-red-500" required />
           <p className="text-xs text-muted-foreground">0 = 無料配信</p>
-
-          {/* 画質別料金ガイド */}
           {(() => {
             const p = form.price;
             const activeQuality = p >= 150 ? "FHD 1080p" : p >= 55 ? "HD 720p" : "SD 480p";
             return (
               <div className="bg-secondary/60 border border-border/50 rounded-xl p-4 space-y-3 mt-2">
-                <p className="text-xs font-black text-foreground">📊 設定価格で画質が自動決定されます（視聴者1人の場合）</p>
+                <p className="text-xs font-black text-foreground">📊 設定価格で画質が自動決定されます</p>
                 <div className="space-y-2">
                   {[
                     { quality: "SD 480p", minCoins: 15, maxCoins: 54, badge: "bg-zinc-500/20 text-zinc-300", activeBadge: "bg-zinc-500 text-white" },
@@ -790,10 +434,7 @@ export default function GoLive() {
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${isActive ? activeBadge : badge}`}>{quality}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            {maxCoins ? `${minCoins}〜${maxCoins}コイン` : `${minCoins}コイン以上`}（視聴者価格15分毎）
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {" → "}配信者収益 <span className="text-green-400 font-bold">¥{Math.floor((isActive ? (p || minCoins) : minCoins) * 0.85)}</span>（85%）
+                            {maxCoins ? `${minCoins}〜${maxCoins}コイン` : `${minCoins}コイン以上`}（15分毎）
                           </p>
                         </div>
                         {isActive && <span className="text-[10px] font-black text-primary shrink-0">← 現在</span>}
@@ -801,125 +442,58 @@ export default function GoLive() {
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  ※ 無料配信（0コイン）はFHD 1080pで配信されます。配信者への還元は視聴者支払額の85%（BASICプラン加入者）です。
-                </p>
               </div>
             );
           })()}
         </div>
 
-        {/* チケット販売設定（PPV限定） */}
+        {/* チケット販売設定 */}
         <div className={`space-y-3 border rounded-2xl p-4 ${canUseLiveStream && ppvSubscription ? "bg-yellow-500/5 border-yellow-500/30" : "bg-muted/20 border-muted/40 opacity-60"}`}>
           <div className="flex items-center justify-between">
             <label className={`text-sm font-bold flex items-center gap-2 ${canUseLiveStream && ppvSubscription ? "text-yellow-400" : "text-muted-foreground"}`}>
               🎫 チケット販売（PPVプラン限定）
             </label>
-            <a href="/content-analytics" className="text-xs text-primary hover:text-primary/80 font-semibold underline underline-offset-2 transition-colors">
-              売れ行き確認 →
-            </a>
-            <button
-              type="button"
-              disabled={!canUseLiveStream || !ppvSubscription}
+            <button type="button" disabled={!canUseLiveStream || !ppvSubscription}
               onClick={() => setTicketEnabled((v) => !v)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled && ppvSubscription ? "bg-yellow-500" : "bg-secondary"}`}
-            >
+              className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled && ppvSubscription ? "bg-yellow-500" : "bg-secondary"}`}>
               <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ticketEnabled && ppvSubscription ? "left-6" : "left-0.5"}`} />
             </button>
           </div>
           {ticketEnabled && (
             <div className="space-y-3">
-              {/* 配信時間 */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">配信時間（15分単位・最大2時間）</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {TICKET_DURATIONS.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => {
-                        setTicketDurationMinutes(m);
-                        setTicketPriceYen(Math.ceil((m / 15) * 150));
-                      }}
-                      className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
-                        ticketDurationMinutes === m
-                          ? "bg-yellow-500 text-black"
-                          : "bg-secondary hover:bg-yellow-500/20"
-                      }`}
-                    >
+                    <button key={m} type="button"
+                      onClick={() => { setTicketDurationMinutes(m); setTicketPriceYen(Math.ceil((m / 15) * 150)); }}
+                      className={`rounded-lg py-1.5 text-xs font-bold transition-all ${ticketDurationMinutes === m ? "bg-yellow-500 text-black" : "bg-secondary hover:bg-yellow-500/20"}`}>
                       {m}分
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* チケット価格 */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  チケット価格（最低 ¥{minTicketPrice}）
-                </label>
+                <label className="text-xs font-semibold text-muted-foreground">チケット価格（最低 ¥{minTicketPrice}）</label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={minTicketPrice}
-                    step={50}
-                    value={ticketPriceYen}
+                  <input type="number" min={minTicketPrice} step={50} value={ticketPriceYen}
                     onChange={(e) => setTicketPriceYen(Math.max(minTicketPrice, parseInt(e.target.value) || minTicketPrice))}
-                    className="flex-1 rounded-lg bg-secondary border-0 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
-                  />
+                    className="flex-1 rounded-lg bg-secondary border-0 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500/50" />
                   <span className="text-sm text-muted-foreground">円</span>
                 </div>
-                <p className="text-[10px] text-yellow-400">
-                  配信者受取: <span className="font-bold">¥{Math.floor(ticketPriceYen * 0.85)}</span>（85%）
-                  ・コイン/クレジット両対応
-                </p>
+                <p className="text-[10px] text-yellow-400">配信者受取: <span className="font-bold">¥{Math.floor(ticketPriceYen * 0.85)}</span>（85%）</p>
               </div>
             </div>
           )}
-          {!canUseLiveStream && (
-            <p className="text-xs text-muted-foreground">PPVプランへの加入でチケット販売機能を利用できます</p>
-          )}
-          {canUseLiveStream && !ppvSubscription && campaignGrantee && (
-            <p className="text-xs text-yellow-400 font-semibold">✅ キャンペーン対象：期間限定でチケット販売が無料です</p>
-          )}
-          {ppvSubscription && !ticketEnabled && (
-            <p className="text-[11px] text-muted-foreground">ONにすると視聴者がコインまたはクレジットカードでチケットを購入して入場できます</p>
-          )}
-          {(ppvSubscription || campaignGrantee) && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 space-y-1">
-              <p className="text-[11px] text-yellow-400 font-semibold">💡 チケット売れ行き状況は「コンテンツ分析」で確認できます</p>
-              <a href="/content-analytics" className="text-[10px] text-yellow-300 hover:text-yellow-200 font-semibold underline underline-offset-2 transition-colors inline-block">
-                → コンテンツ分析ページを開く
-              </a>
-            </div>
-          )}
+          {!canUseLiveStream && <p className="text-xs text-muted-foreground">PPVプランへの加入でチケット販売機能を利用できます</p>}
         </div>
 
-        {/* 送信 */}
-        <Button
-          type="submit"
-          disabled={creating || !form.title}
-          className={`w-full h-10 sm:h-12 text-white text-sm sm:text-base gap-2 ${
-            broadcastModeTab === "browser"
-              ? "bg-green-500 hover:bg-green-600"
-              : "bg-red-500 hover:bg-red-600"
-          }`}
-        >
+        {/* 送信ボタン */}
+        <Button type="submit" disabled={creating || !form.title} className="w-full h-10 sm:h-12 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base gap-2">
           {creating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              準備中...
-            </>
-          ) : broadcastModeTab === "browser" ? (
-            <>
-              <Smartphone className="w-5 h-5" />
-              ブラウザで配信開始
-            </>
+            <><Loader2 className="w-5 h-5 animate-spin" />準備中...</>
           ) : (
-            <>
-              <Radio className="w-5 h-5" />
-              ライブ配信スタート（OBS）
-            </>
+            <><Radio className="w-5 h-5" />配信スタート — キーを取得してOBS / アプリで配信</>
           )}
         </Button>
       </form>
