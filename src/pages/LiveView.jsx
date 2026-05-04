@@ -237,47 +237,62 @@ function LiveViewInner() {
   const videoPortal = ReactDOM.createPortal(
     <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "linear-gradient(135deg, #0a0a0f 0%, #0d1117 40%, #0a0f0a 100%)" }}>
 
-      {/* ═══ STICKY HEADER ═══ */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 50, height: 56, background: "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px" }}>
-        {/* 左: 戻るボタン + タイトル */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            onClick={() => window.history.back()}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white", cursor: "pointer", flexShrink: 0 }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-          </button>
-          {stream.status === "live" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#ef4444", borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 900, color: "white" }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "white", display: "inline-block" }} />
-                LIVE
-              </span>
-              <span style={{ display: "flex", alignItems: "center", gap: 3, color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                {stream.viewer_count || 0}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* 右: コイン残高 + マイページ */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {user && coinBalance !== null && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 20, padding: "4px 10px" }}>
-              <span style={{ fontSize: 14 }}>🪙</span>
-              <span style={{ color: "#fbbf24", fontWeight: 900, fontSize: 13 }}>{coinBalance.toLocaleString()}</span>
-            </div>
-          )}
-          {user ? (
-            <a href="/settings" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white", textDecoration: "none" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </a>
-          ) : (
-            <button onClick={() => base44.auth.redirectToLogin()} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(99,102,241,0.8)", border: "none", borderRadius: 8, padding: "6px 12px", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-              ログイン
+      {/* ═══ STICKY HEADER — safe-area対応 ═══ */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        background: "rgba(10,10,15,0.75)",
+        backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px" }}>
+          {/* 左: 戻るボタン + ロゴ + LIVE バッジ */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={() => window.history.back()}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white", cursor: "pointer", flexShrink: 0 }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             </button>
-          )}
+            {/* ブランドロゴ */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #10b981, #059669)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <span style={{ color: "white", fontWeight: 900, fontSize: 15, letterSpacing: "-0.3px" }}>chatmarket</span>
+            </div>
+            {stream.status === "live" && (
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 3, background: "#ef4444", borderRadius: 6, padding: "2px 7px", fontSize: 10, fontWeight: 900, color: "white" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "white", display: "inline-block", animation: "pulse 1.5s infinite" }} />
+                  LIVE
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 3, color: "rgba(255,255,255,0.6)", fontSize: 11 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  {stream.viewer_count || 0}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 右: コイン残高 + マイページ */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {user && coinBalance !== null && (
+              <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 20, padding: "4px 10px" }}>
+                <span style={{ fontSize: 13 }}>🪙</span>
+                <span style={{ color: "#fbbf24", fontWeight: 900, fontSize: 13 }}>{coinBalance.toLocaleString()}</span>
+              </div>
+            )}
+            {user ? (
+              <a href="/settings" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white", textDecoration: "none" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </a>
+            ) : (
+              <button onClick={() => base44.auth.redirectToLogin()} style={{ display: "flex", alignItems: "center", gap: 4, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", borderRadius: 8, padding: "6px 12px", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                ログイン
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -303,7 +318,7 @@ function LiveViewInner() {
       )}
 
       {/* ═══ 映像エリア — 16:9 YouTube風 ═══ */}
-      <div style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
+      <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 58px)", left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
         {/* 16:9 映像コンテナ */}
         <div ref={videoContainerRef} style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)", position: "relative", background: "#000", flexShrink: 0 }}>
           {/* PPV 門番 */}
@@ -398,11 +413,54 @@ function LiveViewInner() {
               </div>
             </div>
 
-            {/* 入力・エールエリア */}
-            <div style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)", background: "linear-gradient(to top, rgba(0,0,0,0.95), transparent)", flexShrink: 0 }}>
-              <ViewerChatInput streamId={stream.id} user={user} />
-              <div style={{ padding: "4px 8px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
+            {/* ═══ ボトムナビ — safe-area + 投げ銭ボタン ═══ */}
+            <div style={{
+              flexShrink: 0,
+              background: "rgba(10,10,15,0.82)",
+              backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+              borderTop: "1px solid rgba(255,255,255,0.07)",
+              paddingBottom: "env(safe-area-inset-bottom, 8px)",
+            }}>
+              {/* チャット入力行 */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px 4px" }}>
+                <ViewerChatInput streamId={stream.id} user={user} />
+              </div>
+              {/* アクションバー: ホームボタン / 投げ銭(中央・目立つ) / ミュート・読み上げ */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 14px 6px", gap: 8 }}>
+                {/* ホームへ */}
+                <a href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: "rgba(255,255,255,0.5)", textDecoration: "none", flexShrink: 0 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <span style={{ fontSize: 9, fontWeight: 600 }}>ホーム</span>
+                </a>
+
+                {/* エールボタン群（中央） */}
+                <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                  <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
+                </div>
+
+                {/* 右: 音量 + 読み上げ */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  <button
+                    onClick={() => setIsMuted(v => !v)}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: isMuted ? "#fbbf24" : "rgba(255,255,255,0.5)", padding: 0 }}
+                  >
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: isMuted ? "rgba(251,191,36,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${isMuted ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.12)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {isMuted ? <VolumeX style={{ width: 17, height: 17 }} /> : <Volume2 style={{ width: 17, height: 17 }} />}
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 600 }}>{isMuted ? "ミュート" : "音声"}</span>
+                  </button>
+                  <button
+                    onClick={() => setSpeechEnabled(v => !v)}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: speechEnabled ? "#10b981" : "rgba(255,255,255,0.5)", padding: 0 }}
+                  >
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: speechEnabled ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${speechEnabled ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.12)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
+                      🔊
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 600 }}>読み上げ</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
