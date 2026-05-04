@@ -169,9 +169,9 @@ export default function Home() {
       return real;
     },
     enabled: enabledSections.liveStreams,
-    staleTime: 300000,
-    refetchInterval: 120000,
-    gcTime: 600000,
+    staleTime: 0,
+    refetchInterval: 30000,
+    gcTime: 0,
   });
 
   const { data: scheduledStreams = [] } = useQuery({

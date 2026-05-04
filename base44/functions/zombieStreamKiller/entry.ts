@@ -27,9 +27,17 @@ Deno.serve(async (req) => {
       const elapsedMinutes = (now - startedAt) / 1000 / 60;
       const viewerCount = stream.viewer_count ?? 0;
 
-      // 条件1: 30分以上経過 & 視聴者0人
-      // 条件2: 2時間以上経過（強制終了）
-      const shouldKill = (elapsedMinutes >= 30 && viewerCount === 0) || elapsedMinutes >= 120;
+      // updated_date から何分経過したか（最終更新からの経過時間）
+      const lastUpdated = stream.updated_date ? new Date(stream.updated_date) : startedAt;
+      const minutesSinceUpdate = (now - lastUpdated) / 1000 / 60;
+
+      // 条件1: 15分以上経過 & 視聴者0人
+      // 条件2: 最終更新から10分以上経過（配信者が接続を切った＝ゾンビ）
+      // 条件3: 2時間以上経過（強制終了）
+      const shouldKill =
+        (elapsedMinutes >= 15 && viewerCount === 0) ||
+        (minutesSinceUpdate >= 10 && viewerCount === 0) ||
+        elapsedMinutes >= 120;
 
       if (shouldKill) {
         await base44.asServiceRole.entities.LiveStream.update(stream.id, {
