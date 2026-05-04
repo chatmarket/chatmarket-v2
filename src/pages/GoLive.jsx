@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
 import StreamKeySecurityDisplay from "../components/live/StreamKeySecurityDisplay";
 import TroubleshootingGuide from "../components/live/TroubleshootingGuide";
+import StreamSetupCards from "../components/live/StreamSetupCards";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
@@ -271,48 +272,16 @@ export default function GoLive() {
         </a>
       </div>
 
-      {/* ── 配信マニュアル（PC / スマホ 2本柱）+ トラブル ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {/* PC OBS */}
-        <div className="space-y-3 bg-primary/10 border border-primary/30 rounded-2xl p-4">
-          <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-primary" />
-            <p className="text-sm font-black text-primary">PC配信（OBS Studio）</p>
-          </div>
-          <p className="text-[11px] text-muted-foreground">高画質・多機能な配信ならこちら。シーン切り替え・BGM・ゲーム実況も可能。</p>
-          <StreamKeySecurityDisplay user={user} streamKey={manualStreamKey} ingestEndpoint={manualIngestEndpoint} isSmartphone={false} />
-        </div>
-
-        {/* スマホ Larix / Prism */}
-        <div className="space-y-3 bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-green-400" />
-            <p className="text-sm font-black text-green-400">スマホ配信（Larix / Prism）</p>
-          </div>
-          <p className="text-[11px] text-muted-foreground">スマホ1台でどこでも配信。アプリにURLを貼るだけで即開始。</p>
-          <StreamKeySecurityDisplay user={user} fullRtmpsUrl={fullRtmpsUrl} isSmartphone={true} />
-
-          {/* アプリリンク */}
-          {fullRtmpsUrl && (
-            <div className="flex gap-2 flex-wrap">
-              <a href="https://apps.apple.com/app/larix-broadcaster/id1535549341" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
-                🍎 Larix (iOS)
-              </a>
-              <a href="https://play.google.com/store/apps/details?id=com.wmspanel.larix_broadcaster" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
-                🤖 Larix (Android)
-              </a>
-              <a href="https://prismlive.com/" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors">
-                📡 Prism Live
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* トラブルシューティング */}
-        <div className="space-y-3 bg-orange-500/5 border border-orange-500/25 rounded-2xl p-4">
+      {/* ── PC/スマホ配信 + よくあるトラブル ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+        <StreamSetupCards
+          user={user}
+          streamKey={manualStreamKey}
+          ingestEndpoint={manualIngestEndpoint}
+          fullRtmpsUrl={fullRtmpsUrl}
+        />
+        {/* よくあるトラブル */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
           <TroubleshootingGuide />
         </div>
       </div>

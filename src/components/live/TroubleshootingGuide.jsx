@@ -1,129 +1,124 @@
 import React, { useState } from "react";
-import { ChevronDown, AlertCircle, Wifi, Maximize2, Volume2, Settings } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-/**
- * TroubleshootingGuide
- * よくあるトラブルと対処法（初心者向け）
- */
+const TROUBLES = [
+  {
+    id: "black",
+    emoji: "⬛",
+    title: "画面が真っ黒",
+    short: "映像が映らない",
+    solutions: [
+      "OBS の「ソース」に画面キャプチャ・ウィンドウキャプチャを追加してください",
+      "スマホ側でカメラ許可を与えているか確認",
+      "OBS を管理者権限で起動し直してください",
+    ],
+  },
+  {
+    id: "connect",
+    emoji: "📡",
+    title: "接続エラー",
+    short: "サーバーが見つからない",
+    solutions: [
+      "WiFi・有線ケーブル接続か確認してください",
+      "ストリームキーを再コピーして貼り直してください",
+      "セキュリティソフトが OBS をブロックしている可能性あり → 許可設定へ",
+    ],
+  },
+  {
+    id: "audio",
+    emoji: "🔇",
+    title: "音が出ない",
+    short: "視聴者に声が届かない",
+    solutions: [
+      "OBS の「音声ミキサー」でマイクがミュートになっていないか確認",
+      "PC のシステム設定で、正しいマイクが選択されているか確認",
+      "マイクを差し直して OBS を再起動してみてください",
+    ],
+  },
+  {
+    id: "lag",
+    emoji: "🐢",
+    title: "カクカク・遅延",
+    short: "映像が止まる・ラグ大",
+    solutions: [
+      "インターネットの上り速度を確認（推奨：5Mbps 以上）",
+      "WiFi ではなく有線 LAN ケーブルに切り替えてください",
+      "OBS でビットレートを下げる（設定 → 配信 → 3000〜4000kbps）",
+    ],
+  },
+  {
+    id: "url",
+    emoji: "🔗",
+    title: "URL が無効",
+    short: "スマホにペーストしても弾かれる",
+    solutions: [
+      "URL の先頭・末尾に余分なスペースが入っていないか確認",
+      "もう一度「クリックしてコピー」ボタンから取得し直してください",
+      "メモアプリに一度貼り付けて確認 → 再度アプリにペースト",
+    ],
+  },
+];
+
 export default function TroubleshootingGuide() {
-  const [expandedId, setExpandedId] = useState(null);
-
-  const troubles = [
-    {
-      id: "black-screen",
-      icon: <Maximize2 className="w-5 h-5" />,
-      title: "画面が真っ黒のまま配信されている",
-      solutions: [
-        "OBS を開いて、左下の『ソース』に「画面キャプチャ」「ウィンドウキャプチャ」「ゲーム」など、映したいものが追加されているか確認してください",
-        "追加されていたら、その項目をクリックして『有効』になっているか確認してください",
-        "スマホ/Larix の場合は、カメラが正しく選択されているか確認。アプリの設定から『カメラ』を選び直してください"
-      ]
-    },
-    {
-      id: "connection-error",
-      icon: <Wifi className="w-5 h-5" />,
-      title: "『接続できない』『サーバーが見つからない』というエラーが出る",
-      solutions: [
-        "インターネット接続を確認してください。WiFi か有線で安定した接続があるか確認",
-        "OBS の場合、ストリームキーが正しくコピーされたか確認。URLとキーが両方あるか、スペースが余分に入っていないか見直してください",
-        "ファイアウォール（セキュリティソフト）が OBS をブロックしていないか確認。ブロックされていたら許可に変更してください",
-        "数分待って再度接続を試してみてください。サーバーが一時的に応答していないこともあります"
-      ]
-    },
-    {
-      id: "no-audio",
-      icon: <Volume2 className="w-5 h-5" />,
-      title: "映像は出るけど音が聞こえない",
-      solutions: [
-        "OBS / Larix で『音声入力』『マイク』が追加されているか確認",
-        "マイク・スピーカーのボリュームが上がっているか確認（PCやスマホの側でも確認）",
-        "『ミュート』になっていないか確認。アプリの画面で『🔊』『ミュート』ボタンをチェック",
-        "違うマイクが選択されていないか確認。設定から正しいマイクを選び直してください"
-      ]
-    },
-    {
-      id: "lag-freezing",
-      icon: <Settings className="w-5 h-5" />,
-      title: "配信がカクカク止まったり、遅れている",
-      solutions: [
-        "インターネットの速度を確認。配信には『上り』速度が重要です（下り速度ではなく）",
-        "WiFi を使っている場合、ルーターに近いところに移動してください",
-        "OBS で『画質を下げる』『ビットレートを下げる』を試してください（設定 → 配信から変更可能）",
-        "他のアプリや YouTube などが同時に実行していないか確認。閉じてから配信を再開してください"
-      ]
-    },
-    {
-      id: "url-not-working",
-      icon: <AlertCircle className="w-5 h-5" />,
-      title: "スマホアプリに URL を貼り付けたのに『無効な URL』と言われる",
-      solutions: [
-        "URL の最後に余分なスペースが入っていないか確認。最後の文字の直後に何もないことを確認",
-        "URL 全体をもう一度コピーしてください。一部だけコピーされているかもしれません",
-        "アプリを一度閉じて再度開き直してからペーストしてください",
-        "別のテキストエディタ（メモアプリなど）に一度貼り付けて、URL が正しく入っているか目視で確認してください"
-      ]
-    },
-    {
-      id: "low-bitrate",
-      icon: <Wifi className="w-5 h-5" />,
-      title: "画面の画質が悪い（ぼやけている）",
-      solutions: [
-        "インターネット接続が弱くないか確認。別の場所で試してみてください",
-        "OBS で『ビットレート』を上げてください（設定 → 配信 → ビットレート）。3000〜6000 kbps で試してください",
-        "OBS で『解像度』を確認。1280×720 または 1920×1080 が推奨です",
-        "スマホ / Larix の場合は、カメラの向きを『風景モード』にしてください"
-      ]
-    }
-  ];
+  const [openId, setOpenId] = useState(null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
+      {/* ヘッダー */}
       <div className="flex items-center gap-2 mb-4">
-        <AlertCircle className="w-5 h-5 text-orange-500" />
-        <h2 className="text-lg font-black text-white">よくあるトラブル</h2>
+        <span className="text-lg">⚡</span>
+        <p className="text-sm font-black text-white tracking-wide">よくあるトラブル</p>
+        <span className="text-[10px] font-semibold text-muted-foreground border border-zinc-700 rounded-full px-2 py-0.5 ml-auto">
+          {TROUBLES.length} 件
+        </span>
       </div>
 
-      <div className="space-y-2">
-        {troubles.map((trouble) => (
-          <div key={trouble.id} className="bg-zinc-900/70 border border-zinc-700/50 rounded-lg overflow-hidden">
-            {/* ヘッダー */}
-            <button
-              onClick={() => setExpandedId(expandedId === trouble.id ? null : trouble.id)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <span className="text-orange-500 shrink-0">{trouble.icon}</span>
-                <p className="text-sm font-semibold text-white">{trouble.title}</p>
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${
-                  expandedId === trouble.id ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+      {TROUBLES.map((t) => (
+        <div key={t.id}>
+          <button
+            onClick={() => setOpenId(openId === t.id ? null : t.id)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
+              openId === t.id
+                ? "bg-orange-500/10 border-orange-500/40 shadow-sm"
+                : "bg-zinc-900/60 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900"
+            }`}
+          >
+            <span className="text-base shrink-0">{t.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-black leading-none ${openId === t.id ? "text-orange-400" : "text-white"}`}>{t.title}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">{t.short}</p>
+            </div>
+            <span className={`text-muted-foreground transition-transform shrink-0 ${openId === t.id ? "rotate-180" : ""}`} style={{ fontSize: 10 }}>▼</span>
+          </button>
 
-            {/* 詳細内容 */}
-            {expandedId === trouble.id && (
-              <div className="px-4 py-3 bg-zinc-900/30 border-t border-zinc-700/30 space-y-2.5">
-                {trouble.solutions.map((solution, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <span className="text-orange-500 font-black text-sm shrink-0 mt-0.5">
-                      {idx + 1}.
-                    </span>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{solution}</p>
-                  </div>
-                ))}
-              </div>
+          <AnimatePresence>
+            {openId === t.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 py-3 bg-zinc-900/40 border border-t-0 border-orange-500/20 rounded-b-xl space-y-2">
+                  {t.solutions.map((s, i) => (
+                    <div key={i} className="flex gap-2.5">
+                      <span className="text-orange-400 font-black text-[11px] shrink-0 mt-0.5">{i + 1}.</span>
+                      <p className="text-[11px] text-zinc-300 leading-relaxed">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
             )}
-          </div>
-        ))}
-      </div>
+          </AnimatePresence>
+        </div>
+      ))}
 
-      {/* 底部ヒント */}
-      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 space-y-1">
-        <p className="text-xs font-bold text-blue-400">💡 それでも解決しない場合</p>
-        <p className="text-[11px] text-blue-300/80">
-          配信を一度終了して、アプリ・OBS・PCを再起動することで解決することがほとんどです。
+      {/* フッター */}
+      <div className="mt-3 flex items-start gap-2 bg-blue-500/8 border border-blue-500/20 rounded-xl px-3 py-2.5">
+        <span className="text-sm shrink-0">💡</span>
+        <p className="text-[10px] text-blue-300/80 leading-relaxed">
+          解決しない場合はアプリ・OBS・PC を<strong className="text-blue-300">再起動</strong>するだけで直ることがほとんどです。
         </p>
       </div>
     </div>
