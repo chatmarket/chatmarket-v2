@@ -1,0 +1,53 @@
+import { useEffect, useRef, useState } from "react";
+
+/**
+ * useStreamSpeech
+ * チャットやエールを音声で読み上げるカスタムフック
+ * 
+ * 使用例:
+ * const { isSpeaking, toggleSpeech } = useStreamSpeech();
+ */
+export default function useStreamSpeech() {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const synth = useRef(null);
+
+  useEffect(() => {
+    // ブラウザの音声合成APIを初期化
+    if (typeof window !== "undefined") {
+      synth.current = window.speechSynthesis;
+    }
+  }, []);
+
+  const speak = (text) => {
+    if (!synth.current) return;
+
+    // 既存の読み上げをキャンセル
+    synth.current.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ja-JP";
+    utterance.rate = 1.2; // 速度1.2倍
+    utterance.pitch = 1;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    synth.current.speak(utterance);
+  };
+
+  const cancel = () => {
+    if (synth.current) {
+      synth.current.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      cancel();
+    }
+  };
+
+  return { isSpeaking, speak, cancel, toggleSpeech };
+}
