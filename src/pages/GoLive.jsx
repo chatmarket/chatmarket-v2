@@ -264,6 +264,101 @@ export default function GoLive() {
         <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
       </div>
 
+      {/* ── PRISM Live Studio 専用セクション（重要！） ── */}
+      {liveStreamId && (
+        <div className="mb-8 bg-gradient-to-br from-purple-950 to-purple-900 border-2 border-purple-500/60 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
+              <span className="text-2xl">✨</span>
+            </div>
+            <div>
+              <p className="text-sm font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
+              <h2 className="text-xl font-black text-white">配信3ステップ — コピペで準備完了</h2>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {/* ① 配信先 */}
+            <div className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center">①</span>
+                <p className="font-bold text-white">配信先（Server URL）</p>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  readOnly
+                  value={`rtmps://${manualIngestEndpoint}:443/app/`}
+                  className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`rtmps://${manualIngestEndpoint}:443/app/`);
+                    toast.success("配信先をコピーしました");
+                  }}
+                  className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            {/* ② 鍵 */}
+            <div className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center">②</span>
+                <p className="font-bold text-white">ストリームキー（Stream Key）</p>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  readOnly
+                  value={manualStreamKey}
+                  className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono truncate"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(manualStreamKey);
+                    toast.success("ストリームキーをコピーしました");
+                  }}
+                  className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            {/* ③ チャット表示用URL */}
+            <div className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center">③</span>
+                <p className="font-bold text-white">チャット表示用URL</p>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/prism-overlay/${liveStreamId}`}
+                  className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/prism-overlay/${liveStreamId}`);
+                    toast.success("チャットURLをコピーしました");
+                  }}
+                  className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-xs text-purple-300/80 bg-purple-950/50 rounded-lg px-2 py-1.5 mt-2">
+                💬 <span className="font-semibold">Prism の「Web Overlay」に貼り付けてください</span> — リアルタイムチャットと投げ銭通知が画面に表示されます
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 配信マニュアルへのバナー ── */}
       <div className="mb-8">
         <a href="/streaming-manual" className="block group">
