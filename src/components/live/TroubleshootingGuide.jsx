@@ -57,6 +57,39 @@ const TROUBLES = [
       "メモアプリに一度貼り付けて確認 → 再度アプリにペースト",
     ],
   },
+  {
+    id: "cpu",
+    emoji: "⚙️",
+    title: "CPU 使用率が高い",
+    short: "配信中に PC が重くなる",
+    solutions: [
+      "他のアプリを閉じてください（ブラウザ、Discord など）",
+      "OBS の設定 → 出力 → エンコーダを『GPU（NVIDIA/AMD）』に変更",
+      "解像度を 1080p から 720p に落とすか、フレームレートを 30fps に変更",
+    ],
+  },
+  {
+    id: "camera",
+    emoji: "📷",
+    title: "カメラが認識されない",
+    short: "OBS にカメラが映らない",
+    solutions: [
+      "USB カメラは別の USB ポートに挿し直してください",
+      "Windows 設定 → プライバシーとセキュリティ → カメラで、OBS に許可を与えてください",
+      "カメラのドライバを最新版に更新してください",
+    ],
+  },
+  {
+    id: "bitrate",
+    emoji: "📊",
+    title: "ビットレート不足",
+    short: "画質がすぐ悪くなる",
+    solutions: [
+      "インターネットの上り速度を確認（speedtest.net などで測定）",
+      "OBS の設定 → 出力 → ビットレートを現在の速度に合わせて調整（推奨：上り速度の 60%）",
+      "有線 LAN に切り替えてください（WiFi より安定性が高い）",
+    ],
+  },
 ];
 
 export default function TroubleshootingGuide() {
