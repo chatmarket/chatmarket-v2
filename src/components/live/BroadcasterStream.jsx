@@ -387,40 +387,48 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         )}
       </div>
 
-      {/* 右側: 視聴者数グラフ + チャット — landscape時に flex-[1] */}
-      <div className="w-full lg:w-80 landscape:flex-[1] landscape:w-auto landscape:max-h-screen landscape:overflow-y-auto flex flex-col gap-2 landscape:gap-2">
-        <ViewerCountGraph streamId={streamId} isLive={isLive} />
+      {/* 右側: チャット・エール・ランキング（全状態共通で表示） */}
+       <div className="w-full lg:w-80 landscape:flex-[1] landscape:w-auto landscape:max-h-screen landscape:overflow-y-auto flex flex-col gap-2 landscape:gap-2">
+         {isOBSLive && <ViewerCountGraph streamId={streamId} isLive={isLive} />}
 
-        <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800">
-            <p className="text-sm font-bold text-white">💬 チャット</p>
-          </div>
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-            <LiveChatDisplay streamId={streamId} />
-          </div>
-        </div>
+         {/* チャット（配信中のみ） */}
+         {isOBSLive && (
+           <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+             <div className="px-4 py-3 border-b border-zinc-800">
+               <p className="text-sm font-bold text-white">💬 チャット</p>
+             </div>
+             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+               <LiveChatDisplay streamId={streamId} />
+             </div>
+           </div>
+         )}
 
-        <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800">
-            <p className="text-sm font-bold text-yellow-400">⭐ エール・スーパーチャット</p>
-          </div>
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-            <LiveYellDisplay streamId={streamId} latestYell={latestYell} />
-          </div>
-        </div>
+         {/* エール・スーパーチャット（配信中のみ） */}
+         {isOBSLive && (
+           <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+             <div className="px-4 py-3 border-b border-zinc-800">
+               <p className="text-sm font-bold text-yellow-400">⭐ エール・スーパーチャット</p>
+             </div>
+             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+               <LiveYellDisplay streamId={streamId} latestYell={latestYell} />
+             </div>
+           </div>
+         )}
 
-        {/* 投げ銭ランキング */}
-        <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-            <span className="text-base">🏆</span>
-            <p className="text-sm font-bold text-white">投げ銭ランキング</p>
-            <span className="text-[10px] text-zinc-500 ml-auto">この配信</span>
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 py-3">
-            <YellRanking streamId={streamId} />
-          </div>
-        </div>
-      </div>
+         {/* 投げ銭ランキング（配信中のみ） */}
+         {isOBSLive && (
+           <div className="flex-1 flex flex-col bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+             <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
+               <span className="text-base">🏆</span>
+               <p className="text-sm font-bold text-white">投げ銭ランキング</p>
+               <span className="text-[10px] text-zinc-500 ml-auto">この配信</span>
+             </div>
+             <div className="flex-1 overflow-y-auto px-3 py-3">
+               <YellRanking streamId={streamId} />
+             </div>
+           </div>
+         )}
+       </div>
 
       {/* 配信終了確認モーダル */}
       {showEndConfirm && (

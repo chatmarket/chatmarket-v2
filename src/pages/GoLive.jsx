@@ -485,16 +485,10 @@ export default function GoLive() {
     // OBS画面と同じ画面を表示
   }
 
-  // OBS配信画面（モーダルで「OBS配信」選択後）
+  // ★ 統一画面：OBS & ブラウザ両対応（同じBroadcasterStream使用）
   if (liveStreamId && !showModeSelect) {
     return (
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="flex items-center gap-3 mb-4 sm:mb-6">
-          <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-            <Radio className="w-4 h-4 text-red-400 animate-pulse" />
-          </div>
-          <h1 className="text-lg sm:text-2xl font-bold">配信中</h1>
-        </div>
+      <div className="w-full">
         <BroadcasterStream
           streamId={liveStreamId}
           ivsStreamKey={manualStreamKey || ivsStream?.streamKey}
