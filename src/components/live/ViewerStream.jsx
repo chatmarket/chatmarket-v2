@@ -20,6 +20,8 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
   const [loading, setLoading] = useState(true);
   const [showManualPlay, setShowManualPlay] = useState(false);
   const [urlPolling, setUrlPolling] = useState(false);
+  const playbackRateRef = useRef(1.0);
+  const latencyCheckIntervalRef = useRef(null);
 
   // ★ playbackUrl は state で管理 — DBから強制再取得できるよう
   const [playbackUrl, setPlaybackUrl] = useState(stream?.ivs_playback_url || null);
@@ -201,6 +203,29 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
           onMutedChange?.(true);
           videoRef.current?.play().catch(() => setShowManualPlay(true));
         });
+
+        // ★ 動的再生速度調整 (Re-sync playback rate) を開始
+        if (latencyCheckIntervalRef.current) clearInterval(latencyCheckIntervalRef.current);
+        latencyCheckIntervalRef.current = setInterval(() => {
+          if (destroyedRef.current || !videoRef.current) return;
+          
+          const currentTime = videoRef.current.currentTime;
+          const duration = videoRef.current.duration;
+          const latency = Math.max(0, duration - currentTime);
+
+          // 遅延が3秒を超えたら再生速度を上げる
+          if (latency > 3 && playbackRateRef.current !== 1.1) {
+            playbackRateRef.current = 1.1;
+            videoRef.current.playbackRate = 1.1;
+            console.log(`[ViewerStream] ⚡ Latency ${latency.toFixed(2)}s > 3s → playback rate 1.1x`);
+          } 
+          // 遅延が1.5秒以下になったら通常速度に戻す
+          else if (latency <= 1.5 && playbackRateRef.current !== 1.0) {
+            playbackRateRef.current = 1.0;
+            videoRef.current.playbackRate = 1.0;
+            console.log(`[ViewerStream] ✅ Latency ${latency.toFixed(2)}s ≤ 1.5s → playback rate 1.0x (synced)`);
+          }
+        }, 500);
       });
 
       player.addEventListener("error", (error) => {
@@ -224,10 +249,11 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
 
       const hls = new Hls({
         lowLatencyMode: true,
-        liveSyncDuration: 0.5,
-        liveMaxLatencyDuration: 2,
-        maxBufferLength: 1.5,
-        maxMaxBufferLength: 3,
+        liveLowLatencyMode: true,
+        liveSyncDuration: 0.3,
+        liveMaxLatencyDuration: 1.5,
+        maxBufferLength: 0.5,
+        maxMaxBufferLength: 1.5,
         fragLoadingTimeOut: 15000,
         fragLoadingMaxRetry: 6,
         manifestLoadingTimeOut: 12000,
@@ -254,6 +280,27 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
           onMutedChange?.(true);
           vid.play().catch(() => setShowManualPlay(true));
         });
+
+        // ★ 動的再生速度調整 (hls.js fallback用)
+        if (latencyCheckIntervalRef.current) clearInterval(latencyCheckIntervalRef.current);
+        latencyCheckIntervalRef.current = setInterval(() => {
+          if (destroyedRef.current || !vid) return;
+          
+          const currentTime = vid.currentTime;
+          const duration = vid.duration;
+          const latency = Math.max(0, duration - currentTime);
+
+          if (latency > 3 && playbackRateRef.current !== 1.1) {
+            playbackRateRef.current = 1.1;
+            vid.playbackRate = 1.1;
+            console.log(`[ViewerStream] ⚡ hls.js: Latency ${latency.toFixed(2)}s > 3s → playback rate 1.1x`);
+          } 
+          else if (latency <= 1.5 && playbackRateRef.current !== 1.0) {
+            playbackRateRef.current = 1.0;
+            vid.playbackRate = 1.0;
+            console.log(`[ViewerStream] ✅ hls.js: Latency ${latency.toFixed(2)}s ≤ 1.5s → playback rate 1.0x`);
+          }
+        }, 500);
       });
 
       hls.on(Hls.Events.FRAG_CHANGED, () => {
@@ -292,6 +339,7 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
 
     destroyedRef.current = false;
     retryRef.current = 0;
+    playbackRateRef.current = 1.0;
     setLoading(true);
     setShowManualPlay(false);
 
@@ -302,6 +350,7 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
     return () => {
       destroyedRef.current = true;
       clearTimeout(t);
+      if (latencyCheckIntervalRef.current) clearInterval(latencyCheckIntervalRef.current);
       destroyHls();
     };
   }, [playbackUrl]);
