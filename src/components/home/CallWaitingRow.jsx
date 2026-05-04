@@ -141,15 +141,17 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
             {channel.call_available_dates}
           </p>
         )}
-        <Link to={`/channel/${cardChannelId}`}>
-          <p className="text-[10px] text-muted-foreground truncate hover:text-primary transition-colors">{cardChannelName}</p>
-        </Link>
+        {!isGhost ? (
+          <Link to={`/channel/${cardChannelId}`}>
+            <p className="text-[10px] text-muted-foreground truncate hover:text-primary transition-colors">{cardChannelName}</p>
+          </Link>
+        ) : (
+          <p className="text-[10px] text-muted-foreground truncate">{cardChannelName}</p>
+        )}
         {isGhost ? (
-          <div className="space-y-1.5">
-            <Button size="sm" className="w-full h-7 text-[11px] bg-primary/50 gap-1 cursor-not-allowed opacity-60" disabled>
-              <User className="w-3 h-3" /> 準備中...
-            </Button>
-          </div>
+          <Button size="sm" disabled className="w-full h-7 text-[11px] opacity-50 gap-1">
+            近日公開予定
+          </Button>
         ) : !isOwnChannel ? (
           <div className="space-y-1.5">
             <Button
