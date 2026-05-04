@@ -268,6 +268,7 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
   const handleStartBroadcast = async () => {
     const isAuth = await base44.auth.isAuthenticated().catch(() => false);
     if (!isAuth) {
+      console.warn('[BrowserBroadcaster] ❌ Auth check failed');
       base44.auth.redirectToLogin();
       return;
     }
@@ -275,56 +276,77 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
     if (!streamId) {
       setError('配信IDが見つかりません');
       setShowErrorDialog(true);
+      console.error('[BrowserBroadcaster] ❌ streamId missing:', streamId);
+      return;
+    }
+
+    if (!streamRef.current || streamRef.current.getTracks().length === 0) {
+      setError('カメラ・マイクが起動していません。テストボタンを押して確認してください。');
+      setShowErrorDialog(true);
+      console.error('[BrowserBroadcaster] ❌ No local stream:', { streamRef: !!streamRef.current, tracks: streamRef.current?.getTracks().length });
       return;
     }
 
     if (micLevel === 0) {
       setError('マイクが反応していません。マイクリセットボタンを押してから再度お試しください。');
       setShowErrorDialog(true);
+      console.error('[BrowserBroadcaster] ❌ Mic level zero:', micLevel);
       return;
     }
 
-    console.log('[BrowserBroadcaster] 🚀 Starting RTMPS broadcast for streamId:', streamId);
+    console.log('[BrowserBroadcaster] 🚀 Starting RTMPS broadcast');
+    console.log('[DEBUG] streamId:', streamId);
+    console.log('[DEBUG] localStream tracks:', streamRef.current?.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
+    console.log('[DEBUG] micLevel:', micLevel);
     setBroadcastStatus("connecting");
     setBroadcastError(null);
 
     try {
-      // ★ RTMPS 直送ルート（OBS と同じ）
+      // ★ RTMPS 設定取得
       console.log('[BrowserBroadcaster] 📡 Fetching RTMPS config from createLiveStream...');
       const streamRes = await base44.functions.invoke('createLiveStream', {});
       const { rtmpsUrl, streamKey, playbackUrl } = streamRes.data;
 
+      console.log('[DEBUG] createLiveStream response:', { rtmpsUrl, streamKey: streamKey ? streamKey.substring(0, 20) + '...' : 'EMPTY', playbackUrl });
+
       if (!rtmpsUrl || !streamKey) {
-        throw new Error('RTMPS 設定が取得できませんでした');
+        throw new Error('RTMPS設定が取得できませんでした: ' + JSON.stringify({ rtmpsUrl, streamKey }));
       }
 
       const fullRtmpsUrl = `${rtmpsUrl}${streamKey}`;
       console.log('[BrowserBroadcaster] 🎬 RTMPS Endpoint:', fullRtmpsUrl.substring(0, 80) + '...');
-      console.log('[BrowserBroadcaster] 💰 Cost: $0.005/分（chatmarket-main直送）');
+
+      // ★ ⚠️ 警告：ブラウザはRTMPSクライアント機能を持たない
+      console.warn('[BrowserBroadcaster] ⚠️ WARNING: This is NOT a real RTMPS send. Browser WebRTC→AWS adapter missing.');
+      console.warn('[BrowserBroadcaster] ⚠️ To enable real streaming, implement FFmpeg.wasm or use WHIP/WebRTC gateway.');
+      console.log('[BrowserBroadcaster] 📊 Local stream to AWS mapping: NOT IMPLEMENTED');
 
       // DB を更新 + playbackUrl を保存
       const FIXED_PLAYBACK_URL = playbackUrl || "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
-      
+
       const updatePayload = {
         status: "live",
         live_started_at: new Date().toISOString(),
         ivs_playback_url: FIXED_PLAYBACK_URL,
       };
-      
+
       console.log('[BrowserBroadcaster] 💾 Saving to DB:', { streamId, playbackUrl: FIXED_PLAYBACK_URL });
-      
+
       await base44.entities.LiveStream.update(streamId, updatePayload);
-      console.log('[BrowserBroadcaster] ✅ DB updated');
+      console.log('[BrowserBroadcaster] ✅ DB updated to "live" status');
 
       if (channelId) {
         await base44.entities.Channel.update(channelId, { is_live: true })
           .catch(err => console.warn('Channel update warning:', err.message));
       }
 
+      setIsBroadcasting(true);
       setBroadcastStatus("live");
-      toast.success("✅ RTMPS 配信開始 — chatmarket-main へ直送中");
+      console.log('[BrowserBroadcaster] ⚠️ DB marked as LIVE, but NO VIDEO IS BEING SENT TO AWS');
+      toast.success("⚠️ DB更新完了。AWS映像プレビューは真っ黒のままです（RTMPS送信未実装）");
     } catch (err) {
-      console.error('[BrowserBroadcaster] ❌ Broadcast error:', err);
+      console.error('[BrowserBroadcaster] ❌ Broadcast error:', err.message);
+      console.error('[BrowserBroadcaster] ❌ Error stack:', err.stack);
       setBroadcastStatus("error");
       setBroadcastError(err.message);
       setIsBroadcasting(false);
