@@ -296,11 +296,18 @@ export default function BrowserBroadcaster({ streamId, channelId, onEnd }) {
       setIsBroadcasting(true);
       await connectToWhip();
 
-      // WHIP 接続成功後にDBを更新
-      await base44.entities.LiveStream.update(streamId, {
+      // WHIP 接続成功後にDBを更新 + playbackUrl を保存
+      // ★ ブラウザ発信は固定チャンネルを使用しているため、playbackUrl も固定値
+      const FIXED_PLAYBACK_URL = "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
+      
+      const updatePayload = {
         status: "live",
         live_started_at: new Date().toISOString(),
-      }).catch(err => console.warn('[BrowserBroadcaster] LiveStream update failed (non-fatal):', err.message));
+        ivs_playback_url: FIXED_PLAYBACK_URL, // ★ 視聴者側で映像が表示されるようにplaybackUrlを保存
+      };
+      
+      await base44.entities.LiveStream.update(streamId, updatePayload)
+        .catch(err => console.warn('[BrowserBroadcaster] LiveStream update failed (non-fatal):', err.message));
 
       if (channelId) {
         await base44.entities.Channel.update(channelId, { is_live: true })
