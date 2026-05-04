@@ -193,18 +193,18 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
       >
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
-          {/* ── 配信前・サムネイル待機画面 ── */}
-          {status === "preview" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950">
-              {thumbnailUrl && (
-                <img src={thumbnailUrl} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-              )}
-              {/* 視聴者数バッジ（配信前）*/}
-              <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-black/70 border border-cyan-500/40 rounded-full px-4 py-2">
-                <Eye className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-bold text-cyan-300">{viewerCount}人が待機中</span>
-              </div>
-              <div className="relative z-10 flex flex-col items-center gap-4 text-center px-6">
+           {/* ── 配信前・サムネイル待機画面 ── */}
+           {status === "preview" && (
+             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-10">
+               {thumbnailUrl && (
+                 <img src={thumbnailUrl} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-40 z-0" />
+               )}
+               {/* 視聴者数バッジ（配信前）*/}
+               <div className="absolute top-3 left-3 z-30 flex items-center gap-2 bg-black/70 border border-cyan-500/40 rounded-full px-4 py-2">
+                 <Eye className="w-4 h-4 text-cyan-400" />
+                 <span className="text-sm font-bold text-cyan-300">{viewerCount}人が待機中</span>
+               </div>
+              <div className="relative z-20 flex flex-col items-center gap-4 text-center px-6">
                 <Camera className="w-12 h-12 text-zinc-400" />
                 <p className="text-sm font-semibold text-zinc-300">カメラはまだ起動していません</p>
                 <button
@@ -264,7 +264,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           {/* ステータスバッジ（OBS 配信中のみ表示） */}
           {isOBSLive && (
             <div
-              className="absolute flex items-center gap-2 flex-wrap z-10"
+              className="absolute flex items-center gap-2 flex-wrap z-20"
               style={{ top: `calc(0.75rem + env(safe-area-inset-top, 0px))`, left: `calc(0.75rem + env(safe-area-inset-left, 0px))` }}
             >
               <span className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
@@ -293,14 +293,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           )}
 
           {isOBSLive && (
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3 z-20">
               <LiveCostTracker startedAt={liveStartedAt} viewerCount={viewerCount} priceCoins={150} />
             </div>
           )}
 
           {/* GoLive ボタン（配信前 & 確認中に表示） */}
           {!isOBSLive && !isLive && (
-            <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
+            <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none z-20">
               <button
                 onClick={handleGoLive}
                 className="pointer-events-auto flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-black text-lg px-10 py-4 rounded-2xl shadow-2xl shadow-red-500/40 transition-all hover:scale-105 active:scale-95"
