@@ -31,13 +31,13 @@ Deno.serve(async (req) => {
       const lastUpdated = stream.updated_date ? new Date(stream.updated_date) : startedAt;
       const minutesSinceUpdate = (now - lastUpdated) / 1000 / 60;
 
-      // 条件1: 15分以上経過 & 視聴者0人
-      // 条件2: 最終更新から10分以上経過（配信者が接続を切った＝ゾンビ）
-      // 条件3: 2時間以上経過（強制終了）
+      // 条件1: 60分以上経過 & 視聴者0人（テスト配信等の長時間放置のみ）
+      // 条件2: 最終更新から30分以上経過 & 視聴者0人（liveStreamCostTrackerが1分毎に更新するため通常は発火しない）
+      // 条件3: 3時間以上経過（強制終了）
       const shouldKill =
-        (elapsedMinutes >= 15 && viewerCount === 0) ||
-        (minutesSinceUpdate >= 10 && viewerCount === 0) ||
-        elapsedMinutes >= 120;
+        (elapsedMinutes >= 60 && viewerCount === 0) ||
+        (minutesSinceUpdate >= 30 && viewerCount === 0) ||
+        elapsedMinutes >= 180;
 
       if (shouldKill) {
         await base44.asServiceRole.entities.LiveStream.update(stream.id, {

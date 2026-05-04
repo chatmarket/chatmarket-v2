@@ -14,7 +14,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const INPUT_COST_PER_MIN = 30 / 60;          // 0.5円/分
 const OUTPUT_COST_PER_VIEWER_PER_MIN = 5 / 60; // 0.0833円/視聴者/分
-const AUTO_STOP_ZERO_VIEWER_MINUTES = 5;
+const AUTO_STOP_ZERO_VIEWER_MINUTES = 60;
 
 Deno.serve(async (req) => {
   try {
