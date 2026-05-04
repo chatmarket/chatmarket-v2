@@ -12,7 +12,7 @@ const DB_REFRESH_EVERY = 3; // 3回リトライごとにDBから再取得
 const URL_POLL_INTERVAL_MS = 300;  // ① URL未確定時のポーリング間隔
 const URL_POLL_MAX_ATTEMPTS = 10;  // ① 最大10回
 
-export default function ViewerStream({ stream }) {
+export default function ViewerStream({ stream, isMuted, onMutedChange }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const retryRef = useRef(0);
@@ -131,7 +131,12 @@ export default function ViewerStream({ stream }) {
         if (destroyedRef.current) return;
         setLoading(false);
         setShowManualPlay(false);
-        vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+        vid.muted = false;
+        vid.play().catch(() => {
+          vid.muted = true;
+          onMutedChange?.(true);
+          vid.play().catch(() => {});
+        });
       };
       const onError = () => {
         if (destroyedRef.current) return;
@@ -179,7 +184,14 @@ export default function ViewerStream({ stream }) {
         console.log(`[ViewerStream] ✅ Manifest parsed — playing`);
         setLoading(false);
         setShowManualPlay(false);
-        vid.play().catch(() => { vid.muted = true; vid.play().catch(() => setShowManualPlay(true)); });
+        // ★ ミュートなしで再生試行。ブラウザがブロックした場合のみミュートにフォールバック
+        vid.muted = false;
+        vid.play().catch(() => {
+          console.warn("[ViewerStream] Autoplay blocked — falling back to muted");
+          vid.muted = true;
+          onMutedChange?.(true);
+          vid.play().catch(() => setShowManualPlay(true));
+        });
       });
 
       hls.on(Hls.Events.FRAG_CHANGED, () => {
@@ -285,6 +297,7 @@ export default function ViewerStream({ stream }) {
         ref={videoRef}
         autoPlay
         playsInline
+        muted={isMuted}
         className="w-full h-full object-contain"
       />
     </div>

@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 import ChatPanel from "../components/chat/ChatPanel.jsx";
 import TipOverlay from "../components/live/TipOverlay";
 import ExtensionNotification from "../components/live/ExtensionNotification";
-import { Users, Radio, Lock, CreditCard, Zap, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
+import { CreditCard, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -74,11 +74,20 @@ function LiveViewInner() {
   const [celebrationYell, setCelebrationYell] = useState(null);
   const extensionNotifiedRef = useRef(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [coinBalance, setCoinBalance] = useState(null);
+  const videoContainerRef = useRef(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (!isAuth) return;
-      base44.auth.me().then(setUser).catch(() => {});
+      base44.auth.me().then(u => {
+        setUser(u);
+        // コイン残高取得
+        base44.entities.YellCoinWallet.filter({ user_email: u.email })
+          .then(w => setCoinBalance(w[0]?.balance ?? 0))
+          .catch(() => setCoinBalance(0));
+      }).catch(() => {});
     }).catch(() => {});
   }, []);
 
@@ -226,19 +235,61 @@ function LiveViewInner() {
   }
 
   const videoPortal = ReactDOM.createPortal(
-    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "#000" }}>
+    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "linear-gradient(135deg, #0a0a0f 0%, #0d1117 40%, #0a0f0a 100%)" }}>
+
+      {/* ═══ STICKY HEADER ═══ */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 50, height: 56, background: "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px" }}>
+        {/* 左: 戻るボタン + タイトル */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={() => window.history.back()}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white", cursor: "pointer", flexShrink: 0 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          {stream.status === "live" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#ef4444", borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 900, color: "white" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "white", display: "inline-block" }} />
+                LIVE
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 3, color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                {stream.viewer_count || 0}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* 右: コイン残高 + マイページ */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {user && coinBalance !== null && (
+            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 20, padding: "4px 10px" }}>
+              <span style={{ fontSize: 14 }}>🪙</span>
+              <span style={{ color: "#fbbf24", fontWeight: 900, fontSize: 13 }}>{coinBalance.toLocaleString()}</span>
+            </div>
+          )}
+          {user ? (
+            <a href="/settings" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white", textDecoration: "none" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </a>
+          ) : (
+            <button onClick={() => base44.auth.redirectToLogin()} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(99,102,241,0.8)", border: "none", borderRadius: 8, padding: "6px 12px", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              ログイン
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* チケットペイウォール */}
       {stream.is_ticket_enabled && !hasPurchased && ticketChecked && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-5 p-6">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-5 p-6" style={{ paddingTop: 80 }}>
           <div className="text-6xl">🎫</div>
           <h2 className="text-xl font-black text-white">チケット制ライブ配信</h2>
           <div className="text-center space-y-1">
             <p className="text-3xl font-black text-yellow-400">¥{(stream.ticket_price_yen || 150).toLocaleString()}</p>
             <p className="text-sm text-white/60">{stream.ticket_duration_minutes || 60}分間の視聴チケット</p>
           </div>
-          <p className="text-xs text-white/40 text-center max-w-xs">
-            コインまたはクレジットカードで購入後、すぐに視聴できます
-          </p>
           {!user ? (
             <Button onClick={() => base44.auth.redirectToLogin()} className="gap-2 h-12 px-8">
               <CreditCard className="w-5 h-5" /> ログインして購入
@@ -251,142 +302,118 @@ function LiveViewInner() {
         </div>
       )}
 
-      {/* 映像エリア — プレミアムスタイル */}
-      <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
-        <div style={{ borderRadius: "24px", overflow: "hidden", width: "100%", height: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", position: "relative" }}>
-          {/* PPV 門番（チケット制でない有料配信のみ）*/}
+      {/* ═══ 映像エリア — 16:9 YouTube風 ═══ */}
+      <div style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
+        {/* 16:9 映像コンテナ */}
+        <div ref={videoContainerRef} style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", aspectRatio: "16/9", borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)", position: "relative", background: "#000", flexShrink: 0 }}>
+          {/* PPV 門番 */}
           {!stream.is_ticket_enabled && stream.price > 0 && !coinAllowed && (
-            <LivePaywallStripe
-              stream={stream}
-              user={user}
-              onAllowed={() => setCoinAllowed(true)}
-            />
+            <LivePaywallStripe stream={stream} user={user} onAllowed={() => setCoinAllowed(true)} />
           )}
           {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
             <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
           ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
             <iframe src={stream.youtube_url} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
           ) : stream.status === "live" && ticketChecked && (stream.price <= 0 || coinAllowed) ? (
-            <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} />
+            <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} isMuted={isMuted} onMutedChange={setIsMuted} />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-950">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {stream.status === "ended" ? "配信は終了しました" : "配信開始をお待ちください"}
               </p>
             </div>
           )}
+
+          {/* ミュート警告バナー */}
+          {isMuted && stream.status === "live" && (
+            <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.85)", border: "1px solid rgba(251,191,36,0.5)", borderRadius: 8, padding: "6px 14px" }}>
+              <VolumeX style={{ width: 14, height: 14, color: "#fbbf24" }} />
+              <span style={{ color: "white", fontSize: 12, fontWeight: 700 }}>ミュート中 —</span>
+              <button
+                onClick={() => setIsMuted(false)}
+                style={{ color: "#fbbf24", fontSize: 12, fontWeight: 900, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                タップして音声ON
+              </button>
+            </div>
+          )}
+
+          {/* コントロールバー */}
+          {stream.status === "live" && (
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)", padding: "20px 12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* 音量ボタン */}
+                <button
+                  onClick={() => setIsMuted(v => !v)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "white", cursor: "pointer" }}
+                >
+                  {isMuted
+                    ? <VolumeX style={{ width: 14, height: 14 }} />
+                    : <Volume2 style={{ width: 14, height: 14 }} />
+                  }
+                </button>
+                {/* 読み上げボタン */}
+                <button
+                  onClick={() => setSpeechEnabled(v => !v)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: speechEnabled ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.1)", border: speechEnabled ? "1px solid #fbbf24" : "1px solid rgba(255,255,255,0.2)", color: speechEnabled ? "#fbbf24" : "white", cursor: "pointer", fontSize: 14 }}
+                  title="コメント読み上げ"
+                >
+                  🔊
+                </button>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>
+                  {stream.channel_name}
+                </span>
+                {/* 全画面 */}
+                <button
+                  onClick={toggleFullscreen}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "white", cursor: "pointer" }}
+                >
+                  {isFullscreen ? <Minimize style={{ width: 14, height: 14 }} /> : <Maximize style={{ width: 14, height: 14 }} />}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* チャット・エールエリア */}
+        {stream.status === "live" && (
+          <div style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            {/* 投げ銭ランキング + チャット */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "4px 8px 0", display: "flex", gap: 8 }}>
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column-reverse", gap: 4 }}>
+                <LiveChatDisplay streamId={stream.id} />
+              </div>
+              <div style={{ width: 150, flexShrink: 0 }}>
+                <div style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 10, overflow: "hidden" }}>
+                  <div style={{ padding: "6px 10px", borderBottom: "1px solid rgba(251,191,36,0.15)", display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 12 }}>🏆</span>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "#fde68a" }}>投げ銭TOP</span>
+                  </div>
+                  <div style={{ padding: "4px 8px", maxHeight: 120, overflowY: "auto" }}>
+                    <YellRanking streamId={stream.id} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 入力・エールエリア */}
+            <div style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)", background: "linear-gradient(to top, rgba(0,0,0,0.95), transparent)", flexShrink: 0 }}>
+              <ViewerChatInput streamId={stream.id} user={user} />
+              <div style={{ padding: "4px 8px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* 戻るボタン */}
-      <div className="absolute top-3 left-3 z-30">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-black/60 backdrop-blur border border-white/20 text-white hover:bg-black/80 transition-all"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-        </button>
-      </div>
-
-      {/* LIVEバッジ */}
-      {stream.status === "live" && (
-        <div className="absolute top-3 left-14 flex items-center gap-2">
-          <Badge className="bg-red-500 text-white border-0 flex items-center gap-1.5 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-white" />
-            LIVE
-          </Badge>
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {stream.viewer_count || 0}
-          </Badge>
-        </div>
-      )}
-
-      {/* 読み上げトグル（右上） */}
-      {stream.status === "live" && (
-        <button
-          onClick={() => setSpeechEnabled((v) => !v)}
-          title={speechEnabled ? "読み上げON" : "読み上げOFF"}
-          style={{
-            position: "absolute",
-            top: 12,
-            right: activeCall ? 120 : 12,
-            zIndex: 30,
-            width: 38,
-            height: 38,
-            borderRadius: "50%",
-            background: speechEnabled ? "rgba(251,191,36,0.85)" : "rgba(0,0,0,0.5)",
-            border: speechEnabled ? "2px solid #fbbf24" : "1px solid rgba(255,255,255,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}
-        >
-          {speechEnabled
-            ? <Volume2 style={{ width: 18, height: 18, color: "#000" }} />
-            : <VolumeX style={{ width: 18, height: 18, color: "#fff" }} />
-          }
-        </button>
-      )}
 
       {/* エール通知ポップアップ */}
       {stream.status === "live" && (
         <YellNotificationPopup streamId={stream.id} speechEnabled={speechEnabled} />
       )}
-
       <TipOverlay tips={activeTips} />
-
-      {/* 配信ページでは「通話中」ボタンを表示しない（配信と通話は別機能） */}
-
-      {stream.status === "live" && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none">
-          {/* チャット背景 — Blur + 高級感 */}
-          <div className="pointer-events-auto absolute bottom-0 left-0 right-0 max-h-[50vh] md:max-h-1/2 flex flex-col"
-            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)", backdropFilter: "blur(12px)" }}>
-            {/* 投げ銭ランキング（右側に小さく） */}
-            <div className="absolute right-2 bottom-28 sm:bottom-32 w-44 sm:w-52 pointer-events-auto">
-              <div className="bg-black/70 border border-yellow-500/30 rounded-xl overflow-hidden backdrop-blur">
-                <div className="flex items-center gap-1.5 px-3 py-2 border-b border-yellow-500/20">
-                  <span className="text-sm">🏆</span>
-                  <p className="text-xs font-black text-yellow-300">投げ銭TOP</p>
-                </div>
-                <div className="px-2 py-2 max-h-40 overflow-y-auto">
-                  <YellRanking streamId={stream.id} />
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-1.5 sm:py-2 space-y-1 min-h-[60px] sm:min-h-[100px] max-h-[120px] sm:max-h-[180px]">
-              <LiveChatDisplay streamId={stream.id} />
-            </div>
-          </div>
-
-          {/* エール送信エリア — 親指エリア最適化 */}
-          <div className="pointer-events-auto absolute bottom-0 left-0 right-0"
-            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)", paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
-            {/* チャット入力 */}
-            <ViewerChatInput streamId={stream.id} user={user} />
-
-            {/* エールボタン — 親指エリア配置（下部両脇） */}
-            <div className="px-2 sm:px-3 pb-3 sm:pb-4 flex justify-between items-end gap-1 sm:gap-2">
-              <div className="flex gap-1 sm:gap-1.5 flex-wrap justify-start flex-1">
-                {/* ★ stream.id = DBで検証済みの正確なID。URLパラメータidではなくこちらを使用 */}
-                <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
-              </div>
-              <div className="flex items-center gap-1">
-                <VideoControls videoRef={null} showQuality={false} />
-                <button
-                  onClick={toggleFullscreen}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur hover:from-white/30 hover:to-white/10 flex items-center justify-center text-white transition-all shadow-lg"
-                >
-                  {isFullscreen ? <Minimize className="w-3 h-3 sm:w-4 sm:h-4" /> : <Maximize className="w-3 h-3 sm:w-4 sm:h-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>,
     document.body
   );
