@@ -128,21 +128,21 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
   return (
     <PaywallShell stream={stream} price={price}>
       {/* 残高表示 */}
-      <div className={`flex items-center gap-2 rounded-xl px-4 py-3 border ${
+      <div className={`flex items-start sm:items-center gap-2 rounded-xl px-3 sm:px-4 py-2 sm:py-3 border text-sm sm:text-base ${
         canAfford
           ? "bg-yellow-500/10 border-yellow-500/30"
           : "bg-red-500/10 border-red-500/30"
       }`}>
-        <Coins className={`w-5 h-5 shrink-0 ${canAfford ? "text-yellow-400" : "text-red-400"}`} />
-        <div>
-          <p className="text-xs text-zinc-400">あなたの残高</p>
-          <p className={`font-black text-lg ${canAfford ? "text-yellow-400" : "text-red-400"}`}>
+        <Coins className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5 sm:mt-0 ${canAfford ? "text-yellow-400" : "text-red-400"}`} />
+        <div className="flex-1">
+          <p className="text-[11px] sm:text-xs text-zinc-400">あなたの残高</p>
+          <p className={`font-black text-base sm:text-lg ${canAfford ? "text-yellow-400" : "text-red-400"}`}>
             {balance.toLocaleString()} コイン
           </p>
         </div>
         {!canAfford && (
-          <p className="ml-auto text-xs text-red-400 font-bold">
-            {(price - balance).toLocaleString()} コイン不足
+          <p className="text-[10px] sm:text-xs text-red-400 font-bold shrink-0">
+            {(price - balance).toLocaleString()} 不足
           </p>
         )}
       </div>
@@ -152,15 +152,15 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
         <Button
           onClick={handleConsume}
           disabled={consuming}
-          className="w-full h-12 bg-primary hover:bg-primary/90 text-black font-black text-base gap-2"
+          className="w-full h-11 sm:h-12 bg-primary hover:bg-primary/90 text-black font-black text-sm sm:text-base gap-2"
         >
-          {consuming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-          {price.toLocaleString()} コイン消費して視聴する
+          {consuming ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Zap className="w-4 h-4 sm:w-5 sm:h-5" />}
+          <span className="truncate">{price.toLocaleString()} コイン消費して視聴</span>
         </Button>
       ) : (
         /* コイン不足 → Stripe購入ボタン一覧 */
         <div className="space-y-2">
-          <p className="text-xs text-zinc-400 text-center font-semibold">コインをチャージして視聴する</p>
+          <p className="text-[11px] sm:text-xs text-zinc-400 text-center font-semibold">コインをチャージして視聴する</p>
           {COIN_PLANS.map((plan) => {
             const stripeLink = getStripeLink(plan.stripeKey);
             const isLoading = bypassingLink === plan.stripeKey;
@@ -175,21 +175,21 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
                   }
                 }}
                 disabled={!stripeLink || isLoading}
-                className={`w-full flex items-center justify-between gap-3 bg-card border border-border hover:border-primary/50 rounded-xl px-4 py-3 transition-all ${
+                className={`w-full flex items-center justify-between gap-2 sm:gap-3 bg-card border border-border hover:border-primary/50 rounded-xl px-3 sm:px-4 py-2 sm:py-3 transition-all text-sm ${
                   !stripeLink || isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-yellow-400" />
-                  <span className="font-black text-sm">{plan.coins.toLocaleString()} コイン</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 shrink-0" />
+                  <span className="font-black text-xs sm:text-sm truncate">{plan.coins.toLocaleString()} コイン</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-400">¥{plan.charge_amount.toLocaleString()}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  <span className="text-xs sm:text-sm text-zinc-400">¥{plan.charge_amount.toLocaleString()}</span>
                   {isLoading
-                    ? <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-primary" />
                     : stripeLink
-                    ? <ExternalLink className="w-4 h-4 text-primary" />
-                    : <span className="text-xs text-red-400 font-bold">未設定</span>
+                    ? <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                    : <span className="text-[10px] text-red-400 font-bold">未設定</span>
                   }
                 </div>
               </button>
@@ -207,8 +207,8 @@ export default function LivePaywallStripe({ stream, user, onAllowed }) {
 /** 共通シェル: 映像の上に重なるモーダル風レイアウト */
 function PaywallShell({ stream, price, children }) {
   return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl p-6 space-y-4 shadow-2xl">
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4">
+      <div className="w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl p-4 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
         <div className="text-center space-y-1">
           <div className="text-4xl mb-2">🔒</div>
