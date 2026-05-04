@@ -230,21 +230,12 @@ export default function ViewerStream({ stream, isMuted, onMutedChange }) {
       if (!destroyedRef.current) initPlayer(playbackUrl);
     }, 50);
 
-    // ★ 15秒ごとに生存確認 — ローディングが続いていたら自動リフレッシュ
-    const watchdog = setInterval(() => {
-      if (!destroyedRef.current && loading) {
-        console.warn("[ViewerStream] ⏰ Watchdog: still loading after 15s — DB refresh");
-        refreshUrlFromDB();
-      }
-    }, 15000);
-
     return () => {
       destroyedRef.current = true;
       clearTimeout(t);
-      clearInterval(watchdog);
       destroyHls();
     };
-  }, [playbackUrl]); // ← loading を依存配列から除去（無限ループ防止）
+  }, [playbackUrl]);
 
   // playbackUrl なし（DBにURLが入っていない）— ポーリング中
   if (!playbackUrl) {
