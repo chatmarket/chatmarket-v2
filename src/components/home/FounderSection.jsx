@@ -88,7 +88,7 @@ export default function FounderSection() {
           {/* CTAボタン */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-start pt-2">
             <a
-              href="https://note.com"
+              href="https://note.com/ono_chatmarket/"
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl font-black text-sm transition-all hover:scale-105 active:scale-95"
@@ -103,7 +103,7 @@ export default function FounderSection() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
             <a
-              href="https://note.com"
+              href="https://note.com/ono_chatmarket/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-80"
