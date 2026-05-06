@@ -16,6 +16,7 @@ import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream.jsx";
 import YellButtons from "../components/live/YellButtons.jsx";
 import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx";
+import InstantKanteiButton from "../components/live/InstantKanteiButton.jsx";
 import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
 import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
 import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx";
@@ -474,9 +475,15 @@ function LiveViewInner() {
                   <span style={{ fontSize: 8.5, fontWeight: 600 }}>ホーム</span>
                 </a>
 
-                {/* エールボタン群（中央） */}
-                <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                {/* エールボタン群 + 鑑定ボタン（中央） */}
+                <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
                   <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
+                  <InstantKanteiButton
+                    streamId={stream.id}
+                    user={user}
+                    channelId={stream.channel_id}
+                    channelOwnerEmail={channelOwnerEmail}
+                  />
                 </div>
 
                 {/* 右: 音量 + 読み上げ */}
