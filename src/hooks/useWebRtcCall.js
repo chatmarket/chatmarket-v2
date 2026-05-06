@@ -14,9 +14,14 @@ import { useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
+// Google STUN × 4 + Cloudflare STUN — マンションWi-Fi・キャリアNAT越えに対応
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
 ];
 
 export function useWebRtcCall({
@@ -47,8 +52,23 @@ export function useWebRtcCall({
       }
     };
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      iceTransportPolicy: 'all',        // host / srflx / relay すべて試みる
+      bundlePolicy: 'max-bundle',       // 音声・映像を1チャネルにまとめて効率化
+      rtcpMuxPolicy: 'require',
+    });
     pcRef.current = pc;
+
+    // ICE候補収集エラーをログに記録（ファイアウォール診断用）
+    pc.onicecandidateerror = (ev) => {
+      console.warn('[WebRTC] ICE candidate error:', ev.errorCode, ev.errorText, ev.url);
+    };
+
+    // ICE収集完了ログ
+    pc.onicegatheringstatechange = () => {
+      console.log('[WebRTC] ICE gathering state:', pc.iceGatheringState);
+    };
 
     // ── ローカルストリームのトラックを追加 ──
     localStream.getTracks().forEach(track => {
