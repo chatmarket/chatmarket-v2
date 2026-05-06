@@ -4,16 +4,29 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Plus, ThumbsUp, Tag, X, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, Plus, ThumbsUp, Tag, X, Send, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ja } from "date-fns/locale";
+
+// トリップ生成：パスワードをSHA-256でハッシュ化し先頭8文字を返す
+async function generateTrip(password) {
+  if (!password) return "";
+  const encoded = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return "◆" + hashHex.slice(0, 8).toUpperCase();
+}
 
 const TAGS = ["機材・環境", "OBS設定", "音声トラブル", "配信テクニック", "収益化", "雑談"];
 
 function PostCard({ post, user, onLike }) {
   const [expanded, setExpanded] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [replyTrip, setReplyTrip] = useState("");
+  const [replyHandle, setReplyHandle] = useState("");
+  const [showReplyTrip, setShowReplyTrip] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -23,8 +36,14 @@ function PostCard({ post, user, onLike }) {
     if (!replyText.trim()) return;
     if (!user) { base44.auth.redirectToLogin(); return; }
     setSubmitting(true);
+    const trip = replyTrip ? await generateTrip(replyTrip) : "";
+    const displayName = replyHandle.trim() || user.full_name || user.email;
+    // スレ主トリップと一致するか確認
+    const isOp = trip && trip === post.trip;
     const updated = [...replies, {
-      author: user.full_name || user.email,
+      author: displayName,
+      trip,
+      is_op: isOp,
       email: user.email,
       content: replyText.trim(),
       created_at: new Date().toISOString(),
@@ -32,9 +51,12 @@ function PostCard({ post, user, onLike }) {
     await base44.entities.BlogPost.update(post.id, { replies: updated });
     queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
     setReplyText("");
+    setReplyTrip("");
+    setReplyHandle("");
+    setShowReplyTrip(false);
     setSubmitting(false);
     setExpanded(true);
-    toast.success("返信しました");
+    toast.success(isOp ? "スレ主として返信しました ✓" : "返信しました");
   };
 
   return (
@@ -48,6 +70,12 @@ function PostCard({ post, user, onLike }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-sm text-white">{post.author_name || "匿名"}</span>
+              {post.trip && (
+                <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <ShieldCheck className="w-2.5 h-2.5" />{post.trip}
+                </span>
+              )}
+              <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">スレ主</span>
               {post.tag && (
                 <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Tag className="w-2.5 h-2.5" />{post.tag}
@@ -92,8 +120,21 @@ function PostCard({ post, user, onLike }) {
                 {(r.author || "?")[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold text-zinc-300">{r.author || "匿名"}</span>
+                  {r.trip && (
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                      r.is_op
+                        ? "text-amber-400 bg-amber-500/10 border border-amber-500/30"
+                        : "text-zinc-500 bg-zinc-800"
+                    }`}>
+                      {r.is_op && <ShieldCheck className="w-2.5 h-2.5" />}
+                      {r.trip}
+                    </span>
+                  )}
+                  {r.is_op && (
+                    <span className="text-[10px] font-bold bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">スレ主</span>
+                  )}
                   <span className="text-[10px] text-zinc-600">
                     {formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: ja })}
                   </span>
@@ -104,18 +145,45 @@ function PostCard({ post, user, onLike }) {
           ))}
 
           {/* Reply input */}
-          <div className="flex gap-2 pt-2 border-t border-zinc-800">
-            <Input
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder={user ? "返信を書く..." : "返信するにはログインが必要です"}
-              disabled={!user}
-              className="bg-zinc-800 border-0 text-sm h-8"
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleReply()}
-            />
-            <Button size="sm" disabled={submitting || !replyText.trim() || !user} onClick={handleReply} className="h-8 px-3">
-              <Send className="w-3.5 h-3.5" />
-            </Button>
+          <div className="pt-2 border-t border-zinc-800 space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder={user ? "返信を書く..." : "返信するにはログインが必要です"}
+                disabled={!user}
+                className="bg-zinc-800 border-0 text-sm h-8"
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleReply()}
+              />
+              <button
+                type="button"
+                onClick={() => setShowReplyTrip(v => !v)}
+                className={`text-[10px] px-2 rounded font-bold border transition-all shrink-0 ${showReplyTrip ? "border-amber-500/50 text-amber-400 bg-amber-500/10" : "border-zinc-700 text-zinc-500 hover:border-zinc-500"}`}
+                title="固定ハンドル"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+              </button>
+              <Button size="sm" disabled={submitting || !replyText.trim() || !user} onClick={handleReply} className="h-8 px-3">
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            {showReplyTrip && (
+              <div className="flex gap-2">
+                <Input
+                  value={replyHandle}
+                  onChange={e => setReplyHandle(e.target.value)}
+                  placeholder="ハンドル名（省略可）"
+                  className="bg-zinc-900 border border-zinc-700 text-xs h-7"
+                />
+                <Input
+                  value={replyTrip}
+                  onChange={e => setReplyTrip(e.target.value)}
+                  type="password"
+                  placeholder="トリップキー（パスワード）"
+                  className="bg-zinc-900 border border-zinc-700 text-xs h-7"
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -127,7 +195,7 @@ export default function Forum() {
   const [user, setUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedTag, setSelectedTag] = useState(null);
-  const [form, setForm] = useState({ title: "", content: "", tag: "" });
+  const [form, setForm] = useState({ title: "", content: "", tag: "", handle: "", tripKey: "" });
   const [submitting, setSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -149,18 +217,21 @@ export default function Forum() {
     if (!form.title.trim() || !form.content.trim()) return;
     if (!user) { base44.auth.redirectToLogin(); return; }
     setSubmitting(true);
+    const trip = form.tripKey ? await generateTrip(form.tripKey) : "";
+    const authorName = form.handle.trim() || user.full_name || user.email;
     await base44.entities.BlogPost.create({
       title: form.title.trim(),
       content: form.content.trim(),
       tag: form.tag || null,
-      author_name: user.full_name || user.email,
+      author_name: authorName,
       author_email: user.email,
+      trip,
       post_type: "forum",
       likes: 0,
       replies: [],
     });
     queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
-    setForm({ title: "", content: "", tag: "" });
+    setForm({ title: "", content: "", tag: "", handle: "", tripKey: "" });
     setShowForm(false);
     setSubmitting(false);
     toast.success("投稿しました！");
@@ -195,6 +266,22 @@ export default function Forum() {
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 space-y-4">
           <h2 className="font-bold text-white">新規投稿</h2>
+          <div className="flex gap-2">
+            <Input
+              value={form.handle}
+              onChange={(e) => setForm({ ...form, handle: e.target.value })}
+              placeholder="ハンドル名（省略時はアカウント名）"
+              className="bg-zinc-800 border-0 flex-1"
+              maxLength={30}
+            />
+            <Input
+              value={form.tripKey}
+              onChange={(e) => setForm({ ...form, tripKey: e.target.value })}
+              type="password"
+              placeholder="トリップキー（スレ主証明用パスワード）"
+              className="bg-zinc-800 border-0 flex-1"
+            />
+          </div>
           <Input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
