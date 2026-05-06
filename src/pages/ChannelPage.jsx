@@ -137,6 +137,31 @@ export default function ChannelPage() {
               </p>
             )}
 
+            {/* 占い師専用情報（stream_category === "fortune" の時だけ表示） */}
+            {channel.stream_category === "fortune" && (
+              <div className="mt-3 bg-gradient-to-br from-purple-500/10 to-indigo-500/5 border border-purple-500/25 rounded-xl p-3 space-y-2">
+                <p className="text-xs font-black text-purple-400 flex items-center gap-1.5">🔮 占い師プロフィール</p>
+                {channel.fortune_arts && (
+                  <div>
+                    <p className="text-[10px] text-purple-400/70 font-semibold uppercase tracking-widest">占術</p>
+                    <p className="text-sm text-foreground/90">{channel.fortune_arts}</p>
+                  </div>
+                )}
+                {channel.fortune_genres && (
+                  <div>
+                    <p className="text-[10px] text-purple-400/70 font-semibold uppercase tracking-widest">相談ジャンル</p>
+                    <p className="text-sm text-foreground/90">{channel.fortune_genres}</p>
+                  </div>
+                )}
+                {channel.fortune_experience && (
+                  <div>
+                    <p className="text-[10px] text-purple-400/70 font-semibold uppercase tracking-widest">実績・資格</p>
+                    <p className="text-sm text-foreground/90 whitespace-pre-wrap">{channel.fortune_experience}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Stats row */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
@@ -203,7 +228,7 @@ export default function ChannelPage() {
                   <>
                     <Button
                       size="sm"
-                      className="gap-2 w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-bold"
+                      className="gap-2 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black shadow-lg shadow-green-500/30 animate-pulse hover:animate-none transition-all scale-100 hover:scale-105"
                       onClick={async () => {
                         if (!currentUser) { base44.auth.redirectToLogin(); return; }
                         try {

@@ -68,6 +68,29 @@
       },
       "description": "\u696d\u7a2e\u30bf\u30b0\uff08\u6700\u592710\u500b\uff09"
     },
+    "stream_category": {
+      "type": "string",
+      "enum": [
+        "all",
+        "fortune",
+        "chat",
+        "other"
+      ],
+      "default": "chat",
+      "description": "\u914d\u4fe1\u30ab\u30c6\u30b4\u30ea\uff08\u5360\u3044 / \u96d1\u8ac7 / \u305d\u306e\u4ed6\uff09"
+    },
+    "fortune_arts": {
+      "type": "string",
+      "description": "\u3010\u5360\u3044\u3011\u5360\u8853\uff08\u30bf\u30ed\u30c3\u30c8\u30fb\u897f\u6d0b\u5360\u661f\u8853\u30fb\u56db\u67f1\u63a8\u547d\u306a\u3069\uff09"
+    },
+    "fortune_experience": {
+      "type": "string",
+      "description": "\u3010\u5360\u3044\u3011\u9451\u5b9a\u5b9f\u7e3e\u30fb\u8cc7\u683c\u30fb\u7d4c\u6b74"
+    },
+    "fortune_genres": {
+      "type": "string",
+      "description": "\u3010\u5360\u3044\u3011\u76f8\u8ac7\u30b8\u30e3\u30f3\u30eb\uff08\u604b\u611b\u30fb\u4ed5\u4e8b\u30fb\u4eba\u9593\u95a2\u4fc2\u306a\u3069\uff09"
+    },
     "call_price_15min": {
       "type": "number",
       "default": 0,
@@ -120,16 +143,16 @@
         "AUTO_ACCEPT"
       ],
       "default": "MANUAL",
-      "description": "\u53d7\u4fe1\u901a\u8a71\u306e\u81ea\u52d5\u627f\u8afe\u30e2\u30fc\u30c9\u3002AUTO_ACCEPT=\u5373\u5ea7\u306b\u63a5\u7d9a\u5408\u610f\u3092\u81ea\u52d5\u751f\u6210"
+      "description": "\u53d7\u4fe1\u901a\u8a71\u306e\u81ea\u52d5\u627f\u8afe\u30e2\u30fc\u30c9"
     },
     "default_call_duration_minutes": {
       "type": "number",
       "default": 0,
-      "description": "\u30c7\u30d5\u30a9\u30eb\u30c8\u901a\u8a71\u6642\u9593\uff08\u5206\uff09\u30020=\u30d7\u30e9\u30f3\u5225\u30c7\u30d5\u30a9\u30eb\u30c8\u4f7f\u7528\u3002\u30e9\u30a4\u30d0\u30fc\u304c\u30ab\u30b9\u30bf\u30de\u30a4\u30ba\u53ef\u80fd\uff08\u30df\u30ea\u30aa\u30cd\u30a2\u671f\u9593\u4e2d\u306f\u81ea\u52d5\u7684\u306b15\u5206\u306b\u306a\u308a\u307e\u3059\uff09"
+      "description": "\u30c7\u30d5\u30a9\u30eb\u30c8\u901a\u8a71\u6642\u9593\uff08\u5206\uff09"
     },
     "call_theme": {
       "type": "string",
-      "description": "\u901a\u8a71\u30c6\u30fc\u30de\u30fb\u5185\u5bb9\uff08\u4f55\u306e\u8a71\u3092\u3059\u308b\u306e\u304b\uff09"
+      "description": "\u901a\u8a71\u30c6\u30fc\u30de\u30fb\u5185\u5bb9"
     },
     "call_available_dates": {
       "type": "string",
@@ -140,7 +163,7 @@
       "items": {
         "type": "object"
       },
-      "description": "\u9031\u6b21\u901a\u8a71\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb [{date: YYYY-MM-DD, label: string, status: 'available'|'busy'|'closed'}]"
+      "description": "\u9031\u6b21\u901a\u8a71\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb"
     },
     "ng_words": {
       "type": "array",
@@ -178,7 +201,7 @@
     "campaign_allowed": {
       "type": "boolean",
       "default": false,
-      "description": "Admin\u304c\u8a31\u53ef\u3057\u305f\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u30d5\u30e9\u30b0\uff08\u6700\u4f4e\u4fa1\u683c\u5236\u9650\u3092\u514d\u9664\uff09"
+      "description": "Admin\u304c\u8a31\u53ef\u3057\u305f\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u30d5\u30e9\u30b0"
     },
     "campaign_note": {
       "type": "string",
@@ -187,17 +210,17 @@
     "monthly_revenue_coins": {
       "type": "number",
       "default": 0,
-      "description": "\u5f53\u6708\u306e\u7d2f\u8a08\u6d88\u8cbb\u30b3\u30a4\u30f3\u6570\uff08\u6708\u9593\u58f2\u4e0a\u96c6\u8a08\u7528\uff09"
+      "description": "\u5f53\u6708\u306e\u7d2f\u8a08\u6d88\u8cbb\u30b3\u30a4\u30f3\u6570"
     },
     "progressive_rate": {
       "type": "number",
       "default": 0.85,
-      "description": "\u73fe\u5728\u9069\u7528\u4e2d\u306e\u30d7\u30ed\u30b0\u30ec\u30c3\u30b7\u30d6\u9084\u5143\u7387\uff080.85\u301c0.95\uff09"
+      "description": "\u73fe\u5728\u9069\u7528\u4e2d\u306e\u30d7\u30ed\u30b0\u30ec\u30c3\u30b7\u30d6\u9084\u5143\u7387"
     },
     "live_min_per_15min": {
       "type": "number",
       "default": 150,
-      "description": "\u30e9\u30a4\u30d6\u914d\u4fe1\u306e\u6700\u4f4e\u30b3\u30a4\u30f3/15\u5206\uff08\u9084\u5143\u7387\u9023\u52d5\u30ac\u30fc\u30c9\uff09"
+      "description": "\u30e9\u30a4\u30d6\u914d\u4fe1\u306e\u6700\u4f4e\u30b3\u30a4\u30f3/15\u5206"
     },
     "rate_applied_month": {
       "type": "string",

@@ -52,6 +52,7 @@ export default function Home() {
   const [messageTarget, setMessageTarget] = useState(null);
   const [cfExpanded, setCfExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryTab, setCategoryTab] = useState("all");
   const [enabledSections, setEnabledSections] = useState({
     callWaiting: false,
     liveStreams: false,
@@ -151,10 +152,18 @@ export default function Home() {
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels-all"],
-    queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 30),
+    queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 50),
     enabled: true,
     staleTime: 600000,
     gcTime: 1200000,
+  });
+
+  // カテゴリフィルター済みチャンネル
+  const filteredChannels = channels.filter((ch) => {
+    if (categoryTab === "all") return true;
+    if (categoryTab === "fortune") return ch.stream_category === "fortune";
+    if (categoryTab === "chat") return ch.stream_category === "chat" || !ch.stream_category;
+    return true;
   });
 
   // ライブストリーム：本物 + ダミー統合
@@ -535,11 +544,36 @@ export default function Home() {
         </div>
       )}
 
-      {/* 1on1 待機中 */}
+      {/* カテゴリタブ */}
+      <div className="flex gap-2 border-b border-border/30 pb-0">
+        {[
+          { key: "all", label: "すべて", emoji: "🌐" },
+          { key: "fortune", label: "占い", emoji: "🔮" },
+          { key: "chat", label: "雑談", emoji: "💬" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setCategoryTab(tab.key)}
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all ${
+              categoryTab === tab.key
+                ? "border-primary text-foreground bg-primary/5"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-white/5"
+            }`}
+          >
+            <span>{tab.emoji}</span>
+            {tab.label}
+            {tab.key === "fortune" && (
+              <span className="text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full px-1.5 py-0.5 font-black">NEW</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* 1on1 待機中（カテゴリフィルター対応） */}
       <div ref={callRef}>
         {enabledSections.callWaiting && (
           <section className="px-0">
-            <CallWaitingRow user={user} />
+            <CallWaitingRow user={user} categoryFilter={categoryTab} filteredChannels={filteredChannels} />
           </section>
         )}
       </div>

@@ -43,6 +43,12 @@ export default function Settings() {
   const [channelTags, setChannelTags] = useState([]);
   const [channelCategoryId, setChannelCategoryId] = useState("");
   const [channelId, setChannelId] = useState(null);
+  const [streamCategory, setStreamCategory] = useState("chat");
+  const [fortuneFields, setFortuneFields] = useState({
+    fortune_arts: "",
+    fortune_experience: "",
+    fortune_genres: "",
+  });
   const [fanclubSettings, setFanclubSettings] = useState({
     fanclub_enabled: false,
     fanclub_monthly_price: 500,
@@ -140,6 +146,12 @@ export default function Settings() {
         setChannelTags(channels[0].tags || []);
         setChannelCategoryId(channels[0].category_id || "");
         setChannelId(channels[0].id);
+        setStreamCategory(channels[0].stream_category || "chat");
+        setFortuneFields({
+          fortune_arts: channels[0].fortune_arts || "",
+          fortune_experience: channels[0].fortune_experience || "",
+          fortune_genres: channels[0].fortune_genres || "",
+        });
         setFanclubSettings({
           fanclub_enabled: channels[0].fanclub_enabled || false,
           fanclub_monthly_price: channels[0].fanclub_monthly_price || 500,
@@ -680,10 +692,89 @@ export default function Settings() {
         </TabsContent>
         {/* Category/Tags Tab */}
         <TabsContent value="category" className="space-y-5">
+          {/* 配信カテゴリ選択 */}
+          <div className="bg-card rounded-xl p-5 border border-border/50 space-y-4">
+            <div>
+              <h3 className="font-bold mb-1">配信カテゴリ</h3>
+              <p className="text-xs text-muted-foreground">あなたの配信スタイルを選択してください。カテゴリによって表示が変わります。</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "fortune", label: "🔮 占い", desc: "鑑定・占術系" },
+                { value: "chat", label: "💬 雑談", desc: "トーク・交流系" },
+                { value: "other", label: "✨ その他", desc: "音楽・趣味など" },
+              ].map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setStreamCategory(cat.value)}
+                  className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-center ${
+                    streamCategory === cat.value
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border/50 bg-secondary/50 text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <span className="text-lg">{cat.label}</span>
+                  <span className="text-[10px]">{cat.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 占い専用フィールド（ふわっと表示） */}
+          <div
+            className={`overflow-hidden transition-all duration-500 ease-in-out ${
+              streamCategory === "fortune"
+                ? "max-h-[600px] opacity-100"
+                : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="bg-gradient-to-br from-purple-500/10 to-indigo-500/5 border border-purple-500/30 rounded-xl p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔮</span>
+                <div>
+                  <h3 className="font-bold text-purple-300">占い師専用プロフィール</h3>
+                  <p className="text-xs text-purple-300/70">入力した内容はプロフィールページに表示されます</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-purple-300">占術・得意な鑑定方法</Label>
+                  <Input
+                    value={fortuneFields.fortune_arts}
+                    onChange={(e) => setFortuneFields({ ...fortuneFields, fortune_arts: e.target.value })}
+                    placeholder="例：タロット・西洋占星術・四柱推命・数秘術"
+                    className="bg-purple-500/10 border-purple-500/30 focus:border-purple-500/60"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-purple-300">鑑定実績・資格・経歴</Label>
+                  <Textarea
+                    value={fortuneFields.fortune_experience}
+                    onChange={(e) => setFortuneFields({ ...fortuneFields, fortune_experience: e.target.value })}
+                    placeholder="例：鑑定歴10年・延べ3,000名以上・占い師協会認定"
+                    className="bg-purple-500/10 border-purple-500/30 focus:border-purple-500/60 resize-none"
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-purple-300">相談ジャンル</Label>
+                  <Input
+                    value={fortuneFields.fortune_genres}
+                    onChange={(e) => setFortuneFields({ ...fortuneFields, fortune_genres: e.target.value })}
+                    placeholder="例：恋愛・結婚・仕事・人間関係・転職"
+                    className="bg-purple-500/10 border-purple-500/30 focus:border-purple-500/60"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 業種タグ */}
           <div className="bg-card rounded-xl p-5 border border-border/50 space-y-4">
             <div>
               <h3 className="font-bold mb-1">業種・タグ設定</h3>
-              <p className="text-xs text-muted-foreground">PDFのマインドマップに基づく業種カテゴリからタグを選択してください。検索で見つけてもらいやすくなります。</p>
+              <p className="text-xs text-muted-foreground">検索で見つけてもらいやすくなります。</p>
             </div>
             <CategoryTagSelector value={channelTags} onChange={setChannelTags} />
           </div>
@@ -691,15 +782,21 @@ export default function Settings() {
             onClick={async () => {
               if (!channelId) { toast.error("チャンネルが見つかりません"); return; }
               setSaving(true);
-              await base44.entities.Channel.update(channelId, { tags: channelTags });
-              toast.success("業種タグを保存しました");
+              await base44.entities.Channel.update(channelId, {
+                tags: channelTags,
+                stream_category: streamCategory,
+                fortune_arts: fortuneFields.fortune_arts,
+                fortune_experience: fortuneFields.fortune_experience,
+                fortune_genres: fortuneFields.fortune_genres,
+              });
+              toast.success("カテゴリ・タグを保存しました");
               setSaving(false);
             }}
             disabled={saving}
             className="w-full gap-2 bg-primary hover:bg-primary/90"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            タグを保存する
+            保存する
           </Button>
         </TabsContent>
         {/* Call Settings Tab */}

@@ -17,7 +17,7 @@ const GHOST_CHANNELS = [
   { id: "ghost-6", name: "けんじ", call_theme: "筋トレ・ダイエット指導💪", call_available_dates: "朝6時〜・夜22時〜", avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", tags: ["筋トレ"] },
 ];
 
-export default function CallWaitingRow({ user }) {
+export default function CallWaitingRow({ user, categoryFilter = "all", filteredChannels = null }) {
   const navigate = useNavigate();
 
   const { data: allChannels = [] } = useQuery({
@@ -37,8 +37,23 @@ export default function CallWaitingRow({ user }) {
     navigate(`/chat/${channelId}`);
   };
 
-  // 実チャンネル + ゴーストを合わせて表示（ゴーストは末尾に追加）
-  const displayChannels = [...allChannels, ...GHOST_CHANNELS];
+  // カテゴリフィルター適用
+  const baseChannels = filteredChannels
+    ? allChannels.filter(ch => filteredChannels.some(fc => fc.id === ch.id))
+    : allChannels;
+
+  // 占いカテゴリのゴーストを追加（all/fortuneタブのみ）
+  const FORTUNE_GHOSTS = categoryFilter === "fortune" ? [
+    { id: "ghost-f1", name: "天宮みくり", call_theme: "タロット鑑定💎恋愛・仕事なんでも", call_available_dates: "毎晩20時〜", stream_category: "fortune", avatar_url: "https://images.unsplash.com/photo-1581091870627-7d2b3e8a2b97?w=200&h=200&fit=crop" },
+    { id: "ghost-f2", name: "蒼月れいか", call_theme: "西洋占星術🌙本格的なホロスコープ", call_available_dates: "土日・祝日終日", stream_category: "fortune", avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop" },
+  ] : [];
+
+  const ghostsToShow = categoryFilter === "fortune" ? FORTUNE_GHOSTS
+    : categoryFilter === "chat" ? GHOST_CHANNELS
+    : [...GHOST_CHANNELS, ...FORTUNE_GHOSTS];
+
+  // 実チャンネル + ゴーストを合わせて表示
+  const displayChannels = [...baseChannels, ...ghostsToShow];
   const half = Math.ceil(displayChannels.length / 2);
   const rows = [displayChannels.slice(0, half), displayChannels.slice(half)].filter(r => r.length > 0);
   const isOwnChannel = (channel) => myChannelIds.has(channel.id);
@@ -113,7 +128,11 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
   };
 
   return (
-    <div className="w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border bg-green-500/10 border-green-500/40">
+    <div className={`w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border ${
+      channel.stream_category === "fortune"
+        ? "bg-purple-500/10 border-purple-500/40"
+        : "bg-green-500/10 border-green-500/40"
+    }`}>
       {/* Avatar */}
       <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary flex items-center justify-center">
         {channel.avatar_url ? (
@@ -123,9 +142,11 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
             <span className="text-xl font-bold text-muted-foreground">{channel.name?.[0]}</span>
           </div>
         )}
-        <div className="absolute top-2 left-2 flex items-center gap-1 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/90">
+        <div className={`absolute top-2 left-2 flex items-center gap-1 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+          channel.stream_category === "fortune" ? "bg-purple-500/90" : "bg-green-500/90"
+        }`}>
           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-          今すぐ通話可能
+          {channel.stream_category === "fortune" ? "🔮 占い" : "今すぐ通話可能"}
         </div>
       </div>
 
