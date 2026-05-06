@@ -8,7 +8,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CalendarDays, Check, X, RefreshCw, Clock, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarDays, Check, X, RefreshCw, Clock, MessageCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_CONFIG = {
   pending:          { label: "リクエスト中", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30" },
@@ -228,6 +229,7 @@ function AppointmentCard({ appt, isOwner, onRefresh }) {
 
 export default function AppointmentDashboard({ channel, user }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const isOwner = user?.email === channel?.owner_email;
 
   const { data: appointments = [], refetch } = useQuery({
@@ -274,10 +276,16 @@ export default function AppointmentDashboard({ channel, user }) {
           <CalendarDays className="w-4 h-4 text-primary" />
           <p className="text-sm font-bold">{isOwner ? "届いた予約リクエスト" : "あなたの予約リクエスト"}</p>
           {pending.length > 0 && (
-            <span className="ml-auto text-[10px] font-black bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5">
+            <span className="ml-1 text-[10px] font-black bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5">
               {pending.length}件 対応待ち
             </span>
           )}
+          <button
+            onClick={() => navigate("/fortune-calendar")}
+            className="ml-auto flex items-center gap-1 text-[10px] font-bold text-primary hover:underline"
+          >
+            カレンダーで見る <ExternalLink className="w-3 h-3" />
+          </button>
         </div>
 
         {appointments.length === 0 ? (

@@ -82,6 +82,7 @@ import AffiliateAnalytics from '@/pages/AffiliateAnalytics';
 import CallProfilePage from '@/pages/CallProfilePage';
 import ChannelProfileEdit from '@/pages/ChannelProfileEdit';
 import PrismWebOverlay from '@/pages/PrismWebOverlay';
+import FortuneCalendar from '@/pages/FortuneCalendar';
 
 export default function App() {
 
@@ -165,6 +166,7 @@ export default function App() {
             <Route path="/call-profile/:channelId" element={<CallProfilePage />} />
             <Route path="/channel-profile-edit" element={<ChannelProfileEdit />} />
             <Route path="/prism-overlay/:streamId" element={<PrismWebOverlay />} />
+            <Route path="/fortune-calendar" element={<FortuneCalendar />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>

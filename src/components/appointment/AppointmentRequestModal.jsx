@@ -21,7 +21,11 @@ export default function AppointmentRequestModal({ channel, user, onClose, onSent
   const [time, setTime] = useState("10:00");
   const [duration, setDuration] = useState(30);
   const [message, setMessage] = useState("");
+  const [theme, setTheme] = useState("恋愛・結婚");
+  const [birthDate, setBirthDate] = useState("");
   const [sending, setSending] = useState(false);
+
+  const THEMES = ["恋愛・結婚", "仕事・転職", "人間関係", "健康", "金運・財運", "総合運", "その他"];
 
   // 今日以降の日付のみ選択可
   const today = new Date().toISOString().split("T")[0];
@@ -41,6 +45,8 @@ export default function AppointmentRequestModal({ channel, user, onClose, onSent
         requested_time: time,
         duration_minutes: duration,
         message: message.trim(),
+        consultation_theme: theme,
+        birth_date: birthDate || undefined,
         status: "pending",
       });
       toast.success("🗓️ リクエストを送信しました！ライバーからの返答をお待ちください");
@@ -127,6 +133,34 @@ export default function AppointmentRequestModal({ channel, user, onClose, onSent
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* 相談テーマ */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-muted-foreground">🔮 相談テーマ（鑑定カルテに自動連携）</label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {THEMES.map(t => (
+                <button key={t} type="button" onClick={() => setTheme(t)}
+                  className={`py-1.5 rounded-xl border text-[10px] font-bold transition-all ${
+                    theme === t ? "border-primary bg-primary/20 text-primary" : "border-border bg-secondary text-muted-foreground"
+                  }`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 生年月日（任意） */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+              生年月日（任意・鑑定に使用）
+            </label>
+            <input
+              type="date"
+              value={birthDate}
+              onChange={e => setBirthDate(e.target.value)}
+              className="w-full bg-secondary border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary/50"
+            />
           </div>
 
           {/* メッセージ */}
