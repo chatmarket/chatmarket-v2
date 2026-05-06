@@ -367,7 +367,7 @@ export default function PlanSelect() {
       )}
 
       <div className="space-y-3">
-         <h1 className="text-2xl font-black">プランを選択する</h1>
+         <h1 className="text-2xl font-black">視聴はコインで　ライバーはサブスクで還元率UP!（無料期間あり）</h1>
          <p className="text-muted-foreground text-sm">複数のプランを組み合わせてお申し込みいただけます。</p>
 
          {/* 目立つ説明バナー */}
