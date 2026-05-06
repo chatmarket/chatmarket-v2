@@ -1,0 +1,31 @@
+{
+  "name": "VideoReaction",
+  "type": "object",
+  "properties": {
+    "video_id": {
+      "type": "string",
+      "description": "\u52d5\u753bID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "like"
+      ],
+      "description": "\u30ea\u30a2\u30af\u30b7\u30e7\u30f3\u7a2e\u5225"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "video_id",
+    "user_email",
+    "type"
+  ]
+}

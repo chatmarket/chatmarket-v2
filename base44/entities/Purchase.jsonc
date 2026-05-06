@@ -1,0 +1,47 @@
+{
+  "name": "Purchase",
+  "type": "object",
+  "properties": {
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "livestream"
+      ],
+      "description": "\u8cfc\u5165\u30bf\u30a4\u30d7"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "\u52d5\u753b or \u30e9\u30a4\u30d6\u914d\u4fe1ID"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u8cfc\u5165\u91d1\u984d"
+    },
+    "buyer_email": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u8005\u30e1\u30fc\u30eb"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "refunded"
+      ],
+      "default": "completed",
+      "description": "\u8cfc\u5165\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "item_type",
+    "item_id",
+    "amount",
+    "buyer_email"
+  ]
+}

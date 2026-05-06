@@ -58,6 +58,11 @@
       "type": "string",
       "format": "date-time",
       "description": "\u4f7f\u7528\u65e5\u6642"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
     }
   },
   "required": [

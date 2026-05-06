@@ -1,0 +1,47 @@
+{
+  "name": "PlanSubscription",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "\u30d7\u30e9\u30f3ID\uff08basic, vod, ppv, call-anser\u7b49\uff09"
+    },
+    "plan_name": {
+      "type": "string",
+      "description": "\u30d7\u30e9\u30f3\u540d"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u52a0\u5165\u958b\u59cb\u65e5"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u89e3\u7d04\u65e5"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "user_email",
+    "plan_id",
+    "plan_name"
+  ]
+}

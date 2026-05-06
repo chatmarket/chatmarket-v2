@@ -34,6 +34,11 @@
     "terms_version": {
       "type": "string",
       "description": "\u540c\u610f\u6e08\u307f\u898f\u7d04\u30d0\u30fc\u30b8\u30e7\u30f3"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
     }
   },
   "required": [

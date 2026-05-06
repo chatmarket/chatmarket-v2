@@ -1,0 +1,47 @@
+{
+  "name": "WatchHistory",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u8996\u8074\u8005\u30e1\u30fc\u30eb"
+    },
+    "video_id": {
+      "type": "string",
+      "description": "\u52d5\u753bID"
+    },
+    "video_title": {
+      "type": "string",
+      "description": "\u52d5\u753b\u30bf\u30a4\u30c8\u30eb"
+    },
+    "video_thumbnail": {
+      "type": "string",
+      "description": "\u30b5\u30e0\u30cd\u30a4\u30ebURL"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "is_free": {
+      "type": "boolean",
+      "description": "\u7121\u6599\u52d5\u753b\u304b"
+    },
+    "price": {
+      "type": "number",
+      "description": "\u4fa1\u683c"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "user_email",
+    "video_id"
+  ]
+}

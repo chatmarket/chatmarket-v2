@@ -1,0 +1,27 @@
+{
+  "name": "ChannelFollow",
+  "type": "object",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u30d5\u30a9\u30ed\u30fc\u5148\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30d5\u30a9\u30ed\u30fc\u5148\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "follower_email": {
+      "type": "string",
+      "description": "\u30d5\u30a9\u30ed\u30ef\u30fc\u306e\u30e1\u30fc\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "channel_id",
+    "follower_email"
+  ]
+}

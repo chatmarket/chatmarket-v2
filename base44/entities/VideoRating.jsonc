@@ -1,0 +1,28 @@
+{
+  "name": "VideoRating",
+  "type": "object",
+  "properties": {
+    "video_id": {
+      "type": "string",
+      "description": "\u52d5\u753bID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    },
+    "score": {
+      "type": "number",
+      "description": "\u8a55\u4fa1\u30b9\u30b3\u30a2\uff081\u301c5\uff09"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "video_id",
+    "user_email",
+    "score"
+  ]
+}

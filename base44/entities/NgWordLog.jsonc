@@ -31,6 +31,11 @@
     "user_email": {
       "type": "string",
       "description": "\u767a\u8a00\u8005\u30e1\u30fc\u30eb\uff08\u4efb\u610f\uff09"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
     }
   },
   "required": [

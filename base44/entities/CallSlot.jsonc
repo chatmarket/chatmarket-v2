@@ -1,0 +1,72 @@
+{
+  "name": "CallSlot",
+  "type": "object",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u65e5\u4ed8 (YYYY-MM-DD)"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "\u958b\u59cb\u6642\u523b (HH:mm)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "\u7d42\u4e86\u6642\u523b (HH:mm)"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 30,
+      "description": "\u901a\u8a71\u6642\u9593\uff08\u5206\uff09"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "\u6599\u91d1\uff08\u5186\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "reserved",
+        "cancelled"
+      ],
+      "default": "open",
+      "description": "\u67a0\u306e\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "reserved_by_email": {
+      "type": "string",
+      "description": "\u4e88\u7d04\u8005\u30e1\u30fc\u30eb"
+    },
+    "reservation_id": {
+      "type": "string",
+      "description": "\u4e88\u7d04ID"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "channel_id",
+    "owner_email",
+    "date",
+    "start_time",
+    "duration_minutes",
+    "price"
+  ]
+}
