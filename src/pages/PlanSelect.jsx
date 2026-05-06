@@ -7,6 +7,7 @@ import { Check, Video, Radio, PhoneCall, Play, Heart, Phone, ExternalLink, Shopp
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getStripeLinkByPlan } from "@/lib/stripeLinks";
 import { toast } from "sonner";
+import ProgressiveIncentiveChart from "@/components/plan/ProgressiveIncentiveChart";
 
 // 単体プランの定義
 const PLANS = [
@@ -638,6 +639,9 @@ export default function PlanSelect() {
           })}
         </Accordion>
       </div>
+
+      {/* プログレッシブ・インセンティブ グラフ解説 */}
+      <ProgressiveIncentiveChart />
 
       {/* 合計・申し込みバー */}
       {selected.size > 0 && (
