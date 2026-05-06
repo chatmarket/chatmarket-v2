@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useSmartCameraSelection } from "@/hooks/useSmartCameraSelection";
-import { useIvsStagesCall } from "@/hooks/useIvsStagesCall";
+import { useWebRtcCall } from "@/hooks/useWebRtcCall";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -421,28 +421,13 @@ export default function VideoCallPage() {
     const isCaller = user.email === callerId;
     const isCallee = user.email === calleeId;
 
-    // Caller のみ: accepted → IVS Stages token 生成 → active に遷移
+    // Caller のみ: accepted → そのままWebRTCで active に遷移（バックエンド不要）
     if (isCaller && call.status === 'accepted' && !countdownStartedRef.current) {
       countdownStartedRef.current = true;
-      console.log('[VideoCallPage] ⚡ CALLER: accepted detected, generating IVS tokens...');
-      
-      base44.functions.invoke('createIvsStagesSession', { call_id: call.id })
-        .then((res) => {
-          console.log('[VideoCallPage] ✅ IVS tokens generated:', res.data);
-          return base44.entities.VideoCall.update(call.id, { status: 'active' });
-        })
-        .then(() => {
-          console.log('[VideoCallPage] ✅ Call status updated to active, refetching...');
-          return refetchCall();
-        })
-        .catch((err) => {
-          console.error('[VideoCallPage] ❌ IVS token gen failed:', err.message);
-          // フォールバック: トークン生成失敗でも active に進む
-          console.log('[VideoCallPage] 🔄 Fallback: proceeding to active anyway');
-          base44.entities.VideoCall.update(call.id, { status: 'active' })
-            .then(() => refetchCall())
-            .catch((e) => console.error('[VideoCallPage] ❌ Fallback update failed:', e));
-        });
+      console.log('[VideoCallPage] ⚡ CALLER: accepted → active (WebRTC direct)');
+      base44.entities.VideoCall.update(call.id, { status: 'active' })
+        .then(() => refetchCall())
+        .catch((e) => console.error('[VideoCallPage] ❌ active update failed:', e));
     }
 
     // Active になったら 3秒カウントダウン表示
@@ -1005,17 +990,17 @@ export default function VideoCallPage() {
   // 残高不足でのチャージ誘導モーダル
   const [showLowBalanceModal, setShowLowBalanceModal] = useState(false);
 
-  // ---- IVS Stages 接続ステータス ----
+  // ---- WebRTC 接続ステータス ----
   const [ivsConnectStatus, setIvsConnectStatus] = useState(null); // null | 'reconnecting' | 'failed'
 
-  // ---- IVS Stages 接続（1対1通話） ----
-  useIvsStagesCall({
+  // ---- WebRTC P2P 接続（1対1通話 / ブラウザ直接） ----
+  useWebRtcCall({
     call,
     localStream,
     remoteVideoRef,
     user,
     enabled: call?.status === 'active' && !!localStream && !!user,
-    onReconnecting: (attempt) => setIvsConnectStatus('reconnecting'),
+    onReconnecting: () => setIvsConnectStatus('reconnecting'),
     onReconnected: () => setIvsConnectStatus(null),
     onReconnectFailed: () => setIvsConnectStatus('failed'),
   });
