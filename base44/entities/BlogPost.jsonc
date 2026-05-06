@@ -43,6 +43,10 @@
       "type": "string",
       "description": "\u8457\u8005\u540d"
     },
+    "author_email": {
+      "type": "string",
+      "description": "\u8457\u8005\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9"
+    },
     "published_at": {
       "type": "string",
       "format": "date-time",
@@ -62,6 +66,32 @@
       ],
       "default": "\u672a\u5bfe\u5fdc",
       "description": "\u30e9\u30a4\u30d0\u30fc\u7533\u3057\u8fbc\u307f\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "post_type": {
+      "type": "string",
+      "enum": [
+        "blog",
+        "forum",
+        "recruit"
+      ],
+      "default": "blog",
+      "description": "\u6295\u7a3f\u7a2e\u5225\uff08blog=\u30d6\u30ed\u30b0\u8a18\u4e8b / forum=\u63b2\u793a\u677f\u30b9\u30ec\u30c3\u30c9 / recruit=\u30e9\u30a4\u30d0\u30fc\u7533\u3057\u8fbc\u307f\uff09"
+    },
+    "tag": {
+      "type": "string",
+      "description": "\u63b2\u793a\u677f\u30bf\u30b0\uff08\u6a5f\u6750\u30fb\u74b0\u5883\u3001OBS\u8a2d\u5b9a\u306a\u3069\uff09"
+    },
+    "likes": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3044\u3044\u306d\u6570"
+    },
+    "replies": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\u8fd4\u4fe1\u30ea\u30b9\u30c8\uff08{author, email, content, created_at}\uff09"
     }
   },
   "required": [
