@@ -111,14 +111,16 @@ export default function QuickChargeModal({ onClose, onSuccess, neededCoins = 15 
                 >
                   {plan.popular && (
                     <span style={{
-                      position: "absolute", top: 0, right: 0,
-                      background: "linear-gradient(135deg, #10b981, #059669)",
-                      color: "white", fontSize: 9, fontWeight: 900,
-                      padding: "3px 10px",
-                      borderRadius: "0 16px 0 8px",
+                      position: "absolute", top: -1, right: -1,
+                      background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                      color: "white", fontSize: 10, fontWeight: 900,
+                      padding: "4px 12px",
+                      borderRadius: "0 16px 0 12px",
                       display: "flex", alignItems: "center", gap: 3,
+                      boxShadow: "0 2px 8px rgba(245,158,11,0.5)",
+                      letterSpacing: "0.02em",
                     }}>
-                      <Sparkles style={{ width: 8, height: 8 }} /> おすすめ
+                      <Sparkles style={{ width: 9, height: 9 }} /> 一番人気！お得
                     </span>
                   )}
                   <div style={{ textAlign: "left" }}>
