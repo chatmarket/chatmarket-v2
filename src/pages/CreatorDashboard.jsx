@@ -23,6 +23,7 @@ import ThanksLetterCard from "../components/dashboard/ThanksLetterCard";
 import PriceUpNudgeCard from "../components/dashboard/PriceUpNudgeCard";
 import WishlistBoard from "../components/dashboard/WishlistBoard";
 import FortuneKartePanel from "../components/fortune/FortuneKartePanel";
+import KanteiPaymentNotifier from "../components/fortune/KanteiPaymentNotifier";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -123,6 +124,10 @@ export default function CreatorDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* 🔮 占い師向け決済完了フローティング通知（ダッシュボード常駐） */}
+      {channel?.stream_category === "fortune" && channel?.id && (
+        <KanteiPaymentNotifier channelId={channel.id} />
+      )}
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>

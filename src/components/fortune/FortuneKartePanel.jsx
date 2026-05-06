@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { BookOpen, Plus, Search, ChevronDown, ChevronUp, Edit3, Trash2, X, Save, Star, RefreshCw, Tag, Calendar, User } from "lucide-react";
+import { BookOpen, Plus, Search, ChevronDown, ChevronUp, Edit3, Trash2, X, Save, Star, RefreshCw, Tag, Calendar, User, Coins, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,12 +38,25 @@ const EMPTY_FORM = {
 export default function FortuneKartePanel({ channel, user }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  // リアルタイム受取履歴（購読で即時追加）
+  const [realtimePayments, setRealtimePayments] = useState([]);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [searchQ, setSearchQ] = useState("");
   const [filterTheme, setFilterTheme] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
   const [tagInput, setTagInput] = useState("");
+
+  // SuperChat リアルタイム購読（このチャンネル宛のみ）
+  useEffect(() => {
+    if (!channel?.id) return;
+    const unsub = base44.entities.SuperChat.subscribe((event) => {
+      if (event.type !== "create") return;
+      if (event.data?.channel_id !== channel.id) return;
+      setRealtimePayments((prev) => [{ ...event.data, id: event.id, _new: true }, ...prev].slice(0, 50));
+    });
+    return unsub;
+  }, [channel?.id]);
 
   const { data: kartes = [], isLoading } = useQuery({
     queryKey: ["fortune-kartes", channel?.id],
@@ -135,6 +148,20 @@ export default function FortuneKartePanel({ channel, user }) {
   const repeatClients = kartes.filter((k) => k.is_repeat_client);
   const totalKartes = kartes.length;
 
+  // DB から過去のコイン受取履歴（このチャンネル）
+  const { data: pastPayments = [] } = useQuery({
+    queryKey: ["fortune-payments", channel?.id],
+    queryFn: () => base44.entities.SuperChat.filter({ channel_id: channel.id }, "-created_date", 30),
+    enabled: !!channel?.id,
+    refetchInterval: 30000,
+  });
+
+  // realtime + DB をマージ（重複除去）
+  const allPayments = [
+    ...realtimePayments,
+    ...pastPayments.filter((p) => !realtimePayments.some((r) => r.id === p.id)),
+  ].slice(0, 30);
+
   return (
     <div className="space-y-4">
       {/* ヘッダー */}
@@ -157,6 +184,47 @@ export default function FortuneKartePanel({ channel, user }) {
         <Button onClick={openNew} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white">
           <Plus className="w-4 h-4" /> 新規カルテ
         </Button>
+      </div>
+
+      {/* ═══ コイン受取履歴（リアルタイム＋DB） ═══ */}
+      <div className="rounded-xl overflow-hidden"
+        style={{ background: "rgba(251,191,36,0.04)", border: "1px solid rgba(251,191,36,0.2)" }}>
+        <div className="flex items-center gap-2 px-4 py-3 border-b"
+          style={{ borderColor: "rgba(251,191,36,0.15)", background: "rgba(251,191,36,0.07)" }}>
+          <Coins className="w-4 h-4 text-yellow-400" />
+          <p className="text-xs font-black text-yellow-400 uppercase tracking-widest">コイン受取履歴</p>
+          {realtimePayments.length > 0 && (
+            <span className="flex items-center gap-1 text-[10px] font-black bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full ml-auto animate-pulse">
+              <Zap className="w-2.5 h-2.5" /> LIVE更新中
+            </span>
+          )}
+        </div>
+        {allPayments.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">受取履歴がまだありません</p>
+        ) : (
+          <div className="divide-y" style={{ divideColor: "rgba(251,191,36,0.08)" }}>
+            {allPayments.slice(0, 10).map((p, i) => (
+              <div key={p.id || i}
+                className="flex items-center gap-3 px-4 py-2.5"
+                style={p._new ? { background: "rgba(16,185,129,0.08)", transition: "background 1s" } : {}}>
+                {/* 新着インジケーター */}
+                {p._new && <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 animate-pulse" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-white truncate">
+                    {p.user_name || "匿名"}{p.message ? <span className="text-muted-foreground font-normal"> — {p.message}</span> : ""}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {p.created_date ? format(new Date(p.created_date), "M/d HH:mm", { locale: ja }) : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Coins className="w-3.5 h-3.5 text-yellow-400" />
+                  <span className="font-black text-yellow-400 text-sm">{p.amount}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 新規 / 編集フォーム */}

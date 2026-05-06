@@ -12,6 +12,7 @@ import MicLevelMeter from "./MicLevelMeter";
 import LiveChatDisplay from "./LiveChatDisplay";
 import LiveYellDisplay from "./LiveYellDisplay";
 import YellRanking from "./YellRanking";
+import KanteiPaymentNotifier from "../fortune/KanteiPaymentNotifier";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
@@ -434,6 +435,9 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
            </div>
          )}
        </div>
+
+      {/* 🔮 占い師向け決済完了トースト（channel_id があれば自動表示） */}
+      <KanteiPaymentNotifier channelId={streamId} />
 
       {/* 配信終了確認モーダル */}
       {showEndConfirm && (
