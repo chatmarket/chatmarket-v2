@@ -22,6 +22,7 @@ import ArchiveAssetCard from "../components/dashboard/ArchiveAssetCard";
 import ThanksLetterCard from "../components/dashboard/ThanksLetterCard";
 import PriceUpNudgeCard from "../components/dashboard/PriceUpNudgeCard";
 import WishlistBoard from "../components/dashboard/WishlistBoard";
+import FortuneKartePanel from "../components/fortune/FortuneKartePanel";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -164,6 +165,14 @@ export default function CreatorDashboard() {
 
           {/* 価格アップの背中押し通知 */}
           <PriceUpNudgeCard videoCalls={videoCalls} liveStreams={liveStreams} />
+
+          {/* 🔮 鑑定カルテ（占いカテゴリのみ表示） */}
+          {channel?.stream_category === "fortune" && (
+            <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-950/30 to-indigo-950/20 p-5"
+              style={{ boxShadow: "0 0 30px rgba(167,139,250,0.06)" }}>
+              <FortuneKartePanel channel={channel} user={user} />
+            </div>
+          )}
 
           {/* ファンのウィッシュリスト掲示板 */}
           {channel && (

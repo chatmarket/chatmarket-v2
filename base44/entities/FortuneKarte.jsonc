@@ -1,0 +1,142 @@
+{
+  "name": "FortuneKarte",
+  "type": "object",
+  "description": "\u5360\u3044\u5e2b\u306e\u9451\u5b9a\u30ab\u30eb\u30c6\uff08\u76f8\u8ac7\u5185\u5bb9\u30fb\u9451\u5b9a\u7d50\u679c\u306e\u8a18\u9332\uff09",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_owner_email": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u30e1\u30fc\u30eb"
+    },
+    "client_email": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u306e\u30e1\u30fc\u30eb"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u306e\u540d\u524d"
+    },
+    "session_type": {
+      "type": "string",
+      "enum": [
+        "video_call",
+        "live_chat",
+        "manual"
+      ],
+      "default": "manual",
+      "description": "\u30bb\u30c3\u30b7\u30e7\u30f3\u7a2e\u5225\uff08\u30d3\u30c7\u30aa\u901a\u8a71/\u30e9\u30a4\u30d6\u30c1\u30e3\u30c3\u30c8/\u624b\u5165\u529b\uff09"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u3059\u308b\u30bb\u30c3\u30b7\u30e7\u30f3ID\uff08VideoCall.id / LiveStream.id\uff09"
+    },
+    "consultation_theme": {
+      "type": "string",
+      "enum": [
+        "\u604b\u611b\u30fb\u7d50\u5a5a",
+        "\u4ed5\u4e8b\u30fb\u8ee2\u8077",
+        "\u4eba\u9593\u95a2\u4fc2",
+        "\u5065\u5eb7",
+        "\u91d1\u904b\u30fb\u8ca1\u904b",
+        "\u7dcf\u5408\u904b",
+        "\u305d\u306e\u4ed6"
+      ],
+      "default": "\u7dcf\u5408\u904b",
+      "description": "\u76f8\u8ac7\u30c6\u30fc\u30de"
+    },
+    "birth_date": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u306e\u751f\u5e74\u6708\u65e5\uff08\u4efb\u610f\uff09"
+    },
+    "consultation_content": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u5185\u5bb9\uff08\u30e9\u30a4\u30d0\u30fc\u30e1\u30e2\uff09"
+    },
+    "reading_result": {
+      "type": "string",
+      "description": "\u9451\u5b9a\u7d50\u679c\u30fb\u30a2\u30c9\u30d0\u30a4\u30b9\uff08\u30e9\u30a4\u30d0\u30fc\u30e1\u30e2\uff09"
+    },
+    "fortune_method": {
+      "type": "string",
+      "description": "\u4f7f\u7528\u3057\u305f\u5360\u8853\uff08\u30bf\u30ed\u30c3\u30c8\u30fb\u897f\u6d0b\u5360\u661f\u8853\u30fb\u56db\u67f1\u63a8\u547d\u306a\u3069\uff09"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u30bf\u30b0\uff08\u4f8b: \u5fa9\u7e01, \u8ee2\u8077, \u7247\u60f3\u3044\uff09"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u6b21\u56de\u30d5\u30a9\u30ed\u30fc\u30a2\u30c3\u30d7\u4e88\u5b9a\u65e5"
+    },
+    "is_repeat_client": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30ea\u30d4\u30fc\u30bf\u30fc\u5224\u5b9a\u30d5\u30e9\u30b0"
+    },
+    "repeat_count": {
+      "type": "number",
+      "default": 1,
+      "description": "\u3053\u306e\u76f8\u8ac7\u8005\u306e\u901a\u7b97\u76f8\u8ac7\u56de\u6570"
+    },
+    "private_memo": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d0\u30fc\u5c02\u7528\u30d7\u30e9\u30a4\u30d9\u30fc\u30c8\u30e1\u30e2\uff08\u76f8\u8ac7\u8005\u306b\u306f\u975e\u516c\u958b\uff09"
+    },
+    "rating": {
+      "type": "number",
+      "description": "\u81ea\u5df1\u8a55\u4fa1\uff081\u301c5\uff09"
+    }
+  },
+  "required": [
+    "channel_id",
+    "channel_owner_email"
+  ],
+  "rls": {
+    "create": {
+      "data.channel_owner_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.channel_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.channel_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.channel_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
