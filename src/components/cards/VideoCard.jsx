@@ -28,10 +28,10 @@ export default function VideoCard({ video, size = "default" }) {
       <div className="relative overflow-hidden rounded-lg sm:rounded-xl aspect-video bg-secondary">
         {video.thumbnail_url ? (
           <img
-                src={video.thumbnail_url}
-                alt={video.title}
-                loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            src={video.thumbnail_url}
+            alt={video.title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -39,15 +39,25 @@ export default function VideoCard({ video, size = "default" }) {
           </div>
         )}
 
-        {/* SAMPLE watermark */}
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <span className="text-white/30 text-3xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
-            SAMPLE
-          </span>
+        {/* ホバー時: シマーライン（動画が動く感） */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)",
+            transform: "translateX(-100%)",
+            animation: "shimmerSlide 1.2s ease-in-out forwards",
+          }} />
         </div>
 
         {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* ホバー時: 再生ボタン */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
+          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.95)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#000"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+        </div>
 
         {/* Duration badge */}
         {video.duration && (
@@ -68,6 +78,8 @@ export default function VideoCard({ video, size = "default" }) {
           </Badge>
         ) : null}
       </div>
+
+      <style>{`@keyframes shimmerSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }`}</style>
 
       <div className="mt-2 space-y-1">
         <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${isLarge ? "text-base" : "text-xs sm:text-sm"}`}>

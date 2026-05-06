@@ -314,16 +314,18 @@ export default function Home() {
         </Link>
       )}
 
-      {/* Hero — ブランドメッセージ刷新 */}
+      {/* Hero — メッシュグラデーション体験型 */}
       <section className="relative overflow-hidden rounded-2xl text-center" style={{
         background: "linear-gradient(160deg, #0d1117 0%, #0a1628 40%, #0d1a12 80%, #0a0e18 100%)",
         border: "1px solid rgba(0,255,157,0.15)",
+        minHeight: 480,
       }}>
-        {/* 光のオーロラ背景 */}
+        {/* メッシュグラデーション背景 */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-10" style={{ background: "radial-gradient(ellipse, #00ff9d 0%, transparent 70%)", filter: "blur(40px)" }} />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full opacity-8" style={{ background: "radial-gradient(ellipse, #60a5fa 0%, transparent 70%)", filter: "blur(40px)" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(0,255,157,1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,157,1) 1px,transparent 1px)", backgroundSize: "50px 50px" }} />
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-20" style={{ background: "radial-gradient(ellipse, #00ff9d 0%, transparent 70%)", filter: "blur(60px)", animation: "meshFloat1 8s ease-in-out infinite" }} />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full opacity-15" style={{ background: "radial-gradient(ellipse, #7c3aed 0%, transparent 70%)", filter: "blur(50px)", animation: "meshFloat2 10s ease-in-out infinite" }} />
+          <div className="absolute top-1/3 right-1/3 w-64 h-64 rounded-full opacity-12" style={{ background: "radial-gradient(ellipse, #0ea5e9 0%, transparent 70%)", filter: "blur(45px)", animation: "meshFloat3 7s ease-in-out infinite" }} />
+          <div className="absolute bottom-1/3 left-1/5 w-72 h-72 rounded-full opacity-10" style={{ background: "radial-gradient(ellipse, #f59e0b 0%, transparent 70%)", filter: "blur(55px)", animation: "meshFloat1 12s ease-in-out infinite reverse" }} />
         </div>
 
         <div className="relative z-10 px-5 py-12 sm:py-16 md:py-20 space-y-8">
@@ -349,25 +351,28 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 理念テキスト */}
-          <div className="mx-auto max-w-xl space-y-3">
-            <div className="rounded-2xl px-6 py-5 text-left space-y-3"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
-              <p className="text-sm sm:text-base leading-relaxed text-white/80">
-                「<span className="text-white font-bold">私なんかが稼げるの？</span>」そう思う必要はありません。
-              </p>
-              <p className="text-xs sm:text-sm leading-relaxed text-white/60">
-                あなたが「普通」だと思っている経験や言葉は、世界のどこかで誰かを救う特別な価値になります。
-                ChatMarketは、安売りではなく、<span className="text-primary font-semibold">あなたの価値を正しく証明し、独り立ちするための場所</span>です。
-              </p>
-              {/* 画質×価値の補足 */}
-              <div className="flex items-start gap-2 pt-1 border-t border-white/5">
-                <span className="text-[10px] text-primary/70 font-mono leading-relaxed mt-0.5">▸</span>
-                <p className="text-[11px] text-white/40 leading-relaxed">
-                  あなたのスキルに、ふさわしい価格設定を。SD 15円〜 / HD 55円〜 / FHD 150円〜 と、成長に合わせて単価をランクアップできます。
-                </p>
-              </div>
-            </div>
+          {/* アイコンのみのカテゴリ表現（説明ボックス廃止） */}
+          <div className="flex items-center justify-center gap-4 sm:gap-8">
+            {[
+              { emoji: "🔮", label: "占い", color: "#a78bfa" },
+              { emoji: "📚", label: "教育", color: "#60a5fa" },
+              { emoji: "💬", label: "雑談", color: "#00ff9d" },
+              { emoji: "🎵", label: "音楽", color: "#f59e0b" },
+              { emoji: "🎮", label: "ゲーム", color: "#ef4444" },
+            ].map((cat) => (
+              <button
+                key={cat.label}
+                onClick={() => navigate(`/search?q=${encodeURIComponent(cat.label)}`)}
+                className="flex flex-col items-center gap-1.5 group transition-all hover:scale-110 active:scale-95"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all group-hover:shadow-lg"
+                  style={{ background: `${cat.color}18`, border: `1px solid ${cat.color}40`, boxShadow: `0 0 0 0 ${cat.color}40` }}
+                >
+                  {cat.emoji}
+                </div>
+                <span className="text-[10px] sm:text-xs font-bold" style={{ color: cat.color }}>{cat.label}</span>
+              </button>
+            ))}
           </div>
 
           {/* 検索フォーム */}
@@ -397,45 +402,40 @@ export default function Home() {
             <Link to="/recruit" className="w-full sm:w-auto">
               <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-black text-sm text-black transition-all hover:scale-105 active:scale-95"
                 style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 25px rgba(0,255,157,0.4)" }}>
-                <Radio className="w-4 h-4" /> 自分の価値を証明する（ライバー登録）
+                <Radio className="w-4 h-4" /> ライバー登録
               </button>
             </Link>
             <Link to="/search" className="w-full sm:w-auto">
               <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm text-white border transition-all hover:border-primary/60 hover:bg-primary/5"
                 style={{ borderColor: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)" }}>
-                <Play className="w-4 h-4" /> 宝物を見つける（視聴を始める）
+                <Play className="w-4 h-4" /> 視聴を始める
+              </button>
+            </Link>
+            <Link to="/plan-select" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-80"
+                style={{ borderColor: "rgba(0,212,255,0.3)", background: "rgba(0,212,255,0.08)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.3)" }}>
+                もっと知る →
               </button>
             </Link>
           </div>
 
-          {/* 即登録ステップ（3タップ導線） */}
-          {!user && (
-            <div className="mx-auto max-w-sm">
-              <p className="text-[10px] text-white/25 mb-2 text-center tracking-widest uppercase">— 登録は30秒 —</p>
-              <div className="flex items-center justify-center gap-1 text-[10px] text-white/40">
-                <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center font-black shrink-0">1</span>
-                <span>メールアドレスで登録</span>
-                <span className="mx-1 text-white/20">›</span>
-                <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center font-black shrink-0">2</span>
-                <span>プランを選ぶ</span>
-                <span className="mx-1 text-white/20">›</span>
-                <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center font-black shrink-0">3</span>
-                <span>今すぐ配信</span>
-              </div>
-            </div>
-          )}
-
         </div>
       </section>
 
-      {/* PPV料金表 */}
-      <div className="px-0">
-        <PpvPricingTable />
-      </div>
+      <style>{`
+        @keyframes meshFloat1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-20px) scale(1.1); } }
+        @keyframes meshFloat2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-20px,30px) scale(1.08); } }
+        @keyframes meshFloat3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(15px,25px) scale(1.05); } }
+      `}</style>
 
-      {/* 55円革命バナー */}
-      <div className="px-0">
-        <QualityRevolutionBanner />
+      {/* PPV料金表 + 55円革命 → 「もっと知る」ボタン1つに集約 */}
+      <div className="flex justify-center">
+        <Link to="/plan-select">
+          <button className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
+            style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.25)", color: "#00d4ff", boxShadow: "0 0 20px rgba(0,212,255,0.1)" }}>
+            <span className="text-base">✨</span> 料金・プラン詳細を見る →
+          </button>
+        </Link>
       </div>
 
       {/* サーバー安定化バナー */}
