@@ -231,11 +231,17 @@ export default function Dashboard() {
                     {history.slice(0, 3).map(item => (
                       <Link key={item.id} to={`/watch/${item.video_id}`}>
                         <div className="flex gap-3 items-center bg-card border border-border/50 rounded-xl p-3 hover:border-primary/30 transition-all">
-                          <div className="w-20 h-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                            {item.video_thumbnail
-                              ? <img src={item.video_thumbnail} alt="" className="w-full h-full object-cover" />
-                              : <Play className="w-5 h-5 text-muted-foreground" />
-                            }
+                          <div className="w-20 h-12 rounded-lg overflow-hidden shrink-0 relative">
+                            {item.video_thumbnail ? (
+                              <img src={item.video_thumbnail} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
+                                <span className="absolute text-white/30 font-black text-2xl select-none">
+                                  {(item.channel_name || "?")[0].toUpperCase()}
+                                </span>
+                                <Play className="relative w-5 h-5 text-white/70" />
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold line-clamp-1">{item.video_title}</p>
