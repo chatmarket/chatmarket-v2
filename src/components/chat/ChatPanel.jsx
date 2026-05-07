@@ -21,6 +21,11 @@ const superChatColors = {
 };
 
 export default function ChatPanel({ targetType, targetId, user: userProp }) {
+  // デバッグ: targetId が undefined でないか確認
+  if (!targetId) {
+    console.warn('[ChatPanel] ⚠️ targetId undefined:', { targetType, targetId });
+  }
+  
   // チャット専用のtarget_type（コメントと分離するため "_chat" サフィックスを付与）
   const chatType = targetType + "_chat";
   const [message, setMessage] = useState("");
