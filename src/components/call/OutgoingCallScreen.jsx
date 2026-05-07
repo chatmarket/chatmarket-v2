@@ -151,13 +151,21 @@ export default function OutgoingCallScreen({ call, localVideoRef, onCancel }) {
         </div>
       </div>
 
-      {/* ── 自分のカメラプレビュー（右下PiP） ── */}
-      <div className="absolute bottom-36 right-5 w-24 h-32 rounded-2xl overflow-hidden border-2 border-white/20 shadow-xl bg-black/80 z-20">
-        <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-        <div className="absolute bottom-1 inset-x-0 text-center">
-          <span className="text-[9px] text-white/60 bg-black/50 px-2 py-0.5 rounded-full">あなた</span>
+      {/* ── 自分のカメラプレビュー（中央・ビデオサイズ枠 + カウントダウン） ── */}
+      <motion.div
+        className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="w-full max-w-sm aspect-video rounded-2xl overflow-hidden border-4 shadow-2xl"
+          style={{ borderColor: "rgba(255,255,255,0.25)", backgroundColor: "rgba(0,0,0,0.6)" }}>
+          <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="absolute bottom-3 inset-x-0 text-center">
+            <span className="text-sm text-white/80 bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm">あなた</span>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── 注意書き ── */}
       <div className="relative z-10 px-6 w-full max-w-sm mb-2">
