@@ -55,8 +55,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryTab, setCategoryTab] = useState("all");
   const [enabledSections, setEnabledSections] = useState({
-    callWaiting: true,  // 最初から表示（TOPに近いため）
-    liveStreams: false,
+    callWaiting: true,  // 常に表示（IntersectionObserverの遅延を回避）
+    liveStreams: true,  // 同様に常に取得開始
     popularVideos: false,
     featuredVideos: false,
     freeVideos: false,
