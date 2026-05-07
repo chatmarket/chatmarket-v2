@@ -2,17 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import { useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import ChatPanel from "../components/chat/ChatPanel.jsx";
 import TipOverlay from "../components/live/TipOverlay";
 import ExtensionNotification from "../components/live/ExtensionNotification";
-import { CreditCard, Maximize, Minimize, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import VideoControls from "../components/video/VideoControls";
 import ViewerStream from "../components/live/ViewerStream.jsx";
 import YellButtons from "../components/live/YellButtons.jsx";
 import YellNotificationPopup from "../components/live/YellNotificationPopup.jsx";
@@ -21,9 +17,7 @@ import ViewerChatInput from "../components/live/ViewerChatInput.jsx";
 import LiveChatDisplay from "../components/live/LiveChatDisplay.jsx";
 import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx";
 import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
-import LivePaywall from "../components/live/LivePaywall.jsx";
 import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
-import YellRanking from "../components/live/YellRanking.jsx";
 import StreamInfoPanel from "../components/live/StreamInfoPanel.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
@@ -49,12 +43,10 @@ class LiveViewErrorBoundary extends React.Component {
   }
 }
 
-/** PWA/ブラウザ両対応: safe-area-inset-top をJSで取得するhook */
 function useSafeAreaTop() {
   const [safeTop, setSafeTop] = useState(0);
   useEffect(() => {
     const measure = () => {
-      // CSSから env(safe-area-inset-top) を読み取る（最も確実な方法）
       const el = document.createElement("div");
       el.style.cssText = "position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;pointer-events:none;visibility:hidden;";
       document.body.appendChild(el);
@@ -64,7 +56,6 @@ function useSafeAreaTop() {
     };
     measure();
     window.addEventListener("resize", measure);
-    // orientationchange後に再測定
     window.addEventListener("orientationchange", () => setTimeout(measure, 200));
     return () => {
       window.removeEventListener("resize", measure);
@@ -74,44 +65,66 @@ function useSafeAreaTop() {
   return safeTop;
 }
 
+// 経過時間カウンター
+function useElapsedTime(startedAt) {
+  const [elapsed, setElapsed] = useState("00:00:00");
+  useEffect(() => {
+    if (!startedAt) return;
+    const tick = () => {
+      const secs = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+      const h = Math.floor(secs / 3600).toString().padStart(2, "0");
+      const m = Math.floor((secs % 3600) / 60).toString().padStart(2, "0");
+      const s = (secs % 60).toString().padStart(2, "0");
+      setElapsed(`${h}:${m}:${s}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  return elapsed;
+}
+
 function LiveViewInner() {
   const { streamId, id: idParam } = useParams();
   const id = streamId || idParam;
-  
-  // ★ Stream ID パラメータが正確に渡されているか即座に検証ログ
+
   useEffect(() => {
-    console.log(`[LiveView] 🔍 URL Parameter Check:`, {
-      streamId_param: streamId,
-      id_param: idParam,
-      resolved_id: id,
-      timestamp: new Date().toISOString(),
-    });
+    console.log(`[LiveView] 🔍 URL Param:`, { streamId, idParam, id });
   }, [streamId, idParam, id]);
-  
+
   const [user, setUser] = useState(null);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [ticketChecked, setTicketChecked] = useState(false);
-  // 旧PPV（price > 0 かつ is_ticket_enabled=false）の視聴許可フラグ
   const [coinAllowed, setCoinAllowed] = useState(false);
   const [activeTips, setActiveTips] = useState([]);
   const [channelOwnerEmail, setChannelOwnerEmail] = useState("");
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [forceKey, setForceKey] = useState(0);
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [celebrationYell, setCelebrationYell] = useState(null);
-  const extensionNotifiedRef = useRef(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [coinBalance, setCoinBalance] = useState(null);
-  const videoContainerRef = useRef(null);
+  const [isLandscape, setIsLandscape] = useState(false);
   const safeTop = useSafeAreaTop();
+  const verifiedStreamIdRef = useRef(null);
+
+  // 横縦向き検知
+  useEffect(() => {
+    const check = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    check();
+    window.addEventListener("resize", check);
+    window.addEventListener("orientationchange", () => setTimeout(check, 200));
+    return () => {
+      window.removeEventListener("resize", check);
+      window.removeEventListener("orientationchange", check);
+    };
+  }, []);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (!isAuth) return;
       base44.auth.me().then(u => {
         setUser(u);
-        // コイン残高取得
         base44.entities.YellCoinWallet.filter({ user_email: u.email })
           .then(w => setCoinBalance(w[0]?.balance ?? 0))
           .catch(() => setCoinBalance(0));
@@ -122,24 +135,9 @@ function LiveViewInner() {
   useEffect(() => {
     const unsub = base44.entities.SuperChat.subscribe((event) => {
       if (event.type !== "create") return;
-      
-      // ★ DB検証済みIDを優先、なければURLパラメータIDで比較
       const effectiveId = verifiedStreamIdRef.current || id;
       const incomingId = event.data?.livestream_id;
-      const isMatch = incomingId === effectiveId || incomingId === id;
-
-      console.log(`[LiveView] 💰 SuperChat received:`, {
-        event_id: event.id,
-        livestream_id: incomingId,
-        url_param_id: id,
-        verified_id: verifiedStreamIdRef.current,
-        isMatch,
-        user: event.data?.user_name,
-        amount: event.data?.amount,
-      });
-      
-      if (!isMatch) return;
-      
+      if (incomingId !== effectiveId && incomingId !== id) return;
       const item = { ...event.data, id: event.id };
       if (!item.gift_id) {
         setActiveTips((prev) => [...prev.slice(-4), item]);
@@ -150,380 +148,321 @@ function LiveViewInner() {
     return unsub;
   }, [id]);
 
-  // ★ DBから検証済みの正確なstream IDを保持するref
-  const verifiedStreamIdRef = useRef(null);
-
   const { data: stream, isLoading } = useQuery({
     queryKey: ["livestream", id],
     queryFn: async () => {
-      // ★ ID指定で直接取得
       const streams = await base44.entities.LiveStream.filter({ id });
       const s = streams[0];
-      
-      // ★ 常にフルURLをコンソールに出力（視聴者側デバッグの核心）
-      const debugInfo = {
-        url_param_id: id,
-        db_stream_id: s?.id,
-        id_match: s?.id === id,
-        status: s?.status,
-        playback_url_FULL: s?.ivs_playback_url,
-        playback_url_exists: !!s?.ivs_playback_url,
-        stream_type: s?.stream_type,
-        fetched_at: new Date().toISOString(),
-        title: s?.title,
-        channel_id: s?.channel_id,
-      };
-      console.log(`[LiveView] 📡 DB fetch result:`, debugInfo);
-      
-      // ★ 視聴者が playback_url なしで読み込み永遠ループに陥っていないか警告
-      if (s?.status === 'live' && !s?.ivs_playback_url) {
-        console.error('[LiveView] 🚨 CRITICAL: Stream is LIVE but playback_url is MISSING!', debugInfo);
-      }
-
-      // ★ DBで検証されたIDを保存（投げ銭・チャット等の宛先に使用）
+      console.log(`[LiveView] 📡 DB fetch:`, { id, status: s?.status, hasUrl: !!s?.ivs_playback_url });
       if (s?.id) verifiedStreamIdRef.current = s.id;
-
       return s || null;
     },
-    refetchInterval: 3000, // 3秒ごとにDB再取得（liveステータス変化を素早く捕捉）
-    staleTime: 0,           // キャッシュを使わず常に最新を取得
+    refetchInterval: 3000,
+    staleTime: 0,
   });
 
-  const { data: activeCall } = useQuery({
-    queryKey: ["active-call", stream?.channel_id],
-    queryFn: async () => {
-      const calls = await base44.entities.VideoCall.filter({
-        status: "active",
-        callee_channel_id: stream?.channel_id
-      });
-      return calls[0] || null;
-    },
+  const elapsed = useElapsedTime(stream?.live_started_at);
+
+  const { data: channel } = useQuery({
+    queryKey: ["channel-for-live", stream?.channel_id],
+    queryFn: () => base44.entities.Channel.filter({ id: stream.channel_id }).then(r => r[0]),
     enabled: !!stream?.channel_id,
-    refetchInterval: 30000,
-    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
-    if (!stream?.channel_id) return;
-    base44.entities.Channel.filter({ id: stream.channel_id }).then((r) => {
-      if (r[0]?.owner_email) setChannelOwnerEmail(r[0].owner_email);
-    });
-  }, [stream?.channel_id]);
+    if (channel?.owner_email) setChannelOwnerEmail(channel.owner_email);
+  }, [channel]);
 
   useEffect(() => {
     if (!stream) return;
-
-    console.log("[LiveView] 🎬 Checking purchase status:", {
-      is_ticket_enabled: stream.is_ticket_enabled,
-      price: stream.price,
-      stream_type: stream.stream_type,
-    });
-
     if (stream.is_ticket_enabled) {
-      // チケット制: 購入済みかチェック
       const purchases = stream.ticket_purchases || [];
       const purchased = user ? purchases.some((p) => p.user_email === user.email) : false;
       setHasPurchased(purchased);
       setTicketChecked(true);
     } else {
-      // 旧PPV（コイン消費型）: LivePaywall が制御するため ticketChecked=true で通過させる
       setHasPurchased(true);
       setTicketChecked(true);
     }
-
-    // ★ AWS同期待機（決済完了後 → Playerを初期化）
-    if (coinAllowed && stream.ivs_playback_url) {
-      console.log("[LiveView] 🔄 Coin allowed detected, waiting for AWS sync...");
-      setTimeout(() => {
-        console.log("[LiveView] ✅ AWS sync complete, initializing player with URL:", stream.ivs_playback_url.substring(0, 60) + "...");
-      }, 1500);
-    }
-  }, [stream?.id, stream?.is_ticket_enabled, stream?.price, user?.email, coinAllowed, stream?.ivs_playback_url]);
-
-  const toggleFullscreen = () => setIsFullscreen((prev) => !prev);
-
-  const handlePurchase = async () => {
-    if (!user) { base44.auth.redirectToLogin(); return; }
-    await base44.entities.Purchase.create({
-      item_type: "livestream",
-      item_id: id,
-      amount: stream.price,
-      buyer_email: user.email,
-      status: "completed",
-    });
-    setHasPurchased(true);
-    toast.success("チケット購入完了！配信を視聴します🎉");
-  };
+  }, [stream?.id, stream?.is_ticket_enabled, user?.email, coinAllowed]);
 
   if (!id || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0c0c12" }}>
+        <div style={{ width: 36, height: 36, border: "3px solid rgba(16,185,129,0.2)", borderTopColor: "#10b981", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   if (!stream) {
     return (
-      <div className="text-center py-24">
-        <p className="text-muted-foreground">配信が見つかりません</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0c0c12", color: "rgba(255,255,255,0.5)", flexDirection: "column", gap: 12 }}>
+        <span style={{ fontSize: 40 }}>📡</span>
+        <p>配信が見つかりません</p>
       </div>
     );
   }
 
-  const videoPortal = ReactDOM.createPortal(
-    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 99999, background: "linear-gradient(135deg, #0a0a0f 0%, #0d1117 40%, #0a0f0a 100%)" }}>
+  // ── レイアウト定数 ──
+  const TOPBAR_H = 52;
+  const CHAT_W = isLandscape ? 260 : "100%";
 
-      {/* ═══ STICKY HEADER — safe-area対応 ═══ */}
+  const videoPortal = ReactDOM.createPortal(
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 99999,
+      background: "#0c0c12",
+      display: "flex", flexDirection: "column",
+      fontFamily: "'M PLUS Rounded 1c', sans-serif",
+    }}>
+
+      {/* ── TOP BAR ── */}
       <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
         paddingTop: safeTop,
-        background: "linear-gradient(180deg, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.85) 100%)",
-        backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(16,185,129,0.1)",
+        flexShrink: 0,
+        background: "#13121c",
+        borderBottom: "0.5px solid rgba(255,255,255,0.07)",
+        zIndex: 10,
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px" }}>
-          {/* 左: 戻るボタン + ロゴ + LIVE バッジ */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", height: TOPBAR_H }}>
+          {/* 左: 戻る + アバター + チャンネル名 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <button
               onClick={() => window.history.back()}
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white", cursor: "pointer", flexShrink: 0 }}
+              style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             </button>
-            {/* ブランドロゴ */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f9139d1_1ldpi.png" alt="ChatMarket" style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0, objectFit: "contain" }} />
-              <span style={{ color: "#10b981", fontWeight: 900, fontSize: 14, letterSpacing: "-0.3px", textShadow: "0 0 8px rgba(16,185,129,0.3)" }}>chatmarket</span>
+            {/* アバター */}
+            <div style={{
+              width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+              background: channel?.avatar_url ? "transparent" : "linear-gradient(135deg,#c96b4a,#7c4dff)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden",
+              fontSize: 14, fontWeight: 700, color: "#fff",
+            }}>
+              {channel?.avatar_url
+                ? <img src={channel.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : (stream.channel_name?.[0] || "L")
+              }
             </div>
-            {stream.status === "live" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 3, background: "#ef4444", borderRadius: 6, padding: "2px 7px", fontSize: 10, fontWeight: 900, color: "white" }}>
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "white", display: "inline-block", animation: "pulse 1.5s infinite" }} />
-                  LIVE
-                </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 3, color: "rgba(255,255,255,0.6)", fontSize: 11 }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  {stream.viewer_count || 0}
-                </span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f0eeff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "38vw" }}>
+                {stream.channel_name}
               </div>
-            )}
+              {stream.title && (
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "38vw" }}>
+                  {stream.title}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* 右: コイン残高 + マイページ */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {user && coinBalance !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 20, padding: "5px 12px", boxShadow: "0 0 12px rgba(16,185,129,0.15)" }}>
-                <span style={{ fontSize: 13 }}>🪙</span>
-                <span style={{ color: "#10b981", fontWeight: 900, fontSize: 13 }}>{coinBalance.toLocaleString()}</span>
+          {/* 右: 視聴者数 + LIVEバッジ + コイン */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            {stream.status === "live" && (
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
+                  <Users style={{ width: 12, height: 12 }} />
+                  <span style={{ color: "#f0eeff", fontWeight: 700, fontSize: 13 }}>{(stream.viewer_count || 0).toLocaleString()}</span>
+                </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#e5382a", borderRadius: 4, padding: "3px 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", color: "#fff" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#fff", display: "inline-block", animation: "pulseDot 1.4s ease-in-out infinite" }} />
+                  LIVE
+                </div>
               </div>
             )}
-            {user ? (
-              <a href="/settings" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", textDecoration: "none", transition: "all 0.2s" }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </a>
-            ) : (
-              <button onClick={() => base44.auth.redirectToLogin()} style={{ display: "flex", alignItems: "center", gap: 4, background: "linear-gradient(135deg,#10b981,#059669)", border: "1px solid rgba(16,185,129,0.5)", borderRadius: 10, padding: "6px 12px", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: "0 0 12px rgba(16,185,129,0.2)" }}>
-                ログイン
-              </button>
+            {user && coinBalance !== null && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 20, padding: "4px 10px" }}>
+                <span style={{ fontSize: 12 }}>🪙</span>
+                <span style={{ color: "#10b981", fontWeight: 900, fontSize: 12 }}>{coinBalance.toLocaleString()}</span>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* チケットペイウォール */}
-      {stream.is_ticket_enabled && !hasPurchased && ticketChecked && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-5 p-6" style={{ paddingTop: 80 }}>
-          <div className="text-6xl">🎫</div>
-          <h2 className="text-xl font-black text-white">チケット制ライブ配信</h2>
-          <div className="text-center space-y-1">
-            <p className="text-3xl font-black text-yellow-400">¥{(stream.ticket_price_yen || 150).toLocaleString()}</p>
-            <p className="text-sm text-white/60">{stream.ticket_duration_minutes || 60}分間の視聴チケット</p>
-          </div>
-          {!user ? (
-            <Button onClick={() => base44.auth.redirectToLogin()} className="gap-2 h-12 px-8">
-              <CreditCard className="w-5 h-5" /> ログインして購入
-            </Button>
-          ) : (
-            <Button onClick={() => setShowTicketModal(true)} className="gap-2 h-12 px-8 bg-yellow-500 hover:bg-yellow-600 text-black font-black">
-              <span className="text-lg">🎫</span> チケットを購入する
-            </Button>
-          )}
-        </div>
-      )}
+      {/* ── BODY: 縦=映像上・チャット下 / 横=映像左・チャット右 ── */}
+      <div style={{
+        flex: 1, minHeight: 0,
+        display: "flex",
+        flexDirection: isLandscape ? "row" : "column",
+        overflow: "hidden",
+      }}>
 
-      {/* ═══ 映像エリア — 16:9 YouTube風 ═══ */}
-      <div style={{ position: "absolute", top: safeTop + 58, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "8px 0 0 0" }}>
-        {/* 16:9 映像コンテナ */}
-        <div ref={videoContainerRef} style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", aspectRatio: "16/9", borderRadius: 20, overflow: "hidden", position: "relative", flexShrink: 0, background: "linear-gradient(135deg, #0a0f0a 0%, #0d1117 50%, #0a0a0f 100%)", boxShadow: "0 0 60px rgba(16,185,129,0.15), 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 20px rgba(255,255,255,0.05)" }}>
-          {/* PPV 門番 */}
-          {!stream.is_ticket_enabled && stream.price > 0 && !coinAllowed && (
-            <LivePaywallStripe stream={stream} user={user} onAllowed={() => setCoinAllowed(true)} />
-          )}
-          {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
-            <iframe src={stream.vimeo_url} className="w-full h-full" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={stream.title} />
-          ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
-            <iframe src={stream.youtube_url} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
-          ) : stream.status === "live" && ticketChecked && (stream.price <= 0 || coinAllowed) ? (
-            <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} isMuted={isMuted} onMutedChange={setIsMuted} />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-zinc-950">
-              <p className="text-muted-foreground text-sm">
-                {stream.status === "ended" ? "配信は終了しました" : "配信開始をお待ちください"}
-              </p>
-            </div>
-          )}
-
-          {/* ミュート警告バナー */}
-          {isMuted && stream.status === "live" && (
-            <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.85)", border: "1px solid rgba(251,191,36,0.5)", borderRadius: 8, padding: "6px 14px" }}>
-              <VolumeX style={{ width: 14, height: 14, color: "#fbbf24" }} />
-              <span style={{ color: "white", fontSize: 12, fontWeight: 700 }}>ミュート中 —</span>
-              <button
-                onClick={() => setIsMuted(false)}
-                style={{ color: "#fbbf24", fontSize: 12, fontWeight: 900, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-              >
-                タップして音声ON
-              </button>
-            </div>
-          )}
-
-          {/* コントロールバー */}
-          {stream.status === "live" && (
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)", padding: "20px 12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {/* 音量ボタン */}
-                <button
-                  onClick={() => setIsMuted(v => !v)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "white", cursor: "pointer" }}
-                >
-                  {isMuted
-                    ? <VolumeX style={{ width: 14, height: 14 }} />
-                    : <Volume2 style={{ width: 14, height: 14 }} />
+        {/* ── 映像カラム ── */}
+        <div style={{
+          flex: 1, minWidth: 0, minHeight: 0,
+          display: "flex", flexDirection: "column",
+          borderRight: isLandscape ? "0.5px solid rgba(255,255,255,0.06)" : "none",
+          borderBottom: !isLandscape ? "0.5px solid rgba(255,255,255,0.06)" : "none",
+          position: "relative",
+        }}>
+          {/* 映像ラッパー: 縦向きは16:9固定、横向きはflex-fill */}
+          <div style={{
+            position: "relative",
+            width: "100%",
+            ...(isLandscape ? { flex: 1, minHeight: 0 } : { paddingTop: "56.25%" }),
+            background: "#07070e",
+            overflow: "hidden",
+          }}>
+            <div style={isLandscape
+              ? { position: "absolute", inset: 0 }
+              : { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }
+            }>
+              {/* ペイウォール */}
+              {!stream.is_ticket_enabled && stream.price > 0 && !coinAllowed && (
+                <LivePaywallStripe stream={stream} user={user} onAllowed={() => setCoinAllowed(true)} />
+              )}
+              {stream.is_ticket_enabled && !hasPurchased && ticketChecked && (
+                <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.85)", gap: 16, padding: 24 }}>
+                  <span style={{ fontSize: 48 }}>🎫</span>
+                  <p style={{ color: "white", fontWeight: 900, fontSize: 16 }}>チケット制ライブ配信</p>
+                  <p style={{ color: "#fbbf24", fontWeight: 900, fontSize: 24 }}>¥{(stream.ticket_price_yen || 150).toLocaleString()}</p>
+                  {!user
+                    ? <Button onClick={() => base44.auth.redirectToLogin()}>ログインして購入</Button>
+                    : <Button onClick={() => setShowTicketModal(true)} className="bg-yellow-500 hover:bg-yellow-600 text-black font-black">🎫 チケットを購入する</Button>
                   }
+                </div>
+              )}
+
+              {/* 映像本体 */}
+              {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
+                <iframe src={stream.vimeo_url} style={{ width: "100%", height: "100%", border: "none" }} allow="autoplay; fullscreen" allowFullScreen title={stream.title} />
+              ) : stream.status === "live" && ticketChecked && stream.stream_type === "youtube" && stream.youtube_url ? (
+                <iframe src={stream.youtube_url} style={{ width: "100%", height: "100%", border: "none" }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={stream.title} />
+              ) : stream.status === "live" && ticketChecked && (stream.price <= 0 || coinAllowed) ? (
+                <ViewerStream key={`${id}-${forceKey}`} streamId={id} stream={stream} isMuted={isMuted} onMutedChange={setIsMuted} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#07070e" }}>
+                  <div style={{ textAlign: "center", opacity: 0.3 }}>
+                    <div style={{ fontSize: 40 }}>📡</div>
+                    <p style={{ color: "white", fontSize: 13, marginTop: 8 }}>
+                      {stream.status === "ended" ? "配信は終了しました" : "配信開始をお待ちください"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* 左上オーバーレイ: 経過時間 + 視聴者数 */}
+              {stream.status === "live" && (
+                <div style={{ position: "absolute", top: 10, left: 10, display: "flex", flexDirection: "column", gap: 5, pointerEvents: "none" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#ffd980" }}>
+                    <Clock style={{ width: 11, height: 11 }} />
+                    {elapsed}
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
+                    <Users style={{ width: 11, height: 11 }} />
+                    <strong style={{ color: "#fff" }}>{(stream.viewer_count || 0).toLocaleString()}</strong> 人
+                  </span>
+                </div>
+              )}
+
+              {/* 左下: タイトル */}
+              {stream.status === "live" && (
+                <div style={{ position: "absolute", bottom: 44, left: 10, pointerEvents: "none" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}>{stream.title}</div>
+                  {stream.description && (
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", textShadow: "0 1px 4px rgba(0,0,0,0.8)", marginTop: 2 }}>{stream.channel_name}</div>
+                  )}
+                </div>
+              )}
+
+              {/* ミュートバナー */}
+              {isMuted && stream.status === "live" && (
+                <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.85)", border: "1px solid rgba(251,191,36,0.5)", borderRadius: 8, padding: "6px 14px", whiteSpace: "nowrap" }}>
+                  <VolumeX style={{ width: 13, height: 13, color: "#fbbf24" }} />
+                  <span style={{ color: "white", fontSize: 12, fontWeight: 700 }}>ミュート中 —</span>
+                  <button onClick={() => setIsMuted(false)} style={{ color: "#fbbf24", fontSize: 12, fontWeight: 900, background: "none", border: "none", cursor: "pointer", padding: 0 }}>タップして音声ON</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* コントロールバー（映像直下）*/}
+          {stream.status === "live" && (
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 12px", background: "#0f0f18", borderTop: "0.5px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* 音量 */}
+                <button onClick={() => setIsMuted(v => !v)} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "0.5px solid rgba(255,255,255,0.14)", borderRadius: 6, color: isMuted ? "#fbbf24" : "rgba(255,255,255,0.7)", padding: "5px 10px", fontSize: 11, cursor: "pointer" }}>
+                  {isMuted ? <VolumeX style={{ width: 13, height: 13 }} /> : <Volume2 style={{ width: 13, height: 13 }} />}
                 </button>
-                {/* 読み上げボタン */}
-                <button
-                  onClick={() => setSpeechEnabled(v => !v)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: speechEnabled ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.1)", border: speechEnabled ? "1px solid #fbbf24" : "1px solid rgba(255,255,255,0.2)", color: speechEnabled ? "#fbbf24" : "white", cursor: "pointer", fontSize: 14 }}
-                  title="コメント読み上げ"
-                >
-                  🔊
+                {/* 読み上げ */}
+                <button onClick={() => setSpeechEnabled(v => !v)} style={{ display: "flex", alignItems: "center", gap: 4, background: speechEnabled ? "rgba(251,191,36,0.15)" : "none", border: `0.5px solid ${speechEnabled ? "rgba(251,191,36,0.5)" : "rgba(255,255,255,0.14)"}`, borderRadius: 6, color: speechEnabled ? "#fbbf24" : "rgba(255,255,255,0.7)", padding: "5px 10px", fontSize: 11, cursor: "pointer" }}>
+                  🔊 読み上げ
                 </button>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>
-                  {stream.channel_name}
+                <InstantKanteiButton streamId={stream.id} user={user} channelId={stream.channel_id} channelOwnerEmail={channelOwnerEmail} />
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+                  {stream.max_bitrate_restriction || "HD"}
                 </span>
-                {/* 全画面 */}
-                <button
-                  onClick={toggleFullscreen}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "white", cursor: "pointer" }}
-                >
-                  {isFullscreen ? <Minimize style={{ width: 14, height: 14 }} /> : <Maximize style={{ width: 14, height: 14 }} />}
-                </button>
               </div>
             </div>
           )}
+
+          {/* StreamInfoPanel（縦向きのみ映像下に表示） */}
+          {!isLandscape && <StreamInfoPanel stream={stream} />}
         </div>
 
-        {/* ═══ StreamInfoPanel — 映像直下に表示 ═══ */}
-        <StreamInfoPanel stream={stream} />
-
-        {/* チャット・エールエリア */}
+        {/* ── チャットカラム ── */}
         {stream.status === "live" && (
-          <div style={{ width: "100%", maxWidth: "calc((100vh - 56px - 220px) * 16/9)", flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            {/* 投げ銭ランキング + チャット */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "4px 8px 0", display: "flex", gap: 8 }}>
-              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column-reverse", gap: 4 }}>
-                <LiveChatDisplay streamId={stream.id} />
-              </div>
-              <div style={{ width: 160, flexShrink: 0 }}>
-                <div style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.04) 100%)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 14, overflow: "hidden", boxShadow: "0 0 20px rgba(16,185,129,0.1), inset 0 1px 8px rgba(255,255,255,0.05)" }}>
-                  <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(16,185,129,0.15)", display: "flex", alignItems: "center", gap: 4, background: "linear-gradient(90deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%)" }}>
-                    <span style={{ fontSize: 13 }}>🏆</span>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "#10b981" }}>投げ銭 TOP</span>
-                  </div>
-                  <div style={{ padding: "6px 8px", maxHeight: 130, overflowY: "auto" }}>
-                    <YellRanking streamId={stream.id} />
-                  </div>
-                </div>
-              </div>
+          <div style={{
+            width: isLandscape ? CHAT_W : "100%",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            background: "#0f0e17",
+            ...(isLandscape ? { height: "100%" } : { flex: 1, minHeight: 0 }),
+            overflow: "hidden",
+          }}>
+            {/* チャットヘッダー */}
+            <div style={{ padding: "8px 12px 7px", borderBottom: "0.5px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.5)" }}>LIVE CHAT</span>
+              {user && coinBalance !== null && (
+                <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>🪙 {coinBalance.toLocaleString()}</span>
+              )}
             </div>
 
-            {/* ═══ ボトムナビ — safe-area + 投げ銭ボタン ═══ */}
+            {/* メッセージ一覧 */}
+            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+              <LiveChatDisplay streamId={stream.id} />
+            </div>
+
+            {/* エールコインボタン（チャットに内包）*/}
+            <div style={{ flexShrink: 0, borderTop: "0.5px solid rgba(255,255,255,0.06)", padding: "7px 10px 5px" }}>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 5, letterSpacing: "0.03em" }}>SUPER CHAT</div>
+              <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} compact={true} />
+            </div>
+
+            {/* チャット入力 */}
             <div style={{
               flexShrink: 0,
-              background: "linear-gradient(180deg, rgba(10,10,15,0.7) 0%, rgba(10,10,15,0.95) 100%)",
-              backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-              borderTop: "1px solid rgba(16,185,129,0.1)",
-              paddingBottom: `max(8px, env(safe-area-inset-bottom, 8px))`,
-              paddingLeft: `max(14px, env(safe-area-inset-left, 14px))`,
-              paddingRight: `max(14px, env(safe-area-inset-right, 14px))`,
+              borderTop: "0.5px solid rgba(255,255,255,0.06)",
+              padding: "7px 10px",
+              paddingBottom: `max(10px, env(safe-area-inset-bottom, 10px))`,
             }}>
-              {/* チャット入力行 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px 4px" }}>
-                <ViewerChatInput streamId={stream.id} user={user} />
-              </div>
-              {/* アクションバー: ホームボタン / 投げ銭(中央・目立つ) / ミュート・読み上げ */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px 8px", gap: 8 }}>
-                {/* ホームへ */}
-                <a href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: "rgba(255,255,255,0.6)", textDecoration: "none", flexShrink: 0, transition: "all 0.2s" }}>
-                   <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                  </div>
-                  <span style={{ fontSize: 8.5, fontWeight: 600 }}>ホーム</span>
-                </a>
-
-                {/* エールボタン群 + 鑑定ボタン（中央） */}
-                <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
-                  <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} />
-                  <InstantKanteiButton
-                    streamId={stream.id}
-                    user={user}
-                    channelId={stream.channel_id}
-                    channelOwnerEmail={channelOwnerEmail}
-                  />
-                </div>
-
-                {/* 右: 音量 + 読み上げ */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setIsMuted(v => !v)}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: isMuted ? "#fbbf24" : "rgba(255,255,255,0.6)", padding: 0, transition: "all 0.2s" }}
-                  >
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: isMuted ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${isMuted ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {isMuted ? <VolumeX style={{ width: 18, height: 18 }} /> : <Volume2 style={{ width: 18, height: 18 }} />}
-                    </div>
-                    <span style={{ fontSize: 8.5, fontWeight: 600 }}>{isMuted ? "ミュート" : "音声"}</span>
-                  </button>
-                  <button
-                    onClick={() => setSpeechEnabled(v => !v)}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", color: speechEnabled ? "#10b981" : "rgba(255,255,255,0.6)", padding: 0, transition: "all 0.2s" }}
-                  >
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: speechEnabled ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${speechEnabled ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
-                      🔊
-                    </div>
-                    <span style={{ fontSize: 8.5, fontWeight: 600 }}>読み上げ</span>
-                  </button>
-                </div>
-              </div>
+              <ViewerChatInput streamId={stream.id} user={user} />
             </div>
           </div>
         )}
       </div>
 
-      {/* エール通知ポップアップ */}
+      {/* エール通知 */}
       {stream.status === "live" && (
         <YellNotificationPopup streamId={stream.id} speechEnabled={speechEnabled} />
       )}
       <TipOverlay tips={activeTips} />
+
+      <style>{`
+        @keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.3} }
+      `}</style>
     </div>,
     document.body
   );
 
   return (
-    <div className="w-full min-h-screen bg-black">
+    <div style={{ width: "100%", minHeight: "100vh", background: "#0c0c12" }}>
       <MetaHelmet
         title={`🔴 ${stream.title} | ChatMarket LIVE`}
         description={stream.description || `${stream.channel_name}がライブ配信中！`}
@@ -531,17 +470,13 @@ function LiveViewInner() {
       />
       {videoPortal}
       {celebrationYell && <YellCelebrationEffect yell={celebrationYell} onComplete={() => setCelebrationYell(null)} />}
-      {/* チケット購入モーダル */}
       {stream && user && showTicketModal && (
         <LiveTicketPurchase
           stream={stream}
           user={user}
           isOpen={showTicketModal}
           onClose={() => setShowTicketModal(false)}
-          onPurchaseSuccess={() => {
-            setHasPurchased(true);
-            setShowTicketModal(false);
-          }}
+          onPurchaseSuccess={() => { setHasPurchased(true); setShowTicketModal(false); }}
         />
       )}
     </div>
