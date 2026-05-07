@@ -22,9 +22,10 @@ export default function CallWaitingRow({ user, categoryFilter = "all", filteredC
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["call-enabled-channels"],
-    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 100),
-    staleTime: 30000,
-    gcTime: 60000,
+    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 200),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
   });
 
   // ログイン中ユーザーが owner のチャンネルIDセットを作成
@@ -37,10 +38,14 @@ export default function CallWaitingRow({ user, categoryFilter = "all", filteredC
     navigate(`/chat/${channelId}`);
   };
 
-  // カテゴリフィルター適用
-  const baseChannels = filteredChannels
-    ? allChannels.filter(ch => filteredChannels.some(fc => fc.id === ch.id))
-    : allChannels;
+  // カテゴリフィルター適用 — call_enabled チャンネルをカテゴリで絞るだけ
+  const baseChannels = categoryFilter === "all"
+    ? allChannels
+    : categoryFilter === "fortune"
+      ? allChannels.filter(ch => ch.stream_category === "fortune")
+      : categoryFilter === "chat"
+        ? allChannels.filter(ch => ch.stream_category === "chat" || !ch.stream_category)
+        : allChannels;
 
   // 占いカテゴリのゴーストを追加（all/fortuneタブのみ）
   const FORTUNE_GHOSTS = categoryFilter === "fortune" ? [
