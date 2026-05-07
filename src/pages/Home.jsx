@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ import FounderSection from "../components/home/FounderSection";
 
 export default function Home() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [myChannel, setMyChannel] = useState(null);
   const [togglingWait, setTogglingWait] = useState(false);
@@ -79,6 +80,16 @@ export default function Home() {
         }).catch((err) => console.error("[Home] Auth error:", err));
       }
     });
+
+    // Channel変更をリアルタイムで購読 → 画面即更新
+    const unsub = base44.entities.Channel.subscribe((event) => {
+      if (event.type === "update" && event.data?.call_enabled !== undefined) {
+        // call_enabledが変わったら、関連クエリをリセット（キャッシュ無効化）
+        queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
+        queryClient.invalidateQueries({ queryKey: ["channels-all"] });
+      }
+    });
+    return () => unsub();
   }, []);
 
   const openCallSettings = () => {
