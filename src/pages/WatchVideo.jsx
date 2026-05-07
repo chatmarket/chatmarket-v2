@@ -37,9 +37,22 @@ export default function WatchVideo() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
   const [signedVideoUrl, setSignedVideoUrl] = useState(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const queryClient = useQueryClient();
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 【Keyboard-Aware】visualViewport でキーボード高さ検知（滑らかな縮小アニメーション）
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const diff = Math.max(0, window.innerHeight - window.visualViewport.height);
+        setKeyboardHeight(diff > 50 ? diff : 0);
+      }
+    };
+    window.visualViewport?.addEventListener('resize', handleResize);
+    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleFullscreen = () => {
     const el = containerRef.current;
@@ -229,7 +242,13 @@ export default function WatchVideo() {
         image={video.thumbnail_url}
       />
       {/* スクロール可能なメインコンテンツ */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div 
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6"
+        style={{
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          maxHeight: keyboardHeight > 0 ? `calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - ${keyboardHeight}px)` : '100%'
+        }}
+      >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Video Player */}
           <div className="space-y-3 sm:space-y-4 lg:col-span-2">

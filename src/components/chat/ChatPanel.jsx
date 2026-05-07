@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, DollarSign, Smile, Pin, PinOff, Shield, MoreVertical, X, ChevronsDown } from "lucide-react";
+import { Send, DollarSign, Smile, Pin, PinOff, Shield, MoreVertical, X, ChevronsDown, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
@@ -49,14 +49,14 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   const prevMsgCountRef = useRef(0);
   const queryClient = useQueryClient();
   const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // 削除確認用
 
-  // 【Keyboard-Aware】スマホキーボード出現時に高さを調整
+  // 【Keyboard-Aware】visualViewport でキーボード高さ検知（精密版）
   useEffect(() => {
     const handleResize = () => {
-      const viewport = window.visualViewport;
-      if (viewport) {
-        const diff = window.innerHeight - viewport.height;
-        setKeyboardHeight(diff > 50 ? diff : 0); // 50px以上なら キーボード判定
+      if (window.visualViewport) {
+        const diff = Math.max(0, window.innerHeight - window.visualViewport.height);
+        setKeyboardHeight(diff > 50 ? diff : 0);
       }
     };
     window.visualViewport?.addEventListener('resize', handleResize);
@@ -204,9 +204,11 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   return (
     <div 
       className="flex flex-col h-full bg-card rounded-xl border border-border/50 relative"
-      style={{ 
-        maxHeight: keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight + 150}px)` : '100%',
-        transition: 'max-height 0.2s ease-out'
+      style={{
+        maxHeight: keyboardHeight > 0 
+          ? `calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - ${keyboardHeight + 8}px)`
+          : '100%',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
       {/* Header */}
@@ -314,7 +316,7 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
                     {menuOpenId === msg.id && (
-                      <div className="absolute right-0 top-6 z-20 bg-card border border-border/50 rounded-xl shadow-xl py-1 min-w-[130px]">
+                      <div className="absolute right-0 top-6 z-20 bg-card border border-border/50 rounded-xl shadow-xl py-1 min-w-[140px]">
                         <button
                           onClick={() => handlePin(msg)}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-secondary transition-colors"
@@ -322,6 +324,12 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
                           {pinnedCommentId === msg.id
                             ? <><PinOff className="w-3.5 h-3.5 text-muted-foreground" /> 固定解除</>
                             : <><Pin className="w-3.5 h-3.5 text-primary" /> コメントを固定</>}
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(msg)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-red-500/20 transition-colors text-red-400"
+                        >
+                          <X className="w-3.5 h-3.5" /> 削除
                         </button>
                       </div>
                     )}
@@ -344,8 +352,14 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
         )}
       </AnimatePresence>
 
-      {/* 入力エリア */}
-      <div className="border-t border-border/50 flex-shrink-0">
+      {/* 入力エリア — bottom ピッタリ吸い付かせ */}
+      <div 
+        className="border-t border-border/50 flex-shrink-0"
+        style={{
+          paddingBottom: `calc(${keyboardHeight}px + env(safe-area-inset-bottom))`,
+          transition: 'padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      >
         {aiBlocked && (
           <div className="px-3 pt-2 pb-1 text-xs bg-red-500/20 border-b border-red-500/50 rounded-t-lg flex items-center gap-1.5 mx-0">
             <Shield className="w-3 h-3 text-red-400 shrink-0" />
@@ -413,6 +427,40 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
           onClose={() => setShowNgSettings(false)}
           onSaved={(words) => setNgWords(words)}
         />
+      )}
+
+      {/* コメント削除確認ダイアログ */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border/50 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 className="font-black text-base flex items-center gap-2 text-red-400">
+              <AlertCircle className="w-5 h-5" /> コメントを削除しますか？
+            </h3>
+            <div className="bg-secondary rounded-lg p-3 text-sm text-foreground/80">
+              「{deleteConfirm.content}」
+            </div>
+            <p className="text-xs text-muted-foreground">削除したコメントは復元できません。</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-2.5 rounded-xl border border-border/50 text-sm font-semibold hover:bg-secondary transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async () => {
+                  await base44.entities.Comment.delete(deleteConfirm.id);
+                  queryClient.invalidateQueries({ queryKey: ["comments", chatType, targetId] });
+                  setDeleteConfirm(null);
+                  setMenuOpenId(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
+              >
+                削除
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
