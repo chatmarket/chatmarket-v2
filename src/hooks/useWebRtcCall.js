@@ -1,15 +1,11 @@
 /**
  * useWebRtcCall — WebRTC P2P 1対1通話フック
  *
- * 戦略: All-Candidates + 超高速シグナリング + 自動リトライ（最大3回）
- *
- * 高速化ポイント:
- * - ICE収集タイムアウト: 3秒（STUN通常500ms以内）
- * - Calleeのreadyフラグ書き込みとOffer既存チェックを並列実行
- * - ポーリング間隔: 300ms（1秒→0.3秒）
- * - iceCandidatePoolSize: 10（事前収集で即応）
- * - iOS Safari: muted→autoplay→unmuted の2段階 play()
- * - Callee: 既にOfferが存在する場合は即座に処理（待機0ms）
+ * 設計思想: 速度より確実性を最優先
+ * - ICE収集は「完了まで待つ」（早切りしない）
+ * - タイムアウトは余裕を持たせる
+ * - iOS Safari: muted autoplay → unmute の2段階
+ * - 自動リトライ最大3回（2秒・4秒・6秒）
  */
 import { useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
@@ -21,13 +17,13 @@ const ICE_SERVERS = [
 ];
 
 const MAX_RETRIES = 3;
-const ICE_GATHER_TIMEOUT_MS = 3000;   // 8000→3000: STUN通常500ms以内
-const CALLEE_READY_TIMEOUT_MS = 12000;
-const ANSWER_TIMEOUT_MS = 20000;       // 30000→20000
-const OFFER_TIMEOUT_MS = 20000;        // 30000→20000
-const POLL_INTERVAL_MS = 300;          // 1000→300ms
+const ICE_GATHER_TIMEOUT_MS = 8000;   // 余裕を持たせる（モバイル回線考慮）
+const CALLEE_READY_TIMEOUT_MS = 15000;
+const ANSWER_TIMEOUT_MS = 30000;
+const OFFER_TIMEOUT_MS = 30000;
+const POLL_INTERVAL_MS = 500;          // 高速すぎず・遅すぎず
 
-/** ICE収集完了まで待つ（早期完了サポート） */
+/** ICE収集完了まで待つ */
 function waitForIceGathering(pc) {
   return new Promise((resolve) => {
     if (pc.iceGatheringState === 'complete') { resolve(); return; }
@@ -38,34 +34,29 @@ function waitForIceGathering(pc) {
       }
     };
     pc.addEventListener('icegatheringstatechange', check);
-    // タイムアウト後は収集済み候補で進む（待ちすぎない）
     setTimeout(() => {
       pc.removeEventListener('icegatheringstatechange', check);
-      resolve();
+      resolve(); // タイムアウトしても収集済み候補で進む
     }, ICE_GATHER_TIMEOUT_MS);
   });
 }
 
 /**
  * iOS Safari 対応 play()
- * 1. muted=true で autoplay（ブロックされない）
- * 2. 映像が出たら muted=false に切り替え（音声復元）
+ * muted=true で autoplay してから unmute（音声ブロック回避）
  */
 function playRemoteVideo(videoEl) {
   if (!videoEl) return;
   videoEl.muted = true;
-  videoEl.volume = 1.0;
   videoEl.play()
     .then(() => {
-      // autoplay 成功後に unmute（iOS Safari はここで音声が出る）
       setTimeout(() => {
         videoEl.muted = false;
         videoEl.volume = 1.0;
-      }, 200);
+      }, 300);
     })
-    .catch(e => {
-      console.warn('[WebRTC] video.play() failed:', e.message);
-      // ユーザージェスチャーが必要な場合: muted のまま継続し映像だけ表示
+    .catch(() => {
+      // ユーザージェスチャーが必要な端末: muted のまま映像だけ表示
       videoEl.muted = true;
       videoEl.play().catch(() => {});
     });
@@ -110,13 +101,12 @@ export function useWebRtcCall({
         iceTransportPolicy: 'all',
         bundlePolicy: 'max-bundle',
         rtcpMuxPolicy: 'require',
-        iceCandidatePoolSize: 10, // 事前収集で接続高速化
+        iceCandidatePoolSize: 10,
       });
       pcRef.current = pc;
 
-      // ICEエラーログ
       pc.onicecandidateerror = (ev) => {
-        console.warn('[WebRTC] ICE candidate error:', ev.errorCode, ev.url);
+        console.warn('[WebRTC] ICE error:', ev.errorCode, ev.url);
       };
       pc.onicegatheringstatechange = () => {
         console.log('[WebRTC] ICE gathering:', pc.iceGatheringState);
@@ -125,7 +115,7 @@ export function useWebRtcCall({
         }
       };
 
-      // ローカルトラック追加
+      // ローカルトラックを全て追加
       const tracks = localStream.getTracks();
       if (tracks.length === 0) {
         reportStatus('error', 'カメラ・マイクが取得できていません');
@@ -133,30 +123,29 @@ export function useWebRtcCall({
       }
       tracks.forEach(track => {
         pc.addTrack(track, localStream);
-        console.log('[WebRTC] 📹 Added local track:', track.kind, track.enabled);
+        console.log('[WebRTC] Added track:', track.kind, 'enabled:', track.enabled);
       });
 
-      // リモートトラック受信（iOS Safari 対応 play）
+      // リモートトラック受信
       pc.ontrack = (event) => {
         if (cleanedUpRef.current) return;
         const videoEl = remoteVideoRef.current;
         if (!videoEl) return;
-        // srcObject が未設定 or 別ストリームなら置き換え
-        if (!videoEl.srcObject) {
-          videoEl.srcObject = event.streams[0] || new MediaStream();
+
+        // ストリームをそのまま srcObject にセット（最もシンプルで確実）
+        if (event.streams && event.streams[0]) {
+          videoEl.srcObject = event.streams[0];
         } else {
-          event.streams[0]?.getTracks().forEach(t => {
-            if (!videoEl.srcObject.getTracks().includes(t)) {
-              videoEl.srcObject.addTrack(t);
-            }
-          });
+          if (!videoEl.srcObject) videoEl.srcObject = new MediaStream();
+          videoEl.srcObject.addTrack(event.track);
         }
+
         playRemoteVideo(videoEl);
         reportStatus('track_received', event.track.kind);
-        console.log('[WebRTC] ✅ Remote track received:', event.track.kind);
+        console.log('[WebRTC] ✅ Remote track:', event.track.kind);
       };
 
-      // 接続状態監視
+      // 接続状態
       pc.onconnectionstatechange = () => {
         const state = pc.connectionState;
         console.log('[WebRTC] connectionState:', state);
@@ -164,7 +153,7 @@ export function useWebRtcCall({
           reportStatus('connected', '映像・音声接続完了');
           onReconnected?.();
         } else if (state === 'failed') {
-          reportStatus('failed', 'ICE接続失敗（NAT超えに失敗）');
+          reportStatus('failed', 'ICE接続失敗');
           onReconnecting?.();
           scheduleRetry(attemptNum, 'ICE connection failed');
         } else if (state === 'disconnected') {
@@ -175,7 +164,7 @@ export function useWebRtcCall({
 
       pc.oniceconnectionstatechange = () => {
         const s = pc.iceConnectionState;
-        console.log('[WebRTC] ICE connection state:', s);
+        console.log('[WebRTC] ICE state:', s);
         if (s === 'failed') {
           reportStatus('ice_failed', 'ICEネゴシエーション失敗');
         } else if (s === 'checking') {
@@ -192,17 +181,17 @@ export function useWebRtcCall({
       }
     };
 
-    // ── 自動リトライ ──
+    // ── リトライスケジューラ ──
     const scheduleRetry = (lastAttempt, reason) => {
       if (cleanedUpRef.current) return;
       const next = lastAttempt + 1;
       if (next > MAX_RETRIES) {
-        reportStatus('give_up', `${MAX_RETRIES}回試行しても接続できませんでした（原因: ${reason}）`);
-        toast.error(`接続に失敗しました（${reason}）。通話を終了して再度お試しください。`);
+        reportStatus('give_up', `${MAX_RETRIES}回試行しても接続できませんでした`);
+        toast.error(`接続に失敗しました。通話を終了して再度お試しください。`);
         onReconnectFailed?.();
         return;
       }
-      const delay = next * 2000; // 2秒・4秒・6秒
+      const delay = next * 2000;
       reportStatus('retrying', `${delay / 1000}秒後に再試行... (${next}/${MAX_RETRIES})`);
       toast.info(`接続を再試行します... (${next}/${MAX_RETRIES})`);
       retryTimerRef.current = setTimeout(() => {
@@ -216,7 +205,7 @@ export function useWebRtcCall({
     // ────────────────────────────────────────────
     const runAsCaller = async (pc, attemptNum) => {
       try {
-        // 1. 古いシグナリングをクリア（並列で実行）
+        // 1. シグナリングをクリア
         await base44.entities.VideoCall.update(call.id, {
           webrtc_offer: null,
           webrtc_answer: null,
@@ -227,14 +216,14 @@ export function useWebRtcCall({
         reportStatus('cleared', 'シグナリングデータをリセット');
         if (cleanedUpRef.current) return;
 
-        // 2. Callee の ready を待つ（subscribe + 高速ポーリング）
+        // 2. Callee の ready を待つ
         reportStatus('waiting_callee', 'ライバーの接続準備を待っています...');
         await new Promise((resolve) => {
           let done = false;
           const finish = (reason) => {
             if (done) return;
             done = true;
-            console.log('[WebRTC] Callee ready:', reason);
+            console.log('[WebRTC] Callee ready via:', reason);
             resolve();
           };
 
@@ -249,7 +238,7 @@ export function useWebRtcCall({
             if (ev.data?.webrtc_callee_ready) { unsub(); finish('subscribe'); }
           });
 
-          // 高速ポーリング（300ms）
+          // ポーリング（バックアップ）
           const poll = setInterval(async () => {
             if (done) { clearInterval(poll); return; }
             try {
@@ -268,7 +257,7 @@ export function useWebRtcCall({
         if (cleanedUpRef.current) return;
         reportStatus('offering', 'Offerを作成中（ICE収集中）...');
 
-        // 3. Offer 作成 → ICE 収集（3秒タイムアウト）
+        // 3. Offer 作成 → ICE 収集完了まで待つ
         const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
         await pc.setLocalDescription(offer);
         await waitForIceGathering(pc);
@@ -280,13 +269,13 @@ export function useWebRtcCall({
           reportStatus('warning', 'ICE候補が0件です（STUN到達不可の可能性）');
         }
 
-        // 4. Offer 一括送信
+        // 4. Offer 送信
         await base44.entities.VideoCall.update(call.id, {
           webrtc_offer: JSON.stringify(pc.localDescription),
         });
         reportStatus('offer_sent', `Offer送信完了（ICE候補: ${iceCount}件）`);
 
-        // 5. Answer 待ち（subscribe + 高速ポーリング 300ms）
+        // 5. Answer 待ち
         let answered = false;
         const handleAnswer = async (answerJson) => {
           if (answered || pc.remoteDescription !== null || cleanedUpRef.current) return;
@@ -312,7 +301,7 @@ export function useWebRtcCall({
           elapsed += POLL_INTERVAL_MS;
           if (elapsed >= ANSWER_TIMEOUT_MS) {
             clearInterval(pollAnswer);
-            reportStatus('answer_timeout', `${ANSWER_TIMEOUT_MS / 1000}秒以内にAnswerが届かなかった`);
+            reportStatus('answer_timeout', 'Answerが届きませんでした');
             scheduleRetry(attemptNum, 'Answer timeout');
             return;
           }
@@ -333,11 +322,11 @@ export function useWebRtcCall({
     };
 
     // ────────────────────────────────────────────
-    // CALLEE（スマホ最優先: ready フラグ + 即時 Offer チェック並列実行）
+    // CALLEE（ready フラグを最初に立て、Offer既存時は即処理）
     // ────────────────────────────────────────────
     const runAsCallee = async (pc) => {
       try {
-        // ready フラグ書き込みと既存 Offer チェックを並列実行
+        // ready フラグ書き込みと既存 Offer チェックを並列
         const [, existingCalls] = await Promise.all([
           base44.entities.VideoCall.update(call.id, { webrtc_callee_ready: true }),
           base44.entities.VideoCall.filter({ id: call.id }),
@@ -370,7 +359,7 @@ export function useWebRtcCall({
           }
         };
 
-        // 既に Offer が存在する場合は即座に処理（待機0ms）
+        // 既に Offer がある場合は即座に処理（待機ゼロ）
         if (existingCalls[0]?.webrtc_offer) {
           await handleOffer(existingCalls[0].webrtc_offer);
           return () => {};
@@ -383,14 +372,14 @@ export function useWebRtcCall({
           if (ev.data?.webrtc_offer) await handleOffer(ev.data.webrtc_offer);
         });
 
-        // 高速ポーリング（300ms）
+        // ポーリング（バックアップ）
         let elapsed = 0;
         const pollOffer = setInterval(async () => {
           if (cleanedUpRef.current || offerApplied) { clearInterval(pollOffer); return; }
           elapsed += POLL_INTERVAL_MS;
           if (elapsed >= OFFER_TIMEOUT_MS) {
             clearInterval(pollOffer);
-            reportStatus('offer_timeout', `${OFFER_TIMEOUT_MS / 1000}秒以内にOfferが届かなかった`);
+            reportStatus('offer_timeout', 'Offerが届きませんでした');
             toast.error('接続タイムアウト。通話を一度終了して再度お試しください。');
             return;
           }
