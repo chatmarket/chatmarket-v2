@@ -44,7 +44,7 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   const [aiBlocked, setAiBlocked] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
-  const scrollBottomRef = useRef(null);
+  const scrollTopRef = useRef(null);
   const prevMsgCountRef = useRef(0);
   const queryClient = useQueryClient();
   const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
@@ -109,7 +109,13 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   const filterNg = useCallback((text) => {
     if (!ngWords.length) return true;
     const lower = text.toLowerCase();
-    return !ngWords.some((w) => w && lower.includes(w.toLowerCase()));
+    const blockedWord = ngWords.find((w) => w && lower.includes(w.toLowerCase()));
+    if (blockedWord) {
+      // 【管理者ログ】AIブロック理由を記録（コンソール）
+      console.warn(`[AIModeration] 🚫 Message blocked by NG word: "${blockedWord}" | Content: "${text}"`);
+      return false;
+    }
+    return true;
   }, [ngWords]);
 
   const sendComment = useMutation({
@@ -132,8 +138,10 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
     const trimmed = message.trim();
     if (!trimmed || !user) return;
     if (!filterNg(trimmed)) {
+      // 【管理者ログ】UIに表示
       setMessage("");
       setAiBlocked(true);
+      console.warn(`[AIModeration] 🛡️ Message blocked from user: ${user.email} | Timestamp: ${new Date().toISOString()}`);
       setTimeout(() => setAiBlocked(false), 3000);
       return;
     }
@@ -165,13 +173,13 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   const allMessages = [
     ...filterMessages(comments.filter((c) => filterNg(c.content || ""))).map((c) => ({ ...c, type: "comment" })),
     ...superChats.map((s) => ({ ...s, type: "superchat" })),
-  ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+  ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)); // 【逆順】最新が上
 
-  // 自動スクロール＆新着バッジ（allMessages定義後）
+  // 自動スクロール＆新着バッジ（逆順スクロール：新着が上）
   useEffect(() => {
     const newCount = allMessages.length;
     if (autoScroll) {
-      scrollBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollTopRef.current?.scrollIntoView({ behavior: "smooth" });
       setUnreadCount(0);
     } else if (newCount > prevMsgCountRef.current) {
       setUnreadCount(c => c + (newCount - prevMsgCountRef.current));
@@ -229,9 +237,30 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
         )}
       </AnimatePresence>
 
+      {/* ★ エール・ティッカー（最新5秒固定） */}
+      {superChats.length > 0 && (
+        <AnimatePresence>
+          {superChats[0] && (
+            <div className="px-3 py-2 bg-gradient-to-r from-yellow-500/15 to-orange-500/15 border-t border-yellow-500/20 flex items-center gap-2 animate-pulse">
+              <span className="text-lg">🎉</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black text-yellow-400 truncate">
+                  {superChats[0].user_name} さんがエールコイン {superChats[0].amount} を送った！
+                </p>
+                {superChats[0].message && (
+                  <p className="text-[10px] text-yellow-300 truncate">{superChats[0].message}</p>
+                )}
+              </div>
+              <span className="text-sm font-black text-yellow-400 shrink-0">💛</span>
+            </div>
+          )}
+        </AnimatePresence>
+      )}
+
       {/* メッセージ一覧 */}
       <ScrollArea className="flex-1 p-3">
         <div className="space-y-2" onWheel={() => setAutoScroll(false)}>
+          <div ref={scrollTopRef} />
           {allMessages.map((msg) =>
             msg.type === "superchat" ? (
               <div
@@ -281,7 +310,6 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
               </div>
             )
           )}
-          <div ref={scrollBottomRef} />
         </div>
       </ScrollArea>
 
@@ -298,8 +326,10 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
 
       {/* 入力エリア */}
       {aiBlocked && (
-        <div className="mx-3 mb-1 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-          <Shield className="w-3 h-3" /> このメッセージはAIモデレーションにより送信できませんでした
+        <div className="mx-3 mb-1 text-xs bg-red-500/20 border border-red-500/50 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+          <Shield className="w-3 h-3 text-red-400" />
+          <span className="text-red-300 font-semibold">不適切な発言をAIが非表示にしました</span>
+          {isOwner && <span className="text-red-400 text-[10px] ml-auto">(ブラウザのコンソールで詳細を確認)</span>}
         </div>
       )}
       {user ? (
