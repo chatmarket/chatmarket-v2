@@ -234,9 +234,9 @@ export function t(key) {
 export const PAGE_META = {
   home: {
     ja: {
-      title: "ChatMarket | 有料ライブ配信・動画販売・1対1ビデオ通話プラットフォーム",
-      description: "ChatMarketは有料ライブ配信・動画販売・1対1有料ビデオ通話をこのプラットフォーム一つで実現。最大95%の高収益還元率でクリエイターの収益化を強力にサポートします。",
-      keywords: "ライブ配信,動画販売,ビデオ通話,有料配信,クリエイター,収益化,チャットマーケット",
+      title: "チャットマーケット | ライブ配信・動画販売・1対1ビデオ通話プラットフォーム【ChatMarket】",
+      description: "チャットマーケット（ChatMarket）は有料ライブ配信・動画販売・1対1有料ビデオ通話・占い鑑定予約をこのプラットフォーム一つで実現。チャットマーケットなら最大95%の高収益還元率でクリエイターの収益化を強力にサポートします。",
+      keywords: "チャットマーケット,チャットマーケット ライバー,チャットマーケット 占い,チャットマーケット 配信,ライブ配信,動画販売,ビデオ通話,有料配信,クリエイター,収益化",
     },
     en: {
       title: "ChatMarket | Live Streaming, Video Sales & 1-on-1 Video Calls Platform",
