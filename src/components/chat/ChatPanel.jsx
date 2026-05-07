@@ -121,14 +121,11 @@ export default function ChatPanel({ targetType, targetId }) {
     },
   });
 
-  const handleSend = async (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
     const trimmed = message.trim();
     if (!trimmed || !user) return;
-    if (!filterNg(trimmed)) { setMessage(""); return; }
-    // AI moderation check before posting
-    const safe = await checkMessage(trimmed);
-    if (!safe) {
+    if (!filterNg(trimmed)) {
       setMessage("");
       setAiBlocked(true);
       setTimeout(() => setAiBlocked(false), 3000);
