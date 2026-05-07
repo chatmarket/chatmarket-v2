@@ -28,6 +28,7 @@ import RemoteMuteIndicator from "../components/call/RemoteMuteIndicator";
 import IncomingCallScreen from "../components/call/IncomingCallScreen";
 import OutgoingCallScreen from "../components/call/OutgoingCallScreen";
 import MobileVideoCallUI from "../components/call/MobileVideoCallUI";
+import CallDebugPanel from "../components/debug/CallDebugPanel";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -1164,6 +1165,14 @@ export default function VideoCallPage() {
 
   return (
     <div className="bg-black flex flex-col" style={{ height: '100dvh', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', minHeight: 0 }}>
+
+      {/* デバッグパネル（左下 虫アイコン） */}
+      <CallDebugPanel
+        call={call}
+        localStream={localStream}
+        remoteVideoRef={remoteVideoRef}
+        user={user}
+      />
 
       {/* ABR Manager */}
       <AdaptiveBitrateManager
