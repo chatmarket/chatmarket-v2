@@ -84,6 +84,7 @@ import ChannelProfileEdit from '@/pages/ChannelProfileEdit';
 import PrismWebOverlay from '@/pages/PrismWebOverlay';
 import FortuneCalendar from '@/pages/FortuneCalendar';
 import ReminderLogs from '@/pages/ReminderLogs';
+import Dashboard from '@/pages/Dashboard';
 
 export default function App() {
 
@@ -169,6 +170,7 @@ export default function App() {
             <Route path="/prism-overlay/:streamId" element={<PrismWebOverlay />} />
             <Route path="/fortune-calendar" element={<FortuneCalendar />} />
             <Route path="/admin/reminder-logs" element={<ReminderLogs />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>

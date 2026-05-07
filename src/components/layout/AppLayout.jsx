@@ -30,6 +30,7 @@ const ADMIN_NAV_ITEMS = [
 
 const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
+  { path: "/dashboard", icon: BarChart3, label: "マイページ" },
   { path: "/search", icon: Search, label: "さがす" },
   { path: "/community", icon: Users, label: "コミュニティ" },
   { path: "/fanclub", icon: Crown, label: "ファンクラブ" },
@@ -335,8 +336,8 @@ export default function AppLayout() {
         {[
           { path: "/", icon: Home, label: "ホーム" },
           { path: "/search", icon: Search, label: "さがす" },
+          { path: "/dashboard", icon: BarChart3, label: "マイページ" },
           { path: "/go-live", icon: Radio, label: "配信" },
-          { path: "/fanclub", icon: Crown, label: "FC" },
           { path: "/settings", icon: Settings, label: "設定" },
         ].map(({ path, icon: Icon, label }) => (
           <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2">
