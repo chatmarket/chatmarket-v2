@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import EarningsSummaryCard from "../components/dashboard/EarningsSummaryCard";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import IncomingMessagesWidget from "../components/dashboard/IncomingMessagesWidget";
+import RecommendedCreators from "../components/dashboard/RecommendedCreators";
 
 // ── モード定数 ──
 const MODE_FAN = "fan";
@@ -166,15 +167,21 @@ export default function Dashboard() {
       {mode === MODE_FAN && (
         <div className="space-y-5">
 
-          {/* 挨拶 + コイン残高（支払い導線①: 1タップでチャージ） */}
+              {/* 挨拶 + コイン残高 */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold">おかえり、{firstName}さん 👋</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                フォロー中 {followedChannels.length}チャンネル
-              </p>
+              {followedChannels.length === 0 && history.length === 0 ? (
+                <h1 className="text-xl font-bold">まず好きなクリエイターを見つけよう！</h1>
+              ) : (
+                <>
+                  <h1 className="text-xl font-bold">おかえり、{firstName}さん 👋</h1>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    フォロー中 {followedChannels.length}チャンネル
+                  </p>
+                </>
+              )}
             </div>
-            {/* ★ コイン残高 + チャージ導線 — 最短1タップ */}
+            {/* コイン残高 + チャージ導線 — 最短1タップ */}
             <Link to="/coin-charge">
               <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:opacity-80 ${
                 coinBalance < 100
@@ -190,68 +197,84 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* ライブ中チャンネル（最優先表示: 今すぐ見れる） */}
-          <LiveNowSection followedChannelIds={followedChannels.map(f => f.channel_id)} />
+          {/* オンボーディング CTA（フォロー0 かつ 履歴0） */}
+          {followedChannels.length === 0 && history.length === 0 ? (
+            <Link to="/search">
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-6 flex flex-col items-center gap-3 text-center hover:border-primary/60 transition-all">
+                <span className="text-4xl">🔍</span>
+                <div>
+                  <p className="text-base font-black">クリエイターを探す</p>
+                  <p className="text-sm text-muted-foreground mt-1">ライブ配信・動画・通話ができるクリエイターが見つかります</p>
+                </div>
+                <Button className="bg-primary hover:bg-primary/90 gap-2 mt-1">
+                  さがすページへ <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </Link>
+          ) : (
+            <>
+              {/* ライブ中チャンネル（最優先表示） */}
+              <LiveNowSection followedChannelIds={followedChannels.map(f => f.channel_id)} />
 
-          {/* 続きを見る（離脱防止: 途中の動画を即リスタート） */}
-          {history.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase flex items-center gap-1.5">
-                  <History className="w-3.5 h-3.5" /> 続きを見る
-                </h2>
-                <Link to="/my-library" className="text-xs text-primary hover:underline">すべて</Link>
-              </div>
-              <div className="space-y-2">
-                {history.slice(0, 3).map(item => (
-                  <Link key={item.id} to={`/watch/${item.video_id}`}>
-                    <div className="flex gap-3 items-center bg-card border border-border/50 rounded-xl p-3 hover:border-primary/30 transition-all">
-                      <div className="w-20 h-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                        {item.video_thumbnail
-                          ? <img src={item.video_thumbnail} alt="" className="w-full h-full object-cover" />
-                          : <Play className="w-5 h-5 text-muted-foreground" />
-                        }
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold line-clamp-1">{item.video_title}</p>
-                        <p className="text-xs text-muted-foreground">{item.channel_name}</p>
-                      </div>
-                      <Play className="w-4 h-4 text-muted-foreground shrink-0" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* フォロー中クリエイター（ストーリー型: 新着を一目で） */}
-          {followedChannelData.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" /> フォロー中
-                </h2>
-              </div>
-              <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide">
-                {followedChannelData.map(ch => {
-                  const isLive = ch.is_live;
-                  return (
-                    <Link key={ch.id} to={`/channel/${ch.id}`} className="flex flex-col items-center gap-1.5 shrink-0">
-                      <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${isLive ? "border-red-500 p-0.5" : "border-border"}`}>
-                        <div className="w-full h-full rounded-full overflow-hidden bg-secondary flex items-center justify-center">
-                          {ch.avatar_url
-                            ? <img src={ch.avatar_url} alt={ch.name} className="w-full h-full object-cover" />
-                            : <span className="text-lg font-bold text-muted-foreground">{ch.name?.[0]}</span>
-                          }
+              {/* 続きを見る */}
+              {history.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5" /> 続きを見る
+                    </h2>
+                    <Link to="/my-library" className="text-xs text-primary hover:underline">すべて</Link>
+                  </div>
+                  <div className="space-y-2">
+                    {history.slice(0, 3).map(item => (
+                      <Link key={item.id} to={`/watch/${item.video_id}`}>
+                        <div className="flex gap-3 items-center bg-card border border-border/50 rounded-xl p-3 hover:border-primary/30 transition-all">
+                          <div className="w-20 h-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
+                            {item.video_thumbnail
+                              ? <img src={item.video_thumbnail} alt="" className="w-full h-full object-cover" />
+                              : <Play className="w-5 h-5 text-muted-foreground" />
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold line-clamp-1">{item.video_title}</p>
+                            <p className="text-xs text-muted-foreground">{item.channel_name}</p>
+                          </div>
+                          <Play className="w-4 h-4 text-muted-foreground shrink-0" />
                         </div>
-                      </div>
-                      <span className="text-[10px] text-center font-medium max-w-[56px] line-clamp-1">{ch.name}</span>
-                      {isLive && <span className="text-[9px] font-black text-red-400">LIVE</span>}
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* フォロー中クリエイター（ストーリー型） */}
+              {followedChannelData.length > 0 && (
+                <section>
+                  <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
+                    <Users className="w-3.5 h-3.5" /> フォロー中
+                  </h2>
+                  <div className="flex gap-4 overflow-x-auto pb-1">
+                    {followedChannelData.map(ch => {
+                      const isLive = ch.is_live;
+                      return (
+                        <Link key={ch.id} to={`/channel/${ch.id}`} className="flex flex-col items-center gap-1.5 shrink-0">
+                          <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${isLive ? "border-red-500 p-0.5" : "border-border"}`}>
+                            <div className="w-full h-full rounded-full overflow-hidden bg-secondary flex items-center justify-center">
+                              {ch.avatar_url
+                                ? <img src={ch.avatar_url} alt={ch.name} className="w-full h-full object-cover" />
+                                : <span className="text-lg font-bold text-muted-foreground">{ch.name?.[0]}</span>
+                              }
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-center font-medium max-w-[56px] line-clamp-1">{ch.name}</span>
+                          {isLive && <span className="text-[9px] font-black text-red-400">LIVE</span>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+            </>
           )}
 
           {/* クイックアクション */}
@@ -279,6 +302,9 @@ export default function Dashboard() {
               </div>
             </Link>
           </div>
+
+          {/* おすすめクリエイター */}
+          <RecommendedCreators />
 
           {/* クリエイター切り替え誘導（チャンネルなし） */}
           {!hasChannel && (
