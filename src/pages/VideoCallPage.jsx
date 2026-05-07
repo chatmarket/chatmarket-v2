@@ -29,6 +29,7 @@ import IncomingCallScreen from "../components/call/IncomingCallScreen";
 import OutgoingCallScreen from "../components/call/OutgoingCallScreen";
 import MobileVideoCallUI from "../components/call/MobileVideoCallUI";
 import CallDebugPanel from "../components/debug/CallDebugPanel";
+import WebRtcStatusPanel from "../components/call/WebRtcStatusPanel";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -993,6 +994,8 @@ export default function VideoCallPage() {
 
   // ---- WebRTC 接続ステータス ----
   const [ivsConnectStatus, setIvsConnectStatus] = useState(null); // null | 'reconnecting' | 'failed'
+  const [webrtcStatus, setWebrtcStatus] = useState(null);
+  const [webrtcDetail, setWebrtcDetail] = useState('');
 
   // ---- WebRTC P2P 接続（1対1通話 / ブラウザ直接） ----
   useWebRtcCall({
@@ -1002,8 +1005,9 @@ export default function VideoCallPage() {
     user,
     enabled: call?.status === 'active' && !!localStream && !!user,
     onReconnecting: () => setIvsConnectStatus('reconnecting'),
-    onReconnected: () => setIvsConnectStatus(null),
+    onReconnected: () => { setIvsConnectStatus(null); setWebrtcStatus('connected'); },
     onReconnectFailed: () => setIvsConnectStatus('failed'),
+    onStatusChange: (status, detail) => { setWebrtcStatus(status); setWebrtcDetail(detail || ''); },
   });
 
   const addFloating = useCallback((emoji, type = "emoji") => {
