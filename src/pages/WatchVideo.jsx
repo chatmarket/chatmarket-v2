@@ -222,20 +222,23 @@ export default function WatchVideo() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+    <div className="w-full h-screen flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <MetaHelmet
         title={`${video.title} | ChatMarket`}
         description={video.description || `${video.channel_name}の動画「${video.title}」を視聴する。ChatMarketで有料・無料動画を楽しもう。`}
         image={video.thumbnail_url}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Video Player */}
-        <div className="space-y-3 sm:space-y-4 lg:col-span-2">
+      {/* スクロール可能なメインコンテンツ */}
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Video Player */}
+          <div className="space-y-3 sm:space-y-4 lg:col-span-2">
           {/* 残り視聴時間インジケーター */}
           <div className="bg-card border border-border/50 rounded-xl p-3 sm:p-4">
             <DailyViewTimeIndicator />
           </div>
-          <div ref={containerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden">
+          {/* 【微調整】動画高さ制限 + 縦長防止 */}
+          <div ref={containerRef} className="relative bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '55vh' }}>
             {(signedVideoUrl || video.video_url) ? (
               <video
                 ref={videoRef}
@@ -339,15 +342,16 @@ export default function WatchVideo() {
           </div>
         </div>
 
-        {/* Chat */}
-        <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)] lg:col-span-1">
-          <ChatPanel targetType="video" targetId={id} user={user} />
+          {/* Chat */}
+          <div className="lg:col-span-1" style={{ minHeight: '300px' }}>
+            <ChatPanel targetType="video" targetId={id} user={user} />
+          </div>
         </div>
-      </div>
 
-      {/* Recommended Videos */}
-      <div className="mt-4 sm:mt-6">
-        <RecommendedVideos currentVideoId={id} category={video.category} />
+        {/* Recommended Videos */}
+        <div className="mt-4 sm:mt-6">
+          <RecommendedVideos currentVideoId={id} category={video.category} />
+        </div>
       </div>
 
       {/* ---- Paywall Modal（新・Stripe手数料外出し版） ----*/}

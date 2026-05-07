@@ -44,10 +44,24 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   const [aiBlocked, setAiBlocked] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollTopRef = useRef(null);
   const prevMsgCountRef = useRef(0);
   const queryClient = useQueryClient();
   const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
+
+  // 【Keyboard-Aware】スマホキーボード出現時に高さを調整
+  useEffect(() => {
+    const handleResize = () => {
+      const viewport = window.visualViewport;
+      if (viewport) {
+        const diff = window.innerHeight - viewport.height;
+        setKeyboardHeight(diff > 50 ? diff : 0); // 50px以上なら キーボード判定
+      }
+    };
+    window.visualViewport?.addEventListener('resize', handleResize);
+    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (userProp) { setUser(userProp); return; }
@@ -188,7 +202,13 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
   }, [allMessages.length, autoScroll]);
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-xl border border-border/50 relative">
+    <div 
+      className="flex flex-col h-full bg-card rounded-xl border border-border/50 relative"
+      style={{ 
+        maxHeight: keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight + 150}px)` : '100%',
+        transition: 'max-height 0.2s ease-out'
+      }}
+    >
       {/* Header */}
       <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -325,61 +345,63 @@ export default function ChatPanel({ targetType, targetId, user: userProp }) {
       </AnimatePresence>
 
       {/* 入力エリア */}
-      {aiBlocked && (
-        <div className="mx-3 mb-1 text-xs bg-red-500/20 border border-red-500/50 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-          <Shield className="w-3 h-3 text-red-400" />
-          <span className="text-red-300 font-semibold">不適切な発言をAIが非表示にしました</span>
-          {isOwner && <span className="text-red-400 text-[10px] ml-auto">(ブラウザのコンソールで詳細を確認)</span>}
-        </div>
-      )}
-      {user ? (
-        <div className="p-3 border-t border-border/50 space-y-2">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowSuperChat(true)}
-              className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 text-xs gap-1 px-2"
-            >
-              <DollarSign className="w-3.5 h-3.5" />
-              エールコイン
+      <div className="border-t border-border/50 flex-shrink-0">
+        {aiBlocked && (
+          <div className="px-3 pt-2 pb-1 text-xs bg-red-500/20 border-b border-red-500/50 rounded-t-lg flex items-center gap-1.5 mx-0">
+            <Shield className="w-3 h-3 text-red-400 shrink-0" />
+            <span className="text-red-300 font-semibold">不適切な発言をAIが非表示にしました</span>
+            {isOwner && <span className="text-red-400 text-[10px] ml-auto">(詳細はコンソール)</span>}
+          </div>
+        )}
+        {user ? (
+          <div className="p-4 space-y-3">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowSuperChat(true)}
+                className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 text-xs gap-1 px-2"
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                エールコイン
+              </Button>
+            </div>
+            <div className="relative flex gap-2">
+              {showEmojiPicker && (
+                <EmojiPicker onSelect={(emoji) => setMessage((p) => p + emoji)} onClose={() => setShowEmojiPicker(false)} />
+              )}
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker((v) => !v)}
+                className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg transition-colors text-xl ${
+                  showEmojiPicker ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                <Smile className="w-4 h-4" />
+              </button>
+              <form onSubmit={handleSend} className="flex flex-1 gap-2">
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="コメントを入力..."
+                  className="bg-secondary border-0 text-sm flex-1 rounded-lg"
+                  onFocus={() => setShowEmojiPicker(false)}
+                />
+                <Button type="submit" size="icon" className="shrink-0 bg-primary hover:bg-primary/90 rounded-lg">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 text-center">
+            <Button size="sm" variant="secondary" onClick={() => base44.auth.redirectToLogin()}>
+              ログインしてコメント
             </Button>
           </div>
-          <div className="relative flex gap-2">
-            {showEmojiPicker && (
-              <EmojiPicker onSelect={(emoji) => setMessage((p) => p + emoji)} onClose={() => setShowEmojiPicker(false)} />
-            )}
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker((v) => !v)}
-              className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-colors text-xl ${
-                showEmojiPicker ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-            >
-              <Smile className="w-4 h-4" />
-            </button>
-            <form onSubmit={handleSend} className="flex flex-1 gap-2">
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="コメントを入力..."
-                className="bg-secondary border-0 text-sm flex-1"
-                onFocus={() => setShowEmojiPicker(false)}
-              />
-              <Button type="submit" size="icon" className="shrink-0 bg-primary hover:bg-primary/90">
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
-          </div>
-        </div>
-      ) : (
-        <div className="p-3 border-t border-border/50 text-center">
-          <Button size="sm" variant="secondary" onClick={() => base44.auth.redirectToLogin()}>
-            ログインしてコメント
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {showSuperChat && (
         <SuperChatModal livestreamId={targetId} user={user} onClose={() => setShowSuperChat(false)} />
