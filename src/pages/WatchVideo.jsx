@@ -25,6 +25,12 @@ export default function WatchVideo() {
   const { id } = useParams();
   const videoRef = useRef(null);
   const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+    });
+  }, []);
   const [showPaywall, setShowPaywall] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [previewEnded, setPreviewEnded] = useState(false);
@@ -335,7 +341,7 @@ export default function WatchVideo() {
 
         {/* Chat */}
         <div className="h-[400px] sm:h-[500px] lg:h-[calc(100vh-8rem)] lg:col-span-1">
-          <ChatPanel targetType="video" targetId={id} />
+          <ChatPanel targetType="video" targetId={id} user={user} />
         </div>
       </div>
 

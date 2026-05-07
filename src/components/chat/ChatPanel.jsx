@@ -20,11 +20,11 @@ const superChatColors = {
   red: "from-red-500/20 to-red-600/10 border-red-500/40",
 };
 
-export default function ChatPanel({ targetType, targetId }) {
+export default function ChatPanel({ targetType, targetId, user: userProp }) {
   // チャット専用のtarget_type（コメントと分離するため "_chat" サフィックスを付与）
   const chatType = targetType + "_chat";
   const [message, setMessage] = useState("");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(userProp || null);
   const [channel, setChannel] = useState(null);
   const [showSuperChat, setShowSuperChat] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -45,10 +45,11 @@ export default function ChatPanel({ targetType, targetId }) {
   const { checkMessage, scanMessages, filterMessages } = useAiModeration(ngWords);
 
   useEffect(() => {
+    if (userProp) { setUser(userProp); return; }
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
-  }, []);
+  }, [userProp]);
 
   useEffect(() => {
     if (!targetId) return;
