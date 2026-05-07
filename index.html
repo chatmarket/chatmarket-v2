@@ -167,26 +167,21 @@
             });
           });
         }
-        // localStorage / sessionStorage クリア（URL記憶削除）
+        // localStorage / sessionStorage クリア（URL記憶削除・認証キーは除外）
         Object.keys(localStorage).forEach(function(key) {
+          // 認証・セッション関連のキーは絶対に削除しない
+          if (key.includes('token') || key.includes('auth') || key.includes('session') || key.includes('user') || key.includes('base44')) return;
           if (key.startsWith('cm_') || key.startsWith('http')) {
             localStorage.removeItem(key);
           }
         });
         Object.keys(sessionStorage).forEach(function(key) {
+          if (key.includes('token') || key.includes('auth') || key.includes('session') || key.includes('user') || key.includes('base44')) return;
           if (key.startsWith('cm_')) {
             sessionStorage.removeItem(key);
           }
         });
-        // IndexedDB クリア
-        if (indexedDB) {
-          indexedDB.databases().then(function(dbs) {
-            dbs.forEach(function(db) {
-              indexedDB.deleteDatabase(db.name);
-              console.log('[CacheClean] IDB deleted:', db.name);
-            });
-          }).catch(function() {});
-        }
+        // IndexedDB クリアは認証情報破壊のリスクがあるためスキップ
         // バージョン更新
         localStorage.setItem('cm_cache_ver', CACHE_VERSION);
         // 1回のみリロード

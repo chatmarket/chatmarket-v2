@@ -22,7 +22,7 @@ import DailyViewTimeIndicator from "../components/video/DailyViewTimeIndicator";
 const FREE_PREVIEW_SECONDS = 30;
 
 export default function WatchVideo() {
-  const { id } = useParams();
+  const { videoId: id } = useParams();
   const videoRef = useRef(null);
   const [user, setUser] = useState(null);
 
