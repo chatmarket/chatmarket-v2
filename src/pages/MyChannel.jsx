@@ -93,7 +93,7 @@ export default function MyChannel() {
     await base44.entities.Channel.update(channel.id, { call_enabled: newValue });
     queryClient.invalidateQueries({ queryKey: ["my-channels"] });
     // ★ Home の待機チャンネル一覧をリアルタイムで更新
-    queryClient.invalidateQueries({ queryKey: ["call-waiting-channels"] });
+    queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
   };
 
   if (!user) return null;

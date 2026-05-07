@@ -164,8 +164,14 @@ export default function Settings() {
 
         setCallSettings({
           call_enabled: callEnabled,
-          call_price_30min: channels[0].call_price_30min || 3000,
-          call_price_60min: channels[0].call_price_60min || 5000,
+          call_price_15min: channels[0].call_price_15min || 0,
+          call_price_30min: channels[0].call_price_30min || 0,
+          call_price_45min: channels[0].call_price_45min || 0,
+          call_price_60min: channels[0].call_price_60min || 0,
+          call_price_75min: channels[0].call_price_75min || 0,
+          call_price_90min: channels[0].call_price_90min || 0,
+          call_price_105min: channels[0].call_price_105min || 0,
+          call_price_120min: channels[0].call_price_120min || 0,
           call_available_dates: channels[0].call_available_dates || "",
           call_theme: channels[0].call_theme || "",
         });
