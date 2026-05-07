@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { CalendarDays, Clock, MessageCircle, Send } from "lucide-react";
+import { CalendarDays, Clock, MessageCircle, Send, Globe } from "lucide-react";
+import { getTimezoneHint, getUserTimezone } from "@/lib/timezone";
+import { getLang } from "@/lib/i18n";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90];
 const TIME_OPTIONS = [];
@@ -84,6 +86,14 @@ export default function AppointmentRequestModal({ channel, user, onClose, onSent
               <p className="font-bold">{channel.name}</p>
             </div>
           </div>
+
+          {/* タイムゾーン表示（海外ユーザー向け） */}
+          {getTimezoneHint(getLang()) && (
+            <div className="flex items-center gap-1.5 text-[10px] text-blue-400/80 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-1.5">
+              <Globe className="w-3 h-3 shrink-0" />
+              <span>{getTimezoneHint(getLang())}</span>
+            </div>
+          )}
 
           {/* 希望日 */}
           <div className="space-y-1.5">

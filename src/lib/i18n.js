@@ -197,8 +197,25 @@ export const translations = {
     },
 };
 
+/**
+ * ブラウザ言語を検出してデフォルト言語を返す
+ * 優先順: localStorage > ブラウザ言語 > "ja"
+ */
+export function detectBrowserLang() {
+  const browserLang = navigator.language || navigator.languages?.[0] || "ja";
+  const primary = browserLang.split("-")[0].toLowerCase();
+  if (primary === "ko") return "ko";
+  if (primary === "en") return "en";
+  return "ja"; // その他はデフォルト日本語
+}
+
 export function getLang() {
-  return localStorage.getItem("cm_lang") || "ja";
+  const stored = localStorage.getItem("cm_lang");
+  if (stored) return stored;
+  // 初回アクセス時はブラウザ言語を自動検出して保存
+  const detected = detectBrowserLang();
+  localStorage.setItem("cm_lang", detected);
+  return detected;
 }
 
 export function setLang(lang) {

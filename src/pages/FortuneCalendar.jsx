@@ -12,11 +12,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   CalendarDays, ChevronLeft, ChevronRight, Clock, Phone, BookOpen,
-  Plus, Check, RefreshCw, X, Video, Bell, ArrowRight
+  Plus, Check, RefreshCw, X, Video, Bell, ArrowRight, Globe
 } from "lucide-react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval,
-  isSameDay, isToday, parseISO, addMinutes, differenceInMinutes } from "date-fns";
+  isSameDay, isToday, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
+import { minutesUntilLocal, getTimezoneHint, formatAppointmentDateTime } from "@/lib/timezone";
+import { getLang } from "@/lib/i18n";
 import AppointmentRequestModal from "@/components/appointment/AppointmentRequestModal";
 
 const STATUS_CONFIG = {
@@ -32,12 +34,7 @@ for (let h = 9; h <= 22; h++) {
   TIME_OPTIONS.push(`${String(h).padStart(2, "0")}:30`);
 }
 
-// 予約時刻まで何分か
-function minutesUntil(dateStr, timeStr) {
-  if (!dateStr || !timeStr) return null;
-  const target = parseISO(`${dateStr}T${timeStr}:00`);
-  return differenceInMinutes(target, new Date());
-}
+// minutesUntilLocal をlib/timezoneからimport済み
 
 // 通話ルームを開く（VideoCallを作成 or 既存のを返す）
 async function openCallRoom(appt, user) {
@@ -145,7 +142,7 @@ function AppointmentDetailModal({ appt, user, onClose, onRefresh }) {
   const cfg = STATUS_CONFIG[appt.status] || STATUS_CONFIG.pending;
   const confirmedDate = appt.confirmed_date || appt.requested_date;
   const confirmedTime = appt.confirmed_time || appt.requested_time;
-  const mins = minutesUntil(confirmedDate, confirmedTime);
+  const mins = minutesUntilLocal(confirmedDate, confirmedTime);
   const isCallable = appt.status === "accepted" && mins !== null && mins >= -5 && mins <= 30;
   const isUpcoming = appt.status === "accepted" && mins !== null && mins > 30;
 
@@ -371,7 +368,7 @@ export default function FortuneCalendar() {
         if (a.status !== "accepted") return false;
         const d = a.confirmed_date || a.requested_date;
         const t = a.confirmed_time || a.requested_time;
-        const m = minutesUntil(d, t);
+        const m = minutesUntilLocal(d, t);
         return m !== null && m >= -5 && m <= 5;
       });
       if (callable.length > 0) {
@@ -439,6 +436,11 @@ export default function FortuneCalendar() {
         <div>
           <h1 className="text-xl font-black">🔮 鑑定予約カレンダー</h1>
           <p className="text-xs text-muted-foreground">予約時刻になると自動で通話ルームへ誘導されます</p>
+          {getTimezoneHint(getLang()) && (
+            <p className="text-[10px] text-blue-400/70 flex items-center gap-1 mt-0.5">
+              <Globe className="w-3 h-3" /> {getTimezoneHint(getLang())}
+            </p>
+          )}
         </div>
         {myChannel && (
           <button
@@ -540,7 +542,7 @@ export default function FortuneCalendar() {
                   const cfg = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending;
                   const d = a.confirmed_date || a.requested_date;
                   const t = a.confirmed_time || a.requested_time;
-                  const mins = minutesUntil(d, t);
+                  const mins = minutesUntilLocal(d, t);
                   const nearTime = a.status === "accepted" && mins !== null && mins >= -5 && mins <= 30;
                   return (
                     <button key={a.id} onClick={() => setSelectedAppt(a)}
@@ -594,7 +596,7 @@ export default function FortuneCalendar() {
               upcomingAccepted.slice(0, 5).map(a => {
                 const d = a.confirmed_date || a.requested_date;
                 const t = a.confirmed_time || a.requested_time;
-                const mins = minutesUntil(d, t);
+                const mins = minutesUntilLocal(d, t);
                 const isCallable = mins !== null && mins >= -5 && mins <= 30;
                 return (
                   <button key={a.id} onClick={() => setSelectedAppt(a)}
