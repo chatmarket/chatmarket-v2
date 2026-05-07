@@ -75,7 +75,16 @@ export function useSmartCameraSelection() {
           setSelectedCameraId(savedId);
           const s = await navigator.mediaDevices.getUserMedia({
             video: { deviceId: { exact: savedId } },
-            audio: aDevices[0] ? { deviceId: { exact: aDevices[0].deviceId } } : true,
+            audio: aDevices[0] ? {
+              deviceId: { exact: aDevices[0].deviceId },
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            } : {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
           });
           setStream(s);
           setSelectedMicId(s.getAudioTracks()[0]?.getSettings()?.deviceId || aDevices[0]?.deviceId || null);
@@ -105,7 +114,16 @@ export function useSmartCameraSelection() {
             const micId = localStorage.getItem('selectedMicId') || aDevices[0]?.deviceId;
             const s = await navigator.mediaDevices.getUserMedia({
               video: { deviceId: { exact: dev.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
-              audio: micId ? { deviceId: { exact: micId } } : true,
+              audio: micId ? { 
+                deviceId: { exact: micId },
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              } : {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              },
             }).catch(() => null);
             if (s) {
               chosenStream = s;
@@ -119,7 +137,14 @@ export function useSmartCameraSelection() {
         // 5. 全て失敗したら最後の手段（デバイス指定なし）
         if (!chosenStream) {
           console.warn('[useSmartCameraSelection] ⚠️ All probes failed, using default');
-          chosenStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          chosenStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
           chosenId = chosenStream.getVideoTracks()[0]?.getSettings()?.deviceId || null;
         }
 
@@ -130,6 +155,18 @@ export function useSmartCameraSelection() {
         const micId = chosenStream.getAudioTracks()[0]?.getSettings()?.deviceId || aDevices[0]?.deviceId || null;
         setSelectedMicId(micId);
         if (micId) localStorage.setItem('selectedMicId', micId);
+
+        // エコーキャンセル確認ログ
+        const audioTrack = chosenStream.getAudioTracks()[0];
+        if (audioTrack) {
+          const settings = audioTrack.getSettings();
+          console.log('[EchoCancellation] 🎙️ Audio track settings:', {
+            echoCancellation: settings.echoCancellation,
+            noiseSuppression: settings.noiseSuppression,
+            autoGainControl: settings.autoGainControl,
+            sampleRate: settings.sampleRate,
+          });
+        }
 
       } catch (err) {
         console.error('[useSmartCameraSelection] ❌ Device init failed:', err);
@@ -166,7 +203,15 @@ export function useSmartCameraSelection() {
     if (stream) {
       stream.getAudioTracks().forEach(t => t.stop());
       try {
-        const newAudioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: { deviceId: { exact: deviceId } } });
+        const newAudioStream = await navigator.mediaDevices.getUserMedia({
+          video: false,
+          audio: {
+            deviceId: { exact: deviceId },
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
         const newTrack = newAudioStream.getAudioTracks()[0];
         const newStream = new MediaStream([...stream.getVideoTracks(), newTrack]);
         setStream(newStream);
