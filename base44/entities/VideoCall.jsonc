@@ -39,12 +39,12 @@
     "caller_muted": {
       "type": "boolean",
       "default": false,
-      "description": "\u767a\u4fe1\u8005\u304c\u30df\u30e5\u30fc\u30c8\u4e2d\u304b\uff08\u76f8\u624b\u306b\u901a\u77e5\u7528\uff09"
+      "description": "\u767a\u4fe1\u8005\u304c\u30df\u30e5\u30fc\u30c8\u4e2d\u304b"
     },
     "callee_muted": {
       "type": "boolean",
       "default": false,
-      "description": "\u7740\u4fe1\u8005\u304c\u30df\u30e5\u30fc\u30c8\u4e2d\u304b\uff08\u76f8\u624b\u306b\u901a\u77e5\u7528\uff09"
+      "description": "\u7740\u4fe1\u8005\u304c\u30df\u30e5\u30fc\u30c8\u4e2d\u304b"
     },
     "is_free_call": {
       "type": "boolean",
@@ -59,12 +59,12 @@
     "price": {
       "type": "number",
       "default": 0,
-      "description": "\u901a\u8a71\u6599\u91d1\uff08\u5186\uff09\u767a\u4fe1\u8005\u304c\u652f\u6255\u3046"
+      "description": "\u901a\u8a71\u6599\u91d1\uff08\u5186\uff09"
     },
     "coin_price_per_15min": {
       "type": "number",
       "default": 500,
-      "description": "15\u5206\u3042\u305f\u308a\u306e\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u6d88\u8cbb\u6570\uff08\u6700\u4f4e500\uff09"
+      "description": "15\u5206\u3042\u305f\u308a\u306e\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u6d88\u8cbb\u6570"
     },
     "coins_consumed": {
       "type": "number",
@@ -79,7 +79,7 @@
     "billing_started_at": {
       "type": "string",
       "format": "date-time",
-      "description": "\u8ab2\u91d1\u958b\u59cb\u30bf\u30a4\u30e0\u30b9\u30bf\u30f3\u30d7\uff08\u4e21\u8005\u63a5\u7d9a\u78ba\u7acb\u6642\uff09"
+      "description": "\u8ab2\u91d1\u958b\u59cb\u30bf\u30a4\u30e0\u30b9\u30bf\u30f3\u30d7"
     },
     "billing_interval_count": {
       "type": "number",
@@ -109,22 +109,22 @@
     "comm_cost_yen": {
       "type": "number",
       "default": 0,
-      "description": "AWS\u901a\u4fe1\u5b9f\u8cbb\uff084\u5186/\u5206\u00d7\u5b9f\u969b\u306e\u901a\u8a71\u6642\u9593\uff09"
+      "description": "AWS\u901a\u4fe1\u5b9f\u8cbb"
     },
     "platform_revenue_coins": {
       "type": "number",
       "default": 0,
-      "description": "\u904b\u55b6\u7dcf\u53ce\u76ca\uff08\u6d88\u8cbb\u30b3\u30a4\u30f3\u306e15%\uff09"
+      "description": "\u904b\u55b6\u7dcf\u53ce\u76ca"
     },
     "platform_profit_yen": {
       "type": "number",
       "default": 0,
-      "description": "\u904b\u55b6\u7d14\u5229\u76ca\uff08\u904b\u55b6\u53ce\u76ca - \u901a\u4fe1\u30b3\u30b9\u30c8\uff09"
+      "description": "\u904b\u55b6\u7d14\u5229\u76ca"
     },
     "creator_revenue_coins": {
       "type": "number",
       "default": 0,
-      "description": "\u30e9\u30a4\u30d0\u30fc\u5831\u916c\uff08\u6d88\u8cbb\u30b3\u30a4\u30f3\u306e85%\uff09"
+      "description": "\u30e9\u30a4\u30d0\u30fc\u5831\u916c"
     },
     "yell_coin_amount": {
       "type": "number",
@@ -173,7 +173,7 @@
     },
     "recording_s3_key": {
       "type": "string",
-      "description": "S3\u4fdd\u5b58\u6642\u306e\u30ad\u30fc\uff08\u30d1\u30b9\uff09"
+      "description": "S3\u4fdd\u5b58\u6642\u306e\u30ad\u30fc"
     },
     "recording_option": {
       "type": "boolean",
@@ -188,7 +188,7 @@
     "recording_infra_cost_yen": {
       "type": "number",
       "default": 0,
-      "description": "\u9332\u753b\u306b\u4f7f\u3063\u305fAWS\u5b9f\u8cbb\uff08Media Capture\uff09\u8a08\u4e0a\u7528"
+      "description": "\u9332\u753b\u306b\u4f7f\u3063\u305fAWS\u5b9f\u8cbb"
     },
     "extension_request_minutes": {
       "type": "number",
@@ -226,7 +226,28 @@
     "loss_time_buffer_until": {
       "type": "string",
       "format": "date-time",
-      "description": "\u30ed\u30b9\u30bf\u30a4\u30e0\u30d0\u30c3\u30d5\u30a1\u306e\u7d42\u4e86\u6642\u523b\uff08\u6c7a\u6e08\u5b8c\u4e86\u307e\u3067\u6642\u9593\u5207\u308c\u3092\u9045\u5ef6\uff09"
+      "description": "\u30ed\u30b9\u30bf\u30a4\u30e0\u30d0\u30c3\u30d5\u30a1\u306e\u7d42\u4e86\u6642\u523b"
+    },
+    "webrtc_offer": {
+      "type": "string",
+      "description": "WebRTC SDP Offer (Caller\u5074\u304c\u66f8\u304d\u8fbc\u3080)"
+    },
+    "webrtc_answer": {
+      "type": "string",
+      "description": "WebRTC SDP Answer (Callee\u5074\u304c\u66f8\u304d\u8fbc\u3080)"
+    },
+    "webrtc_ice_candidates_broadcaster": {
+      "type": "string",
+      "description": "Caller \u306e ICE candidates (JSON\u914d\u5217)"
+    },
+    "webrtc_ice_candidates_viewer": {
+      "type": "string",
+      "description": "Callee \u306e ICE candidates (JSON\u914d\u5217)"
+    },
+    "webrtc_callee_ready": {
+      "type": "boolean",
+      "default": false,
+      "description": "Callee\uff08\u5360\u3044\u5e2b\uff09\u304c\u30b7\u30b0\u30ca\u30ea\u30f3\u30b0\u53d7\u4fe1\u6e96\u5099\u5b8c\u4e86\u30d5\u30e9\u30b0"
     }
   },
   "required": [

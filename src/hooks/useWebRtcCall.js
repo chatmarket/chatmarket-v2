@@ -57,6 +57,7 @@ export function useWebRtcCall({
       iceTransportPolicy: 'all',
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require',
+      iceCandidatePoolSize: 10, // ICE収集を事前開始して高速化
     });
     pcRef.current = pc;
 
@@ -143,7 +144,7 @@ export function useWebRtcCall({
       }
     };
 
-    // ── Caller: 古いシグナリングをクリア → Offer作成 → DB書き込み ──
+    // ── Caller: 古いシグナリングをクリア → Calleeのready確認 → Offer作成 → DB書き込み ──
     const runAsCaller = async () => {
       try {
         // 古いシグナリングデータをクリア（再接続時の競合防止）
@@ -152,11 +153,25 @@ export function useWebRtcCall({
           webrtc_answer: null,
           webrtc_ice_candidates_broadcaster: null,
           webrtc_ice_candidates_viewer: null,
+          webrtc_callee_ready: null,
         });
         console.log('[WebRTC] 🧹 Cleared old signaling data');
 
-        // 少し待ってCalleeが購読を開始するのを確認
-        await new Promise(r => setTimeout(r, 500));
+        // Callee が購読開始の ready フラグを立てるのを待つ（最大10秒）
+        let calleeReady = false;
+        for (let i = 0; i < 20; i++) {
+          if (cleanedUpRef.current) return;
+          await new Promise(r => setTimeout(r, 500));
+          try {
+            const calls = await base44.entities.VideoCall.filter({ id: call.id });
+            if (calls[0]?.webrtc_callee_ready) { calleeReady = true; break; }
+          } catch {}
+        }
+        if (!calleeReady) {
+          console.warn('[WebRTC] ⚠️ Callee ready flag not detected, sending Offer anyway');
+        } else {
+          console.log('[WebRTC] ✅ Callee is ready, sending Offer');
+        }
         if (cleanedUpRef.current) return;
 
         const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
@@ -228,9 +243,13 @@ export function useWebRtcCall({
       }
     };
 
-    // ── Callee: Offer受信 → Answer作成 → DB書き込み ──
+    // ── Callee: ready フラグ → Offer受信 → Answer作成 → DB書き込み ──
     const runAsCallee = async () => {
       try {
+        // Callerに「準備完了」を通知（Offerを待ち受け中であることを知らせる）
+        await base44.entities.VideoCall.update(call.id, { webrtc_callee_ready: true });
+        console.log('[WebRTC] 📣 Callee ready flag set');
+
         let offerApplied = false;
 
         const handleOffer = async (offerJson, callerCandidatesJson) => {
