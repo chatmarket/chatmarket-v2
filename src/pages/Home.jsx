@@ -55,7 +55,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryTab, setCategoryTab] = useState("all");
   const [enabledSections, setEnabledSections] = useState({
-    callWaiting: false,
+    callWaiting: true,  // 最初から表示（TOPに近いため）
     liveStreams: false,
     popularVideos: false,
     featuredVideos: false,
