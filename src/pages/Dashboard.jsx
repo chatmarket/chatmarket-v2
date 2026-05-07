@@ -181,20 +181,22 @@ export default function Dashboard() {
                 </>
               )}
             </div>
-            {/* コイン残高 + チャージ導線 — 最短1タップ */}
-            <Link to="/coin-charge">
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:opacity-80 ${
-                coinBalance < 100
-                  ? "bg-red-500/10 border-red-500/30 animate-pulse"
-                  : "bg-yellow-500/10 border-yellow-500/30"
-              }`}>
-                <Coins className="w-4 h-4 text-yellow-400" />
-                <span className="font-black text-sm text-yellow-400">{coinBalance.toLocaleString()}</span>
-                {coinBalance < 100 && (
-                  <span className="text-[10px] text-red-400 font-bold">チャージ</span>
-                )}
-              </div>
-            </Link>
+            {/* コイン残高 + チャージ導線 — 残高1以上のみ表示 */}
+            {coinBalance > 0 && (
+              <Link to="/coin-charge">
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:opacity-80 ${
+                  coinBalance < 100
+                    ? "bg-red-500/10 border-red-500/30 animate-pulse"
+                    : "bg-yellow-500/10 border-yellow-500/30"
+                }`}>
+                  <Coins className="w-4 h-4 text-yellow-400" />
+                  <span className="font-black text-sm text-yellow-400">{coinBalance.toLocaleString()}</span>
+                  {coinBalance < 100 && (
+                    <span className="text-[10px] text-red-400 font-bold">チャージ</span>
+                  )}
+                </div>
+              </Link>
+            )}
           </div>
 
           {/* オンボーディング CTA（フォロー0 かつ 履歴0） */}
