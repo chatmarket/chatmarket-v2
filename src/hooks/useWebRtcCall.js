@@ -42,23 +42,34 @@ function waitForIceGathering(pc) {
 }
 
 /**
- * iOS Safari 対応 play()
- * muted=true で autoplay してから unmute（音声ブロック回避）
+ * PC/iOS Safari 対応 play()
+ * まず unmuted で試み、失敗したら muted → unmute の2段階
  */
 function playRemoteVideo(videoEl) {
   if (!videoEl) return;
-  videoEl.muted = true;
+
+  // まずアンミュートで直接再生を試みる（PC Chrome等）
+  videoEl.muted = false;
+  videoEl.volume = 1.0;
   videoEl.play()
     .then(() => {
-      setTimeout(() => {
-        videoEl.muted = false;
-        videoEl.volume = 1.0;
-      }, 300);
+      console.log('[WebRTC] ✅ Remote video playing with audio');
     })
     .catch(() => {
-      // ユーザージェスチャーが必要な端末: muted のまま映像だけ表示
+      // autoplay ブロック時（iOS Safari 等）: muted で再生 → 少し後にunmute
+      console.log('[WebRTC] ⚠️ Unmuted play blocked, falling back to muted→unmute');
       videoEl.muted = true;
-      videoEl.play().catch(() => {});
+      videoEl.play()
+        .then(() => {
+          setTimeout(() => {
+            videoEl.muted = false;
+            videoEl.volume = 1.0;
+            console.log('[WebRTC] ✅ Remote video unmuted after muted-play');
+          }, 500);
+        })
+        .catch((e) => {
+          console.warn('[WebRTC] ❌ Remote video play failed:', e.message);
+        });
     });
 }
 
@@ -132,9 +143,17 @@ export function useWebRtcCall({
         const videoEl = remoteVideoRef.current;
         if (!videoEl) return;
 
+        // ★ 音声トラックは必ず enabled=true に（PC Chrome でミュートになることがある）
+        if (event.track.kind === 'audio') {
+          event.track.enabled = true;
+          console.log('[WebRTC] 🔊 Audio track received, enabled:', event.track.enabled);
+        }
+
         // ストリームをそのまま srcObject にセット（最もシンプルで確実）
         if (event.streams && event.streams[0]) {
           videoEl.srcObject = event.streams[0];
+          // ストリーム内の全音声トラックを有効化
+          event.streams[0].getAudioTracks().forEach(t => { t.enabled = true; });
         } else {
           if (!videoEl.srcObject) videoEl.srcObject = new MediaStream();
           videoEl.srcObject.addTrack(event.track);
@@ -142,7 +161,7 @@ export function useWebRtcCall({
 
         playRemoteVideo(videoEl);
         reportStatus('track_received', event.track.kind);
-        console.log('[WebRTC] ✅ Remote track:', event.track.kind);
+        console.log('[WebRTC] ✅ Remote track:', event.track.kind, 'muted:', event.track.muted);
       };
 
       // 接続状態

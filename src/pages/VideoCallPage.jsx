@@ -502,10 +502,11 @@ export default function VideoCallPage() {
         remoteAudioCtxRef.current = ctx;
         if (ctx.state === 'suspended') ctx.resume().catch(() => {});
         const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        remoteAnalyserRef.current = analyser;
+         const analyser = ctx.createAnalyser();
+         analyser.fftSize = 256;
+         source.connect(analyser);
+         // NOTE: destination には接続しない — video要素が音声を出力するため二重になる
+         remoteAnalyserRef.current = analyser;
         const data = new Uint8Array(analyser.frequencyBinCount);
         const tick = () => {
           if (cancelled) return;
