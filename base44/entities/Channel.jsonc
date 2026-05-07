@@ -225,6 +225,40 @@
     "rate_applied_month": {
       "type": "string",
       "description": "\u9084\u5143\u7387\u3092\u9069\u7528\u3057\u305f\u6708\uff08YYYY-MM\u5f62\u5f0f\uff09"
+    },
+    "social_links": {
+      "type": "object",
+      "description": "SNS\u30ea\u30f3\u30af\u96c6",
+      "properties": {
+        "x": {
+          "type": "string",
+          "description": "X\uff08\u65e7Twitter\uff09URL"
+        },
+        "instagram": {
+          "type": "string",
+          "description": "Instagram URL"
+        },
+        "tiktok": {
+          "type": "string",
+          "description": "TikTok URL"
+        },
+        "youtube": {
+          "type": "string",
+          "description": "YouTube URL"
+        },
+        "line": {
+          "type": "string",
+          "description": "LINE\u516c\u5f0f\u30a2\u30ab\u30a6\u30f3\u30c8URL"
+        },
+        "facebook": {
+          "type": "string",
+          "description": "Facebook URL"
+        },
+        "website": {
+          "type": "string",
+          "description": "\u516c\u5f0f\u30b5\u30a4\u30c8\u30fb\u30d6\u30ed\u30b0URL"
+        }
+      }
     }
   },
   "required": [

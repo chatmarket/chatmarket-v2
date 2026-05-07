@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Save, ExternalLink, Pencil, PhoneCall, CalendarDays, FileText, Image, Coins } from "lucide-react";
+import { Save, ExternalLink, Pencil, PhoneCall, CalendarDays, FileText, Image, Coins, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import CallScheduleEditor from "@/components/call/CallScheduleEditor";
+import { SNS_CONFIG } from "@/components/channel/SocialLinks";
 
 const PRICE_OPTIONS = [15, 30, 45, 60, 75, 90, 105, 120];
 
@@ -39,6 +40,7 @@ export default function ChannelProfileEdit() {
     call_price_105min: 0,
     call_price_120min: 0,
     tags: [],
+    social_links: {},
   });
   const [tagInput, setTagInput] = useState("");
 
@@ -76,7 +78,8 @@ export default function ChannelProfileEdit() {
       call_price_105min: channel.call_price_105min || 0,
       call_price_120min: channel.call_price_120min || 0,
       tags: channel.tags || [],
-    });
+    social_links: channel.social_links || {},
+  });
   }, [channel]);
 
   const handleSave = async () => {
@@ -291,6 +294,32 @@ export default function ChannelProfileEdit() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── SNSリンク ── */}
+      <section className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <h2 className="font-bold text-sm flex items-center gap-2 text-primary">
+          <Share2 className="w-4 h-4" /> SNSリンク
+        </h2>
+        <p className="text-xs text-muted-foreground">入力したSNSだけアイコンとして表示されます</p>
+        <div className="space-y-3">
+          {SNS_CONFIG.map(sns => (
+            <div key={sns.key} className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 ${sns.bg}`}>
+                {sns.icon}
+              </div>
+              <Input
+                value={form.social_links?.[sns.key] || ""}
+                onChange={e => setForm(f => ({
+                  ...f,
+                  social_links: { ...f.social_links, [sns.key]: e.target.value }
+                }))}
+                className="bg-secondary border-0 text-sm"
+                placeholder={`${sns.label} の URL`}
+              />
+            </div>
+          ))}
         </div>
       </section>
 

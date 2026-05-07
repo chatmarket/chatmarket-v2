@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCode from "qrcode.react";
 import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode } from "lucide-react";
+import SocialLinks from "@/components/channel/SocialLinks";
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -286,6 +287,14 @@ export default function MyChannel() {
             </Button>
           </div>
         </div>
+
+        {/* SNSリンク表示 */}
+        {channel.social_links && Object.values(channel.social_links).some(v => v?.trim()) && (
+          <div className="mt-5 pt-4 border-t border-border/30">
+            <p className="text-xs text-muted-foreground mb-2 font-semibold">SNS</p>
+            <SocialLinks socialLinks={channel.social_links} channelId={channel.id} />
+          </div>
+        )}
 
         {/* 通話受付スイッチ */}
         <div className="mt-6 bg-secondary/50 rounded-xl border border-border/30 p-4 flex items-center justify-between">
