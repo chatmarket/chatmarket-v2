@@ -25,7 +25,9 @@ export default function CallWaitingRow({ user, categoryFilter = "all", filteredC
     queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 200),
     staleTime: 0,
     gcTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
   });
 
   // ログイン中ユーザーが owner のチャンネルIDセットを作成

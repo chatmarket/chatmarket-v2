@@ -155,8 +155,10 @@ export default function Home() {
     queryKey: ["channels-all"],
     queryFn: () => base44.entities.Channel.list("-monthly_revenue_coins", 50),
     enabled: true,
-    staleTime: 600000,
-    gcTime: 1200000,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // カテゴリフィルター済みチャンネル
