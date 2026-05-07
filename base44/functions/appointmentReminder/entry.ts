@@ -136,8 +136,14 @@ Deno.serve(async (req) => {
         });
       } catch (flagErr) {
         console.error(`[Reminder] Flag write failed for ${appt.id}:`, flagErr.message);
+        // エラー内容をDBに記録（ログ画面で確認可能）
+        try {
+          await base44.asServiceRole.entities.Appointment.update(appt.id, {
+            reminder_error: `[${new Date().toISOString()}] Flag write failed: ${flagErr.message}`,
+          });
+        } catch {}
         errors++;
-        continue; // フラグ書き込み失敗時は通知しない（安全側に倒す）
+        continue;
       }
 
       // 通知送信（双方向: 依頼者 + ライバー両方に）
@@ -166,6 +172,11 @@ Deno.serve(async (req) => {
           });
         } catch (notifErr) {
           console.error(`[Reminder] Notification failed for ${target.email}:`, notifErr.message);
+          try {
+            await base44.asServiceRole.entities.Appointment.update(appt.id, {
+              reminder_error: `[${new Date().toISOString()}] Notification failed for ${target.email}: ${notifErr.message}`,
+            });
+          } catch {}
         }
 
         // メールリマインド
@@ -190,6 +201,11 @@ Chat Market
           console.log(`[Reminder] ✓ Email sent to ${target.email} (diffMin=${diffMin})`);
         } catch (mailErr) {
           console.error(`[Reminder] Email failed for ${target.email}:`, mailErr.message);
+          try {
+            await base44.asServiceRole.entities.Appointment.update(appt.id, {
+              reminder_error: `[${new Date().toISOString()}] Email failed for ${target.email}: ${mailErr.message}`,
+            });
+          } catch {}
         }
       }
 

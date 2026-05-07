@@ -91,6 +91,15 @@
       "type": "string",
       "format": "date-time",
       "description": "\u901a\u8a71\u30eb\u30fc\u30e0\u3092\u958b\u3044\u305f\u6642\u523b"
+    },
+    "reminder_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "15\u5206\u524d\u30ea\u30de\u30a4\u30f3\u30c9\u9001\u4fe1\u6e08\u307f\u6642\u523b\uff08\u591a\u91cd\u9001\u4fe1\u9632\u6b62\u30d5\u30e9\u30b0\uff09"
+    },
+    "reminder_error": {
+      "type": "string",
+      "description": "\u30ea\u30de\u30a4\u30f3\u30c9\u9001\u4fe1\u5931\u6557\u6642\u306e\u30a8\u30e9\u30fc\u30e1\u30c3\u30bb\u30fc\u30b8"
     }
   },
   "required": [
