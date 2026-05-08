@@ -371,7 +371,7 @@ export default function GoLive() {
             <div className="relative flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-primary uppercase tracking-widest">📘 配信マニュアル</p>
-                <h2 className="text-xl font-black text-white mt-2">OBS・Larix・Prism Live Studio の詳しい使い方</h2>
+                <h2 className="text-xl font-black text-white mt-2">OBS・Prism Live Studio の詳しい使い方</h2>
                 <p className="text-muted-foreground text-sm mt-2">初心者でも迷わず配信できるよう、手順をわかりやすく整理しました。ダウンロード方法・接続方法・よくあるトラブルもカバー。</p>
                 <p className="text-orange-300 text-xs font-semibold mt-3">💡 有料生配信を行うには、配信専用アプリを経由して配信を行います</p>
               </div>

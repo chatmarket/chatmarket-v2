@@ -107,7 +107,7 @@ export default function StreamingManual() {
             ← 戻る
           </button>
           <h1 className="text-3xl font-black text-white">配信マニュアル</h1>
-          <p className="text-muted-foreground text-sm mt-2">OBS・Larix・Prism Live Studio の配信方法をわかりやすく解説</p>
+          <p className="text-muted-foreground text-sm mt-2">OBS・Prism Live Studio の配信方法をわかりやすく解説</p>
           <div className="mt-4 bg-orange-500/15 border border-orange-500/30 rounded-lg px-3 py-2">
             <p className="text-sm font-semibold text-orange-300">💡 有料生配信を行うには、配信専用アプリを経由して配信を行います</p>
           </div>

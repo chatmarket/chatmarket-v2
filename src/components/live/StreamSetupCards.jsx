@@ -4,7 +4,7 @@ import StreamKeySecurityDisplay from "./StreamKeySecurityDisplay";
 
 /**
  * StreamSetupCards
- * PC配信（OBS）・スマホ配信（Larix/Prism）を
+ * PC配信（OBS）・スマホ配信（Prism）を
  * 世界最高レベルのデザインで表示するカードコンポーネント
  */
 export default function StreamSetupCards({ user, streamKey, ingestEndpoint, fullRtmpsUrl }) {
@@ -12,7 +12,7 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
 
   const tabs = [
     { id: "pc",     label: "PC 配信",     emoji: "🖥️", sub: "OBS Studio" },
-    { id: "mobile", label: "スマホ配信",  emoji: "📱", sub: "Larix / Prism" },
+    { id: "mobile", label: "スマホ配信",  emoji: "📱", sub: "Prism Live Studio" },
   ];
 
   return (
@@ -123,7 +123,7 @@ export default function StreamSetupCards({ user, streamKey, ingestEndpoint, full
                 ))}
               </div>
               <div className="px-5 pb-4 pt-1">
-                <p className="text-[11px] text-muted-foreground">上のLarixと同じURLを貼り付けて配信開始できます。設定 → Custom RTMPS → URLを貼り付け。</p>
+                <p className="text-[11px] text-muted-foreground">設定 → Custom RTMPS → URLを貼り付けて配信開始できます。</p>
               </div>
             </div>
           </motion.div>
