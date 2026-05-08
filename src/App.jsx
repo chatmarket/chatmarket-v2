@@ -153,7 +153,7 @@ export default function App() {
             <Route path="/millionaire" element={<MillionaireChallenge />} />
             <Route path="/influencer-campaign" element={<InfluencerCampaign />} />
             <Route path="/enterprise" element={<EnterpriseDashboard />} />
-
+            <Route path="/mux-video/:videoId" element={<Navigate to="/" replace />} />
             <Route path="/obs-guide" element={<ObsGuide />} />
             <Route path="/streaming-manual" element={<Navigate to="/obs-guide" replace />} />
             <Route path="/coin-charge" element={<CoinCharge />} />
