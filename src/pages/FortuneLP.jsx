@@ -315,6 +315,31 @@ export default function FortuneLP() {
 
           <SlotsWidget />
 
+          {/* 1年間無料バナー */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className="inline-flex flex-col items-center gap-1 px-6 py-4 rounded-2xl mx-auto"
+            style={{
+              background: "linear-gradient(135deg, rgba(212,175,55,0.18), rgba(107,33,168,0.18))",
+              border: `2px solid ${MYSTIC.gold}`,
+              boxShadow: "0 0 30px rgba(212,175,55,0.25)",
+            }}
+          >
+            <p className="text-xs font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>
+              🎁 期間限定・特別オファー
+            </p>
+            <p className="text-2xl sm:text-3xl font-black text-white leading-tight">
+              登録から<span style={{ color: MYSTIC.gold }}>1年間</span>、完全無料！
+            </p>
+            <p className="text-sm text-white/60">
+              通常月額 <span className="line-through text-white/40">¥3,300</span>
+              　→　<span className="font-black text-white">¥0</span>／月（12ヶ月間）
+            </p>
+            <p className="text-[10px] text-white/35 mt-0.5">※ 1年経過後は月額3,300円（税込）が発生します</p>
+          </motion.div>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <motion.button
               whileTap={{ scale: 0.96 }}
@@ -454,6 +479,19 @@ export default function FortuneLP() {
             <br />時が来た。
           </h2>
           <SlotsWidget />
+
+          {/* 1年無料バッジ */}
+          <div
+            className="flex items-center justify-center gap-3 py-3 px-5 rounded-2xl"
+            style={{ background: "rgba(212,175,55,0.12)", border: `1px solid ${MYSTIC.gold}` }}
+          >
+            <span className="text-2xl">🎁</span>
+            <div className="text-left">
+              <p className="font-black text-white text-sm">登録から<span style={{ color: MYSTIC.gold }}>1年間</span>サブスク無料</p>
+              <p className="text-[11px] text-white/50">通常 <span className="line-through">¥3,300/月</span> → 12ヶ月間 ¥0</p>
+            </div>
+          </div>
+
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={() => navigate("/recruit")}
@@ -467,7 +505,7 @@ export default function FortuneLP() {
             ✨ 今すぐ鑑定師として登録する（無料）
           </motion.button>
           <p className="text-xs text-white/30">
-            審査通過後、最短当日から活動可能。登録・月額費用は一切かかりません。
+            審査通過後、最短当日から活動可能。1年間サブスク無料。2年目以降は月額3,300円（税込）。
           </p>
         </div>
       </section>
