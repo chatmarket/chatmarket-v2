@@ -255,13 +255,13 @@ export default function FortuneLP() {
 
       {/* ── ヘッダー ── */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 flex items-end justify-between px-5 pb-3 transition-all duration-300"
         style={{
-          paddingTop: 'env(safe-area-inset-top)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 12px)',
           background: scrolled ? "rgba(13,10,26,0.95)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
           borderBottom: scrolled ? `1px solid ${MYSTIC.border}` : "none",
-          height: `calc(env(safe-area-inset-top) + 60px)`,
+          minHeight: 'calc(env(safe-area-inset-top) + 64px)',
         }}
       >
         <div className="flex items-center gap-2">
@@ -282,7 +282,8 @@ export default function FortuneLP() {
 
       {/* ── ヒーロー ── */}
       <section
-        className="relative flex flex-col items-center justify-center text-center px-5 pt-32 pb-24 min-h-screen"
+        className="relative flex flex-col items-center justify-center text-center px-5 pb-24 min-h-screen"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 96px)' }}
       >
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="space-y-6 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4">
