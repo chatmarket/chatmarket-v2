@@ -302,9 +302,10 @@ function LiveViewInner() {
           <div style={{
             position: "relative",
             width: "100%",
-            ...(isLandscape ? { flex: 1, minHeight: 0 } : { paddingTop: "56.25%" }),
+            ...(isLandscape ? { flex: 1, minHeight: 0 } : stream?.aspect_ratio === "9:16" ? { paddingTop: "177.78%" } : { paddingTop: "56.25%" }),
             background: "#07070e",
             overflow: "hidden",
+            transition: "padding-top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
           }}>
             <div style={isLandscape
               ? { position: "absolute", inset: 0 }
