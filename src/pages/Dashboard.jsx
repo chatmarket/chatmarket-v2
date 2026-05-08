@@ -133,7 +133,9 @@ export default function Dashboard() {
 
       {/* ── モードトグル ── */}
       {hasChannel && (
-        <div className="flex justify-center mb-6">
+        <div className="mb-6">
+          <p className="text-xs text-muted-foreground text-center mb-2">視聴者、配信者毎にモードを切り替えてご利用ください</p>
+          <div className="flex justify-center">
           <div className="flex bg-secondary border border-border/50 rounded-xl p-1 gap-1">
             <button
               onClick={() => switchMode(MODE_FAN)}
@@ -157,6 +159,7 @@ export default function Dashboard() {
               <Mic className={`w-4 h-4 ${mode === MODE_CREATOR ? "text-red-400" : ""}`} />
               クリエイター
             </button>
+          </div>
           </div>
         </div>
       )}
