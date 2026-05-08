@@ -31,6 +31,31 @@ Deno.serve(async (req) => {
     });
     console.log(`✓ YellCoinWallet created for ${userEmail} with 500 coins`);
 
+    // 管理者向けアプリ内通知を作成
+    const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+    for (const admin of adminUsers) {
+      await base44.asServiceRole.entities.Notification.create({
+        user_email: admin.email,
+        type: 'new_video', // 汎用タイプ流用
+        title: '🎉 新規ユーザー登録',
+        message: `${data.full_name || userEmail} さんが新規登録しました（${userEmail}）`,
+        link: '/admin/dashboard?tab=users',
+        is_read: false,
+        is_broadcast: false,
+      });
+    }
+    console.log(`✓ Admin notifications sent for ${userEmail}`);
+
+    // 管理者へメール通知
+    const adminEmail = Deno.env.get('ADMIN_NOTIFY_EMAIL') || 'unei@chatmarket.info';
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: adminEmail,
+      from_name: 'ChatMarket 運営通知',
+      subject: `【新規登録】${data.full_name || userEmail} さんが登録しました`,
+      body: `新しいユーザーが登録しました。\n\n名前: ${data.full_name || '未設定'}\nメール: ${userEmail}\n登録日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n\n管理画面: https://live-chat-market.com/admin/dashboard?tab=users`,
+    });
+    console.log(`✓ Admin email sent for ${userEmail}`);
+
     return Response.json({
       status: 'success',
       user_email: userEmail,
