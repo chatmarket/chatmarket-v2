@@ -156,13 +156,20 @@ Deno.serve(async (req) => {
       }
 
       console.log(`[ivsSessionWebhook] ✅ Marked LIVE: ${stream.id} "${stream.title}"`);
+      console.log(`[ivsSessionWebhook] 🎬 **配信接続成功！ RTMP から AWS IVS へ信号を受信**`);
+      console.log(`[ivsSessionWebhook] 📺 ${stream.title} (Channel: ${stream.channel_id})`);
 
       // ─── フォロワー通知（非同期で実行、エラーが本処理をブロックしない） ───
       notifyFollowersAsync(base44, stream).catch(err => {
         console.error("[ivsSessionWebhook] ⚠️ Follower notification failed:", err);
       });
 
-      return Response.json({ success: true, stream_id: stream.id, action: "started" });
+      return Response.json({ 
+        success: true, 
+        stream_id: stream.id, 
+        action: "started",
+        message: "🎬 配信接続成功！ RTMP 信号を受信し、ライブ配信を開始しました。視聴者はサイト上で配信を見られます。"
+      });
     }
 
     // ─── 3b. Stream End → "ended" + VOD自動販売化 ────────────────────────
