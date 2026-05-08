@@ -120,16 +120,6 @@ function FortuneCard({ profile, index }) {
         }}
       />
 
-      {/* バッジ */}
-      <div className="absolute top-4 right-4">
-        <span
-          className="text-[10px] font-black px-2.5 py-1 rounded-full"
-          style={{ background: "linear-gradient(135deg, #D4AF37, #A0760F)", color: "#0D0A1A" }}
-        >
-          {profile.badge}
-        </span>
-      </div>
-
       <div className="relative p-5 space-y-3">
         {/* バッジ（カード内上部に移動・絶対配置廃止） */}
         <div className="flex items-start gap-3">
