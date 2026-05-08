@@ -259,295 +259,285 @@ export default function GoLive() {
 
   // ── 配信セットアップフォーム ──
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12 h-screen overflow-y-auto">
-      <div className="flex items-center gap-3 mb-6 sm:mb-8">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10 overflow-y-auto">
+      {/* ヘッダー */}
+      <div className="flex items-center gap-3 mb-6 lg:mb-8">
         <button onClick={() => setMode(MODE_SELECT)} className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-2 mr-1">← 戻る</button>
-        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-          <Radio className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
+        <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+          <Radio className="w-5 h-5 text-red-400 animate-pulse" />
         </div>
-        <h1 className="text-lg sm:text-2xl font-bold">ライブ配信を開始</h1>
+        <h1 className="text-xl lg:text-3xl font-black text-white">ライブ配信セットアップ</h1>
+        <span className="ml-auto text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-1 rounded-full">1対多 PPV配信</span>
       </div>
 
-      {/* ── PRISM Live Studio 専用セクション（重要！） ── */}
+      {/* ── PRISM Live Studio 専用セクション（キー取得後） ── */}
       {liveStreamId && (
         <div className="mb-8 bg-gradient-to-br from-purple-950 to-purple-900 border-2 border-purple-500/60 rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
-              <span className="text-2xl">✨</span>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
+              <span className="text-xl">✨</span>
             </div>
             <div>
-              <p className="text-sm font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
-              <h2 className="text-xl font-black text-white">配信3ステップ — コピペで準備完了</h2>
+              <p className="text-xs font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
+              <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
             </div>
           </div>
-
-          <div className="space-y-3">
-            {/* ① 配信先 */}
-            <div className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center">①</span>
-                <p className="font-bold text-white">配信先（Server URL）</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {[
+              { num: "①", label: "配信先（Server URL）", value: `rtmps://${manualIngestEndpoint}:443/app/`, msg: "配信先をコピーしました" },
+              { num: "②", label: "ストリームキー（Stream Key）", value: manualStreamKey, msg: "ストリームキーをコピーしました" },
+              { num: "③", label: "チャット表示用URL", value: `${window.location.origin}/prism-overlay/${liveStreamId}`, msg: "チャットURLをコピーしました" },
+            ].map(({ num, label, value, msg }) => (
+              <div key={num} className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-full bg-purple-500 text-white font-black text-xs flex items-center justify-center shrink-0">{num}</span>
+                  <p className="font-bold text-white text-sm">{label}</p>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <input type="text" readOnly value={value}
+                    className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono truncate" />
+                  <button onClick={() => { navigator.clipboard.writeText(value); toast.success(msg); }}
+                    className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors">
+                    Copy
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  readOnly
-                  value={`rtmps://${manualIngestEndpoint}:443/app/`}
-                  className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`rtmps://${manualIngestEndpoint}:443/app/`);
-                    toast.success("配信先をコピーしました");
-                  }}
-                  className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-
-            {/* ② 鍵 */}
-            <div className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center">②</span>
-                <p className="font-bold text-white">ストリームキー（Stream Key）</p>
-              </div>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  readOnly
-                  value={manualStreamKey}
-                  className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono truncate"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(manualStreamKey);
-                    toast.success("ストリームキーをコピーしました");
-                  }}
-                  className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-
-            {/* ③ チャット表示用URL */}
-            <div className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center">③</span>
-                <p className="font-bold text-white">チャット表示用URL</p>
-              </div>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  readOnly
-                  value={`${window.location.origin}/prism-overlay/${liveStreamId}`}
-                  className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/prism-overlay/${liveStreamId}`);
-                    toast.success("チャットURLをコピーしました");
-                  }}
-                  className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors"
-                >
-                  Copy
-                </button>
-              </div>
-              <p className="text-xs text-purple-300/80 bg-purple-950/50 rounded-lg px-2 py-1.5 mt-2">
-                💬 <span className="font-semibold">Prism の「Web Overlay」に貼り付けてください</span> — リアルタイムチャットと投げ銭通知が画面に表示されます
-              </p>
-            </div>
+            ))}
           </div>
+          <p className="text-xs text-purple-300/70 mt-3 pl-1">💬 Prism の「Web Overlay」に③のURLを貼り付けるとリアルタイムチャット・投げ銭通知が表示されます</p>
         </div>
       )}
 
-      {/* ── 配信マニュアルへのバナー ── */}
-      <div className="mb-8">
-        <a href="/streaming-manual" className="block group">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 to-primary/10 border-2 border-primary/40 hover:border-primary/60 transition-all p-6 hover:shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-primary uppercase tracking-widest">📘 配信マニュアル</p>
-                <h2 className="text-xl font-black text-white mt-2">OBS・Prism Live Studio の詳しい使い方</h2>
-                <p className="text-muted-foreground text-sm mt-2">初心者でも迷わず配信できるよう、手順をわかりやすく整理しました。ダウンロード方法・接続方法・よくあるトラブルもカバー。</p>
-                <p className="text-orange-300 text-xs font-semibold mt-3">💡 有料生配信を行うには、配信専用アプリを経由して配信を行います</p>
-              </div>
-              <ArrowRight className="w-6 h-6 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+      {/* ── PC向け2カラムレイアウト ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+
+        {/* ══ 左カラム: 配信設定フォーム ══ */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-6 bg-red-500 rounded-full" />
+            <h2 className="text-base font-black text-white uppercase tracking-wider">配信設定</h2>
+          </div>
+
+          <form onSubmit={handleStart} className="space-y-4 pb-8">
+
+            {/* サムネイル */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">サムネイル画像</Label>
+              <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-primary/60 transition-colors bg-zinc-900/60 hover:bg-zinc-900">
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setThumbnailFile(e.target.files[0])} />
+                {thumbnailFile ? (
+                  <div className="flex items-center gap-2 text-primary">
+                    <Image className="w-5 h-5" />
+                    <span className="text-sm font-medium">{thumbnailFile.name}</span>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <Image className="w-6 h-6 text-zinc-500 mx-auto mb-1" />
+                    <p className="text-xs text-zinc-500">クリックして選択（推奨: 1280×720px）</p>
+                  </div>
+                )}
+              </label>
             </div>
-          </div>
-        </a>
-      </div>
 
-      {/* ── PC/スマホ配信 + よくあるトラブル ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
-        <StreamSetupCards
-          user={user}
-          streamKey={manualStreamKey}
-          ingestEndpoint={manualIngestEndpoint}
-          fullRtmpsUrl={fullRtmpsUrl}
-        />
-        {/* よくあるトラブル */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
-          <TroubleshootingGuide />
-        </div>
-      </div>
+            {/* タイトル */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-red-400 uppercase tracking-widest">配信タイトル *</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="配信タイトルを入力" required
+                className="bg-zinc-800 border border-zinc-600 focus:border-red-500 focus:ring-1 focus:ring-red-500/30 text-white placeholder:text-zinc-500 h-11" />
+            </div>
 
-      <form onSubmit={handleStart} className="space-y-4 sm:space-y-6 pb-20">
-        {/* サムネイル */}
-        <div className="space-y-2">
-          <Label>サムネイル画像</Label>
-          <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/50">
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => setThumbnailFile(e.target.files[0])} />
-            {thumbnailFile ? (
-              <div className="flex items-center gap-2 text-primary">
-                <Image className="w-5 h-5" />
-                <span className="text-sm font-medium">{thumbnailFile.name}</span>
-              </div>
-            ) : (
-              <div className="text-center">
-                <Image className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
-                <p className="text-xs text-muted-foreground">サムネイル画像を選択（推奨: 1280×720px）</p>
-              </div>
-            )}
-          </label>
-        </div>
+            {/* 説明 */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">説明</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="配信の説明・内容を入力"
+                className="bg-zinc-800 border border-zinc-600 focus:border-zinc-400 text-white placeholder:text-zinc-500 resize-none" rows={3} />
+            </div>
 
-        {/* タイトル */}
-        <div className="space-y-2">
-          <Label className="text-red-400 font-bold">配信タイトル *</Label>
-          <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-            placeholder="配信タイトルを入力" className="bg-secondary border-2 border-red-500/50 focus:border-red-500" required />
-        </div>
-
-        {/* 説明 */}
-        <div className="space-y-2">
-          <Label>説明</Label>
-          <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="配信の説明を入力" className="bg-secondary border-0 resize-none" rows={3} />
-        </div>
-
-        {/* 予定日時 */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <Label>予定日時（任意）</Label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={!form.scheduled_at}
-                onChange={(e) => setForm({ ...form, scheduled_at: e.target.checked ? "" : new Date().toISOString().slice(0, 16) })}
-                className="w-4 h-4 accent-primary rounded" />
-              <span className="text-sm text-primary font-semibold">即配信</span>
-            </label>
-          </div>
-          {form.scheduled_at && (
-            <Input type="datetime-local" value={form.scheduled_at}
-              onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} className="bg-secondary border-0" />
-          )}
-        </div>
-
-        {/* 配信予定時間 */}
-        <div className="space-y-2">
-          <Label>配信予定時間</Label>
-          <select value={form.availableTime} onChange={(e) => setForm({ ...form, availableTime: e.target.value })}
-            className="w-full h-9 rounded-md bg-secondary border-0 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-            <option value="">選択してください</option>
-            <option value="30分">30分</option>
-            <option value="1時間">1時間</option>
-            <option value="1時間30分">1時間30分</option>
-            <option value="2時間">2時間（最大）</option>
-          </select>
-          <p className="text-xs text-muted-foreground">最大2時間まで設定できます</p>
-        </div>
-
-        {/* 価格 */}
-        <div className="space-y-2">
-          <Label className="text-red-400 font-bold">視聴価格（コイン）*</Label>
-          <Input type="number" min={0} value={form.price}
-            onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-            className="bg-secondary border-2 border-red-500/50 focus:border-red-500" required />
-          <p className="text-xs text-muted-foreground">0 = 無料配信</p>
-          {(() => {
-            const p = form.price;
-            const activeQuality = p >= 150 ? "FHD 1080p" : p >= 55 ? "HD 720p" : "SD 480p";
-            return (
-              <div className="bg-secondary/60 border border-border/50 rounded-xl p-4 space-y-3 mt-2">
-                <p className="text-xs font-black text-foreground">📊 設定価格で画質が自動決定されます</p>
-                <div className="space-y-2">
-                  {[
-                    { quality: "SD 480p", minCoins: 15, maxCoins: 54, badge: "bg-zinc-500/20 text-zinc-300", activeBadge: "bg-zinc-500 text-white" },
-                    { quality: "HD 720p", minCoins: 55, maxCoins: 149, badge: "bg-blue-500/20 text-blue-300", activeBadge: "bg-blue-500 text-white" },
-                    { quality: "FHD 1080p", minCoins: 150, maxCoins: null, badge: "bg-primary/20 text-primary", activeBadge: "bg-primary text-primary-foreground" },
-                  ].map(({ quality, minCoins, maxCoins, badge, activeBadge }) => {
-                    const isActive = quality === activeQuality;
-                    return (
-                      <div key={quality} className={`flex items-center gap-3 rounded-lg px-3 py-2 border transition-all ${isActive ? "bg-background border-primary/50 ring-1 ring-primary/30" : "bg-background/40 border-transparent"}`}>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${isActive ? activeBadge : badge}`}>{quality}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-muted-foreground">
-                            {maxCoins ? `${minCoins}〜${maxCoins}コイン` : `${minCoins}コイン以上`}（15分毎）
-                          </p>
-                        </div>
-                        {isActive && <span className="text-[10px] font-black text-primary shrink-0">← 現在</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* チケット販売設定 */}
-        <div className={`space-y-3 border rounded-2xl p-4 ${canUseLiveStream && ppvSubscription ? "bg-yellow-500/5 border-yellow-500/30" : "bg-muted/20 border-muted/40 opacity-60"}`}>
-          <div className="flex items-center justify-between">
-            <label className={`text-sm font-bold flex items-center gap-2 ${canUseLiveStream && ppvSubscription ? "text-yellow-400" : "text-muted-foreground"}`}>
-              🎫 チケット販売（PPVプラン限定）
-            </label>
-            <button type="button" disabled={!canUseLiveStream || !ppvSubscription}
-              onClick={() => setTicketEnabled((v) => !v)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled && ppvSubscription ? "bg-yellow-500" : "bg-secondary"}`}>
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ticketEnabled && ppvSubscription ? "left-6" : "left-0.5"}`} />
-            </button>
-          </div>
-          {ticketEnabled && (
-            <div className="space-y-3">
+            {/* 予定日時 + 配信時間（横並び） */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">配信時間（15分単位・最大2時間）</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {TICKET_DURATIONS.map((m) => (
-                    <button key={m} type="button"
-                      onClick={() => { setTicketDurationMinutes(m); setTicketPriceYen(Math.ceil((m / 15) * 150)); }}
-                      className={`rounded-lg py-1.5 text-xs font-bold transition-all ${ticketDurationMinutes === m ? "bg-yellow-500 text-black" : "bg-secondary hover:bg-yellow-500/20"}`}>
-                      {m}分
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">配信日時</Label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" checked={!form.scheduled_at}
+                      onChange={(e) => setForm({ ...form, scheduled_at: e.target.checked ? "" : new Date().toISOString().slice(0, 16) })}
+                      className="w-3.5 h-3.5 accent-primary rounded" />
+                    <span className="text-xs text-primary font-bold">即配信</span>
+                  </label>
                 </div>
+                {form.scheduled_at ? (
+                  <Input type="datetime-local" value={form.scheduled_at}
+                    onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
+                    className="bg-zinc-800 border border-zinc-600 text-white h-11" />
+                ) : (
+                  <div className="h-11 bg-zinc-800/40 border border-zinc-700 rounded-md flex items-center px-3">
+                    <span className="text-xs text-primary font-bold">▶ 今すぐ配信</span>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">チケット価格（最低 ¥{minTicketPrice}）</label>
-                <div className="flex items-center gap-2">
-                  <input type="number" min={minTicketPrice} step={50} value={ticketPriceYen}
-                    onChange={(e) => setTicketPriceYen(Math.max(minTicketPrice, parseInt(e.target.value) || minTicketPrice))}
-                    className="flex-1 rounded-lg bg-secondary border-0 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500/50" />
-                  <span className="text-sm text-muted-foreground">円</span>
-                </div>
-                <p className="text-[10px] text-yellow-400">配信者受取: <span className="font-bold">¥{Math.floor(ticketPriceYen * 0.85)}</span>（85%）</p>
+                <Label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">配信予定時間</Label>
+                <select value={form.availableTime} onChange={(e) => setForm({ ...form, availableTime: e.target.value })}
+                  className="w-full h-11 rounded-md bg-zinc-800 border border-zinc-600 px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                  <option value="">未定</option>
+                  <option value="30分">30分</option>
+                  <option value="1時間">1時間</option>
+                  <option value="1時間30分">1時間30分</option>
+                  <option value="2時間">2時間（最大）</option>
+                </select>
               </div>
             </div>
-          )}
-          {!canUseLiveStream && <p className="text-xs text-muted-foreground">PPVプランへの加入でチケット販売機能を利用できます</p>}
+
+            {/* 価格 */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-red-400 uppercase tracking-widest">視聴価格（コイン）*</Label>
+              <Input type="number" min={0} value={form.price}
+                onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                required className="bg-zinc-800 border border-zinc-600 focus:border-red-500 focus:ring-1 focus:ring-red-500/30 text-white h-11" />
+              {(() => {
+                const p = form.price;
+                const activeQuality = p >= 150 ? "FHD 1080p" : p >= 55 ? "HD 720p" : "SD 480p";
+                return (
+                  <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-3 space-y-2 mt-1">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">📊 価格 → 画質 自動決定</p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { quality: "SD 480p", minCoins: 15, maxCoins: 54, color: "zinc" },
+                        { quality: "HD 720p", minCoins: 55, maxCoins: 149, color: "blue" },
+                        { quality: "FHD 1080p", minCoins: 150, maxCoins: null, color: "primary" },
+                      ].map(({ quality, minCoins, maxCoins, color }) => {
+                        const isActive = quality === activeQuality;
+                        const activeClasses = color === "primary" ? "bg-primary text-primary-foreground ring-2 ring-primary/50" : color === "blue" ? "bg-blue-600 text-white ring-2 ring-blue-500/50" : "bg-zinc-600 text-white ring-2 ring-zinc-500/50";
+                        return (
+                          <div key={quality} className={`rounded-lg p-2 text-center border transition-all ${isActive ? `${activeClasses} border-transparent` : "border-zinc-700 bg-zinc-800/40"}`}>
+                            <p className={`text-[10px] font-black ${isActive ? "" : "text-zinc-400"}`}>{quality}</p>
+                            <p className={`text-[9px] mt-0.5 ${isActive ? "opacity-80" : "text-zinc-500"}`}>{maxCoins ? `${minCoins}〜${maxCoins}` : `${minCoins}+`}コイン</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* チケット販売設定 */}
+            <div className={`space-y-3 border rounded-2xl p-4 ${canUseLiveStream && ppvSubscription ? "bg-yellow-500/5 border-yellow-500/30" : "bg-zinc-900/40 border-zinc-700/50 opacity-60"}`}>
+              <div className="flex items-center justify-between">
+                <label className={`text-sm font-bold flex items-center gap-2 ${canUseLiveStream && ppvSubscription ? "text-yellow-400" : "text-zinc-500"}`}>
+                  🎫 チケット販売（PPVプラン限定）
+                </label>
+                <button type="button" disabled={!canUseLiveStream || !ppvSubscription}
+                  onClick={() => setTicketEnabled((v) => !v)}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${ticketEnabled && ppvSubscription ? "bg-yellow-500" : "bg-zinc-700"}`}>
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ticketEnabled && ppvSubscription ? "left-6" : "left-0.5"}`} />
+                </button>
+              </div>
+              {ticketEnabled && (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400">配信時間（15分単位・最大2時間）</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {TICKET_DURATIONS.map((m) => (
+                        <button key={m} type="button"
+                          onClick={() => { setTicketDurationMinutes(m); setTicketPriceYen(Math.ceil((m / 15) * 150)); }}
+                          className={`rounded-lg py-1.5 text-xs font-bold transition-all ${ticketDurationMinutes === m ? "bg-yellow-500 text-black" : "bg-zinc-800 hover:bg-yellow-500/20 text-zinc-300"}`}>
+                          {m}分
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-400">チケット価格（最低 ¥{minTicketPrice}）</label>
+                    <div className="flex items-center gap-2">
+                      <input type="number" min={minTicketPrice} step={50} value={ticketPriceYen}
+                        onChange={(e) => setTicketPriceYen(Math.max(minTicketPrice, parseInt(e.target.value) || minTicketPrice))}
+                        className="flex-1 rounded-lg bg-zinc-800 border border-zinc-600 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-yellow-500/50" />
+                      <span className="text-sm text-zinc-400">円</span>
+                    </div>
+                    <p className="text-[10px] text-yellow-400">配信者受取: <span className="font-bold">¥{Math.floor(ticketPriceYen * 0.85)}</span>（85%）</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 送信ボタン */}
+            <Button type="submit" disabled={creating || !form.title} className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-black text-base gap-2 shadow-lg shadow-red-500/20">
+              {creating ? (
+                <><Loader2 className="w-5 h-5 animate-spin" />配信枠を準備中...</>
+              ) : (
+                <><Radio className="w-5 h-5" />配信スタート — キーを取得</>
+              )}
+            </Button>
+          </form>
         </div>
 
-        {/* 送信ボタン */}
-        <Button type="submit" disabled={creating || !form.title} className="w-full h-10 sm:h-12 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base gap-2">
-          {creating ? (
-            <><Loader2 className="w-5 h-5 animate-spin" />準備中...</>
-          ) : (
-            <><Radio className="w-5 h-5" />配信スタート — キーを取得してOBS / アプリで配信</>
-          )}
-        </Button>
-      </form>
+        {/* ══ 右カラム: 配信ツール・ヘルプ ══ */}
+        <div className="space-y-5 lg:sticky lg:top-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-6 bg-primary rounded-full" />
+            <h2 className="text-base font-black text-white uppercase tracking-wider">配信ツール＆ヘルプ</h2>
+          </div>
+
+          {/* 配信マニュアルへのバナー */}
+          <a href="/streaming-manual" className="block group">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/30 hover:border-primary/60 transition-all p-5 hover:shadow-lg hover:shadow-primary/10">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">📘 配信マニュアル</p>
+                  <p className="text-sm font-black text-white">OBS・Prism Live Studio の詳しい使い方</p>
+                  <p className="text-xs text-zinc-400 mt-1">手順・接続方法・よくあるトラブルをカバー</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </a>
+
+          {/* PC/スマホ配信ツール */}
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
+            <div className="px-4 pt-4 pb-2 border-b border-zinc-800">
+              <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">配信アプリを選択</p>
+            </div>
+            <div className="p-4">
+              <StreamSetupCards
+                user={user}
+                streamKey={manualStreamKey}
+                ingestEndpoint={manualIngestEndpoint}
+                fullRtmpsUrl={fullRtmpsUrl}
+              />
+            </div>
+          </div>
+
+          {/* よくあるトラブル */}
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
+            <div className="px-4 pt-4 pb-2 border-b border-zinc-800">
+              <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">⚡ よくあるトラブル</p>
+            </div>
+            <div className="p-4">
+              <TroubleshootingGuide />
+            </div>
+          </div>
+
+          {/* 配信手順メモ */}
+          <div className="bg-zinc-900/60 border border-zinc-700/50 rounded-2xl p-4 space-y-2">
+            <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3">🚀 配信の流れ</p>
+            {[
+              "① 左側のフォームに配信情報を入力",
+              "② 「配信スタート」でキーを取得",
+              "③ OBS / Prism にキーをコピペ",
+              "④ 配信アプリで「配信開始」を押す",
+              "⑤ ChatMarket でON AIRを確認！",
+            ].map((step) => (
+              <div key={step} className="flex items-start gap-2">
+                <div className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" />
+                <p className="text-xs text-zinc-400">{step}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
