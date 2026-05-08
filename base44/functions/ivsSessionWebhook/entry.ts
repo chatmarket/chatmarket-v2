@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, stream_id: stream.id, action: "started" });
     }
 
-    // ─── 3b. Stream End → "ended" ───────────────────────────────────────
+    // ─── 3b. Stream End → "ended" + VOD自動販売化 ────────────────────────
     if (eventName === "Stream End" || eventName === "Session Ended") {
       console.log(`[ivsSessionWebhook] 🔴 Stream END — ARN: ${channelArn}`);
 
@@ -181,10 +181,15 @@ Deno.serve(async (req) => {
         return Response.json({ message: "no live stream found", channelArn });
       }
 
+      // 配信を ended に変更
       await base44.asServiceRole.entities.LiveStream.update(stream.id, {
         status: "ended",
         live_ended_at: new Date().toISOString(),
         auto_stopped: true,
+        // ─── ここからVOD自動販売化 ──────────────────
+        archive_vod_enabled: true,
+        archive_vod_price: stream.price || 0, // 配信価格をそのまま使用
+        // ──────────────────────────────────────
       });
 
       if (stream.channel_id) {
@@ -194,7 +199,8 @@ Deno.serve(async (req) => {
       }
 
       console.log(`[ivsSessionWebhook] ✅ Marked ENDED: ${stream.id} "${stream.title}"`);
-      return Response.json({ success: true, stream_id: stream.id, action: "ended" });
+      console.log(`[ivsSessionWebhook] 🎬 VOD販売自動化: 価格 ¥${stream.price || 0}`);
+      return Response.json({ success: true, stream_id: stream.id, action: "ended", vod_enabled: true });
     }
 
     // ─── その他のイベント（無視） ──────────────────────────────────────
