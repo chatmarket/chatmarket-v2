@@ -237,7 +237,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 shrink-0 flex-col fixed left-0 top-0 h-screen bg-sidebar border-r border-border/50 z-40">
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col fixed left-0 top-0 h-screen bg-sidebar border-r border-border/50 z-40" style={{ paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)' }}>
         {renderSidebar(null)}
       </aside>
 
@@ -245,50 +245,52 @@ export default function AppLayout() {
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-72 bg-sidebar h-full shadow-2xl">
+          <aside className="relative w-72 bg-sidebar h-full shadow-2xl overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)' }}>
             {renderSidebar(() => setSidebarOpen(false))}
           </aside>
         </div>
       )}
 
       {/* Main content */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden w-full lg:pt-0 pt-16">
-        {/* Mobile/Tablet top bar */}
-        <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 h-16 flex items-center px-4 gap-3">
-          <Button variant="ghost" onClick={() => setSidebarOpen(true)} className="h-12 w-12 p-0">
-            <Menu className="w-6 h-6" />
-          </Button>
-          <Link to="/" className="flex items-center gap-2 flex-1">
-            <img src={LOGO_URL} alt="" className="w-7 h-7 object-contain" />
-            <span className="font-black tracking-tight">Chat<span className="text-primary">Market</span></span>
-          </Link>
-          <div className="flex items-center gap-1">
-            <LangSwitcher />
-            {user && (
-              <>
-                <span className="text-sm font-medium text-foreground max-w-[80px] truncate">
-                  {user.full_name?.split(' ')[0] || user.email?.split('@')[0]}
-                </span>
-                <NotificationBell user={user} />
-              </>
-            )}
-            {!user && (
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs" onClick={() => base44.auth.redirectToLogin()}>
-                ログイン
-              </Button>
-            )}
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen overflow-x-hidden w-full">
+        {/* Mobile/Tablet top bar — Safe Area対応 */}
+        <header
+          className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border/50 flex items-end"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingLeft: 'env(safe-area-inset-left)',
+            paddingRight: 'env(safe-area-inset-right)',
+          }}
+        >
+          <div className="flex items-center w-full px-4 gap-3 h-14">
+            <Button variant="ghost" onClick={() => setSidebarOpen(true)} className="h-11 w-11 p-0 shrink-0">
+              <Menu className="w-6 h-6" />
+            </Button>
+            <Link to="/" className="flex items-center gap-2 flex-1 min-w-0">
+              <img src={LOGO_URL} alt="" className="w-8 h-8 object-contain shrink-0" />
+              <span className="font-black tracking-tight truncate">Chat<span className="text-primary">Market</span></span>
+            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <LangSwitcher />
+              {user && <NotificationBell user={user} />}
+              {!user && (
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs px-3" onClick={() => base44.auth.redirectToLogin()}>
+                  ログイン
+                </Button>
+              )}
+            </div>
           </div>
         </header>
 
         {/* Desktop top bar */}
         <header className="hidden lg:flex sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 h-14 items-center px-6 gap-4">
           <div className="flex-1" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <LangSwitcher />
             {user ? (
               <>
                 <NotificationBell user={user} />
-                <Link to="/my-channel" className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
+                <Link to="/my-channel" className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-secondary transition-colors">
                   <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                     <User className="w-3.5 h-3.5 text-primary" />
                   </div>
@@ -317,7 +319,12 @@ export default function AppLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 pb-20 lg:pb-6 overflow-x-hidden">
+        <main className="flex-1 overflow-x-hidden w-full max-w-[1400px] mx-auto lg:pt-0 lg:pb-8"
+          style={{
+            paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)',
+          }}
+        >
           <Outlet />
         </main>
 
@@ -331,8 +338,16 @@ export default function AppLayout() {
       {/* グローバル着信・承認通知（ライブ視聴ページでは完全停止） */}
       {user && !location.pathname.startsWith("/live/") && <GlobalCallNotifier user={user} />}
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center justify-around h-16 px-2">
+      {/* Mobile Bottom Navigation — Safe Area対応フローティング */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center justify-around px-2"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+          minHeight: 56,
+        }}
+      >
         {[
           { path: "/", icon: Home, label: "ホーム" },
           { path: "/search", icon: Search, label: "さがす" },
@@ -340,7 +355,7 @@ export default function AppLayout() {
           { path: "/go-live", icon: Radio, label: "配信" },
           { path: "/settings", icon: Settings, label: "設定" },
         ].map(({ path, icon: Icon, label }) => (
-          <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2">
+          <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
             <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
             <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>
               {label}
