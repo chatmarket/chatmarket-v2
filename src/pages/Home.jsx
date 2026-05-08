@@ -297,7 +297,7 @@ export default function Home() {
       {/* ステータス＋メッセージ */}
       <div className="text-center py-3 space-y-1">
         <p className="text-sm sm:text-base font-bold">まだ未完成、皆様と作り上げたいと思っています</p>
-        <p className="text-[10px] sm:text-xs text-muted-foreground">⚡ ベータ版稼働中</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground animate-pulse">⚡ ベータ版稼働中</p>
       </div>
 
       {/* ヒーロースロット（1位ライバー常駐枠） */}
