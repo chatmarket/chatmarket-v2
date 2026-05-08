@@ -364,6 +364,7 @@ export default function Home() {
             <p className="text-sm sm:text-base text-white/40 italic" style={{ letterSpacing: "0.05em" }}>
               "What price for your 15 minutes of skill?"
             </p>
+            <p className="sr-only">チャットマーケット（Chat Market）- ライバー・占い師・クリエイター向けライブ配信・動画販売・1対1ビデオ通話プラットフォーム</p>
           </div>
 
           {/* アイコンのみのカテゴリ表現（説明ボックス廃止） */}

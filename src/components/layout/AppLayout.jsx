@@ -96,7 +96,7 @@ export default function AppLayout() {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-border/50">
         <Link to="/" onClick={onCloseFn} className="flex items-center gap-2.5">
-          <img src={LOGO_URL} alt="ChatMarket" className="w-9 h-9 object-contain" />
+          <img src={LOGO_URL} alt="チャットマーケット ロゴ" className="w-9 h-9 object-contain" />
           <span className="font-black text-lg tracking-tight">
             Chat<span className="text-primary">Market</span>
           </span>
@@ -266,7 +266,7 @@ export default function AppLayout() {
               <Menu className="w-6 h-6" />
             </Button>
             <Link to="/" className="flex items-center gap-2 flex-1 min-w-0">
-              <img src={LOGO_URL} alt="" className="w-8 h-8 object-contain shrink-0" />
+              <img src={LOGO_URL} alt="チャットマーケット ロゴ" className="w-8 h-8 object-contain shrink-0" />
               <span className="font-black tracking-tight truncate">Chat<span className="text-primary">Market</span></span>
             </Link>
             <div className="flex items-center gap-2 shrink-0">
