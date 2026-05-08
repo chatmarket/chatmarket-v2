@@ -253,7 +253,7 @@ export default function ObsGuide() {
             📡
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-black text-white mb-1.5">✅ 1対多数の生配信には OBS / PRISM を推奨</h3>
+            <h3 className="text-lg font-black text-white mb-1.5">✅ 1対多数の生配信には OBS / PRISM で！！</h3>
             <p className="text-white/90 text-sm leading-relaxed">
               複数の視聴者に配信する場合は、安定した接続ができる <strong>無料の OBS システム</strong>（PC版・スマホ版）のご利用をお願いします。高品質・低遅延・安定配信で、ファンとの最高の配信体験を実現します。
             </p>
