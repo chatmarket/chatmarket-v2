@@ -294,11 +294,10 @@ export default function Home() {
         </div>
       </Link>
 
-      {/* ステータス表示（最小化） */}
-      <div className="text-center py-2">
-        <p className="neon-blue-message text-[10px] sm:text-xs font-semibold">
-          ⚡ ベータ版稼働中
-        </p>
+      {/* ステータス＋メッセージ */}
+      <div className="text-center py-3 space-y-1">
+        <p className="text-sm sm:text-base font-bold">まだ未完成、皆様と作り上げたいと思っています</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground">⚡ ベータ版稼働中</p>
       </div>
 
       {/* ヒーロースロット（1位ライバー常駐枠） */}
