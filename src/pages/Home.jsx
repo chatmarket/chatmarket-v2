@@ -278,81 +278,37 @@ export default function Home() {
       {/* サブスク無料キャンペーンバナー */}
       <Link to="/recruit" className="block">
         <div
-          className="relative overflow-hidden rounded-2xl px-5 py-4 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          className="relative overflow-hidden rounded-2xl px-5 py-3 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
           style={{
             background: "linear-gradient(135deg, #1a0a2e 0%, #2d1060 50%, #1a0a2e 100%)",
             border: "2px solid #a855f7",
             boxShadow: "0 0 30px rgba(168,85,247,0.6), 0 0 60px rgba(168,85,247,0.2)",
           }}
         >
-          {/* パルス装飾 */}
-          <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-purple-400 animate-ping opacity-75" />
-          <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-purple-400" />
-          <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-pink-400 animate-ping opacity-75" />
-          <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-pink-400" />
-
-          <p className="text-[11px] font-bold mb-1 tracking-widest" style={{ color: "#c084fc" }}>
-            🎁 期間限定キャンペーン
+          <p className="font-black text-lg sm:text-xl" style={{ color: "#f5e27a", textShadow: "0 0 20px rgba(245,226,122,0.6)" }}>
+            🎁 ライバー登録で12ヶ月無料！
           </p>
-          <p className="font-black text-lg sm:text-2xl leading-tight" style={{ color: "#f5e27a", textShadow: "0 0 20px rgba(245,226,122,0.6)" }}>
-            只今サブスク<span style={{ color: "#fff" }}>12ヶ月間</span>無料キャンペーン中！
-          </p>
-          <p className="text-xs sm:text-sm mt-1" style={{ color: "#c084fc" }}>
-            今すぐライバー登録して特典をゲット →
+          <p className="text-xs mt-1" style={{ color: "#c084fc" }}>
+            期間限定キャンペーン →
           </p>
         </div>
       </Link>
 
-      {/* ネオン白文字のメッセージ */}
-      <div className="text-center py-3 neon-messages">
-        <p className="neon-white-message text-xs sm:text-sm font-bold tracking-tight">
-          まだ、未完成。皆様の意見を聞きながら進化していきます。
-        </p>
-        <p className="neon-blue-message text-[10px] sm:text-xs font-semibold mt-1">
-          ベータ版稼働中、一部機能が正常に利用出来ない場合もありますので予めご了承下さい
+      {/* ステータス表示（最小化） */}
+      <div className="text-center py-2">
+        <p className="neon-blue-message text-[10px] sm:text-xs font-semibold">
+          ⚡ ベータ版稼働中
         </p>
       </div>
 
       {/* ヒーロースロット（1位ライバー常駐枠） */}
       <HeroSlot />
 
-      {/* 期間限定ライバー募集バナー（〜4/30） */}
+      {/* 期間限定バナー（最小化） */}
       {SHOW_RECRUIT_BANNER && (
         <Link to="/recruit" className="block">
-          <div
-            className="relative overflow-hidden rounded-2xl px-5 py-4 cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            style={{
-              background: "linear-gradient(135deg, #1a0800 0%, #3d1500 50%, #1a0800 100%)",
-              border: "2px solid #f59e0b",
-              boxShadow: "0 0 25px rgba(245,158,11,0.6), 0 0 50px rgba(245,158,11,0.2)",
-            }}
-          >
-            {/* パルス装飾 */}
-            <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-amber-400 animate-ping opacity-75" />
-            <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-amber-400" />
-
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(245,158,11,0.25)", border: "1px solid #f59e0b" }}>
-                <Zap className="w-5 h-5" style={{ color: "#f59e0b" }} />
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                 <p className="text-[11px] font-bold mb-0.5" style={{ color: "#fbbf24", letterSpacing: "0.1em" }}>
-                    定員になり次第終了
-                  </p>
-                  <p className="font-black text-sm sm:text-base leading-tight" style={{ color: "#fef3c7" }}>
-                    {t("recruitBannerText")}
-                  </p>
-               </div>
-              <div className="shrink-0 px-4 py-2 rounded-xl font-black text-sm whitespace-nowrap"
-                 style={{
-                   background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                   color: "#1a0800",
-                   boxShadow: "0 0 12px rgba(245,158,11,0.7)",
-                 }}>
-                 {t("securePro")}
-               </div>
-            </div>
+          <div className="rounded-2xl px-4 py-2 text-center font-black text-sm" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", color: "#fbbf24" }}>
+            🎯 定員直前：ライバー募集中
           </div>
         </Link>
       )}
@@ -379,19 +335,16 @@ export default function Home() {
           </p>
 
           {/* メインキャッチコピー */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight"
               style={{ color: "#fff" }}>
-              あなたの15分を、<br />
+              あなたの時間を<br />
               <span style={{
                 background: "linear-gradient(135deg, #00ff9d, #60a5fa, #a78bfa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>いくらで売りますか？</span>
+              }}>売上に変える</span>
             </h1>
-            <p className="text-sm sm:text-base text-white/40 italic" style={{ letterSpacing: "0.05em" }}>
-              "What price for your 15 minutes of skill?"
-            </p>
             <p className="sr-only">チャットマーケット（Chat Market）- ライバー・占い師・クリエイター向けライブ配信・動画販売・1対1ビデオ通話プラットフォーム</p>
           </div>
 
@@ -441,27 +394,13 @@ export default function Home() {
             </Button>
           </div>
 
-          {/* CTA ボタン */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Link to="/recruit" className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-black text-sm text-black transition-all hover:scale-105 active:scale-95"
-                style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 25px rgba(0,255,157,0.4)" }}>
-                <Radio className="w-4 h-4" /> ライバー登録
-              </button>
-            </Link>
-            <Link to="/search" className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm text-white border transition-all hover:border-primary/60 hover:bg-primary/5"
-                style={{ borderColor: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)" }}>
-                <Play className="w-4 h-4" /> 視聴を始める
-              </button>
-            </Link>
-            <Link to="/plan-select" className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-80"
-                style={{ borderColor: "rgba(0,212,255,0.3)", background: "rgba(0,212,255,0.08)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.3)" }}>
-                もっと知る →
-              </button>
-            </Link>
-          </div>
+          {/* 単一CTA（ライバー登録） */}
+          <Link to="/recruit">
+            <button className="px-8 py-4 rounded-2xl font-black text-base text-black transition-all hover:scale-105 active:scale-95"
+              style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 25px rgba(0,255,157,0.4)" }}>
+              <Radio className="w-5 h-5 inline mr-2" /> 今すぐ登録
+            </button>
+          </Link>
 
         </div>
       </section>
@@ -473,14 +412,7 @@ export default function Home() {
       `}</style>
 
       {/* PPV料金表 + 55円革命 → 「もっと知る」ボタン1つに集約 */}
-      <div className="flex justify-center">
-        <Link to="/plan-select">
-          <button className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
-            style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.25)", color: "#00d4ff", boxShadow: "0 0 20px rgba(0,212,255,0.1)" }}>
-            <span className="text-base">✨</span> 料金・プラン詳細を見る →
-          </button>
-        </Link>
-      </div>
+
 
       {/* サーバー安定化バナー */}
       <div className="px-0">
