@@ -349,66 +349,85 @@ export default function Dashboard() {
           CREATOR MODE
       ════════════════════════════════ */}
       {mode === MODE_CREATOR && (
-        <div className="space-y-5">
+        <div className="space-y-4">
 
-          {/* ヘッダー + ライブ開始（最重要CTA） */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold">こんにちは、{firstName}さん</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                今月の収益: <strong className="text-primary">¥{totalRevenue.toLocaleString()}</strong>
-              </p>
-            </div>
-            <Link to="/go-live">
-              <Button className="gap-2 bg-red-500 hover:bg-red-600 text-white font-black">
-                <Radio className="w-4 h-4" /> LIVE
-              </Button>
-            </Link>
-          </div>
+          {/* ── ① ヒーロー収益カード（モチベ爆上がり） ── */}
+          <div className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(135deg, #0a1a0a 0%, #0d2a0d 50%, #061006 100%)", border: "1px solid rgba(0,255,157,0.25)", boxShadow: "0 0 40px rgba(0,255,157,0.08)" }}>
+            {/* 装飾グロー */}
+            <div className="absolute top-0 right-0 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(0,255,157,0.12) 0%, transparent 70%)" }} />
 
-          {/* 承認済み通話（最優先: 今すぐやること） */}
-          <AcceptedCallsList userEmail={user.email} />
-
-          {/* 受信メッセージ */}
-          <IncomingMessagesWidget userEmail={user.email} />
-
-          {/* 今月サマリー 4メトリクス */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: "今月の収益", value: `¥${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-              { label: "ビデオ通話", value: `${monthVC.length}件`, icon: Phone, color: "text-blue-400", bg: "bg-blue-500/10" },
-              { label: "エール", value: `${monthSC.length}件`, icon: Coins, color: "text-yellow-400", bg: "bg-yellow-500/10" },
-              { label: "コンテンツ販売", value: `${monthP.length}件`, icon: Video, color: "text-purple-400", bg: "bg-purple-500/10" },
-            ].map(({ label, value, icon: Icon, color, bg }) => (
-              <div key={label} className="bg-card border border-border/50 rounded-xl p-4">
-                <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mb-2`}>
-                  <Icon className={`w-4 h-4 ${color}`} />
-                </div>
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className={`text-xl font-black ${color}`}>{value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* ★ 支払い導線（出金）— 最短2タップ: ここ→払い出し申請 */}
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/30 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-primary" />
-              </div>
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-xs text-muted-foreground">出金可能残高</p>
-                <p className="text-xl font-black text-primary">¥{totalRevenue.toLocaleString()}</p>
+                <p className="text-xs font-bold tracking-widest" style={{ color: "rgba(0,255,157,0.6)", letterSpacing: "0.15em" }}>TODAY'S CREATOR</p>
+                <h1 className="text-xl font-black text-white mt-0.5">{firstName} さん 🎙</h1>
               </div>
+              <Link to="/go-live">
+                <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-black text-sm text-black animate-pulse"
+                  style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 20px rgba(0,255,157,0.5)" }}>
+                  <Radio className="w-4 h-4" /> LIVE
+                </button>
+              </Link>
+            </div>
+
+            {/* 今月収益 BIG DISPLAY */}
+            <div className="mb-3">
+              <p className="text-xs text-white/40 mb-1">今月の収益（あなたの取り分）</p>
+              <div className="flex items-end gap-2">
+                <span className="font-black leading-none" style={{ fontSize: 48, color: "#00ff9d", textShadow: "0 0 20px rgba(0,255,157,0.5)" }}>
+                  ¥{totalRevenue.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* 収益率バッジ */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(0,255,157,0.12)", border: "1px solid rgba(0,255,157,0.3)" }}>
+                <Zap className="w-3.5 h-3.5" style={{ color: "#00ff9d" }} />
+                <span className="text-xs font-black" style={{ color: "#00ff9d" }}>収益率 最大95%</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30">
+                <Coins className="w-3.5 h-3.5 text-yellow-400" />
+                <span className="text-xs font-bold text-yellow-400">業界最高水準</span>
+              </div>
+            </div>
+
+            {/* 内訳サブメトリクス */}
+            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5">
+              {[
+                { label: "通話", value: monthVC.length, unit: "件", color: "#60a5fa" },
+                { label: "エール", value: monthSC.length, unit: "件", color: "#fbbf24" },
+                { label: "販売", value: monthP.length, unit: "件", color: "#a78bfa" },
+              ].map(({ label, value, unit, color }) => (
+                <div key={label} className="text-center">
+                  <p className="text-lg font-black" style={{ color }}>{value}<span className="text-xs ml-0.5" style={{ color }}>{unit}</span></p>
+                  <p className="text-[10px] text-white/30 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── ② 出金カード（最短1タップ） ── */}
+          <div className="flex items-center gap-3 bg-card border border-border/50 rounded-xl p-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-muted-foreground">出金可能残高</p>
+              <p className="text-lg font-black text-primary">¥{totalRevenue.toLocaleString()}</p>
             </div>
             <Link to="/withdrawal-request">
-              <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 font-black">
-                出金申請 <ArrowUpRight className="w-3.5 h-3.5" />
+              <Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 font-black shrink-0">
+                出金 <ArrowUpRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
           </div>
 
-          {/* 今後の予約 */}
+          {/* ── ③ 承認済み通話 & メッセージ ── */}
+          <AcceptedCallsList userEmail={user.email} />
+          <IncomingMessagesWidget userEmail={user.email} />
+
+          {/* ── ④ 今後の予約 ── */}
           {upcomingAppointments.length > 0 && (
             <section>
               <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 flex items-center gap-1.5">
@@ -424,7 +443,7 @@ export default function Dashboard() {
                       <p className="text-sm font-semibold">{appt.requester_name}</p>
                       <p className="text-xs text-muted-foreground">{appt.confirmed_date} {appt.confirmed_time}</p>
                     </div>
-                    <Link to={`/fortune-calendar`}>
+                    <Link to="/fortune-calendar">
                       <Button size="sm" variant="outline" className="text-xs">入室</Button>
                     </Link>
                   </div>
@@ -433,7 +452,7 @@ export default function Dashboard() {
             </section>
           )}
 
-          {/* クイックアクション — 最頻操作を最小クリックで */}
+          {/* ── ⑤ クイックアクション ── */}
           <section>
             <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2">クイックアクション</h2>
             <div className="grid grid-cols-3 gap-2">
@@ -455,7 +474,7 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* ファンモードへ切り替え */}
+          {/* ── ⑥ ファンモードへ切り替え ── */}
           <button
             onClick={() => switchMode(MODE_FAN)}
             className="w-full border border-dashed border-border/50 rounded-xl p-4 flex items-center justify-between hover:bg-secondary/50 transition-all text-left"
