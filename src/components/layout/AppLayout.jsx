@@ -13,7 +13,7 @@ import NotificationBell from "./NotificationBell";
 import LangSwitcher from "./LangSwitcher";
 import Footer from "./Footer";
 import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
-import { SUPER_ADMIN_EMAILS } from "@/lib/adminConfig";
+import { isAdmin } from "@/lib/adminConfig";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -154,7 +154,7 @@ export default function AppLayout() {
               );
             })}
 
-            {SUPER_ADMIN_EMAILS.includes(user.email) && (
+            {isAdmin(user) && (
               <>
                 <div className="pt-3 pb-1 px-3">
                   <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ スーパー管理者</p>
@@ -208,7 +208,7 @@ export default function AppLayout() {
                 <Settings className="w-4 h-4 shrink-0" />設定
               </div>
             </Link>
-            {SUPER_ADMIN_EMAILS.includes(user.email) && (
+            {isAdmin(user) && (
               <Link to="/admin/dashboard" onClick={onCloseFn}>
                 <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-400 hover:bg-purple-500/10 transition-all">
                   <BarChart3 className="w-4 h-4 shrink-0" />管理者

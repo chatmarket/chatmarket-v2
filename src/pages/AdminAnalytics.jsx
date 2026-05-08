@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Globe, Users, Eye, TrendingUp, Calendar, Activity, MessageSquare, Video, Radio, Coins } from "lucide-react";
-import { SUPER_ADMIN_EMAILS } from "@/lib/adminConfig";
+import { isAdmin } from "@/lib/adminConfig";
 
 export default function AdminAnalytics() {
   const [user, setUser] = useState(null);
@@ -14,7 +14,7 @@ export default function AdminAnalytics() {
       if (isAuth) {
         base44.auth.me().then((u) => {
           setUser(u);
-          if (u.role !== "admin" && !SUPER_ADMIN_EMAILS.includes(u.email)) {
+          if (u.role !== "admin") {
             window.location.href = "/";
           }
         });
@@ -163,7 +163,7 @@ export default function AdminAnalytics() {
   const topVideos = videos.slice(0, 5);
   const topCreators = channels.slice(0, 5);
 
-  if (!user || !SUPER_ADMIN_EMAILS.includes(user.email)) {
+  if (!user || !isAdmin(user)) {
     return (
       <div className="p-6 text-center text-muted-foreground">
         アクセス権がありません。スーパー管理者のみ利用可能です。

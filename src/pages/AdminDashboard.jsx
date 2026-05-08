@@ -31,7 +31,7 @@ import RecruitApplicationManagement from "../components/admin/RecruitApplication
 import PurchaseReportTab from "../components/admin/PurchaseReportTab";
 import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 import NgWordManagement from "../components/admin/NgWordManagement";
-import { SUPER_ADMIN_EMAILS, isAdmin as checkIsAdmin } from "@/lib/adminConfig";
+import { isAdmin } from "@/lib/adminConfig";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -46,11 +46,9 @@ export default function AdminDashboard() {
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get("tab") || "revenue";
 
-  // 管理者判定は role === "admin" を基本とし、メールリストは補助（lib/adminConfig.js）
-  const ADMIN_EMAILS = SUPER_ADMIN_EMAILS;
   const VIEWER_EMAILS = [];
-
-  const isSuperAdminUser = user && SUPER_ADMIN_EMAILS.includes(user.email);
+  const isSuperAdminUser = user && isAdmin(user);
+  const ADMIN_EMAILS = [];
   const isViewerOnly = false;
   const displayUserRole = user?.role;
 
@@ -68,7 +66,7 @@ export default function AdminDashboard() {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
         base44.auth.me().then((u) => {
-          if (u.role !== "admin" && !SUPER_ADMIN_EMAILS.includes(u.email)) {
+          if (u.role !== "admin") {
             window.location.href = "/";
             return;
           }
@@ -84,70 +82,70 @@ export default function AdminDashboard() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ["admin-all-users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["admin-all-channels"],
     queryFn: () => base44.entities.Channel.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allVideos = [] } = useQuery({
     queryKey: ["admin-all-videos"],
     queryFn: () => base44.entities.Video.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allStreams = [] } = useQuery({
     queryKey: ["admin-all-streams"],
     queryFn: () => base44.entities.LiveStream.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allCalls = [] } = useQuery({
     queryKey: ["admin-all-calls"],
     queryFn: () => base44.entities.VideoCall.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allPurchases = [] } = useQuery({
     queryKey: ["admin-all-purchases"],
     queryFn: () => base44.entities.Purchase.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allYellCoinTransactions = [] } = useQuery({
     queryKey: ["admin-all-yell-transactions"],
     queryFn: () => base44.entities.YellCoinTransaction.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allYellCoinWallets = [] } = useQuery({
     queryKey: ["admin-all-yell-wallets"],
     queryFn: () => base44.entities.YellCoinWallet.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allSubscriptions = [] } = useQuery({
     queryKey: ["admin-all-subscriptions"],
     queryFn: () => base44.entities.PlanSubscription.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   // 管理者・ビューアー以外のサブスク加入者のみカウント
-  const filteredSubscriptions = allSubscriptions.filter((s) => !ADMIN_EMAILS.includes(s.user_email) && !VIEWER_EMAILS.includes(s.user_email));
+  const filteredSubscriptions = allSubscriptions.filter((s) => !VIEWER_EMAILS.includes(s.user_email));
 
   const { data: allCancellationReasons = [] } = useQuery({
     queryKey: ["admin-all-cancellation-reasons"],
     queryFn: () => base44.entities.CancellationReason.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: allCrowdfundingProjects = [] } = useQuery({
     queryKey: ["admin-all-crowdfunding-projects"],
     queryFn: () => base44.entities.CrowdfundingProject.list(),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user.email),
+    enabled: !!user && isAdmin(user),
   });
 
   const { data: applications = [] } = useQuery({
@@ -157,27 +155,23 @@ export default function AdminDashboard() {
         { channel_id: "recruit_application" },
         "-created_date"
       ),
-    enabled: !!user && SUPER_ADMIN_EMAILS.includes(user?.email),
+    enabled: !!user && isAdmin(user),
     refetchInterval: 15000,
   });
 
   const { data: pendingReports = [] } = useQuery({
     queryKey: ["admin-pending-reports"],
     queryFn: () => base44.entities.ChannelReport.filter({ status: "pending" }),
-    enabled: !!user && ADMIN_EMAILS.includes(user?.email),
+    enabled: !!user && isAdmin(user),
     refetchInterval: 30000,
   });
 
-  if (!user || !ADMIN_EMAILS.includes(user.email)) {
+  if (!user || !isAdmin(user)) {
     return null;
   }
 
-  // 管理者・ビューアーユーザーの取得
-  const adminUserEmails = ADMIN_EMAILS;
-  const viewerUserEmails = VIEWER_EMAILS;
-
-  // 収益計算（管理者・ビューアー分除外）
-  const excludedEmails = [...adminUserEmails, ...VIEWER_EMAILS];
+  // 収益計算（ビューアー分除外）
+  const excludedEmails = [...VIEWER_EMAILS];
   const totalVideoRevenue = allPurchases
     .filter((p) => p.item_type === "video" && !excludedEmails.includes(p.created_by))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -497,7 +491,7 @@ export default function AdminDashboard() {
             };
 
             // 管理者ユーザーならフィルターしない、それ以外は管理者メール除外
-            const displaySubscriptions = user?.role === "admin" ? allSubscriptions : allSubscriptions.filter((s) => !ADMIN_EMAILS.includes(s.user_email));
+            const displaySubscriptions = allSubscriptions;
 
             const subscriptionStats = PLANS.map((planId) => {
               const active = displaySubscriptions.filter((s) => s.plan_id === planId && s.status === "active").length;
@@ -518,7 +512,7 @@ export default function AdminDashboard() {
             });
 
             // 解約理由の集計（管理者以外は管理者メール除外）
-            const displayCancellationReasons = user?.role === "admin" ? allCancellationReasons : allCancellationReasons.filter((r) => !ADMIN_EMAILS.includes(r.user_email));
+            const displayCancellationReasons = allCancellationReasons;
             const reasonCounts = {};
             displayCancellationReasons.forEach((r) => {
               const key = r.reason_ja || r.reason;
@@ -626,8 +620,8 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalVideoRevenue * 0.85).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                   販売件数: {allPurchases.filter((p) => p.item_type === "video" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(p.created_by))).length}件
-                 </div>
+                  販売件数: {allPurchases.filter((p) => p.item_type === "video").length}件
+                </div>
               </div>
             </div>
 
@@ -651,8 +645,8 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">¥{Math.floor(totalStreamRevenue * 0.85).toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                   販売件数: {allPurchases.filter((p) => p.item_type === "livestream" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(p.created_by))).length}件
-                 </div>
+                  販売件数: {allPurchases.filter((p) => p.item_type === "livestream").length}件
+                </div>
               </div>
             </div>
 
@@ -676,8 +670,8 @@ export default function AdminDashboard() {
                   <span className="font-semibold text-green-400">{Math.floor(totalCallCoins * 0.85).toLocaleString()}コイン</span>
                 </div>
                 <div className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mt-2">
-                   終了通話: {allCalls.filter((c) => c.status === "ended" && (user?.role === "admin" ? true : !ADMIN_EMAILS.includes(c.caller_email) && !ADMIN_EMAILS.includes(c.callee_email))).length}件
-                 </div>
+                  終了通話: {allCalls.filter((c) => c.status === "ended").length}件
+                </div>
               </div>
             </div>
 
