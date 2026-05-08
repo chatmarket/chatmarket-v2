@@ -510,6 +510,29 @@ export default function FortuneLP() {
         </div>
       </section>
 
+      {/* ご意見募集セクション */}
+      <section className="relative px-5 pb-16">
+        <div
+          className="max-w-2xl mx-auto rounded-2xl p-6 text-center space-y-3"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(16px)" }}
+        >
+          <p className="text-base font-black text-white">💬 ご意見・ご要望を募集しています</p>
+          <p className="text-sm text-white/55 leading-relaxed">
+            ChatMarketはまだ生まれたばかりのサービスです。<br />
+            「こんな機能が欲しい」「ここが使いづらい」など、<br />
+            鑑定師・ユーザーの皆さまの声を大切にしながら改善を続けています。<br />
+            ぜひ、率直なご意見をお聞かせください。
+          </p>
+          <a
+            href="mailto:unei@chatmarket.info?subject=ご意見・ご要望"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-80"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
+          >
+            📩 ご意見・ご要望を送る
+          </a>
+        </div>
+      </section>
+
       {/* フッター */}
       <footer className="text-center py-8 text-white/20 text-xs" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
         © 2026 ChatMarket. All rights reserved.
