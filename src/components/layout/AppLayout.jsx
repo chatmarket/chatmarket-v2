@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, ShoppingBag, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,12 +44,12 @@ const CREATOR_ITEMS = [
   { path: "/go-live", icon: Radio, label: "ライブ配信（PPV）" },
   { path: "/call-waiting", icon: Phone, label: "1対1ビデオ通話", highlight: true },
   { path: "/upload", icon: Upload, label: "動画アップ" },
-  { path: "/creator-dashboard", icon: BarChart3, label: "ダッシュボード" },
+  { path: "/dashboard", icon: BarChart3, label: "クリエイターダッシュボード" },
   { path: "/vod-analytics", icon: TrendingUp, label: "VOD分析" },
   { path: "/revenue", icon: Wallet, label: "収益管理" },
   { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
   { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
-  { path: "/equipment", icon: ShoppingBag, label: "機材ガイド" },
+
   { path: "/forum", icon: MessageSquare, label: "掲示板" },
 ];
 

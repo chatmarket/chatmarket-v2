@@ -42,7 +42,7 @@ import MyReservations from '@/pages/MyReservations';
 import CallCalendar from '@/pages/CallCalendar';
 import ChannelSchedule from '@/pages/ChannelSchedule';
 import CreatorSchedule from '@/pages/CreatorSchedule';
-import EquipmentStore from '@/pages/EquipmentStore';
+
 import Forum from '@/pages/Forum';
 import CrowdfundingList from '@/pages/CrowdfundingList';
 import CrowdfundingDetail from '@/pages/CrowdfundingDetail';
@@ -68,15 +68,11 @@ import MillionaireChallenge from '@/pages/MillionaireChallenge';
 import InfluencerCampaign from '@/pages/InfluencerCampaign';
 import NgWordAnalytics from '@/pages/NgWordAnalytics';
 import EnterpriseDashboard from '@/pages/EnterpriseDashboard';
-import MuxVideoPage from '@/pages/MuxVideoPage';
-import InfraSlide from '@/pages/InfraSlide';
+
 import PlanDetail from '@/pages/PlanDetail';
-import TestPayment from '@/pages/TestPayment';
-import VideoEngineComparison from '@/pages/VideoEngineComparison';
-import LandingPage from '@/pages/LandingPage';
 import VodAnalytics from '@/pages/VodAnalytics';
 import ObsGuide from '@/pages/ObsGuide';
-import StreamingManual from '@/pages/StreamingManual';
+
 import CoinCharge from '@/pages/CoinCharge';
 import AffiliateAnalytics from '@/pages/AffiliateAnalytics';
 import CallProfilePage from '@/pages/CallProfilePage';
@@ -131,7 +127,7 @@ export default function App() {
             <Route path="/call-calendar/:channelId" element={<CallCalendar />} />
             <Route path="/channel-schedule/:channelId" element={<ChannelSchedule />} />
             <Route path="/creator-schedule" element={<CreatorSchedule />} />
-            <Route path="/equipment" element={<EquipmentStore />} />
+            <Route path="/equipment" element={<Navigate to="/obs-guide" replace />} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/crowdfunding" element={<CrowdfundingList />} />
             <Route path="/crowdfunding/:projectId" element={<CrowdfundingDetail />} />
@@ -157,13 +153,9 @@ export default function App() {
             <Route path="/millionaire" element={<MillionaireChallenge />} />
             <Route path="/influencer-campaign" element={<InfluencerCampaign />} />
             <Route path="/enterprise" element={<EnterpriseDashboard />} />
-            <Route path="/mux-video/:videoId" element={<MuxVideoPage />} />
-            <Route path="/infra" element={<InfraSlide />} />
-            <Route path="/test-payment" element={<TestPayment />} />
-            <Route path="/video-engine" element={<VideoEngineComparison />} />
-            <Route path="/landing" element={<LandingPage />} />
+
             <Route path="/obs-guide" element={<ObsGuide />} />
-            <Route path="/streaming-manual" element={<StreamingManual />} />
+            <Route path="/streaming-manual" element={<Navigate to="/obs-guide" replace />} />
             <Route path="/coin-charge" element={<CoinCharge />} />
             <Route path="/admin/affiliate" element={<AffiliateAnalytics />} />
             <Route path="/call-profile/:channelId" element={<CallProfilePage />} />

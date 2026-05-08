@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, Download, ExternalLink, Zap, Star, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, ExternalLink, Zap, Star, CheckCircle2, AlertTriangle, Lightbulb, Smartphone } from "lucide-react";
 
 const STEPS = [
   {
@@ -307,6 +307,57 @@ export default function ObsGuide() {
           {QA.map((item) => (
             <QAItem key={item.q} item={item} />
           ))}
+        </div>
+      </section>
+
+      {/* ── スマホ配信（Prism Live Studio）セクション ── */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Smartphone className="w-6 h-6 text-purple-400" />
+          <h2 className="text-2xl font-black text-white">スマホで配信する — Prism Live Studio</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">iPhone / Android どちらでも使える無料の配信アプリ。フィルター・テキスト・バーチャル背景など豊富なエフェクトが使えます。</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* iOS */}
+          <a href="https://apps.apple.com/jp/app/prism-live-studio/id1319056339" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-black/40 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all">
+            <span className="text-3xl">🍎</span>
+            <div>
+              <p className="font-bold text-sm text-white">App Store でダウンロード</p>
+              <p className="text-xs text-muted-foreground">iPhone / iPad 対応</p>
+            </div>
+          </a>
+          {/* Android */}
+          <a href="https://play.google.com/store/apps/details?id=com.NCSSoft.PrismLive" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-black/40 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all">
+            <span className="text-3xl">🤖</span>
+            <div>
+              <p className="font-bold text-sm text-white">Google Play でダウンロード</p>
+              <p className="text-xs text-muted-foreground">Android 対応</p>
+            </div>
+          </a>
+        </div>
+
+        <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-3">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Prism Live Studio 設定手順</p>
+          {[
+            { n: "①", t: "Chat Market でキーを取得", d: "「ライブ配信を開始」→「配信スタート」を押してサーバーURL・ストリームキーをコピー" },
+            { n: "②", t: "Prism を開き「Live」を選択", d: "アプリ起動 → 「Live」→「Custom RTMPS」を選択" },
+            { n: "③", t: "URL を貼り付けて配信開始", d: "コピーした完全RTMPS URL を貼り付け → 「Start Live」をタップ" },
+          ].map(item => (
+            <div key={item.n} className="flex items-start gap-3 bg-secondary/40 rounded-xl px-4 py-3">
+              <span className="w-6 h-6 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-black text-purple-300 shrink-0">{item.n}</span>
+              <div>
+                <p className="text-sm font-bold text-white">{item.t}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3 text-xs text-orange-300">
+          ⚠️ 有料生配信はOBS / Prism などの配信専用アプリ経由が必須です。ブラウザ直接配信（WebRTC）は無料視聴のみ対応です。
         </div>
       </section>
 
