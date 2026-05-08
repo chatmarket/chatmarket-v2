@@ -311,53 +311,125 @@ export default function ObsGuide() {
       </section>
 
       {/* ── スマホ配信（Prism Live Studio）セクション ── */}
-      <section className="space-y-6">
+      <section className="space-y-6 bg-gradient-to-br from-purple-950 to-purple-900/50 border border-purple-500/40 rounded-2xl p-7">
         <div className="flex items-center gap-3">
-          <Smartphone className="w-6 h-6 text-purple-400" />
-          <h2 className="text-2xl font-black text-white">スマホで配信する — Prism Live Studio</h2>
+          <Smartphone className="w-7 h-7 text-purple-300" />
+          <h2 className="text-2xl font-black text-white">📱 スマホで配信 — PRISM Live Studio</h2>
+          <span className="ml-auto text-xs font-bold bg-purple-500/40 text-purple-200 px-3 py-1 rounded-full border border-purple-500/50">スマホ版完全ガイド</span>
         </div>
-        <p className="text-sm text-muted-foreground">iPhone / Android どちらでも使える無料の配信アプリ。フィルター・テキスト・バーチャル背景など豊富なエフェクトが使えます。</p>
 
+        {/* メリット強調 */}
+        <div className="bg-black/40 border border-purple-500/30 rounded-xl p-4 space-y-2">
+          <p className="text-sm font-bold text-purple-300">✨ PRISM を使うメリット</p>
+          <ul className="text-xs text-purple-100/80 space-y-1.5">
+            <li>• <strong>コメント・投げ銭がリアルタイムに画面に表示</strong> — ファンのお礼がその場で目に入り、感動が伝わる</li>
+            <li>• <strong>演出満載</strong> — フィルター、テキスト、バーチャル背景、アニメーションで配信を豪華に</li>
+            <li>• <strong>iPhone / Android両対応、完全無料</strong> — 余分な投資なし、スマホ1台で本格配信</li>
+          </ul>
+        </div>
+
+        {/* アプリダウンロード */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* iOS */}
           <a href="https://apps.apple.com/jp/app/prism-live-studio/id1319056339" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-black/40 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all">
+            className="flex items-center gap-3 bg-black/50 border border-purple-500/20 hover:border-purple-400/60 hover:bg-black/60 rounded-xl p-4 transition-all">
             <span className="text-3xl">🍎</span>
             <div>
-              <p className="font-bold text-sm text-white">App Store でダウンロード</p>
-              <p className="text-xs text-muted-foreground">iPhone / iPad 対応</p>
+              <p className="font-bold text-sm text-white">App Store</p>
+              <p className="text-xs text-purple-200/70">iPhone / iPad ダウンロード</p>
             </div>
           </a>
-          {/* Android */}
           <a href="https://play.google.com/store/apps/details?id=com.NCSSoft.PrismLive" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-black/40 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all">
+            className="flex items-center gap-3 bg-black/50 border border-purple-500/20 hover:border-purple-400/60 hover:bg-black/60 rounded-xl p-4 transition-all">
             <span className="text-3xl">🤖</span>
             <div>
-              <p className="font-bold text-sm text-white">Google Play でダウンロード</p>
-              <p className="text-xs text-muted-foreground">Android 対応</p>
+              <p className="font-bold text-sm text-white">Google Play</p>
+              <p className="text-xs text-purple-200/70">Android ダウンロード</p>
             </div>
           </a>
         </div>
 
-        <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-3">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Prism Live Studio 設定手順</p>
-          {[
-            { n: "①", t: "Chat Market でキーを取得", d: "「ライブ配信を開始」→「配信スタート」を押してサーバーURL・ストリームキーをコピー" },
-            { n: "②", t: "Prism を開き「Live」を選択", d: "アプリ起動 → 「Live」→「Custom RTMPS」を選択" },
-            { n: "③", t: "URL を貼り付けて配信開始", d: "コピーした完全RTMPS URL を貼り付け → 「Start Live」をタップ" },
-          ].map(item => (
-            <div key={item.n} className="flex items-start gap-3 bg-secondary/40 rounded-xl px-4 py-3">
-              <span className="w-6 h-6 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-black text-purple-300 shrink-0">{item.n}</span>
-              <div>
-                <p className="text-sm font-bold text-white">{item.t}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.d}</p>
-              </div>
+        {/* 完全ガイド（正確な手順） */}
+        <div className="space-y-5">
+          <p className="text-xs font-bold text-purple-300 uppercase tracking-widest">📋 4ステップ完全セットアップガイド</p>
+
+          {/* STEP 1 */}
+          <div className="bg-black/30 border border-purple-500/30 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-purple-500 text-white font-black text-xs flex items-center justify-center">①</span>
+              <p className="font-black text-white">配信プラットフォームの登録</p>
             </div>
-          ))}
+            <div className="space-y-2 text-xs text-purple-100/80">
+              <p>• <strong>PRISM アプリを起動</strong>し、右下の <strong>「Ready」</strong> ボタンをタップ</p>
+              <p>• <strong>「プラットフォームを選択」</strong>画面で <strong>「Custom RTMP」</strong> を選択</p>
+              <p>• Chat Market 管理画面から以下をコピーして貼り付け：</p>
+              <div className="bg-black/50 border border-purple-500/40 rounded-lg p-3 space-y-2 ml-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-purple-300">• <strong>URL</strong>: RTMP サーバーURL</span>
+                  <Link to="/go-live" className="text-[10px] bg-purple-500/30 hover:bg-purple-500/50 text-purple-200 px-2 py-0.5 rounded border border-purple-500/50 transition-colors">
+                    Go-Live で確認 →
+                  </Link>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-purple-300">• <strong>Stream Key</strong>: ストリームキー</span>
+                  <Link to="/go-live" className="text-[10px] bg-purple-500/30 hover:bg-purple-500/50 text-purple-200 px-2 py-0.5 rounded border border-purple-500/50 transition-colors">
+                    Go-Live で確認 →
+                  </Link>
+                </div>
+              </div>
+              <p>• 名前を <strong>「Chat Market」</strong> と付けて <strong>保存</strong></p>
+            </div>
+          </div>
+
+          {/* STEP 2 */}
+          <div className="bg-black/30 border border-purple-500/30 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-purple-500 text-white font-black text-xs flex items-center justify-center">②</span>
+              <p className="font-black text-white">💫 魔法の演出（Overlay）の設定 ← <span className="text-purple-300">ここが最重要！</span></p>
+            </div>
+            <div className="space-y-2 text-xs text-purple-100/80">
+              <p className="text-purple-200"><strong>これをしないと投げ銭が画面に映りません！</strong></p>
+              <p>• 配信準備画面で画面を <strong>「左にスワイプ」</strong></p>
+              <p>• メニューの中から <strong>「ウィジェット (Widget)」</strong> をタップ</p>
+              <p>• さらに <strong>「Web」</strong> を選択</p>
+              <p>• URL 入力欄に Chat Market 管理画面の <strong>「③ Overlay URL」</strong> を貼り付けて保存</p>
+              <div className="bg-black/50 border border-purple-500/40 rounded-lg p-2 ml-4">
+                <Link to="/go-live" className="inline-block text-[10px] bg-purple-500/30 hover:bg-purple-500/50 text-purple-200 px-2 py-0.5 rounded border border-purple-500/50 transition-colors">
+                  Go-Live で Overlay URL をコピー →
+                </Link>
+              </div>
+              <p>• 画面に透明な枠が出るので、邪魔にならない場所に配置</p>
+            </div>
+          </div>
+
+          {/* STEP 3 */}
+          <div className="bg-black/30 border border-purple-500/30 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-purple-500 text-white font-black text-xs flex items-center justify-center">③</span>
+              <p className="font-black text-white">画質とアスペクト比の確認</p>
+            </div>
+            <div className="space-y-2 text-xs text-purple-100/80">
+              <p>• 画面上部の <strong>設定アイコン</strong>から画質（解像度）が <strong>1080p または 720p</strong> になっているか確認</p>
+              <p>• 占いなら「<strong>縦持ち</strong> (9:16)」、授業なら「<strong>横持ち</strong> (16:9)」など、用途に合わせてスマホの向きを固定</p>
+              <p className="text-purple-300">※ Chat Market 側が自動で画面サイズを調整します</p>
+            </div>
+          </div>
+
+          {/* STEP 4 */}
+          <div className="bg-gradient-to-r from-purple-600/40 to-purple-500/30 border border-purple-400/50 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-purple-400 text-white font-black text-xs flex items-center justify-center">④</span>
+              <p className="font-black text-white">配信スタート！🚀</p>
+            </div>
+            <div className="space-y-2 text-xs text-purple-100/90">
+              <p>• 全ての準備ができたら、黄色の <strong>「Go Live」</strong> ボタンをタップ</p>
+              <p className="font-bold text-purple-200">• 約2秒後、自動的に Chat Market のサイト上であなたの配信が <strong>「LIVE中」</strong> として公開されます！</p>
+              <p className="text-purple-300">• コメント・投げ銭がリアルタイムに Overlay に表示される → ファンへのお礼が即座に伝わる</p>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3 text-xs text-orange-300">
-          ⚠️ 有料生配信はOBS / Prism などの配信専用アプリ経由が必須です。ブラウザ直接配信（WebRTC）は無料視聴のみ対応です。
+        <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-xs text-green-300">
+          ✅ <strong>配信接続完了！</strong> Overlay に投げ銭とコメントが流れ始めたら、そのまま配信をお楽しみください。視聴者のリアルタイムな反応がモチベーションに繋がります。
         </div>
       </section>
 
