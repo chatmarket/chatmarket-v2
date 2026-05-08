@@ -26,6 +26,7 @@ const SHOW_RECRUIT_BANNER = isBefore(_now, _RECRUIT_DEADLINE);
 
 import VideoCard from "../components/cards/VideoCard";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import { SUPER_ADMIN_EMAILS } from "@/lib/adminConfig";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import ScrollRow from "../components/home/ScrollRow";

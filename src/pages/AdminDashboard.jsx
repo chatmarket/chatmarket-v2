@@ -31,6 +31,7 @@ import RecruitApplicationManagement from "../components/admin/RecruitApplication
 import PurchaseReportTab from "../components/admin/PurchaseReportTab";
 import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 import NgWordManagement from "../components/admin/NgWordManagement";
+import { SUPER_ADMIN_EMAILS, isAdmin as checkIsAdmin } from "@/lib/adminConfig";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -44,11 +45,14 @@ export default function AdminDashboard() {
   // URLパラメータでタブ初期値を制御
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get("tab") || "revenue";
-  
-  const SUPER_ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
-  const isSuperAdmin = user && SUPER_ADMIN_EMAILS.includes(user.email);
-  const isViewerOnly = user?.email === "kimurayasunari5@gmail.com";
-  const displayUserRole = isViewerOnly ? "viewer" : user?.role;
+
+  // 管理者判定は role === "admin" を基本とし、メールリストは補助（lib/adminConfig.js）
+  const ADMIN_EMAILS = SUPER_ADMIN_EMAILS;
+  const VIEWER_EMAILS = [];
+
+  const isSuperAdminUser = user && SUPER_ADMIN_EMAILS.includes(user.email);
+  const isViewerOnly = false;
+  const displayUserRole = user?.role;
 
   const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
     queryKey: ["admin-stripe-balance"],
@@ -56,19 +60,15 @@ export default function AdminDashboard() {
       const response = await base44.functions.invoke('getStripeBalance', {});
       return response.data;
     },
-    refetchInterval: 60000, // Refetch every 60 seconds
-    enabled: !!user && user.email === "unei@chatmarket.info",
+    refetchInterval: 60000,
+    enabled: !!user && isSuperAdminUser,
   });
-
-  const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com", "admin@example.com"];
-  const SUPER_ADMIN_EMAILS_CHECK = ["unei@chatmarket.info", "ono@onestep-corp.com", "taktak0315@icloud.com"];
-  const VIEWER_EMAILS = ["kimurayasunari5@gmail.com"];
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
         base44.auth.me().then((u) => {
-          if (!ADMIN_EMAILS.includes(u.email)) {
+          if (u.role !== "admin" && !SUPER_ADMIN_EMAILS.includes(u.email)) {
             window.location.href = "/";
             return;
           }

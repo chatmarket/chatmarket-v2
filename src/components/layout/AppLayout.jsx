@@ -13,10 +13,9 @@ import NotificationBell from "./NotificationBell";
 import LangSwitcher from "./LangSwitcher";
 import Footer from "./Footer";
 import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
+import { SUPER_ADMIN_EMAILS } from "@/lib/adminConfig";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
-
-const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com", "unei@chatmarket.info"];
 
 const ADMIN_NAV_ITEMS = [
   { key: "admin-dashboard", path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },

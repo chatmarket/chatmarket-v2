@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Globe, Users, Eye, TrendingUp, Calendar, Activity, MessageSquare, Video, Radio, Coins } from "lucide-react";
-
-const SUPER_ADMIN_EMAILS = ["ono@onestep-corp.com", "taktak0315@icloud.com", "unei@chatmarket.info"];
+import { SUPER_ADMIN_EMAILS } from "@/lib/adminConfig";
 
 export default function AdminAnalytics() {
   const [user, setUser] = useState(null);
@@ -15,7 +14,7 @@ export default function AdminAnalytics() {
       if (isAuth) {
         base44.auth.me().then((u) => {
           setUser(u);
-          if (!SUPER_ADMIN_EMAILS.includes(u.email)) {
+          if (u.role !== "admin" && !SUPER_ADMIN_EMAILS.includes(u.email)) {
             window.location.href = "/";
           }
         });
