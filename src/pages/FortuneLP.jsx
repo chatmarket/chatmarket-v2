@@ -439,13 +439,13 @@ export default function FortuneLP() {
               🎁 期間限定・特別オファー
             </p>
             <p className="text-2xl sm:text-3xl font-black text-white leading-tight">
-              登録から<span style={{ color: MYSTIC.gold }}>1年間</span>、完全無料！
+              <span style={{ color: MYSTIC.gold }}>Basicプラン</span>が<br />登録から<span style={{ color: MYSTIC.gold }}>1年間</span>、完全無料！
             </p>
             <p className="text-sm text-white/60">
               通常月額 <span className="line-through text-white/40">¥3,300</span>
               　→　<span className="font-black text-white">¥0</span>／月（12ヶ月間）
             </p>
-            <p className="text-[10px] text-white/35 mt-0.5">※ 1年経過後は月額3,300円（税込）が発生します</p>
+            <p className="text-[10px] text-white/35 mt-0.5">※ Basicプランのみ対象。1年経過後は月額3,300円（税込）が発生します</p>
           </motion.div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
@@ -595,8 +595,8 @@ export default function FortuneLP() {
           >
             <span className="text-2xl">🎁</span>
             <div className="text-left">
-              <p className="font-black text-white text-sm">登録から<span style={{ color: MYSTIC.gold }}>1年間</span>サブスク無料</p>
-              <p className="text-[11px] text-white/50">通常 <span className="line-through">¥3,300/月</span> → 12ヶ月間 ¥0</p>
+              <p className="font-black text-white text-sm"><span style={{ color: MYSTIC.gold }}>Basicプラン</span>が登録から<span style={{ color: MYSTIC.gold }}>1年間</span>無料</p>
+              <p className="text-[11px] text-white/50">通常 <span className="line-through">¥3,300/月</span> → 12ヶ月間 ¥0（Basic限定）</p>
             </div>
           </div>
 
@@ -613,7 +613,7 @@ export default function FortuneLP() {
             ✨ 今すぐ鑑定師として登録する（無料）
           </motion.button>
           <p className="text-xs text-white/30">
-            審査通過後、最短当日から活動可能。1年間サブスク無料。2年目以降は月額3,300円（税込）。
+            審査通過後、最短当日から活動可能。Basicプランのみ登録から1年間無料。2年目以降は月額3,300円（税込）。
           </p>
         </div>
       </section>
