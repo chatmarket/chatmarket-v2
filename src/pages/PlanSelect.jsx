@@ -347,7 +347,7 @@ export default function PlanSelect() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {planInfo?.isAdmin && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
           <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>
@@ -495,7 +495,7 @@ export default function PlanSelect() {
 
       {/* プラン一覧（FREEを除く） */}
       <div className="space-y-3">
-        <Accordion type="multiple" defaultValue={["basic", "call-anser", "vod", "ppv"]} className="space-y-2">
+        <Accordion type="multiple" defaultValue={["basic", "call-anser", "vod", "ppv"]} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {PLANS.filter(p => p.id !== "free").map((plan) => {
             const Icon = plan.icon;
             const isSelected = selected.has(plan.id);

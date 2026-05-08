@@ -279,7 +279,7 @@ export default function Recruit() {
 
       {/* ===== 全プラン無料 詳細 ===== */}
       <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-background to-secondary/20">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
               🎉 先着300名限定キャンペーン
@@ -387,7 +387,7 @@ export default function Recruit() {
 
       {/* ===== 試食コーナー → 本注文 ステップ図 ===== */}
       <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-secondary/30 to-background">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full px-4 py-1 text-xs font-bold">
               🍽️ まずは無料でお試し
@@ -500,7 +500,7 @@ export default function Recruit() {
 
       {/* ===== 解放される機能 ===== */}
       <section className="w-full py-16 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">プロフェッショナル機能、全開放</h2>
           <p className="text-center text-muted-foreground mb-10 text-sm">通常は月額費用が必要な全機能が、キャンペーン期間中は完全無料で使い放題</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -546,7 +546,7 @@ export default function Recruit() {
 
       {/* ===== 数字 ===== */}
       <section className="w-full py-12 px-4 sm:px-6 bg-secondary/20 border-y border-border/30">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
             { value: "95%", label: "最大還元率", color: "text-primary" },
             { value: "300名", label: "限定先着枠", color: "text-red-400" },
@@ -563,9 +563,9 @@ export default function Recruit() {
 
       {/* ===== 機能一覧 ===== */}
       <section className="w-full py-16 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-black text-center mb-8">使える全機能</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
               { icon: "📡", label: "有料ライブ配信（PPV）" },
               { icon: "🎬", label: "動画アーカイブ販売" },
@@ -591,7 +591,7 @@ export default function Recruit() {
 
       {/* ===== 申し込みフォーム ===== */}
       <section ref={formRef} className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-secondary/20 to-background">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-2xl lg:max-w-4xl mx-auto">
           <div className="text-center mb-8 space-y-2">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
               📝 ライバー登録申し込み
@@ -718,7 +718,7 @@ export default function Recruit() {
 
       {/* ===== FAQ ===== */}
       <section className="w-full py-12 px-4 sm:px-6 border-t border-border/30">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-xl font-black mb-6 text-center">よくある質問</h2>
           <div className="space-y-3">
             {[
