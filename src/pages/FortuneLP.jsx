@@ -130,11 +130,12 @@ function FortuneCard({ profile, index }) {
         </span>
       </div>
 
-      <div className="relative p-6 space-y-4">
-        {/* Avatar + 名前 */}
-        <div className="flex items-center gap-4">
+      <div className="relative p-5 space-y-3">
+        {/* バッジ（カード内上部に移動・絶対配置廃止） */}
+        <div className="flex items-start gap-3">
+          {/* Avatar */}
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shrink-0"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
             style={{
               background: "linear-gradient(135deg, rgba(107,33,168,0.4), rgba(212,175,55,0.2))",
               border: `1px solid ${MYSTIC.border}`,
@@ -143,24 +144,33 @@ function FortuneCard({ profile, index }) {
           >
             {profile.avatar}
           </div>
-          <div>
-            <p className="font-black text-lg text-white leading-tight">{profile.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: MYSTIC.gold }}>{profile.specialty}</p>
-            <p className="text-xs text-white/40 mt-0.5">経験 {profile.years}年</p>
+          {/* 名前・専門 */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="font-black text-base text-white leading-tight break-all">{profile.name}</p>
+              <span
+                className="text-[9px] font-black px-2 py-0.5 rounded-full shrink-0"
+                style={{ background: "linear-gradient(135deg, #D4AF37, #A0760F)", color: "#0D0A1A" }}
+              >
+                {profile.badge}
+              </span>
+            </div>
+            <p className="text-xs mt-0.5 leading-snug" style={{ color: MYSTIC.gold }}>{profile.specialty}</p>
+            <p className="text-[11px] text-white/40 mt-0.5">経験 {profile.years}年</p>
           </div>
         </div>
 
         {/* キャッチ */}
-        <p className="text-sm text-white/70 italic leading-relaxed" style={{ fontStyle: "italic" }}>
-          "{ profile.tagline }"
+        <p className="text-sm text-white/65 leading-relaxed" style={{ fontStyle: "italic" }}>
+          "{profile.tagline}"
         </p>
 
         {/* タグ */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {profile.tags.map((tag) => (
             <span
               key={tag}
-              className="text-[10px] font-bold px-2.5 py-1 rounded-full"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
               style={{ background: "rgba(168,85,247,0.15)", color: "#C084FC", border: "1px solid rgba(168,85,247,0.3)" }}
             >
               #{tag}
@@ -169,21 +179,17 @@ function FortuneCard({ profile, index }) {
         </div>
 
         {/* スタッツ */}
-        <div className="grid grid-cols-3 gap-2 pt-2">
-          <div className="text-center">
-            <p className="text-lg font-black" style={{ color: MYSTIC.gold }}>
-              {profile.rating}
-            </p>
+        <div className="grid grid-cols-3 gap-1 pt-1 border-t border-white/5">
+          <div className="text-center py-1">
+            <p className="text-base font-black" style={{ color: MYSTIC.gold }}>{profile.rating}</p>
             <p className="text-[9px] text-white/40">評価</p>
           </div>
-          <div className="text-center">
-            <p className="text-lg font-black text-white">{profile.reviews.toLocaleString()}</p>
+          <div className="text-center py-1">
+            <p className="text-base font-black text-white">{profile.reviews.toLocaleString()}</p>
             <p className="text-[9px] text-white/40">鑑定数</p>
           </div>
-          <div className="text-center">
-            <p className="text-lg font-black" style={{ color: "#34D399" }}>
-              ¥{(profile.monthly / 10000).toFixed(0)}万
-            </p>
+          <div className="text-center py-1">
+            <p className="text-base font-black" style={{ color: "#34D399" }}>¥{(profile.monthly / 10000).toFixed(0)}万</p>
             <p className="text-[9px] text-white/40">月収目安</p>
           </div>
         </div>
@@ -191,7 +197,7 @@ function FortuneCard({ profile, index }) {
         {/* CTA */}
         <motion.button
           whileTap={{ scale: 0.97 }}
-          className="w-full py-3 rounded-2xl font-black text-sm transition-all"
+          className="w-full py-2.5 rounded-2xl font-black text-sm transition-all"
           style={{
             background: hovered
               ? "linear-gradient(135deg, #D4AF37, #A0760F)"
