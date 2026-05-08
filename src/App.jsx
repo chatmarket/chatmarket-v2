@@ -85,6 +85,7 @@ import PrismWebOverlay from '@/pages/PrismWebOverlay';
 import FortuneCalendar from '@/pages/FortuneCalendar';
 import ReminderLogs from '@/pages/ReminderLogs';
 import Dashboard from '@/pages/Dashboard';
+import FortuneLP from '@/pages/FortuneLP';
 
 export default function App() {
 
@@ -171,6 +172,7 @@ export default function App() {
             <Route path="/fortune-calendar" element={<FortuneCalendar />} />
             <Route path="/admin/reminder-logs" element={<ReminderLogs />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/fortune-lp" element={<FortuneLP />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
