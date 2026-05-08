@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCode from "qrcode.react";
-import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode, Archive, ToggleLeft, ToggleRight } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode, Archive, ToggleLeft, ToggleRight, Coins } from "lucide-react";
 import SocialLinks from "@/components/channel/SocialLinks";
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
@@ -338,6 +338,11 @@ export default function MyChannel() {
           </TabsTrigger>
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
+            {subscriptions.filter(s => s.status === "active").length > 0 && (
+              <span className="ml-1 text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-black">
+                {subscriptions.filter(s => s.status === "active").length}件
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -444,21 +449,24 @@ export default function MyChannel() {
                   return (
                     <div key={s.id} className={`bg-card rounded-xl p-4 border transition-colors ${isSelling ? "border-primary/40 bg-primary/5" : "border-border/50"}`}>
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden relative">
                           {s.thumbnail_url
                             ? <img src={s.thumbnail_url} alt="" className="w-full h-full object-cover" />
                             : <Archive className="w-5 h-5 text-muted-foreground" />
                           }
+                          {isSelling && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-[10px] text-white font-bold">✓</div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate text-sm">{s.title}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             📅 {dateLabel}放送分
                           </p>
-                          <p className="text-xs mt-0.5">
+                          <p className="text-xs mt-0.5 flex items-center gap-1">
                             {isSelling
-                              ? <span className="text-primary font-bold">🟢 販売中 • {s.archive_vod_price || s.price || 0}コイン</span>
-                              : <span className="text-muted-foreground">⚫ 非販売</span>
+                              ? <><Coins className="w-3 h-3 text-yellow-400" /><span className="text-yellow-400 font-bold">{s.archive_vod_price || s.price || 0}コイン</span></>
+                              : <span className="text-muted-foreground">販売予定なし</span>
                             }
                           </p>
                         </div>
@@ -484,9 +492,12 @@ export default function MyChannel() {
 
         <TabsContent value="plans">
           <div className="space-y-4">
-            {/* 現在契約中 */}
+            {/* 現在契約中（更新日時表示） */}
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">現在契約中</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">現在契約中</h3>
+                <span className="text-[10px] text-muted-foreground">自動更新</span>
+              </div>
               {subscriptions.filter((s) => s.status === "active").length === 0 ? (
                 <div className="bg-card rounded-xl border border-border/50 p-6 text-center text-muted-foreground text-sm">
                   現在契約中のプランはありません
@@ -500,18 +511,28 @@ export default function MyChannel() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {subscriptions.filter((s) => s.status === "active").map((sub) => (
-                    <div key={sub.id} className="bg-card rounded-xl border border-primary/30 p-4 flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">{sub.plan_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          加入日: {sub.start_date ? new Date(sub.start_date).toLocaleDateString("ja-JP") : new Date(sub.created_date).toLocaleDateString("ja-JP")}
-                        </p>
+                  {subscriptions.filter((s) => s.status === "active").map((sub) => {
+                    const planDetails = {
+                      "basic": "Basic — 基本機能",
+                      "vod": "VOD — 動画販売",
+                      "ppv": "PPV — ライブ配信（1対多）",
+                      "call-anser": "CALL&ANSER — 1対1ビデオ通話"
+                    };
+                    return (
+                      <div key={sub.id} className="bg-gradient-to-r from-green-900/20 to-green-800/10 rounded-xl border border-green-500/40 p-4 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
+                          <CheckCircle className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-white">{planDetails[sub.plan_id] || sub.plan_name}</p>
+                          <p className="text-xs text-green-300/70 mt-0.5">
+                            ✓ 加入済み — 次回更新: {sub.start_date ? new Date(new Date(sub.start_date).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("ja-JP") : "—"}
+                          </p>
+                        </div>
+                        <span className="text-xs font-bold bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full shrink-0">有効</span>
                       </div>
-                      <span className="text-xs font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">契約中</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
