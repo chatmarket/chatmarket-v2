@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCode from "qrcode.react";
-import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode, Archive, ToggleLeft, ToggleRight } from "lucide-react";
 import SocialLinks from "@/components/channel/SocialLinks";
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
@@ -333,6 +333,9 @@ export default function MyChannel() {
           <TabsTrigger value="streams" className="flex items-center gap-1">
             <Radio className="w-3.5 h-3.5" /> 配信履歴
           </TabsTrigger>
+          <TabsTrigger value="archives" className="flex items-center gap-1">
+            <Archive className="w-3.5 h-3.5" /> アーカイブ販売
+          </TabsTrigger>
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
           </TabsTrigger>
@@ -407,6 +410,76 @@ export default function MyChannel() {
               </Link>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="archives">
+          {(() => {
+            const endedStreams = streams.filter(s => s.status === "ended");
+            if (endedStreams.length === 0) {
+              return (
+                <div className="text-center py-16 text-muted-foreground text-sm">
+                  配信終了後にアーカイブが表示されます
+                </div>
+              );
+            }
+            return (
+              <div className="space-y-3">
+                {endedStreams.map((s) => {
+                  const broadcastDate = s.live_started_at || s.created_date;
+                  const dateLabel = broadcastDate
+                    ? new Date(broadcastDate).toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })
+                    : "日時不明";
+                  const isSelling = s.archive_vod_enabled;
+
+                  const handleToggleVod = async (e) => {
+                    e.stopPropagation();
+                    await base44.entities.LiveStream.update(s.id, {
+                      archive_vod_enabled: !isSelling,
+                      archive_vod_price: !isSelling ? (s.price || 0) : 0,
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["my-streams", channel?.id] });
+                    toast.success(!isSelling ? "アーカイブ販売を開始しました" : "アーカイブ販売を停止しました");
+                  };
+
+                  return (
+                    <div key={s.id} className={`bg-card rounded-xl p-4 border transition-colors ${isSelling ? "border-primary/40 bg-primary/5" : "border-border/50"}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+                          {s.thumbnail_url
+                            ? <img src={s.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                            : <Archive className="w-5 h-5 text-muted-foreground" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold truncate text-sm">{s.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            📅 {dateLabel}放送分
+                          </p>
+                          <p className="text-xs mt-0.5">
+                            {isSelling
+                              ? <span className="text-primary font-bold">🟢 販売中 • {s.archive_vod_price || s.price || 0}コイン</span>
+                              : <span className="text-muted-foreground">⚫ 非販売</span>
+                            }
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleToggleVod}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            isSelling
+                              ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                              : "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20"
+                          }`}
+                        >
+                          {isSelling ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          {isSelling ? "販売停止" : "販売開始"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="plans">

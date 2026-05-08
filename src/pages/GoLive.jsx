@@ -41,6 +41,7 @@ export default function GoLive() {
   const [ticketEnabled, setTicketEnabled] = useState(false);
   const [ticketDurationMinutes, setTicketDurationMinutes] = useState(60);
   const [ticketPriceYen, setTicketPriceYen] = useState(600);
+  const [archiveVodEnabled, setArchiveVodEnabled] = useState(true);
 
   const TICKET_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120];
   const minTicketPrice = Math.ceil((ticketDurationMinutes / 15) * 150);
@@ -187,6 +188,7 @@ export default function GoLive() {
         ticket_duration_minutes: ticketEnabled ? ticketDurationMinutes : 0,
         ticket_total_revenue_yen: 0,
         ticket_purchases: [],
+        auto_archive_vod_enabled: archiveVodEnabled,
       });
 
       await base44.entities.Channel.update(channel.id, { is_live: true });
@@ -421,6 +423,25 @@ export default function GoLive() {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* アーカイブVOD販売設定 */}
+            <div className="space-y-2 border rounded-2xl p-4 bg-blue-500/5 border-blue-500/30">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-blue-300 flex items-center gap-2">
+                  🎬 配信終了後にアーカイブ販売する
+                </label>
+                <button type="button"
+                  onClick={() => setArchiveVodEnabled((v) => !v)}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${archiveVodEnabled ? "bg-blue-500" : "bg-zinc-700"}`}>
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${archiveVodEnabled ? "left-6" : "left-0.5"}`} />
+                </button>
+              </div>
+              <p className="text-xs text-zinc-400">
+                {archiveVodEnabled
+                  ? `✅ 配信終了後、自動的に¥${parseInt(form.price) || 0}コインで販売開始されます`
+                  : "配信終了後はアーカイブを非販売にします（後からマイチャンネルで変更可）"}
+              </p>
             </div>
 
             {/* チケット販売設定 */}

@@ -181,15 +181,14 @@ Deno.serve(async (req) => {
         return Response.json({ message: "no live stream found", channelArn });
       }
 
-      // 配信を ended に変更
+      // 配信を ended に変更（配信者がアーカイブ販売を選択した場合のみVOD有効化）
+      const shouldSellVod = stream.auto_archive_vod_enabled === true;
       await base44.asServiceRole.entities.LiveStream.update(stream.id, {
         status: "ended",
         live_ended_at: new Date().toISOString(),
         auto_stopped: true,
-        // ─── ここからVOD自動販売化 ──────────────────
-        archive_vod_enabled: true,
-        archive_vod_price: stream.price || 0, // 配信価格をそのまま使用
-        // ──────────────────────────────────────
+        archive_vod_enabled: shouldSellVod,
+        archive_vod_price: shouldSellVod ? (stream.price || 0) : 0,
       });
 
       if (stream.channel_id) {
