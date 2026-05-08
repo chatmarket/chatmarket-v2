@@ -298,7 +298,7 @@ export default function Home() {
             只今サブスク<span style={{ color: "#fff" }}>12ヶ月間</span>無料キャンペーン中！
           </p>
           <p className="text-xs sm:text-sm mt-1" style={{ color: "#c084fc" }}>
-            Basicプラン限定 · 今すぐライバー登録して特典をゲット →
+            今すぐライバー登録して特典をゲット →
           </p>
         </div>
       </Link>
