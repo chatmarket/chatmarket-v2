@@ -78,10 +78,10 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  // 全体統計
+  // 全体統計（User エンティティはRLSで直接listできないためバックエンド関数経由）
   const { data: allUsers = [] } = useQuery({
     queryKey: ["admin-all-users"],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => base44.functions.invoke('adminGetAllUsers', {}).then(r => r.data?.users || []),
     enabled: !!user && isAdmin(user),
   });
 
