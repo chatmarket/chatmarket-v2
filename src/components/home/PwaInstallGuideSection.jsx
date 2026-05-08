@@ -21,29 +21,85 @@ export default function PwaInstallGuideSection() {
                 iPhone / iPad（Safari）
               </span>
             </AccordionTrigger>
-            <AccordionContent className="text-sm space-y-3 pt-2">
-              <div className="space-y-2">
-                <p className="font-semibold">手順：</p>
-                <ol className="list-decimal ml-5 space-y-1.5 text-foreground/80">
-                  <li>Safari のメニュー（下部の上矢印）をタップ</li>
-                  <li>「ホーム画面に追加」を選択</li>
-                  <li>名前を確認して「追加」をタップ</li>
-                  <li>ホーム画面にアプリアイコンが表示されます</li>
-                </ol>
-              </div>
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-semibold text-primary">💡 図解</p>
-                <div className="space-y-1.5 text-xs text-foreground/70">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-secondary px-2 py-1 rounded">Safari</span>
-                    <span>→</span>
-                    <span className="bg-secondary px-2 py-1 rounded">下矢印アイコン</span>
-                    <span>→</span>
-                    <span className="bg-secondary px-2 py-1 rounded">ホーム画面に追加</span>
-                    <span>→</span>
-                    <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold">完了</span>
-                  </div>
+            <AccordionContent className="text-sm space-y-4 pt-2">
+              {/* ステップバイステップ */}
+              <div className="space-y-3">
+                <p className="font-semibold">手順（Safari のみ対応）：</p>
+                <div className="space-y-2">
+                  {[
+                    {
+                      step: "1",
+                      icon: "📲",
+                      title: "このページを Safari で開く",
+                      desc: "ChatMarket（live-chat-market.com）を Safari ブラウザで開いてください。Chrome や LINE のブラウザでは操作できません。",
+                    },
+                    {
+                      step: "2",
+                      icon: "⬆️",
+                      title: "画面下部の「共有」ボタンをタップ",
+                      desc: (
+                        <>
+                          画面の一番下にある <span className="font-bold text-primary">四角から上矢印が出たアイコン（共有ボタン）</span> をタップします。<br />
+                          ※ iPhone の場合は画面下部中央、iPad は画面上部右側にあります。
+                        </>
+                      ),
+                    },
+                    {
+                      step: "3",
+                      icon: "➕",
+                      title: "「ホーム画面に追加」を選択",
+                      desc: (
+                        <>
+                          共有メニューが開いたら、下にスクロールして <span className="font-bold text-primary">「ホーム画面に追加」</span>（＋マークのアイコン）をタップします。
+                        </>
+                      ),
+                    },
+                    {
+                      step: "4",
+                      icon: "✏️",
+                      title: "名前を確認して「追加」をタップ",
+                      desc: "アプリ名が「Chat Market」になっていることを確認し、右上の「追加」をタップします。",
+                    },
+                    {
+                      step: "5",
+                      icon: "🎉",
+                      title: "ホーム画面に追加完了！",
+                      desc: "ホーム画面に Chat Market のアイコンが表示されます。次回からはアイコンをタップするだけでアプリのように起動できます。",
+                    },
+                  ].map(({ step, icon, title, desc }) => (
+                    <div key={step} className="flex gap-3 bg-secondary/40 rounded-xl p-3">
+                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-xs shrink-0 mt-0.5">
+                        {step}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm flex items-center gap-1.5">
+                          <span>{icon}</span> {title}
+                        </p>
+                        <p className="text-xs text-foreground/65 mt-1 leading-relaxed">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              {/* フロー図 */}
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
+                <p className="text-xs font-semibold text-primary mb-2">💡 操作の流れ</p>
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-foreground/70">
+                  <span className="bg-secondary px-2 py-1 rounded">Safari で開く</span>
+                  <span>→</span>
+                  <span className="bg-secondary px-2 py-1 rounded">⬆️ 共有ボタン</span>
+                  <span>→</span>
+                  <span className="bg-secondary px-2 py-1 rounded">➕ ホーム画面に追加</span>
+                  <span>→</span>
+                  <span className="bg-secondary px-2 py-1 rounded">「追加」をタップ</span>
+                  <span>→</span>
+                  <span className="bg-primary text-primary-foreground px-2 py-1 rounded font-bold">完了！</span>
+                </div>
+              </div>
+
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-xs text-yellow-200/80">
+                ⚠️ <span className="font-bold">ご注意：</span> この操作は <span className="font-bold">Safari ブラウザ専用</span> です。Chrome・Firefox・LINE のブラウザからは「ホーム画面に追加」の項目が表示されない場合があります。
               </div>
             </AccordionContent>
           </AccordionItem>
