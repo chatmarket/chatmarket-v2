@@ -6,7 +6,6 @@ module.exports = {
   safelist: [
     { pattern: /^(bg|text|border)-(pink|red)-(400|500)/ },
     { pattern: /^(bg|text|border)-(pink|red)-\d+\/(10|20|30)/ },
-    { pattern: /^landscape:/ },
   ],
   screens: {
     landscape: { raw: "(orientation: landscape)" },

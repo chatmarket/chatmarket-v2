@@ -241,6 +241,30 @@ export default function ObsGuide() {
         <span className="text-xs font-black bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full">OBS配信ガイド</span>
         <h1 className="text-3xl md:text-4xl font-black text-white">Chat Market で配信プロになろう</h1>
         <p className="text-muted-foreground max-w-xl mx-auto">初心者から法人レベルまで、4ステップで機材・設定をすべて解説。あなたのレベルに合ったセクションを選んでください。</p>
+      </div>
+
+      {/* ── 1対多数配信推奨バナー ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-400/50 p-6 shadow-lg shadow-emerald-500/20">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20" style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.3) 0%, transparent 70%)" }} />
+        </div>
+        <div className="relative z-10 flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-white/20 border border-white/30 flex items-center justify-center shrink-0 text-xl">
+            📡
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-black text-white mb-1.5">✅ 1対多数の生配信には OBS / PRISM を推奨</h3>
+            <p className="text-white/90 text-sm leading-relaxed">
+              複数の視聴者に配信する場合は、安定した接続ができる <strong>無料の OBS システム</strong>（PC版・スマホ版）のご利用をお願いします。高品質・低遅延・安定配信で、ファンとの最高の配信体験を実現します。
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">💻 OBS for PC</span>
+              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">📱 PRISM for スマホ</span>
+              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">🆓 完全無料</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
         {/* OBS Download CTA */}
         <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-card border border-primary/30 rounded-2xl px-6 py-4">
@@ -256,6 +280,29 @@ export default function ObsGuide() {
           >
             <Download className="w-4 h-4" /> OBS公式サイトへ
           </a>
+        </div>
+
+        {/* ── 1対多数配信推奨バナー ── */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-400/50 p-6 shadow-lg shadow-emerald-500/20">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20" style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.3) 0%, transparent 70%)" }} />
+          </div>
+          <div className="relative z-10 flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/20 border border-white/30 flex items-center justify-center shrink-0 text-xl">
+              📡
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-black text-white mb-1.5">✅ 1対多数の生配信には OBS / PRISM を推奨</h3>
+              <p className="text-white/90 text-sm leading-relaxed">
+                複数の視聴者に配信する場合は、安定した接続ができる <strong>無料の OBS システム</strong>（PC版・スマホ版）のご利用をお願いします。高品質・低遅延・安定配信で、ファンとの最高の配信体験を実現します。
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">💻 OBS for PC</span>
+                <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">📱 PRISM for スマホ</span>
+                <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">🆓 完全無料</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
