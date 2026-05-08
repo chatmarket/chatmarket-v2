@@ -207,6 +207,107 @@ function FortuneCard({ profile, index }) {
   );
 }
 
+// ── お問い合わせフォーム ──
+function ContactForm() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !message) return;
+    setSending(true);
+    try {
+      const { base44 } = await import("@/api/base44Client");
+      await base44.integrations.Core.SendEmail({
+        to: "unei@chatmarket.info",
+        from_name: name || "匿名",
+        subject: `【ご意見・ご要望】${name || "匿名"} より`,
+        body: `送信者名: ${name || "匿名"}\nメール: ${email}\n\n${message}`,
+      });
+      setSent(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-80"
+        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
+      >
+        📩 ご意見・ご要望を送る
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: "#1a1030", border: `1px solid ${MYSTIC.border}` }}>
+            {sent ? (
+              <div className="text-center py-6 space-y-3">
+                <p className="text-3xl">✨</p>
+                <p className="font-black text-white text-lg">送信完了しました！</p>
+                <p className="text-sm text-white/60">ご意見ありがとうございます。</p>
+                <button onClick={() => { setOpen(false); setSent(false); setName(""); setEmail(""); setMessage(""); }}
+                  className="mt-2 px-6 py-2 rounded-xl text-sm font-bold text-white/70 border border-white/20 hover:border-white/40 transition-all">
+                  閉じる
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-black text-white text-base">💬 ご意見・ご要望</p>
+                  <button type="button" onClick={() => setOpen(false)} className="text-white/40 hover:text-white text-xl leading-none">✕</button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="お名前（任意）"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white bg-white/5 border border-white/10 focus:outline-none focus:border-white/30 placeholder:text-white/30"
+                />
+                <input
+                  type="email"
+                  placeholder="メールアドレス *"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white bg-white/5 border border-white/10 focus:outline-none focus:border-white/30 placeholder:text-white/30"
+                />
+                <textarea
+                  placeholder="ご意見・ご要望をお書きください *"
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  required
+                  rows={5}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white bg-white/5 border border-white/10 focus:outline-none focus:border-white/30 placeholder:text-white/30 resize-none"
+                />
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white/60 border border-white/10 hover:border-white/30 transition-all">
+                    キャンセル
+                  </button>
+                  <button type="submit" disabled={sending || !email || !message}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-black transition-all disabled:opacity-40"
+                    style={{ background: "linear-gradient(135deg, #D4AF37, #A0760F)", color: "#0D0A1A" }}>
+                    {sending ? "送信中..." : "送信する"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ── メインLP ──
 export default function FortuneLP() {
   const navigate = useNavigate();
@@ -524,13 +625,7 @@ export default function FortuneLP() {
             鑑定師・ユーザーの皆さまの声を大切にしながら改善を続けています。<br />
             ぜひ、率直なご意見をお聞かせください。
           </p>
-          <a
-            href="mailto:unei@chatmarket.info?subject=ご意見・ご要望"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:opacity-80"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
-          >
-            📩 ご意見・ご要望を送る
-          </a>
+          <ContactForm />
         </div>
       </section>
 
