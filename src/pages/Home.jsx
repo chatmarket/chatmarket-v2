@@ -275,6 +275,34 @@ export default function Home() {
       {/* ジャイアント・キリング速報バナー（グローバル固定） */}
       <GiantKillingBanner />
 
+      {/* サブスク無料キャンペーンバナー */}
+      <Link to="/recruit" className="block">
+        <div
+          className="relative overflow-hidden rounded-2xl px-5 py-4 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          style={{
+            background: "linear-gradient(135deg, #1a0a2e 0%, #2d1060 50%, #1a0a2e 100%)",
+            border: "2px solid #a855f7",
+            boxShadow: "0 0 30px rgba(168,85,247,0.6), 0 0 60px rgba(168,85,247,0.2)",
+          }}
+        >
+          {/* パルス装飾 */}
+          <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-purple-400 animate-ping opacity-75" />
+          <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-purple-400" />
+          <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-pink-400 animate-ping opacity-75" />
+          <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-pink-400" />
+
+          <p className="text-[11px] font-bold mb-1 tracking-widest" style={{ color: "#c084fc" }}>
+            🎁 期間限定キャンペーン
+          </p>
+          <p className="font-black text-lg sm:text-2xl leading-tight" style={{ color: "#f5e27a", textShadow: "0 0 20px rgba(245,226,122,0.6)" }}>
+            只今サブスク<span style={{ color: "#fff" }}>12ヶ月間</span>無料キャンペーン中！
+          </p>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: "#c084fc" }}>
+            Basicプラン限定 · 今すぐライバー登録して特典をゲット →
+          </p>
+        </div>
+      </Link>
+
       {/* ネオン白文字のメッセージ */}
       <div className="text-center py-3 neon-messages">
         <p className="neon-white-message text-xs sm:text-sm font-bold tracking-tight">
