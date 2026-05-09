@@ -103,6 +103,8 @@ export default function GoLive() {
 
   // ライブ配信開始ボタン処理
   const handleStartLive = () => {
+    // まだロード中なら何もしない（誤判定でplan-selectに飛ばない）
+    if (ppvLoading || campaignLoading || !user) return;
     if (canUseLiveStream) {
       setMode(MODE_LIVE);
     } else {
@@ -212,7 +214,8 @@ export default function GoLive() {
         <div className="w-full grid grid-cols-1 gap-4">
           <button
             onClick={handleStartLive}
-            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
+            disabled={ppvLoading || campaignLoading || !user}
+            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left disabled:opacity-60 disabled:cursor-wait"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
               <Radio className="w-8 h-8 text-red-400" />
@@ -222,7 +225,7 @@ export default function GoLive() {
               <p className="text-muted-foreground text-sm leading-relaxed">複数の視聴者に向けてリアルタイムで配信。スーパーチャットやギフトを受け取れます。</p>
             </div>
             <span className="mt-auto w-full py-2.5 rounded-xl bg-red-500 text-white text-sm font-black text-center group-hover:bg-red-600 transition-colors">
-              ライブ配信を開始
+              {(ppvLoading || campaignLoading) ? "確認中..." : "ライブ配信を開始"}
             </span>
           </button>
         </div>
