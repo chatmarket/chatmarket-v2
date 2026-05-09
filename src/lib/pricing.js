@@ -87,6 +87,10 @@ export const PLAN_REVENUE_SHARE = {
   crowdfunding:   0.90,
 };
 
+// ─── 有識者カテゴリ専用還元率（85%固定） ─────────────────────────
+export const EXPERT_CATEGORY_ID = "expert";
+export const EXPERT_REVENUE_SHARE = 0.85; // PPV・エールコイン共通
+
 // ─── プログレッシブ・インセンティブ階層表 ─────────────────────────
 export const PROGRESSIVE_TIERS = [
   { threshold:  1000000, rate: 0.86 },
@@ -121,7 +125,12 @@ export function getProgressiveRate(monthlyGrossRevenue) {
   return 0.85;
 }
 
-export function getApplicableRate(planId, monthlyGrossRevenue = 0) {
+export function getApplicableRate(planId, monthlyGrossRevenue = 0, categoryId = null) {
+  // 有識者カテゴリ（Expert）：常に85%固定
+  if (categoryId === EXPERT_CATEGORY_ID) {
+    return EXPERT_REVENUE_SHARE;
+  }
+  
   const progressivePlans = ['basic', 'vod', 'ppv', 'call-anser'];
   if (progressivePlans.includes(planId)) {
     return getProgressiveRate(monthlyGrossRevenue);
@@ -129,8 +138,8 @@ export function getApplicableRate(planId, monthlyGrossRevenue = 0) {
   return PLAN_REVENUE_SHARE[planId] ?? 0.70;
 }
 
-export function calcPayout({ grossRevenue, planId, monthlyGrossRevenue = 0, infraCost = 0, transferFee = 0 }) {
-  const rate     = getApplicableRate(planId, monthlyGrossRevenue);
+export function calcPayout({ grossRevenue, planId, monthlyGrossRevenue = 0, infraCost = 0, transferFee = 0, categoryId = null }) {
+  const rate     = getApplicableRate(planId, monthlyGrossRevenue, categoryId);
   const afterInfra = grossRevenue - infraCost;
   const payout   = Math.floor(afterInfra * rate) - transferFee;
   return { grossRevenue, infraCost, afterInfra, rate, payout: Math.max(0, payout), transferFee };
