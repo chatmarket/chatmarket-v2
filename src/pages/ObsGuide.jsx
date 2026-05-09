@@ -213,6 +213,22 @@ function StepSection({ step }) {
             ))}
           </div>
         </div>
+
+        {/* OBS Download CTA */}
+        <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-card border border-primary/30 rounded-2xl px-6 py-4">
+          <div className="text-left">
+            <p className="font-bold text-sm text-white">まずはOBSをダウンロード（完全無料）</p>
+            <p className="text-xs text-muted-foreground">Windows / Mac / Linux 対応</p>
+          </div>
+          <a
+            href="https://obsproject.com/ja/download"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm px-5 py-2.5 rounded-xl transition-all"
+          >
+            <Download className="w-4 h-4" /> OBS公式サイトへ
+          </a>
+        </div>
       </section>
     );
   }
@@ -332,22 +348,6 @@ export default function ObsGuide() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* OBS Download CTA */}
-      <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-card border border-primary/30 rounded-2xl px-6 py-4">
-        <div className="text-left">
-          <p className="font-bold text-sm text-white">まずはOBSをダウンロード（完全無料）</p>
-          <p className="text-xs text-muted-foreground">Windows / Mac / Linux 対応</p>
-        </div>
-        <a
-          href="https://obsproject.com/ja/download"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm px-5 py-2.5 rounded-xl transition-all"
-        >
-          <Download className="w-4 h-4" /> OBS公式サイトへ
-        </a>
       </div>
 
       {/* Stream Key Setup */}
