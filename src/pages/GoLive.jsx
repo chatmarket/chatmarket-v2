@@ -124,6 +124,16 @@ export default function GoLive() {
   const handleStart = async (e) => {
     e.preventDefault();
     if (!form.title) return;
+    // 整数バリデーション：小数点・15未満を弾く
+    const priceInt = Math.floor(Number(form.price));
+    if (priceInt > 0 && priceInt < 15) {
+      toast.error("視聴価格は最低15コイン（SD 480p）以上で設定してください");
+      return;
+    }
+    if (Number(form.price) !== priceInt) {
+      toast.error("視聴価格は整数で入力してください（小数点不可）");
+      return;
+    }
     setCreating(true);
 
     const ivsRes = await base44.functions.invoke('createLiveStream', {});
@@ -181,7 +191,7 @@ export default function GoLive() {
         status: isLiveNow ? "live" : "scheduled",
         scheduled_at: form.scheduled_at || null,
         available_time: form.availableTime || "",
-        price: parseInt(form.price) || 0,
+        price: Math.floor(Number(form.price)) || 0,
         viewer_count: 0,
         stream_type: "ivs",
         ivs_playback_url: FIXED_PLAYBACK_URL,
@@ -393,10 +403,22 @@ export default function GoLive() {
 
             {/* 価格 */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-red-400 uppercase tracking-widest">視聴価格（コイン）*</Label>
-              <Input type="number" min={0} value={form.price}
-                onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-                required className="bg-zinc-800 border border-zinc-600 focus:border-red-500 focus:ring-1 focus:ring-red-500/30 text-white h-11" />
+              <Label className="text-xs font-bold text-red-400 uppercase tracking-widest">視聴価格（コイン）* <span className="text-zinc-500 font-normal normal-case">（整数・最低15コイン）</span></Label>
+              <Input
+                type="number"
+                min={15}
+                step={1}
+                value={form.price}
+                onChange={(e) => {
+                  const raw = Math.floor(Number(e.target.value));
+                  setForm({ ...form, price: isNaN(raw) || raw < 0 ? 0 : raw });
+                }}
+                required
+                className="bg-zinc-800 border border-zinc-600 focus:border-red-500 focus:ring-1 focus:ring-red-500/30 text-white h-11"
+              />
+              {form.price > 0 && form.price < 15 && (
+                <p className="text-xs text-red-400 font-bold">⚠️ 最低15コイン以上で設定してください（SD 480p）</p>
+              )}
               {(() => {
                 const p = form.price;
                 const activeQuality = p >= 150 ? "FHD 1080p" : p >= 55 ? "HD 720p" : "SD 480p";
@@ -472,8 +494,8 @@ export default function GoLive() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-zinc-400">チケット価格（最低 ¥{minTicketPrice}）</label>
                     <div className="flex items-center gap-2">
-                      <input type="number" min={minTicketPrice} step={50} value={ticketPriceYen}
-                        onChange={(e) => setTicketPriceYen(Math.max(minTicketPrice, parseInt(e.target.value) || minTicketPrice))}
+                      <input type="number" min={minTicketPrice} step={1} value={ticketPriceYen}
+                        onChange={(e) => setTicketPriceYen(Math.max(minTicketPrice, Math.floor(Number(e.target.value)) || minTicketPrice))}
                         className="flex-1 rounded-lg bg-zinc-800 border border-zinc-600 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-yellow-500/50" />
                       <span className="text-sm text-zinc-400">円</span>
                     </div>
@@ -484,7 +506,7 @@ export default function GoLive() {
             </div>
 
             {/* 送信ボタン */}
-            <Button type="submit" disabled={creating || !form.title} className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-black text-base gap-2 shadow-lg shadow-red-500/20">
+            <Button type="submit" disabled={creating || !form.title || (Number(form.price) > 0 && Math.floor(Number(form.price)) < 15)} className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-black text-base gap-2 shadow-lg shadow-red-500/20">
               {creating ? (
                 <><Loader2 className="w-5 h-5 animate-spin" />配信枠を準備中...</>
               ) : (
