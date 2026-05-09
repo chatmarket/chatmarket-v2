@@ -178,6 +178,81 @@ export default function MusicianLP() {
         </div>
       </section>
 
+      {/* ── バンドステージシーン ── */}
+      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0a0510 0%, #1a0033 100%)" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="rounded-3xl overflow-hidden shadow-2xl mb-8"
+            style={{ boxShadow: "0 0 60px rgba(168,85,247,0.3), 0 0 120px rgba(236,72,153,0.15)" }}>
+            <img
+              src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/34a7860b4_generated_image.png"
+              alt="日本のバンドがステージで演奏している風景"
+              className="w-full h-auto object-cover aspect-video"
+            />
+          </div>
+          <div className="text-center space-y-3 mb-16">
+            <h3 className="text-2xl font-black">バンドもソロも、思いのままに</h3>
+            <p className="text-white/60 text-sm max-w-2xl mx-auto">
+              ChatMarketはあらゆる音楽スタイルに対応。バンド演奏、ソロアーティスト、DTM制作者—誰もが自分のペースで活動できます。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── ソロギタリスト ── */}
+      <section className="py-20 px-5" style={{ background: "#0a0510" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="rounded-3xl overflow-hidden shadow-2xl order-2 md:order-1"
+              style={{ boxShadow: "0 0 60px rgba(168,85,247,0.3), 0 0 120px rgba(236,72,153,0.15)" }}>
+              <img
+                src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/14564601f_generated_image.png"
+                alt="ギターを持って歌う日本人女性アーティスト"
+                className="w-full h-auto object-cover aspect-square md:aspect-auto"
+              />
+            </div>
+            <div className="space-y-6 order-1 md:order-2">
+              <div className="space-y-2">
+                <p className="text-sm font-bold tracking-widest uppercase" style={{ color: "#ec4899" }}>
+                  🎸 あなたの世界観を伝える
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-black leading-tight text-white">
+                  COVER曲ではなく、<br />
+                  <span style={{ color: "#a855f7" }}>自分の音を売る</span>
+                </h2>
+              </div>
+
+              <p className="text-base text-white/60 leading-relaxed">
+                ChatMarketなら、あなたのオリジナル楽曲・世界観・個性がそのまま商品になります。カバー曲に頼る必要はありません。
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white text-sm">オリジナル楽曲販売</p>
+                    <p className="text-xs text-white/50 mt-0.5">制作した楽曲を何度でも販売。寝ながら稼ぐ</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white text-sm">PV・メイキング映像販売</p>
+                    <p className="text-xs text-white/50 mt-0.5">制作風景・音楽PV・プロモーション動画も販売可能</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white text-sm">ライブ・限定コンテンツ</p>
+                    <p className="text-xs text-white/50 mt-0.5">課金ライブ配信で世界観をダイレクト配信</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── 収益シミュレーター ── */}
       <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0a0510 0%, #1a0033 100%)" }}>
         <div className="max-w-md mx-auto text-center space-y-8">
