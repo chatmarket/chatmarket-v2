@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCode from "qrcode.react";
 import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode, Archive, ToggleLeft, ToggleRight, Coins } from "lucide-react";
 import SocialLinks from "@/components/channel/SocialLinks";
+import { GlobalProfileEditor, LanguageBadges, LocalTimeClock, LearningStatusBadge } from "@/components/channel/GlobalProfilePanel";
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -68,7 +69,14 @@ export default function MyChannel() {
 
   useEffect(() => {
     if (channel) {
-      setChannelForm({ name: channel.name || "", description: channel.description || "" });
+      setChannelForm({
+        name: channel.name || "",
+        description: channel.description || "",
+        native_language: channel.native_language || "",
+        learning_languages: channel.learning_languages || [],
+        resident_country: channel.resident_country || "",
+        learning_status: channel.learning_status || "",
+      });
     }
   }, [channel]);
 
@@ -263,6 +271,24 @@ export default function MyChannel() {
               <>
                 <h1 className="text-xl font-bold truncate">{channel.name}</h1>
                 <p className="text-sm text-muted-foreground mt-1">{channel.description || "説明なし"}</p>
+                {/* Local Time */}
+                {channel.resident_country && (
+                  <div className="mt-2">
+                    <LocalTimeClock countryCode={channel.resident_country} />
+                  </div>
+                )}
+                {/* 言語バッジ */}
+                {(channel.native_language || (channel.learning_languages || []).length > 0) && (
+                  <div className="mt-2">
+                    <LanguageBadges nativeLang={channel.native_language} learningLangs={channel.learning_languages} />
+                  </div>
+                )}
+                {/* 学習ステータス */}
+                {channel.learning_status && (
+                  <div className="mt-2">
+                    <LearningStatusBadge text={channel.learning_status} />
+                  </div>
+                )}
                 <Button onClick={() => setEditing(true)} size="sm" variant="ghost" className="mt-2 gap-2 text-xs">
                   <Edit className="w-3 h-3" /> 編集
                 </Button>
@@ -287,6 +313,13 @@ export default function MyChannel() {
             </Button>
           </div>
         </div>
+
+        {/* グローバルプロフィール編集（editing時のみ） */}
+        {editing && (
+          <div className="mt-5">
+            <GlobalProfileEditor form={channelForm} onChange={setChannelForm} />
+          </div>
+        )}
 
         {/* SNSリンク表示 */}
         {channel.social_links && Object.values(channel.social_links).some(v => v?.trim()) && (
