@@ -99,8 +99,8 @@ const PLANS = [
     description: "1対多数の有料ライブ配信でファンから直接収益化。BASICプランとの組み合わせでご利用いただけます。",
     features: [
       "1対多数の有料ライブ配信（視聴者数無制限）",
-      "【施策①】最低配信料金：SD 480p 150円〜 / HD 720p 300円〜 / FHD 1080p 1,500円〜（15分あたり）",
-      "【施策②】画質制限：150円設定は720p / 300円以上設定は1080p許可",
+      "【施策①】最低配信料金：SD 480p 15円〜 / HD 720p 55円〜 / FHD 1080p 150円〜（15分あたり）",
+      "【施策②】画質制限：55コイン設定は720p / 150コイン以上設定は1080p許可",
       "【施策③】プログレッシブ・インセンティブ：月間売上に応じて還元率が最大95%まで自動アップ",
       "視聴者からエールコイン（投げ銭）受取",
       "ライブ配信アーカイブをVOD販売可（BASICプラン+VODプラン加入で可）",
@@ -110,9 +110,9 @@ const PLANS = [
       "コスト内訳：場所代30円/時間（入力）＋ 送料5円/視聴者/時間（出力）",
     ],
     priceDetail: [
-      { quality: "SD 480p", minPrice: "¥150〜", icon: "📺" },
-      { quality: "HD 720p", minPrice: "¥300〜", icon: "🖥️" },
-      { quality: "FHD 1080p", minPrice: "¥1,500〜", icon: "✨" },
+      { quality: "SD 480p", minPrice: "15コイン〜", icon: "📺" },
+      { quality: "HD 720p", minPrice: "55コイン〜", icon: "🖥️" },
+      { quality: "FHD 1080p", minPrice: "150コイン〜", icon: "✨" },
     ],
   },
   {
@@ -591,7 +591,7 @@ export default function PlanSelect() {
                       </div>
                       <div className="bg-secondary/50 px-4 py-3 text-xs text-muted-foreground space-y-1">
                         <p>📌 収益還元率 <span className="text-primary font-bold">85%</span>（月間売上に応じて最大95%まで自動アップ）</p>
-                        <p>📌 150円設定 → 最大720p / 300円以上 → 最大1080p配信許可</p>
+                        <p>📌 55コイン設定 → 最大720p / 150コイン以上 → 最大1080p配信許可</p>
                         <p>📌 コスト：場所代30円/時間 ＋ 送料5円/視聴者/時間</p>
                       </div>
                     </div>
