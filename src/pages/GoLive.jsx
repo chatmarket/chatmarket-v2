@@ -107,7 +107,18 @@ export default function GoLive() {
       base44.auth.redirectToLogin();
       return;
     }
-    setMode(MODE_LIVE);
+    // まだロード中なら何もしない
+    if (ppvLoading || campaignLoading) return;
+    // 管理者は無条件で進める
+    if (user.role === "admin") {
+      setMode(MODE_LIVE);
+      return;
+    }
+    if (canUseLiveStream) {
+      setMode(MODE_LIVE);
+    } else {
+      navigate("/plan-select");
+    }
   };
 
   const handleStart = async (e) => {
