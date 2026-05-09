@@ -139,25 +139,20 @@ export default function ExpertLP() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 text-white overflow-x-hidden font-inter">
-      {/* ── ヘッダー ── */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-20 transition-all"
-        style={{
-          background: scrolled ? "rgba(15,23,42,0.95)" : "transparent",
-          backdropFilter: scrolled ? "blur(10px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(147,197,253,0.2)" : "none",
-        }}
+      {/* ── ExpertLP独自のCTAボタン（AppLayoutヘッダーの下に表示） ── */}
+      <div
+        className="fixed left-0 right-0 z-40 flex justify-end px-6 py-2 pointer-events-none"
+        style={{ top: "calc(env(safe-area-inset-top) + 56px)" }}
       >
-        <div />
-        <Link to="/recruit">
+        <Link to="/recruit" className="pointer-events-auto">
           <Button
             size="sm"
-            className="bg-amber-500 hover:bg-amber-600 text-black font-black"
+            className="bg-amber-500 hover:bg-amber-600 text-black font-black shadow-lg"
           >
             今すぐ登録 →
           </Button>
         </Link>
-      </header>
+      </div>
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex items-center justify-center px-6 pt-32 pb-16">
