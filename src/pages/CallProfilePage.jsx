@@ -13,6 +13,7 @@ import CallScheduleCalendar from "@/components/call/CallScheduleCalendar";
 import CallScheduleEditor from "@/components/call/CallScheduleEditor";
 import AppointmentRequestModal from "@/components/appointment/AppointmentRequestModal";
 import AppointmentDashboard from "@/components/appointment/AppointmentDashboard";
+import { LanguageBadges, LocalTimeClock, LearningStatusBadge } from "@/components/channel/GlobalProfilePanel";
 
 export default function CallProfilePage() {
   const { channelId } = useParams();
@@ -268,10 +269,21 @@ export default function CallProfilePage() {
             )}
           </div>
 
-          <div className="pb-1 flex-1">
+          <div className="pb-1 flex-1 space-y-2">
             <h1 className="text-2xl font-black text-foreground leading-tight">{channel.name}</h1>
+
+            {/* 言語バッジ */}
+            {(channel.native_language || (channel.learning_languages || []).length > 0) && (
+              <LanguageBadges nativeLang={channel.native_language} learningLangs={channel.learning_languages} />
+            )}
+
+            {/* ローカル時計 */}
+            {channel.resident_country && (
+              <LocalTimeClock countryCode={channel.resident_country} />
+            )}
+
             {channel.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
+              <div className="flex flex-wrap gap-1">
                 {channel.tags.slice(0, 4).map(tag => (
                   <span key={tag} className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-semibold">{tag}</span>
                 ))}
@@ -279,6 +291,13 @@ export default function CallProfilePage() {
             )}
           </div>
         </div>
+
+        {/* 学習ステータス */}
+        {channel.learning_status && !isEditing && (
+          <div className="mb-4">
+            <LearningStatusBadge text={channel.learning_status} />
+          </div>
+        )}
 
         {/* ══════════════════════════════════
             3. 待機メッセージ（キャッチコピー）

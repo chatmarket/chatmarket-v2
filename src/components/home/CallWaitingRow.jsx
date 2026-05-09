@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneCall, MessageCircle, User } from "lucide-react";
 import ScrollRow from "./ScrollRow";
 import { toast } from "sonner";
+import { getLang, getCountry, LearningStatusBadge } from "@/components/channel/GlobalProfilePanel";
 
 // ゴーストサンプル — AWSに一切通信しないダミーカード（実際の通話不可）
 const GHOST_CHANNELS = [
@@ -159,16 +160,38 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1.5">
+        {/* 言語バッジ行 */}
+        {(channel.native_language || (channel.learning_languages || []).length > 0) && (
+          <div className="flex flex-wrap gap-1">
+            {channel.native_language && (() => {
+              const lang = getLang(channel.native_language);
+              return lang ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 border border-primary/30 text-primary font-semibold leading-none">
+                  {lang.flag} {lang.name}
+                </span>
+              ) : null;
+            })()}
+            {(channel.learning_languages || []).slice(0, 2).map(code => {
+              const lang = getLang(code);
+              return lang ? (
+                <span key={code} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-semibold leading-none">
+                  {lang.flag} {lang.name}
+                </span>
+              ) : null;
+            })}
+          </div>
+        )}
+
         {/* 待機タイトル（call_theme） */}
         <p className="text-xs font-black text-foreground line-clamp-2 leading-tight">
           {channel?.call_theme || "通話受付中"}
         </p>
-        {/* 説明文（call_available_dates） */}
-        {channel?.call_available_dates && (
-          <p className="text-[10px] text-muted-foreground line-clamp-2 leading-tight">
-            {channel.call_available_dates}
-          </p>
+
+        {/* 学習ステータス */}
+        {channel.learning_status && (
+          <LearningStatusBadge text={channel.learning_status} compact />
         )}
+
         {!isGhost ? (
           <Link to={`/channel/${cardChannelId}`}>
             <p className="text-[10px] text-muted-foreground truncate hover:text-primary transition-colors">{cardChannelName}</p>
@@ -176,21 +199,51 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
         ) : (
           <p className="text-[10px] text-muted-foreground truncate">{cardChannelName}</p>
         )}
+
         {isGhost ? (
           <Button size="sm" disabled className="w-full h-7 text-[11px] opacity-50 gap-1">
             近日公開予定
           </Button>
         ) : !isOwnChannel ? (
           <div className="space-y-1.5">
-            <Button
-              size="sm"
-              className="w-full h-7 text-[11px] bg-primary hover:bg-primary/90 gap-1"
-              onClick={() => navigate(`/call-profile/${cardChannelId}`)}
+            {/* 即時通話ボタンを最前面に */}
+            <button
+              onClick={async () => {
+                if (!user) { base44.auth.redirectToLogin(); return; }
+                if (calling) return;
+                setCalling(true);
+                try {
+                  const newCall = await base44.entities.VideoCall.create({
+                    caller_email: user.email,
+                    caller_name: user.full_name || user.email,
+                    callee_email: channel.owner_email,
+                    callee_name: channel.name,
+                    callee_channel_id: cardChannelId,
+                    status: "pending",
+                    is_paid: false,
+                    price: 0,
+                    coin_price_per_15min: 150,
+                    duration_minutes: 30,
+                    message: "今すぐ通話リクエスト（待機中）",
+                  });
+                  navigate(`/video-call/${newCall.id}`);
+                } catch {
+                  toast.error("通話リクエストの作成に失敗しました");
+                  setCalling(false);
+                }
+              }}
+              className="w-full h-8 rounded-lg text-[11px] font-black flex items-center justify-center gap-1 transition-all active:scale-95"
+              style={{
+                background: calling ? "rgba(0,255,157,0.2)" : "linear-gradient(135deg,#00ff9d,#00c97a)",
+                color: "#000",
+                boxShadow: "0 0 10px rgba(0,255,157,0.4)",
+              }}
             >
-              <User className="w-3 h-3" /> プロフィールを見る
-            </Button>
-            <Button size="sm" variant="outline" className="w-full h-7 text-[11px] gap-1" onClick={onChat}>
-              <MessageCircle className="w-3 h-3" /> チャットで声をかける
+              <PhoneCall className="w-3 h-3" />
+              {calling ? "接続中…" : "今すぐ通話"}
+            </button>
+            <Button size="sm" variant="outline" className="w-full h-7 text-[11px] gap-1 border-border/40" onClick={() => navigate(`/call-profile/${cardChannelId}`)}>
+              <User className="w-3 h-3" /> 詳細を見る
             </Button>
           </div>
         ) : (
