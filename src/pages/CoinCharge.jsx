@@ -28,7 +28,7 @@ const QA = [
   { q: "返金・払い戻しはできますか？", a: "デジタルコンテンツの性質上、チャージ済みのエールコインの返金はできません。特定商取引法の規定に基づき、ご購入前にご確認ください。" },
   { q: "Visaギフトカードの残高が足りない場合は？", a: "Stripeではカード分割払い（複数カード）には対応していません。残高が充分なギフトカードをご使用いただくか、残高を確認してからチャージ金額を選んでください。" },
   { q: "チャージが反映されません", a: "通常は即時反映されます。5分以上経過しても反映されない場合は、設定ページを再読み込みするか、サポートまでお問い合わせください。" },
-  { q: "コインはどんなことに使えますか？", a: "ライブ配信へのスーパーチャット（投げ銭）、1対1ビデオ通話の料金支払い、クリエイターへのギフト送信などにご利用いただけます。" },
+  { q: "コインはどんなことに使えますか？", a: "ライブ配信へのエールコイン送信・1対1ビデオ通話・PPV視聴・有料動画視聴・アーカイブ視聴などにご利用いただけます。" },
 ];
 
 function QAItem({ item }) {
@@ -65,7 +65,7 @@ export default function CoinCharge() {
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-white">コインをチャージして<br />クリエイターを応援しよう</h1>
         <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-          エールコインはライブ配信への投げ銭・1対1ビデオ通話・ギフト送信に使えます。<br />
+          エールコインはライブ配信へのエールコイン・1対1ビデオ通話・PPV視聴、有料動画視聴、アーカイブ視聴に使えます。<br />
           クレジットカードがなくても<span className="text-yellow-400 font-bold">Visaギフトカード</span>でチャージできます。
         </p>
       </div>
@@ -187,6 +187,17 @@ export default function CoinCharge() {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center">※商品リンクはAmazonアソシエイト（chatmarket-22）を使用しています</p>
+      </section>
+
+      {/* 有効期限注意書き */}
+      <section className="bg-red-500/10 border border-red-500/40 rounded-2xl px-6 py-5 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-black text-red-300">⚠️ エールコインのご利用期限について</p>
+          <p className="text-sm text-red-200/80 leading-relaxed">
+            チャージされたエールコインは<span className="font-bold text-red-200">180日以内</span>にサイト内でのみご利用いただけます。180日を過ぎた余剰コインにつきましては<span className="font-bold text-red-200">ゼロになります</span>ので、予めご了承ください。
+          </p>
+        </div>
       </section>
 
       {/* Q&A */}
