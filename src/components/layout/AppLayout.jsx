@@ -146,6 +146,23 @@ export default function AppLayout() {
               <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者メニュー</p>
             </div>
             {CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
+              // ファンクラブメニューは動的に分岐
+              if (path === "/fanclub" && myChannel) {
+                return (
+                  <Link key={path} to="/fanclub-manage" onClick={onCloseFn}>
+                    <div className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      isActive("/fanclub-manage")
+                        ? "bg-amber-500/20 text-amber-400"
+                        : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-400"
+                    )}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="flex-1">ファンクラブ管理</span>
+                    </div>
+                  </Link>
+                );
+              }
+
               const isWaiting = highlight && myChannel?.call_enabled && !isActive(path);
               return (
                 <Link key={path} to={path} onClick={onCloseFn}>

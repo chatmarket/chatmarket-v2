@@ -27,6 +27,7 @@ import AdminAnalytics from '@/pages/AdminAnalytics';
 import VideoModeration from '@/pages/VideoModeration';
 import DirectChat from '@/pages/DirectChat';
 import FanClub from '@/pages/FanClub';
+import FanClubManage from '@/pages/FanClubManage';
 import Community from '@/pages/Community';
 import Blog from '@/pages/Blog';
 import BlogDetail from '@/pages/BlogDetail';
@@ -120,6 +121,7 @@ export default function App() {
             <Route path="/chat/:channelId" element={<DirectChat />} />
             <Route path="/fanclub/:channelId" element={<FanClub />} />
             <Route path="/fanclub" element={<FanClub />} />
+            <Route path="/fanclub-manage" element={<FanClubManage />} />
             <Route path="/community" element={<Community />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:postId" element={<BlogDetail />} />
