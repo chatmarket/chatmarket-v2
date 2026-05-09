@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Crown, Zap, TrendingUp, Users, Mic2, DollarSign, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { Crown, Zap, TrendingUp, Users, Mic2, DollarSign, CheckCircle2, ArrowRight, Sparkles, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const STATS = [
   { value: "85%", label: "還元率", sub: "PPV・エール共通" },
@@ -62,6 +64,9 @@ const FEATURES = [
 export default function ExpertLP() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [eventInfo, setEventInfo] = useState(null);
+  const [user, setUser] = useState(null);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     document.title = "有識者・著名人向け講演会プラットフォーム | Chat Market";
@@ -69,6 +74,68 @@ export default function ExpertLP() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // イベント情報とユーザー取得
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // デモ用：ExpertLP 専用イベントを取得
+        const events = await base44.entities.TicketEvent.filter({
+          channel_id: "expert_lp"
+        });
+        if (events.length > 0) {
+          setEventInfo(events[0]);
+        }
+
+        // ユーザー認証確認
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          const me = await base44.auth.me();
+          setUser(me);
+        }
+      } catch (err) {
+        console.error("Failed to load event info:", err);
+      }
+    };
+    init();
+  }, []);
+
+  // チケット購入処理
+  const handleTicketPurchase = async () => {
+    if (!user) {
+      base44.auth.redirectToLogin("/lp/expert");
+      return;
+    }
+
+    if (!eventInfo) {
+      toast.error("イベント情報が見つかりません");
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      const response = await base44.functions.invoke("createLiveTicketCheckout", {
+        event_id: eventInfo.id,
+        event_name: eventInfo.event_name,
+        ticket_price: eventInfo.price || 3000,
+        ticket_type: "expert_lecture",
+        buyer_email: user.email,
+        buyer_name: user.full_name || user.email,
+        redirect_url: window.location.href,
+      });
+
+      if (response.data?.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      } else {
+        toast.error("チェックアウトページの取得に失敗しました");
+      }
+    } catch (err) {
+      console.error("Ticket purchase error:", err);
+      toast.error("購入処理に失敗しました");
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 text-white overflow-x-hidden font-inter">
@@ -291,6 +358,95 @@ export default function ExpertLP() {
           </p>
         </div>
       </section>
+
+      {/* ── DEMO LECTURE EVENT ── */}
+      {eventInfo && (
+        <section className="py-20 px-6">
+          <div className="max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="rounded-2xl border-2 border-amber-500/60 p-8 space-y-6"
+              style={{
+                background: "linear-gradient(135deg, rgba(251,191,36,0.15), rgba(59,130,246,0.1))",
+              }}
+            >
+              <div className="text-center space-y-2">
+                <p className="text-sm font-bold text-amber-400">🎤 DEMO EVENT</p>
+                <h3 className="text-2xl font-black text-white">
+                  {eventInfo.event_name || "知の帝国構築セミナー"}
+                </h3>
+                <p className="text-blue-100">
+                  有識者プラットフォーム完成記念・特別講演
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                  <Calendar className="w-5 h-5 text-amber-400 shrink-0" />
+                  <div>
+                    <p className="text-xs text-blue-200">開始予定日</p>
+                    <p className="text-lg font-bold text-white">
+                      {eventInfo.event_date
+                        ? new Date(eventInfo.event_date).toLocaleString("ja-JP", {
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "2026年5月15日 20:00"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                  <DollarSign className="w-5 h-5 text-amber-400 shrink-0" />
+                  <div>
+                    <p className="text-xs text-blue-200">チケット価格</p>
+                    <p className="text-lg font-bold text-white">
+                      ¥{eventInfo.price || 3000}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 space-y-2">
+                <p className="text-sm text-blue-100">
+                  <strong>📬 購入後の特典</strong><br />
+                  • イベント開始15分前に通知を受け取れます<br />
+                  • 購入者限定：有識者向けコミュニティへのアクセス<br />
+                  • アーカイブ動画視聴権（30日間有効）
+                </p>
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleTicketPurchase}
+                disabled={purchasing}
+                className="w-full py-4 rounded-xl font-black text-lg text-black transition-all hover:scale-105 disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(135deg, #3b82f6, #fbbf24)",
+                  boxShadow: "0 0 30px rgba(251,191,36,0.4)",
+                }}
+              >
+                {purchasing ? (
+                  "処理中..."
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    チケットを購入する
+                  </span>
+                )}
+              </motion.button>
+
+              <p className="text-xs text-blue-300 text-center">
+                セキュア決済（Stripe） • 購入確認メール即座送信
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* ── FINAL CTA ── */}
       <section className="py-24 px-6 text-center">
