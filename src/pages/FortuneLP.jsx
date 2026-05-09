@@ -517,6 +517,82 @@ export default function FortuneLP() {
         </div>
       </section>
 
+      {/* ── オンライン占いシーン ── */}
+      <section className="relative px-5 py-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* 画像（レスポンシブ） */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="rounded-3xl overflow-hidden shadow-2xl order-2 md:order-1"
+              style={{
+                boxShadow: `0 0 60px rgba(212,175,55,0.25), 0 0 120px rgba(107,33,168,0.15)`,
+              }}
+            >
+              <img
+                src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/27cf5990b_generated_image.png"
+                alt="女性占い師がオンラインで鑑定中"
+                className="w-full h-auto object-cover aspect-[4/3] md:aspect-auto"
+              />
+            </motion.div>
+
+            {/* テキストセクション */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="space-y-6 order-1 md:order-2"
+            >
+              <div className="space-y-2">
+                <p className="text-sm font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>
+                  ✨ あなたのスタイルで稼ぐ
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-black leading-tight text-white">
+                  自宅でも、カフェでも。<br />
+                  <span style={{ color: MYSTIC.gold }}>どこからでも鑑定できる</span>
+                </h2>
+              </div>
+
+              <p className="text-base text-white/60 leading-relaxed">
+                ChatMarketはビデオ通話中心の鑑定プラットフォーム。スマートフォン1台あれば、いつでもどこからでも鑑定活動をスタートできます。移動時間ゼロ、装置費用ゼロ。あなたの時間を、最大限に活用してください。
+              </p>
+
+              <ul className="space-y-3">
+                {[
+                  "スマホ1台でいますぐ始める",
+                  "移動時間ゼロで効率最大化",
+                  "24時間・365日、好きな時間に配信",
+                  "ファンは世界135カ国以上から訪問",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-black"
+                      style={{ background: MYSTIC.gold }}>✓</span>
+                    <span className="text-sm text-white/75">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => document.querySelector("header")?.scrollIntoView({ behavior: "smooth" })}
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-base transition-all hover:scale-105"
+                style={{
+                  background: "linear-gradient(135deg, #D4AF37, #A0760F)",
+                  color: "#0D0A1A",
+                  boxShadow: "0 0 30px rgba(212,175,55,0.4)",
+                }}
+              >
+                今すぐ始める →
+              </motion.button>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* ── 占い師が選ぶ理由 ── */}
       <section className="relative px-5 py-20">
         <div className="max-w-4xl mx-auto space-y-12">
