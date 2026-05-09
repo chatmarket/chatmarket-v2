@@ -101,12 +101,21 @@ export default function TutorLP() {
       />
 
       {/* HERO */}
-      <section className="py-24 px-5 text-center bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="text-5xl sm:text-6xl font-black text-blue-900 leading-tight tracking-tight">
+      <section className="py-12 sm:py-20 px-5 text-center bg-gradient-to-b from-blue-50 to-white">
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Hero Image */}
+          <div className="w-full rounded-2xl overflow-hidden shadow-lg mb-8">
+            <img 
+              src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/9a5027293_Gemini_Generated_Image_f2joh1f2jo.png" 
+              alt="オンライン授業中の講師"
+              className="w-full h-auto object-cover"
+            />
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-blue-900 leading-tight tracking-tight">
             THE HOME TEACHER
           </h1>
-          <p className="text-xl text-slate-600 leading-relaxed">
+          <p className="text-lg sm:text-xl text-slate-600 leading-relaxed">
             家庭教師プロジェクト：教育者の価値を最大化する次世代プラットフォーム
           </p>
           <div className="pt-8">
@@ -183,30 +192,32 @@ export default function TutorLP() {
       </section>
 
       {/* プロ講師のための「聖域」 */}
-      <section className="py-20 px-5">
-        <div className="max-w-3xl mx-auto">
-          <div className="inline-block w-1 h-8 bg-yellow-500 rounded-full mb-4" />
-          <h2 className="text-3xl font-black text-blue-900 mb-10">プロ講師のための「聖域」</h2>
+      <section className="py-16 sm:py-20 px-5">
+       <div className="max-w-5xl mx-auto">
+         <div className="inline-block w-1 h-8 bg-yellow-500 rounded-full mb-4" />
+         <h2 className="text-3xl font-black text-blue-900 mb-10">プロ講師のための「聖域」</h2>
 
-          <div className="flex flex-col md:flex-row gap-10 items-center">
-            <div className="flex-1">
-              <p className="text-slate-700 leading-relaxed mb-4">
-                <strong>エリート講師のブランド化</strong>
-              </p>
-              <p className="text-slate-600 leading-relaxed mb-6">
-                Chat Marketは、単なるマッチングサイトではありません。あなたの専門性と実績を輝かせるための「専用チャンネル」を提供します。
-              </p>
-              <p className="text-slate-600 leading-relaxed">
-                PRISM Live Studioとの連携により、数式や図解も鮮明に伝えることが可能。対面授業を超える「体験」を生徒に届けましょう。
-              </p>
-            </div>
-            <div className="flex-1 hidden md:block">
-              <div className="w-64 h-64 rounded-full bg-gradient-to-br from-blue-100 to-slate-100 flex items-center justify-center">
-                <BookOpen className="w-32 h-32 text-blue-900 opacity-30" />
-              </div>
-            </div>
-          </div>
-        </div>
+         <div className="flex flex-col md:flex-row gap-8 items-center">
+           <div className="flex-1 order-2 md:order-1">
+             <p className="text-slate-700 leading-relaxed mb-4">
+               <strong>エリート講師のブランド化</strong>
+             </p>
+             <p className="text-slate-600 leading-relaxed mb-6">
+               Chat Marketは、単なるマッチングサイトではありません。あなたの専門性と実績を輝かせるための「専用チャンネル」を提供します。
+             </p>
+             <p className="text-slate-600 leading-relaxed">
+               PRISM Live Studioとの連携により、数式や図解も鮮明に伝えることが可能。対面授業を超える「体験」を生徒に届けましょう。
+             </p>
+           </div>
+           <div className="flex-1 order-1 md:order-2">
+             <img 
+               src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/9a5027293_Gemini_Generated_Image_f2joh1f2jo.png"
+               alt="講師のプロフィールセットアップ"
+               className="w-full rounded-2xl shadow-lg"
+             />
+           </div>
+         </div>
+       </div>
       </section>
 
       {/* 収益構造の革命 */}
