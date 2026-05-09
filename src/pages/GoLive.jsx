@@ -90,9 +90,18 @@ export default function GoLive() {
   const canUseLiveStream = isTestAccount || !!ppvSubscription || !!campaignGrantee;
 
   useEffect(() => {
-    if (!modeInitialized && user && !ppvLoading && !campaignLoading) {
-      if (canUseLiveStream) setMode(MODE_LIVE);
-      setModeInitialized(true);
+    if (!modeInitialized && user) {
+      // adminは即座にLIVEモードへ（PPVチェック待ち不要）
+      if (user.role === "admin") {
+        setMode(MODE_LIVE);
+        setModeInitialized(true);
+        return;
+      }
+      // 一般ユーザーはPPV/キャンペーンのロード完了を待つ
+      if (!ppvLoading && !campaignLoading) {
+        if (canUseLiveStream) setMode(MODE_LIVE);
+        setModeInitialized(true);
+      }
     }
   }, [user, ppvLoading, campaignLoading, canUseLiveStream, modeInitialized]);
 
