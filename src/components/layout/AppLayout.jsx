@@ -35,6 +35,7 @@ const LP_NAV_ITEMS = [
   { key: "lp-tutor", path: "/lp/tutor", icon: BookOpen, label: "家庭教師LP" },
   { key: "lp-expert", path: "/lp/expert", icon: Star, label: "有識者LP" },
   { key: "lp-fitness", path: "/lp/fitness", icon: Zap, label: "フィットネスLP" },
+  { key: "lp-career", path: "/lp/career", icon: Zap, label: "キャリアLP" },
 ];
 
 const NAV_ITEMS = [

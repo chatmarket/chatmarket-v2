@@ -88,6 +88,20 @@ export const LP_TEMPLATES = [
   },
   // ── 未公開テンプレート（画像・文言差替で即公開可能）──
   {
+    id: "career",
+    label: "キャリアコンサルタント・人事",
+    emoji: "🧭",
+    path: "/lp/career",
+    color: "#1B2B6B",
+    revenueRate: 85,
+    freeMonths: 12,
+    slots: 50,
+    heroTitle: "Career Navigation\nProject",
+    heroSub: "1対1模擬面接×メンタルケア：専門家のための新聖域",
+    ctaBadge: "還元率 85% | 12ヶ月無料 | 秘密厳守",
+    published: true,
+  },
+  {
     id: "lawyer",
     label: "士業（弁護士・税理士）",
     emoji: "⚖️",
