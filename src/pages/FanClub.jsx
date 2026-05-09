@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Crown, Sparkles, Shield } from "lucide-react";
@@ -58,14 +58,29 @@ function MemberBadge({ months, tier }) {
 
 export default function FanClub() {
   const { channelId } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) {
+        base44.auth.me().then((u) => {
+          setUser(u);
+          // channelIdがない場合、自分のチャンネルを自動取得
+          if (!channelId && u?.email) {
+            base44.entities.Channel.filter({ owner_email: u.email })
+              .then((channels) => {
+                if (channels.length > 0) {
+                  navigate(`/fanclub/${channels[0].id}`);
+                }
+              })
+              .catch(() => {});
+          }
+        }).catch(() => {});
+      }
     });
-  }, []);
+  }, [channelId, navigate]);
 
   const { data: channel } = useQuery({
     queryKey: ["fanclub-channel", channelId],
