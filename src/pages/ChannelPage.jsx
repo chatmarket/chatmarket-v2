@@ -10,12 +10,14 @@ import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, Calend
 import ReportChannelDialog from "../components/channel/ReportChannelDialog";
 import OshiRegisterButton from "../components/home/OshiRegisterButton";
 import CategoryBadge from "../components/channel/CategoryBadge";
+import MusicianProfileBadge from "../components/profile/MusicianProfileBadge";
 import FanCommunityTab from "../components/community/FanCommunityTab";
 import VaultTab from "../components/vault/VaultTab";
 import SanctumTab from "../components/vault/SanctumTab";
 import ReferralSharePanel from "../components/channel/ReferralSharePanel";
 import MetaHelmet from "../components/layout/MetaHelmet";
 import { captureRefFromUrl } from "@/lib/referral";
+import { isMusician } from "@/lib/roleTerminology";
 
 export default function ChannelPage() {
   const { channelId } = useParams();
@@ -141,7 +143,12 @@ export default function ChannelPage() {
 
           <div className="flex-1 min-w-0">
             {/* Name */}
-            <h1 className="text-2xl font-black truncate">{channel.name}</h1>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl font-black truncate">{channel.name}</h1>
+              {currentUser && isMusician(currentUser) && (
+                <MusicianProfileBadge isMusicianRole={true} size="md" />
+              )}
+            </div>
 
             {/* Category & Tags */}
             {(channel.category_id || channel.tags?.length > 0) && (
@@ -157,8 +164,20 @@ export default function ChannelPage() {
               </p>
             )}
 
+            {/* Musician 情報（user.role === "musician" の時だけ表示） */}
+            {currentUser && isMusician(currentUser) && (
+              <div className="mt-3 bg-gradient-to-br from-purple-500/10 to-pink-500/5 border border-purple-500/25 rounded-xl p-3 space-y-2">
+                <p className="text-xs font-black text-purple-400 flex items-center gap-1.5">🎸 ミュージシャンプロフィール</p>
+                {channel.description && (
+                  <div>
+                    <p className="text-sm text-foreground/90">{channel.description}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 占い師専用情報（stream_category === "fortune" の時だけ表示） */}
-            {channel.stream_category === "fortune" && (
+            {channel.stream_category === "fortune" && !isMusician(currentUser) && (
               <div className="mt-3 bg-gradient-to-br from-purple-500/10 to-indigo-500/5 border border-purple-500/25 rounded-xl p-3 space-y-2">
                 <p className="text-xs font-black text-purple-400 flex items-center gap-1.5">🔮 占い師プロフィール</p>
                 {channel.fortune_arts && (
