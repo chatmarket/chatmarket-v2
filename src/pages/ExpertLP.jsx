@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Crown, Zap, TrendingUp, Users, Mic2, DollarSign, CheckCircle2, ArrowRight, Sparkles, Calendar, Clock } from "lucide-react";
+import { Crown, Zap, TrendingUp, Users, Mic2, DollarSign, CheckCircle2, ArrowRight, Sparkles, Calendar, Clock, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -259,6 +259,68 @@ export default function ExpertLP() {
               <p className="text-xs text-blue-200 mt-1">{s.sub}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── VISUAL SHOWCASE ── */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <h2 className="text-3xl md:text-4xl font-black text-center">
+            講演会も、個別相談も。<br />
+            <span className="text-amber-400">同じ有識者が対応します。</span>
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* 大規模講演会 */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="rounded-2xl overflow-hidden shadow-2xl border border-amber-500/30"
+            >
+              <img
+                src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/707796e00_generated_image.png"
+                alt="大規模講演会で有識者が多くの聴衆の前で講演している様子"
+                className="w-full h-auto object-cover aspect-video"
+              />
+              <div className="p-6 bg-gradient-to-t from-slate-900 to-slate-800 space-y-2">
+                <h3 className="text-xl font-black text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-amber-400" />
+                  大規模講演会
+                </h3>
+                <p className="text-sm text-blue-100">
+                  数千人規模の同時視聴にも対応。<br />
+                  PPV・エール・チケット販売で最大還元率85%。
+                </p>
+              </div>
+            </motion.div>
+
+            {/* 1対1個別相談 */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="rounded-2xl overflow-hidden shadow-2xl border border-blue-500/30"
+            >
+              <img
+                src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/950461c0f_generated_image.png"
+                alt="同じ有識者が1対1のオンライン個別相談をしている様子"
+                className="w-full h-auto object-cover aspect-video"
+              />
+              <div className="p-6 bg-gradient-to-t from-slate-900 to-slate-800 space-y-2">
+                <h3 className="text-xl font-black text-white flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-blue-400" />
+                  1対1個別相談
+                </h3>
+                <p className="text-sm text-blue-100">
+                  ライブ終了後の自動誘導。<br />
+                  深い学習とカスタマイズされた指導で満足度向上。
+                </p>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
