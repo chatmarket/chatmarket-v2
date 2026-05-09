@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { requiresParentalConsent, createParentalConsentRecord } from "@/lib/minorProtectionLogic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,6 +75,15 @@ export default function Recruit() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // 家庭教師カテゴリの保護者同意フロー
+  const [studentAge, setStudentAge] = useState("");
+  const [parentalConsentRequired, setParentalConsentRequired] = useState(false);
+  const [parentalConsent, setParentalConsent] = useState({
+    parentName: "",
+    parentEmail: "",
+    agreed: false,
+  });
+
   useEffect(() => {
     base44.auth.isAuthenticated().then(async (ok) => {
       if (ok) {
@@ -92,9 +102,21 @@ export default function Recruit() {
     ? `🎯 Pro特典：全有料プラン24ヶ月完全無料（要審査）`
     : `🎁 Standard特典：全有料プラン12ヶ月完全無料`;
 
+  // 家庭教師カテゴリで未成年の場合、保護者同意を必須化
+  useEffect(() => {
+    if (tutorCategory && studentAge) {
+      const age = parseInt(studentAge, 10);
+      setParentalConsentRequired(age < 18);
+    }
+  }, [studentAge, tutorCategory]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email) { toast.error("お名前とメールアドレスは必須です"); return; }
+    if (tutorCategory && parentalConsentRequired && !parentalConsent.agreed) {
+      toast.error("未成年生徒の場合、保護者の同意確認が必須です");
+      return;
+    }
     setSubmitting(true);
 
     // 1. 申請レコード保存
@@ -111,6 +133,13 @@ export default function Recruit() {
           category_id: TUTOR_CATEGORY.id,
           tutor_90_percent_rate: true,
           tutor_free_subscription_12_months: true,
+          ...(parentalConsentRequired && {
+            parental_consent_required: true,
+            student_age: parseInt(studentAge, 10),
+            parent_name: parentalConsent.parentName,
+            parent_email: parentalConsent.parentEmail,
+            parental_consent_given: parentalConsent.agreed,
+          }),
         }),
       };
 
@@ -695,6 +724,50 @@ export default function Recruit() {
                 <Input value={snsUrl} onChange={e => setSnsUrl(e.target.value)} placeholder="https://twitter.com/yourhandle" className="bg-secondary border-0" />
                 <p className="text-xs text-muted-foreground">Pro特典審査に使用します</p>
               </div>
+
+              {tutorCategory && (
+                <div className="space-y-3 border rounded-2xl p-4 bg-blue-500/5 border-blue-500/30">
+                  <p className="text-sm font-bold text-blue-300">👨‍👩‍👧 生徒への教える場合（年齢確認）</p>
+                  <div className="space-y-2">
+                    <Input
+                      type="number"
+                      min="6"
+                      max="30"
+                      value={studentAge}
+                      onChange={(e) => setStudentAge(e.target.value)}
+                      placeholder="生徒の年齢 例：15"
+                      className="bg-secondary border-0"
+                    />
+                    {parentalConsentRequired && (
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                        <p className="text-xs font-bold text-red-400">⚠️ 未成年生徒のため保護者同意が必須</p>
+                        <Input
+                          value={parentalConsent.parentName}
+                          onChange={(e) => setParentalConsent({ ...parentalConsent, parentName: e.target.value })}
+                          placeholder="保護者のお名前"
+                          className="bg-secondary border-0 text-xs"
+                        />
+                        <Input
+                          type="email"
+                          value={parentalConsent.parentEmail}
+                          onChange={(e) => setParentalConsent({ ...parentalConsent, parentEmail: e.target.value })}
+                          placeholder="保護者メールアドレス"
+                          className="bg-secondary border-0 text-xs"
+                        />
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={parentalConsent.agreed}
+                            onChange={(e) => setParentalConsent({ ...parentalConsent, agreed: e.target.checked })}
+                            className="w-4 h-4 accent-blue-400"
+                          />
+                          <span className="text-xs text-blue-300 font-semibold">保護者から同意を得ました</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label>自己PR・配信コンセプト（任意）</Label>
