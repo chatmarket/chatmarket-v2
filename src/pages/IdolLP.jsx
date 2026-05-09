@@ -280,45 +280,7 @@ export default function IdolLP() {
         </div>
       </section>
 
-      {/* ── ADVISOR SECTION ── */}
-      <section className="py-20 px-5" style={{ background: "#000" }}>
-        <div className="max-w-xl mx-auto">
-          <div className="p-8 rounded-3xl text-center space-y-5" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(236,72,153,0.1))", border: "1px solid rgba(168,85,247,0.4)" }}>
-            <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl font-black"
-              style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)", boxShadow: "0 0 30px rgba(168,85,247,0.6)" }}>
-              小野
-            </div>
-            <div>
-              <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#c084fc" }}>Chat Market 公認アドバイザー</p>
-              <h3 className="text-2xl font-black mt-1">小野 賢一</h3>
-              <p className="text-white/50 text-sm mt-1">ChatMarket代表 / アイドル支援プロデューサー</p>
-            </div>
-            <p className="text-white/65 text-sm leading-relaxed">
-              「アイドルがもっと自由に、もっと稼げる世界を作りたい。<br />
-              事務所に頼らなくても、あなたの輝きは必ず誰かに届く。<br />
-              Chat Marketが全力でサポートします。」
-            </p>
-            <div className="flex justify-center gap-3">
-              <a href="https://twitter.com/chatmarket_jp" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors"
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                <Twitter className="w-3.5 h-3.5" /> X でフォロー
-              </a>
-              <a href="https://instagram.com/chatmarket_jp" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors"
-                style={{ background: "rgba(236,72,153,0.15)", border: "1px solid rgba(236,72,153,0.4)", color: "#f9a8d4" }}>
-                <Instagram className="w-3.5 h-3.5" /> Instagram
-              </a>
-            </div>
-            <Link to="/advisor">
-              <button className="w-full py-3 rounded-xl font-black text-sm transition-all hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)" }}>
-                公認アドバイザーの詳細プロフィール →
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
+
 
       {/* ── SCOUT APPLICATION CTA ── */}
       <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a0008 100%)" }}>
