@@ -66,9 +66,9 @@ export default function GoLive() {
       const subs = await base44.entities.PlanSubscription.filter({ user_email: user.email, plan_id: "ppv", status: "active" });
       return subs[0] || null;
     },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5分間キャッシュ（本来は加入状態が変わらない）
-    gcTime: 30 * 60 * 1000,    // 30分間保持
+    enabled: !!user && user.role !== 'admin',
+    staleTime: 0, // 常に最新を取得（プラン加入直後も正しく反映）
+    gcTime: 0,
   });
 
   const { data: campaignGrantee = null, isLoading: campaignLoading } = useQuery({
@@ -81,12 +81,13 @@ export default function GoLive() {
       if (grantee && new Date(grantee.expires_at) > new Date()) return grantee;
       return null;
     },
-    enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10分間キャッシュ
-    gcTime: 60 * 60 * 1000,     // 1時間保持
+    enabled: !!user && user.role !== 'admin',
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const isTestAccount = user?.email === 'ono@onestep-corp.com';
+  // adminは別途 handleStartLive / useEffect で処理するため、ここでは一般ユーザー用の判定のみ
   const canUseLiveStream = isTestAccount || !!ppvSubscription || !!campaignGrantee;
 
   useEffect(() => {
