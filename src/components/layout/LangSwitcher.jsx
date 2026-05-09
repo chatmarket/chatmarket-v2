@@ -13,6 +13,12 @@ const LANGS = [
   { code: "ja", label: "日本語", flag: "🇯🇵" },
   { code: "en", label: "English", flag: "🇺🇸" },
   { code: "ko", label: "한국어", flag: "🇰🇷" },
+  { code: "zh", label: "中文", flag: "🇨🇳" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
 ];
 
 export default function LangSwitcher() {
