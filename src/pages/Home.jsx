@@ -33,6 +33,8 @@ import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import ScrollRow from "../components/home/ScrollRow";
 import CallWaitingRow from "../components/home/CallWaitingRow";
+import PersonalizedCategorySection from "../components/home/PersonalizedCategorySection";
+import GlobalTimeZoneShowcase from "../components/home/GlobalTimeZoneShowcase";
 import CreatorRanking from "../components/home/CreatorRanking";
 import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
 import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
@@ -520,6 +522,12 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* パーソナライズカテゴリセクション */}
+      <PersonalizedCategorySection user={user} />
+
+      {/* 「今この国と繋がる」グローバル特集 */}
+      <GlobalTimeZoneShowcase />
 
       {/* カテゴリタブ */}
       <div className="flex gap-2 border-b border-border/30 pb-0">

@@ -250,6 +250,11 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold">運営管理ダッシュボード</h1>
         </div>
         <div className="flex gap-2">
+          <Link to="/admin/metrics">
+            <Button variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-primary/10">
+              <TrendingUp className="w-4 h-4" /> 社長向けメトリクス
+            </Button>
+          </Link>
           <Link to="/admin/ng-word-analytics">
             <Button variant="outline" className="gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10">
               <ShieldAlert className="w-4 h-4" /> NGワード分析
