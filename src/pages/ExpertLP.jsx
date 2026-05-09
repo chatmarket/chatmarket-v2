@@ -148,10 +148,7 @@ export default function ExpertLP() {
           borderBottom: scrolled ? "1px solid rgba(147,197,253,0.2)" : "none",
         }}
       >
-        <div className="flex items-center gap-2">
-          <Crown className="w-6 h-6 text-amber-400" />
-          <span className="font-black text-lg tracking-widest">CHATMARKET</span>
-        </div>
+        <div />
         <Link to="/recruit">
           <Button
             size="sm"
