@@ -82,6 +82,8 @@ import FortuneCalendar from '@/pages/FortuneCalendar';
 import ReminderLogs from '@/pages/ReminderLogs';
 import Dashboard from '@/pages/Dashboard';
 import FortuneLP from '@/pages/FortuneLP';
+import IdolLP from '@/pages/IdolLP';
+import AdvisorProfile from '@/pages/AdvisorProfile';
 
 export default function App() {
 
@@ -165,6 +167,8 @@ export default function App() {
             <Route path="/admin/reminder-logs" element={<ReminderLogs />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/fortune-lp" element={<FortuneLP />} />
+            <Route path="/idol-lp" element={<IdolLP />} />
+            <Route path="/advisor" element={<AdvisorProfile />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
