@@ -84,6 +84,7 @@ import Dashboard from '@/pages/Dashboard';
 import FortuneLP from '@/pages/FortuneLP';
 import IdolLP from '@/pages/IdolLP';
 import MusicianLP from '@/pages/MusicianLP';
+import TutorLP from '@/pages/TutorLP';
 import AdvisorProfile from '@/pages/AdvisorProfile';
 
 export default function App() {
@@ -170,6 +171,7 @@ export default function App() {
             <Route path="/fortune-lp" element={<FortuneLP />} />
             <Route path="/idol-lp" element={<IdolLP />} />
             <Route path="/musician" element={<MusicianLP />} />
+            <Route path="/lp/tutor" element={<TutorLP />} />
             <Route path="/advisor" element={<AdvisorProfile />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />

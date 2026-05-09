@@ -14,6 +14,8 @@ import MetaHelmet from "@/components/layout/MetaHelmet";
 import BusinessModelShowcase from "@/components/recruit/BusinessModelShowcase";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
+import { applyTutorCategoryLogic, TUTOR_CATEGORY } from "@/lib/tutorCategoryLogic";
 
 // ---- キャンペーン設定 ----
 const CAMPAIGN_START = new Date("2026-04-16T20:00:00+09:00");
@@ -57,6 +59,9 @@ function CountdownBox({ value, label }) {
 
 export default function Recruit() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const tutorCategory = location.state?.category === "tutor";
+  
   const [user, setUser] = useState(null);
   const countdown = useCountdown(CAMPAIGN_START.getTime());
   const formRef = useRef(null);
@@ -94,17 +99,24 @@ export default function Recruit() {
 
     // 1. 申請レコード保存
     try {
+      const applicationData = {
+        name,
+        email,
+        sns_url: snsUrl,
+        followers: followerCount,
+        pr,
+        campaign_tier: isProTier ? "pro_90days_all_plans" : "standard_30days_all_plans",
+        applied_at: new Date().toISOString(),
+        ...(tutorCategory && {
+          category_id: TUTOR_CATEGORY.id,
+          tutor_90_percent_rate: true,
+          tutor_free_subscription_12_months: true,
+        }),
+      };
+
       await base44.entities.BlogPost.create({
         title: `【ライバー募集申請】${name}`,
-        content: JSON.stringify({
-          name,
-          email,
-          sns_url: snsUrl,
-          followers: followerCount,
-          pr,
-          campaign_tier: isProTier ? "pro_90days_all_plans" : "standard_30days_all_plans",
-          applied_at: new Date().toISOString(),
-        }),
+        content: JSON.stringify(applicationData),
         channel_id: "recruit_application",
         status: "draft",
       });
@@ -116,10 +128,18 @@ export default function Recruit() {
         email,
         followers: followerCount,
         name,
+        ...(tutorCategory && {
+          category_id: TUTOR_CATEGORY.id,
+          tutor_revenue_rate: 0.90,
+          tutor_free_subscription_months: 12,
+        }),
       });
       if (res.data?.success) {
         const months = res.data.months;
-        toast.success(`✅ 全プランを${months}ヶ月間、自動で有効化しました！`);
+        const message = tutorCategory
+          ? `✅ 家庭教師カテゴリで登録完了！90%還元率 + 12ヶ月無料が自動適用されました`
+          : `✅ 全プランを${months}ヶ月間、自動で有効化しました！`;
+        toast.success(message);
       }
     } catch (err) {
       // 付与失敗はサイレント（申請は通す）
