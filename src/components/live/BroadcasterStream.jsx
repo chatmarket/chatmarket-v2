@@ -96,47 +96,53 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return unsubscribeYell;
   }, [streamId]);
 
-  // 視聴者数取得（配信中のみ、30秒ごと・最大5回に削減）
+  // IVSチャンネル状態モニタリング（OBS配信中のみ）
+  // 映像が入った瞬間を検知してコンソールとビューワー数に反映
   useEffect(() => {
     if (!streamId || !isOBSLive) return;
-    
-    let fetchCount = 0;
-    const fetchViewerCount = async () => {
+
+    let ivsConnected = false;
+
+    const checkIvs = async () => {
       try {
-        const streams = await base44.entities.LiveStream.filter({ id: streamId });
-        if (streams[0]?.viewer_count !== undefined) {
-          setViewerCount(streams[0].viewer_count);
-          fetchCount++;
+        const res = await base44.functions.invoke('checkIvsStreamStatus', {});
+        const state = res?.data?.stream_state;
+        const health = res?.data?.stream_health;
+        const viewers = res?.data?.viewer_count ?? 0;
+
+        if (state === 'LIVE' && !ivsConnected) {
+          ivsConnected = true;
+          console.log(`%c[IVS] ✅ 映像受信開始！ health=${health} viewers=${viewers}`, 'color: #10b981; font-weight: bold; font-size: 13px');
+          // LiveStreamのステータスをliveに確定
+          await base44.entities.LiveStream.update(streamId, { status: 'live' });
+        } else if (state === 'LIVE') {
+          console.log(`[IVS] 📡 配信中 | health=${health} | viewers=${viewers}`);
+        } else {
+          console.log(`[IVS] ⏳ OBS接続待機中... state=${state}`);
         }
+
+        setViewerCount(viewers);
       } catch (err) {
-        console.error('[BroadcasterStream] Failed to fetch viewer count:', err);
+        // IVSチェックのエラーは無視（配信継続に影響させない）
       }
     };
 
-    fetchViewerCount();
-    // 初回 + 30秒ごと最大5回（150秒で停止）
-    const interval = setInterval(() => {
-      if (fetchCount < 5) fetchViewerCount();
-      else clearInterval(interval);
-    }, 30000);
+    checkIvs();
+    const interval = setInterval(checkIvs, 30000);
     return () => clearInterval(interval);
   }, [streamId, isOBSLive]);
 
-  // 画質設定（初回1回限定・AWS読み取り1回で完結）
+  // 画質設定（初回1回のみ取得）
   useEffect(() => {
     if (!streamId || streamQuality) return;
-    
     const fetchStreamQuality = async () => {
       try {
         const streams = await base44.entities.LiveStream.filter({ id: streamId });
         if (streams[0]?.max_bitrate_restriction) {
           setStreamQuality(streams[0].max_bitrate_restriction);
         }
-      } catch (err) {
-        console.error('[BroadcasterStream] Failed to fetch stream quality:', err);
-      }
+      } catch (_) {}
     };
-
     fetchStreamQuality();
   }, [streamId]);
 
