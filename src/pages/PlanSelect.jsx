@@ -431,6 +431,7 @@ export default function PlanSelect() {
                     {isSelected && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">初期費用・月額 0円でお試し開始</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">収益還元率 70%</span>
                 </div>
 
                 <div>
