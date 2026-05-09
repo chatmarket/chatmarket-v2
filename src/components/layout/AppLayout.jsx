@@ -14,6 +14,7 @@ import LangSwitcher from "./LangSwitcher";
 import Footer from "./Footer";
 import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
 import { isAdmin } from "@/lib/adminConfig";
+import { captureRefFromUrl } from "@/lib/referral";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -60,6 +61,8 @@ export default function AppLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // サイト全体でrefパラメータをキャプチャ（どのページから来てもOK）
+    captureRefFromUrl();
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });

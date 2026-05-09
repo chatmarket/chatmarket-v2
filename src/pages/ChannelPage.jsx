@@ -12,6 +12,9 @@ import CategoryBadge from "../components/channel/CategoryBadge";
 import FanCommunityTab from "../components/community/FanCommunityTab";
 import VaultTab from "../components/vault/VaultTab";
 import SanctumTab from "../components/vault/SanctumTab";
+import ReferralSharePanel from "../components/channel/ReferralSharePanel";
+import MetaHelmet from "../components/layout/MetaHelmet";
+import { captureRefFromUrl } from "@/lib/referral";
 
 export default function ChannelPage() {
   const { channelId } = useParams();
@@ -22,6 +25,8 @@ export default function ChannelPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // 紹介コードをURLから取得してlocalStorageに保存
+    captureRefFromUrl();
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setCurrentUser).catch(() => {});
     });
@@ -105,8 +110,22 @@ export default function ChannelPage() {
 
   const isOwner = currentUser?.email === channel.owner_email;
 
+  // OGP用メタ情報
+  const ogTitle = channel.is_live
+    ? `🔴 ライブ中：${channel.name} | Chat Market`
+    : `${channel.name} | Chat Market`;
+  const ogDescription = channel.description
+    ? channel.description.slice(0, 100)
+    : `${channel.name}のチャンネル。占い鑑定・ライブ配信はChat Marketで。`;
+  const ogImage = channel.avatar_url || "https://chatmarket.info/og-image.png";
+
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <MetaHelmet
+        title={ogTitle}
+        description={ogDescription}
+        image={ogImage}
+      />
       {/* Channel header card */}
       <div className="bg-card rounded-xl sm:rounded-2xl border border-border/50 p-4 sm:p-6 mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-5">
@@ -197,11 +216,13 @@ export default function ChannelPage() {
               </Button>
             </Link>
             {isOwner ? (
-              <Link to="/my-channel">
-                <Button size="sm" variant="secondary" className="gap-2 w-full">
-                  <Upload className="w-4 h-4" /> チャンネル管理
-                </Button>
-              </Link>
+              <>
+                <Link to="/my-channel">
+                  <Button size="sm" variant="secondary" className="gap-2 w-full">
+                    <Upload className="w-4 h-4" /> チャンネル管理
+                  </Button>
+                </Link>
+              </>
             ) : (
               <>
                 <Button
@@ -359,6 +380,13 @@ export default function ChannelPage() {
           isOwner={isOwner}
           isFollower={isFollowing}
         />
+      )}
+
+      {/* オーナー向け：SNS紹介シェアパネル */}
+      {isOwner && (
+        <div className="mt-8">
+          <ReferralSharePanel channel={channel} />
+        </div>
       )}
     </div>
   );

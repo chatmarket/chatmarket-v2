@@ -465,9 +465,9 @@ function LiveViewInner() {
   return (
     <div style={{ width: "100%", minHeight: "100vh", background: "#0c0c12" }}>
       <MetaHelmet
-        title={`🔴 ${stream.title} | ChatMarket LIVE`}
-        description={stream.description || `${stream.channel_name}がライブ配信中！`}
-        image={stream.thumbnail_url}
+        title={`🔴 ライブ中：${stream.channel_name}先生 | ${stream.title} | Chat Market`}
+        description={stream.description || `${stream.channel_name}先生が今まさに鑑定中！Chat Marketでライブ視聴・エール送信できます。`}
+        image={stream.thumbnail_url || stream.channel_avatar || "https://chatmarket.info/og-image.png"}
       />
       {videoPortal}
       {celebrationYell && <YellCelebrationEffect yell={celebrationYell} onComplete={() => setCelebrationYell(null)} />}
