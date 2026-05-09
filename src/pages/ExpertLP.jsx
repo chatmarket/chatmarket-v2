@@ -211,7 +211,7 @@ export default function ExpertLP() {
           >
             3,000名規模の講演会・セミナーで圧倒的な収益を実現。<br />
             PPV・エール・個別相談すべてが還元率85%。シンプルで、公明正大。<br />
-            <strong>社長が「数千人を集めても、ビクともしない」と自信を持って営業できるシステムを完備。</strong>
+
           </motion.p>
 
           <motion.div
@@ -411,9 +411,7 @@ export default function ExpertLP() {
 
           <p className="text-sm text-blue-200 pt-4 border-t border-blue-500/20">
             <strong>複雑な計算はなし。すべてが同じ基準。</strong><br />
-            「数千人が一斉にチケット購入してもシステムが悲鳴を上げない」ということを、
-            <br />
-            社長が営業時にプレゼンできる確実な基盤を用意しました。
+            数千人が一斉にチケット購入しても安定稼働する確実な基盤を用意しました。
           </p>
         </div>
       </section>
@@ -515,8 +513,8 @@ export default function ExpertLP() {
             さあ、あなたの知をお金に変えよう。
           </h2>
           <p className="text-lg text-blue-100">
-            社長が「3,000人を集めてもビクともしない」と営業する<br />
-            エンタープライズシステムの完成。
+            3,000人規模の同時視聴にも安定対応する<br />
+            エンタープライズシステムを完備。
           </p>
 
           <Link to="/recruit">
