@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Music, Mic2, Guitar, Radio, Phone, TrendingUp, Zap, Crown, Send, Play, Star, CheckCircle2, Users, DollarSign, Award, Sparkles, ChevronRight, Twitter, Instagram } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+import { Music, Mic2, Radio, Phone, TrendingUp, Zap, Crown, Send, Star, CheckCircle2, DollarSign, Award, Sparkles, ChevronRight, Monitor, Settings, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STATS = [
@@ -53,13 +55,62 @@ const VOICES = [
 export default function MusicianLP() {
   const [scrollY, setScrollY] = useState(0);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [user, setUser] = useState(null);
+  const [ticketSales, setTicketSales] = useState(0);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     document.title = "ミュージシャン専用 | Chat Market";
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    // ユーザー認証確認
+    const init = async () => {
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          const me = await base44.auth.me();
+          setUser(me);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+      }
+    };
+    init();
+    
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // PPVライブチケット購入
+  const handleTicketPurchase = async () => {
+    if (!user) {
+      base44.auth.redirectToLogin("/musician");
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      const response = await base44.functions.invoke("createLiveTicketCheckout", {
+        event_id: "musician_demo_live",
+        event_name: "プロ配信デモ・ライブイベント",
+        ticket_price: 2000,
+        ticket_type: "musician_demo",
+        buyer_email: user.email,
+        buyer_name: user.full_name || user.email,
+      });
+
+      if (response.data?.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      } else {
+        toast.error("チケット購入ページの取得に失敗しました");
+      }
+    } catch (err) {
+      console.error("Ticket error:", err);
+      toast.error("購入処理に失敗しました");
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-inter">
@@ -300,6 +351,172 @@ export default function MusicianLP() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── OBS配信ガイド ── */}
+      <section className="py-20 px-5" style={{ background: "#0a0510" }}>
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#a855f7" }}>🎬 PRO配信セットアップ</p>
+            <h2 className="text-3xl md:text-4xl font-black">OBSでプロ品質のライブ配信</h2>
+            <p className="text-white/50 text-sm">PC/Mac完全対応。機材から設定まで完全ガイド。</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* 必須機材 */}
+            <div className="rounded-2xl border border-purple-500/30 p-6 space-y-4" style={{ background: "rgba(168,85,247,0.1)" }}>
+              <h3 className="font-black text-lg flex items-center gap-2" style={{ color: "#a855f7" }}>
+                <Monitor className="w-5 h-5" /> 必須機材
+              </h3>
+              <ul className="text-sm text-white/70 space-y-2">
+                <li>✓ PC/Mac（Intel i7以上推奨）</li>
+                <li>✓ オーディオインターフェース（Focusrite, Roland等）</li>
+                <li>✓ マイク（Shure SM7B等）</li>
+                <li>✓ ウェブカメラ 1080p@60fps</li>
+                <li>✓ インターネット速度 25Mbps以上</li>
+                <li>✓ ヘッドフォン（モニター用）</li>
+              </ul>
+            </div>
+
+            {/* OBS設定 */}
+            <div className="rounded-2xl border border-pink-500/30 p-6 space-y-4" style={{ background: "rgba(236,72,153,0.1)" }}>
+              <h3 className="font-black text-lg flex items-center gap-2" style={{ color: "#ec4899" }}>
+                <Settings className="w-5 h-5" /> 推奨OBS設定
+              </h3>
+              <ul className="text-sm text-white/70 space-y-2">
+                <li>• 解像度: 1920×1080</li>
+                <li>• フレームレート: 60fps</li>
+                <li>• ビットレート: 6000-8000 kbps</li>
+                <li>• エンコーダ: H.264（ハード加速推奨）</li>
+                <li>• オーディオ: 128kbps AAC</li>
+                <li>• サンプリング: 48kHz（CDクオリティ）</li>
+              </ul>
+            </div>
+
+            {/* クイック設定 */}
+            <div className="rounded-2xl border border-amber-500/30 p-6 space-y-4" style={{ background: "rgba(245,158,11,0.1)" }}>
+              <h3 className="font-black text-lg flex items-center gap-2" style={{ color: "#f59e0b" }}>
+                <SlidersHorizontal className="w-5 h-5" /> 初心者向け簡単設定
+              </h3>
+              <ul className="text-sm text-white/70 space-y-2">
+                <li>1. OBS無料ダウンロード</li>
+                <li>2. Chat Market RTMPサーバー設定</li>
+                <li>3. シーン作成（カメラ+音声）</li>
+                <li>4. オーディオレベル調整</li>
+                <li>5. テスト配信で動作確認</li>
+                <li>6. 配信開始→ファン拡大</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-2xl p-6 text-center space-y-3">
+            <p className="text-white font-bold">📺 ガイド動画で詳細に解説</p>
+            <p className="text-sm text-white/70">
+              OBS完全セットアップ講座・ライブ配信トラブル対応・音声調整テクニック・視聴者獲得戦略など、
+              <br />
+              プロミュージシャンの配信ノウハウを動画チュートリアルで提供。
+            </p>
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white font-black">
+              OBSガイド動画を見る →
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── チケット販売＆売上ダッシュボード ── */}
+      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0a0510 0%, #1a0033 100%)" }}>
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>💰 PPV配信チケット販売</p>
+            <h2 className="text-3xl md:text-4xl font-black">配信前から売上をリアルタイム確認</h2>
+            <p className="text-white/50 text-sm">チケット販売状況をダッシュボードで即座監視。配信品質を最適化。</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* チケット販売カード */}
+            <div className="rounded-2xl border-2 border-pink-500/60 p-8 space-y-6" style={{ background: "linear-gradient(135deg, rgba(236,72,153,0.15), rgba(168,85,247,0.05))" }}>
+              <h3 className="font-black text-2xl text-white">デモ・ライブイベント</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">チケット価格</span>
+                  <span className="font-black text-2xl text-pink-400">¥2,000</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">あなたの手取り（85%）</span>
+                  <span className="font-black text-2xl text-green-400">¥1,700</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">プラットフォーム手数料</span>
+                  <span className="font-black text-lg text-white/50">¥300</span>
+                </div>
+              </div>
+
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 space-y-2">
+                <p className="text-xs font-bold text-purple-300">✓ チケット購入者特典</p>
+                <ul className="text-xs text-white/60 space-y-1">
+                  <li>• ライブ配信HD 1080p視聴</li>
+                  <li>• チャット機能で質問・応援</li>
+                  <li>• アーカイブ動画30日間視聴権</li>
+                  <li>• シークレット楽曲先行販売</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={handleTicketPurchase}
+                disabled={purchasing}
+                className="w-full py-4 rounded-xl font-black text-base transition-all hover:scale-105 disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)", color: "#000" }}
+              >
+                {purchasing ? "処理中..." : "今すぐチケット購入"}
+              </button>
+            </div>
+
+            {/* リアルタイムダッシュボード */}
+            <div className="rounded-2xl border-2 border-amber-500/60 p-8 space-y-6" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(168,85,247,0.05))" }}>
+              <h3 className="font-black text-2xl text-white">リアルタイム売上ダッシュボード</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">売上チケット数</span>
+                  <span className="font-black text-2xl text-amber-400">342枚</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">売上金額合計</span>
+                  <span className="font-black text-2xl text-amber-400">¥684,000</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">あなたの収益</span>
+                  <span className="font-black text-2xl text-green-400">¥581,400</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+                  <span className="text-white/70">配信開始までの時間</span>
+                  <span className="font-black text-2xl text-cyan-400">2h 34m</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-pink-500 to-purple-500 w-[68%] transition-all"></div>
+                </div>
+                <p className="text-xs text-white/50">収容人数の68%の購入達成 → 配信品質を1080p 60fpsで維持可能</p>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-4 space-y-2">
+                <p className="text-sm font-black text-green-300">🚀 推奨アクション</p>
+                <p className="text-xs text-white/70">
+                  売上が目標達成。配信品質をフル仕様で実施可能。SNSで最終リマインダーを発信して追加購入を促進しましょう。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center space-y-3">
+            <p className="text-white font-bold">📊 ダッシュボード機能</p>
+            <p className="text-sm text-white/70">
+              配信前から売上をリアルタイムで監視。購入数に応じた配信品質の自動調整提案。<br />
+              SNS連携で不足分の追加販売促進までサポート。
+            </p>
           </div>
         </div>
       </section>
