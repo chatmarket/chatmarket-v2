@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,14 @@ const ADMIN_NAV_ITEMS = [
   { key: "admin-ngword", path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
   { key: "influencer", path: "/influencer-campaign", icon: Zap, label: "爆撃テンプレート" },
   { key: "admin-affiliate", path: "/admin/affiliate", icon: TrendingUp, label: "アフィリエイト分析" },
+];
+
+const LP_NAV_ITEMS = [
+  { key: "lp-fortune", path: "/fortune-lp", icon: Star, label: "占い師LP" },
+  { key: "lp-idol", path: "/idol-lp", icon: Star, label: "アイドルLP" },
+  { key: "lp-musician", path: "/musician", icon: Music, label: "ミュージシャンLP" },
+  { key: "lp-tutor", path: "/lp/tutor", icon: BookOpen, label: "家庭教師LP" },
+  { key: "lp-expert", path: "/lp/expert", icon: Star, label: "有識者LP" },
 ];
 
 const NAV_ITEMS = [
@@ -169,6 +177,23 @@ export default function AppLayout() {
                       isActive(path)
                         ? "bg-purple-500/20 text-purple-300"
                         : "text-purple-400/70 hover:bg-purple-500/10 hover:text-purple-300"
+                    )}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                    </div>
+                  </Link>
+                ))}
+
+                <div className="pt-2 pb-1 px-3">
+                  <p className="text-[10px] font-bold tracking-widest text-amber-400 uppercase">🎯 LP管理</p>
+                </div>
+                {LP_NAV_ITEMS.map(({ key, path, icon: Icon, label }) => (
+                  <Link key={key} to={path} onClick={onCloseFn}>
+                    <div className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      isActive(path)
+                        ? "bg-amber-500/20 text-amber-300"
+                        : "text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-300"
                     )}>
                       <Icon className="w-4 h-4 shrink-0" />
                       {label}
