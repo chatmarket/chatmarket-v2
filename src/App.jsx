@@ -86,6 +86,7 @@ import IdolLP from '@/pages/IdolLP';
 import MusicianLP from '@/pages/MusicianLP';
 import TutorLP from '@/pages/TutorLP';
 import ExpertLP from '@/pages/ExpertLP';
+import FitnessLP from '@/pages/FitnessLP';
 
 
 export default function App() {
@@ -174,6 +175,7 @@ export default function App() {
             <Route path="/musician" element={<MusicianLP />} />
             <Route path="/lp/tutor" element={<TutorLP />} />
             <Route path="/lp/expert" element={<ExpertLP />} />
+            <Route path="/lp/fitness" element={<FitnessLP />} />
 
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
