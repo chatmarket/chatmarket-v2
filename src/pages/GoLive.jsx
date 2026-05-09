@@ -222,7 +222,7 @@ export default function GoLive() {
             </div>
             <div>
               <p className="font-black text-white text-lg mb-1">1対多 ライブ配信</p>
-              <p className="text-muted-foreground text-sm leading-relaxed">複数の視聴者に向けてリアルタイムで配信。スーパーチャットやギフトを受け取れます。</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">複数の視聴者に向けてリアルタイムで配信。エールコインや視聴料を得る事が出来ます。</p>
             </div>
             <span className="mt-auto w-full py-2.5 rounded-xl bg-red-500 text-white text-sm font-black text-center group-hover:bg-red-600 transition-colors">
               {(ppvLoading || campaignLoading) ? "確認中..." : "ライブ配信を開始"}
