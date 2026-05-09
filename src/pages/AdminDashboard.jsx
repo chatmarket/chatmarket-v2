@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -32,6 +32,7 @@ import PurchaseReportTab from "../components/admin/PurchaseReportTab";
 import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 import NgWordManagement from "../components/admin/NgWordManagement";
 import IdolApplicationManagement from "../components/admin/IdolApplicationManagement";
+import TicketBuyerExport from "../components/admin/TicketBuyerExport";
 import { isAdmin } from "@/lib/adminConfig";
 
 export default function AdminDashboard() {
@@ -457,6 +458,9 @@ export default function AdminDashboard() {
 
               {/* 📝 レポート・ライバー */}
               <div className="flex gap-0">
+                <TabsTrigger value="ticket-buyers" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Ticket className="w-4 h-4" /> チケット購入者
+                </TabsTrigger>
                 <TabsTrigger value="idol-applications" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Star className="w-4 h-4" /> アイドル応募
                 </TabsTrigger>
@@ -871,6 +875,18 @@ export default function AdminDashboard() {
         {/* 通話制限管理タブ */}
         <TabsContent value="call-limit" className="space-y-6">
           <CallUsageLimitManagement />
+        </TabsContent>
+
+        {/* チケット購入者リスト */}
+        <TabsContent value="ticket-buyers" className="space-y-6">
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-5 py-4 flex items-center gap-3">
+            <Ticket className="w-5 h-5 text-blue-400 shrink-0" />
+            <div>
+              <p className="font-black text-blue-300">チケット購入者リスト CSV出力</p>
+              <p className="text-xs text-blue-400/70">TicketEvent・PPVライブ配信の購入者をプロモーションメール配信用にエクスポート</p>
+            </div>
+          </div>
+          <TicketBuyerExport />
         </TabsContent>
 
         {/* アイドルスカウト応募タブ */}
