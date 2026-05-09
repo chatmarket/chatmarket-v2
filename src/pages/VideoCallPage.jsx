@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import MessageModal from "../components/chat/MessageModal";
 import CallSettingsPanel from "../components/call/CallSettingsPanel";
+import BeautyFilterPanel from "../components/call/BeautyFilterPanel";
 import CallChatPanel from "../components/call/CallChatPanel";
 import AdaptiveBitrateManager from "../components/call/AdaptiveBitrateManager";
 import CallIsolationValidator from "../components/debug/CallIsolationValidator";

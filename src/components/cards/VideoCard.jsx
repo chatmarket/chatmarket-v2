@@ -19,14 +19,16 @@ function formatViews(count) {
   return count.toString();
 }
 
-export default function VideoCard({ video, size = "default" }) {
+export default function VideoCard({ video, size = "default", portrait = false }) {
   const isLarge = size === "large";
   const navigate = useNavigate();
 
+  // portrait=true で縦長(9:16)サムネイル対応
+  const aspectClass = portrait ? "aspect-[9/16]" : "aspect-video";
 
   return (
     <Link to={`/watch/${video.id}`} className="group block">
-      <div className="relative overflow-hidden rounded-lg sm:rounded-xl aspect-video bg-secondary">
+      <div className={`relative overflow-hidden rounded-lg sm:rounded-xl ${aspectClass} bg-secondary`}>
         {video.thumbnail_url ? (
           <OptimizedImage
             src={video.thumbnail_url}

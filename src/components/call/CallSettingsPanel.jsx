@@ -1,16 +1,23 @@
 /**
- * CallSettingsPanel — 通話画面の設定パネル（デバイス選択 + 映像エフェクト）
+ * CallSettingsPanel — 通話画面の設定パネル（デバイス選択 + 美肌フィルター + 映像エフェクト）
  */
 import React from "react";
+import { Sparkles } from "lucide-react";
+
+const BEAUTY_PRESETS = [
+  { key: "none",   label: "オフ",     emoji: "🚫", filter: "" },
+  { key: "soft",   label: "ソフト",   emoji: "✨", filter: "brightness(1.08) contrast(0.95) saturate(0.9)" },
+  { key: "beauty", label: "美肌",     emoji: "💎", filter: "brightness(1.12) contrast(0.9) saturate(0.85) blur(0.5px)" },
+  { key: "glow",   label: "グロー",   emoji: "🌟", filter: "brightness(1.18) contrast(0.88) saturate(1.1)" },
+  { key: "warm",   label: "ウォーム", emoji: "🔆", filter: "brightness(1.1) sepia(0.15) saturate(1.2)" },
+  { key: "cool",   label: "クール",   emoji: "❄️", filter: "brightness(1.05) hue-rotate(10deg) saturate(0.85)" },
+];
 
 const VIDEO_EFFECTS = [
   { key: "none",    label: "なし",   emoji: "⬜", filter: "" },
   { key: "vivid",   label: "鮮やか", emoji: "🎨", filter: "saturate(1.8) contrast(1.1)" },
-  { key: "cool",    label: "クール", emoji: "❄️", filter: "hue-rotate(200deg) saturate(1.4)" },
-  { key: "warm",    label: "暖色",   emoji: "🌅", filter: "sepia(0.4) saturate(1.5) brightness(1.05)" },
   { key: "bw",      label: "モノクロ",emoji: "🎞️", filter: "grayscale(1)" },
   { key: "vintage", label: "レトロ", emoji: "📷", filter: "sepia(0.6) contrast(1.1) brightness(0.9)" },
-  { key: "dream",   label: "夢幻",   emoji: "✨", filter: "blur(0.5px) saturate(1.3) brightness(1.1)" },
 ];
 
 export default function CallSettingsPanel({
@@ -23,6 +30,11 @@ export default function CallSettingsPanel({
   const handleEffect = (opt) => {
     onEffectChange(opt.key);
     if (localVideoRef?.current) localVideoRef.current.style.filter = opt.filter;
+  };
+
+  const handleBeauty = (preset) => {
+    onEffectChange(preset.key);
+    if (localVideoRef?.current) localVideoRef.current.style.filter = preset.filter;
   };
 
   return (
@@ -60,9 +72,36 @@ export default function CallSettingsPanel({
           </select>
         </div>
       )}
+      {/* 美肌フィルター */}
+      <div>
+        <label className="text-xs font-bold mb-1.5 flex items-center gap-1.5 text-pink-400">
+          <Sparkles className="w-3.5 h-3.5" /> 美肌フィルター
+        </label>
+        <div className="grid grid-cols-6 gap-1">
+          {BEAUTY_PRESETS.map(preset => (
+            <button key={preset.key}
+              onClick={() => handleBeauty(preset)}
+              className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg border transition-all"
+              style={{
+                background: effectKey === preset.key ? "rgba(236,72,153,0.2)" : "rgba(255,255,255,0.05)",
+                borderColor: effectKey === preset.key ? "rgba(236,72,153,0.7)" : "rgba(255,255,255,0.1)",
+              }}
+            >
+              <span className="text-sm leading-none">{preset.emoji}</span>
+              <span className="text-[8px] font-bold" style={{ color: effectKey === preset.key ? "#f9a8d4" : "rgba(255,255,255,0.4)" }}>
+                {preset.label}
+              </span>
+            </button>
+          ))}
+        </div>
+        {effectKey !== "none" && BEAUTY_PRESETS.find(p => p.key === effectKey) && (
+          <p className="text-[9px] text-pink-400/70 mt-1">💎 {BEAUTY_PRESETS.find(p => p.key === effectKey)?.label}フィルター適用中</p>
+        )}
+      </div>
+
       {/* 映像エフェクト */}
       <div>
-        <label className="text-xs text-white/50 mb-1.5 block">✨ 映像エフェクト</label>
+        <label className="text-xs text-white/50 mb-1.5 block">🎨 映像エフェクト</label>
         <div className="flex flex-wrap gap-1.5">
           {VIDEO_EFFECTS.map(opt => (
             <button key={opt.key}

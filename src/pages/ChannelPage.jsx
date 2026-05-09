@@ -8,6 +8,7 @@ import RevenueRankingWidget from "../components/ranking/RevenueRankingWidget";
 import { Button } from "@/components/ui/button";
 import { Users, Video, Radio, MessageCircle, Upload, Bell, BellOff, Home, CalendarDays, Flag, Users as UsersIcon, Gem, Shield, Phone, PhoneOff } from "lucide-react";
 import ReportChannelDialog from "../components/channel/ReportChannelDialog";
+import OshiRegisterButton from "../components/home/OshiRegisterButton";
 import CategoryBadge from "../components/channel/CategoryBadge";
 import FanCommunityTab from "../components/community/FanCommunityTab";
 import VaultTab from "../components/vault/VaultTab";
@@ -236,6 +237,7 @@ export default function ChannelPage() {
                   {isFollowing ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                   {isFollowing ? "フォロー中" : "フォローする"}
                 </Button>
+                <OshiRegisterButton channel={channel} user={currentUser} />
                 <Button
                   size="sm"
                   variant="secondary"
