@@ -294,6 +294,36 @@ export default function IdolLP() {
         </div>
       </section>
 
+      {/* ── SCOUT APPLICATION CTA ── */}
+      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a0008 100%)" }}>
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold"
+            style={{ background: "rgba(236,72,153,0.2)", border: "1px solid rgba(236,72,153,0.5)", color: "#f9a8d4" }}>
+            🌟 SCOUT APPLICATION
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black leading-tight">
+            スカウトに<br />
+            <span style={{ background: "linear-gradient(135deg, #f9a8d4, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              応募する
+            </span>
+          </h2>
+          <p className="text-white/55 text-sm leading-relaxed">
+            Chat Market公認アドバイザー 小野が直接審査。<br />
+            写真・SNSアカウントを送るだけで簡単応募！
+          </p>
+          <button
+            onClick={() => setShowApplicationForm(true)}
+            className="w-full px-8 py-5 rounded-2xl font-black text-base text-black transition-all hover:scale-105 active:scale-95"
+            style={{ background: "linear-gradient(135deg, #f0abfc, #ec4899)", boxShadow: "0 0 40px rgba(236,72,153,0.5)" }}>
+            <span className="flex items-center justify-center gap-2">
+              <Send className="w-5 h-5" />
+              今すぐ応募フォームを開く
+            </span>
+          </button>
+          <p className="text-xs text-white/30">※応募は無料です。選考結果はメールでお知らせします。</p>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ── */}
       <section className="py-24 px-5 text-center" style={{ background: "linear-gradient(180deg, #000 0%, #0d001a 50%, #000 100%)" }}>
         <div className="max-w-md mx-auto space-y-6">
@@ -318,6 +348,11 @@ export default function IdolLP() {
           <p className="text-xs text-white/30">登録はメールアドレスだけ。クレカ不要。いつでも退会できます。</p>
         </div>
       </section>
+
+      {/* 応募フォームモーダル */}
+      {showApplicationForm && (
+        <IdolApplicationForm open={showApplicationForm} onClose={() => setShowApplicationForm(false)} />
+      )}
 
       <style>{`
         @keyframes twinkle {

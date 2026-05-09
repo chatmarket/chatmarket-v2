@@ -29,9 +29,9 @@ import TestUserCreationForm from "../components/admin/TestUserCreationForm";
 import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList";
 import RecruitApplicationManagement from "../components/admin/RecruitApplicationManagement";
 import PurchaseReportTab from "../components/admin/PurchaseReportTab";
-import IdolApplicationManagement from "../components/admin/IdolApplicationManagement";
 import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 import NgWordManagement from "../components/admin/NgWordManagement";
+import IdolApplicationManagement from "../components/admin/IdolApplicationManagement";
 import { isAdmin } from "@/lib/adminConfig";
 
 export default function AdminDashboard() {
@@ -457,8 +457,8 @@ export default function AdminDashboard() {
 
               {/* 📝 レポート・ライバー */}
               <div className="flex gap-0">
-                <TabsTrigger value="idol-scout" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 text-pink-400">
-                  <Star className="w-4 h-4" /> スカウト応募
+                <TabsTrigger value="idol-applications" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Star className="w-4 h-4" /> アイドル応募
                 </TabsTrigger>
                 <TabsTrigger value="recruit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary relative">
                   <Zap className="w-4 h-4" /> 申込
@@ -874,14 +874,12 @@ export default function AdminDashboard() {
         </TabsContent>
 
         {/* アイドルスカウト応募タブ */}
-        <TabsContent value="idol-scout" className="space-y-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
-              <Star className="w-5 h-5 text-pink-400" />
-            </div>
+        <TabsContent value="idol-applications" className="space-y-6">
+          <div className="bg-pink-500/10 border border-pink-500/30 rounded-xl px-5 py-4 flex items-center gap-3">
+            <Star className="w-5 h-5 text-pink-400 shrink-0" />
             <div>
-              <h2 className="font-black text-lg">アイドルスカウト応募一覧</h2>
-              <p className="text-xs text-muted-foreground">/idol-lp の応募フォームから届いた申込みを管理します</p>
+              <p className="font-black text-pink-300">アイドルスカウト応募管理</p>
+              <p className="text-xs text-pink-400/70">IdolLP ページからの応募が一覧表示されます</p>
             </div>
           </div>
           <IdolApplicationManagement />
