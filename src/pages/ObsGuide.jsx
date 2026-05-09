@@ -372,6 +372,9 @@ export default function ObsGuide() {
         </div>
       </section>
 
+      {/* ── スマホ配信 前書き ── */}
+      <p className="text-center text-sm text-muted-foreground italic">面倒に感じるかもしれませんが美しく魅せる事へのこだわりです</p>
+
       {/* ── スマホ配信（Prism Live Studio）セクション ── */}
       <section className="space-y-6 bg-gradient-to-br from-purple-950 to-purple-900/50 border border-purple-500/40 rounded-2xl p-7">
         <div className="flex items-center gap-3">
