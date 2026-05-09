@@ -25,6 +25,8 @@ const _now = new Date();
 const SHOW_RECRUIT_BANNER = isBefore(_now, _RECRUIT_DEADLINE);
 
 import VideoCard from "../components/cards/VideoCard";
+import VideoCardSkeleton from "../components/cards/VideoCardSkeleton";
+import LiveStreamCardSkeleton from "../components/cards/LiveStreamCardSkeleton";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import { isAdmin } from "@/lib/adminConfig";
 import LiveStreamCard from "../components/cards/LiveStreamCard";
@@ -182,7 +184,7 @@ export default function Home() {
   });
 
   // ライブストリーム：本物 + ダミー統合
-  const { data: liveStreams = [] } = useQuery({
+  const { data: liveStreams = [], isLoading: liveLoading } = useQuery({
     queryKey: ["livestreams-home"],
     queryFn: async () => {
       const real = await base44.entities.LiveStream.filter({ status: "live" }, "-created_date", 6);
@@ -206,7 +208,7 @@ export default function Home() {
     gcTime: 600000,
   });
 
-  const { data: popularVideos = [] } = useQuery({
+  const { data: popularVideos = [], isLoading: popularLoading } = useQuery({
     queryKey: ["videos-popular"],
     queryFn: async () => {
       const all = await base44.entities.Video.list("-view_count", 30);
@@ -563,18 +565,19 @@ export default function Home() {
         {enabledSections.liveStreams && (liveStreams.length > 0 || scheduledStreams.length > 0) && (
           <section className="space-y-6">
             {/* ライブ配信中 */}
-            {liveStreams.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-                  <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
-                  <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
-                </div>
-                <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-                  {liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)}
-                </ScrollRow>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+                <h2 className="text-base sm:text-lg font-bold">{t("liveNowSection")}</h2>
+                <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-full px-2 py-0.5 font-semibold">LIVE</span>
               </div>
-            )}
+              <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+                {liveLoading
+                  ? <LiveStreamCardSkeleton count={3} />
+                  : liveStreams.map((s) => <LiveStreamCard key={s.id} stream={s} />)
+                }
+              </ScrollRow>
+            </div>
 
             {/* 配信予定 */}
             {scheduledStreams.length > 0 && (
@@ -602,7 +605,11 @@ export default function Home() {
               <h2 className="text-base sm:text-lg font-bold">人気の動画</h2>
               <span className="text-xs text-orange-400 bg-orange-400/10 border border-orange-400/30 rounded-full px-2 py-0.5 font-semibold">HOT</span>
             </div>
-            {popularVideos.filter(v => !v.moderation_status || v.moderation_status === "approved").length > 0 ? (
+            {popularLoading ? (
+              <ScrollRow cardWidth={280} mobileCardWidth="72vw">
+                <VideoCardSkeleton count={4} />
+              </ScrollRow>
+            ) : popularVideos.filter(v => !v.moderation_status || v.moderation_status === "approved").length > 0 ? (
               <ScrollRow cardWidth={280} mobileCardWidth="72vw">
                 {popularVideos
                   .filter(v => !v.moderation_status || v.moderation_status === "approved")

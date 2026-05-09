@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Radio, Clock, Calendar, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 function formatTime(dateStr) {
   if (!dateStr) return "";
@@ -19,11 +20,11 @@ export default function LiveStreamCard({ stream, channelCallEnabled }) {
     <Link to={`/live/${stream.id}`} className="group block">
       <div className="relative overflow-hidden rounded-xl aspect-video bg-secondary">
         {stream.thumbnail_url ? (
-          <img
+          <OptimizedImage
             src={stream.thumbnail_url}
             alt={stream.title}
-            loading="lazy"
             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+            skeletonClassName="w-full h-full"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-red-500/20 to-primary/10 flex items-center justify-center transition-all duration-500 group-hover:from-red-500/30 group-hover:to-primary/20">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Clock } from "lucide-react";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 function formatDuration(seconds) {
   if (!seconds) return "";
@@ -27,11 +28,11 @@ export default function VideoCard({ video, size = "default" }) {
     <Link to={`/watch/${video.id}`} className="group block">
       <div className="relative overflow-hidden rounded-lg sm:rounded-xl aspect-video bg-secondary">
         {video.thumbnail_url ? (
-          <img
+          <OptimizedImage
             src={video.thumbnail_url}
             alt={video.title}
-            loading="lazy"
             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+            skeletonClassName="w-full h-full"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
