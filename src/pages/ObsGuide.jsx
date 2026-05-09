@@ -159,57 +159,125 @@ const QA = [
 ];
 
 function StepSection({ step }) {
-  return (
-    <section className={`rounded-2xl border ${step.border} bg-gradient-to-br ${step.color} p-6 md:p-8 space-y-6`}>
-      {/* Header */}
-      <div className="flex items-start gap-4 flex-wrap">
-        <div>
-          <span className={`text-xs font-black px-3 py-1 rounded-full border ${step.badge}`}>{step.level}</span>
-          <h2 className="text-2xl font-black text-white mt-2">{step.title} <span className="text-muted-foreground font-medium text-lg">— {step.subtitle}</span></h2>
-          <p className="text-sm text-muted-foreground mt-1">👤 対象: {step.target}</p>
-          <p className="text-xs font-bold text-primary mt-1">📊 {step.bitrate}</p>
-        </div>
-      </div>
+  const [open, setOpen] = useState(false);
+  const isFirstStep = step.id === "beginner";
 
-      {/* Guide steps */}
-      <div className="space-y-2">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">設定ガイド</p>
+  if (isFirstStep) {
+    return (
+      <section className={`rounded-2xl border ${step.border} bg-gradient-to-br ${step.color} p-6 md:p-8 space-y-6`}>
+        {/* Header */}
+        <div className="flex items-start gap-4 flex-wrap">
+          <div>
+            <span className={`text-xs font-black px-3 py-1 rounded-full border ${step.badge}`}>{step.level}</span>
+            <h2 className="text-2xl font-black text-white mt-2">{step.title} <span className="text-muted-foreground font-medium text-lg">— 初めてのOBS配信（PC版）</span></h2>
+            <p className="text-sm text-muted-foreground mt-1">👤 対象: {step.target}</p>
+            <p className="text-xs font-bold text-primary mt-1">📊 {step.bitrate}</p>
+          </div>
+        </div>
+
+        {/* Guide steps */}
         <div className="space-y-2">
-          {step.guide.map((g) => (
-            <div key={g.step} className="flex items-start gap-3 bg-black/30 rounded-xl px-4 py-3">
-              <span className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-black text-primary shrink-0">{g.step}</span>
-              <p className="text-sm text-foreground/90">{g.text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Products */}
-      <div className="space-y-2">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">おすすめ機材</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {step.products.map((p) => (
-            <a
-              key={p.name}
-              href={p.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex gap-4 bg-black/40 hover:bg-black/60 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all group"
-            >
-              <img src={p.image} alt={p.name} className="w-20 h-20 rounded-lg object-cover shrink-0 bg-secondary" />
-              <div className="flex-1 min-w-0 space-y-1">
-                <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{p.tag}</span>
-                <p className="text-sm font-bold text-white group-hover:text-primary transition-colors line-clamp-2">{p.name}</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
-                <div className="flex items-center gap-1 text-primary text-xs font-bold">
-                  <ExternalLink className="w-3 h-3" /> Amazonで見る
-                </div>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">設定ガイド</p>
+          <div className="space-y-2">
+            {step.guide.map((g) => (
+              <div key={g.step} className="flex items-start gap-3 bg-black/30 rounded-xl px-4 py-3">
+                <span className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-black text-primary shrink-0">{g.step}</span>
+                <p className="text-sm text-foreground/90">{g.text}</p>
               </div>
-            </a>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+
+        {/* Products */}
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">おすすめ機材</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {step.products.map((p) => (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-4 bg-black/40 hover:bg-black/60 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all group"
+              >
+                <img src={p.image} alt={p.name} className="w-20 h-20 rounded-lg object-cover shrink-0 bg-secondary" />
+                <div className="flex-1 min-w-0 space-y-1">
+                  <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{p.tag}</span>
+                  <p className="text-sm font-bold text-white group-hover:text-primary transition-colors line-clamp-2">{p.name}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+                  <div className="flex items-center gap-1 text-primary text-xs font-bold">
+                    <ExternalLink className="w-3 h-3" /> Amazonで見る
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-secondary/50 transition-colors"
+      >
+        <span className={`text-xs font-black px-3 py-1 rounded-full border ${step.badge}`}>{step.level} — {step.title}</span>
+        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
+      </button>
+      {open && (
+        <section className={`${step.border} bg-gradient-to-br ${step.color} p-6 md:p-8 space-y-6 border-t`}>
+          {/* Header */}
+          <div className="flex items-start gap-4 flex-wrap">
+            <div>
+              <h2 className="text-2xl font-black text-white">{step.title} <span className="text-muted-foreground font-medium text-lg">— {step.subtitle}</span></h2>
+              <p className="text-sm text-muted-foreground mt-1">👤 対象: {step.target}</p>
+              <p className="text-xs font-bold text-primary mt-1">📊 {step.bitrate}</p>
+            </div>
+          </div>
+
+          {/* Guide steps */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">設定ガイド</p>
+            <div className="space-y-2">
+              {step.guide.map((g) => (
+                <div key={g.step} className="flex items-start gap-3 bg-black/30 rounded-xl px-4 py-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-black text-primary shrink-0">{g.step}</span>
+                  <p className="text-sm text-foreground/90">{g.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Products */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">おすすめ機材</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {step.products.map((p) => (
+                <a
+                  key={p.name}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-4 bg-black/40 hover:bg-black/60 border border-white/10 hover:border-primary/40 rounded-xl p-4 transition-all group"
+                >
+                  <img src={p.image} alt={p.name} className="w-20 h-20 rounded-lg object-cover shrink-0 bg-secondary" />
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{p.tag}</span>
+                    <p className="text-sm font-bold text-white group-hover:text-primary transition-colors line-clamp-2">{p.name}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+                    <div className="flex items-center gap-1 text-primary text-xs font-bold">
+                      <ExternalLink className="w-3 h-3" /> Amazonで見る
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -301,35 +369,6 @@ export default function ObsGuide() {
         <div className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 flex items-start gap-2 text-xs text-primary">
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
           ストリームキーは他人に見せないでください。チャンネルへの不正配信を防ぐためのパスワードです。
-        </div>
-      </section>
-
-      {/* Steps */}
-      <div className="space-y-8">
-        {STEPS.map((step) => (
-          <StepSection key={step.id} step={step} />
-        ))}
-      </div>
-
-      {/* Tip from team */}
-      <section className="bg-gradient-to-r from-primary/10 to-green-500/10 border border-primary/30 rounded-2xl p-6 flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0">
-          <Lightbulb className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <p className="font-black text-white mb-1">💬 運営からのワンポイントアドバイス</p>
-          <p className="text-sm text-foreground/80">「まずはマイクから投資するのがおすすめです。音がいいだけでプロっぽさが出ますよ！カメラの画質より、声の品質が視聴継続率に直結します。AT2020USB-X 一本で、配信の印象が劇的に変わります。」</p>
-          <p className="text-xs text-muted-foreground mt-1">— Chat Market 運営チーム</p>
-        </div>
-      </section>
-
-      {/* Q&A */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-black flex items-center gap-2"><Star className="w-5 h-5 text-yellow-400" /> よくある質問（配信前の不安を解消）</h2>
-        <div className="space-y-2">
-          {QA.map((item) => (
-            <QAItem key={item.q} item={item} />
-          ))}
         </div>
       </section>
 
@@ -453,6 +492,35 @@ export default function ObsGuide() {
 
         <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-xs text-green-300">
           ✅ <strong>配信接続完了！</strong> Overlay に投げ銭とコメントが流れ始めたら、そのまま配信をお楽しみください。視聴者のリアルタイムな反応がモチベーションに繋がります。
+        </div>
+      </section>
+
+      {/* Steps */}
+      <div className="space-y-8">
+        {STEPS.map((step) => (
+          <StepSection key={step.id} step={step} />
+        ))}
+      </div>
+
+      {/* Tip from team */}
+      <section className="bg-gradient-to-r from-primary/10 to-green-500/10 border border-primary/30 rounded-2xl p-6 flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0">
+          <Lightbulb className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <p className="font-black text-white mb-1">💬 運営からのワンポイントアドバイス</p>
+          <p className="text-sm text-foreground/80">「まずはマイクから投資するのがおすすめです。音がいいだけでプロっぽさが出ますよ！カメラの画質より、声の品質が視聴継続率に直結します。AT2020USB-X 一本で、配信の印象が劇的に変わります。」</p>
+          <p className="text-xs text-muted-foreground mt-1">— Chat Market 運営チーム</p>
+        </div>
+      </section>
+
+      {/* Q&A */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-black flex items-center gap-2"><Star className="w-5 h-5 text-yellow-400" /> よくある質問（配信前の不安を解消）</h2>
+        <div className="space-y-2">
+          {QA.map((item) => (
+            <QAItem key={item.q} item={item} />
+          ))}
         </div>
       </section>
 
