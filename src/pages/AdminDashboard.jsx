@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star, Ticket } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star, Ticket, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -33,6 +33,7 @@ import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 import NgWordManagement from "../components/admin/NgWordManagement";
 import IdolApplicationManagement from "../components/admin/IdolApplicationManagement";
 import TicketBuyerExport from "../components/admin/TicketBuyerExport";
+import SpecialRateManager from "../components/admin/SpecialRateManager";
 import { isAdmin } from "@/lib/adminConfig";
 
 export default function AdminDashboard() {
@@ -456,6 +457,13 @@ export default function AdminDashboard() {
                 </TabsTrigger>
               </div>
 
+              {/* 🎯 特別料率・LP */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="special-rates" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Percent className="w-4 h-4" /> 特別料率
+                </TabsTrigger>
+              </div>
+
               {/* 📝 レポート・ライバー */}
               <div className="flex gap-0">
                 <TabsTrigger value="ticket-buyers" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
@@ -875,6 +883,18 @@ export default function AdminDashboard() {
         {/* 通話制限管理タブ */}
         <TabsContent value="call-limit" className="space-y-6">
           <CallUsageLimitManagement />
+        </TabsContent>
+
+        {/* 特別料率・LPテンプレート */}
+        <TabsContent value="special-rates" className="space-y-6">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4 flex items-center gap-3">
+            <Percent className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <p className="font-black text-amber-300">職種別・特別還元率 & LPテンプレート管理</p>
+              <p className="text-xs text-amber-400/70">社長が「〇〇向けLPが必要」と言った瞬間に対応できる体制。カテゴリ追加・還元率設定・公開状況を一元管理。</p>
+            </div>
+          </div>
+          <SpecialRateManager />
         </TabsContent>
 
         {/* チケット購入者リスト */}
