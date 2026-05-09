@@ -440,6 +440,12 @@ export default function ObsGuide() {
               </div>
               <p>• 名前を <strong>「Chat Market」</strong> と付けて <strong>保存</strong></p>
             </div>
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl px-4 py-3 flex items-center gap-2 mt-1">
+              <span className="text-purple-300 text-xs font-bold">📝 まだアカウントを持っていない方：</span>
+              <a href="https://prismlive.com/ja_jp/" target="_blank" rel="noopener noreferrer" className="text-xs font-black text-purple-200 underline underline-offset-2 hover:text-white transition-colors">
+                PRISM Live Studio の公式サイトでアカウントを作成 →
+              </a>
+            </div>
           </div>
 
           {/* STEP 2 */}
