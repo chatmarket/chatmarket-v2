@@ -160,14 +160,27 @@ export default function IdolLP() {
         </div>
       </section>
 
+      {/* ── GROUP LIVE IMAGE ── */}
+      <section className="py-16 sm:py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a0033 100%)" }}>
+       <div className="max-w-4xl mx-auto">
+         <div className="rounded-2xl overflow-hidden shadow-2xl">
+           <img 
+             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/e8cd1b6f2_generated_image.png"
+             alt="女性アイドルグループのオンラインライブ配信"
+             className="w-full h-auto object-cover"
+           />
+         </div>
+       </div>
+      </section>
+
       {/* ── FEATURES ── */}
       <section className="py-20 px-5" style={{ background: "#0d001a" }}>
-        <div className="max-w-3xl mx-auto space-y-10">
-          <div className="text-center space-y-3">
-            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#c084fc" }}>FEATURES</p>
-            <h2 className="text-3xl sm:text-4xl font-black">4つの収益化ルート</h2>
-            <p className="text-white/50 text-sm">あなたのスタイルに合わせて選べる</p>
-          </div>
+       <div className="max-w-3xl mx-auto space-y-10">
+         <div className="text-center space-y-3">
+           <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#c084fc" }}>FEATURES</p>
+           <h2 className="text-3xl sm:text-4xl font-black">4つの収益化ルート</h2>
+           <p className="text-white/50 text-sm">あなたのスタイルに合わせて選べる</p>
+         </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {FEATURES.map((f) => (
               <div key={f.title} className="p-6 rounded-2xl space-y-3 hover:scale-[1.02] transition-transform"
@@ -181,13 +194,26 @@ export default function IdolLP() {
         </div>
       </section>
 
+      {/* ── ONE-ON-ONE CALL IMAGE ── */}
+      <section className="py-16 sm:py-20 px-5" style={{ background: "#0d001a" }}>
+       <div className="max-w-4xl mx-auto">
+         <div className="rounded-2xl overflow-hidden shadow-2xl">
+           <img 
+             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/27cf5990b_generated_image.png"
+             alt="1対1オンラインビデオ通話"
+             className="w-full h-auto object-cover"
+           />
+         </div>
+       </div>
+      </section>
+
       {/* ── 収益シミュレーター（簡易） ── */}
       <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a0033 100%)" }}>
-        <div className="max-w-md mx-auto text-center space-y-8">
-          <div className="space-y-2">
-            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>REVENUE</p>
-            <h2 className="text-3xl font-black">こんなに稼げる</h2>
-          </div>
+       <div className="max-w-md mx-auto text-center space-y-8">
+         <div className="space-y-2">
+           <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>REVENUE</p>
+           <h2 className="text-3xl font-black">こんなに稼げる</h2>
+         </div>
           <div className="space-y-3">
             {[
               { scenario: "週2回ライブ配信 (50人視聴)", monthly: "約¥40,000〜" },
