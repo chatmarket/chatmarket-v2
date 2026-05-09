@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Heart, Sparkles, ChevronRight, Play, Shield, TrendingUp, Coins, Radio, Phone, Crown, Instagram, Twitter, ArrowRight, CheckCircle2, Zap } from "lucide-react";
+import { Star, Heart, Sparkles, ChevronRight, Play, Shield, TrendingUp, Coins, Radio, Phone, Crown, Instagram, Twitter, ArrowRight, CheckCircle2, Zap, Send } from "lucide-react";
+import IdolApplicationForm from "../components/recruit/IdolApplicationForm";
 
 const STATS = [
   { value: "85%", label: "収益還元率", sub: "業界最高水準" },
@@ -51,6 +52,7 @@ const VOICES = [
 
 export default function IdolLP() {
   const [scrollY, setScrollY] = useState(0);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
 
   useEffect(() => {
     document.title = "アイドル・タレント専用 | Chat Market";
@@ -110,21 +112,21 @@ export default function IdolLP() {
 
           {/* CTAボタン */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <button
+              onClick={() => setShowApplicationForm(true)}
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-base text-black transition-all hover:scale-105 active:scale-95 shadow-2xl"
+              style={{ background: "linear-gradient(135deg, #f0abfc, #ec4899)", boxShadow: "0 0 40px rgba(236,72,153,0.5)" }}>
+              <span className="flex items-center justify-center gap-2">
+                <Send className="w-5 h-5" />
+                スカウト応募する
+              </span>
+            </button>
             <Link to="/recruit">
-              <button className="w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-base text-black transition-all hover:scale-105 active:scale-95 shadow-2xl"
-                style={{ background: "linear-gradient(135deg, #f0abfc, #ec4899)", boxShadow: "0 0 40px rgba(236,72,153,0.5)" }}>
-                <span className="flex items-center justify-center gap-2">
-                  <Crown className="w-5 h-5" />
-                  無料でデビューする
-                </span>
-              </button>
-            </Link>
-            <Link to="/advisor">
               <button className="w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-base text-white/80 hover:text-white transition-all border"
                 style={{ borderColor: "rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)" }}>
                 <span className="flex items-center justify-center gap-2">
-                  <Play className="w-4 h-4" />
-                  もっと詳しく
+                  <Crown className="w-4 h-4" />
+                  無料でデビューする
                 </span>
               </button>
             </Link>

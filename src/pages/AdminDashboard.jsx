@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -29,6 +29,7 @@ import TestUserCreationForm from "../components/admin/TestUserCreationForm";
 import RegisteredTestUsersList from "../components/admin/RegisteredTestUsersList";
 import RecruitApplicationManagement from "../components/admin/RecruitApplicationManagement";
 import PurchaseReportTab from "../components/admin/PurchaseReportTab";
+import IdolApplicationManagement from "../components/admin/IdolApplicationManagement";
 import CopyrightReportManager from "../components/admin/CopyrightReportManager";
 import NgWordManagement from "../components/admin/NgWordManagement";
 import { isAdmin } from "@/lib/adminConfig";
@@ -456,6 +457,9 @@ export default function AdminDashboard() {
 
               {/* 📝 レポート・ライバー */}
               <div className="flex gap-0">
+                <TabsTrigger value="idol-scout" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 text-pink-400">
+                  <Star className="w-4 h-4" /> スカウト応募
+                </TabsTrigger>
                 <TabsTrigger value="recruit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary relative">
                   <Zap className="w-4 h-4" /> 申込
                   {applications.length > 0 && (
@@ -867,6 +871,20 @@ export default function AdminDashboard() {
         {/* 通話制限管理タブ */}
         <TabsContent value="call-limit" className="space-y-6">
           <CallUsageLimitManagement />
+        </TabsContent>
+
+        {/* アイドルスカウト応募タブ */}
+        <TabsContent value="idol-scout" className="space-y-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
+              <Star className="w-5 h-5 text-pink-400" />
+            </div>
+            <div>
+              <h2 className="font-black text-lg">アイドルスカウト応募一覧</h2>
+              <p className="text-xs text-muted-foreground">/idol-lp の応募フォームから届いた申込みを管理します</p>
+            </div>
+          </div>
+          <IdolApplicationManagement />
         </TabsContent>
 
         {/* ライバー申込状況タブ */}
