@@ -106,8 +106,8 @@ export default function TutorLP() {
           {/* Hero Image */}
           <div className="w-full rounded-2xl overflow-hidden shadow-lg mb-8">
             <img 
-              src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/9a5027293_Gemini_Generated_Image_f2joh1f2jo.png" 
-              alt="オンライン授業中の講師"
+              src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/bb603a708_generated_image.png" 
+              alt="オンライン授業を受ける学生"
               className="w-full h-auto object-cover"
             />
           </div>
@@ -211,8 +211,8 @@ export default function TutorLP() {
            </div>
            <div className="flex-1 order-1 md:order-2">
              <img 
-               src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/9a5027293_Gemini_Generated_Image_f2joh1f2jo.png"
-               alt="講師のプロフィールセットアップ"
+               src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/bb603a708_generated_image.png"
+               alt="オンライン授業風景"
                className="w-full rounded-2xl shadow-lg"
              />
            </div>
