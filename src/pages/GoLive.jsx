@@ -58,37 +58,40 @@ export default function GoLive() {
     enabled: !!user,
   });
 
-  const { data: ppvSubscription = null, isLoading: ppvLoading } = useQuery({
+  const isAdmin = user?.role === 'admin';
+  const isTestAccount = user?.email === 'ono@onestep-corp.com';
+
+  const { data: ppvSubscription = null, isLoading: ppvLoading, isError: ppvError } = useQuery({
     queryKey: ["ppv-subscription", user?.email],
     queryFn: async () => {
-      // テストアカウント自動付与
-      if (user?.email === 'ono@onestep-corp.com') return { plan_id: "ppv", status: "active" };
+      if (isTestAccount) return { plan_id: "ppv", status: "active" };
       const subs = await base44.entities.PlanSubscription.filter({ user_email: user.email, plan_id: "ppv", status: "active" });
       return subs[0] || null;
     },
-    enabled: !!user && user.role !== 'admin',
-    staleTime: 0, // 常に最新を取得（プラン加入直後も正しく反映）
+    enabled: !!user && !isAdmin,
+    staleTime: 0,
     gcTime: 0,
+    retry: 2,
   });
 
-  const { data: campaignGrantee = null, isLoading: campaignLoading } = useQuery({
+  const { data: campaignGrantee = null, isLoading: campaignLoading, isError: campaignError } = useQuery({
     queryKey: ["campaign-live-grantee", user?.email],
     queryFn: async () => {
-      // テストアカウント自動付与
-      if (user?.email === 'ono@onestep-corp.com') return { email: user.email, reason: "test_account" };
+      if (isTestAccount) return { email: user.email, reason: "test_account" };
       const grantees = await base44.entities.CampaignLiveGrantee.filter({ email: user.email });
       const grantee = grantees[0];
       if (grantee && new Date(grantee.expires_at) > new Date()) return grantee;
       return null;
     },
-    enabled: !!user && user.role !== 'admin',
+    enabled: !!user && !isAdmin,
     staleTime: 0,
     gcTime: 0,
+    retry: 2,
   });
 
-  const isTestAccount = user?.email === 'ono@onestep-corp.com';
-  // adminは別途 handleStartLive / useEffect で処理するため、ここでは一般ユーザー用の判定のみ
+  // 一般ユーザー用の判定（adminは別ルートで処理）
   const canUseLiveStream = isTestAccount || !!ppvSubscription || !!campaignGrantee;
+  const planCheckError = ppvError || campaignError;
 
   useEffect(() => {
     if (!modeInitialized && user) {
@@ -117,11 +120,16 @@ export default function GoLive() {
       base44.auth.redirectToLogin();
       return;
     }
-    // まだロード中なら何もしない
-    if (ppvLoading || campaignLoading) return;
-    // 管理者は無条件で進める
-    if (user.role === "admin") {
+    // 管理者は無条件で進める（クエリ不要）
+    if (isAdmin) {
       setMode(MODE_LIVE);
+      return;
+    }
+    // ロード中はボタンを無効化しているので到達しないが念のため
+    if (ppvLoading || campaignLoading) return;
+    // 通信エラー時はplan-selectに飛ばさずトースト案内
+    if (planCheckError) {
+      toast.error("通信エラーが発生しました。画面を再読み込みしてください。");
       return;
     }
     if (canUseLiveStream) {
@@ -234,26 +242,42 @@ export default function GoLive() {
 
   // モード選択画面
   if (mode === MODE_SELECT) {
+    const isChecking = !isAdmin && (ppvLoading || campaignLoading || !user);
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center gap-6">
         <div className="text-center mb-2">
           <h1 className="text-2xl font-black text-white mb-1">配信・通話モードを選択</h1>
           <p className="text-muted-foreground text-sm">用途に合わせて選んでください</p>
         </div>
+
+        {/* 通信エラー案内 */}
+        {planCheckError && (
+          <div className="w-full bg-red-500/10 border border-red-500/40 rounded-xl px-4 py-3 text-center">
+            <p className="text-sm text-red-400 font-bold">⚠️ 加入状況の確認中にエラーが発生しました</p>
+            <button onClick={() => window.location.reload()} className="mt-2 text-xs text-red-300 underline underline-offset-2">
+              画面を再読み込みしてください
+            </button>
+          </div>
+        )}
+
         <div className="w-full grid grid-cols-1 gap-4">
           <button
             onClick={handleStartLive}
-            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left"
+            disabled={isChecking || !!planCheckError}
+            className="flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-border bg-card hover:border-red-500/70 hover:bg-red-500/5 transition-all group text-left disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/25 transition-colors">
-              <Radio className="w-8 h-8 text-red-400" />
+              {isChecking ? <Loader2 className="w-8 h-8 text-red-400 animate-spin" /> : <Radio className="w-8 h-8 text-red-400" />}
             </div>
             <div>
               <p className="font-black text-white text-lg mb-1">1対多 ライブ配信</p>
-              <p className="text-muted-foreground text-sm leading-relaxed">複数の視聴者に向けてリアルタイムで配信。エールコインや視聴料を得る事が出来ます。</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {isChecking ? "プラン加入状況を確認中..." : "複数の視聴者に向けてリアルタイムで配信。エールコインや視聴料を得る事が出来ます。"}
+              </p>
             </div>
-            <span className="mt-auto w-full py-2.5 rounded-xl bg-red-500 text-white text-sm font-black text-center group-hover:bg-red-600 transition-colors">
-              ライブ配信を開始
+            <span className="mt-auto w-full py-2.5 rounded-xl bg-red-500 text-white text-sm font-black text-center group-hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
+              {isChecking && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isChecking ? "確認中..." : "ライブ配信を開始"}
             </span>
           </button>
         </div>
