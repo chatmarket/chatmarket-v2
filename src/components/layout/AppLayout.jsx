@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import NotificationBell from "./NotificationBell";
 import LangSwitcher from "./LangSwitcher";
+import CreatorModeToggle from "./CreatorModeToggle";
 import Footer from "./Footer";
 import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
 import { isAdmin } from "@/lib/adminConfig";
@@ -67,8 +68,19 @@ const CREATOR_ITEMS = [
 export default function AppLayout() {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [creatorMode, setCreatorMode] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // creatorMode の状態を監視（localStorage の変更を検知）
+  useEffect(() => {
+    const checkMode = () => {
+      setCreatorMode(localStorage.getItem("creatorMode") === "true");
+    };
+    checkMode();
+    window.addEventListener("storage", checkMode);
+    return () => window.removeEventListener("storage", checkMode);
+  }, []);
 
   useEffect(() => {
     // サイト全体でrefパラメータをキャプチャ（どのページから来てもOK）
@@ -123,6 +135,35 @@ export default function AppLayout() {
 
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {/* 配信用モード時は配信者メニューを最上部に固定 */}
+        {user && creatorMode && (
+          <div className="mb-4 pb-3 border-b border-border/30">
+            <p className="text-[10px] font-bold tracking-widest text-primary uppercase mb-2">⚡ クイックアクセス</p>
+            <Link to="/dashboard" onClick={onCloseFn}>
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-black transition-all",
+                isActive("/dashboard")
+                  ? "bg-primary/20 text-primary"
+                  : "text-foreground hover:bg-primary/10"
+              )}>
+                <BarChart3 className="w-4 h-4" />
+                <span>ダッシュボード</span>
+              </div>
+            </Link>
+            <Link to="/fanclub-manage" onClick={onCloseFn}>
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-black transition-all mt-1",
+                isActive("/fanclub-manage")
+                  ? "bg-amber-500/20 text-amber-400"
+                  : "text-foreground hover:bg-amber-500/10"
+              )}>
+                <Crown className="w-4 h-4" />
+                <span>ファンクラブ</span>
+              </div>
+            </Link>
+          </div>
+        )}
+
         {NAV_ITEMS.map(({ path, icon: Icon, label, showNew }) => (
           <Link key={path} to={path} onClick={onCloseFn}>
             <div className={cn(
@@ -140,7 +181,7 @@ export default function AppLayout() {
           </Link>
         ))}
 
-        {user && (
+        {user && !creatorMode && (
           <>
             <div className="pt-3 pb-1 px-3">
               <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者メニュー</p>
@@ -317,6 +358,7 @@ export default function AppLayout() {
               <span className="font-black tracking-tight truncate">Chat<span className="text-primary">Market</span></span>
             </Link>
             <div className="flex items-center gap-2 shrink-0">
+              {user && <CreatorModeToggle />}
               <LangSwitcher />
               {user && <NotificationBell user={user} />}
               {!user && (
@@ -332,6 +374,7 @@ export default function AppLayout() {
         <header className="hidden lg:flex sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 h-14 items-center px-6 gap-4">
           <div className="flex-1" />
           <div className="flex items-center gap-3">
+            {user && <CreatorModeToggle />}
             <LangSwitcher />
             {user ? (
               <>
