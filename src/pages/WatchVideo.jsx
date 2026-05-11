@@ -272,135 +272,167 @@ export default function WatchVideo() {
           maxHeight: keyboardHeight > 0 ? `calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - ${keyboardHeight}px)` : '100%'
         }}
       >
-        <div className={`${isFullscreen ? 'w-full h-full flex flex-row' : 'max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3'} gap-0 ${!isFullscreen ? 'gap-4 sm:gap-6' : ''}`}>
-          {/* Video Player */}
-          <div className={`${isFullscreen ? 'w-1/2 h-full flex flex-col' : 'space-y-3 sm:space-y-4 lg:col-span-2'}`}>
-          {!isFullscreen && (
-            <div className="bg-card border border-border/50 rounded-xl p-3 sm:p-4">
-              <DailyViewTimeIndicator />
-            </div>
-          )}
-          {/* 【微調整】動画高さ制限 + 縦長防止 */}
-          <div ref={containerRef} className={`relative bg-black ${isFullscreen ? 'rounded-none' : 'rounded-xl'} overflow-hidden`} style={isFullscreen ? { width: '100%', height: '100%' } : { aspectRatio: '16/9', maxHeight: '55vh' }}>
-            {(signedVideoUrl || video.video_url) ? (
-              <video
-                ref={videoRef}
-                src={signedVideoUrl || video.video_url}
-                className="w-full h-full object-contain"
-                controls
-                autoPlay
-                poster={video.thumbnail_url}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-secondary">
-                <p className="text-muted-foreground">動画がまだアップロードされていません</p>
+        {!isFullscreen ? (
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Video Player */}
+            <div className="space-y-3 sm:space-y-4 lg:col-span-2">
+              <div className="bg-card border border-border/50 rounded-xl p-3 sm:p-4">
+                <DailyViewTimeIndicator />
               </div>
-            )}
-
-            {/* SAMPLE watermark - 未購入の有料動画のみ表示 */}
-            {isPaid && !hasPurchased && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-                <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
-                  SAMPLE
-                </span>
-              </div>
-            )}
-
-            {/* Preview indicator */}
-            {isPaid && !hasPurchased && !previewEnded && (
-              <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
-                30秒プレビュー中
-              </div>
-            )}
-
-            {/* Video controls overlay */}
-            {(signedVideoUrl || video.video_url) && (
-              <div className={`absolute flex items-center gap-2 ${isFullscreen ? 'bottom-3 right-3' : 'bottom-12 right-3'}`}>
-                {isFullscreen && (
-                  <button
-                    onClick={() => setShowComments(!showComments)}
-                    className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
-                    title={showComments ? "コメント非表示" : "コメント表示"}
-                  >
-                    {showComments ? <MessageSquare className="w-4 h-4" /> : <MessageSquareOff className="w-4 h-4" />}
-                  </button>
-                )}
-                <VideoControls videoRef={videoRef} showQuality={true} />
-                <button
-                  onClick={toggleFullscreen}
-                  className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
-                  title={isFullscreen ? "全画面解除" : "全画面表示"}
-                >
-                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Video info — sticky 固定 */}
-          {!isFullscreen && (
-          <div className="sticky top-4 space-y-3 bg-background z-10">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
-              <h1 className="text-xl md:text-2xl font-bold flex-1">
-                {video.is_free && (
-                  <span className="inline-block bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded mr-2 align-middle">FREE</span>
-                )}
-                {!video.is_free && video.price > 0 && (
-                   <span className="inline-block bg-green-500/20 text-green-400 text-sm font-bold px-2 py-0.5 rounded mr-2 align-middle">販売価格 ¥{video.price?.toLocaleString()}</span>
-                 )}
-                {video.title}
-              </h1>
-              <button
-                onClick={toggleFavorite}
-                className={`shrink-0 mt-1 w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFavorited ? "bg-red-500 text-white" : "bg-secondary text-muted-foreground hover:text-red-400"}`}
-                title={isFavorited ? "お気に入り解除" : "お気に入りに追加"}
-              >
-                <Heart className={`w-5 h-5 ${isFavorited ? "fill-white" : ""}`} />
-              </button>
-            </div>
-
-            {/* Channel info */}
-            <Link to={`/channel/${video.channel_id}`} className="flex items-center gap-3 group w-fit">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center overflow-hidden ring-2 ring-border group-hover:ring-primary transition-all">
-                {video.channel_avatar ? (
-                  <img src={video.channel_avatar} alt="" className="w-full h-full object-cover" />
+              {/* 【微調整】動画高さ制限 + 縦長防止 */}
+              <div ref={containerRef} className="relative bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '55vh' }}>
+                {(signedVideoUrl || video.video_url) ? (
+                  <video
+                    ref={videoRef}
+                    src={signedVideoUrl || video.video_url}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    poster={video.thumbnail_url}
+                  />
                 ) : (
-                  <span className="text-sm font-bold text-muted-foreground">{video.channel_name?.[0]}</span>
+                  <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <p className="text-muted-foreground">動画がまだアップロードされていません</p>
+                  </div>
+                )}
+
+                {/* SAMPLE watermark - 未購入の有料動画のみ表示 */}
+                {isPaid && !hasPurchased && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+                    <span className="text-white/30 text-6xl font-black" style={{ transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>
+                      SAMPLE
+                    </span>
+                  </div>
+                )}
+
+                {/* Preview indicator */}
+                {isPaid && !hasPurchased && !previewEnded && (
+                  <div className="absolute top-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
+                    30秒プレビュー中
+                  </div>
+                )}
+
+                {/* Video controls overlay */}
+                {(signedVideoUrl || video.video_url) && (
+                  <div className="absolute flex items-center gap-2 bottom-12 right-3">
+                    <VideoControls videoRef={videoRef} showQuality={true} />
+                    <button
+                      onClick={toggleFullscreen}
+                      className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
+                      title={isFullscreen ? "全画面解除" : "全画面表示"}
+                    >
+                      {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                    </button>
+                  </div>
                 )}
               </div>
-              <div>
-                <p className="font-semibold text-sm group-hover:text-primary transition-colors">{video.channel_name}</p>
-                <p className="text-xs text-muted-foreground">チャンネルを見る →</p>
-              </div>
-            </Link>
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
-                {video.view_count || 0} 回視聴
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {video.created_date && format(new Date(video.created_date), "yyyy/MM/dd")}
-              </span>
-            </div>
-            {video.description && (
-              <div className="bg-card rounded-xl p-3 sm:p-4 border border-border/50">
-                <p className="text-xs sm:text-sm text-foreground/80 whitespace-pre-wrap">{video.description}</p>
-              </div>
-            )}
-            <div className="space-y-3">
-              <ReactionBar targetType="video" targetId={id} user={user} />
-              <CommentSection targetType="video" targetId={id} user={user} />
-            </div>
-          </div>
-          )}
 
-          {/* Chat & Yell */}
-          {!isFullscreen ? (
+              {/* Video info — sticky 固定 */}
+              <div className="sticky top-4 space-y-3 bg-background z-10">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
+                  <h1 className="text-xl md:text-2xl font-bold flex-1">
+                    {video.is_free && (
+                      <span className="inline-block bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded mr-2 align-middle">FREE</span>
+                    )}
+                    {!video.is_free && video.price > 0 && (
+                       <span className="inline-block bg-green-500/20 text-green-400 text-sm font-bold px-2 py-0.5 rounded mr-2 align-middle">販売価格 ¥{video.price?.toLocaleString()}</span>
+                     )}
+                    {video.title}
+                  </h1>
+                  <button
+                    onClick={toggleFavorite}
+                    className={`shrink-0 mt-1 w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFavorited ? "bg-red-500 text-white" : "bg-secondary text-muted-foreground hover:text-red-400"}`}
+                    title={isFavorited ? "お気に入り解除" : "お気に入りに追加"}
+                  >
+                    <Heart className={`w-5 h-5 ${isFavorited ? "fill-white" : ""}`} />
+                  </button>
+                </div>
+
+                {/* Channel info */}
+                <Link to={`/channel/${video.channel_id}`} className="flex items-center gap-3 group w-fit">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center overflow-hidden ring-2 ring-border group-hover:ring-primary transition-all">
+                    {video.channel_avatar ? (
+                      <img src={video.channel_avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-muted-foreground">{video.channel_name?.[0]}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm group-hover:text-primary transition-colors">{video.channel_name}</p>
+                    <p className="text-xs text-muted-foreground">チャンネルを見る →</p>
+                  </div>
+                </Link>
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    {video.view_count || 0} 回視聴
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {video.created_date && format(new Date(video.created_date), "yyyy/MM/dd")}
+                  </span>
+                </div>
+                {video.description && (
+                  <div className="bg-card rounded-xl p-3 sm:p-4 border border-border/50">
+                    <p className="text-xs sm:text-sm text-foreground/80 whitespace-pre-wrap">{video.description}</p>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  <ReactionBar targetType="video" targetId={id} user={user} />
+                  <CommentSection targetType="video" targetId={id} user={user} />
+                </div>
+              </div>
+            </div>
+
+            {/* Chat & Yell */}
             <div className="lg:col-span-1" style={{ minHeight: '300px' }}>
               {showComments && <ChatPanel targetType="video" targetId={id} user={user} />}
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="w-full h-full flex flex-row gap-0">
+            {/* Fullscreen Mode */}
+            <div className="w-1/2 h-full flex flex-col">
+              <div ref={containerRef} className="relative bg-black w-full h-full overflow-hidden rounded-none">
+                {(signedVideoUrl || video.video_url) ? (
+                  <video
+                    ref={videoRef}
+                    src={signedVideoUrl || video.video_url}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    poster={video.thumbnail_url}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <p className="text-muted-foreground">動画がまだアップロードされていません</p>
+                  </div>
+                )}
+
+                {/* Video controls overlay - fullscreen */}
+                {(signedVideoUrl || video.video_url) && (
+                  <div className="absolute flex items-center gap-2 bottom-3 right-3">
+                    <button
+                      onClick={() => setShowComments(!showComments)}
+                      className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
+                      title={showComments ? "コメント非表示" : "コメント表示"}
+                    >
+                      {showComments ? <MessageSquare className="w-4 h-4" /> : <MessageSquareOff className="w-4 h-4" />}
+                    </button>
+                    <VideoControls videoRef={videoRef} showQuality={true} />
+                    <button
+                      onClick={toggleFullscreen}
+                      className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
+                      title={isFullscreen ? "全画面解除" : "全画面表示"}
+                    >
+                      {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Chat & Yell - fullscreen */}
             <div className="w-1/2 h-full flex flex-col gap-2 overflow-hidden">
               {showComments && (
                 <div className="flex-1 overflow-y-auto bg-zinc-900 rounded-none border-none min-h-0">
@@ -419,11 +451,11 @@ export default function WatchVideo() {
                 </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {!isFullscreen && (
-          <div className="mt-4 sm:mt-6">
+          <div className="mt-4 sm:mt-6 max-w-7xl mx-auto">
             <RecommendedVideos currentVideoId={id} category={video.category} />
           </div>
         )}
