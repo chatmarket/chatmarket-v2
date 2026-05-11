@@ -603,10 +603,25 @@ export default function GoLive() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
 
         {/* ══ 左カラム: 配信設定フォーム ══ */}
-        <div className="space-y-1">
+        <div className="space-y-5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-6 bg-red-500 rounded-full" />
             <h2 className="text-base font-black text-white uppercase tracking-wider">配信設定</h2>
+          </div>
+
+          {/* PC/スマホ配信ツール（フォーム前） */}
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
+            <div className="px-4 pt-4 pb-2 border-b border-zinc-800">
+              <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">配信アプリを選択</p>
+            </div>
+            <div className="p-4">
+              <StreamSetupCards
+                user={user}
+                streamKey={manualStreamKey}
+                ingestEndpoint={manualIngestEndpoint}
+                fullRtmpsUrl={fullRtmpsUrl}
+              />
+            </div>
           </div>
 
           <form onSubmit={handleStart} className="space-y-4 pb-8">
@@ -825,21 +840,6 @@ export default function GoLive() {
               streamId={liveStreamId}
             />
           )}
-
-          {/* PC/スマホ配信ツール */}
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
-            <div className="px-4 pt-4 pb-2 border-b border-zinc-800">
-              <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">配信アプリを選択</p>
-            </div>
-            <div className="p-4">
-              <StreamSetupCards
-                user={user}
-                streamKey={manualStreamKey}
-                ingestEndpoint={manualIngestEndpoint}
-                fullRtmpsUrl={fullRtmpsUrl}
-              />
-            </div>
-          </div>
 
           {/* よくあるトラブル */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
