@@ -11,10 +11,25 @@ import { useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const ICE_SERVERS = [
+// フォールバック用STUN（Twilio取得失敗時のみ使用）
+const FALLBACK_ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
 ];
+
+/** Twilio NTSからICEサーバー一覧を取得（グローバルTURN対応） */
+async function fetchTwilioIceServers() {
+  try {
+    const res = await base44.functions.invoke('getTwilioIceServers', {});
+    if (res.data?.iceServers?.length) {
+      console.log('[WebRTC] ✅ Twilio NTS ICE servers loaded:', res.data.iceServers.length, 'servers');
+      return res.data.iceServers;
+    }
+  } catch (e) {
+    console.warn('[WebRTC] ⚠️ Twilio NTS unavailable, falling back to Google STUN:', e.message);
+  }
+  return FALLBACK_ICE_SERVERS;
+}
 
 const MAX_RETRIES = 3;
 const ICE_GATHER_TIMEOUT_MS = 8000;   // 余裕を持たせる（モバイル回線考慮）
@@ -107,8 +122,12 @@ export function useWebRtcCall({
 
       reportStatus('connecting', `試行 ${attemptNum}/${MAX_RETRIES}`);
 
+      // Twilio NTSからグローバルTURNサーバーを取得（初回のみ）
+      const iceServers = await fetchTwilioIceServers();
+      if (cleanedUpRef.current) return;
+
       const pc = new RTCPeerConnection({
-        iceServers: ICE_SERVERS,
+        iceServers,
         iceTransportPolicy: 'all',
         bundlePolicy: 'max-bundle',
         rtcpMuxPolicy: 'require',
