@@ -9,7 +9,7 @@ import PaywallOverlay from "../components/video/PaywallOverlay";
 import Preview30SecPaywallModal from "../components/video/Preview30SecPaywallModal";
 import CommentSection from "../components/video/CommentSection";
 import ReactionBar from "../components/video/ReactionBar";
-import { Eye, Calendar, Heart, Maximize, Minimize } from "lucide-react";
+import { Eye, Calendar, Heart, Maximize, Minimize, MessageSquareOff, MessageSquare, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -41,6 +41,8 @@ export default function WatchVideo() {
   const queryClient = useQueryClient();
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showComments, setShowComments] = useState(true);
+  const [isLandscape, setIsLandscape] = useState(false);
 
   // 【Keyboard-Aware】visualViewport でキーボード高さ検知（滑らかな縮小アニメーション）
   useEffect(() => {
@@ -68,6 +70,27 @@ export default function WatchVideo() {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handler);
     return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  // スマホ横向き検知 + 自動フルスクリーン
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      const isLand = window.matchMedia("(orientation: landscape)").matches;
+      setIsLandscape(isLand);
+      // モバイルで横向きなら自動フルスクリーン要求
+      if (isLand && /mobile|android|iphone/i.test(navigator.userAgent)) {
+        if (!document.fullscreenElement && containerRef.current) {
+          containerRef.current.requestFullscreen().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener("orientationchange", handleOrientationChange);
+    window.addEventListener("resize", handleOrientationChange);
+    handleOrientationChange();
+    return () => {
+      window.removeEventListener("orientationchange", handleOrientationChange);
+      window.removeEventListener("resize", handleOrientationChange);
+    };
   }, []);
 
   const { data: video, isLoading } = useQuery({
@@ -235,7 +258,7 @@ export default function WatchVideo() {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className={`w-full flex flex-col overflow-hidden ${isFullscreen ? 'h-screen' : 'h-screen'}`} style={{ paddingTop: isFullscreen ? '0' : 'env(safe-area-inset-top)', paddingBottom: isFullscreen ? '0' : 'env(safe-area-inset-bottom)' }}>
       <MetaHelmet
         title={`${video.title} | ChatMarket`}
         description={video.description || `${video.channel_name}の動画「${video.title}」を視聴する。ChatMarketで有料・無料動画を楽しもう。`}
@@ -243,21 +266,22 @@ export default function WatchVideo() {
       />
       {/* スクロール可能なメインコンテンツ */}
       <div 
-        className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6"
+        className={`flex-1 overflow-y-auto ${isFullscreen ? 'px-0' : 'px-3 sm:px-4'} ${isFullscreen ? 'py-0' : 'py-4 sm:py-6'}`}
         style={{
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           maxHeight: keyboardHeight > 0 ? `calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - ${keyboardHeight}px)` : '100%'
         }}
       >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className={`${isFullscreen ? 'w-full h-full flex flex-row' : 'max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3'} gap-0 ${!isFullscreen ? 'gap-4 sm:gap-6' : ''}`}>
           {/* Video Player */}
-          <div className="space-y-3 sm:space-y-4 lg:col-span-2">
-          {/* 残り視聴時間インジケーター */}
-          <div className="bg-card border border-border/50 rounded-xl p-3 sm:p-4">
-            <DailyViewTimeIndicator />
-          </div>
+          <div className={`${isFullscreen ? 'w-1/2 h-full flex flex-col' : 'space-y-3 sm:space-y-4 lg:col-span-2'}`}>
+          {!isFullscreen && (
+            <div className="bg-card border border-border/50 rounded-xl p-3 sm:p-4">
+              <DailyViewTimeIndicator />
+            </div>
+          )}
           {/* 【微調整】動画高さ制限 + 縦長防止 */}
-          <div ref={containerRef} className="relative bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '55vh' }}>
+          <div ref={containerRef} className={`relative bg-black ${isFullscreen ? 'rounded-none' : 'rounded-xl'} overflow-hidden`} style={isFullscreen ? { width: '100%', height: '100%' } : { aspectRatio: '16/9', maxHeight: '55vh' }}>
             {(signedVideoUrl || video.video_url) ? (
               <video
                 ref={videoRef}
@@ -291,7 +315,16 @@ export default function WatchVideo() {
 
             {/* Video controls overlay */}
             {(signedVideoUrl || video.video_url) && (
-              <div className="absolute bottom-12 right-3 flex items-center gap-2">
+              <div className={`absolute flex items-center gap-2 ${isFullscreen ? 'bottom-3 right-3' : 'bottom-12 right-3'}`}>
+                {isFullscreen && (
+                  <button
+                    onClick={() => setShowComments(!showComments)}
+                    className="bg-black/70 hover:bg-black/90 text-white rounded-lg p-1.5 transition-all"
+                    title={showComments ? "コメント非表示" : "コメント表示"}
+                  >
+                    {showComments ? <MessageSquare className="w-4 h-4" /> : <MessageSquareOff className="w-4 h-4" />}
+                  </button>
+                )}
                 <VideoControls videoRef={videoRef} showQuality={true} />
                 <button
                   onClick={toggleFullscreen}
@@ -305,6 +338,7 @@ export default function WatchVideo() {
           </div>
 
           {/* Video info — sticky 固定 */}
+          {!isFullscreen && (
           <div className="sticky top-4 space-y-3 bg-background z-10">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
               <h1 className="text-xl md:text-2xl font-bold flex-1">
@@ -359,18 +393,40 @@ export default function WatchVideo() {
               <CommentSection targetType="video" targetId={id} user={user} />
             </div>
           </div>
+          )}
+
+          {/* Chat & Yell */}
+          {!isFullscreen ? (
+            <div className="lg:col-span-1" style={{ minHeight: '300px' }}>
+              {showComments && <ChatPanel targetType="video" targetId={id} user={user} />}
+            </div>
+          ) : (
+            <div className="w-1/2 h-full flex flex-col gap-2 overflow-hidden">
+              {showComments && (
+                <div className="flex-1 overflow-y-auto bg-zinc-900 rounded-none border-none min-h-0">
+                  <ChatPanel targetType="video" targetId={id} user={user} />
+                </div>
+              )}
+              {/* エールコインボタン常駐（フルスクリーン時） */}
+              <div className="bg-black/80 backdrop-blur-sm border-t border-zinc-700 p-3 flex items-center justify-center">
+                <button
+                  onClick={() => user ? null : base44.auth.redirectToLogin()}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-black rounded-xl transition-all text-sm shrink-0"
+                  title="エールコインを送る"
+                >
+                  <Coins className="w-4 h-4" />
+                  エール送信
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-          {/* Chat */}
-          <div className="lg:col-span-1" style={{ minHeight: '300px' }}>
-            <ChatPanel targetType="video" targetId={id} user={user} />
+        {!isFullscreen && (
+          <div className="mt-4 sm:mt-6">
+            <RecommendedVideos currentVideoId={id} category={video.category} />
           </div>
-        </div>
-
-        {/* Recommended Videos */}
-        <div className="mt-4 sm:mt-6">
-          <RecommendedVideos currentVideoId={id} category={video.category} />
-        </div>
+        )}
       </div>
 
       {/* ---- Paywall Modal（新・Stripe手数料外出し版） ----*/}
