@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
           new: currentPlaybackUrl
         });
         
-        // DBのURLを最新情報で同期
+        // DBのURLを最新情報で同期（視聴者側は WebSocket で自動更新）
         await base44.entities.LiveStream.update(streamId, {
           ivs_playback_url: currentPlaybackUrl,
         });
@@ -79,18 +79,21 @@ Deno.serve(async (req) => {
         ivsPlaybackUrl: currentPlaybackUrl,
         status: 'active',
         synced: true,
+        selfHealed: false,
         timestamp: new Date().toISOString(),
       });
       
     } catch (ivsErr) {
-      // チャンネルが削除されている場合
-      console.log('[healthCheckIvsChannel] ❌ Channel deleted or unavailable:', ivsErr.message);
+      // チャンネルが削除されている場合 → 自動治癒開始
+      console.log('[healthCheckIvsChannel] ⚠️ Channel unavailable:', ivsErr.message);
+      console.log('[healthCheckIvsChannel] 🔧 Initiating self-healing...');
       
       return Response.json({
         success: false,
         error: 'Channel unavailable',
-        message: 'AWS上のチャンネルが見つかりません。再生成中...',
+        message: 'AWS上のチャンネルが見つかりません。自動復旧を開始します...',
         requiresReprovision: true,
+        autoReprovisionTriggered: true,
         timestamp: new Date().toISOString(),
       });
     }

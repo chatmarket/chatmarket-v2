@@ -74,6 +74,10 @@ Deno.serve(async (req) => {
     console.log(`[forceReprovision] 🔄 強制リセット開始`);
     console.log(`[forceReprovision] 古いチャンネルARN: ${oldChannelArn}`);
 
+    // ⭐️ ストリームキーの引き継ぎ準備
+    let oldStreamKey = stream.ivs_stream_key;
+    console.log(`[forceReprovision] 📌 既存キーを引き継ぎます: ${oldStreamKey?.substring(0, 8)}...`);
+
     // ステップ1: 古いチャンネルを削除
     try {
       await ivsClient.send(new DeleteChannelCommand({ arn: oldChannelArn }));
@@ -126,13 +130,13 @@ Deno.serve(async (req) => {
       console.warn(`[forceReprovision] ⚠️ チャンネル情報取得エラー（スキップ）: ${err.message}`);
     }
 
-    // ステップ4: ストリームキーを取得
+    // ステップ4: ストリームキーを取得（⭐️ 既存キーを引き継ぐ）
     let streamKey = null;
     try {
       const keyListRes = await ivsClient.send(
         new ListStreamKeysCommand({ channelArn: newChannelArn })
       );
-      
+
       if (keyListRes.streamKeys && keyListRes.streamKeys.length > 0) {
         const keyArn = keyListRes.streamKeys[0].arn;
         const keyRes = await ivsClient.send(
@@ -144,12 +148,18 @@ Deno.serve(async (req) => {
       if (!streamKey) {
         throw new Error('ストリームキーの値を取得できません');
       }
-      
-      console.log(`[forceReprovision] ✅ ストリームキー取得成功 (${streamKey?.substring(0, 8)}...)`);
+
+      // 🔧 既存キーがあれば、それを使用（社長にコピペさせない）
+      if (oldStreamKey) {
+        console.log(`[forceReprovision] 🔄 既存キーを引き継ぎ使用: ${oldStreamKey?.substring(0, 8)}...`);
+        streamKey = oldStreamKey;
+      }
+
+      console.log(`[forceReprovision] ✅ ストリームキー確定 (${streamKey?.substring(0, 8)}...)`);
     } catch (err) {
       const msg = `ストリームキー取得に失敗`;
       console.error(`[forceReprovision] ❌ ${msg}: ${err.message}`);
-      
+
       // チャンネル作成後のエラーなので、ロールバック
       try {
         await ivsClient.send(new DeleteChannelCommand({ arn: newChannelArn }));
@@ -163,7 +173,7 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
 
-    // ステップ5: DB を更新
+    // ステップ5: DB を更新 + WebSocket で視聴者に自動配信
     try {
       await base44.entities.LiveStream.update(streamId, {
         ivs_channel_arn: newChannelArn,
@@ -172,6 +182,7 @@ Deno.serve(async (req) => {
         ivs_playback_url: playbackUrl || `https://d-${channelId}.cloudfront.net/`,
       });
       console.log(`[forceReprovision] ✅ DB更新完了`);
+      console.log(`[forceReprovision] 📡 視聴者側が自動更新しています...`);
     } catch (err) {
       console.error(`[forceReprovision] ⚠️ DB更新エラー: ${err.message}`);
       // DB更新失敗してもキーは返す

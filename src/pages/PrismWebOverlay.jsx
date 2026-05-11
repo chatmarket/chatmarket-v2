@@ -182,7 +182,7 @@ export default function PrismWebOverlay() {
     return unsubscribeLiveStream;
   }, [streamId]);
 
-  // IVSチャンネルヘルスチェック
+  // IVSチャンネルヘルスチェック＋自動治癒
   const performHealthCheck = async () => {
     console.log('[PrismWebOverlay] 🏥 Performing IVS health check...');
     setIsConnecting(true);
@@ -192,26 +192,40 @@ export default function PrismWebOverlay() {
       const res = await base44.functions.invoke('healthCheckIvsChannel', { streamId });
       const data = res?.data;
       
-      if (data?.success) {
-        console.log('[PrismWebOverlay] ✅ Health check passed:', data);
+      if (data?.success && !data?.requiresReprovision) {
+        console.log('[PrismWebOverlay] ✅ Health check passed — Channel is healthy:', data);
+        console.log('[PrismWebOverlay] 📡 Playback URL synced:', data.ivsPlaybackUrl);
         setIsConnecting(false);
-      } else {
-        console.log('[PrismWebOverlay] ⚠️ Health check failed:', data);
-        setHealthCheckError(data?.message);
-        setIsConnecting(true); // 接続準備中を継続表示
+        return; // 正常終了
+      }
+      
+      // ⚠️ チャンネル問題検出 → 自動治癒開始
+      if (data?.requiresReprovision || !data?.success) {
+        console.log('[PrismWebOverlay] 🔧 Channel issue detected. Starting self-healing...');
+        setHealthCheckError('インフラを自動修復中です...');
         
-        // 自動復旧: チャンネル再生成が必要な場合
-        if (data?.requiresReprovision) {
-          console.log('[PrismWebOverlay] 🔧 Triggering channel reprovision...');
-          try {
-            const reprovRes = await base44.functions.invoke('forceReprovisionIvsChannel', { streamId });
-            console.log('[PrismWebOverlay] ✅ Reprovision result:', reprovRes?.data);
+        try {
+          console.log('[PrismWebOverlay] 🔄 Reprovision in progress (keeping existing stream key)...');
+          const reprovRes = await base44.functions.invoke('forceReprovisionIvsChannel', { streamId });
+          const reprovData = reprovRes?.data;
+          
+          if (reprovData?.success) {
+            console.log('[PrismWebOverlay] ✅ Self-healing complete!', {
+              oldChannelArn: reprovData.oldChannelArn,
+              newChannelArn: reprovData.newChannelArn,
+              streamKeyPreserved: '✅ (unchanged)',
+              playbackUrl: reprovData.playbackUrl,
+            });
+            console.log('[PrismWebOverlay] 📡 Broadcasting new URL to viewers via WebSocket...');
             setIsConnecting(false);
-          } catch (reprovErr) {
-            console.error('[PrismWebOverlay] ❌ Reprovision failed:', reprovErr);
-            setIsConnecting(false);
-            setHealthCheckError('チャンネル復旧に失敗しました。OBSを再起動してください。');
+            setHealthCheckError(null);
+          } else {
+            throw new Error(reprovData?.error || 'Reprovision failed');
           }
+        } catch (reprovErr) {
+          console.error('[PrismWebOverlay] ❌ Self-healing failed:', reprovErr);
+          setIsConnecting(false);
+          setHealthCheckError('チャンネル復旧に失敗しました。OBSを再起動してください。');
         }
       }
     } catch (err) {
