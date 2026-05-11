@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, Coins, Users, Settings, TrendingUp, Save } from "lucide-react";
+import { Crown, Coins, Users, Settings, TrendingUp, Save, DollarSign, Euro, Zap, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 const MIN_PRICE = 300;
@@ -37,6 +37,13 @@ export default function FanClubManage() {
     queryKey: ["fanclub-members", channel?.id],
     queryFn: () => base44.entities.PlanSubscription.filter({ plan_id: `sanctum_${channel?.id}`, status: "active" }),
     enabled: !!channel?.id,
+  });
+
+  // スパチャ収益
+  const { data: superChats = [] } = useQuery({
+    queryKey: ["fanclub-superchats", channel?.id],
+    queryFn: () => base44.entities.SuperChat.filter({ callee_email: user.email }, "-created_date", 200),
+    enabled: !!user?.email,
   });
 
   useEffect(() => {
@@ -96,6 +103,10 @@ export default function FanClubManage() {
   }
 
   const monthlyRevenue = members.length * price;
+
+  // 為替レート（参考値）
+  const USD_RATE = 157;
+  const EUR_RATE = 172;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -205,15 +216,93 @@ export default function FanClubManage() {
 
         {/* 売上タブ */}
         <TabsContent value="revenue" className="space-y-4">
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl border border-primary/40 p-6 space-y-3">
-            <p className="text-sm text-muted-foreground">月間合計（手取り 85%）</p>
-            <p className="text-4xl font-black text-green-400">
-              ¥{Math.floor(monthlyRevenue * 0.85).toLocaleString()}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              会員 {members.length}人 × 月額 ¥{price.toLocaleString()} = ¥{monthlyRevenue.toLocaleString()}
-            </p>
-          </div>
+          {/* 収益サマリーカード */}
+          {(() => {
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            const thisMonthSC = superChats.filter(s => s.created_date >= monthStart);
+            const scTotal = thisMonthSC.reduce((sum, s) => sum + (s.amount || 0), 0);
+            const scNet = Math.floor(scTotal * 0.85);
+            const fcNet = Math.floor(monthlyRevenue * 0.85);
+            const totalNet = scNet + fcNet;
+            const totalGross = scTotal + monthlyRevenue;
+
+            return (
+              <>
+                {/* 合計ヒーローカード */}
+                <div className="relative overflow-hidden rounded-2xl p-6 space-y-2"
+                  style={{ background: "linear-gradient(135deg, #0a1a0a 0%, #0d2a0d 100%)", border: "1px solid rgba(0,255,157,0.3)" }}>
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(ellipse, rgba(0,255,157,0.15) 0%, transparent 70%)" }} />
+                  <p className="text-xs font-bold tracking-widest" style={{ color: "rgba(0,255,157,0.6)" }}>TOTAL NET REVENUE（今月・手取り）</p>
+                  <p className="text-5xl font-black" style={{ color: "#00ff9d" }}>
+                    ¥{totalNet.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-white/40">税込売上 ¥{totalGross.toLocaleString()} × 85%</p>
+                  {/* 通貨換算 */}
+                  <div className="flex gap-4 pt-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                      <DollarSign className="w-3.5 h-3.5 text-green-400" />
+                      <span className="text-sm font-bold text-white">${(totalNet / USD_RATE).toFixed(2)}</span>
+                      <span className="text-[10px] text-white/30">USD</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                      <Euro className="w-3.5 h-3.5 text-blue-400" />
+                      <span className="text-sm font-bold text-white">€{(totalNet / EUR_RATE).toFixed(2)}</span>
+                      <span className="text-[10px] text-white/30">EUR</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 内訳カード */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* ファンクラブ月額 */}
+                  <div className="bg-card border border-border/50 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-yellow-400" />
+                      <p className="text-xs font-bold text-yellow-400">ファンクラブ月額</p>
+                    </div>
+                    <p className="text-2xl font-black text-foreground">¥{fcNet.toLocaleString()}</p>
+                    <p className="text-[11px] text-muted-foreground">{members.length}人 × ¥{price.toLocaleString()}</p>
+                    <div className="flex gap-2 text-[10px] text-muted-foreground">
+                      <span>${(fcNet / USD_RATE).toFixed(2)}</span>
+                      <span>€{(fcNet / EUR_RATE).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {/* スパチャ */}
+                  <div className="bg-card border border-border/50 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-orange-400" />
+                      <p className="text-xs font-bold text-orange-400">スパチャ（今月）</p>
+                    </div>
+                    <p className="text-2xl font-black text-foreground">¥{scNet.toLocaleString()}</p>
+                    <p className="text-[11px] text-muted-foreground">{thisMonthSC.length}件の投げ銭</p>
+                    <div className="flex gap-2 text-[10px] text-muted-foreground">
+                      <span>${(scNet / USD_RATE).toFixed(2)}</span>
+                      <span>€{(scNet / EUR_RATE).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 年間予測 */}
+                <div className="bg-card border border-border/50 rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">年間収益予測（月額ベース）</p>
+                    <p className="text-xl font-black text-primary">¥{(fcNet * 12).toLocaleString()}</p>
+                  </div>
+                  <div className="text-right text-xs text-muted-foreground space-y-0.5">
+                    <p>${((fcNet * 12) / USD_RATE).toFixed(0)} USD</p>
+                    <p>€{((fcNet * 12) / EUR_RATE).toFixed(0)} EUR</p>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground text-center">
+                  ※ 為替レートは参考値（USD: ¥{USD_RATE} / EUR: ¥{EUR_RATE}）
+                </p>
+              </>
+            );
+          })()}
         </TabsContent>
       </Tabs>
     </div>
