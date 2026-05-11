@@ -201,10 +201,10 @@ export default function LivePaywall({ stream, user, onAllowed }) {
   );
 }
 
-/** 共通シェル: 映像の上に重なるモーダル風レイアウト */
+/** 共通シェル: ビデオプレイヤー上のみに限定（z-index: 30はビデオコンテナ内の絶対位置） */
 function PaywallShell({ stream, price, children }) {
   return (
-    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4">
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4 pointer-events-auto">
       <div className="w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl p-6 space-y-4 shadow-2xl">
         {/* ヘッダー */}
         <div className="text-center space-y-1">

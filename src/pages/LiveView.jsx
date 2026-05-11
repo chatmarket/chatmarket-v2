@@ -406,47 +406,47 @@ function LiveViewInner() {
           {!isLandscape && <StreamInfoPanel stream={stream} />}
         </div>
 
-        {/* ── チャットカラム ── */}
-        {stream.status === "live" && (
-          <div style={{
-            width: isLandscape ? CHAT_W : "100%",
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            background: "#0f0e17",
-            ...(isLandscape ? { height: "100%" } : { flex: 1, minHeight: 0 }),
-            overflow: "hidden",
-          }}>
-            {/* チャットヘッダー */}
-            <div style={{ padding: "8px 12px 7px", borderBottom: "0.5px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.5)" }}>LIVE CHAT</span>
-              {user && coinBalance !== null && (
-                <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>🪙 {coinBalance.toLocaleString()}</span>
-              )}
-            </div>
+        {/* ── チャットカラム（常に表示・チケット未購入でも閲覧可能） ── */}
+         {stream.status === "live" && (
+           <div style={{
+             width: isLandscape ? CHAT_W : "100%",
+             flexShrink: 0,
+             display: "flex",
+             flexDirection: "column",
+             background: "#0f0e17",
+             ...(isLandscape ? { height: "100%" } : { flex: 1, minHeight: 0 }),
+             overflow: "hidden",
+           }}>
+             {/* チャットヘッダー */}
+             <div style={{ padding: "8px 12px 7px", borderBottom: "0.5px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.5)" }}>LIVE CHAT</span>
+               {user && coinBalance !== null && (
+                 <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>🪙 {coinBalance.toLocaleString()}</span>
+               )}
+             </div>
 
-            {/* メッセージ一覧 */}
-            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-              <LiveChatDisplay streamId={stream.id} />
-            </div>
+             {/* メッセージ一覧（チケット未購入でも表示） */}
+             <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+               <LiveChatDisplay streamId={stream.id} />
+             </div>
 
-            {/* エールコインボタン（チャットに内包）*/}
-            <div style={{ flexShrink: 0, borderTop: "0.5px solid rgba(255,255,255,0.06)", padding: "7px 10px 5px" }}>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 5, letterSpacing: "0.03em" }}>SUPER CHAT</div>
-              <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} compact={true} />
-            </div>
+             {/* エールコインボタン（チケット未購入でも送信可能） */}
+             <div style={{ flexShrink: 0, borderTop: "0.5px solid rgba(255,255,255,0.06)", padding: "7px 10px 5px" }}>
+               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 5, letterSpacing: "0.03em" }}>SUPER CHAT</div>
+               <YellButtons streamId={stream.id} user={user} channelId={stream.channel_id} compact={true} />
+             </div>
 
-            {/* チャット入力 */}
-            <div style={{
-              flexShrink: 0,
-              borderTop: "0.5px solid rgba(255,255,255,0.06)",
-              padding: "7px 10px",
-              paddingBottom: `max(10px, env(safe-area-inset-bottom, 10px))`,
-            }}>
-              <ViewerChatInput streamId={stream.id} user={user} />
-            </div>
-          </div>
-        )}
+             {/* チャット入力 */}
+             <div style={{
+               flexShrink: 0,
+               borderTop: "0.5px solid rgba(255,255,255,0.06)",
+               padding: "7px 10px",
+               paddingBottom: `max(10px, env(safe-area-inset-bottom, 10px))`,
+             }}>
+               <ViewerChatInput streamId={stream.id} user={user} />
+             </div>
+           </div>
+         )}
       </div>
 
       {/* エール通知 */}
