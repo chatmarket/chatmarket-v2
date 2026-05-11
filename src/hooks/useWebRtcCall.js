@@ -449,7 +449,14 @@ export function useWebRtcCall({
       cleanedUpRef.current = true;
       clearTimeout(retryTimerRef.current);
       stopPollingRef.current?.();
-      if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
+      if (pcRef.current) {
+        // ICEセッションを確実に破棄 — Twilioのトラフィック課金を防ぐ
+        const senders = pcRef.current.getSenders?.() || [];
+        senders.forEach(s => { try { pcRef.current.removeTrack(s); } catch {} });
+        pcRef.current.close();
+        pcRef.current = null;
+        console.log('[WebRTC] 🔒 ICE session released — Twilio TURN traffic stopped');
+      }
     };
   }, [enabled, call?.id, localStream, user?.email]);
 }
