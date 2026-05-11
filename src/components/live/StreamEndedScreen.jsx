@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { ThumbsUp, Heart } from "lucide-react";
+import { ThumbsUp, Heart, Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 /**
  * StreamEndedScreen
@@ -8,6 +9,8 @@ import { ThumbsUp, Heart } from "lucide-react";
  * 「配信は終了しました。エールありがとうございました！」
  */
 export default function StreamEndedScreen({ totalYells = 0, totalViewers = 0 }) {
+  const navigate = useNavigate();
+
   useEffect(() => {
     console.log('[StreamEndedScreen] 👋 Stream ended display triggered');
   }, []);
@@ -190,6 +193,7 @@ export default function StreamEndedScreen({ totalYells = 0, totalViewers = 0 }) 
             marginTop: "40px",
             fontSize: "14px",
             color: "#94a3b8",
+            marginBottom: "24px",
           }}
         >
           また次回の配信でお会いしましょう！
@@ -198,6 +202,40 @@ export default function StreamEndedScreen({ totalYells = 0, totalViewers = 0 }) 
             📲 ホームに戻ります...
           </span>
         </motion.div>
+
+        {/* ホームボタン */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1 }}
+          onClick={() => navigate("/")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "12px",
+            padding: "14px 32px",
+            fontSize: "16px",
+            fontWeight: "700",
+            cursor: "pointer",
+            boxShadow: "0 0 20px rgba(34, 197, 94, 0.4)",
+            transition: "transform 0.2s, box-shadow 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = "scale(1.05)";
+            e.target.style.boxShadow = "0 0 30px rgba(34, 197, 94, 0.6)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "scale(1)";
+            e.target.style.boxShadow = "0 0 20px rgba(34, 197, 94, 0.4)";
+          }}
+        >
+          <Home style={{ width: "20px", height: "20px" }} />
+          ホームへ戻る
+        </motion.button>
       </div>
     </motion.div>
   );
