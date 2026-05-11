@@ -365,6 +365,11 @@ export default function AppLayout() {
               <span className="font-black tracking-tight truncate">Chat<span className="text-primary">Market</span></span>
             </Link>
             <div className="flex items-center gap-2 shrink-0">
+              {user && (
+                <span className="text-xs font-semibold text-muted-foreground truncate max-w-[80px]">
+                  {user.full_name?.split(/\s/)[0] || user.email?.split("@")[0]}
+                </span>
+              )}
               {user && <CreatorModeToggle />}
               <LangSwitcher />
               {user && <NotificationBell user={user} />}
