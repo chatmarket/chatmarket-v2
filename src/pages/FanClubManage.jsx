@@ -147,6 +147,7 @@ export default function FanClubManage() {
               <span className="text-muted-foreground shrink-0">/月</span>
             </div>
             <p className="text-xs text-muted-foreground">設定可能範囲: {MIN_PRICE}円 〜 {MAX_PRICE}円</p>
+            <p className="text-xs text-muted-foreground">Approx. ${(price / 157).toFixed(2)} USD（参考レート）</p>
             <p className="text-xs text-primary">手取り ¥{Math.floor(price * 0.85).toLocaleString()} (85%)</p>
           </div>
 
