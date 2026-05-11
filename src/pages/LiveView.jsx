@@ -407,7 +407,7 @@ function LiveViewInner() {
         </div>
 
         {/* ── チャットカラム（常に表示・チケット未購入でも閲覧可能） ── */}
-         {stream.status === "live" && (
+        {stream.status === "live" && (
            <div style={{
              width: isLandscape ? CHAT_W : "100%",
              flexShrink: 0,
@@ -445,9 +445,9 @@ function LiveViewInner() {
              }}>
                <ViewerChatInput streamId={stream.id} user={user} />
              </div>
-           </div>
-         )}
-      </div>
+             </div>
+             )}
+             </div>
 
       {/* エール通知 */}
       {stream.status === "live" && (
