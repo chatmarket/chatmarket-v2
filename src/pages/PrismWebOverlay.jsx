@@ -5,6 +5,9 @@ import StreamOverlayChat from "@/components/overlay/StreamOverlayChat";
 import StreamOverlayYell from "@/components/overlay/StreamOverlayYell";
 import StreamStatusOverlay from "@/components/overlay/StreamStatusOverlay";
 import StreamConnectionWelcome from "@/components/overlay/StreamConnectionWelcome";
+import SystemHealthIndicator from "@/components/overlay/SystemHealthIndicator";
+import ConnectionReadySign from "@/components/overlay/ConnectionReadySign";
+import LightweightYellNotification from "@/components/overlay/LightweightYellNotification";
 
 /**
  * PrismWebOverlay
@@ -24,6 +27,8 @@ export default function PrismWebOverlay() {
   const [viewerCount, setViewerCount] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [healthCheckError, setHealthCheckError] = useState(null);
+  const [latestYell, setLatestYell] = useState(null);
+  const [showDebugPanel, setShowDebugPanel] = useState(true);
 
   // ページロード時のテストログ＋サーバー報告
   useEffect(() => {
@@ -110,7 +115,7 @@ export default function PrismWebOverlay() {
     return unsubscribeChat;
   }, [streamId]);
 
-  // エール購読
+  // エール購読：軽量アニメーション優先
   useEffect(() => {
     if (!streamId) {
       console.log('[PrismWebOverlay] ⚠️ No streamId for yell subscription');
@@ -126,20 +131,23 @@ export default function PrismWebOverlay() {
         return;
       }
 
-      const yell = {
+      const yellData = {
         id: event.id,
-        user: event.data?.user_name || "Anonymous",
+        user_name: event.data?.user_name || "Anonymous",
         amount: event.data?.amount || 0,
         message: event.data?.message || "",
         timestamp: new Date().toISOString(),
       };
-      
+
       const lagMs = Date.now() - new Date(event.data?.created_date).getTime();
-      console.log('[PrismWebOverlay] 💰 SuperChat received:', { user: yell.user, amount: yell.amount, coins: yell.amount, lag: `${lagMs}ms` });
-      console.log('[PrismWebOverlay] 🎨 Rendering yell notification — will auto-dismiss in 5s');
-      
-      setYellNotifications((prev) => [...prev, yell]);
-      
+      console.log('[PrismWebOverlay] ⭐ Yell: ${event.data?.user_name} × ${event.data?.amount} coins (lag: ${lagMs}ms)');
+
+      // 軽量通知を優先
+      setLatestYell(yellData);
+
+      // 古い表示と互換性のため yellowNotifications にも追加
+      setYellNotifications((prev) => [...prev, yellData]);
+
       // 5秒後に自動削除
       setTimeout(() => {
         setYellNotifications((prev) => prev.filter((y) => y.id !== event.id));
@@ -267,6 +275,8 @@ export default function PrismWebOverlay() {
         inset: 0,
         background: "transparent",
         pointerEvents: "none",
+        WebkitFontSmoothing: "antialiased",
+        MozOsxFontSmoothing: "grayscale",
       }}
       onLoad={() => console.log('[PrismWebOverlay] ✅ DOM rendered and ready')}
     >
@@ -336,11 +346,22 @@ export default function PrismWebOverlay() {
         isConnecting={isConnecting}
       />
 
-      {/* 接続成功ウェルカムメッセージ（オープニング）*/}
-      {(() => {
-        console.log('[PrismWebOverlay] 📊 Rendering StreamConnectionWelcome:', { streamId, isLive: streamStatus === "live" });
-        return <StreamConnectionWelcome streamId={streamId} />;
-      })()}
+      {/* 接続確認看板（常時表示）*/}
+      <ConnectionReadySign />
+
+      {/* システム自己診断パネル（デバッグ用）*/}
+      {showDebugPanel && <SystemHealthIndicator streamId={streamId} />}
+
+      {/* 接続成功ウェルカムメッセージ */}
+      <StreamConnectionWelcome streamId={streamId} />
+
+      {/* 軽量エール通知 */}
+      {latestYell && (
+        <LightweightYellNotification
+          yell={latestYell}
+          onComplete={() => setLatestYell(null)}
+        />
+      )}
     </div>
   );
 }
