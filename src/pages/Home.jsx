@@ -19,6 +19,7 @@ import { isBefore } from "date-fns";
 import { toast } from "sonner";
 import { t } from "@/lib/i18n";
 import { useInViewTrigger } from "@/hooks/useInViewTrigger";
+import StreamingSetupModal from "@/components/onboarding/StreamingSetupModal";
 
 const _RECRUIT_DEADLINE = new Date('2026-05-01T00:00:00+09:00');
 const _now = new Date();
@@ -59,6 +60,8 @@ export default function Home() {
   const [cfExpanded, setCfExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryTab, setCategoryTab] = useState("all");
+  const [showStreamingSetup, setShowStreamingSetup] = useState(false);
+  const [hasSeenStreamingSetup, setHasSeenStreamingSetup] = useState(false);
   const [enabledSections, setEnabledSections] = useState({
     callWaiting: true,  // 常に表示（IntersectionObserverの遅延を回避）
     liveStreams: true,  // 同様に常に取得開始
@@ -80,6 +83,10 @@ export default function Home() {
           const channels = await base44.entities.Channel.filter({ owner_email: u.email });
           if (channels[0]) {
             setMyChannel(channels[0]);
+          } else if (!hasSeenStreamingSetup) {
+            // チャンネルがなく、ガイドをまだ見ていない場合は表示
+            setShowStreamingSetup(true);
+            setHasSeenStreamingSetup(true);
           }
         }).catch((err) => console.error("[Home] Auth error:", err));
       }
@@ -94,7 +101,7 @@ export default function Home() {
       }
     });
     return () => unsub();
-  }, []);
+  }, [hasSeenStreamingSetup, queryClient]);
 
   const openCallSettings = () => {
     if (!myChannel) return;
@@ -782,6 +789,13 @@ export default function Home() {
           onClose={() => setMessageTarget(null)}
         />
       )}
+
+      {/* 配信セットアップガイド */}
+      <StreamingSetupModal
+        isOpen={showStreamingSetup}
+        onClose={() => setShowStreamingSetup(false)}
+        hasChannel={!!myChannel}
+      />
     </div>
   );
 }
