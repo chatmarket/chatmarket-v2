@@ -20,6 +20,7 @@ import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
 import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
 import StreamInfoPanel from "../components/live/StreamInfoPanel.jsx";
 import LivePreviewLockout from "../components/live/LivePreviewLockout.jsx";
+import ScheduledStreamWaiting from "../components/live/ScheduledStreamWaiting.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -327,6 +328,11 @@ function LiveViewInner() {
                 />
               )}
 
+              {/* 配信前の待機画面 */}
+              {stream.status === "scheduled" && (
+                <ScheduledStreamWaiting stream={stream} viewerCount={stream.viewer_count || 0} />
+              )}
+
               {/* 映像本体 */}
               {stream.status === "live" && ticketChecked && stream.stream_type === "vimeo" && stream.vimeo_url ? (
                 <iframe src={stream.vimeo_url} style={{ width: "100%", height: "100%", border: "none" }} allow="autoplay; fullscreen" allowFullScreen title={stream.title} />
@@ -406,7 +412,7 @@ function LiveViewInner() {
           {!isLandscape && <StreamInfoPanel stream={stream} />}
         </div>
 
-        {/* ── チャットカラム（常に表示・チケット未購入でも閲覧可能） ── */}
+        {/* ── チャットカラム（配信中のみ表示） ── */}
         {stream.status === "live" && (
            <div style={{
              width: isLandscape ? CHAT_W : "100%",
