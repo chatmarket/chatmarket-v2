@@ -14,7 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Eye, Mic, Radio, Coins, TrendingUp, Wallet, Phone,
   Play, Heart, Users, History, ChevronRight, Bell,
-  Upload, Video, ArrowUpRight, Zap, Clock, AlertCircle
+  Upload, Video, ArrowUpRight, Zap, Clock, AlertCircle, Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EarningsSummaryCard from "../components/dashboard/EarningsSummaryCard";
@@ -481,6 +481,7 @@ export default function Dashboard() {
                 { label: "収益管理", icon: Wallet, to: "/revenue", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20" },
                 { label: "詳細分析", icon: TrendingUp, to: "/creator-dashboard", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
                 { label: "チャンネル", icon: Users, to: "/my-channel", color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
+                { label: "ファンクラブ管理", icon: Crown, to: "/fanclub-manage", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
               ].map(({ label, icon: Icon, to, color, bg }) => (
                 <Link key={to} to={to}>
                   <div className={`border rounded-xl p-3 flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity ${bg}`}>
