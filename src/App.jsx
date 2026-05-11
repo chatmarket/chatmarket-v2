@@ -90,6 +90,8 @@ import ExpertLP from '@/pages/ExpertLP';
 import FitnessLP from '@/pages/FitnessLP';
 import CareerLP from '@/pages/CareerLP';
 import AdminDashboardMetrics from '@/pages/AdminDashboardMetrics';
+import EnglishLP from '@/pages/EnglishLP';
+import CoachLP from '@/pages/CoachLP';
 
 
 export default function App() {
@@ -182,6 +184,8 @@ export default function App() {
             <Route path="/lp/fitness" element={<FitnessLP />} />
             <Route path="/lp/career" element={<CareerLP />} />
             <Route path="/admin/metrics" element={<AdminDashboardMetrics />} />
+            <Route path="/lp/english" element={<EnglishLP />} />
+            <Route path="/lp/coach" element={<CoachLP />} />
 
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />

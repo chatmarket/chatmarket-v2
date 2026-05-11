@@ -238,6 +238,13 @@
         }
       }
     },
+    "badges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u30d0\u30c3\u30b8\uff08storecka_100, toeic_900, certified_coach, years_5, years_10, youtube_10k, twitter_10k, top_creator, verified \u306a\u3069\uff09"
+    },
     "campaign_allowed": {
       "type": "boolean",
       "default": false,

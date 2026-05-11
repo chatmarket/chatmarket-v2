@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ import Footer from "./Footer";
 import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
 import { isAdmin } from "@/lib/adminConfig";
 import { captureRefFromUrl } from "@/lib/referral";
+import { capturePromoFromUrl } from "@/lib/promoCode";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -37,6 +38,8 @@ const LP_NAV_ITEMS = [
   { key: "lp-expert", path: "/lp/expert", icon: Star, label: "有識者LP" },
   { key: "lp-fitness", path: "/lp/fitness", icon: Zap, label: "フィットネスLP" },
   { key: "lp-career", path: "/lp/career", icon: Zap, label: "キャリアLP" },
+  { key: "lp-english", path: "/lp/english", icon: Globe, label: "英会話講師LP" },
+  { key: "lp-coach", path: "/lp/coach", icon: Star, label: "コーチLP" },
 ];
 
 const NAV_ITEMS = [
@@ -85,6 +88,7 @@ export default function AppLayout() {
   useEffect(() => {
     // サイト全体でrefパラメータをキャプチャ（どのページから来てもOK）
     captureRefFromUrl();
+    capturePromoFromUrl();
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });

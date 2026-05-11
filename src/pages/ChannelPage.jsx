@@ -18,6 +18,7 @@ import ReferralSharePanel from "../components/channel/ReferralSharePanel";
 import MetaHelmet from "../components/layout/MetaHelmet";
 import { captureRefFromUrl } from "@/lib/referral";
 import { isMusician } from "@/lib/roleTerminology";
+import ProfileBadges from "@/components/profile/ProfileBadges";
 
 export default function ChannelPage() {
   const { channelId } = useParams();
@@ -198,6 +199,13 @@ export default function ChannelPage() {
                     <p className="text-sm text-foreground/90 whitespace-pre-wrap">{channel.fortune_experience}</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* バッジ */}
+            {channel.badges?.length > 0 && (
+              <div className="mt-2">
+                <ProfileBadges badges={channel.badges} compact />
               </div>
             )}
 

@@ -14,6 +14,7 @@ import CallScheduleEditor from "@/components/call/CallScheduleEditor";
 import AppointmentRequestModal from "@/components/appointment/AppointmentRequestModal";
 import AppointmentDashboard from "@/components/appointment/AppointmentDashboard";
 import { LanguageBadges, LocalTimeClock, LearningStatusBadge } from "@/components/channel/GlobalProfilePanel";
+import ProfileBadges from "@/components/profile/ProfileBadges";
 
 export default function CallProfilePage() {
   const { channelId } = useParams();
@@ -291,6 +292,13 @@ export default function CallProfilePage() {
             )}
           </div>
         </div>
+
+        {/* バッジ */}
+        {channel.badges?.length > 0 && !isEditing && (
+          <div className="mb-4">
+            <ProfileBadges badges={channel.badges} />
+          </div>
+        )}
 
         {/* 学習ステータス */}
         {channel.learning_status && !isEditing && (
