@@ -399,61 +399,151 @@ export default function GoLive() {
 
       {/* ── PRISM Live Studio 専用セクション（キー取得後） ── */}
       {liveStreamId && (
-        <div className="mb-8 bg-gradient-to-br from-purple-950 to-purple-900 border-2 border-purple-500/60 rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between gap-3 mb-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
-                <span className="text-xl">✨</span>
+        <div className="mb-8 space-y-4">
+          {/* 上部: キー情報 */}
+          <div className="bg-gradient-to-br from-purple-950 to-purple-900 border-2 border-purple-500/60 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
+                  <span className="text-xl">✨</span>
+                </div>
+                <div>
+                  <p className="text-xs font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
+                  <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
+                  {keyFetchedAt && (
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                        AWS取得済み {keyFetchedAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                        ⚠️ 現在のセッション専用
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
-                <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
-                {keyFetchedAt && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
-                      AWS取得済み {keyFetchedAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                    </span>
-                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                      ⚠️ 現在のセッション専用
-                    </span>
+              <button
+                onClick={handleRefreshKey}
+                disabled={refreshingKey}
+                className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-black transition-colors disabled:opacity-50 shrink-0"
+              >
+                {refreshingKey
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />更新中...</>
+                  : <><RefreshCw className="w-3.5 h-3.5" />🔑 鍵を再取得</>}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {[
+                { num: "①", label: "配信先（Server URL）", value: `rtmps://${manualIngestEndpoint}:443/app/`, msg: "配信先をコピーしました" },
+                { num: "②", label: "ストリームキー（Stream Key）", value: manualStreamKey, msg: "ストリームキーをコピーしました" },
+                { num: "③", label: "チャット表示用URL", value: `${window.location.origin}/prism-overlay/${liveStreamId}`, msg: "チャットURLをコピーしました" },
+              ].map(({ num, label, value, msg }) => (
+                <div key={num} className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-full bg-purple-500 text-white font-black text-xs flex items-center justify-center shrink-0">{num}</span>
+                    <p className="font-bold text-white text-sm">{label}</p>
                   </div>
-                )}
+                  <div className="flex gap-2 items-center">
+                    <input type="text" readOnly value={value}
+                      className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono truncate" />
+                    <button onClick={() => { navigator.clipboard.writeText(value); toast.success(msg); }}
+                      className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors">
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-purple-300/70 mt-3 pl-1">💬 Prism の「Web Overlay」に③のURLを貼り付けるとリアルタイムチャット・投げ銭通知が表示されます</p>
+          </div>
+
+          {/* 下部: モバイル縦型プレビュー＆URLハイライト */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* プレビュー（左・モバイル縦型） */}
+            <div className="bg-gradient-to-br from-blue-950 to-blue-900 border-2 border-blue-500/60 rounded-2xl overflow-hidden shadow-lg">
+              <div className="px-5 py-4 border-b border-blue-700/50">
+                <p className="text-xs font-black text-blue-300 uppercase tracking-widest">📱 モバイル縦型プレビュー（9:16）</p>
+                <p className="text-xs text-blue-300/70 mt-1">PRISMで表示される実際のレイアウト</p>
+              </div>
+              <div className="p-4 bg-black/30 flex items-center justify-center min-h-[400px] lg:min-h-[500px]">
+                {/* モバイル枠 */}
+                <div className="relative bg-black rounded-2xl border-4 border-blue-400 overflow-hidden shadow-2xl" style={{ width: "280px", aspectRatio: "9/16" }}>
+                  {/* 透過背景 */}
+                  <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <div style={{ backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px)", height: "100%" }} />
+                  </div>
+                  
+                  {/* チャット表示エリア（下半分） */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1/2 p-3 flex flex-col-reverse gap-2 overflow-hidden">
+                    <div className="text-[10px] text-green-400 font-bold whitespace-nowrap text-shadow">
+                      <span className="text-green-400">配信者:</span> <span className="text-white">こんにちは！</span>
+                    </div>
+                    <div className="text-[10px] text-green-400 font-bold whitespace-nowrap text-shadow">
+                      <span className="text-green-400">視聴者A:</span> <span className="text-white">応援してます</span>
+                    </div>
+                    <div className="text-[10px] text-blue-300 font-bold py-1.5 px-2 rounded bg-amber-500/20 border border-amber-500/40 text-center whitespace-nowrap">
+                      ✨ 視聴者B から 500 コイン!
+                    </div>
+                  </div>
+                  
+                  {/* PRISM配信エリア表示 */}
+                  <div className="absolute top-2 left-0 right-0 text-center text-[8px] text-blue-300/60">
+                    PRISM Web Overlay
+                  </div>
+                </div>
               </div>
             </div>
-            <button
-              onClick={handleRefreshKey}
-              disabled={refreshingKey}
-              className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-black transition-colors disabled:opacity-50 shrink-0"
-            >
-              {refreshingKey
-                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />更新中...</>
-                : <><RefreshCw className="w-3.5 h-3.5" />🔑 鍵を再取得</>}
-            </button>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {[
-              { num: "①", label: "配信先（Server URL）", value: `rtmps://${manualIngestEndpoint}:443/app/`, msg: "配信先をコピーしました" },
-              { num: "②", label: "ストリームキー（Stream Key）", value: manualStreamKey, msg: "ストリームキーをコピーしました" },
-              { num: "③", label: "チャット表示用URL", value: `${window.location.origin}/prism-overlay/${liveStreamId}`, msg: "チャットURLをコピーしました" },
-            ].map(({ num, label, value, msg }) => (
-              <div key={num} className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-full bg-purple-500 text-white font-black text-xs flex items-center justify-center shrink-0">{num}</span>
-                  <p className="font-bold text-white text-sm">{label}</p>
+
+            {/* URL強調セクション（右） */}
+            <div className="space-y-3">
+              <div className="bg-gradient-to-br from-green-950 to-green-900 border-2 border-green-500/60 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">🎯</span>
+                  <p className="font-black text-white">③ Web Overlay URLをコピー</p>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <input type="text" readOnly value={value}
-                    className="flex-1 bg-zinc-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono truncate" />
-                  <button onClick={() => { navigator.clipboard.writeText(value); toast.success(msg); }}
-                    className="shrink-0 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors">
-                    Copy
-                  </button>
+                <p className="text-xs text-green-200 mb-4 leading-relaxed">
+                  このURLを「<strong>PRISMの Web Overlay 欄</strong>」に貼り付けるだけで、リアルタイムチャット・投げ銭通知がスマホ画面に表示されます。
+                </p>
+                
+                {/* URLボックス */}
+                <div className="bg-black/50 border border-green-500/40 rounded-xl p-4 space-y-2 mb-3">
+                  <p className="text-[10px] text-green-300/70 font-bold uppercase tracking-widest">完全URL（コピー対象）</p>
+                  <div className="flex gap-2 items-stretch">
+                    <input 
+                      type="text" 
+                      readOnly 
+                      value={`${window.location.origin}/prism-overlay/${liveStreamId}`}
+                      className="flex-1 bg-zinc-950 border border-green-500/30 rounded-lg px-3 py-2.5 text-xs text-green-300 font-mono break-all leading-tight overflow-hidden"
+                    />
+                  </div>
                 </div>
+
+                {/* メインCTA */}
+                <button 
+                  onClick={() => { 
+                    navigator.clipboard.writeText(`${window.location.origin}/prism-overlay/${liveStreamId}`);
+                    toast.success("✅ Web Overlay URLをコピーしました！\nPRISMに貼り付けてください");
+                  }}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-black text-sm rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  URLをコピー ＆ PRISMに貼る
+                </button>
               </div>
-            ))}
+
+              {/* 手順メモ */}
+              <div className="bg-blue-950/40 border border-blue-500/30 rounded-xl p-4">
+                <p className="text-xs font-bold text-blue-300 mb-2">手順：</p>
+                <ol className="space-y-1.5 text-xs text-blue-200 list-decimal list-inside">
+                  <li>上のボタンでURLをコピー</li>
+                  <li>PRISM を開く</li>
+                  <li>設定 → <strong>Web Overlay</strong></li>
+                  <li>URLを貼り付け → 完了 ✅</li>
+                </ol>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-purple-300/70 mt-3 pl-1">💬 Prism の「Web Overlay」に③のURLを貼り付けるとリアルタイムチャット・投げ銭通知が表示されます</p>
         </div>
       )}
 
