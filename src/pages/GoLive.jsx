@@ -156,7 +156,15 @@ export default function GoLive() {
 
     const ivsRes = await base44.functions.invoke('createLiveStream', {});
     if (!ivsRes?.data?.streamId) {
-      toast.error('配信枠の作成に失敗しました。');
+      const errMsg = ivsRes?.data?.error || '配信枠の作成に失敗しました。';
+      const errCode = ivsRes?.data?.code || '';
+      if (errCode === 'AWS_CREDENTIALS_MISSING') {
+        toast.error('⚠️ AWSの認証キーが未設定です。Base44ダッシュボード → Settings → Environment Variables にAWS_ACCESS_KEY_IDとAWS_SECRET_ACCESS_KEYをセットしてください。', { duration: 10000 });
+      } else if (errMsg.includes('403') || errMsg.includes('Forbidden') || errMsg.includes('AccessDenied')) {
+        toast.error('⚠️ AWS権限エラー(403): IAMユーザーにIVSの権限（AmazonIVSFullAccess）が付与されているか確認してください。', { duration: 10000 });
+      } else {
+        toast.error(`配信枠の作成に失敗しました: ${errMsg}`, { duration: 8000 });
+      }
       setCreating(false);
       return;
     }

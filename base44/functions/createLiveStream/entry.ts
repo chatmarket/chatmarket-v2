@@ -10,28 +10,33 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const region = Deno.env.get('AWS_REGION') || 'ap-northeast-1';
+    const accessKeyId = Deno.env.get('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
+
+    // AWSキー未設定チェック
+    if (!accessKeyId || !secretAccessKey) {
+      return Response.json({
+        error: 'AWS_ACCESS_KEY_ID または AWS_SECRET_ACCESS_KEY が設定されていません。Base44ダッシュボード → Settings → Environment Variables でAWSの認証キーをセットしてください。',
+        code: 'AWS_CREDENTIALS_MISSING',
+      }, { status: 500 });
+    }
 
     // AWS IVS クライアント初期化
     const ivsClient = new IvsClient({
       region: region,
-      credentials: {
-        accessKeyId: Deno.env.get('AWS_ACCESS_KEY_ID') || '',
-        secretAccessKey: Deno.env.get('AWS_SECRET_ACCESS_KEY') || '',
-      },
+      credentials: { accessKeyId, secretAccessKey },
     });
 
     // チャネル名：ユーザーメール + タイムスタンプで一意性を保証
     const channelName = `stream-${user.email.replace(/[@.]/g, '-')}-${Date.now()}`;
     console.log(`[createLiveStream] 🚀 Creating channel: ${channelName} for user: ${user.email}`);
 
-    // ★ AWS IVS チャネルを動的作成（高品質・安定性重視）
+    // ★ AWS IVS チャネルを動的作成（STANDARDは最も互換性が高い）
     const createChannelCommand = new CreateChannelCommand({
       name: channelName,
-      type: 'ADVANCED', // 高品質は ADVANCED 推奨
+      type: 'STANDARD',
       authorized: false,
-      latencyMode: 'LOW', // 低遅延（チャット同期用）
-      preset: 'DEFAULT',
-      recordingConfigurationArn: undefined, // 後でアーカイブ設定可能
+      latencyMode: 'LOW',
     });
 
     let channel = null;
@@ -178,9 +183,9 @@ Deno.serve(async (req) => {
     let statusCode = 500;
     let errorMessage = error.message || 'Channel creation failed';
 
-    if (error.message?.includes('Unauthorized') || error.code === 'UnauthorizedOperation') {
-      statusCode = 401;
-      errorMessage = 'AWS credentials invalid or expired';
+    if (error.message?.includes('Unauthorized') || error.code === 'UnauthorizedOperation' || error.code === 'AccessDeniedException' || error.$metadata?.httpStatusCode === 403) {
+      statusCode = 403;
+      errorMessage = `403 Forbidden: AWSキーの権限が不足しています。IAMユーザーに AmazonIVSFullAccess ポリシーを付与してください。(${error.message})`;
     } else if (error.message?.includes('ThrottlingException') || error.code === 'ThrottlingException') {
       statusCode = 429;
       errorMessage = 'AWS API rate limit exceeded - please retry in a few seconds';
