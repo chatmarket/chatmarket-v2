@@ -121,10 +121,44 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('[refreshIvsStreamKey] ❌ Error:', error.message);
+    console.error('[refreshIvsStreamKey] 💥 エラー発生:', error.message);
+    
+    let friendlyMsg = 'ストリームキーの更新に失敗しました';
+    let suggestion = '再度試してください';
+    let code = 'UNKNOWN_ERROR';
+
+    if (error.message.includes('not found') || error.message.includes('NotFound')) {
+      code = 'CHANNEL_NOT_FOUND';
+      friendlyMsg = '❌ IVSチャンネルが見つかりません';
+      suggestion = 'チャンネルが削除されている可能性があります。管理者に「IVSチャンネルを強制リセット」を依頼してください。';
+    } else if (error.message.includes('InvalidChannel')) {
+      code = 'INVALID_CHANNEL';
+      friendlyMsg = '❌ チャンネルが無効です';
+      suggestion = '管理者ダッシュボード → ライブ配信 → 「IVSチャンネルを強制リセット」を実行してください。';
+    } else if (error.message.includes('AccessDenied') || error.message.includes('Forbidden')) {
+      code = 'AWS_PERMISSION_DENIED';
+      friendlyMsg = '❌ AWS権限がありません（403 Forbidden）';
+      suggestion = 'IAMユーザーに IVS 権限が付与されているか確認してください。';
+    } else if (error.message.includes('credentials')) {
+      code = 'AWS_CREDENTIALS_ERROR';
+      friendlyMsg = '❌ AWS認証情報が無効です';
+      suggestion = 'Base44ダッシュボード → 設定 → 環境変数 で AWS_ACCESS_KEY_ID と AWS_SECRET_ACCESS_KEY を確認してください。';
+    } else if (error.message.includes('生成に失敗')) {
+      code = 'CREATE_KEY_FAILED';
+      friendlyMsg = '❌ ストリームキーの生成に失敗しました';
+      suggestion = '強制リセット機能を試してください。';
+    }
+
+    console.error(`[refreshIvsStreamKey] エラーコード: ${code}`);
+    console.error(`[refreshIvsStreamKey] 詳細: ${error.message}`);
+    console.error(`[refreshIvsStreamKey] 提案: ${suggestion}`);
+
     return Response.json({
-      error: error.message,
-      code: error.code || 'UNKNOWN_ERROR',
+      error: friendlyMsg,
+      code,
+      suggestion,
+      details: error.message,
+      timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
 });

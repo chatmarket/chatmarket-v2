@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Radio, Loader2, Image, CheckCircle2, Copy, Smartphone, ArrowRight } from "lucide-react";
+import { Radio, Loader2, Image, CheckCircle2, Copy, Smartphone, ArrowRight, Zap } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BroadcasterStream from "../components/live/BroadcasterStream";
@@ -156,6 +156,39 @@ export default function GoLive() {
         : "✅ ストリームキーを最新情報に更新しました");
     } catch (err) {
       toast.error("キー更新失敗: " + err.message);
+    } finally {
+      setRefreshingKey(false);
+    }
+  };
+
+  const handleForceReprovision = async () => {
+    if (!liveStreamId) {
+      toast.error("配信枠を作成してください");
+      return;
+    }
+    if (!confirm("⚠️ IVSチャンネルを強制リセットします。既存のキーは無効になります。続行しますか？")) {
+      return;
+    }
+    setRefreshingKey(true);
+    try {
+      const res = await base44.functions.invoke('forceReprovisionIvsChannel', { streamId: liveStreamId });
+      const data = res.data;
+      if (!data?.success) throw new Error(data?.error || "リセット失敗");
+
+      setManualStreamKey(data.streamKey);
+      setManualIngestEndpoint(data.ingestEndpoint);
+      setKeyFetchedAt(new Date());
+
+      await base44.entities.LiveStream.update(liveStreamId, {
+        ivs_channel_arn: data.newChannelArn,
+        ivs_stream_key: data.streamKey,
+        ivs_ingest_endpoint: data.ingestEndpoint,
+        ivs_playback_url: data.playbackUrl,
+      });
+
+      toast.success("🔄 IVSチャンネルを強制リセットしました！新しいキーが生成されています。");
+    } catch (err) {
+      toast.error("強制リセット失敗: " + err.message);
     } finally {
       setRefreshingKey(false);
     }
@@ -422,15 +455,27 @@ export default function GoLive() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={handleRefreshKey}
-                disabled={refreshingKey}
-                className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-black transition-colors disabled:opacity-50 shrink-0"
-              >
-                {refreshingKey
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />更新中...</>
-                  : <><RefreshCw className="w-3.5 h-3.5" />🔑 鍵を再取得</>}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefreshKey}
+                  disabled={refreshingKey}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-black transition-colors disabled:opacity-50 shrink-0"
+                >
+                  {refreshingKey
+                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />更新中...</>
+                    : <><RefreshCw className="w-3.5 h-3.5" />🔑 鍵を再取得</>}
+                </button>
+                <button
+                  onClick={handleForceReprovision}
+                  disabled={refreshingKey}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-300 rounded-xl text-xs font-black transition-colors disabled:opacity-50 shrink-0"
+                  title="チャンネル全体をリセット（最終手段）"
+                >
+                  {refreshingKey
+                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /></>
+                    : <><Zap className="w-3.5 h-3.5" />⚡ 強制リセット</>}
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {[
