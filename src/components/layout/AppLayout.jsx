@@ -17,6 +17,8 @@ import GlobalCallNotifier from "@/components/call/GlobalCallNotifier";
 import { isAdmin } from "@/lib/adminConfig";
 import { captureRefFromUrl } from "@/lib/referral";
 import { capturePromoFromUrl } from "@/lib/promoCode";
+import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
+import { preloadTranslations } from "@/lib/dbTranslations";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -89,6 +91,7 @@ export default function AppLayout() {
     // サイト全体でrefパラメータをキャプチャ（どのページから来てもOK）
     captureRefFromUrl();
     capturePromoFromUrl();
+    preloadTranslations(); // DB翻訳プリロード
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then(setUser).catch(() => {});
     });
@@ -424,6 +427,9 @@ export default function AppLayout() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* PWA Install Prompt */}
+      <PwaInstallPrompt />
 
       {/* Push Notification Prompt */}
       <PushNotificationPrompt />

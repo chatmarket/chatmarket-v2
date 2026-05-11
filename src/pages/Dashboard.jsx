@@ -21,6 +21,7 @@ import EarningsSummaryCard from "../components/dashboard/EarningsSummaryCard";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import IncomingMessagesWidget from "../components/dashboard/IncomingMessagesWidget";
 import RecommendedCreators from "../components/dashboard/RecommendedCreators";
+import PwaDebugWidget from "../components/dashboard/PwaDebugWidget";
 
 // ── モード定数 ──
 const MODE_FAN = "fan";
@@ -493,7 +494,10 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* ── ⑥ ファンモードへ切り替え ── */}
+          {/* ── ⑥ PWAデバッグ（管理者のみ表示） ── */}
+          {user?.role === "admin" && <PwaDebugWidget />}
+
+          {/* ── ⑦ ファンモードへ切り替え ── */}
           <button
             onClick={() => switchMode(MODE_FAN)}
             className="w-full border border-dashed border-border/50 rounded-xl p-4 flex items-center justify-between hover:bg-secondary/50 transition-all text-left"
