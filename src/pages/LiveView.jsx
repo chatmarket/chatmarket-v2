@@ -19,6 +19,7 @@ import YellCelebrationEffect from "../components/live/YellCelebrationEffect.jsx"
 import LiveTicketPurchase from "../components/live/LiveTicketPurchase.jsx";
 import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
 import StreamInfoPanel from "../components/live/StreamInfoPanel.jsx";
+import LivePreviewLockout from "../components/live/LivePreviewLockout.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -315,16 +316,15 @@ function LiveViewInner() {
               {!stream.is_ticket_enabled && stream.price > 0 && !coinAllowed && (
                 <LivePaywallStripe stream={stream} user={user} onAllowed={() => setCoinAllowed(true)} />
               )}
-              {stream.is_ticket_enabled && !hasPurchased && ticketChecked && (
-                <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.85)", gap: 16, padding: 24 }}>
-                  <span style={{ fontSize: 48 }}>🎫</span>
-                  <p style={{ color: "white", fontWeight: 900, fontSize: 16 }}>チケット制ライブ配信</p>
-                  <p style={{ color: "#fbbf24", fontWeight: 900, fontSize: 24 }}>¥{(stream.ticket_price_yen || 150).toLocaleString()}</p>
-                  {!user
-                    ? <Button onClick={() => base44.auth.redirectToLogin()}>ログインして購入</Button>
-                    : <Button onClick={() => setShowTicketModal(true)} className="bg-yellow-500 hover:bg-yellow-600 text-black font-black">🎫 チケットを購入する</Button>
-                  }
-                </div>
+              
+              {/* 30秒無料プレビュー → チケット購入オーバーレイ */}
+              {stream.is_ticket_enabled && ticketChecked && (
+                <LivePreviewLockout
+                  stream={stream}
+                  user={user}
+                  hasPurchased={hasPurchased}
+                  onPurchaseClick={() => setShowTicketModal(true)}
+                />
               )}
 
               {/* 映像本体 */}
