@@ -2,48 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Crown, Sparkles, Shield } from "lucide-react";
+import { Crown, Sparkles, Shield, CalendarClock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import SanctumTierCard from "../components/vault/SanctumTierCard";
 import MemberGiftPanel from "../components/fanclub/MemberGiftPanel";
-
-const DEFAULT_TIERS = [
-  {
-    tier_id: "standard",
-    price: 500,
-    name: "Standard",
-    emoji: "⭐",
-    perks: ["限定投稿・写真を閲覧", "コミュニティ掲示板への投稿", "スタンダードバッジ（継続月数表示）", "会員限定ギフト解放"],
-  },
-  {
-    tier_id: "premium",
-    price: 3000,
-    name: "Premium",
-    emoji: "👑",
-    perks: ["Standard の全特典", "FHD画質開放（対象配信）", "限定ライブへの招待", "プレミアムバッジ", "プレミアムギフト解放"],
-  },
-  {
-    tier_id: "diamond",
-    price: 10000,
-    name: "Diamond",
-    emoji: "💎",
-    perks: ["Premium の全特典", "月1回の1対1ビデオ通話権", "ダイヤモンドバッジ", "伝説のギフト解放", "ライバーからの優先返信・DM権"],
-  },
-];
-
-function MemberBadge({ months, tier }) {
-  if (!months) return null;
-  const badge =
-    tier === "diamond" ? "💎" :
-    tier === "premium" ? "👑" :
-    months >= 12 ? "🌟" :
-    months >= 6  ? "⭐" : "✨";
-  return (
-    <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-      {badge} {months}ヶ月
-    </span>
-  );
-}
+import FanclubSubscribeButton from "../components/vault/FanclubSubscribeButton";
 
 export default function FanClub() {
   const { channelId } = useParams();
@@ -56,13 +18,10 @@ export default function FanClub() {
       if (isAuth) {
         base44.auth.me().then((u) => {
           setUser(u);
-          // channelIdがない場合、自分のチャンネルを自動取得
           if (!channelId && u?.email) {
             base44.entities.Channel.filter({ owner_email: u.email })
               .then((channels) => {
-                if (channels.length > 0) {
-                  navigate(`/fanclub/${channels[0].id}`);
-                }
+                if (channels.length > 0) navigate(`/fanclub/${channels[0].id}`);
               })
               .catch(() => {});
           }
@@ -76,9 +35,6 @@ export default function FanClub() {
     queryFn: () => base44.entities.Channel.filter({ id: channelId }).then((r) => r[0]),
     enabled: !!channelId,
   });
-
-  // DBからティアを取得（チャンネルに設定があればそれを使用、なければデフォルト）
-  const tiers = channel?.fanclub_tiers?.length > 0 ? channel.fanclub_tiers : DEFAULT_TIERS;
 
   const { data: subscription } = useQuery({
     queryKey: ["sanctum-sub-fc", channelId, user?.email],
@@ -97,16 +53,13 @@ export default function FanClub() {
     enabled: !!user,
   });
 
-  const currentTierName = subscription?.plan_name?.replace("sanctum_", "") || null;
-
-  const monthsSubscribed = subscription?.start_date
-    ? Math.floor((Date.now() - new Date(subscription.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))
-    : 0;
-
+  const isMember = !!subscription;
+  // 単一プランの価格を取得（fanclub_tiers[0] または fanclub_monthly_price）
+  const monthlyPrice = channel?.fanclub_tiers?.[0]?.price || channel?.fanclub_monthly_price || 500;
   const effectiveChannel = channel || { name: "サンプルチャンネル" };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
+    <div className="max-w-lg mx-auto px-4 py-10 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
@@ -116,16 +69,14 @@ export default function FanClub() {
       >
         <div className="flex items-center justify-center gap-2 mb-2">
           <Crown className="w-6 h-6 text-yellow-400" />
-          <h1 className="font-black text-2xl text-yellow-400" style={{ textShadow: "0 0 30px rgba(255,215,0,0.3)" }}>
-            FAN CLUB
-          </h1>
+          <h1 className="font-black text-2xl text-yellow-400">FAN CLUB</h1>
           <Shield className="w-5 h-5 text-purple-400" />
         </div>
         <p className="text-sm text-muted-foreground">
-          <span className="text-purple-300 font-bold">{effectiveChannel.name}</span> の特別なファンコミュニティ
+          <span className="text-purple-300 font-bold">{effectiveChannel.name}</span> の公式ファンクラブ
         </p>
 
-        {subscription && (
+        {isMember && (
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -133,34 +84,55 @@ export default function FanClub() {
           >
             <Sparkles className="w-4 h-4 text-purple-400" />
             <span className="text-sm font-bold text-purple-300">メンバー加入中</span>
-            <MemberBadge months={monthsSubscribed} tier={currentTierName} />
           </motion.div>
         )}
       </motion.div>
 
-      {/* Tier cards — DB駆動の動的レンダリング */}
+      {/* 単一入会カード */}
       {channelId ? (
-        <div className={`grid gap-4 ${tiers.length === 1 ? "grid-cols-1 max-w-sm mx-auto" : tiers.length === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"}`}>
-          {tiers.map((tier, i) => (
-            <motion.div
-              key={tier.tier_id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <SanctumTierCard
-                tier={tier.tier_id}
-                price={tier.price}
-                perks={tier.perks || []}
-                name={tier.name}
-                emoji={tier.emoji}
-                channelId={channelId}
-                isCurrentTier={currentTierName === tier.tier_id}
-                hasAnyTier={!!currentTierName}
-                disabled={false}
-              />
-            </motion.div>
-          ))}
+        <div className="bg-card rounded-2xl border-2 border-primary/40 p-6 space-y-5">
+          {/* 先行予約権バッジ */}
+          <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3">
+            <CalendarClock className="w-5 h-5 text-primary shrink-0" />
+            <p className="text-sm font-bold text-primary">1対1通話の先行予約権つき</p>
+          </div>
+
+          {/* 価格 */}
+          <div className="text-center space-y-1">
+            <p className="text-4xl font-black text-foreground">
+              ¥{monthlyPrice.toLocaleString()}
+              <span className="text-base font-normal text-muted-foreground ml-1">/月</span>
+            </p>
+            <p className="text-xs text-muted-foreground">一般公開の24時間前から通話予約が可能になります</p>
+          </div>
+
+          {/* 特典リスト */}
+          <ul className="space-y-2 text-sm text-foreground/80">
+            <li className="flex items-center gap-2">
+              <span className="text-primary">✓</span> 1対1通話 先行予約権（24時間前解放）
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-primary">✓</span> 限定投稿・写真を閲覧
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-primary">✓</span> メンバー限定ギフト解放
+            </li>
+            {channel?.fanclub_description && (
+              <li className="flex items-start gap-2 text-muted-foreground text-xs mt-1">
+                <span>＋</span>{channel.fanclub_description}
+              </li>
+            )}
+          </ul>
+
+          {/* 入会ボタン */}
+          <FanclubSubscribeButton
+            tier="member"
+            channelId={channelId}
+            isCurrentTier={isMember}
+            hasAnyTier={isMember}
+            disabled={false}
+            label={isMember ? "加入中" : `月額 ¥${monthlyPrice.toLocaleString()} で先行予約権をゲット`}
+          />
         </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/40 rounded-xl border border-border/50">
@@ -169,24 +141,18 @@ export default function FanClub() {
       )}
 
       {/* Member Gift Section */}
-      <div className="bg-card rounded-2xl border border-border/50 p-6 space-y-4">
-        <MemberGiftPanel
-          channelId={channelId}
-          channelOwnerEmail={effectiveChannel?.owner_email}
-          user={user}
-          wallet={wallet}
-          currentTier={currentTierName}
-          onWalletUpdate={() => refetchWallet()}
-        />
-      </div>
-
-      {/* Footer */}
-      <div className="rounded-xl border border-purple-500/20 p-4 bg-purple-500/5 text-center space-y-1">
-        <p className="text-sm font-bold text-purple-300">💜 ライバーとファンの絆を、価格で測らない</p>
-        <p className="text-xs text-muted-foreground">
-          会員限定の空間。本当に応援したいファンだけが集まる、質の高いコミュニティです。
-        </p>
-      </div>
+      {isMember && (
+        <div className="bg-card rounded-2xl border border-border/50 p-6 space-y-4">
+          <MemberGiftPanel
+            channelId={channelId}
+            channelOwnerEmail={effectiveChannel?.owner_email}
+            user={user}
+            wallet={wallet}
+            currentTier="member"
+            onWalletUpdate={() => refetchWallet()}
+          />
+        </div>
+      )}
     </div>
   );
 }

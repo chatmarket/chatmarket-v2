@@ -15,7 +15,7 @@ import { toast } from "sonner";
  *   hasAnyTier   - bool (subscribed to some tier in this sanctum)
  *   disabled     - bool
  */
-export default function FanclubSubscribeButton({ tier, channelId, isCurrentTier, hasAnyTier, disabled }) {
+export default function FanclubSubscribeButton({ tier, channelId, isCurrentTier, hasAnyTier, disabled, label }) {
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -90,7 +90,7 @@ export default function FanclubSubscribeButton({ tier, channelId, isCurrentTier,
       ) : (
         <ExternalLink className="w-4 h-4" />
       )}
-      {loading ? '処理中...' : hasAnyTier ? 'プランを変更する' : '加入する（Stripe）'}
+      {loading ? '処理中...' : label || (hasAnyTier ? 'プランを変更する' : '加入する（Stripe）')}
     </Button>
   );
 }
