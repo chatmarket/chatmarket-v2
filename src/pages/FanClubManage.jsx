@@ -132,30 +132,24 @@ export default function FanClubManage() {
             </div>
           </div>
 
-          {/* 月額料金設定 */}
+          {/* 月額料金（固定3ティア表示） */}
           <div className="bg-card rounded-2xl border border-border/50 p-6 space-y-4">
-            <label className="text-sm font-bold block">月額料金（円）</label>
-            <div className="flex items-center gap-3">
-              <Coins className="w-5 h-5 text-yellow-400 shrink-0" />
-              <Input
-                type="number"
-                min="100"
-                step="100"
-                value={formData.fanclub_monthly_price}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    fanclub_monthly_price: parseInt(e.target.value) || 500,
-                  })
-                }
-                className="bg-secondary border-0 text-lg font-bold"
-              />
-              <span className="text-muted-foreground">/月</span>
+            <label className="text-sm font-bold block">月額料金プラン（Stripe連携・固定）</label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "⭐ Standard", price: 500, color: "border-zinc-500/40 bg-zinc-500/5" },
+                { label: "👑 Premium", price: 3000, color: "border-blue-500/40 bg-blue-500/5" },
+                { label: "💎 Diamond", price: 10000, color: "border-amber-500/40 bg-amber-500/5" },
+              ].map(({ label, price, color }) => (
+                <div key={price} className={`rounded-xl border p-3 text-center ${color}`}>
+                  <p className="text-xs font-bold text-muted-foreground">{label}</p>
+                  <p className="text-lg font-black mt-1">¥{price.toLocaleString()}</p>
+                  <p className="text-[10px] text-primary mt-0.5">手取り ¥{Math.floor(price * 0.85).toLocaleString()}</p>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              あなたの手取り: ¥
-              {Math.floor(formData.fanclub_monthly_price * 0.85).toLocaleString()}{" "}
-              (85%)
+            <p className="text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
+              💡 価格はStripe側で管理されています。変更が必要な場合はStripeダッシュボードで対応します。
             </p>
           </div>
 
