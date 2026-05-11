@@ -232,8 +232,12 @@ export default function AppLayout() {
               );
             })}
 
-            {isAdmin(user) && (
-              <>
+          </>
+        )}
+
+        {/* 管理者メニュー — creatorMode に関わらず常に表示 */}
+        {user && isAdmin(user) && (
+          <>
                 <div className="pt-3 pb-1 px-3">
                   <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ スーパー管理者</p>
                 </div>
@@ -267,8 +271,6 @@ export default function AppLayout() {
                     </div>
                   </Link>
                 ))}
-              </>
-            )}
           </>
         )}
       </nav>
