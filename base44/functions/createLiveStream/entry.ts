@@ -1,7 +1,12 @@
 // @ts-nocheck
 /* global Deno */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { IvsClient, CreateChannelCommand } from 'npm:@aws-sdk/client-ivs@3.1029.0';
+import {
+  IvsClient,
+  CreateChannelCommand,
+  ListStreamKeysCommand,
+  GetStreamKeyCommand,
+} from 'npm:@aws-sdk/client-ivs@3.1029.0';
 
 Deno.serve(async (req) => {
   try {
@@ -45,8 +50,20 @@ Deno.serve(async (req) => {
       throw new Error('IVSチャンネル作成失敗: ARNが返されませんでした');
     }
 
-    // CreateChannel レスポンスには streamKeys が含まれている
-    const streamKey = createResponse.streamKey?.value || '';
+    // CreateChannel レスポンスには streamKey が含まれる。
+    // ただし value フィールドが空の場合は ListStreamKeys → GetStreamKey で確実に取得する。
+    let streamKey = createResponse.streamKey?.value || '';
+
+    if (!streamKey) {
+      console.log('[createLiveStream] streamKey.value empty, fetching via ListStreamKeys...');
+      const listRes = await ivsClient.send(new ListStreamKeysCommand({ channelArn: channel.arn }));
+      const keyArns = listRes.streamKeys || [];
+      if (keyArns.length > 0) {
+        const keyRes = await ivsClient.send(new GetStreamKeyCommand({ arn: keyArns[0].arn }));
+        streamKey = keyRes.streamKey?.value || '';
+      }
+    }
+
     if (!streamKey) {
       throw new Error('ストリームキーが取得できませんでした。IAM権限を確認してください。');
     }

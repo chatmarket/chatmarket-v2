@@ -12,6 +12,7 @@ import BroadcasterStream from "../components/live/BroadcasterStream";
 import StreamKeySecurityDisplay from "../components/live/StreamKeySecurityDisplay";
 import TroubleshootingGuide from "../components/live/TroubleshootingGuide";
 import StreamSetupCards from "../components/live/StreamSetupCards";
+import { RefreshCw, ShieldCheck } from "lucide-react";
 
 const MODE_SELECT = "select";
 const MODE_LIVE = "live";
@@ -29,6 +30,7 @@ export default function GoLive() {
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [manualStreamKey, setManualStreamKey] = useState("");
   const [manualIngestEndpoint, setManualIngestEndpoint] = useState("");
+  const [refreshingKey, setRefreshingKey] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -108,6 +110,54 @@ export default function GoLive() {
       }
     }
   }, [user, ppvLoading, campaignLoading, canUseLiveStream, modeInitialized]);
+
+  // AWS から最新のストリームキーを取得・再生成する
+  const handleRefreshKey = async () => {
+    if (!ivsStream?.channelArn && !liveStreamId) {
+      toast.error("先に配信枠を作成してください");
+      return;
+    }
+    // channelArn は ivsStream から、またはDBのlivStreamのivs_channel_arnから取得
+    let channelArn = ivsStream?.channelArn;
+    if (!channelArn && liveStreamId) {
+      try {
+        const streams = await base44.entities.LiveStream.filter({ id: liveStreamId });
+        channelArn = streams[0]?.ivs_channel_arn;
+      } catch (_) {}
+    }
+    if (!channelArn) {
+      toast.error("チャンネルARNが見つかりません");
+      return;
+    }
+
+    setRefreshingKey(true);
+    try {
+      const res = await base44.functions.invoke('refreshIvsStreamKey', { channelArn });
+      const data = res.data;
+      if (!data?.streamKey) throw new Error(data?.error || "キー取得失敗");
+
+      setManualStreamKey(data.streamKey);
+      const host = data.ingestEndpoint;
+      setManualIngestEndpoint(host);
+
+      // DBのLiveStreamも更新
+      if (liveStreamId) {
+        await base44.entities.LiveStream.update(liveStreamId, {
+          ivs_stream_key: data.streamKey,
+          ivs_ingest_endpoint: data.ingestEndpoint,
+          ivs_playback_url: data.playbackUrl,
+        });
+      }
+
+      toast.success(data.regenerated
+        ? "🔑 新しいストリームキーを生成しました！OBSに貼り直してください"
+        : "✅ ストリームキーを最新情報に更新しました");
+    } catch (err) {
+      toast.error("キー更新失敗: " + err.message);
+    } finally {
+      setRefreshingKey(false);
+    }
+  };
 
   // 完全RTMPS URL（スマホアプリ用）
   const fullRtmpsUrl = manualIngestEndpoint && manualStreamKey
@@ -326,14 +376,25 @@ export default function GoLive() {
       {/* ── PRISM Live Studio 専用セクション（キー取得後） ── */}
       {liveStreamId && (
         <div className="mb-8 bg-gradient-to-br from-purple-950 to-purple-900 border-2 border-purple-500/60 rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
-              <span className="text-xl">✨</span>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
+                <span className="text-xl">✨</span>
+              </div>
+              <div>
+                <p className="text-xs font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
+                <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
-              <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
-            </div>
+            <button
+              onClick={handleRefreshKey}
+              disabled={refreshingKey}
+              className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-black transition-colors disabled:opacity-50 shrink-0"
+            >
+              {refreshingKey
+                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />更新中...</>
+                : <><RefreshCw className="w-3.5 h-3.5" />🔑 鍵を再取得</>}
+            </button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {[
