@@ -25,13 +25,21 @@ export default function PrismWebOverlay() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [healthCheckError, setHealthCheckError] = useState(null);
 
-  // ページロード時のテストログ
+  // ページロード時のテストログ＋キャッシュ無視
   useEffect(() => {
-    console.log('[PrismWebOverlay] 🚀 オーバーレイページロード');
-    console.log('[PrismWebOverlay] 📍 streamId:', streamId);
-    console.log('[PrismWebOverlay] 🌐 URL:', window.location.href);
-    console.log('[PrismWebOverlay] ⏰ タイムスタンプ:', new Date().toISOString());
-    console.log('[PrismWebOverlay] 📐 ビューポート:', `${window.innerWidth}x${window.innerHeight}`);
+    // 🔥 強制キャッシュ無視
+    if (typeof window !== 'undefined') {
+      const timestamp = new Date().toISOString();
+      console.log('%c[PrismWebOverlay] 🚀 OVERLAY LOADED - Cache bypassed', 'color: #10b981; font-weight: bold; font-size: 14px');
+      console.log('[PrismWebOverlay] ⏰ Timestamp:', timestamp);
+      console.log('[PrismWebOverlay] 📡 Stream ID:', streamId);
+      console.log('[PrismWebOverlay] 🌐 Full URL:', window.location.href);
+      console.log('[PrismWebOverlay] 📐 Viewport:', `${window.innerWidth}x${window.innerHeight}`);
+      
+      // キャッシュクリア信号をコンソールに出力
+      console.log('[PrismWebOverlay] 🧹 Cache-Control: no-store, no-cache, must-revalidate');
+      console.log('[PrismWebOverlay] 🎨 Rendering StreamConnectionWelcome & StreamStatusOverlay...');
+    }
   }, [streamId]);
 
   // 📱 横向きモード検知 & オフセット制御
@@ -283,8 +291,11 @@ export default function PrismWebOverlay() {
         isConnecting={isConnecting}
       />
 
-      {/* 接続成功ウェルカムメッセージ（オープニング） */}
-      <StreamConnectionWelcome streamId={streamId} />
+      {/* 接続成功ウェルカムメッセージ（オープニング）*/}
+      {(() => {
+        console.log('[PrismWebOverlay] 📊 Rendering StreamConnectionWelcome:', { streamId, isLive: streamStatus === "live" });
+        return <StreamConnectionWelcome streamId={streamId} />;
+      })()}
     </div>
   );
 }

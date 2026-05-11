@@ -11,11 +11,21 @@ import { motion } from "framer-motion";
  */
 export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = "live", isConnecting = false }) {
   useEffect(() => {
-    console.log('[StreamStatusOverlay] 📊 Status updated:', { isLive, viewerCount, status, isConnecting });
+    console.log('[StreamStatusOverlay] 🟢 配信状態更新', {
+      isLive,
+      viewerCount,
+      status,
+      isConnecting,
+      timestamp: new Date().toISOString(),
+    });
+    if (isLive) {
+      console.log('[StreamStatusOverlay] ✅ LIVE表示（z-index: 999998）');
+    }
   }, [isLive, viewerCount, status, isConnecting]);
 
   // 接続準備中の場合は別表示
   if (isConnecting) {
+    console.log('[StreamStatusOverlay] 🔵 接続準備中メッセージ表示（z-index: 999998）');
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -25,7 +35,7 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
           position: "fixed",
           bottom: "20px",
           right: "16px",
-          zIndex: 150,
+          zIndex: 999998,
           pointerEvents: "none",
         }}
       >
@@ -73,7 +83,7 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
           position: "fixed",
           bottom: "20px",
           right: "16px",
-          zIndex: 150,
+          zIndex: 999998,
           pointerEvents: "none",
         }}
       >
@@ -153,7 +163,7 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
           position: "fixed",
           top: "20px",
           left: "16px",
-          zIndex: 150,
+          zIndex: 999998,
           pointerEvents: "none",
         }}
       >

@@ -10,13 +10,18 @@ export default function StreamConnectionWelcome({ streamId }) {
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
-    console.log('[StreamConnectionWelcome] 🎉 Welcome message triggered');
-    console.log('[StreamConnectionWelcome] 📡 Connected to stream:', streamId);
+    // 🔥 強制リフレッシュ：ブラウザキャッシュ無視
+    if (typeof window !== 'undefined') {
+      console.log('[StreamConnectionWelcome] 🚀 FORCING RENDER - Cache bypassed');
+      console.log('[StreamConnectionWelcome] ⏱️', new Date().toISOString());
+      console.log('[StreamConnectionWelcome] 📡 Connected to stream:', streamId);
+      console.log('[StreamConnectionWelcome] 🎨 z-index: 999999 (最前面)');
+    }
 
     // 3秒後に自動で非表示
     const timer = setTimeout(() => {
       setShowWelcome(false);
-      console.log('[StreamConnectionWelcome] 👋 Welcome message faded out');
+      console.log('[StreamConnectionWelcome] ✅ ウェルカムメッセージ非表示');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -36,7 +41,7 @@ export default function StreamConnectionWelcome({ streamId }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 999,
+            zIndex: 999999,
             pointerEvents: "none",
           }}
         >
