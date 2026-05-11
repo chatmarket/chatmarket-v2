@@ -250,7 +250,6 @@ export default function VodManagement() {
               className="h-9 px-3 rounded-md bg-secondary border-0 text-sm text-foreground"
             >
               <option value="all">すべて</option>
-              <option value="free">無料</option>
               <option value="paid">有料</option>
             </select>
           </div>

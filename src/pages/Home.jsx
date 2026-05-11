@@ -231,16 +231,7 @@ export default function Home() {
     gcTime: 0,
   });
 
-  const { data: freeVideos = [] } = useQuery({
-    queryKey: ["videos-free"],
-    queryFn: async () => {
-      const all = await base44.entities.Video.list("-created_date", 30);
-      return all.filter((v) => (!v.moderation_status || v.moderation_status === "approved") && v.is_free).slice(0, 8);
-    },
-    enabled: enabledSections.freeVideos,
-    staleTime: 0,
-    gcTime: 0,
-  });
+
 
   const { data: recentVideos = [] } = useQuery({
     queryKey: ["videos-recent"],
@@ -668,25 +659,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* 無料動画 */}
-      <div ref={freeRef}>
-        {enabledSections.freeVideos && freeVideos.length > 0 && (
-          <section className="space-y-3 px-0">
-            <div className="flex items-center gap-2">
-              <span className="w-1 h-5 rounded-full bg-primary shrink-0" />
-              <h2 className="text-base sm:text-lg font-bold">{t("freeVideos")}</h2>
-              <span className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-full px-2 py-0.5 font-semibold">FREE</span>
-            </div>
-            <ScrollRow cardWidth={280} mobileCardWidth="72vw">
-              {freeVideos.map((v) => (
-                <div key={v.id} className="relative group">
-                  <VideoCard video={v} />
-                </div>
-              ))}
-            </ScrollRow>
-          </section>
-        )}
-      </div>
+
 
       {/* 新着動画 */}
       <div ref={recentRef}>

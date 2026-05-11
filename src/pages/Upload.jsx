@@ -335,50 +335,30 @@ export default function Upload() {
 
         {/* Pricing */}
         <div className="space-y-4 bg-card rounded-xl p-5 border border-border/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>無料で公開</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">オフにすると有料動画になります</p>
-              <p className="text-xs text-yellow-400/80 mt-1">※ 無料動画投稿は１週間に１回となります</p>
-            </div>
-            <Switch
-              checked={form.is_free}
-              onCheckedChange={(v) => setForm({ ...form, is_free: v })}
+          <div className="space-y-2">
+            <Label>価格（エールコイン）</Label>
+            <Input
+              type="number"
+              min={VOD_MIN_PRICE}
+              step={1}
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+              className={`bg-secondary border-0 ${vodPriceError ? "ring-1 ring-destructive" : ""}`}
+              placeholder="100"
             />
+            {vodPriceError ? (
+              <p className="text-destructive text-xs font-semibold">⚠️ 有料動画の最低価格は100円です</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">最低100円〜自由設定。有料動画は最初の30秒が無料プレビューされます</p>
+            )}
+            {form.price >= VOD_MIN_PRICE && (
+              <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
+                <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * 0.85)}コイン（85%）</span></p>
+                <p>運営収益: {Math.floor(form.price * 0.15)}コイン（15%）</p>
+                <p className="text-[10px]">※ 損益分岐点: 約55円相当 / 最低価格100円はブランド維持基準</p>
+              </div>
+            )}
           </div>
-
-          {freeVideoBlocked && (
-            <p className="text-destructive text-xs font-semibold mt-2">
-              ⚠️ 無料動画は1週間に1本までです。次の無料投稿可能日までお待ちください。
-            </p>
-          )}
-
-          {!form.is_free && (
-            <div className="space-y-2">
-              <Label>価格（エールコイン）</Label>
-              <Input
-                type="number"
-                min={VOD_MIN_PRICE}
-                step={1}
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-                className={`bg-secondary border-0 ${vodPriceError ? "ring-1 ring-destructive" : ""}`}
-                placeholder="100"
-              />
-              {vodPriceError ? (
-                <p className="text-destructive text-xs font-semibold">⚠️ 有料動画の最低価格は100円です</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">最低100円〜自由設定。有料動画は最初の30秒が無料プレビューされます</p>
-              )}
-              {form.price >= VOD_MIN_PRICE && (
-                <div className="bg-secondary/60 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
-                  <p>ライバー報酬: <span className="text-primary font-bold">{Math.floor(form.price * 0.85)}コイン（85%）</span></p>
-                  <p>運営収益: {Math.floor(form.price * 0.15)}コイン（15%）</p>
-                  <p className="text-[10px]">※ 損益分岐点: 約55円相当 / 最低価格100円はブランド維持基準</p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Copyright confirmation */}
@@ -397,7 +377,7 @@ export default function Upload() {
 
         <Button
           type="submit"
-          disabled={uploading || !form.title || freeVideoBlocked || uploadDurationExceeded || !videoFile || !copyrightConfirmed || vodPriceError}
+          disabled={uploading || !form.title || uploadDurationExceeded || !videoFile || !copyrightConfirmed || vodPriceError}
           className="w-full h-12 bg-primary hover:bg-primary/90 text-base gap-2"
         >
           {uploading ? (
