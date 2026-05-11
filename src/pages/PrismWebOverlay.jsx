@@ -95,6 +95,15 @@ export default function PrismWebOverlay() {
     return unsubscribeYell;
   }, [streamId]);
 
+  // 🔇 オーバーレイ音声完全無音化 — 全ての audio/speechSynthesis を無効化
+  useEffect(() => {
+    console.log('[PrismWebOverlay] 🔇 Speech Synthesis disabled for overlay mode');
+    // SpeechSynthesis 無効化
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
   return (
     <div
       style={{

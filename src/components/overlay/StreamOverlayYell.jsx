@@ -10,17 +10,8 @@ import ConfettiEffect from "@/components/overlay/ConfettiEffect";
 export default function StreamOverlayYell({ yell }) {
   const [showConfetti, setShowConfetti] = useState(true);
 
-  useEffect(() => {
-    // 読み上げ機能（あれば）
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(
-        `${yell.user}さんから${yell.amount}コイン！`
-      );
-      utterance.lang = "ja-JP";
-      utterance.rate = 1.2;
-      window.speechSynthesis.speak(utterance);
-    }
-  }, [yell]);
+  // 🔇 PRISM オーバーレイ向けに音声通知を無効化
+  //（音声はメインプレイヤーで処理）
 
   return (
     <>
@@ -38,7 +29,67 @@ export default function StreamOverlayYell({ yell }) {
         }}
       />
 
-      {/* メインエフェクト */}
+      {/* 📣 特大ネオンテキストアラート（社長向け） */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 150, damping: 15 }}
+        style={{
+          position: "absolute",
+          top: "35%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 200,
+          textAlign: "center",
+          pointerEvents: "none",
+        }}
+      >
+        {/* 超大型コイン金額（目立つように） */}
+        <motion.div
+          animate={{
+            scale: [1, 1.15, 1],
+            textShadow: [
+              "0 0 20px #fbbf24, 0 0 40px #f59e0b, 0 0 60px #fbbf24",
+              "0 0 40px #fbbf24, 0 0 80px #f59e0b, 0 0 120px #fbbf24",
+              "0 0 20px #fbbf24, 0 0 40px #f59e0b, 0 0 60px #fbbf24",
+            ],
+          }}
+          transition={{ duration: 0.8, repeat: Infinity, repeatType: "loop" }}
+          style={{
+            fontSize: "120px",
+            fontWeight: "900",
+            color: "#fbbf24",
+            letterSpacing: "8px",
+            textShadow: "0 0 40px rgba(251, 191, 36, 1), -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            WebkitTextStroke: "2px #000",
+            paintOrder: "stroke fill",
+            lineHeight: "1",
+          }}
+        >
+          {yell.amount}
+        </motion.div>
+
+        {/* 「コイン受信！」テキスト */}
+        <motion.div
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          style={{
+            fontSize: "48px",
+            fontWeight: "900",
+            color: "#00ff9d",
+            letterSpacing: "4px",
+            marginTop: "20px",
+            textShadow: "0 0 20px #00ff9d, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+            WebkitTextStroke: "1px #000",
+            paintOrder: "stroke fill",
+          }}
+        >
+          エール受信！
+        </motion.div>
+      </motion.div>
+
+      {/* ユーザー名 & メッセージ（下部） */}
       <motion.div
         initial={{ scale: 0, opacity: 0, y: 100 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -51,7 +102,7 @@ export default function StreamOverlayYell({ yell }) {
         }}
         style={{
           position: "absolute",
-          top: "50%",
+          top: "70%",
           left: "50%",
           transform: "translate(-50%, -50%)",
           zIndex: 100,

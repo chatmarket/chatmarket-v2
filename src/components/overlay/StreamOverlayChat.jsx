@@ -18,7 +18,7 @@ export default function StreamOverlayChat({ messages }) {
         display: "flex",
         flexDirection: "column-reverse",
         overflow: "hidden",
-        gap: "8px",
+        gap: "12px",
         padding: "16px",
       }}
     >
@@ -29,14 +29,14 @@ export default function StreamOverlayChat({ messages }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
             style={{
               display: "flex",
               alignItems: "baseline",
               gap: "8px",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: "500",
-              lineHeight: "1.4",
+              lineHeight: "1.6",
               textShadow: "0 2px 8px rgba(0,0,0,0.8)",
               pointerEvents: "none",
             }}
