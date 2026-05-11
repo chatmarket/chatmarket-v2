@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import StreamOverlayChat from "@/components/overlay/StreamOverlayChat";
 import StreamOverlayYell from "@/components/overlay/StreamOverlayYell";
+import StreamStatusOverlay from "@/components/overlay/StreamStatusOverlay";
 
 /**
  * PrismWebOverlay
@@ -18,6 +19,8 @@ export default function PrismWebOverlay() {
   const [yellowNotifications, setYellNotifications] = useState([]);
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
   const [chatOffset, setChatOffset] = useState("left"); // "left" or "right"
+  const [streamStatus, setStreamStatus] = useState("scheduled");
+  const [viewerCount, setViewerCount] = useState(0);
 
   // ページロード時のテストログ
   useEffect(() => {
@@ -128,6 +131,44 @@ export default function PrismWebOverlay() {
     }
   }, []);
 
+  // 📊 ライブストリーム状態をリアルタイム購読
+  useEffect(() => {
+    if (!streamId) return;
+    
+    console.log('[PrismWebOverlay] 📡 LiveStream subscription started:', streamId);
+
+    const unsubscribeLiveStream = base44.entities.LiveStream.subscribe((event) => {
+      if (event.id !== streamId) return;
+      
+      const data = event.data;
+      const newStatus = data?.status || "scheduled";
+      const newViewers = data?.viewer_count || 0;
+      
+      setStreamStatus(newStatus);
+      setViewerCount(newViewers);
+      
+      console.log('[PrismWebOverlay] 🟢 Stream status updated:', { 
+        status: newStatus, 
+        viewers: newViewers,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // 初期値を一度取得
+    base44.entities.LiveStream.filter({ id: streamId }).then((streams) => {
+      if (streams[0]) {
+        setStreamStatus(streams[0].status || "scheduled");
+        setViewerCount(streams[0].viewer_count || 0);
+        console.log('[PrismWebOverlay] 📊 Initial stream state loaded:', { 
+          status: streams[0].status,
+          viewers: streams[0].viewer_count
+        });
+      }
+    });
+
+    return unsubscribeLiveStream;
+  }, [streamId]);
+
   return (
     <div
       style={{
@@ -167,6 +208,13 @@ export default function PrismWebOverlay() {
           <StreamOverlayYell key={yell.id} yell={yell} />
         ))}
       </div>
+
+      {/* ライブステータス & 視聴者数 */}
+      <StreamStatusOverlay 
+        isLive={streamStatus === "live"} 
+        viewerCount={viewerCount}
+        status={streamStatus}
+      />
     </div>
   );
 }
