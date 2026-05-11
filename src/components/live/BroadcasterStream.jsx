@@ -13,6 +13,7 @@ import LiveChatDisplay from "./LiveChatDisplay";
 import LiveYellDisplay from "./LiveYellDisplay";
 import YellRanking from "./YellRanking";
 import KanteiPaymentNotifier from "../fortune/KanteiPaymentNotifier";
+import ObsQuickSetupGuide from "./ObsQuickSetupGuide";
 
 export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEndpoint, onEnd, thumbnailUrl }) {
   const navigate = useNavigate();
@@ -96,39 +97,41 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return unsubscribeYell;
   }, [streamId]);
 
-  // IVSチャンネル状態モニタリング（OBS配信中のみ）
-  // 映像が入った瞬間を検知してコンソールとビューワー数に反映
+  // IVS映像検知ポーリング（OBS配信中のみ）
+  // 外部ソフトから映像信号が到達したかを30秒ごとに検知
+  // 「scheduled」状態で映像が来たら自動で「live」に遷移
   useEffect(() => {
     if (!streamId || !isOBSLive) return;
 
-    let ivsConnected = false;
-
-    const checkIvs = async () => {
+    const detectStream = async () => {
       try {
-        const res = await base44.functions.invoke('checkIvsStreamStatus', {});
-        const state = res?.data?.stream_state;
-        const health = res?.data?.stream_health;
-        const viewers = res?.data?.viewer_count ?? 0;
+        const res = await base44.functions.invoke('detectIvsStreamStart', { streamId });
+        const data = res?.data;
+        
+        if (data?.success) {
+          const { stream_state, stream_health, viewer_count, auto_transitioned } = data;
+          
+          // 自動遷移が発生した場合のログ
+          if (auto_transitioned) {
+            console.log(`%c[IVS] 🚀 映像受信開始！自動で配信状態に遷移しました | health=${stream_health} | viewers=${viewer_count}`, 'color: #10b981; font-weight: bold; font-size: 13px');
+          } else if (stream_state === 'LIVE') {
+            console.log(`[IVS] 📡 配信中 | health=${stream_health} | viewers=${viewer_count}`);
+          } else {
+            console.log(`[IVS] ⏳ OBS接続待機中... state=${stream_state}`);
+          }
 
-        if (state === 'LIVE' && !ivsConnected) {
-          ivsConnected = true;
-          console.log(`%c[IVS] ✅ 映像受信開始！ health=${health} viewers=${viewers}`, 'color: #10b981; font-weight: bold; font-size: 13px');
-          // LiveStreamのステータスをliveに確定
-          await base44.entities.LiveStream.update(streamId, { status: 'live' });
-        } else if (state === 'LIVE') {
-          console.log(`[IVS] 📡 配信中 | health=${health} | viewers=${viewers}`);
+          setViewerCount(viewer_count || 0);
         } else {
-          console.log(`[IVS] ⏳ OBS接続待機中... state=${state}`);
+          console.warn(`[IVS] ⚠️ 状態確認エラー: ${data?.message || 'Unknown'}`);
         }
-
-        setViewerCount(viewers);
       } catch (err) {
         // IVSチェックのエラーは無視（配信継続に影響させない）
+        console.debug(`[IVS] Debug: ${err.message}`);
       }
     };
 
-    checkIvs();
-    const interval = setInterval(checkIvs, 30000);
+    detectStream();
+    const interval = setInterval(detectStream, 30000);
     return () => clearInterval(interval);
   }, [streamId, isOBSLive]);
 
@@ -360,41 +363,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
           </div>
         </div>
 
-        {/* OBS用 RTMPS 情報表示（本配信前にコピー可能） */}
+        {/* OBS/PRISM 簡潔セットアップガイド */}
         {ivsStreamKey && (
-          <div className="px-4 pb-4 space-y-2 bg-zinc-900/50 rounded-lg border border-green-500/30 p-3">
-            <p className="text-[10px] text-green-400 font-bold uppercase tracking-wider">✅ OBS 接続情報</p>
-            <div className="space-y-2">
-              <div>
-                <p className="text-[10px] text-zinc-400">Server URL（OBS の「サーバー」欄）</p>
-                <div className="flex gap-2 items-center mt-0.5">
-                  <input
-                    type="text"
-                    readOnly
-                    value={ivsIngestEndpoint}
-                    className="flex-1 bg-zinc-950 border border-green-500/40 rounded px-2 py-1 text-[10px] text-zinc-300 font-mono"
-                  />
-                  <button onClick={copyServerUrl} className="shrink-0 px-2 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-[10px] font-bold transition-colors">
-                    {copiedKey ? "✓ Copied" : "Copy"}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-400">Stream Key（OBS の「ストリームキー」欄）</p>
-                <div className="flex gap-2 items-center mt-0.5">
-                  <input
-                    type="text"
-                    readOnly
-                    value={ivsStreamKey}
-                    className="flex-1 bg-zinc-950 border border-green-500/40 rounded px-2 py-1 text-[10px] text-zinc-300 font-mono"
-                  />
-                  <button onClick={copyStreamKey} className="shrink-0 px-2 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-[10px] font-bold transition-colors">
-                    {copiedKey ? "✓ Copied" : "Copy"}
-                  </button>
-                </div>
-              </div>
-            </div>
-            <p className="text-[9px] text-zinc-500 mt-2">💡 これらをコピーしてOBS Studio に貼り付けてください</p>
+          <div className="px-4 pb-4">
+            <ObsQuickSetupGuide
+              streamKey={ivsStreamKey}
+              ingestEndpoint={ivsIngestEndpoint}
+              streamId={streamId}
+            />
           </div>
         )}
       </div>

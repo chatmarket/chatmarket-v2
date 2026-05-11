@@ -12,6 +12,7 @@ import BroadcasterStream from "../components/live/BroadcasterStream";
 import StreamKeySecurityDisplay from "../components/live/StreamKeySecurityDisplay";
 import TroubleshootingGuide from "../components/live/TroubleshootingGuide";
 import StreamSetupCards from "../components/live/StreamSetupCards";
+import ObsQuickSetupGuide from "../components/live/ObsQuickSetupGuide";
 import { RefreshCw, ShieldCheck } from "lucide-react";
 
 const MODE_SELECT = "select";
@@ -815,6 +816,15 @@ export default function GoLive() {
               </div>
             </div>
           </a>
+
+          {/* OBS/PRISM 簡潔セットアップガイド（配信枠作成後） */}
+          {liveStreamId && manualStreamKey && (
+            <ObsQuickSetupGuide
+              streamKey={manualStreamKey}
+              ingestEndpoint={manualIngestEndpoint}
+              streamId={liveStreamId}
+            />
+          )}
 
           {/* PC/スマホ配信ツール */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
