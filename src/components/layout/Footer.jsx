@@ -61,6 +61,18 @@ export default function Footer() {
           </p>
         </div>
 
+        {/* Founder's Note */}
+        <div className="border-t border-border/30 pt-6 mb-6">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Founder's Note</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            誰が、どんな想いで作ったか。 ―{" "}
+            <a href="https://note.com/ono_chatmarket/" target="_blank" rel="noopener noreferrer"
+              className="text-primary hover:underline underline-offset-2">
+              社長のnoteを読む →
+            </a>
+          </p>
+        </div>
+
         {/* Divider */}
         <div className="border-t border-border/30 my-6 lg:my-8" />
 

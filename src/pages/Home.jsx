@@ -44,7 +44,6 @@ import GiantKillingBanner from "../components/home/GiantKillingBanner";
 import MillionaireSupporters from "../components/home/MillionaireSupporters";
 import QualityRevolutionBanner from "../components/home/QualityRevolutionBanner";
 import PpvPricingTable from "../components/home/PpvPricingTable";
-import FounderSection from "../components/home/FounderSection";
 
 
 export default function Home() {
@@ -799,8 +798,7 @@ export default function Home() {
         <ProgressiveIncentiveSection />
       </div>
 
-      {/* 社長の想い・Founderセクション */}
-      <FounderSection />
+
 
       <div className="px-0">
         <PwaInstallGuideSection />
