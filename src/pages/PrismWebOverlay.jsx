@@ -19,10 +19,19 @@ export default function PrismWebOverlay() {
 
   // チャット購読
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId) {
+      console.log('[PrismWebOverlay] ⚠️ No streamId provided');
+      return;
+    }
+    
+    console.log('[PrismWebOverlay] ✅ Listening to chat for streamId:', streamId);
     
     const unsubscribeChat = base44.entities.Comment.subscribe((event) => {
-      if (event.type !== "create" || event.data?.livestream_id !== streamId) return;
+      if (event.type !== "create") return;
+      if (event.data?.livestream_id !== streamId) {
+        console.log('[PrismWebOverlay] ⚠️ Chat event mismatch:', { expected: streamId, got: event.data?.livestream_id });
+        return;
+      }
       
       const msg = {
         id: event.id,
@@ -38,10 +47,19 @@ export default function PrismWebOverlay() {
 
   // エール購読
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId) {
+      console.log('[PrismWebOverlay] ⚠️ No streamId for yell subscription');
+      return;
+    }
+
+    console.log('[PrismWebOverlay] ✅ Listening to yells for streamId:', streamId);
 
     const unsubscribeYell = base44.entities.SuperChat.subscribe((event) => {
-      if (event.type !== "create" || event.data?.livestream_id !== streamId) return;
+      if (event.type !== "create") return;
+      if (event.data?.livestream_id !== streamId) {
+        console.log('[PrismWebOverlay] ⚠️ Yell event mismatch:', { expected: streamId, got: event.data?.livestream_id });
+        return;
+      }
 
       const yell = {
         id: event.id,
