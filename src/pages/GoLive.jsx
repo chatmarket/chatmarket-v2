@@ -640,6 +640,32 @@ export default function GoLive() {
             </div>
           )}
 
+          {/* 🚀 推奨設定ガイド（超低遅延） */}
+          <div className="bg-gradient-to-r from-cyan-950 to-blue-950 border-2 border-cyan-500/60 rounded-2xl p-4 shadow-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">⚡</span>
+              <div>
+                <p className="text-xs font-black text-cyan-300 uppercase tracking-widest">超低遅延設定（推奨）</p>
+                <p className="text-white font-black text-sm">10秒以下のリアルタイム配信</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-xs text-cyan-100/80">
+              <div className="bg-black/30 rounded-lg p-3 space-y-1">
+                <p className="font-bold text-cyan-300">🎬 OBS Studio</p>
+                <p>• ビットレート: 2500-4000 Kbps</p>
+                <p>• キーフレーム: <span className="font-bold text-cyan-400">2秒固定</span></p>
+                <p>• プロファイル: Main / High</p>
+              </div>
+              <div className="bg-black/30 rounded-lg p-3 space-y-1">
+                <p className="font-bold text-cyan-300">📱 Prism Live Studio</p>
+                <p>• ビットレート: 2000-3500 Kbps</p>
+                <p>• キーフレーム: <span className="font-bold text-cyan-400">2秒固定</span></p>
+                <p>• 網環境: WiFi推奨</p>
+              </div>
+            </div>
+            <p className="text-[10px] text-cyan-300/60 mt-2 pl-1">💡 IVS LOW遅延モード有効 | 推奨上り速度: 5Mbps以上</p>
+          </div>
+
           {/* PC/スマホ配信ツール（フォーム前） */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
             <div className="px-4 pt-4 pb-2 border-b border-zinc-800">

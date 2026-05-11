@@ -17,6 +17,15 @@ export default function PrismWebOverlay() {
   const [chatMessages, setChatMessages] = useState([]);
   const [yellowNotifications, setYellNotifications] = useState([]);
 
+  // ページロード時のテストログ
+  useEffect(() => {
+    console.log('[PrismWebOverlay] 🚀 オーバーレイページロード');
+    console.log('[PrismWebOverlay] 📍 streamId:', streamId);
+    console.log('[PrismWebOverlay] 🌐 URL:', window.location.href);
+    console.log('[PrismWebOverlay] ⏰ タイムスタンプ:', new Date().toISOString());
+    console.log('[PrismWebOverlay] 📐 ビューポート:', `${window.innerWidth}x${window.innerHeight}`);
+  }, [streamId]);
+
   // チャット購読
   useEffect(() => {
     if (!streamId) {
@@ -24,7 +33,7 @@ export default function PrismWebOverlay() {
       return;
     }
     
-    console.log('[PrismWebOverlay] ✅ Listening to chat for streamId:', streamId);
+    console.log('[PrismWebOverlay] ✅ Chat subscription started for:', streamId);
     
     const unsubscribeChat = base44.entities.Comment.subscribe((event) => {
       if (event.type !== "create") return;
@@ -39,6 +48,7 @@ export default function PrismWebOverlay() {
         text: event.data?.content || "",
         timestamp: new Date().toISOString(),
       };
+      console.log('[PrismWebOverlay] 💬 Chat message:', { user: msg.user, text: msg.text, lag: `${Date.now() - new Date(event.data?.created_date).getTime()}ms` });
       setChatMessages((prev) => [...prev.slice(-20), msg]); // 最新20件キープ
     });
 
@@ -52,7 +62,7 @@ export default function PrismWebOverlay() {
       return;
     }
 
-    console.log('[PrismWebOverlay] ✅ Listening to yells for streamId:', streamId);
+    console.log('[PrismWebOverlay] ✅ Yell subscription started for:', streamId);
 
     const unsubscribeYell = base44.entities.SuperChat.subscribe((event) => {
       if (event.type !== "create") return;
@@ -69,11 +79,16 @@ export default function PrismWebOverlay() {
         timestamp: new Date().toISOString(),
       };
       
+      const lagMs = Date.now() - new Date(event.data?.created_date).getTime();
+      console.log('[PrismWebOverlay] 💰 SuperChat received:', { user: yell.user, amount: yell.amount, coins: yell.amount, lag: `${lagMs}ms` });
+      console.log('[PrismWebOverlay] 🎨 Rendering yell notification — will auto-dismiss in 5s');
+      
       setYellNotifications((prev) => [...prev, yell]);
       
       // 5秒後に自動削除
       setTimeout(() => {
         setYellNotifications((prev) => prev.filter((y) => y.id !== event.id));
+        console.log('[PrismWebOverlay] 🗑️ Yell auto-dismissed');
       }, 5000);
     });
 
@@ -88,6 +103,7 @@ export default function PrismWebOverlay() {
         background: "transparent",
         pointerEvents: "none",
       }}
+      onLoad={() => console.log('[PrismWebOverlay] ✅ DOM rendered and ready')}
     >
       {/* チャット（下から上へ流れる） */}
       <div
