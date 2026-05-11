@@ -250,8 +250,7 @@ export default function GoLive() {
     }
 
     const getQualityFromPrice = (price) => {
-      if (price === 0) return "1080p";
-      if (price >= 150) return "1080p";
+      if (price === 0 || price >= 150) return "1080p";
       if (price >= 55) return "720p";
       return "480p";
     };

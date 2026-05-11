@@ -3,9 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Coins, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { YELL_COIN_SETTINGS } from "@/lib/constants";
 
-// 確定販売テーブル（docs/DEVELOPMENT_HISTORY.md Section 10 参照）
-// ⚠️ ボーナス率を8%以上にするのは逆ざやリスクのため禁止
+// ⚠️ エールコイン販売テーブル（LOCKED: 社長要求 2026-05-11）
+// 定義: lib/constants.js の YELL_COIN_SETTINGS を参照
+// ⚠️ ボーナス率を8%以上にするのは逆ざやリスクのため禁止（PROTECTED）
 const COIN_PLANS = [
   {
     id: "plan_1000",

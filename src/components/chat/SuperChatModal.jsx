@@ -24,6 +24,11 @@ const colorStyles = {
   red: "bg-red-500/20 border-red-500/50 text-red-400",
 };
 
+/**
+ * SuperChatModal → エールコインモーダル
+ * 命名は互換性のため従来通りですが、UI/テキスト内容は「エールコイン」で統一されています。
+ * （社長要求: 2026-05-11）
+ */
 export default function SuperChatModal({ livestreamId, user, onClose }) {
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [message, setMessage] = useState("");
@@ -37,7 +42,7 @@ export default function SuperChatModal({ livestreamId, user, onClose }) {
     setSending(true);
     const chosen = AMOUNTS.find((a) => a.value === selectedAmount);
 
-    // 1. SuperChat作成
+    // 1. エールコイン記録作成（SuperChat エンティティに保存）
     await base44.entities.SuperChat.create({
       amount: selectedAmount,
       message,

@@ -19,7 +19,7 @@ function calcTotal(coins) {
   return Math.ceil(coins * (1 + FEE_RATE));
 }
 
-// コイン数に応じたSuperChatカラー
+// コイン数に応じたエールコインカラー
 function chatColor(coins) {
   if (coins >= 500) return "red";
   if (coins >= 100) return "orange";
@@ -27,7 +27,7 @@ function chatColor(coins) {
   return "green";
 }
 
-// チャット欄に流すメッセージ
+// チャット欄に流すエールコインメッセージ
 function chatMessage(coins) {
   if (coins >= 500) return `👑 ${coins}コインの大エール！ありがとうございます！`;
   if (coins >= 100) return `🔥 ${coins}コインのエール！`;

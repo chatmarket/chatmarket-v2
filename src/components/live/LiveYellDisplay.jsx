@@ -30,7 +30,7 @@ export default function LiveYellDisplay({ streamId, latestYell }) {
   useEffect(() => {
     if (!streamId) return;
     
-    console.log(`[LiveYellDisplay] 📡 Subscribing to SuperChat on stream: ${streamId}`);
+    console.log(`[LiveYellDisplay] 📡 Subscribing to エールコイン on stream: ${streamId}`);
     
     // 初回ロード
     const fetchSuperChats = async () => {
@@ -40,10 +40,10 @@ export default function LiveYellDisplay({ streamId, latestYell }) {
           "-created_date",
           20
         );
-        console.log(`[LiveYellDisplay] 📥 Initial superChats loaded: ${data.length} items`);
+        console.log(`[LiveYellDisplay] 📥 Initial エールコイン loaded: ${data.length} items`);
         setSuperChats(data);
       } catch (err) {
-        console.error('[LiveYellDisplay] Failed to fetch SuperChat:', err);
+        console.error('[LiveYellDisplay] Failed to fetch エールコイン:', err);
       }
     };
 
@@ -53,7 +53,7 @@ export default function LiveYellDisplay({ streamId, latestYell }) {
     const unsubscribe = base44.entities.SuperChat.subscribe((event) => {
       if (event.type !== "create") return;
       if (event.data?.livestream_id !== streamId) return;
-      console.log(`[LiveYellDisplay] ✅ SuperChat added: ${event.data?.user_name} - ${event.data?.amount}コイン`);
+      console.log(`[LiveYellDisplay] ✅ エールコイン受信: ${event.data?.user_name} - ${event.data?.amount}コイン`);
       setSuperChats((prev) => [event.data, ...prev.slice(0, 19)]);
     });
 

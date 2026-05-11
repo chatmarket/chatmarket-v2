@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { IVS_COSTS, YELL_COIN_SETTINGS } from "@/lib/constants";
 
-// IVS コスト概算
-const INPUT_COST_PER_HOUR_YEN = 30;
-const OUTPUT_COST_PER_VIEWER_HOUR_YEN = 5;
-// コイン→円換算（1コイン=1円・確定仕様）
-const COIN_TO_YEN = 1;
-// ライバー還元率（デフォルト85%）
-const REVENUE_RATE = 0.85;
+// ⚠️ AWS IVS コスト設定 LOCKED（lib/constants.js から参照）
+const INPUT_COST_PER_HOUR_YEN = IVS_COSTS.INPUT_COST_PER_HOUR_YEN;
+const OUTPUT_COST_PER_VIEWER_HOUR_YEN = IVS_COSTS.OUTPUT_COST_PER_VIEWER_HOUR_YEN;
+const COIN_TO_YEN = YELL_COIN_SETTINGS.COIN_TO_YEN_RATE;
+const REVENUE_RATE = YELL_COIN_SETTINGS.CREATOR_REVENUE_RATE;
 
 export default function LiveCostTracker({ startedAt, viewerCount, priceCoins = 0 }) {
   const [costYen, setCostYen] = useState(0);
