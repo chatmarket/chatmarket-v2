@@ -181,14 +181,14 @@ export default function PwaInstallPrompt({ forceShow = false }) {
                   className="mb-4 rounded-xl p-3 space-y-2"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
                 >
-                  <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Safari での手順</p>
+                  <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Install on Safari</p>
                   <div className="flex items-center gap-2 text-xs text-white/60">
                     <Share className="w-4 h-4 text-blue-400 shrink-0" />
-                    <span>Safari の <strong className="text-white/80">共有</strong> ボタンをタップ</span>
+                    <span>Tap the <strong className="text-white/80">Share</strong> button（共有）</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-white/60">
                     <Plus className="w-4 h-4 text-green-400 shrink-0" />
-                    <span><strong className="text-white/80">「ホーム画面に追加」</strong> を選択</span>
+                    <span>Select <strong className="text-white/80">"Add to Home Screen"</strong></span>
                   </div>
                 </div>
               )}
