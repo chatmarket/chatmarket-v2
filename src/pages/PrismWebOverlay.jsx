@@ -253,6 +253,54 @@ export default function PrismWebOverlay() {
       }}
       onLoad={() => console.log('[PrismWebOverlay] ✅ DOM rendered and ready')}
     >
+      {/* HTMLフォールバック: JavaScriptが止まってもHTML単体で表示 */}
+      <noscript>
+        <style>{`
+          body::before {
+            content: '';
+            position: fixed;
+            bottom: 20px;
+            right: 16px;
+            z-index: 999998;
+            width: auto;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1.5px solid #ef4444;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: liveIndicator 1.2s infinite;
+          }
+          body::after {
+            content: '● LIVE';
+            position: fixed;
+            bottom: 20px;
+            right: 16px;
+            z-index: 999998;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1.5px solid #ef4444;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+            animation: liveIndicator 1.2s infinite;
+            animation-delay: 0s;
+          }
+          @keyframes liveIndicator {
+            0%, 100% { opacity: 1; text-shadow: 0 0 8px #ef4444; }
+            50% { opacity: 0.3; text-shadow: 0 0 2px #ef4444; }
+          }
+        `}</style>
+      </noscript>
       {/* チャット（横向きモード対応） */}
       <div
         style={{

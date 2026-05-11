@@ -10,18 +10,16 @@ export default function StreamConnectionWelcome({ streamId }) {
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
-    // 🔥 強制リフレッシュ：ブラウザキャッシュ無視
-    if (typeof window !== 'undefined') {
-      console.log('[StreamConnectionWelcome] 🚀 FORCING RENDER - Cache bypassed');
-      console.log('[StreamConnectionWelcome] ⏱️', new Date().toISOString());
-      console.log('[StreamConnectionWelcome] 📡 Connected to stream:', streamId);
-      console.log('[StreamConnectionWelcome] 🎨 z-index: 999999 (最前面)');
-    }
+    // 🔥 即座に強制表示（WebSocket待たない）
+    console.log('%c[StreamConnectionWelcome] 🚀 STATIC OVERLAY LOADED NOW', 'color: #10b981; font-weight: bold; font-size: 16px');
+    console.log('[StreamConnectionWelcome] ⏰ Time:', new Date().toISOString());
+    console.log('[StreamConnectionWelcome] 📡 Stream ID:', streamId);
+    console.log('[StreamConnectionWelcome] 🎨 z-index: 999999 (always on top)');
 
     // 3秒後に自動で非表示
     const timer = setTimeout(() => {
       setShowWelcome(false);
-      console.log('[StreamConnectionWelcome] ✅ ウェルカムメッセージ非表示');
+      console.log('[StreamConnectionWelcome] ✅ Fading out after 3 seconds');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -96,7 +94,7 @@ export default function StreamConnectionWelcome({ streamId }) {
               }}
             />
 
-            {/* メインメッセージ */}
+            {/* メインメッセージ + テスト用背景色 */}
             <div
               style={{
                 fontSize: "56px",
@@ -108,6 +106,10 @@ export default function StreamConnectionWelcome({ streamId }) {
                 paintOrder: "stroke fill",
                 lineHeight: "1.2",
                 marginBottom: "16px",
+                padding: "20px 30px",
+                backgroundColor: "rgba(34, 197, 94, 0.15)",
+                borderRadius: "16px",
+                backdropFilter: "blur(8px)",
               }}
             >
               🎉 Chat Market
@@ -115,7 +117,7 @@ export default function StreamConnectionWelcome({ streamId }) {
               接続成功！
             </div>
 
-            {/* サブメッセージ */}
+            {/* サブメッセージ + テスト用背景色 */}
             <div
               style={{
                 fontSize: "28px",
@@ -125,6 +127,9 @@ export default function StreamConnectionWelcome({ streamId }) {
                 textShadow: "0 0 20px rgba(34, 197, 94, 0.8), -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
                 WebkitTextStroke: "1px #000",
                 paintOrder: "stroke fill",
+                padding: "12px 20px",
+                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                borderRadius: "12px",
               }}
             >
               今日も最高の配信を！

@@ -44,13 +44,14 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            background: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(8px)",
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(10px)",
             border: "1.5px solid #3b82f6",
             borderRadius: "8px",
-            padding: "8px 12px",
+            padding: "10px 14px",
             fontSize: "12px",
             fontWeight: "700",
+            boxShadow: "0 0 12px rgba(59, 130, 246, 0.3)",
           }}
         >
           <motion.div
@@ -92,13 +93,14 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            background: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(8px)",
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(10px)",
             border: "1.5px solid #ef4444",
             borderRadius: "8px",
-            padding: "8px 12px",
+            padding: "10px 14px",
             fontSize: "12px",
             fontWeight: "700",
+            boxShadow: "0 0 12px rgba(239, 68, 68, 0.3)",
           }}
         >
           {/* 点滅 LIVE バッジ */}
