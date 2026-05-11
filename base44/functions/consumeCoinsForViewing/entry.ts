@@ -18,6 +18,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: "ログインが必要です" }, { status: 401 });
     }
 
+    // ★ テストアカウント（ono@onestep-corp.com）はコイン消費をスキップ
+    if (user.email === "ono@onestep-corp.com") {
+      return Response.json({
+        success: true,
+        is_test_account: true,
+        new_balance: 999999,
+        message: "テストアカウント: コイン消費はスキップされました",
+      });
+    }
+
     const { stream_id, price, channel_id, channel_owner_email, channel_name } = await req.json();
 
     // バリデーション
