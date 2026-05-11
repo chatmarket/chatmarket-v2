@@ -8,10 +8,12 @@ import YellMessageModal from "./YellMessageModal";
 const FEE_RATE = 0.036; // 手数料 3.6%
 
 const YELL_AMOUNTS = [
-  { coins: 10,  gradient: "from-amber-700 to-yellow-500",  glow: "rgba(217,119,6,0.6)" },
-  { coins: 50,  gradient: "from-yellow-500 to-amber-400",  glow: "rgba(251,191,36,0.6)" },
-  { coins: 100, gradient: "from-yellow-400 to-amber-300",  glow: "rgba(252,211,77,0.7)" },
-  { coins: 500, gradient: "from-amber-300 to-yellow-100",  glow: "rgba(254,240,138,0.8)" },
+  { coins: 50,    gradient: "from-yellow-500 to-amber-400",  glow: "rgba(251,191,36,0.6)" },
+  { coins: 100,   gradient: "from-yellow-400 to-amber-300",  glow: "rgba(252,211,77,0.7)" },
+  { coins: 500,   gradient: "from-amber-300 to-yellow-100",  glow: "rgba(254,240,138,0.8)" },
+  { coins: 1000,  gradient: "from-orange-400 to-orange-500", glow: "rgba(251,146,60,0.8)" },
+  { coins: 5000,  gradient: "from-red-500 to-orange-600",    glow: "rgba(239,68,68,0.8)" },
+  { coins: 10000, gradient: "from-purple-600 to-red-600",    glow: "rgba(168,85,247,0.9)" },
 ];
 
 // 手数料込みの実際の引き落とし額

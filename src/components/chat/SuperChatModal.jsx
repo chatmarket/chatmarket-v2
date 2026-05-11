@@ -9,12 +9,11 @@ import { Sparkles } from "lucide-react";
 import YellCoinEffect from "../yell/YellCoinEffect";
 
 const AMOUNTS = [
-  { value: 200, color: "green", label: "¥200" },
-  { value: 500, color: "green", label: "¥500" },
+  { value: 50, color: "green", label: "¥50" },
+  { value: 500, color: "yellow", label: "¥500" },
   { value: 1000, color: "yellow", label: "¥1,000" },
   { value: 5000, color: "orange", label: "¥5,000" },
   { value: 10000, color: "red", label: "¥10,000" },
-  { value: 50000, color: "red", label: "¥50,000" },
 ];
 
 const colorStyles = {
