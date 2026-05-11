@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
 /**
  * StreamConnectionWelcome
@@ -28,11 +27,7 @@ export default function StreamConnectionWelcome({ streamId }) {
   return (
     <>
       {showWelcome && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeIn" }}
+        <div
           style={{
             position: "fixed",
             inset: 0,
@@ -41,101 +36,79 @@ export default function StreamConnectionWelcome({ streamId }) {
             justifyContent: "center",
             zIndex: 999999,
             pointerEvents: "none",
+            animation: "fadeInOut 3s ease-in-out forwards",
           }}
         >
-          {/* グラデーション背景フェード */}
-          <motion.div
-            animate={{ opacity: [0, 0.1, 0] }}
-            transition={{ duration: 3, ease: "easeInOut" }}
+          {/* 赤い強力背景 */}
+          <div
             style={{
               position: "absolute",
               inset: 0,
-              background: "radial-gradient(circle, rgba(34, 197, 94, 0.3) 0%, transparent 70%)",
+              background: "radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%)",
             }}
           />
 
-          {/* メインテキスト */}
-          <motion.div
-            animate={{
-              opacity: [0, 1, 1, 0],
-              scale: [0.8, 1, 1, 0.95],
-            }}
-            transition={{
-              duration: 3,
-              times: [0, 0.15, 0.85, 1],
-              ease: "easeInOut",
-            }}
+          {/* シンプル強力メッセージ */}
+          <div
             style={{
               position: "relative",
               zIndex: 10,
               textAlign: "center",
+              padding: "40px 60px",
+              background: "rgba(0, 0, 0, 0.9)",
+              border: "4px solid #ef4444",
+              borderRadius: "20px",
+              boxShadow: "0 0 60px rgba(239, 68, 68, 0.6)",
             }}
           >
-            {/* 外枠グロー */}
-            <motion.div
-              animate={{
-                opacity: [0, 0.3, 0.3, 0],
-                boxShadow: [
-                  "0 0 0 0 rgba(34, 197, 94, 0.4)",
-                  "0 0 40px 20px rgba(34, 197, 94, 0.3)",
-                  "0 0 40px 20px rgba(34, 197, 94, 0.2)",
-                  "0 0 0 0 rgba(34, 197, 94, 0)",
-                ],
-              }}
-              transition={{
-                duration: 3,
-                times: [0, 0.2, 0.8, 1],
-              }}
-              style={{
-                position: "absolute",
-                inset: "-40px",
-                borderRadius: "20px",
-                zIndex: -1,
-              }}
-            />
-
-            {/* メインメッセージ + テスト用背景色 */}
+            {/* デカ赤文字 */}
             <div
               style={{
-                fontSize: "56px",
+                fontSize: "72px",
                 fontWeight: "900",
+                color: "#ef4444",
+                letterSpacing: "4px",
+                textShadow: "0 0 40px rgba(239, 68, 68, 1)",
+                marginBottom: "20px",
+                lineHeight: "1.1",
+              }}
+            >
+              🚀 接続成功！
+            </div>
+
+            {/* サブメッセージ */}
+            <div
+              style={{
+                fontSize: "32px",
+                fontWeight: "700",
                 color: "#ffffff",
                 letterSpacing: "2px",
-                textShadow: "0 0 30px rgba(34, 197, 94, 0.8), -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
-                WebkitTextStroke: "1.5px #000",
-                paintOrder: "stroke fill",
-                lineHeight: "1.2",
-                marginBottom: "16px",
-                padding: "20px 30px",
-                backgroundColor: "rgba(34, 197, 94, 0.15)",
-                borderRadius: "16px",
-                backdropFilter: "blur(8px)",
+                marginBottom: "10px",
               }}
             >
-              🎉 Chat Market
-              <br />
-              接続成功！
+              Chat Market
             </div>
 
-            {/* サブメッセージ + テスト用背景色 */}
             <div
               style={{
-                fontSize: "28px",
-                fontWeight: "700",
-                color: "#22c55e",
-                letterSpacing: "1px",
-                textShadow: "0 0 20px rgba(34, 197, 94, 0.8), -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
-                WebkitTextStroke: "1px #000",
-                paintOrder: "stroke fill",
-                padding: "12px 20px",
-                backgroundColor: "rgba(34, 197, 94, 0.1)",
-                borderRadius: "12px",
+                fontSize: "18px",
+                fontWeight: "600",
+                color: "#fbbf24",
               }}
             >
-              今日も最高の配信を！
+              配信開始準備完了
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+
+          <style>{`
+            @keyframes fadeInOut {
+              0% { opacity: 0; }
+              10% { opacity: 1; }
+              90% { opacity: 1; }
+              100% { opacity: 0; }
+            }
+          `}</style>
+        </div>
       )}
     </>
   );

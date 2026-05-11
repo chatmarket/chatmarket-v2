@@ -25,20 +25,37 @@ export default function PrismWebOverlay() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [healthCheckError, setHealthCheckError] = useState(null);
 
-  // ページロード時のテストログ＋キャッシュ無視
+  // ページロード時のテストログ＋サーバー報告
   useEffect(() => {
-    // 🔥 強制キャッシュ無視
     if (typeof window !== 'undefined') {
       const timestamp = new Date().toISOString();
+      const viewport = `${window.innerWidth}x${window.innerHeight}`;
+      const userAgent = navigator.userAgent;
+      
       console.log('%c[PrismWebOverlay] 🚀 OVERLAY LOADED - Cache bypassed', 'color: #10b981; font-weight: bold; font-size: 14px');
       console.log('[PrismWebOverlay] ⏰ Timestamp:', timestamp);
       console.log('[PrismWebOverlay] 📡 Stream ID:', streamId);
-      console.log('[PrismWebOverlay] 🌐 Full URL:', window.location.href);
-      console.log('[PrismWebOverlay] 📐 Viewport:', `${window.innerWidth}x${window.innerHeight}`);
+      console.log('[PrismWebOverlay] 🌐 URL:', window.location.href);
+      console.log('[PrismWebOverlay] 📐 Viewport:', viewport);
+      console.log('[PrismWebOverlay] 🖥️ UA:', userAgent);
       
-      // キャッシュクリア信号をコンソールに出力
-      console.log('[PrismWebOverlay] 🧹 Cache-Control: no-store, no-cache, must-revalidate');
-      console.log('[PrismWebOverlay] 🎨 Rendering StreamConnectionWelcome & StreamStatusOverlay...');
+      // サーバーにログを送信（通信成立確認）
+      try {
+        base44.functions.invoke('trackLogs', {
+          eventName: 'prism_overlay_loaded',
+          properties: {
+            streamId,
+            timestamp,
+            viewport,
+            userAgent,
+            url: window.location.href,
+          },
+        }).catch((err) => {
+          console.warn('[PrismWebOverlay] ⚠️ Server log failed:', err.message);
+        });
+      } catch (err) {
+        console.warn('[PrismWebOverlay] ⚠️ Server log error:', err.message);
+      }
     }
   }, [streamId]);
 
@@ -255,49 +272,29 @@ export default function PrismWebOverlay() {
     >
       {/* HTMLフォールバック: JavaScriptが止まってもHTML単体で表示 */}
       <noscript>
+        <div
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "16px",
+            zIndex: 999998,
+            padding: "16px 24px",
+            background: "rgba(0, 0, 0, 0.95)",
+            border: "4px solid #ef4444",
+            borderRadius: "12px",
+            fontSize: "20px",
+            fontWeight: "700",
+            color: "#ef4444",
+            boxShadow: "0 0 30px rgba(239, 68, 68, 0.7)",
+            animation: "noscriptFlash 1s infinite",
+          }}
+        >
+          🔴 LIVE
+        </div>
         <style>{`
-          body::before {
-            content: '';
-            position: fixed;
-            bottom: 20px;
-            right: 16px;
-            z-index: 999998;
-            width: auto;
-            padding: 10px 14px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 1.5px solid #ef4444;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: liveIndicator 1.2s infinite;
-          }
-          body::after {
-            content: '● LIVE';
-            position: fixed;
-            bottom: 20px;
-            right: 16px;
-            z-index: 999998;
-            padding: 10px 14px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 1.5px solid #ef4444;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
-            animation: liveIndicator 1.2s infinite;
-            animation-delay: 0s;
-          }
-          @keyframes liveIndicator {
-            0%, 100% { opacity: 1; text-shadow: 0 0 8px #ef4444; }
-            50% { opacity: 0.3; text-shadow: 0 0 2px #ef4444; }
+          @keyframes noscriptFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
           }
         `}</style>
       </noscript>

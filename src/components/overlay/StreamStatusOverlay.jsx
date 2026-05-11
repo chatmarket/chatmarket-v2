@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { motion } from "framer-motion";
 
 /**
  * StreamStatusOverlay
@@ -27,10 +26,7 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
   if (isConnecting) {
     console.log('[StreamStatusOverlay] 🔵 接続準備中メッセージ表示（z-index: 999998）');
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+      <div
         style={{
           position: "fixed",
           bottom: "20px",
@@ -43,31 +39,41 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            background: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(10px)",
-            border: "1.5px solid #3b82f6",
-            borderRadius: "8px",
-            padding: "10px 14px",
-            fontSize: "12px",
+            gap: "12px",
+            background: "rgba(0, 0, 0, 0.9)",
+            border: "3px solid #3b82f6",
+            borderRadius: "12px",
+            padding: "12px 16px",
+            fontSize: "14px",
             fontWeight: "700",
-            boxShadow: "0 0 12px rgba(59, 130, 246, 0.3)",
+            color: "#3b82f6",
+            boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
+            animation: "pulse 1.5s infinite",
           }}
         >
-          <motion.div
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+          <span
             style={{
               display: "inline-block",
-              width: "8px",
-              height: "8px",
+              width: "10px",
+              height: "10px",
               borderRadius: "50%",
               background: "#3b82f6",
+              animation: "blink 1.5s infinite",
             }}
           />
-          <span style={{ color: "#93c5fd" }}>接続準備中...</span>
+          接続準備中...
         </div>
-      </motion.div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+          }
+          @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+        `}</style>
+      </div>
     );
   }
 
@@ -76,10 +82,7 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
   return (
     <>
       {/* 右下：LIVE & 視聴者数 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+      <div
         style={{
           position: "fixed",
           bottom: "20px",
@@ -92,75 +95,69 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            background: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(10px)",
-            border: "1.5px solid #ef4444",
-            borderRadius: "8px",
-            padding: "10px 14px",
-            fontSize: "12px",
+            gap: "12px",
+            background: "rgba(0, 0, 0, 0.9)",
+            border: "3px solid #ef4444",
+            borderRadius: "12px",
+            padding: "12px 16px",
+            fontSize: "14px",
             fontWeight: "700",
-            boxShadow: "0 0 12px rgba(239, 68, 68, 0.3)",
+            boxShadow: "0 0 30px rgba(239, 68, 68, 0.6)",
+            animation: "liveFlash 1.2s infinite",
           }}
         >
           {/* 点滅 LIVE バッジ */}
-          <motion.div
-            animate={{
-              opacity: [1, 0.3, 1],
-              textShadow: [
-                "0 0 8px #ef4444",
-                "0 0 2px #ef4444",
-                "0 0 8px #ef4444",
-              ],
-            }}
-            transition={{
-              duration: 1.2,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
+          <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
+              gap: "6px",
               color: "#ef4444",
-              fontWeight: "900",
-              letterSpacing: "1px",
+              letterSpacing: "2px",
             }}
           >
             <span
               style={{
                 display: "inline-block",
-                width: "8px",
-                height: "8px",
+                width: "12px",
+                height: "12px",
                 borderRadius: "50%",
                 background: "#ef4444",
+                animation: "dotBlink 1.2s infinite",
               }}
             />
-            LIVE
-          </motion.div>
+            ● LIVE
+          </div>
 
           {/* 視聴者数 */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
+              gap: "6px",
               color: "#ffffff",
-              borderLeft: "1px solid rgba(255, 255, 255, 0.2)",
-              paddingLeft: "8px",
+              borderLeft: "2px solid #ef4444",
+              paddingLeft: "12px",
             }}
           >
-            <span style={{ fontSize: "10px" }}>👁️</span>
-            <span>{viewerCount.toLocaleString()}</span>
+            <span style={{ fontSize: "14px" }}>👁️</span>
+            <span style={{ fontWeight: "900" }}>{viewerCount.toLocaleString()}</span>
           </div>
         </div>
-      </motion.div>
+        <style>{`
+          @keyframes liveFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+          }
+          @keyframes dotBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+        `}</style>
+      </div>
 
-      {/* 左上：配信状態インジケータ（フォールバック） */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
+      {/* 左上：配信状態インジケータ */}
+      <div
         style={{
           position: "fixed",
           top: "20px",
@@ -169,32 +166,26 @@ export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = 
           pointerEvents: "none",
         }}
       >
-        <motion.div
-          animate={{
-            opacity: [0.6, 1, 0.6],
-            boxShadow: [
-              "0 0 0 0 rgba(34, 197, 94, 0.4)",
-              "0 0 0 8px rgba(34, 197, 94, 0)",
-              "0 0 0 0 rgba(34, 197, 94, 0)",
-            ],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatType: "loop",
-          }}
+        <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "12px",
-            height: "12px",
+            width: "16px",
+            height: "16px",
             borderRadius: "50%",
             background: "#22c55e",
-            boxShadow: "0 0 12px rgba(34, 197, 94, 0.6)",
+            boxShadow: "0 0 20px rgba(34, 197, 94, 0.8)",
+            animation: "pulse 2s infinite",
           }}
         />
-      </motion.div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.3; }
+          }
+        `}</style>
+      </div>
 
       {/* 視聴者接続状態ログ */}
       <div style={{ display: "none" }}>
