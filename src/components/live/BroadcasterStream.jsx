@@ -418,6 +418,31 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
          )}
        </div>
 
+      {/* 🎯 ライバー専用エール通知（画面最前面・固定） */}
+      {latestYell && isOBSLive && (
+        <div
+          style={{ position: "fixed", top: "80px", right: "20px", zIndex: 99999 }}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: 100, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-2xl px-5 py-4 shadow-2xl shadow-yellow-500/40 border-2 border-yellow-300 min-w-[260px] max-w-[320px]"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl animate-bounce">⭐</span>
+              <p className="font-black text-lg">エール受信！</p>
+            </div>
+            <p className="font-bold text-sm">{latestYell.user_name || "視聴者"} さんから</p>
+            <p className="font-black text-3xl mt-1">{(latestYell.amount || 0).toLocaleString()} <span className="text-lg">コイン</span></p>
+            {latestYell.message && (
+              <p className="text-xs mt-2 bg-black/10 rounded-lg px-3 py-2 font-semibold">💬 {latestYell.message}</p>
+            )}
+          </motion.div>
+        </div>
+      )}
+
       {/* 🔮 占い師向け決済完了トースト（channel_id があれば自動表示） */}
       <KanteiPaymentNotifier channelId={streamId} />
 

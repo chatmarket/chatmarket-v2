@@ -609,6 +609,37 @@ export default function GoLive() {
             <h2 className="text-base font-black text-white uppercase tracking-wider">配信設定</h2>
           </div>
 
+          {/* ✨ PRISM用オーバーレイURL（チャンネルID固定・常時表示） */}
+          {channels[0]?.id && (
+            <div className="bg-gradient-to-r from-green-950 to-green-900 border-2 border-green-500/60 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🎯</span>
+                <div>
+                  <p className="text-xs font-black text-green-300 uppercase tracking-widest">PRISM / OBS 用オーバーレイURL</p>
+                  <p className="text-white font-black text-sm">永久固定URL — 配信のたびに変わりません</p>
+                </div>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/prism-overlay/${liveStreamId || channels[0].id}`}
+                  className="flex-1 bg-zinc-950 border border-green-500/40 rounded-lg px-3 py-2.5 text-xs text-green-300 font-mono"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/prism-overlay/${liveStreamId || channels[0].id}`);
+                    toast.success("✅ オーバーレイURLをコピーしました！\nPRISMの「Web Overlay」に貼り付けてください");
+                  }}
+                  className="shrink-0 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-black font-black text-xs rounded-lg transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <Copy className="w-3.5 h-3.5" /> コピー
+                </button>
+              </div>
+              <p className="text-[10px] text-green-300/70 mt-2">💡 PRISM → 設定 → Web Overlay → このURLを貼り付ける</p>
+            </div>
+          )}
+
           {/* PC/スマホ配信ツール（フォーム前） */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
             <div className="px-4 pt-4 pb-2 border-b border-zinc-800">
