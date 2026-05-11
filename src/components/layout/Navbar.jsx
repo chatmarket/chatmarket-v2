@@ -143,9 +143,9 @@ export default function Navbar() {
             <>
               <NotificationBell user={user} />
               {wallet && (
-                <Button size="sm" variant="ghost" className="hidden sm:flex gap-1.5 text-yellow-400">
+                <Button size="sm" variant="ghost" className="gap-1.5 text-yellow-400 hover:bg-yellow-500/10">
                   <Coins className="w-4 h-4" />
-                  <span className="text-xs">{wallet.balance || 0}</span>
+                  <span className="hidden sm:inline text-xs font-semibold">{(wallet.balance || 0).toLocaleString()}</span>
                 </Button>
               )}
               <Link to="/upload">
