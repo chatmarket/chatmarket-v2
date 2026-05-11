@@ -16,6 +16,8 @@ export default function PrismWebOverlay() {
   const { streamId } = useParams();
   const [chatMessages, setChatMessages] = useState([]);
   const [yellowNotifications, setYellNotifications] = useState([]);
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+  const [chatOffset, setChatOffset] = useState("left"); // "left" or "right"
 
   // ページロード時のテストログ
   useEffect(() => {
@@ -25,6 +27,28 @@ export default function PrismWebOverlay() {
     console.log('[PrismWebOverlay] ⏰ タイムスタンプ:', new Date().toISOString());
     console.log('[PrismWebOverlay] 📐 ビューポート:', `${window.innerWidth}x${window.innerHeight}`);
   }, [streamId]);
+
+  // 📱 横向きモード検知 & オフセット制御
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      const landscape = window.innerWidth > window.innerHeight;
+      setIsLandscape(landscape);
+      if (landscape) {
+        console.log('[PrismWebOverlay] 📱 Landscape mode detected — offset chat to right');
+        setChatOffset("right");
+      } else {
+        console.log('[PrismWebOverlay] 📱 Portrait mode detected — chat to left');
+        setChatOffset("left");
+      }
+    };
+    window.addEventListener("orientationchange", handleOrientationChange);
+    window.addEventListener("resize", handleOrientationChange);
+    handleOrientationChange();
+    return () => {
+      window.removeEventListener("orientationchange", handleOrientationChange);
+      window.removeEventListener("resize", handleOrientationChange);
+    };
+  }, []);
 
   // チャット購読
   useEffect(() => {
@@ -114,14 +138,14 @@ export default function PrismWebOverlay() {
       }}
       onLoad={() => console.log('[PrismWebOverlay] ✅ DOM rendered and ready')}
     >
-      {/* チャット（下から上へ流れる） */}
+      {/* チャット（横向きモード対応） */}
       <div
         style={{
           position: "absolute",
           bottom: 0,
-          left: 0,
-          right: 0,
-          height: "60%",
+          [isLandscape && chatOffset === "right" ? "right" : "left"]: 0,
+          [isLandscape ? "width" : "width"]: isLandscape ? "40%" : "100%",
+          height: isLandscape ? "100%" : "60%",
           pointerEvents: "none",
         }}
       >
