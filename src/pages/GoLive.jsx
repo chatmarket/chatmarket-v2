@@ -31,6 +31,7 @@ export default function GoLive() {
   const [manualStreamKey, setManualStreamKey] = useState("");
   const [manualIngestEndpoint, setManualIngestEndpoint] = useState("");
   const [refreshingKey, setRefreshingKey] = useState(false);
+  const [keyFetchedAt, setKeyFetchedAt] = useState(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -139,6 +140,7 @@ export default function GoLive() {
       setManualStreamKey(data.streamKey);
       const host = data.ingestEndpoint;
       setManualIngestEndpoint(host);
+      setKeyFetchedAt(new Date());
 
       // DBのLiveStreamも更新
       if (liveStreamId) {
@@ -289,6 +291,28 @@ export default function GoLive() {
       });
 
       await base44.entities.Channel.update(channel.id, { is_live: true });
+
+      // ── AWS APIから最新キーを強制取得（DBキャッシュ不使用）──
+      try {
+        const refreshRes = await base44.functions.invoke('refreshIvsStreamKey', { channelArn: ivsData.channelArn });
+        const freshData = refreshRes?.data;
+        if (freshData?.streamKey) {
+          setManualStreamKey(freshData.streamKey);
+          setManualIngestEndpoint(freshData.ingestEndpoint);
+          setKeyFetchedAt(new Date());
+          // DBにも最新キーを保存
+          await base44.entities.LiveStream.update(newStream.id, {
+            ivs_stream_key: freshData.streamKey,
+            ivs_ingest_endpoint: freshData.ingestEndpoint,
+          });
+        } else {
+          setKeyFetchedAt(new Date());
+        }
+      } catch (_) {
+        // リフレッシュ失敗時はcreateLiveStreamのキーをそのまま使う
+        setKeyFetchedAt(new Date());
+      }
+
       setCreating(false);
       sessionStorage.setItem("liveStreamId", newStream.id);
       setLiveStreamId(newStream.id);
@@ -384,6 +408,17 @@ export default function GoLive() {
               <div>
                 <p className="text-xs font-black text-purple-300 uppercase tracking-widest">Prism Live Studio 用</p>
                 <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
+                {keyFetchedAt && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                      AWS取得済み {keyFetchedAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                      ⚠️ 現在のセッション専用
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <button
