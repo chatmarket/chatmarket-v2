@@ -71,6 +71,81 @@ export const YELL_COIN_SETTINGS = {
 };
 
 // ────────────────────────────────────────────────────────────
+// 【YellCoinSystem - 6段階階級制度】LOCKED 小野社長定義
+// ────────────────────────────────────────────────────────────
+export const YELL_COIN_TIERS = {
+  TIER_1: {
+    name: "通常エール",
+    minCoins: 50,
+    maxCoins: 99,
+    effectLevel: 1,      // 演出派手さ: 1（軽い）
+    featured: false,      // ピン留め: なし
+    color: "yellow",
+    emoji: "💛",
+  },
+  TIER_2: {
+    name: "推し応援",
+    minCoins: 100,
+    maxCoins: 499,
+    effectLevel: 1,      // 演出派手さ: 1
+    featured: false,
+    color: "orange",
+    emoji: "🧡",
+  },
+  TIER_3: {
+    name: "大応援",
+    minCoins: 500,
+    maxCoins: 999,
+    effectLevel: 2,      // 演出派手さ: 2（中程度）
+    featured: false,
+    color: "red",
+    emoji: "❤️",
+  },
+  TIER_4: {
+    name: "究極応援",
+    minCoins: 1000,
+    maxCoins: 4999,
+    effectLevel: 2,      // 演出派手さ: 2
+    featured: false,
+    color: "purple",
+    emoji: "💜",
+  },
+  TIER_5: {
+    name: "伝説級応援",
+    minCoins: 5000,
+    maxCoins: 9999,
+    effectLevel: 3,      // 演出派手さ: 3（最高）
+    featured: true,      // ピン留め: あり
+    color: "gold",
+    emoji: "👑",
+  },
+  TIER_6: {
+    name: "神の一手",
+    minCoins: 10000,
+    maxCoins: null,
+    effectLevel: 3,      // 演出派手さ: 3
+    featured: true,      // ピン留め: あり
+    color: "diamond",
+    emoji: "💎",
+  },
+};
+
+/**
+ * エールコイン金額から階級を判定
+ * @param {number} coins - エールコイン数
+ * @returns {object} - 階級情報
+ */
+export function getYellTierFromCoins(coins) {
+  const tiers = Object.values(YELL_COIN_TIERS);
+  for (const tier of tiers) {
+    if (coins >= tier.minCoins && (tier.maxCoins === null || coins <= tier.maxCoins)) {
+      return tier;
+    }
+  }
+  return YELL_COIN_TIERS.TIER_1; // デフォルト
+}
+
+// ────────────────────────────────────────────────────────────
 // 【チケット販売】LOCKED
 // ────────────────────────────────────────────────────────────
 export const TICKET_SETTINGS = {
