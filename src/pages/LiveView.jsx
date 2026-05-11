@@ -21,6 +21,7 @@ import LivePaywallStripe from "../components/live/LivePaywallStripe.jsx";
 import StreamInfoPanel from "../components/live/StreamInfoPanel.jsx";
 import LivePreviewLockout from "../components/live/LivePreviewLockout.jsx";
 import ScheduledStreamWaiting from "../components/live/ScheduledStreamWaiting.jsx";
+import StreamEndedScreen from "../components/live/StreamEndedScreen.jsx";
 
 class LiveViewErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -209,6 +210,22 @@ function LiveViewInner() {
   // ── レイアウト定数 ──
   const TOPBAR_H = 52;
   const CHAT_W = isLandscape ? 260 : "100%";
+
+  // 配信終了画面を全画面で表示
+  if (stream.status === "ended") {
+    return (
+      <div style={{ width: "100%", minHeight: "100vh", background: "#0c0c12" }}>
+        <MetaHelmet
+          title={`配信終了：${stream.channel_name}先生 | Chat Market`}
+          description={`${stream.channel_name}先生の配信は終了しました。`}
+        />
+        <StreamEndedScreen 
+          totalYells={stream.ticket_purchases?.length || 0}
+          totalViewers={stream.viewer_count || 0}
+        />
+      </div>
+    );
+  }
 
   const videoPortal = ReactDOM.createPortal(
     <div style={{
