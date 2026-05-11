@@ -13,6 +13,7 @@ import StreamKeySecurityDisplay from "../components/live/StreamKeySecurityDispla
 import TroubleshootingGuide from "../components/live/TroubleshootingGuide";
 import StreamSetupCards from "../components/live/StreamSetupCards";
 import ObsQuickSetupGuide from "../components/live/ObsQuickSetupGuide";
+import BroadcasterSetupGuide from "../components/broadcast/BroadcasterSetupGuide";
 import { RefreshCw, ShieldCheck } from "lucide-react";
 
 const MODE_SELECT = "select";
@@ -665,6 +666,9 @@ export default function GoLive() {
             </div>
             <p className="text-[10px] text-cyan-300/60 mt-2 pl-1">💡 IVS LOW遅延モード有効 | 推奨上り速度: 5Mbps以上</p>
           </div>
+
+          {/* OBS/PRISM詳細設定ガイド */}
+          <BroadcasterSetupGuide />
 
           {/* PC/スマホ配信ツール（フォーム前） */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
