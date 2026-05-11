@@ -112,22 +112,29 @@ export default function GoLive() {
     }
   }, [user, ppvLoading, campaignLoading, canUseLiveStream, modeInitialized]);
 
+  // チャンネルに既存の固定キーがあればフォーム表示時に自動ロード
+  useEffect(() => {
+    if (channels[0]?.ivs_stream_key && !manualStreamKey) {
+      const ch = channels[0];
+      setManualStreamKey(ch.ivs_stream_key);
+      setManualIngestEndpoint(ch.ivs_ingest_endpoint || "");
+      setIvsStream({
+        streamKey: ch.ivs_stream_key,
+        ingestEndpoint: ch.ivs_ingest_endpoint,
+        playbackUrl: ch.ivs_playback_url,
+        channelArn: ch.ivs_channel_arn,
+      });
+      setKeyFetchedAt(new Date(ch.ivs_provisioned_at || Date.now()));
+    }
+  }, [channels]);
+
   // AWS から最新のストリームキーを取得・再生成する
   const handleRefreshKey = async () => {
-    if (!ivsStream?.channelArn && !liveStreamId) {
-      toast.error("先に配信枠を作成してください");
-      return;
-    }
-    // channelArn は ivsStream から、またはDBのlivStreamのivs_channel_arnから取得
-    let channelArn = ivsStream?.channelArn;
-    if (!channelArn && liveStreamId) {
-      try {
-        const streams = await base44.entities.LiveStream.filter({ id: liveStreamId });
-        channelArn = streams[0]?.ivs_channel_arn;
-      } catch (_) {}
-    }
+    // Channelエンティティの固定キーからARNを取得
+    const channel = channels[0];
+    const channelArn = channel?.ivs_channel_arn || ivsStream?.channelArn;
     if (!channelArn) {
-      toast.error("チャンネルARNが見つかりません");
+      toast.error("先に配信を開始してストリームキーを初期化してください");
       return;
     }
 
@@ -138,16 +145,14 @@ export default function GoLive() {
       if (!data?.streamKey) throw new Error(data?.error || "キー取得失敗");
 
       setManualStreamKey(data.streamKey);
-      const host = data.ingestEndpoint;
-      setManualIngestEndpoint(host);
+      setManualIngestEndpoint(data.ingestEndpoint);
       setKeyFetchedAt(new Date());
 
-      // DBのLiveStreamも更新
-      if (liveStreamId) {
-        await base44.entities.LiveStream.update(liveStreamId, {
+      // Channelエンティティにも最新キーを保存
+      if (channel?.id) {
+        await base44.entities.Channel.update(channel.id, {
           ivs_stream_key: data.streamKey,
           ivs_ingest_endpoint: data.ingestEndpoint,
-          ivs_playback_url: data.playbackUrl,
         });
       }
 
@@ -227,7 +232,7 @@ export default function GoLive() {
   const handleStart = async (e) => {
     e.preventDefault();
     if (!form.title) return;
-    // 整数バリデーション：小数点・15未満を弾く
+    // 整数バリデーション
     const priceInt = Math.floor(Number(form.price));
     if (priceInt > 0 && priceInt < 15) {
       toast.error("視聴価格は最低15コイン（SD 480p）以上で設定してください");
@@ -239,58 +244,76 @@ export default function GoLive() {
     }
     setCreating(true);
 
-    const ivsRes = await base44.functions.invoke('createLiveStream', {});
-    if (!ivsRes?.data?.streamId) {
-      const errMsg = ivsRes?.data?.error || '配信枠の作成に失敗しました。';
-      const errCode = ivsRes?.data?.code || '';
-      if (errCode === 'AWS_CREDENTIALS_MISSING') {
-        toast.error('⚠️ AWSの認証キーが未設定です。Base44ダッシュボード → Settings → Environment Variables にAWS_ACCESS_KEY_IDとAWS_SECRET_ACCESS_KEYをセットしてください。', { duration: 10000 });
-      } else if (errMsg.includes('403') || errMsg.includes('Forbidden') || errMsg.includes('AccessDenied')) {
-        toast.error('⚠️ AWS権限エラー(403): IAMユーザーにIVSの権限（AmazonIVSFullAccess）が付与されているか確認してください。', { duration: 10000 });
-      } else {
-        toast.error(`配信枠の作成に失敗しました: ${errMsg}`, { duration: 8000 });
-      }
-      setCreating(false);
-      return;
-    }
-    const ivsData = ivsRes.data;
-    setIvsStream(ivsData);
-    setManualStreamKey(ivsData.streamKey);
-    // ingestEndpointはホスト名のみ保存（rtmps://なし）
-    const host = ivsData.rtmpsUrl.replace("rtmps://", "").replace(":443/app/", "");
-    setManualIngestEndpoint(host);
-
-    const FIXED_PLAYBACK_URL = ivsData.playbackUrl || "https://27b83d82b8a7.ap-northeast-1.playback.live-video.net/api/video/v1/ap-northeast-1.813372611580.channel.pVdn6DgvnSMG.m3u8";
-
-    let channel = channels[0];
-    if (!channel) {
-      try {
-        channel = await base44.entities.Channel.create({ name: user.full_name + "のチャンネル", owner_email: user.email });
-      } catch (err) {
-        toast.error('チャンネル作成に失敗しました。');
-        setCreating(false);
-        return;
-      }
-    }
-
-    let thumbnail_url = "";
-    if (thumbnailFile) {
-      try {
-        const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
-        thumbnail_url = res.file_url;
-        setThumbnailUrl(thumbnail_url);
-      } catch (err) {}
-    }
-
-    const getQualityFromPrice = (price) => {
-      if (price === 0 || price >= 150) return "1080p";
-      if (price >= 55) return "720p";
-      return "480p";
-    };
-    const autoQuality = getQualityFromPrice(form.price);
-    const isLiveNow = !form.scheduled_at;
-
     try {
+      let channel = channels[0];
+      if (!channel) {
+        try {
+          channel = await base44.entities.Channel.create({ 
+            name: user.full_name + "のチャンネル", 
+            owner_email: user.email 
+          });
+        } catch (err) {
+          toast.error('チャンネル作成に失敗しました。');
+          setCreating(false);
+          return;
+        }
+      }
+
+      // ステップ1: 配信者固有のストリームキー初期化（初回のみ）
+      let channelArn = channel.ivs_channel_arn;
+      let streamKey = channel.ivs_stream_key;
+      let ingestEndpoint = channel.ivs_ingest_endpoint;
+      let playbackUrl = channel.ivs_playback_url;
+
+      if (!streamKey) {
+        // 初回: IVSチャンネル＋ストリームキーを生成
+        const provisionRes = await base44.functions.invoke('provisionChannelStreamKey', { 
+          channel_id: channel.id 
+        });
+        
+        if (!provisionRes?.data?.success) {
+          toast.error(provisionRes?.data?.error || 'ストリームキーの初期化に失敗しました');
+          setCreating(false);
+          return;
+        }
+
+        channelArn = provisionRes.data.channel_arn;
+        streamKey = provisionRes.data.stream_key;
+        ingestEndpoint = provisionRes.data.ingest_endpoint;
+        playbackUrl = provisionRes.data.playback_url;
+
+        toast.success("🎉 あなたの配信キーを作成しました。生涯この1つのキーで配信できます。");
+      }
+
+      setIvsStream({ 
+        streamKey, 
+        ingestEndpoint, 
+        playbackUrl, 
+        channelArn 
+      });
+      setManualStreamKey(streamKey);
+      setManualIngestEndpoint(ingestEndpoint);
+      setKeyFetchedAt(new Date());
+
+      // ステップ2: サムネイルアップロード
+      let thumbnail_url = "";
+      if (thumbnailFile) {
+        try {
+          const res = await base44.integrations.Core.UploadFile({ file: thumbnailFile });
+          thumbnail_url = res.file_url;
+          setThumbnailUrl(thumbnail_url);
+        } catch (err) {}
+      }
+
+      // ステップ3: 配信フレーム作成
+      const getQualityFromPrice = (price) => {
+        if (price === 0 || price >= 150) return "1080p";
+        if (price >= 55) return "720p";
+        return "480p";
+      };
+      const autoQuality = getQualityFromPrice(form.price);
+      const isLiveNow = !form.scheduled_at;
+
       const newStream = await base44.entities.LiveStream.create({
         title: form.title,
         description: form.description,
@@ -301,13 +324,13 @@ export default function GoLive() {
         status: isLiveNow ? "live" : "scheduled",
         scheduled_at: form.scheduled_at || null,
         available_time: form.availableTime || "",
-        price: Math.floor(Number(form.price)) || 0,
+        price: priceInt || 0,
         viewer_count: 0,
         stream_type: "ivs",
-        ivs_playback_url: FIXED_PLAYBACK_URL,
-        ivs_channel_arn: ivsData.channelArn || "",
-        ivs_stream_key: ivsData.streamKey || "",
-        ivs_ingest_endpoint: ivsData.ingestEndpoint || "",
+        ivs_playback_url: playbackUrl,
+        ivs_channel_arn: channelArn,
+        ivs_stream_key: streamKey,
+        ivs_ingest_endpoint: ingestEndpoint,
         max_bitrate_restriction: autoQuality,
         live_started_at: isLiveNow ? new Date().toISOString() : null,
         cost_input_yen: 0,
@@ -324,31 +347,11 @@ export default function GoLive() {
 
       await base44.entities.Channel.update(channel.id, { is_live: true });
 
-      // ── AWS APIから最新キーを強制取得（DBキャッシュ不使用）──
-      try {
-        const refreshRes = await base44.functions.invoke('refreshIvsStreamKey', { channelArn: ivsData.channelArn });
-        const freshData = refreshRes?.data;
-        if (freshData?.streamKey) {
-          setManualStreamKey(freshData.streamKey);
-          setManualIngestEndpoint(freshData.ingestEndpoint);
-          setKeyFetchedAt(new Date());
-          // DBにも最新キーを保存
-          await base44.entities.LiveStream.update(newStream.id, {
-            ivs_stream_key: freshData.streamKey,
-            ivs_ingest_endpoint: freshData.ingestEndpoint,
-          });
-        } else {
-          setKeyFetchedAt(new Date());
-        }
-      } catch (_) {
-        // リフレッシュ失敗時はcreateLiveStreamのキーをそのまま使う
-        setKeyFetchedAt(new Date());
-      }
-
       setCreating(false);
       sessionStorage.setItem("liveStreamId", newStream.id);
       setLiveStreamId(newStream.id);
     } catch (err) {
+      console.error('配信作成エラー:', err);
       toast.error('配信作成に失敗しました: ' + err.message);
       setCreating(false);
     }
@@ -444,13 +447,17 @@ export default function GoLive() {
                   <h2 className="text-lg font-black text-white">配信3ステップ — コピペで準備完了</h2>
                   {keyFetchedAt && (
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
-                        AWS取得済み {keyFetchedAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                      </span>
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                        ⚠️ 現在のセッション専用
-                      </span>
+                      {channels[0]?.ivs_stream_key ? (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/15 border border-primary/30 px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" />
+                          🔒 あなた専用の固定キー（生涯有効）
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                          AWS取得済み {keyFetchedAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
