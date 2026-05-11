@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import StreamOverlayChat from "@/components/overlay/StreamOverlayChat";
 import StreamOverlayYell from "@/components/overlay/StreamOverlayYell";
 import StreamStatusOverlay from "@/components/overlay/StreamStatusOverlay";
+import StreamConnectionWelcome from "@/components/overlay/StreamConnectionWelcome";
 
 /**
  * PrismWebOverlay
@@ -215,6 +216,9 @@ export default function PrismWebOverlay() {
         viewerCount={viewerCount}
         status={streamStatus}
       />
+
+      {/* 接続成功ウェルカムメッセージ（オープニング） */}
+      <StreamConnectionWelcome streamId={streamId} />
     </div>
   );
 }
