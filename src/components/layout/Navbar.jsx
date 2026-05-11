@@ -142,10 +142,12 @@ export default function Navbar() {
           {user ? (
             <>
               <NotificationBell user={user} />
-              <Button size="sm" variant="ghost" className="gap-1.5 text-yellow-400 hover:bg-yellow-500/10">
-                <Coins className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs font-semibold">{(wallet?.balance || 0).toLocaleString()}</span>
-              </Button>
+              <Link to="/coin-charge">
+                <Button size="sm" variant="ghost" className="gap-1.5 text-yellow-400 hover:bg-yellow-500/10">
+                  <Coins className="w-4 h-4" />
+                  <span className="hidden sm:inline text-xs font-semibold">{(wallet?.balance || 0).toLocaleString()}</span>
+                </Button>
+              </Link>
               <Link to="/upload">
                 <Button size="sm" variant="ghost" className="hidden sm:flex gap-2">
                   <Video className="w-4 h-4" />
