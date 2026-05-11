@@ -416,10 +416,7 @@ export default function Home() {
       {/* PPV料金表 + 55円革命 → 「もっと知る」ボタン1つに集約 */}
 
 
-      {/* サーバー安定化バナー */}
-      <div className="px-0">
-        <ServerLimitBanner />
-      </div>
+
 
       {/* クリエイター向け: 待機中にするボタン */}
       {user && myChannel && (
