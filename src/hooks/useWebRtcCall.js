@@ -122,8 +122,14 @@ export function useWebRtcCall({
 
       reportStatus('connecting', `試行 ${attemptNum}/${MAX_RETRIES}`);
 
-      // Twilio NTSからグローバルTURNサーバーを取得（初回のみ）
-      const iceServers = await fetchTwilioIceServers();
+      // ICE優先順位: Google STUN（第1）→ Twilio TURN（フォールバック）
+      const twilioServers = await fetchTwilioIceServers();
+      const iceServers = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        ...twilioServers.filter(s => s.urls && s.urls.toString().startsWith('turn:')),
+      ];
+      console.log('[WebRTC] ICE config: Google STUN x2 + Twilio TURN x', iceServers.length - 2);
       if (cleanedUpRef.current) return;
 
       const pc = new RTCPeerConnection({
