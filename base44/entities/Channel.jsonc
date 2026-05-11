@@ -192,11 +192,51 @@
     "fanclub_monthly_price": {
       "type": "number",
       "default": 500,
-      "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u6708\u984d\u6599\u91d1\uff08\u5186\uff09"
+      "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u6708\u984d\u6599\u91d1\uff08\u5186\uff09\u203b\u5f8c\u65b9\u4e92\u63db\u7528"
     },
     "fanclub_description": {
       "type": "string",
       "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u306e\u8aac\u660e\u30fb\u7279\u5178\u5185\u5bb9"
+    },
+    "fanclub_tiers": {
+      "type": "array",
+      "description": "\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u30c6\u30a3\u30a2\u8a2d\u5b9a\uff08\u52d5\u7684\u30d7\u30e9\u30f3\uff09",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tier_id": {
+            "type": "string",
+            "description": "\u30c6\u30a3\u30a2ID\uff08\u4f8b: standard, premium, diamond\uff09"
+          },
+          "name": {
+            "type": "string",
+            "description": "\u30c6\u30a3\u30a2\u540d\uff08\u8868\u793a\u540d\uff09"
+          },
+          "price": {
+            "type": "number",
+            "description": "\u6708\u984d\u6599\u91d1\uff08\u5186\uff09"
+          },
+          "description": {
+            "type": "string",
+            "description": "\u30c6\u30a3\u30a2\u8aac\u660e"
+          },
+          "perks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\u7279\u5178\u30ea\u30b9\u30c8"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "\u7d75\u6587\u5b57\u30a2\u30a4\u30b3\u30f3"
+          },
+          "stripe_price_id": {
+            "type": "string",
+            "description": "Stripe Price ID\uff08\u4f5c\u6210\u5f8c\u306b\u4fdd\u5b58\uff09"
+          }
+        }
+      }
     },
     "campaign_allowed": {
       "type": "boolean",

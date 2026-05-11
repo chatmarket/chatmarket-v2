@@ -7,38 +7,27 @@ import { base44 } from "@/api/base44Client";
 import SanctumTierCard from "../components/vault/SanctumTierCard";
 import MemberGiftPanel from "../components/fanclub/MemberGiftPanel";
 
-const TIERS = [
+const DEFAULT_TIERS = [
   {
-    tier: "standard",
+    tier_id: "standard",
     price: 500,
-    perks: [
-      "限定投稿・写真を閲覧",
-      "コミュニティ掲示板への投稿",
-      "⭐ スタンダードバッジ（継続月数表示）",
-      "会員限定ギフト解放",
-    ],
+    name: "Standard",
+    emoji: "⭐",
+    perks: ["限定投稿・写真を閲覧", "コミュニティ掲示板への投稿", "スタンダードバッジ（継続月数表示）", "会員限定ギフト解放"],
   },
   {
-    tier: "premium",
+    tier_id: "premium",
     price: 3000,
-    perks: [
-      "Standard の全特典",
-      "FHD画質開放（対象配信）",
-      "限定ライブへの招待",
-      "👑 プレミアムバッジ",
-      "プレミアムギフト解放",
-    ],
+    name: "Premium",
+    emoji: "👑",
+    perks: ["Standard の全特典", "FHD画質開放（対象配信）", "限定ライブへの招待", "プレミアムバッジ", "プレミアムギフト解放"],
   },
   {
-    tier: "diamond",
+    tier_id: "diamond",
     price: 10000,
-    perks: [
-      "Premium の全特典",
-      "月1回の1対1ビデオ通話権",
-      "💎 ダイヤモンドバッジ",
-      "伝説のギフト解放",
-      "ライバーからの優先返信・DM権",
-    ],
+    name: "Diamond",
+    emoji: "💎",
+    perks: ["Premium の全特典", "月1回の1対1ビデオ通話権", "ダイヤモンドバッジ", "伝説のギフト解放", "ライバーからの優先返信・DM権"],
   },
 ];
 
@@ -88,6 +77,9 @@ export default function FanClub() {
     enabled: !!channelId,
   });
 
+  // DBからティアを取得（チャンネルに設定があればそれを使用、なければデフォルト）
+  const tiers = channel?.fanclub_tiers?.length > 0 ? channel.fanclub_tiers : DEFAULT_TIERS;
+
   const { data: subscription } = useQuery({
     queryKey: ["sanctum-sub-fc", channelId, user?.email],
     queryFn: () =>
@@ -106,6 +98,7 @@ export default function FanClub() {
   });
 
   const currentTierName = subscription?.plan_name?.replace("sanctum_", "") || null;
+
   const monthsSubscribed = subscription?.start_date
     ? Math.floor((Date.now() - new Date(subscription.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))
     : 0;
@@ -145,20 +138,24 @@ export default function FanClub() {
         )}
       </motion.div>
 
-      {/* Tier cards */}
+      {/* Tier cards — DB駆動の動的レンダリング */}
       {channelId ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {TIERS.map((tier, i) => (
+        <div className={`grid gap-4 ${tiers.length === 1 ? "grid-cols-1 max-w-sm mx-auto" : tiers.length === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"}`}>
+          {tiers.map((tier, i) => (
             <motion.div
-              key={tier.tier}
+              key={tier.tier_id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
               <SanctumTierCard
-                {...tier}
+                tier={tier.tier_id}
+                price={tier.price}
+                perks={tier.perks || []}
+                name={tier.name}
+                emoji={tier.emoji}
                 channelId={channelId}
-                isCurrentTier={currentTierName === tier.tier}
+                isCurrentTier={currentTierName === tier.tier_id}
                 hasAnyTier={!!currentTierName}
                 disabled={false}
               />

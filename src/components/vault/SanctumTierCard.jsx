@@ -32,9 +32,12 @@ const TIER_CONFIG = {
   },
 };
 
-export default function SanctumTierCard({ tier, price, perks, isCurrentTier, hasAnyTier, channelId, disabled }) {
+export default function SanctumTierCard({ tier, price, perks, name, emoji, isCurrentTier, hasAnyTier, channelId, disabled }) {
+  // DBから渡されたname/emojiを優先、なければTIER_CONFIGのデフォルトを使用
   const cfg = TIER_CONFIG[tier] || TIER_CONFIG.standard;
   const Icon = cfg.icon;
+  const displayName = name || cfg.badge;
+  const displayEmoji = emoji || cfg.emoji;
 
   return (
     <div className={`relative flex flex-col rounded-2xl border-2 overflow-hidden transition-all duration-300 ${cfg.border} ${isCurrentTier ? "shadow-lg scale-[1.02]" : "hover:scale-[1.01]"}`}
@@ -50,7 +53,7 @@ export default function SanctumTierCard({ tier, price, perks, isCurrentTier, has
             <div className={`w-8 h-8 rounded-full ${cfg.badgeColor} flex items-center justify-center`}>
               <Icon className="w-4 h-4 text-white" />
             </div>
-            <span className={`font-black text-sm ${cfg.textColor}`}>{cfg.emoji} {cfg.badge}</span>
+            <span className={`font-black text-sm ${cfg.textColor}`}>{displayEmoji} {displayName}</span>
           </div>
           {isCurrentTier && (
             <span className="text-[10px] bg-amber-400 text-black font-black px-2 py-0.5 rounded-full">加入中</span>
