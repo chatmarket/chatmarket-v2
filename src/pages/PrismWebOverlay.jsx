@@ -22,6 +22,8 @@ export default function PrismWebOverlay() {
   const [chatOffset, setChatOffset] = useState("left"); // "left" or "right"
   const [streamStatus, setStreamStatus] = useState("scheduled");
   const [viewerCount, setViewerCount] = useState(0);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [healthCheckError, setHealthCheckError] = useState(null);
 
   // ページロード時のテストログ
   useEffect(() => {
@@ -148,6 +150,11 @@ export default function PrismWebOverlay() {
       setStreamStatus(newStatus);
       setViewerCount(newViewers);
       
+      // ステータスが「live」に変わったら接続状態を確認
+      if (newStatus === "live") {
+        performHealthCheck();
+      }
+      
       console.log('[PrismWebOverlay] 🟢 Stream status updated:', { 
         status: newStatus, 
         viewers: newViewers,
@@ -155,7 +162,7 @@ export default function PrismWebOverlay() {
       });
     });
 
-    // 初期値を一度取得
+    // 初期値を一度取得 + ヘルスチェック
     base44.entities.LiveStream.filter({ id: streamId }).then((streams) => {
       if (streams[0]) {
         setStreamStatus(streams[0].status || "scheduled");
@@ -164,11 +171,55 @@ export default function PrismWebOverlay() {
           status: streams[0].status,
           viewers: streams[0].viewer_count
         });
+        
+        // 配信中なら即座にヘルスチェック実施
+        if (streams[0].status === "live") {
+          performHealthCheck();
+        }
       }
     });
 
     return unsubscribeLiveStream;
   }, [streamId]);
+
+  // IVSチャンネルヘルスチェック
+  const performHealthCheck = async () => {
+    console.log('[PrismWebOverlay] 🏥 Performing IVS health check...');
+    setIsConnecting(true);
+    setHealthCheckError(null);
+    
+    try {
+      const res = await base44.functions.invoke('healthCheckIvsChannel', { streamId });
+      const data = res?.data;
+      
+      if (data?.success) {
+        console.log('[PrismWebOverlay] ✅ Health check passed:', data);
+        setIsConnecting(false);
+      } else {
+        console.log('[PrismWebOverlay] ⚠️ Health check failed:', data);
+        setHealthCheckError(data?.message);
+        setIsConnecting(true); // 接続準備中を継続表示
+        
+        // 自動復旧: チャンネル再生成が必要な場合
+        if (data?.requiresReprovision) {
+          console.log('[PrismWebOverlay] 🔧 Triggering channel reprovision...');
+          try {
+            const reprovRes = await base44.functions.invoke('forceReprovisionIvsChannel', { streamId });
+            console.log('[PrismWebOverlay] ✅ Reprovision result:', reprovRes?.data);
+            setIsConnecting(false);
+          } catch (reprovErr) {
+            console.error('[PrismWebOverlay] ❌ Reprovision failed:', reprovErr);
+            setIsConnecting(false);
+            setHealthCheckError('チャンネル復旧に失敗しました。OBSを再起動してください。');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[PrismWebOverlay] ❌ Health check error:', err);
+      setHealthCheckError('接続状態を確認できません。');
+      setIsConnecting(false);
+    }
+  };
 
   return (
     <div
@@ -215,6 +266,7 @@ export default function PrismWebOverlay() {
         isLive={streamStatus === "live"} 
         viewerCount={viewerCount}
         status={streamStatus}
+        isConnecting={isConnecting}
       />
 
       {/* 接続成功ウェルカムメッセージ（オープニング） */}

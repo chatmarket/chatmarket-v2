@@ -6,11 +6,59 @@ import { motion } from "framer-motion";
  * 配信状態（LIVE）& リアルタイム視聴者数を表示
  * 右下コーナーの邪魔にならない位置に固定配置
  * 点滅ハートビート効果で「届いている」ことを視覚的に伝達
+ * 
+ * status: "live" | "connecting" | "scheduled"
  */
-export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = "live" }) {
+export default function StreamStatusOverlay({ isLive, viewerCount = 0, status = "live", isConnecting = false }) {
   useEffect(() => {
-    console.log('[StreamStatusOverlay] 📊 Status updated:', { isLive, viewerCount, status });
-  }, [isLive, viewerCount, status]);
+    console.log('[StreamStatusOverlay] 📊 Status updated:', { isLive, viewerCount, status, isConnecting });
+  }, [isLive, viewerCount, status, isConnecting]);
+
+  // 接続準備中の場合は別表示
+  if (isConnecting) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "16px",
+          zIndex: 150,
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(8px)",
+            border: "1.5px solid #3b82f6",
+            borderRadius: "8px",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "700",
+          }}
+        >
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            style={{
+              display: "inline-block",
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              background: "#3b82f6",
+            }}
+          />
+          <span style={{ color: "#93c5fd" }}>接続準備中...</span>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (!isLive) return null;
 
