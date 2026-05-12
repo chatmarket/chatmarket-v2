@@ -549,7 +549,7 @@ export default function Home() {
       </div>
 
       {/* 1on1 待機中（カテゴリフィルター対応） */}
-      <div ref={callRef} className="sticky top-16 z-20 bg-gradient-to-b from-background via-background to-transparent pb-4">
+      <div ref={callRef} className="pb-4">
         {enabledSections.callWaiting && (
           <section className="px-0">
             <div className="flex items-center gap-2 mb-3">
