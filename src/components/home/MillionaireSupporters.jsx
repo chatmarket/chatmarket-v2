@@ -85,10 +85,10 @@ export default function MillionaireSupporters() {
         return (
           <div
             key={ch.id}
-            className={`rounded-2xl border p-4 space-y-3 ${
+            className={`rounded-2xl border p-4 space-y-3 card-float ${
               isMega
                 ? "bg-gradient-to-br from-yellow-900/20 to-black border-yellow-400/40"
-                : "bg-card border-border/50"
+                : "bg-card border-border/40"
             }`}
           >
             {/* チャンネルヘッダー */}

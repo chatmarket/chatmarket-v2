@@ -145,10 +145,10 @@ export default function CreatorRanking() {
       )}
 
       {/* ランキングリスト */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {rankedChannels.map((channel, idx) => (
           <Link key={channel.id} to={`/channel/${channel.id}`}>
-            <div className="flex items-center gap-3 bg-card border border-border/50 rounded-xl p-3 hover:border-primary/40 transition-colors group">
+            <div className="flex items-center gap-3 bg-card border border-border/40 rounded-2xl p-3.5 card-float group">
               {/* 順位 */}
               <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 text-sm font-black ${
                 idx < 3 ? RANK_COLORS[idx] : "text-muted-foreground bg-secondary border-border/50"

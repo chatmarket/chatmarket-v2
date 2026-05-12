@@ -127,14 +127,15 @@
   .safe-left   { padding-left:   env(safe-area-inset-left,   0px); }
   .safe-right  { padding-right:  env(safe-area-inset-right,  0px); }
 
-  /* カード浮遊感ユーティリティ */
+  /* カード浮遊感ユーティリティ — 高級感のある深いシャドウ */
   .card-float {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
     transition: box-shadow 0.3s ease, transform 0.3s ease;
+    border-radius: 1rem;
   }
   .card-float:hover {
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.35);
+    transform: translateY(-3px);
   }
 
   /* font-serif ユーティリティ */

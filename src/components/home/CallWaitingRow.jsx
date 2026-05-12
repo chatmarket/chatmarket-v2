@@ -145,10 +145,10 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
   };
 
   return (
-    <div className={`w-[200px] shrink-0 rounded-xl overflow-hidden hover:border-primary/40 transition-all border ${
+    <div className={`w-[200px] shrink-0 rounded-2xl overflow-hidden card-float border ${
       channel.stream_category === "fortune"
-        ? "bg-purple-500/10 border-purple-500/40"
-        : "bg-green-500/10 border-green-500/40"
+        ? "bg-purple-500/10 border-purple-500/30"
+        : "bg-green-500/10 border-green-500/30"
     }`}>
       {/* Avatar */}
       <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary flex items-center justify-center">
