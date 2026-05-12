@@ -149,18 +149,19 @@ export default function PrismWebOverlay() {
         left: 0,
         right: 0,
         bottom: 0,
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        height: "100vh",
         background: "transparent",
         pointerEvents: "none",
         overflow: "hidden",
-        zIndex: 2147483647, // 最大値
+        zIndex: "2147483647",
         // Webkit GPU強制レイヤー
-        WebkitTransform: "translateZ(0)",
-        transform: "translateZ(0)",
+        WebkitTransform: "translateZ(0) translate3d(0,0,0)",
+        transform: "translateZ(0) translate3d(0,0,0)",
         WebkitBackfaceVisibility: "hidden",
         backfaceVisibility: "hidden",
         WebkitFontSmoothing: "antialiased",
+        isolation: "isolate",
       }}
     >
 
@@ -173,18 +174,18 @@ export default function PrismWebOverlay() {
           position: "fixed",
           top: "12px",
           left: "12px",
-          zIndex: 2147483640,
-          background: "rgba(0,0,0,0.88)",
-          border: "2px solid #22c55e",
+          zIndex: 2147483647,
+          background: "rgba(0,0,0,0.92)",
+          border: "3px solid #22c55e",
           borderRadius: "10px",
-          padding: "8px 14px",
+          padding: "10px 16px",
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          // Webkit強制
-          WebkitTransform: "translateZ(0)",
-          transform: "translateZ(0)",
+          WebkitTransform: "translateZ(0) translate3d(0,0,0)",
+          transform: "translateZ(0) translate3d(0,0,0)",
           WebkitBackfaceVisibility: "hidden",
+          boxShadow: "0 0 20px rgba(34,197,94,0.5), 0 2px 8px rgba(0,0,0,0.8)",
         }}
       >
         <span
@@ -215,19 +216,19 @@ export default function PrismWebOverlay() {
           position: "fixed",
           bottom: "20px",
           right: "16px",
-          zIndex: 2147483640,
+          zIndex: 2147483647,
           display: "flex",
           alignItems: "center",
           gap: "10px",
-          background: "rgba(0,0,0,0.9)",
-          border: isLive ? "3px solid #ef4444" : "2px solid #555",
+          background: "rgba(0,0,0,0.92)",
+          border: isLive ? "3px solid #ef4444" : "2px solid #888",
           borderRadius: "12px",
           padding: "10px 16px",
-          boxShadow: isLive ? "0 0 24px rgba(239,68,68,0.6)" : "none",
+          boxShadow: isLive ? "0 0 24px rgba(239,68,68,0.6), 0 2px 8px rgba(0,0,0,0.8)" : "0 2px 8px rgba(0,0,0,0.8)",
           animation: isLive ? "livePulse 1.4s infinite" : "none",
           WebkitAnimation: isLive ? "livePulse 1.4s infinite" : "none",
-          WebkitTransform: "translateZ(0)",
-          transform: "translateZ(0)",
+          WebkitTransform: "translateZ(0) translate3d(0,0,0)",
+          transform: "translateZ(0) translate3d(0,0,0)",
         }}
       >
         <span
@@ -272,22 +273,23 @@ export default function PrismWebOverlay() {
       <div
         style={{
           position: "fixed",
-          top: "58px",
+          top: "62px",
           left: "12px",
-          zIndex: 2147483638,
-          background: "rgba(0,0,0,0.82)",
-          border: "1px solid #444",
+          zIndex: 2147483647,
+          background: "rgba(0,0,0,0.88)",
+          border: "1px solid #555",
           borderRadius: "8px",
           padding: "6px 10px",
           fontFamily: "monospace",
           fontSize: "10px",
           color: "#ccc",
           lineHeight: "1.8",
-          WebkitTransform: "translateZ(0)",
-          transform: "translateZ(0)",
+          WebkitTransform: "translateZ(0) translate3d(0,0,0)",
+          transform: "translateZ(0) translate3d(0,0,0)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.8)",
         }}
       >
-        <div style={{ color: "#888", fontSize: "9px", marginBottom: "2px", letterSpacing: "1px" }}>
+        <div style={{ color: "#aaa", fontSize: "9px", marginBottom: "2px", letterSpacing: "1px" }}>
           ⚙ DIAG
         </div>
         <div>
@@ -319,27 +321,30 @@ export default function PrismWebOverlay() {
           height: isLandscape ? "100%" : "55%",
           display: "flex",
           flexDirection: "column-reverse",
-          gap: "10px",
-          padding: "16px",
+          gap: "6px",
+          padding: "12px",
           overflow: "hidden",
           pointerEvents: "none",
-          WebkitTransform: "translateZ(0)",
-          transform: "translateZ(0)",
+          zIndex: 2147483647,
+          WebkitTransform: "translateZ(0) translate3d(0,0,0)",
+          transform: "translateZ(0) translate3d(0,0,0)",
         }}
       >
         {chatMessages.map((msg) => (
           <div
             key={msg.id}
             style={{
-              display: "flex",
-              gap: "8px",
+              display: "inline-flex",
+              gap: "6px",
               fontSize: "15px",
-              fontWeight: "600",
+              fontWeight: "700",
               lineHeight: "1.5",
-              // テキスト縁取り（Webkit対応）
+              background: "rgba(0,0,0,0.75)",
+              borderRadius: "6px",
+              padding: "3px 8px",
+              maxWidth: "95%",
               WebkitTextStroke: "0px",
-              textShadow: "0 2px 8px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.8)",
-              opacity: 1,
+              textShadow: "0 1px 4px rgba(0,0,0,1)",
             }}
           >
             <span style={{ color: "#10b981", fontWeight: "800", whiteSpace: "nowrap", flexShrink: 0 }}>
