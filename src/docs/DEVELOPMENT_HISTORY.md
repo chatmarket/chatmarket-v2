@@ -306,5 +306,56 @@ if (isMillionaireChallengePeriod()) {
 
 ---
 
-*最終更新: 2026-04-15*  
-*作成者: 社長の指示に基づく開発バイブル*
+---
+
+## 11. 🏆 Version 1.0 Stable — 社長公認ロック（2026-05-12）
+
+> **「この成功の型を Chat Market の歴史に刻め」— 小野社長**
+
+### 確定済み動作（変更禁止）
+
+| 機能 | 状態 | 変更可否 |
+|------|------|---------|
+| ライブ配信チャット表示 | ✅ 動作確認済み | 🔒 凍結 |
+| エールコイン通知オーバーレイ（透過） | ✅ 動作確認済み | 🔒 凍結 |
+| Prism Web Overlay（`/overlay.html`） | ✅ 動作確認済み | 🔒 凍結 |
+| 30秒プレビューゲート（LivePreviewLockout） | ✅ 動作確認済み | 🔒 凍結 |
+| localStorage による再試聴ブロック | ✅ 実装・統合済み | 🔒 凍結 |
+| OGPバナー（1200×630 ChatMarket公式） | ✅ 設定済み | 🔒 凍結 |
+
+### 30秒ゲートの仕様（最終確定）
+
+```
+① ユーザーがチケット制ライブを開いた瞬間に30秒カウントダウン開始
+② 残り10秒：赤い大型カウントダウンを画面中央に表示
+③ 0秒到達：
+   - localStorage に `preview_used_{streamId} = "1"` を書き込み
+   - 画面全体を bg-black/90 でブロック
+   - 「🎫 今すぐチケットを購入」ボタンを大きく表示
+④ リロード後も localStorage を参照し即ブロック（再試聴不可）
+⑤ チケット購入完了後は hasPurchased=true でコンポーネント自体が非表示
+```
+
+### 禁止事項（今夜の配信終了まで絶対遵守）
+
+```
+❌ LivePreviewLockout コンポーネントを変更するコード
+❌ /overlay.html（Prism オーバーレイ）を変更するコード
+❌ PrismWebOverlay ページを変更するコード
+❌ エールコイン関連の表示ロジックを変更するコード
+❌ LiveView ページのチケット購入フローを変更するコード
+```
+
+### スナップショット（安定版のキーファイル一覧）
+
+- `components/live/LivePreviewLockout.jsx` — 30秒ゲート（localStorage 版）
+- `public/overlay.html` — Prism Web Overlay（透過・チャット・エール表示）
+- `pages/PrismWebOverlay.jsx` — アプリ内オーバーレイ（React 版）
+- `components/live/BroadcasterStream.jsx` — 配信管理画面
+- `pages/LiveView.jsx` — 視聴者側ライブ視聴ページ
+- `index.html` — OGP設定・ドメインリダイレクト
+
+---
+
+*最終更新: 2026-05-12*  
+*Version 1.0 Stable 認定: 小野社長の厳命により凍結*
