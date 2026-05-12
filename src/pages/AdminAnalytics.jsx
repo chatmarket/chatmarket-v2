@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Globe, Users, Eye, TrendingUp, Calendar, Activity, MessageSquare, Video, Radio, Coins } from "lucide-react";
 import { isAdmin } from "@/lib/adminConfig";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 
 export default function AdminAnalytics() {
   const [user, setUser] = useState(null);
@@ -173,6 +174,7 @@ export default function AdminAnalytics() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-full overflow-x-hidden">
+      <MetaHelmet title="プラットフォーム分析 | ChatMarket" noindex={true} />
       {/* ヘッダー */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-black">📊 プラットフォーム分析</h1>

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 
 // リアルタイムメトリクス計算ロジック
 function calculateMetrics(users, channels, videos, streams, calls, purchases) {
@@ -134,6 +135,7 @@ export default function AdminDashboardMetrics() {
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-8">
+      <MetaHelmet title="管理ダッシュボード | ChatMarket" noindex={true} />
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
         <div>

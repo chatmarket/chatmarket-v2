@@ -10,7 +10,8 @@ export default function MetaHelmet({
   lang = 'ja',
   title,
   description,
-  image
+  image,
+  noindex = false,
 }) {
   const meta = getMeta(page, lang);
   const finalTitle = title || meta.title || GLOBAL_META.siteName;
@@ -20,6 +21,20 @@ export default function MetaHelmet({
   useEffect(() => {
     // title
     document.title = finalTitle;
+
+    // robots (noindex制御)
+    const setRobots = (content) => {
+      let el = document.querySelector('meta[name="robots"]');
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute('name', 'robots');
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    if (noindex) {
+      setRobots('noindex, nofollow');
+    }
 
     // description
     let descEl = document.querySelector('meta[name="description"]');
@@ -42,7 +57,7 @@ export default function MetaHelmet({
     setMeta('twitter:title', finalTitle);
     setMeta('twitter:description', finalDescription);
     setMeta('twitter:image', finalImage);
-  }, [finalTitle, finalDescription, finalImage]);
+  }, [finalTitle, finalDescription, finalImage, noindex]);
 
   return null;
 }
