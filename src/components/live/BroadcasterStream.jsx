@@ -207,7 +207,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
         className="flex-1 landscape:flex-[2] flex flex-col bg-black rounded-xl overflow-hidden border border-zinc-800"
         style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 9999, width: "100vw", height: "100vh", borderRadius: 0 } : {}}
       >
-        <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
+        <div className="relative w-full bg-black" style={{ aspectRatio: "9/16" }}>
            {/* ── 配信前・サムネイル待機画面 ── */}
            {status === "preview" && (
              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-10">
@@ -229,6 +229,14 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
                   <Camera className="w-4 h-4" />
                   カメラ・マイクを確認する（自分だけ見える）
                 </button>
+                {/* GoLive ボタン（配信前プレビュー時） */}
+                <button
+                  onClick={handleGoLive}
+                  className="flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-black text-lg px-10 py-4 rounded-2xl shadow-2xl shadow-red-500/40 transition-all hover:scale-105 active:scale-95"
+                >
+                  <Zap className="w-6 h-6" />
+                  配信を開始する
+                </button>
               </div>
             </div>
           )}
@@ -241,8 +249,6 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </div>
           )}
 
-
-
           {/* ── カメラ映像（確認中のみ表示） ── */}
           {isChecking && (
             <>
@@ -251,14 +257,24 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
                 autoPlay
                 muted
                 playsInline
-                className="w-full h-full object-contain bg-black"
-                style={{ display: camOn ? "block" : "none" }}
+                className="w-full h-full object-cover bg-black"
+                style={{ display: camOn ? "block" : "none", transform: "scaleX(-1)" }}
               />
               {!camOn && (
                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
                   <CameraOff className="w-14 h-14 text-zinc-600" />
                 </div>
               )}
+              {/* GoLive ボタン（確認中） */}
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center z-20">
+                <button
+                  onClick={handleGoLive}
+                  className="flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-black text-lg px-10 py-4 rounded-2xl shadow-2xl shadow-red-500/40 transition-all hover:scale-105 active:scale-95"
+                >
+                  <Zap className="w-6 h-6" />
+                  配信を開始する
+                </button>
+              </div>
             </>
           )}
 
@@ -313,18 +329,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </div>
           )}
 
-          {/* GoLive ボタン（配信前 & 確認中に表示） */}
-          {!isOBSLive && !isLive && (
-            <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none z-20">
-              <button
-                onClick={handleGoLive}
-                className="pointer-events-auto flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-black text-lg px-10 py-4 rounded-2xl shadow-2xl shadow-red-500/40 transition-all hover:scale-105 active:scale-95"
-              >
-                <Zap className="w-6 h-6" />
-                配信を開始する
-              </button>
-            </div>
-          )}
+
         </div>
 
         {/* コントロールバー */}
