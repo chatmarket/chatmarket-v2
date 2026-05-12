@@ -103,6 +103,8 @@ export default function App() {
     <QueryClientProvider client={queryClientInstance}>
       <Router>
         <Routes>
+          {/* PrismWebOverlay: AppLayout完全排除・認証不要 */}
+          <Route path="/prism-overlay/:streamId" element={<PrismWebOverlay />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
@@ -174,7 +176,6 @@ export default function App() {
             <Route path="/admin/affiliate" element={<AffiliateAnalytics />} />
             <Route path="/call-profile/:channelId" element={<CallProfilePage />} />
             <Route path="/channel-profile-edit" element={<ChannelProfileEdit />} />
-            <Route path="/prism-overlay/:streamId" element={<PrismWebOverlay />} />
             <Route path="/prism-test" element={<PrismOverlayTest />} />
             <Route path="/fortune-calendar" element={<FortuneCalendar />} />
             <Route path="/admin/reminder-logs" element={<ReminderLogs />} />
