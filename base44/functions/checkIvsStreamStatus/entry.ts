@@ -6,18 +6,21 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const { streamId, channelArn: directArn } = await req.json();
+
     const region = Deno.env.get('AWS_REGION') || 'ap-northeast-1';
     const accessKeyId = Deno.env.get('AWS_ACCESS_KEY_ID');
     const secretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
-    const channelArn = "arn:aws:ivs:ap-northeast-1:813372611580:channel/pVdn6DgvnSMG";
 
-    // AWS Signature V4
-    const now = new Date();
-    const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, "").slice(0, 15) + "Z";
-    const dateStamp = amzDate.slice(0, 8);
-
-    const body = JSON.stringify({ channelArn });
-    const url = `https://ivs.${region}.amazonaws.com/GetStream`;
+    // channelArn を streamId から動的取得、または直接指定
+    let channelArn = directArn;
+    if (!channelArn && streamId) {
+      const streams = await base44.asServiceRole.entities.LiveStream.filter({ id: streamId });
+      channelArn = streams[0]?.ivs_channel_arn;
+    }
+    if (!channelArn) {
+      return Response.json({ error: 'channelArn not found', stream_state: 'NOT_STREAMING' }, { status: 400 });
+    }
 
     async function sha256Hex(message) {
       const msgBuffer = new TextEncoder().encode(message);
@@ -33,8 +36,12 @@ Deno.serve(async (req) => {
       return new Uint8Array(sig);
     }
 
-    const bodyHash = await sha256Hex(body);
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+    const dateStamp = amzDate.slice(0, 8);
+    const body = JSON.stringify({ channelArn });
     const host = `ivs.${region}.amazonaws.com`;
+    const bodyHash = await sha256Hex(body);
     const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
     const signedHeaders = "content-type;host;x-amz-date";
     const canonicalRequest = ["POST", "/GetStream", "", canonicalHeaders, signedHeaders, bodyHash].join("\n");
@@ -48,32 +55,30 @@ Deno.serve(async (req) => {
     const signingKey = await crypto.subtle.importKey("raw", kSigning, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     const sigBytes = await crypto.subtle.sign("HMAC", signingKey, new TextEncoder().encode(stringToSign));
     const signature = Array.from(new Uint8Array(sigBytes)).map(b => b.toString(16).padStart(2, "0")).join("");
-
     const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-    const res = await fetch(url, {
+    const res = await fetch(`https://${host}/GetStream`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Amz-Date": amzDate,
-        "Authorization": authHeader,
-      },
+      headers: { "Content-Type": "application/json", "X-Amz-Date": amzDate, "Authorization": authHeader },
       body,
     });
 
     const data = await res.json();
-    console.log(`[checkIvsStreamStatus] Status: ${res.status}`, JSON.stringify(data));
+    const streamState = data.stream?.state || "NOT_STREAMING";
+    const isSignalReceived = streamState === "LIVE";
 
-    return Response.json({ 
-      http_status: res.status, 
-      stream_state: data.stream?.state || "NOT_STREAMING",
+    console.log(`[checkIvsStreamStatus] ARN=${channelArn} State=${streamState} Health=${data.stream?.health}`);
+
+    return Response.json({
+      http_status: res.status,
+      stream_state: streamState,
       stream_health: data.stream?.health || "UNKNOWN",
-      viewer_count: data.stream?.viewerCount,
+      viewer_count: data.stream?.viewerCount || 0,
       started_at: data.stream?.startTime,
-      raw: data 
+      signal_received: isSignalReceived, // PRISMから信号が届いているか
     });
   } catch (error) {
     console.error('[checkIvsStreamStatus] Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, stream_state: 'NOT_STREAMING' }, { status: 500 });
   }
 });

@@ -32,6 +32,8 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [streamQuality, setStreamQuality] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [latestYell, setLatestYell] = useState(null);
+  const [prismSignal, setPrismSignal] = useState(null); // null | "waiting" | "connected"
+  const [channelIdRef] = useState({ current: null });
   const videoContainerRef = useRef(null);
 
   const isLive = status === "browser-live";
@@ -97,41 +99,33 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     return unsubscribeYell;
   }, [streamId]);
 
-  // IVS映像検知ポーリング（OBS配信中のみ）
-  // 外部ソフトから映像信号が到達したかを30秒ごとに検知
-  // 「scheduled」状態で映像が来たら自動で「live」に遷移
+  // IVS映像検知ポーリング（OBS配信公開後のみ）— PRISM信号検知も兼ねる
   useEffect(() => {
     if (!streamId || !isOBSLive) return;
 
-    const detectStream = async () => {
+    const checkSignal = async () => {
       try {
-        const res = await base44.functions.invoke('detectIvsStreamStart', { streamId });
+        const res = await base44.functions.invoke('checkIvsStreamStatus', { streamId });
         const data = res?.data;
-        
-        if (data?.success) {
-          const { stream_state, stream_health, viewer_count, auto_transitioned } = data;
-          
-          // 自動遷移が発生した場合のログ
-          if (auto_transitioned) {
-            console.log(`%c[IVS] 🚀 映像受信開始！自動で配信状態に遷移しました | health=${stream_health} | viewers=${viewer_count}`, 'color: #10b981; font-weight: bold; font-size: 13px');
-          } else if (stream_state === 'LIVE') {
-            console.log(`[IVS] 📡 配信中 | health=${stream_health} | viewers=${viewer_count}`);
-          } else {
-            console.log(`[IVS] ⏳ OBS接続待機中... state=${stream_state}`);
-          }
+        if (!data) return;
 
-          setViewerCount(viewer_count || 0);
+        const { stream_state, viewer_count, signal_received } = data;
+        setViewerCount(viewer_count || 0);
+
+        if (signal_received) {
+          setPrismSignal("connected");
+          console.log(`%c[IVS] 📡 PRISMから信号受信！state=${stream_state}`, 'color: #10b981; font-weight: bold');
         } else {
-          console.warn(`[IVS] ⚠️ 状態確認エラー: ${data?.message || 'Unknown'}`);
+          setPrismSignal("waiting");
+          console.log(`[IVS] ⏳ PRISM信号待機中... state=${stream_state}`);
         }
       } catch (err) {
-        // IVSチェックのエラーは無視（配信継続に影響させない）
         console.debug(`[IVS] Debug: ${err.message}`);
       }
     };
 
-    detectStream();
-    const interval = setInterval(detectStream, 30000);
+    checkSignal();
+    const interval = setInterval(checkSignal, 8000); // 8秒ごとに信号確認
     return () => clearInterval(interval);
   }, [streamId, isOBSLive]);
 
@@ -149,17 +143,25 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
     fetchStreamQuality();
   }, [streamId]);
 
-  // 配信開始（OBS 配信開始に遷移）
+  // 配信開始（OBS 配信開始に遷移）+ Channel.is_live: true で1対1バッジ連動
   const handleGoLive = async () => {
-    await startCamera(); // 未起動なら起動、起動済みならno-op
+    await startCamera();
     const now = new Date().toISOString();
     await base44.entities.LiveStream.update(streamId, {
       status: "live",
       live_started_at: now,
     });
+    // Channel.is_live を true にしてトップページの「配信中につき1対1不可」を即反映
+    const streams = await base44.entities.LiveStream.filter({ id: streamId });
+    const cid = streams[0]?.channel_id;
+    if (cid) {
+      channelIdRef.current = cid;
+      await base44.entities.Channel.update(cid, { is_live: true });
+    }
     setLiveStartedAt(now);
-    setStatus("obs-live"); // OBS 配信状態に遷移
-    toast.success("✅ 配信ステータスを LIVE に設定しました。OBS から配信を開始してください。");
+    setStatus("obs-live");
+    setPrismSignal("waiting"); // PRISM信号待ち状態へ
+    toast.success("✅ 配信を公開しました！PRISMから配信を開始してください。");
   };
 
   const toggleMic = () => {
@@ -278,17 +280,36 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
             </>
           )}
 
-          {/* ── OBS 配信中: 視聴者向けプレビュー ── */}
+          {/* ── OBS/PRISM 配信中: 信号検知パネル ── */}
           {isOBSLive && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-black to-zinc-900 gap-4">
               <div className="text-center space-y-3 z-10">
                 <div className="w-16 h-16 rounded-full mx-auto bg-primary/20 border-2 border-primary flex items-center justify-center">
                   <RadioIcon className="w-8 h-8 text-primary animate-pulse" />
                 </div>
-                <p className="text-sm font-bold text-white">OBS から配信中</p>
-                <p className="text-xs text-zinc-400">視聴者側に映像が配信されています</p>
+                <p className="text-sm font-bold text-white">配信公開中</p>
               </div>
-              <p className="absolute bottom-4 left-4 text-[10px] text-zinc-600">視聴者プレビュー</p>
+
+              {/* PRISM信号ステータスパネル */}
+              {prismSignal === "connected" ? (
+                <div className="flex items-center gap-3 bg-green-900/60 border-2 border-green-500/70 rounded-2xl px-5 py-3 z-10 shadow-lg shadow-green-500/20">
+                  <span className="w-3 h-3 rounded-full bg-green-400 animate-pulse shrink-0" />
+                  <div>
+                    <p className="text-green-300 font-black text-sm">📡 カメラは繋がっています！</p>
+                    <p className="text-green-400/70 text-xs">視聴者に映像が届いています</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 bg-yellow-900/50 border-2 border-yellow-500/60 rounded-2xl px-5 py-3 z-10">
+                  <span className="w-3 h-3 rounded-full bg-yellow-400 animate-ping shrink-0" />
+                  <div>
+                    <p className="text-yellow-300 font-black text-sm">⏳ PRISMからの信号を待っています</p>
+                    <p className="text-yellow-400/70 text-xs">ボタンを押して配信を開始してください</p>
+                  </div>
+                </div>
+              )}
+
+              <p className="absolute bottom-4 left-4 text-[10px] text-zinc-600">配信管理画面</p>
             </div>
           )}
 
