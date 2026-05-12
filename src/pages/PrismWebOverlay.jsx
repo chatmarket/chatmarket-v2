@@ -12,6 +12,33 @@ import { base44 } from "@/api/base44Client";
  */
 export default function PrismWebOverlay() {
   const { streamId } = useParams();
+
+  // body と #root を強制的に透明にする（index.css の bg-background を上書き）
+  useEffect(() => {
+    const prev = {
+      bodyBg: document.body.style.background,
+      bodyBgColor: document.body.style.backgroundColor,
+      rootBg: document.getElementById("root")?.style.background,
+      rootBgColor: document.getElementById("root")?.style.backgroundColor,
+    };
+    document.body.style.background = "transparent";
+    document.body.style.backgroundColor = "transparent";
+    document.documentElement.style.background = "transparent";
+    document.documentElement.style.backgroundColor = "transparent";
+    const root = document.getElementById("root");
+    if (root) {
+      root.style.background = "transparent";
+      root.style.backgroundColor = "transparent";
+    }
+    return () => {
+      document.body.style.background = prev.bodyBg;
+      document.body.style.backgroundColor = prev.bodyBgColor;
+      if (root) {
+        root.style.background = prev.rootBg || "";
+        root.style.backgroundColor = prev.rootBgColor || "";
+      }
+    };
+  }, []);
   const [chatMessages, setChatMessages] = useState([]);
   const [latestYell, setLatestYell] = useState(null);
   const [showYell, setShowYell] = useState(false);
