@@ -19,6 +19,7 @@ export default function ViewerChatInput({ streamId, user }) {
         content: trimmed,
         target_type: "livestream_chat",
         target_id: streamId,
+        livestream_id: streamId,
         user_name: user.full_name || "匿名",
         user_email: user.email,
       });
