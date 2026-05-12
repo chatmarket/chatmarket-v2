@@ -79,6 +79,7 @@ import AffiliateAnalytics from '@/pages/AffiliateAnalytics';
 import CallProfilePage from '@/pages/CallProfilePage';
 import ChannelProfileEdit from '@/pages/ChannelProfileEdit';
 import PrismWebOverlay from '@/pages/PrismWebOverlay';
+import PrismOverlayTest from '@/pages/PrismOverlayTest';
 // PrismWebOverlay は AppLayout の外側に直接配置（ヘッダー・ナビ完全排除）
 import FortuneCalendar from '@/pages/FortuneCalendar';
 import ReminderLogs from '@/pages/ReminderLogs';
@@ -174,6 +175,7 @@ export default function App() {
             <Route path="/call-profile/:channelId" element={<CallProfilePage />} />
             <Route path="/channel-profile-edit" element={<ChannelProfileEdit />} />
             <Route path="/prism-overlay/:streamId" element={<PrismWebOverlay />} />
+            <Route path="/prism-test" element={<PrismOverlayTest />} />
             <Route path="/fortune-calendar" element={<FortuneCalendar />} />
             <Route path="/admin/reminder-logs" element={<ReminderLogs />} />
             <Route path="/dashboard" element={<Dashboard />} />
