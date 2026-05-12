@@ -1,4 +1,5 @@
-/* M PLUS Rounded 1cフォントはindex.htmlのpreloadで読み込み済み */
+/* Google Fonts: Noto Serif JP（見出し）+ Noto Sans JP（本文） */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,75 +7,87 @@
 
 @layer base {
   :root {
-    --font-inter: 'M PLUS Rounded 1c', sans-serif;
-    --background: 120 5% 4%;
-    --foreground: 0 0% 95%;
-    --card: 120 5% 7%;
-    --card-foreground: 0 0% 95%;
-    --popover: 120 5% 7%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 2%;
-    --secondary: 120 5% 12%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 120 5% 15%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 2%;
-    --destructive: 0 84.2% 60.2%;
+    /* フォント変数 */
+    --font-sans: 'Noto Sans JP', sans-serif;
+    --font-serif: 'Noto Serif JP', serif;
+    --font-inter: 'Noto Sans JP', sans-serif;
+
+    /* 高級感のある濃紺ベース */
+    --background: 224 35% 7%;
+    --foreground: 210 20% 94%;
+    --card: 224 30% 10%;
+    --card-foreground: 210 20% 94%;
+    --popover: 224 30% 10%;
+    --popover-foreground: 210 20% 94%;
+
+    /* エメラルドアクセント */
+    --primary: 162 72% 45%;
+    --primary-foreground: 224 35% 5%;
+
+    --secondary: 224 25% 15%;
+    --secondary-foreground: 210 20% 85%;
+    --muted: 224 20% 18%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 162 72% 45%;
+    --accent-foreground: 224 35% 5%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 120 5% 15%;
-    --input: 120 5% 15%;
-    --ring: 160 84% 39%;
-    --chart-1: 160 84% 39%;
-    --chart-2: 160 60% 50%;
-    --chart-3: 120 40% 40%;
-    --chart-4: 80 60% 50%;
-    --chart-5: 200 60% 50%;
-    --radius: 0.75rem;
-    --sidebar-background: 120 5% 6%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 120 5% 12%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 120 5% 15%;
-    --sidebar-ring: 160 84% 39%;
+
+    /* ボーダー: 淡い濃紺 */
+    --border: 224 20% 18%;
+    --input: 224 20% 18%;
+    --ring: 162 72% 45%;
+
+    --chart-1: 162 72% 45%;
+    --chart-2: 180 60% 50%;
+    --chart-3: 200 65% 55%;
+    --chart-4: 40 85% 60%;
+    --chart-5: 280 55% 60%;
+    --radius: 1rem;
+
+    --sidebar-background: 224 35% 6%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 162 72% 45%;
+    --sidebar-primary-foreground: 224 35% 5%;
+    --sidebar-accent: 224 25% 14%;
+    --sidebar-accent-foreground: 210 20% 85%;
+    --sidebar-border: 224 20% 16%;
+    --sidebar-ring: 162 72% 45%;
   }
 
   .dark {
-    --background: 120 5% 4%;
-    --foreground: 0 0% 95%;
-    --card: 120 5% 7%;
-    --card-foreground: 0 0% 95%;
-    --popover: 120 5% 7%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 2%;
-    --secondary: 120 5% 12%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 120 5% 15%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 2%;
+    --background: 224 35% 7%;
+    --foreground: 210 20% 94%;
+    --card: 224 30% 10%;
+    --card-foreground: 210 20% 94%;
+    --popover: 224 30% 10%;
+    --popover-foreground: 210 20% 94%;
+    --primary: 162 72% 45%;
+    --primary-foreground: 224 35% 5%;
+    --secondary: 224 25% 15%;
+    --secondary-foreground: 210 20% 85%;
+    --muted: 224 20% 18%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 162 72% 45%;
+    --accent-foreground: 224 35% 5%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 120 5% 15%;
-    --input: 120 5% 15%;
-    --ring: 160 84% 39%;
-    --chart-1: 160 84% 39%;
-    --chart-2: 160 60% 50%;
-    --chart-3: 120 40% 40%;
-    --chart-4: 80 60% 50%;
-    --chart-5: 200 60% 50%;
-    --sidebar-background: 120 5% 6%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 120 5% 12%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 120 5% 15%;
-    --sidebar-ring: 160 84% 39%;
+    --border: 224 20% 18%;
+    --input: 224 20% 18%;
+    --ring: 162 72% 45%;
+    --chart-1: 162 72% 45%;
+    --chart-2: 180 60% 50%;
+    --chart-3: 200 65% 55%;
+    --chart-4: 40 85% 60%;
+    --chart-5: 280 55% 60%;
+    --sidebar-background: 224 35% 6%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 162 72% 45%;
+    --sidebar-primary-foreground: 224 35% 5%;
+    --sidebar-accent: 224 25% 14%;
+    --sidebar-accent-foreground: 210 20% 85%;
+    --sidebar-border: 224 20% 16%;
+    --sidebar-ring: 162 72% 45%;
   }
 }
 
@@ -91,7 +104,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
     /* iPhone ノッチ・Dynamic Island 対応 */
     padding-top: env(safe-area-inset-top);
     padding-left: env(safe-area-inset-left);
@@ -99,38 +113,55 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* PWA Standalone / フルスクリーン時: safe-area を確保しつつ body余白を除去 */
-  @media (display-mode: standalone) {
-    body {
-      /* standalone では OS が safe-area を管理するため上書き */
-    }
+  /* 見出し用セリフ体 */
+  h1, h2 {
+    font-family: var(--font-serif);
   }
 
-  /* 固定配置要素用ユーティリティ: ノッチに被らないオフセット */
+  @media (display-mode: standalone) {
+    body {}
+  }
+
   .safe-top    { padding-top:    env(safe-area-inset-top,    0px); }
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .safe-left   { padding-left:   env(safe-area-inset-left,   0px); }
   .safe-right  { padding-right:  env(safe-area-inset-right,  0px); }
 
-  /* Neon animations for Home page */
+  /* カード浮遊感ユーティリティ */
+  .card-float {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .card-float:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+  }
+
+  /* font-serif ユーティリティ */
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
   @keyframes neonWhiteFlicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      text-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #0ff, 0 0 82px #0ff;
+      text-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff;
       color: #fff;
     }
     20%, 24%, 55% {
-      text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+      text-shadow: none;
       color: #f0f0f0;
     }
   }
 
   @keyframes neonBlueFlicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff, 0 0 21px #00d4ff, 0 0 42px #0099ff, 0 0 82px #0099ff;
+      text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff;
       color: #00d4ff;
     }
     20%, 24%, 55% {
-      text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff;
       color: #00b8d4;
     }
   }

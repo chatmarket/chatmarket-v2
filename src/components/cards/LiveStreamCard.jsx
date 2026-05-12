@@ -19,7 +19,7 @@ export default function LiveStreamCard({ stream, channelCallEnabled, channelId }
 
   return (
     <Link to={`/live/${stream.id}`} className="group block">
-      <div className="relative overflow-hidden rounded-xl aspect-video bg-secondary">
+      <div className="relative overflow-hidden rounded-2xl aspect-video bg-secondary card-float">
         {stream.thumbnail_url ? (
           <OptimizedImage
             src={stream.thumbnail_url}

@@ -335,16 +335,19 @@ export default function Home() {
           </p>
 
           {/* メインキャッチコピー */}
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight"
-              style={{ color: "#fff" }}>
-              あなたの時間を<br />
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight"
+              style={{ fontFamily: 'var(--font-serif)', color: "#f0ece4", letterSpacing: "-0.01em" }}>
+              あなたの「声」を<br />
               <span style={{
-                background: "linear-gradient(135deg, #00ff9d, #60a5fa, #a78bfa)",
+                background: "linear-gradient(135deg, #34d399, #6ee7b7, #a7f3d0)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>売上に変える</span>
+              }}>誰かの宝物</span>にする場所
             </h1>
+            <p className="text-sm sm:text-base text-white/60 font-sans leading-relaxed">
+              占い・雑談・相談——あなたの時間が、誰かを救う。
+            </p>
             <p className="sr-only">チャットマーケット（Chat Market）- ライバー・占い師・クリエイター向けライブ配信・動画販売・1対1ビデオ通話プラットフォーム</p>
           </div>
 

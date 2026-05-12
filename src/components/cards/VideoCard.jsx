@@ -28,7 +28,7 @@ export default function VideoCard({ video, size = "default", portrait = false })
 
   return (
     <Link to={`/watch/${video.id}`} className="group block">
-      <div className={`relative overflow-hidden rounded-lg sm:rounded-xl ${aspectClass} bg-secondary`}>
+      <div className={`relative overflow-hidden rounded-2xl ${aspectClass} bg-secondary card-float`}>
         {video.thumbnail_url ? (
           <OptimizedImage
             src={video.thumbnail_url}
@@ -84,8 +84,8 @@ export default function VideoCard({ video, size = "default", portrait = false })
 
       <style>{`@keyframes shimmerSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }`}</style>
 
-      <div className="mt-2 space-y-1">
-        <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${isLarge ? "text-base" : "text-xs sm:text-sm"}`}>
+      <div className="mt-2.5 space-y-1">
+        <h3 className={`font-bold line-clamp-2 group-hover:text-primary transition-colors font-sans ${isLarge ? "text-base" : "text-xs sm:text-sm"}`}>
           {video.is_free && <span className="text-primary font-bold mr-1">[FREE]</span>}
           {!video.is_free && video.price > 0 && <span className="text-yellow-400 font-bold mr-1">¥{video.price?.toLocaleString()}</span>}
           {video.title}
