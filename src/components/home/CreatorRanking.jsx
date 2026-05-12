@@ -106,7 +106,7 @@ export default function CreatorRanking() {
 
       {/* タブ */}
       <div className="flex gap-2 mb-4 flex-wrap">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {TABS.map(({ key, label, icon: IconComponent }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
@@ -116,7 +116,7 @@ export default function CreatorRanking() {
                 : "bg-secondary text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
+            <IconComponent className="w-3.5 h-3.5" />
             {label}
           </button>
         ))}
