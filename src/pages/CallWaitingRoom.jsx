@@ -365,16 +365,21 @@ export default function CallWaitingRoom() {
 
   const handleStartWaiting = async () => {
     if (!title.trim()) { toast.error("タイトルを入力してください"); return; }
+    if (!myChannel) { toast.error("チャンネル情報の読み込みに失敗しました。リロードしてください"); return; }
+    
     // Channelの call_theme（タイトル）と call_available_dates（説明文）を保存してTOPページに表示
-    if (myChannel) {
-      await base44.entities.Channel.update(myChannel.id, {
-        call_enabled: true,
-        call_theme: title.trim(),
-        call_available_dates: description.trim() || null,
-      });
-      // Home側のキャッシュを無効化
-      queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
-    }
+    const updated = await base44.entities.Channel.update(myChannel.id, {
+      call_enabled: true,
+      call_theme: title.trim(),
+      call_available_dates: description.trim() || null,
+    });
+    
+    // ローカル状態を同期
+    setMyChannel({ ...myChannel, ...updated, call_enabled: true });
+    
+    // Home側のキャッシュを無効化
+    queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
+    
     setIsWaiting(true);
     initialDoneRef.current = false;
     seenCallIds.current = new Set();
@@ -385,9 +390,15 @@ export default function CallWaitingRoom() {
     setIsWaiting(false);
     setIncomingCall(null);
     stopCam();
-    // call_theme をクリアしてTOPページから非表示にする
+    // call_enabled と call_theme をクリアしてTOPページから非表示にする
     if (myChannel) {
-      await base44.entities.Channel.update(myChannel.id, { call_theme: null }).catch(() => {});
+      const updated = await base44.entities.Channel.update(myChannel.id, { 
+        call_enabled: false,
+        call_theme: null 
+      });
+      setMyChannel({ ...myChannel, ...updated, call_enabled: false });
+      // Home側のキャッシュを無効化
+      queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
     }
     toast.info("通話受付を終了しました");
   };
