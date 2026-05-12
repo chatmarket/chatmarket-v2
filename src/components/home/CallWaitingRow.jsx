@@ -24,7 +24,12 @@ function CallWaitingRowComponent({ user, categoryFilter = "all", filteredChannel
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["call-enabled-channels"],
-    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 200),
+    queryFn: async () => {
+      console.log("🔍 [CallWaitingRow] Fetching call_enabled channels...");
+      const result = await base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 200);
+      console.log("✅ [CallWaitingRow] Fetched:", result.length, "channels", result);
+      return result;
+    },
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
