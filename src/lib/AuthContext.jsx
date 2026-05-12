@@ -46,7 +46,10 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
-        console.error('App state check failed:', appError);
+        // 401/403 は通常のゲストモード — エラーログではなく無視
+        if (appError.status !== 401 && appError.status !== 403) {
+          console.error('App state check failed:', appError);
+        }
         
         // Handle app-level errors
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
@@ -96,7 +99,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
     } catch (error) {
-      console.error('User auth check failed:', error);
+      // 401/403 は予期される（未ログイン）— サイレント処理
+      if (error.status !== 401 && error.status !== 403) {
+        console.error('User auth check failed:', error);
+      }
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       

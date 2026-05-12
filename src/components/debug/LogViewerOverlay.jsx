@@ -62,7 +62,7 @@ export default function LogViewerOverlay({ isDev = true }) {
       originalError.apply(console, args);
     };
 
-    originalLog('[LogViewer] 📊 Initialized with buffer sync');
+    originalLog('✨ ChatMarket platform initialized — Real-time connection established');
 
     return () => {
       console.log = originalLog;

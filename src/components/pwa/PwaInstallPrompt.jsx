@@ -45,6 +45,10 @@ export default function PwaInstallPrompt({ forceShow = false }) {
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      // イベントをキャプチャしたら準備完了を静かに通知
+      if (!isStandalone()) {
+        console.log('✨ PWA installation prompt ready');
+      }
     };
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
@@ -66,7 +70,10 @@ export default function PwaInstallPrompt({ forceShow = false }) {
     }
 
     timerRef.current = setTimeout(() => {
-      if (shouldShow()) setShow(true);
+      if (shouldShow()) {
+        setShow(true);
+        console.log('✨ Suggesting installation to enhance experience');
+      }
     }, TRIGGER_DELAY_MS);
 
     return () => {

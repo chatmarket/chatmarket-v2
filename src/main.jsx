@@ -30,14 +30,12 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (const reg of registrations) {
       reg.unregister();
-      console.log('[SW] Force unregistered:', reg.scope);
     }
   });
   if ('caches' in window) {
     caches.keys().then((names) => {
       for (const name of names) {
         caches.delete(name);
-        console.log('[SW] Cache cleared:', name);
       }
     });
   }
