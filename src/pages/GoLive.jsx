@@ -566,7 +566,7 @@ export default function GoLive() {
                     <input 
                       type="text" 
                       readOnly 
-                      value={`${window.location.origin}/prism-overlay/${liveStreamId}`}
+                      value={`${window.location.origin}/overlay.html?id=${liveStreamId}`}
                       className="flex-1 bg-zinc-950 border border-green-500/30 rounded-lg px-3 py-2.5 text-xs text-green-300 font-mono break-all leading-tight overflow-hidden"
                     />
                   </div>
