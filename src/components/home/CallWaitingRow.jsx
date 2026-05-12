@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const GHOST_CHANNELS = [
 
 export default function CallWaitingRow({ user, categoryFilter = "all", filteredChannels = null }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["call-enabled-channels"],
@@ -28,8 +29,16 @@ export default function CallWaitingRow({ user, categoryFilter = "all", filteredC
     gcTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchInterval: 30000,
+    refetchInterval: 5000, // 5秒ポーリング — 待機開始を即反映
   });
+
+  // Channel の変更をリアルタイム購読 → 待機ON/OFFを即座に反映
+  useEffect(() => {
+    const unsub = base44.entities.Channel.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
+    });
+    return unsub;
+  }, [queryClient]);
 
   // ログイン中ユーザーが owner のチャンネルIDセットを作成
   const myChannelIds = new Set(
@@ -151,10 +160,10 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
           </div>
         )}
         <div className={`absolute top-2 left-2 flex items-center gap-1 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-          channel.stream_category === "fortune" ? "bg-purple-500/90" : "bg-green-500/90"
+          channel.is_live ? "bg-red-500/90" : channel.stream_category === "fortune" ? "bg-purple-500/90" : "bg-green-500/90"
         }`}>
-          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-          {channel.stream_category === "fortune" ? "🔮 占い" : "今すぐ通話可能"}
+          <span className={`w-1 h-1 rounded-full bg-white ${channel.is_live ? "" : "animate-pulse"}`} />
+          {channel.is_live ? "📡 配信中" : channel.stream_category === "fortune" ? "🔮 占い" : "今すぐ通話可能"}
         </div>
       </div>
 
@@ -204,6 +213,16 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
           <Button size="sm" disabled className="w-full h-7 text-[11px] opacity-50 gap-1">
             近日公開予定
           </Button>
+        ) : channel.is_live ? (
+          /* 配信中 → 1対1不可 */
+          <div className="space-y-1.5">
+            <div className="w-full h-8 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 bg-red-500/15 border border-red-500/30 text-red-400">
+              📡 配信中につき1対1不可
+            </div>
+            <Button size="sm" variant="outline" className="w-full h-7 text-[11px] gap-1 border-border/40" onClick={() => navigate(`/channel/${cardChannelId}`)}>
+              配信を見る →
+            </Button>
+          </div>
         ) : !isOwnChannel ? (
           <div className="space-y-1.5">
             {/* 即時通話ボタンを最前面に */}
