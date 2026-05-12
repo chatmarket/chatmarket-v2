@@ -539,17 +539,9 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 1on1 待機中（カテゴリフィルター対応） */}
-      <div ref={callRef} className="pb-4">
-        <section className="px-0">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-            <h2 className="text-sm font-black">🔵 今すぐ通話可能</h2>
-            <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">待機中</span>
-          </div>
-          {console.log("📢 [Home] CallWaitingRow rendering, categoryTab:", categoryTab, "user:", user?.email)}
-          <CallWaitingRow user={user} categoryFilter={categoryTab} filteredChannels={filteredChannels} />
-        </section>
+      {/* テスト用: セクション表示確認 */}
+      <div className="bg-red-500 text-white p-8 text-center font-bold">
+        🔵 テストセクション表示中
       </div>
 
       {/* ライブ配信中 / 配信予定 */}
