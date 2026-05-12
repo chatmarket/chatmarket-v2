@@ -368,6 +368,7 @@ export default function CallWaitingRoom() {
     // Channelの call_theme（タイトル）と call_available_dates（説明文）を保存してTOPページに表示
     if (myChannel) {
       await base44.entities.Channel.update(myChannel.id, {
+        call_enabled: true,
         call_theme: title.trim(),
         call_available_dates: description.trim() || null,
       }).catch(() => {});
