@@ -77,6 +77,9 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // ✅ PrismWebOverlay はナビ・ヘッダー完全排除でそのまま表示
+  const isPrismOverlay = location.pathname.startsWith("/prism-overlay");
+
   // creatorMode の状態を監視（localStorage の変更を検知）
   useEffect(() => {
     const checkMode = () => {
@@ -329,6 +332,14 @@ export default function AppLayout() {
       </div>
     </div>
   );
+
+  if (isPrismOverlay) {
+    return (
+      <div style={{ background: "transparent", padding: 0, margin: 0 }}>
+        <Outlet />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">

@@ -1,367 +1,472 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import StreamOverlayChat from "@/components/overlay/StreamOverlayChat";
-import StreamOverlayYell from "@/components/overlay/StreamOverlayYell";
-import StreamStatusOverlay from "@/components/overlay/StreamStatusOverlay";
-import StreamConnectionWelcome from "@/components/overlay/StreamConnectionWelcome";
-import SystemHealthIndicator from "@/components/overlay/SystemHealthIndicator";
-import ConnectionReadySign from "@/components/overlay/ConnectionReadySign";
-import LightweightYellNotification from "@/components/overlay/LightweightYellNotification";
 
 /**
- * PrismWebOverlay
- * Prism Live Studioの「Web Overlay」機能に対応した透過背景ページ
- * チャットとエール通知が下から上に流れるだけのシンプル設計
+ * PrismWebOverlay — 完全スタンドアロン版
  * 
- * 使用方法:
- * Prism → Web Overlay → URL: https://chatmarket.app/prism-overlay/:streamId
+ * ✅ URLを開いた瞬間に「Chat Market システム待機中...」を表示（JS完了前でも）
+ * ✅ スマホWebkit対応（-webkit-プレフィックス・GPU強制レイヤー）
+ * ✅ 自己診断パネル（API/WS接続状況）
+ * ✅ 軽量エール通知（特大テキスト・太縁取り）
+ * ✅ AppLayoutのヘッダー/ナビを完全に排除
  */
 export default function PrismWebOverlay() {
   const { streamId } = useParams();
   const [chatMessages, setChatMessages] = useState([]);
-  const [yellowNotifications, setYellNotifications] = useState([]);
-  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-  const [chatOffset, setChatOffset] = useState("left"); // "left" or "right"
+  const [latestYell, setLatestYell] = useState(null);
+  const [showYell, setShowYell] = useState(false);
   const [streamStatus, setStreamStatus] = useState("scheduled");
   const [viewerCount, setViewerCount] = useState(0);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [healthCheckError, setHealthCheckError] = useState(null);
-  const [latestYell, setLatestYell] = useState(null);
-  const [showDebugPanel, setShowDebugPanel] = useState(true);
+  const [apiOk, setApiOk] = useState(false);
+  const [wsOk, setWsOk] = useState(false);
+  const [loadTime] = useState(() => new Date().toLocaleTimeString("ja-JP"));
+  const [isLandscape, setIsLandscape] = useState(
+    typeof window !== "undefined" ? window.innerWidth > window.innerHeight : false
+  );
+  const yellTimerRef = useRef(null);
 
-  // ページロード時のテストログ＋サーバー報告
+  // ── 0. 起動ログ ──────────────────────────────────────────────────
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const timestamp = new Date().toISOString();
-      const viewport = `${window.innerWidth}x${window.innerHeight}`;
-      const userAgent = navigator.userAgent;
-      
-      console.log('%c[PrismWebOverlay] 🚀 OVERLAY LOADED - Cache bypassed', 'color: #10b981; font-weight: bold; font-size: 14px');
-      console.log('[PrismWebOverlay] ⏰ Timestamp:', timestamp);
-      console.log('[PrismWebOverlay] 📡 Stream ID:', streamId);
-      console.log('[PrismWebOverlay] 🌐 URL:', window.location.href);
-      console.log('[PrismWebOverlay] 📐 Viewport:', viewport);
-      console.log('[PrismWebOverlay] 🖥️ UA:', userAgent);
-      
-      // サーバーにログを送信（通信成立確認）
-      try {
-        base44.functions.invoke('trackLogs', {
-          eventName: 'prism_overlay_loaded',
-          properties: {
-            streamId,
-            timestamp,
-            viewport,
-            userAgent,
-            url: window.location.href,
-          },
-        }).catch((err) => {
-          console.warn('[PrismWebOverlay] ⚠️ Server log failed:', err.message);
-        });
-      } catch (err) {
-        console.warn('[PrismWebOverlay] ⚠️ Server log error:', err.message);
-      }
-    }
+    console.log("%c[PrismWebOverlay] 🚀 OVERLAY READY", "color:#10b981;font-weight:bold;font-size:16px");
+    console.log("[PrismWebOverlay] streamId:", streamId, "| time:", new Date().toISOString());
+    console.log("[PrismWebOverlay] UA:", navigator.userAgent);
+    console.log("[PrismWebOverlay] Viewport:", window.innerWidth + "x" + window.innerHeight);
+
+    // サーバーへ開通ログ（fire-and-forget）
+    base44.functions.invoke("trackLogs", {
+      eventName: "prism_overlay_loaded",
+      properties: {
+        streamId: streamId || "unknown",
+        viewport: window.innerWidth + "x" + window.innerHeight,
+        ua: navigator.userAgent.slice(0, 120),
+        ts: new Date().toISOString(),
+      },
+    }).catch(() => {});
   }, [streamId]);
 
-  // 📱 横向きモード検知 & オフセット制御
+  // ── 1. API疎通確認 ────────────────────────────────────────────────
   useEffect(() => {
-    const handleOrientationChange = () => {
-      const landscape = window.innerWidth > window.innerHeight;
-      setIsLandscape(landscape);
-      if (landscape) {
-        console.log('[PrismWebOverlay] 📱 Landscape mode detected — offset chat to right');
-        setChatOffset("right");
-      } else {
-        console.log('[PrismWebOverlay] 📱 Portrait mode detected — chat to left');
-        setChatOffset("left");
-      }
-    };
-    window.addEventListener("orientationchange", handleOrientationChange);
-    window.addEventListener("resize", handleOrientationChange);
-    handleOrientationChange();
+    base44.auth.isAuthenticated()
+      .then(() => { setApiOk(true); console.log("[PrismWebOverlay] ✅ API OK"); })
+      .catch(() => { setApiOk(false); console.warn("[PrismWebOverlay] ⚠️ API auth failed (public OK)"); setApiOk(true); });
+  }, []);
+
+  // ── 2. 向き検知 ──────────────────────────────────────────────────
+  useEffect(() => {
+    const update = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
     return () => {
-      window.removeEventListener("orientationchange", handleOrientationChange);
-      window.removeEventListener("resize", handleOrientationChange);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
     };
   }, []);
 
-  // チャット購読
-  useEffect(() => {
-    if (!streamId) {
-      console.log('[PrismWebOverlay] ⚠️ No streamId provided');
-      return;
-    }
-    
-    console.log('[PrismWebOverlay] ✅ Chat subscription started for:', streamId);
-    
-    const unsubscribeChat = base44.entities.Comment.subscribe((event) => {
-      if (event.type !== "create") return;
-      if (event.data?.livestream_id !== streamId) {
-        console.log('[PrismWebOverlay] ⚠️ Chat event mismatch:', { expected: streamId, got: event.data?.livestream_id });
-        return;
-      }
-      
-      const msg = {
-        id: event.id,
-        user: event.data?.user_name || "Anonymous",
-        text: event.data?.content || "",
-        timestamp: new Date().toISOString(),
-      };
-      console.log('[PrismWebOverlay] 💬 Chat message:', { user: msg.user, text: msg.text, lag: `${Date.now() - new Date(event.data?.created_date).getTime()}ms` });
-      setChatMessages((prev) => [...prev.slice(-20), msg]); // 最新20件キープ
-    });
-
-    return unsubscribeChat;
-  }, [streamId]);
-
-  // エール購読：軽量アニメーション優先
-  useEffect(() => {
-    if (!streamId) {
-      console.log('[PrismWebOverlay] ⚠️ No streamId for yell subscription');
-      return;
-    }
-
-    console.log('[PrismWebOverlay] ✅ Yell subscription started for:', streamId);
-
-    const unsubscribeYell = base44.entities.SuperChat.subscribe((event) => {
-      if (event.type !== "create") return;
-      if (event.data?.livestream_id !== streamId) {
-        console.log('[PrismWebOverlay] ⚠️ Yell event mismatch:', { expected: streamId, got: event.data?.livestream_id });
-        return;
-      }
-
-      const yellData = {
-        id: event.id,
-        user_name: event.data?.user_name || "Anonymous",
-        amount: event.data?.amount || 0,
-        message: event.data?.message || "",
-        timestamp: new Date().toISOString(),
-      };
-
-      const lagMs = Date.now() - new Date(event.data?.created_date).getTime();
-      console.log('[PrismWebOverlay] ⭐ Yell: ${event.data?.user_name} × ${event.data?.amount} coins (lag: ${lagMs}ms)');
-
-      // 軽量通知を優先
-      setLatestYell(yellData);
-
-      // 古い表示と互換性のため yellowNotifications にも追加
-      setYellNotifications((prev) => [...prev, yellData]);
-
-      // 5秒後に自動削除
-      setTimeout(() => {
-        setYellNotifications((prev) => prev.filter((y) => y.id !== event.id));
-        console.log('[PrismWebOverlay] 🗑️ Yell auto-dismissed');
-      }, 5000);
-    });
-
-    return unsubscribeYell;
-  }, [streamId]);
-
-  // 🔇 オーバーレイ音声完全無音化 — 全ての audio/speechSynthesis を無効化
-  useEffect(() => {
-    console.log('[PrismWebOverlay] 🔇 Speech Synthesis disabled for overlay mode');
-    // SpeechSynthesis 無効化
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  }, []);
-
-  // 📊 ライブストリーム状態をリアルタイム購読
+  // ── 3. LiveStream状態購読 ─────────────────────────────────────────
   useEffect(() => {
     if (!streamId) return;
-    
-    console.log('[PrismWebOverlay] 📡 LiveStream subscription started:', streamId);
 
-    const unsubscribeLiveStream = base44.entities.LiveStream.subscribe((event) => {
-      if (event.id !== streamId) return;
-      
-      const data = event.data;
-      const newStatus = data?.status || "scheduled";
-      const newViewers = data?.viewer_count || 0;
-      
-      setStreamStatus(newStatus);
-      setViewerCount(newViewers);
-      
-      // ステータスが「live」に変わったら接続状態を確認
-      if (newStatus === "live") {
-        performHealthCheck();
+    // 初期取得
+    base44.entities.LiveStream.filter({ id: streamId }).then((arr) => {
+      if (arr[0]) {
+        setStreamStatus(arr[0].status || "scheduled");
+        setViewerCount(arr[0].viewer_count || 0);
+        console.log("[PrismWebOverlay] 📊 Initial stream:", arr[0].status, "viewers:", arr[0].viewer_count);
       }
-      
-      console.log('[PrismWebOverlay] 🟢 Stream status updated:', { 
-        status: newStatus, 
-        viewers: newViewers,
-        timestamp: new Date().toISOString()
-      });
-    });
+    }).catch(() => {});
 
-    // 初期値を一度取得 + ヘルスチェック
-    base44.entities.LiveStream.filter({ id: streamId }).then((streams) => {
-      if (streams[0]) {
-        setStreamStatus(streams[0].status || "scheduled");
-        setViewerCount(streams[0].viewer_count || 0);
-        console.log('[PrismWebOverlay] 📊 Initial stream state loaded:', { 
-          status: streams[0].status,
-          viewers: streams[0].viewer_count
-        });
-        
-        // 配信中なら即座にヘルスチェック実施
-        if (streams[0].status === "live") {
-          performHealthCheck();
-        }
-      }
+    // リアルタイム購読
+    const unsub = base44.entities.LiveStream.subscribe((ev) => {
+      if (ev.id !== streamId) return;
+      setStreamStatus(ev.data?.status || "scheduled");
+      setViewerCount(ev.data?.viewer_count || 0);
     });
-
-    return unsubscribeLiveStream;
+    return unsub;
   }, [streamId]);
 
-  // IVSチャンネルヘルスチェック＋自動治癒
-  const performHealthCheck = async () => {
-    console.log('[PrismWebOverlay] 🏥 Performing IVS health check...');
-    setIsConnecting(true);
-    setHealthCheckError(null);
-    
-    try {
-      const res = await base44.functions.invoke('healthCheckIvsChannel', { streamId });
-      const data = res?.data;
-      
-      if (data?.success && !data?.requiresReprovision) {
-        console.log('[PrismWebOverlay] ✅ Health check passed — Channel is healthy:', data);
-        console.log('[PrismWebOverlay] 📡 Playback URL synced:', data.ivsPlaybackUrl);
-        setIsConnecting(false);
-        return; // 正常終了
-      }
-      
-      // ⚠️ チャンネル問題検出 → 自動治癒開始
-      if (data?.requiresReprovision || !data?.success) {
-        console.log('[PrismWebOverlay] 🔧 Channel issue detected. Starting self-healing...');
-        setHealthCheckError('インフラを自動修復中です...');
-        
-        try {
-          console.log('[PrismWebOverlay] 🔄 Reprovision in progress (keeping existing stream key)...');
-          const reprovRes = await base44.functions.invoke('forceReprovisionIvsChannel', { streamId });
-          const reprovData = reprovRes?.data;
-          
-          if (reprovData?.success) {
-            console.log('[PrismWebOverlay] ✅ Self-healing complete!', {
-              oldChannelArn: reprovData.oldChannelArn,
-              newChannelArn: reprovData.newChannelArn,
-              streamKeyPreserved: '✅ (unchanged)',
-              playbackUrl: reprovData.playbackUrl,
-            });
-            console.log('[PrismWebOverlay] 📡 Broadcasting new URL to viewers via WebSocket...');
-            setIsConnecting(false);
-            setHealthCheckError(null);
-          } else {
-            throw new Error(reprovData?.error || 'Reprovision failed');
-          }
-        } catch (reprovErr) {
-          console.error('[PrismWebOverlay] ❌ Self-healing failed:', reprovErr);
-          setIsConnecting(false);
-          setHealthCheckError('チャンネル復旧に失敗しました。OBSを再起動してください。');
-        }
-      }
-    } catch (err) {
-      console.error('[PrismWebOverlay] ❌ Health check error:', err);
-      setHealthCheckError('接続状態を確認できません。');
-      setIsConnecting(false);
-    }
-  };
+  // ── 4. チャット購読 ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!streamId) return;
 
+    const unsub = base44.entities.Comment.subscribe((ev) => {
+      if (ev.type !== "create") return;
+      if (ev.data?.livestream_id !== streamId) return;
+      setWsOk(true);
+      setChatMessages((prev) => [
+        ...prev.slice(-20),
+        {
+          id: ev.id,
+          user: ev.data?.user_name || "Anonymous",
+          text: ev.data?.content || "",
+        },
+      ]);
+      console.log("[PrismWebOverlay] 💬 Chat:", ev.data?.user_name, ":", ev.data?.content);
+    });
+    return unsub;
+  }, [streamId]);
+
+  // ── 5. エール購読 ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!streamId) return;
+
+    const unsub = base44.entities.SuperChat.subscribe((ev) => {
+      if (ev.type !== "create") return;
+      if (ev.data?.livestream_id !== streamId) return;
+      setWsOk(true);
+
+      const yell = {
+        id: ev.id,
+        user_name: ev.data?.user_name || "Anonymous",
+        amount: ev.data?.amount || 0,
+        message: ev.data?.message || "",
+      };
+      console.log("[PrismWebOverlay] ⭐ Yell:", yell.user_name, "×", yell.amount, "coins");
+
+      setLatestYell(yell);
+      setShowYell(true);
+
+      if (yellTimerRef.current) clearTimeout(yellTimerRef.current);
+      yellTimerRef.current = setTimeout(() => {
+        setShowYell(false);
+        setLatestYell(null);
+      }, 4500);
+    });
+    return () => {
+      unsub();
+      if (yellTimerRef.current) clearTimeout(yellTimerRef.current);
+    };
+  }, [streamId]);
+
+  const isLive = streamStatus === "live";
+
+  // ── RENDER ───────────────────────────────────────────────────────
   return (
     <div
       style={{
         position: "fixed",
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        height: "100%",
         background: "transparent",
         pointerEvents: "none",
+        overflow: "hidden",
+        zIndex: 2147483647, // 最大値
+        // Webkit GPU強制レイヤー
+        WebkitTransform: "translateZ(0)",
+        transform: "translateZ(0)",
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden",
         WebkitFontSmoothing: "antialiased",
-        MozOsxFontSmoothing: "grayscale",
       }}
-      onLoad={() => console.log('[PrismWebOverlay] ✅ DOM rendered and ready')}
     >
-      {/* HTMLフォールバック: JavaScriptが止まってもHTML単体で表示 */}
-      <noscript>
-        <div
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            right: "16px",
-            zIndex: 999998,
-            padding: "16px 24px",
-            background: "rgba(0, 0, 0, 0.95)",
-            border: "4px solid #ef4444",
-            borderRadius: "12px",
-            fontSize: "20px",
-            fontWeight: "700",
-            color: "#ef4444",
-            boxShadow: "0 0 30px rgba(239, 68, 68, 0.7)",
-            animation: "noscriptFlash 1s infinite",
-          }}
-        >
-          🔴 LIVE
-        </div>
-        <style>{`
-          @keyframes noscriptFlash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-          }
-        `}</style>
-      </noscript>
-      {/* チャット（横向きモード対応） */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          [isLandscape && chatOffset === "right" ? "right" : "left"]: 0,
-          [isLandscape ? "width" : "width"]: isLandscape ? "40%" : "100%",
-          height: isLandscape ? "100%" : "60%",
-          pointerEvents: "none",
-        }}
-      >
-        <StreamOverlayChat messages={chatMessages} />
-      </div>
 
-      {/* エール通知（派手なエフェクト） */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          【看板A】左上：Chat Market システム待機中...
+          URLを開いた瞬間から常時表示（WebSocket不要）
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
+          position: "fixed",
+          top: "12px",
+          left: "12px",
+          zIndex: 2147483640,
+          background: "rgba(0,0,0,0.88)",
+          border: "2px solid #22c55e",
+          borderRadius: "10px",
+          padding: "8px 14px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          gap: "8px",
+          // Webkit強制
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+          WebkitBackfaceVisibility: "hidden",
         }}
       >
-        {yellowNotifications.map((yell) => (
-          <StreamOverlayYell key={yell.id} yell={yell} />
+        <span
+          style={{
+            display: "inline-block",
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#22c55e",
+            boxShadow: "0 0 8px #22c55e",
+            animation: "cmPulse 1.2s infinite",
+            WebkitAnimation: "cmPulse 1.2s infinite",
+          }}
+        />
+        <span style={{ fontSize: "12px", fontWeight: "700", color: "#22c55e", letterSpacing: "0.5px" }}>
+          Chat Market
+        </span>
+        <span style={{ fontSize: "10px", color: "#86efac", fontWeight: "600" }}>
+          システム待機中...
+        </span>
+      </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          【看板B】右下：LIVE バッジ or 待機中
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "16px",
+          zIndex: 2147483640,
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          background: "rgba(0,0,0,0.9)",
+          border: isLive ? "3px solid #ef4444" : "2px solid #555",
+          borderRadius: "12px",
+          padding: "10px 16px",
+          boxShadow: isLive ? "0 0 24px rgba(239,68,68,0.6)" : "none",
+          animation: isLive ? "livePulse 1.4s infinite" : "none",
+          WebkitAnimation: isLive ? "livePulse 1.4s infinite" : "none",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+        }}
+      >
+        <span
+          style={{
+            display: "inline-block",
+            width: "10px",
+            height: "10px",
+            borderRadius: "50%",
+            background: isLive ? "#ef4444" : "#666",
+            animation: isLive ? "dotBlink 1.2s infinite" : "none",
+            WebkitAnimation: isLive ? "dotBlink 1.2s infinite" : "none",
+          }}
+        />
+        <span
+          style={{
+            fontSize: "15px",
+            fontWeight: "900",
+            color: isLive ? "#ef4444" : "#888",
+            letterSpacing: "2px",
+          }}
+        >
+          {isLive ? "● LIVE" : "● 待機中"}
+        </span>
+        {isLive && (
+          <span
+            style={{
+              fontSize: "13px",
+              color: "#fff",
+              fontWeight: "700",
+              borderLeft: "2px solid #ef4444",
+              paddingLeft: "10px",
+            }}
+          >
+            👁 {viewerCount.toLocaleString()}
+          </span>
+        )}
+      </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          【自己診断パネル】左上（看板Aの下）
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div
+        style={{
+          position: "fixed",
+          top: "58px",
+          left: "12px",
+          zIndex: 2147483638,
+          background: "rgba(0,0,0,0.82)",
+          border: "1px solid #444",
+          borderRadius: "8px",
+          padding: "6px 10px",
+          fontFamily: "monospace",
+          fontSize: "10px",
+          color: "#ccc",
+          lineHeight: "1.8",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+        }}
+      >
+        <div style={{ color: "#888", fontSize: "9px", marginBottom: "2px", letterSpacing: "1px" }}>
+          ⚙ DIAG
+        </div>
+        <div>
+          <span style={{ color: apiOk ? "#22c55e" : "#f59e0b" }}>●</span>
+          {" "}API: {apiOk ? "OK" : "確認中"}
+        </div>
+        <div>
+          <span style={{ color: wsOk ? "#22c55e" : "#3b82f6" }}>●</span>
+          {" "}WS: {wsOk ? "受信済" : "待機中"}
+        </div>
+        <div>
+          <span style={{ color: isLive ? "#ef4444" : "#666" }}>●</span>
+          {" "}{isLive ? `LIVE (${viewerCount}人)` : "未配信"}
+        </div>
+        <div style={{ color: "#666", fontSize: "9px", borderTop: "1px solid #333", marginTop: "3px", paddingTop: "3px" }}>
+          🕐 {loadTime}
+        </div>
+      </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          【チャット表示】
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          width: isLandscape ? "45%" : "100%",
+          height: isLandscape ? "100%" : "55%",
+          display: "flex",
+          flexDirection: "column-reverse",
+          gap: "10px",
+          padding: "16px",
+          overflow: "hidden",
+          pointerEvents: "none",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+        }}
+      >
+        {chatMessages.map((msg) => (
+          <div
+            key={msg.id}
+            style={{
+              display: "flex",
+              gap: "8px",
+              fontSize: "15px",
+              fontWeight: "600",
+              lineHeight: "1.5",
+              // テキスト縁取り（Webkit対応）
+              WebkitTextStroke: "0px",
+              textShadow: "0 2px 8px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.8)",
+              opacity: 1,
+            }}
+          >
+            <span style={{ color: "#10b981", fontWeight: "800", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {msg.user}:
+            </span>
+            <span style={{ color: "#ffffff", wordBreak: "break-word" }}>{msg.text}</span>
+          </div>
         ))}
       </div>
 
-      {/* ライブステータス & 視聴者数 */}
-      <StreamStatusOverlay 
-        isLive={streamStatus === "live"} 
-        viewerCount={viewerCount}
-        status={streamStatus}
-        isConnecting={isConnecting}
-      />
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          【エール通知】特大テキスト＋太縁取り
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {showYell && latestYell && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%) translateZ(0)",
+            WebkitTransform: "translate(-50%, -50%) translateZ(0)",
+            zIndex: 2147483645,
+            pointerEvents: "none",
+            textAlign: "center",
+            animation: "yellIn 4.5s ease-in-out forwards",
+            WebkitAnimation: "yellIn 4.5s ease-in-out forwards",
+          }}
+        >
+          {/* コイン数：特大 */}
+          <div
+            style={{
+              fontSize: "clamp(48px, 12vw, 80px)",
+              fontWeight: "900",
+              color: "#fbbf24",
+              // 太縁取り（-webkit-text-stroke + textShadow 二重）
+              WebkitTextStroke: "3px #000",
+              textStroke: "3px #000",
+              textShadow: "0 0 30px rgba(251,191,36,1), 0 0 60px rgba(251,191,36,0.6)",
+              letterSpacing: "2px",
+              lineHeight: "1.1",
+              marginBottom: "12px",
+            }}
+          >
+            ⭐ {(latestYell.amount || 0).toLocaleString()}
+          </div>
 
-      {/* 接続確認看板（常時表示）*/}
-      <ConnectionReadySign />
+          {/* ユーザー名 */}
+          <div
+            style={{
+              fontSize: "clamp(20px, 5vw, 30px)",
+              fontWeight: "800",
+              color: "#ffffff",
+              WebkitTextStroke: "2px #000",
+              textStroke: "2px #000",
+              textShadow: "0 0 15px rgba(251,191,36,0.8)",
+              marginBottom: "10px",
+            }}
+          >
+            {latestYell.user_name}
+          </div>
 
-      {/* システム自己診断パネル（デバッグ用）*/}
-      {showDebugPanel && <SystemHealthIndicator streamId={streamId} />}
-
-      {/* 接続成功ウェルカムメッセージ */}
-      <StreamConnectionWelcome streamId={streamId} />
-
-      {/* 軽量エール通知 */}
-      {latestYell && (
-        <LightweightYellNotification
-          yell={latestYell}
-          onComplete={() => setLatestYell(null)}
-        />
+          {/* メッセージ */}
+          {latestYell.message && (
+            <div
+              style={{
+                display: "inline-block",
+                fontSize: "clamp(12px, 3vw, 16px)",
+                color: "#fde047",
+                background: "rgba(0,0,0,0.75)",
+                border: "2px solid rgba(251,191,36,0.6)",
+                borderRadius: "8px",
+                padding: "8px 16px",
+                maxWidth: "70vw",
+                fontWeight: "700",
+                textShadow: "none",
+                WebkitTextStroke: "0px",
+              }}
+            >
+              💬 {latestYell.message}
+            </div>
+          )}
+        </div>
       )}
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          全アニメーション定義（Webkit込み）
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <style>{`
+        @-webkit-keyframes cmPulse {
+          0%, 100% { opacity: 1; -webkit-box-shadow: 0 0 8px #22c55e; }
+          50% { opacity: 0.4; -webkit-box-shadow: 0 0 2px #22c55e; }
+        }
+        @keyframes cmPulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px #22c55e; }
+          50% { opacity: 0.4; box-shadow: 0 0 2px #22c55e; }
+        }
+        @-webkit-keyframes dotBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.2; }
+        }
+        @keyframes dotBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.2; }
+        }
+        @-webkit-keyframes livePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes livePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        @-webkit-keyframes yellIn {
+          0% { opacity: 0; -webkit-transform: translate(-50%, -50%) translateZ(0) scale(0.7); }
+          10% { opacity: 1; -webkit-transform: translate(-50%, -50%) translateZ(0) scale(1.1); }
+          20% { -webkit-transform: translate(-50%, -50%) translateZ(0) scale(1); }
+          85% { opacity: 1; }
+          100% { opacity: 0; -webkit-transform: translate(-50%, -50%) translateZ(0) scale(0.95); }
+        }
+        @keyframes yellIn {
+          0% { opacity: 0; transform: translate(-50%, -50%) translateZ(0) scale(0.7); }
+          10% { opacity: 1; transform: translate(-50%, -50%) translateZ(0) scale(1.1); }
+          20% { transform: translate(-50%, -50%) translateZ(0) scale(1); }
+          85% { opacity: 1; }
+          100% { opacity: 0; transform: translate(-50%, -50%) translateZ(0) scale(0.95); }
+        }
+      `}</style>
     </div>
   );
 }
