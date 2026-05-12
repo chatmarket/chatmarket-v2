@@ -27,6 +27,8 @@ export default function GoLive() {
   const [modeInitialized, setModeInitialized] = useState(false);
   const [creating, setCreating] = useState(false);
   const [liveStreamId, setLiveStreamId] = useState(null);
+  const [keyReady, setKeyReady] = useState(false); // キー取得完了フラグ
+  const [goToBroadcast, setGoToBroadcast] = useState(false); // 配信管理画面遷移フラグ
   const [ivsStream, setIvsStream] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -352,6 +354,7 @@ export default function GoLive() {
       setCreating(false);
       sessionStorage.setItem("liveStreamId", newStream.id);
       setLiveStreamId(newStream.id);
+      setKeyReady(true); // キー取得完了 → URLセクションを表示（BroadcasterStreamには飛ばない）
     } catch (err) {
       console.error('配信作成エラー:', err);
       toast.error('配信作成に失敗しました: ' + err.message);
@@ -404,8 +407,8 @@ export default function GoLive() {
     );
   }
 
-  // 配信画面（BroadcasterStream）
-  if (liveStreamId) {
+  // 配信画面（BroadcasterStream）— URLコピー後にボタンで遷移
+  if (goToBroadcast && liveStreamId) {
     return (
       <div className="w-full">
         <BroadcasterStream
@@ -582,6 +585,15 @@ export default function GoLive() {
                 >
                   <Copy className="w-4 h-4" />
                   URLをコピー ＆ PRISMに貼る
+                </button>
+
+                {/* 配信管理画面へ進む */}
+                <button
+                  onClick={() => setGoToBroadcast(true)}
+                  className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-black text-sm rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
+                >
+                  <Radio className="w-4 h-4" />
+                  配信管理画面へ進む →
                 </button>
               </div>
 
