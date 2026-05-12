@@ -56,7 +56,7 @@ export default function Home() {
   const [enabledSections, setEnabledSections] = useState({
     callWaiting: true,  // 常に表示（IntersectionObserverの遅延を回避）
     liveStreams: true,  // 同様に常に取得開始
-    popularVideos: false,
+    popularVideos: true,  // 初期表示
     featuredVideos: false,
     freeVideos: false,
     recentVideos: false,
