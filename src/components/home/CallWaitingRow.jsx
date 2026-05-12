@@ -34,7 +34,7 @@ function CallWaitingRowComponent({ user, categoryFilter = "all", filteredChannel
     gcTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchInterval: 5000, // 5秒ポーリング — 待機開始を即反映
+    refetchInterval: 10000, // 10秒ポーリング — 待機開始を即反映
   });
 
   // Channel の変更をリアルタイム購読 → 待機ON/OFFを即座に反映
