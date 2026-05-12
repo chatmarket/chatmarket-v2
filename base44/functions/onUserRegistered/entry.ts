@@ -22,6 +22,25 @@ Deno.serve(async (req) => {
     });
     console.log(`✓ PlanSubscription created for ${userEmail}`);
 
+    // ── AWS IVS チャンネルを新規ユーザーに自動プロビジョニング ──
+    // Channelが存在する場合のみ（既存ユーザー対応）
+    try {
+      const existingChannels = await base44.asServiceRole.entities.Channel.filter({ owner_email: userEmail });
+      const channel = existingChannels[0];
+      if (channel && !channel.ivs_stream_key) {
+        console.log(`[onUserRegistered] Provisioning IVS channel for ${userEmail}...`);
+        const provisionRes = await base44.asServiceRole.functions.invoke('provisionChannelStreamKey', {
+          channel_id: channel.id,
+        });
+        if (provisionRes?.success) {
+          console.log(`✓ IVS channel auto-provisioned for ${userEmail}`);
+        }
+      }
+    } catch (ivsErr) {
+      // IVSプロビジョニング失敗はユーザー登録を止めない
+      console.warn(`[onUserRegistered] IVS provisioning skipped: ${ivsErr.message}`);
+    }
+
     // YellCoinWallet に初期残高500コインを付与
     await base44.asServiceRole.entities.YellCoinWallet.create({
       user_email: userEmail,

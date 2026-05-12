@@ -24,6 +24,7 @@ import PriceUpNudgeCard from "../components/dashboard/PriceUpNudgeCard";
 import WishlistBoard from "../components/dashboard/WishlistBoard";
 import FortuneKartePanel from "../components/fortune/FortuneKartePanel";
 import KanteiPaymentNotifier from "../components/fortune/KanteiPaymentNotifier";
+import PrismOverlayUrlCard from "../components/overlay/PrismOverlayUrlCard";
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -156,6 +157,9 @@ export default function CreatorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* メインコンテンツ（左2/3） */}
         <div className="lg:col-span-2 space-y-6">
+          {/* 🎯 PRISM用オーバーレイURL（ライバー全員に常時表示） */}
+          {channel?.id && <PrismOverlayUrlCard channelId={channel.id} />}
+
           {/* 受信メッセージ（DM）一覧 */}
           <IncomingMessagesWidget userEmail={user?.email} />
 
