@@ -33,7 +33,7 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [latestYell, setLatestYell] = useState(null);
   const [prismSignal, setPrismSignal] = useState(null); // null | "waiting" | "connected"
-  const [channelIdRef] = useState({ current: null });
+  const channelIdRef = useRef(null);
   const videoContainerRef = useRef(null);
 
   const isLive = status === "browser-live";
@@ -176,11 +176,16 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
 
   const handleEndConfirmed = async () => {
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    const streams = await base44.entities.LiveStream.filter({ id: streamId });
-    if (streams[0]?.channel_id) {
-      await base44.entities.Channel.update(streams[0].channel_id, { is_live: false });
+    // channelIdRef（配信開始時にキャッシュ）を優先使用、なければDBから取得
+    let cid = channelIdRef.current;
+    if (!cid) {
+      const streams = await base44.entities.LiveStream.filter({ id: streamId });
+      cid = streams[0]?.channel_id;
     }
+    // Channel.is_live: false → トップページのバッジが即座に「今すぐ通話可能」に戻る
+    if (cid) await base44.entities.Channel.update(cid, { is_live: false });
     await base44.entities.LiveStream.update(streamId, { status: "ended", live_ended_at: new Date().toISOString() });
+    setPrismSignal(null);
     setStatus("ended");
     toast.success("配信を終了しました");
     if (onEnd) onEnd();
@@ -290,21 +295,21 @@ export default function BroadcasterStream({ streamId, ivsStreamKey, ivsIngestEnd
                 <p className="text-sm font-bold text-white">配信公開中</p>
               </div>
 
-              {/* PRISM信号ステータスパネル */}
+              {/* PRISM信号ステータスパネル — スマホでも視認しやすい大きめUI */}
               {prismSignal === "connected" ? (
-                <div className="flex items-center gap-3 bg-green-900/60 border-2 border-green-500/70 rounded-2xl px-5 py-3 z-10 shadow-lg shadow-green-500/20">
-                  <span className="w-3 h-3 rounded-full bg-green-400 animate-pulse shrink-0" />
+                <div className="flex items-center gap-3 bg-green-500 rounded-2xl px-6 py-4 z-10 shadow-2xl shadow-green-500/50 mx-4">
+                  <span className="w-4 h-4 rounded-full bg-white animate-pulse shrink-0" />
                   <div>
-                    <p className="text-green-300 font-black text-sm">📡 カメラは繋がっています！</p>
-                    <p className="text-green-400/70 text-xs">視聴者に映像が届いています</p>
+                    <p className="text-white font-black text-base">📡 カメラ接続中！</p>
+                    <p className="text-green-100 text-xs font-semibold">視聴者に映像が届いています ✅</p>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 bg-yellow-900/50 border-2 border-yellow-500/60 rounded-2xl px-5 py-3 z-10">
-                  <span className="w-3 h-3 rounded-full bg-yellow-400 animate-ping shrink-0" />
+                <div className="flex items-center gap-3 bg-yellow-500 rounded-2xl px-6 py-4 z-10 shadow-2xl shadow-yellow-500/40 mx-4">
+                  <span className="w-4 h-4 rounded-full bg-white animate-ping shrink-0" />
                   <div>
-                    <p className="text-yellow-300 font-black text-sm">⏳ PRISMからの信号を待っています</p>
-                    <p className="text-yellow-400/70 text-xs">ボタンを押して配信を開始してください</p>
+                    <p className="text-black font-black text-base">⏳ 信号待ち…</p>
+                    <p className="text-yellow-900 text-xs font-bold">PRISMで「配信開始」を押してください</p>
                   </div>
                 </div>
               )}
