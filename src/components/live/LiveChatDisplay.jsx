@@ -9,15 +9,22 @@ export default function LiveChatDisplay({ streamId }) {
     
     console.log(`[LiveChatDisplay] 📡 Subscribing to comments on stream: ${streamId}`);
     
-    // 初回ロード
+    // 初回ロード（target_id と livestream_id 両方を取得してマージ）
     const fetchComments = async () => {
       try {
-        const data = await base44.entities.Comment.filter(
-          { target_type: "livestream_chat", target_id: streamId },
-          "-created_date",
-          30
-        );
-        setComments(data);
+        const [byTarget, byLive] = await Promise.all([
+          base44.entities.Comment.filter({ target_type: "livestream_chat", target_id: streamId }, "-created_date", 30),
+          base44.entities.Comment.filter({ livestream_id: streamId }, "-created_date", 30),
+        ]);
+        // 重複除去してマージ
+        const seen = new Set();
+        const merged = [...byTarget, ...byLive].filter((c) => {
+          if (seen.has(c.id)) return false;
+          seen.add(c.id);
+          return true;
+        });
+        merged.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+        setComments(merged.slice(0, 30));
       } catch (err) {
         console.error('[LiveChatDisplay] Failed to fetch comments:', err);
       }
@@ -25,12 +32,13 @@ export default function LiveChatDisplay({ streamId }) {
 
     fetchComments();
 
-    // リアルタイム購読
+    // リアルタイム購読（target_id または livestream_id でマッチ）
     const unsubscribe = base44.entities.Comment.subscribe((event) => {
       if (event.type !== "create") return;
-      if (event.data?.target_id !== streamId) return;
-      console.log(`[LiveChatDisplay] ✅ Comment added: ${event.data?.user_name}`);
-      setComments((prev) => [event.data, ...prev.slice(0, 29)]);
+      const d = event.data;
+      if (d?.target_id !== streamId && d?.livestream_id !== streamId) return;
+      console.log(`[LiveChatDisplay] ✅ Comment added: ${d?.user_name}`);
+      setComments((prev) => [d, ...prev.slice(0, 29)]);
     });
 
     return unsubscribe;

@@ -15,10 +15,10 @@ body {
   width: 100vw; height: 100vh;
 }
 
-/* ━━ 左上バッジ ━━ */
+/* ━━ 右上バッジ ━━ */
 #badge {
   position: fixed;
-  top: 12px; left: 12px;
+  top: 12px; right: 12px;
   background: rgba(0,0,0,0.55);
   border: 1px solid #22c55e;
   border-radius: 20px;
@@ -171,8 +171,6 @@ var seenIds    = {};
 var yellTimer  = null;
 var isLive     = false;
 var viewers    = 0;
-var latestCommentTs = null;
-var latestYellTs    = null;
 
 // ─── DOM ─────────────────────────────────────────────
 var chatEl    = document.getElementById('chat');
@@ -198,9 +196,9 @@ function updateBadge(ok) {
     document.querySelector('.dot').style.background = '#f87171';
     return;
   }
-  badgeText.textContent = isLive ? ('LIVE · ' + viewers + '人') : 'CM';
-  badgeText.style.color = isLive ? '#22c55e' : '#aaa';
-  document.querySelector('.dot').style.background = isLive ? '#22c55e' : '#888';
+  badgeText.textContent = isLive ? ('● LIVE · ' + viewers + '人') : '● CM';
+  badgeText.style.color = isLive ? '#f87171' : '#aaa';
+  document.querySelector('.dot').style.background = isLive ? '#f87171' : '#888';
 }
 
 // ─── チャット描画 ─────────────────────────────────────
@@ -216,7 +214,6 @@ function renderChat() {
   chatEl.innerHTML = '';
   var total = messages.length;
   messages.forEach(function(m, i) {
-    // 古いほど薄く、最新は opacity:1
     var baseOpacity = 0.4 + (i / Math.max(total - 1, 1)) * 0.6;
     var div = document.createElement('div');
     div.className = 'msg';
@@ -245,7 +242,7 @@ function showYell(user, amount, msg) {
   else      { msgEl.style.display = 'none'; }
 
   yellEl.classList.remove('show');
-  void yellEl.offsetWidth; // reflow でアニメリセット
+  void yellEl.offsetWidth;
   yellEl.classList.add('show');
 
   if (yellTimer) clearTimeout(yellTimer);
@@ -264,16 +261,24 @@ function fetchList(entity, filters, cb) {
   .catch(function(e) { cb(e, []); });
 }
 
-// ─── コメント取得・差分追加 ───────────────────────────
+// ─── コメント取得（target_id と livestream_id 両方を並列取得） ───
 function pollComments() {
   if (!streamId) return;
-  fetchList('Comment', { livestream_id: streamId }, function(err, items) {
-    if (err) return;
-    // 新しい順で来る → reverseして古い順に処理（addMsg内で重複除去）
-    items.slice().reverse().forEach(function(c) {
+
+  var done = 0;
+  var combined = [];
+  function merge(err, items) {
+    if (!err) combined = combined.concat(items);
+    done++;
+    if (done < 2) return;
+    // 重複除去してaddMsg
+    combined.forEach(function(c) {
       addMsg(c.id, c.user_name || '匿名', c.content || c.text || '');
     });
-  });
+  }
+
+  fetchList('Comment', { target_id: streamId, target_type: 'livestream_chat' }, merge);
+  fetchList('Comment', { livestream_id: streamId }, merge);
 }
 
 // ─── エール取得 ───────────────────────────────────────
@@ -282,11 +287,10 @@ function pollYells() {
   fetchList('SuperChat', { livestream_id: streamId }, function(err, items) {
     if (err) return;
     if (!items.length) return;
-    var newest = items[0]; // sort: -created_date なので最新が先頭
+    var newest = items[0];
     if (!seenIds['y_' + newest.id]) {
       seenIds['y_' + newest.id] = true;
       showYell(newest.user_name || '匿名', newest.amount || 0, newest.message || '');
-      // エールをチャット欄にも流す
       addMsg('yell_' + newest.id,
         '⭐ ' + (newest.user_name || '匿名'),
         (newest.amount || 0) + 'コイン' + (newest.message ? ' 「' + newest.message + '」' : ''));
@@ -311,15 +315,12 @@ function pollStream() {
 if (!streamId) {
   showSysMsg('⚠️ URLに ?id=xxx が必要です');
 } else {
-  // ① 即時システムメッセージ
   showSysMsg('✅ システム接続完了 — チャット受信中');
 
-  // ② 即時データ取得
   pollComments();
   pollStream();
   pollYells();
 
-  // ③ 定期ポーリング
   setInterval(pollComments,  2000);
   setInterval(pollYells,     3000);
   setInterval(pollStream,   10000);
