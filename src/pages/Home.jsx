@@ -85,11 +85,11 @@ export default function Home() {
 
     // Channel変更をリアルタイムで購読 → 画面即更新
     const unsub = base44.entities.Channel.subscribe((event) => {
+      // call_enabledが変わったら、関連クエリをリセット（キャッシュ無効化）
       if (event.type === "update" && event.data?.call_enabled !== undefined) {
-        // call_enabledが変わったら、関連クエリをリセット（キャッシュ無効化）
         queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
-        queryClient.invalidateQueries({ queryKey: ["channels-all"] });
       }
+      queryClient.invalidateQueries({ queryKey: ["channels-all"] });
     });
     return () => unsub();
   }, [hasSeenStreamingSetup, queryClient]);
