@@ -33,7 +33,7 @@ export default function PrismWebOverlay() {
     console.log("[PrismWebOverlay] UA:", navigator.userAgent);
     console.log("[PrismWebOverlay] Viewport:", window.innerWidth + "x" + window.innerHeight);
 
-    // サーバーへ開通ログ（fire-and-forget）
+    // サーバーへ開通ログ（fire-and-forget / POST）
     base44.functions.invoke("trackLogs", {
       eventName: "prism_overlay_loaded",
       properties: {
@@ -41,7 +41,22 @@ export default function PrismWebOverlay() {
         viewport: window.innerWidth + "x" + window.innerHeight,
         ua: navigator.userAgent.slice(0, 120),
         ts: new Date().toISOString(),
+        url: window.location.href,
+        referer: document.referrer || "none",
       },
+    }).catch(() => {});
+    // fetch直叩き（SDKが失敗してもログを残す）
+    fetch("https://api.base44.com/api/apps/69c1b541d5db3555833124aa/functions/trackLogs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventName: "prism_overlay_direct_ping",
+        properties: {
+          streamId: streamId || "unknown",
+          ts: new Date().toISOString(),
+          url: window.location.href,
+        }
+      })
     }).catch(() => {});
   }, [streamId]);
 

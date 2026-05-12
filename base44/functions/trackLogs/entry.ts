@@ -1,91 +1,78 @@
 /**
- * trackLogs - ブラウザログ収集エンドポイント（軽量版）
- * 
- * コールドスタート対策：SDK は認証失敗時のみ使用（初回は不要）
- * 性能：最小処理で 50ms以下レスポンス
+ * trackLogs - ブラウザログ収集エンドポイント
+ * POST対応追加: PrismWebOverlayからのアクセスログを受信
  */
 
 Deno.serve(async (req) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-ID',
     'Content-Type': 'application/json',
+    // ★ キャッシュ完全無効化
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   };
 
-  // OPTIONS プリフライト対応
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  // GET のみ許可
+  const env = Deno.env.get('ENVIRONMENT') || 'unknown';
+
+  // ── POST: PrismOverlay アクセスログ ──
+  if (req.method === 'POST') {
+    let body = {};
+    try { body = await req.json(); } catch (_) {}
+
+    const { eventName, properties } = body;
+
+    if (eventName === 'prism_overlay_loaded') {
+      console.log(`🎯 [PRISM_OVERLAY_ACCESS] =============================`);
+      console.log(`🎯 streamId   : ${properties?.streamId || 'unknown'}`);
+      console.log(`🎯 viewport   : ${properties?.viewport || 'unknown'}`);
+      console.log(`🎯 timestamp  : ${properties?.ts || new Date().toISOString()}`);
+      console.log(`🎯 ua         : ${properties?.ua || 'unknown'}`);
+      console.log(`🎯 env        : ${env}`);
+      console.log(`🎯 =========================================== LOGGED`);
+    } else {
+      console.log(`[trackLogs POST] event=${eventName} | props=${JSON.stringify(properties)}`);
+    }
+
+    return Response.json({ success: true, event: eventName, logged_at: new Date().toISOString() }, { status: 200, headers });
+  }
+
+  // ── GET: 既存ログ収集 ──
   if (req.method !== 'GET') {
-    console.warn(`[trackLogs] ❌ ${req.method} not allowed (GET only)`);
-    return Response.json(
-      { error: `${req.method} not allowed. Use GET.` },
-      { status: 405, headers }
-    );
+    return Response.json({ error: `${req.method} not allowed.` }, { status: 405, headers });
   }
 
   const url = new URL(req.url);
-  const action = url.searchParams.get('action') || 'log';
-  const logs = action === 'log' ? (url.searchParams.get('logs') ? JSON.parse(url.searchParams.get('logs')) : []) : [];
+  const logs = url.searchParams.get('logs') ? JSON.parse(url.searchParams.get('logs')) : [];
 
-  const env = Deno.env.get('ENVIRONMENT') || 'unknown';
-  console.log(`[trackLogs] 🚀 START | env=${env}`);
-
-  try {
-    // ★ 認証スキップ（コールドスタート高速化）
-    let user = null;
-    const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      try {
-        const { createClientFromRequest } = await import('npm:@base44/sdk@0.8.25');
-        const base44 = createClientFromRequest(req);
-        user = await base44.auth.me().catch(() => null);
-      } catch (e) {
-        // 認証失敗時も続行
-      }
-    }
-
-    const path = url.searchParams.get('path') || window?.location?.pathname || '/';
-    const hostname = url.searchParams.get('hostname') || window?.location?.hostname || 'unknown';
-
-    // ★ 最小ログ出力（本番環境向けパフォーマンス重視）
-    const yellCount = logs.filter(l => l.msg.includes('[YellBurst]') || l.msg.includes('coins')).length;
-    const chatCount = logs.filter(l => l.msg.includes('[ChatFlood]')).length;
-    const ivsCount = logs.filter(l => l.msg.includes('[IVS Stages]')).length;
-    
-    // 爆撃テスト時のみ詳細出力
-    if (yellCount > 0 || chatCount > 0) {
-      console.log(`🔥 ${hostname} | 💰:${yellCount} 💬:${chatCount} | total:${logs.length}`);
-    } else {
-      // 通常時はワンライナー
-      console.log(`[trackLogs] ✅ ${logs.length}L from ${hostname}`);
-    }
-
-    console.log(`[trackLogs] ✅ SUCCESS | env=${env} | ${logs.length}L | user=${user?.email || 'anon'}`);
-    return Response.json(
-      {
-        success: true,
-        message: `✅ Logged ${logs.length} entries`,
-        received: logs.length,
-        user: user?.email || 'anonymous',
-        env: env,
-        bombardment: {
-          yells: yellCount,
-          chats: chatCount,
-          ivsEvents: ivsCount,
-          isActive: yellCount > 0 || chatCount > 0
-        }
-      },
-      { status: 200, headers }
-    );
-  } catch (error) {
-    console.error('[trackLogs] ❌ ERROR | env=${env} | error=${error.message}');
-    return Response.json(
-      { error: error.message, env: env },
-      { status: 500, headers }
-    );
+  let user = null;
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader) {
+    try {
+      const { createClientFromRequest } = await import('npm:@base44/sdk@0.8.25');
+      const base44 = createClientFromRequest(req);
+      user = await base44.auth.me().catch(() => null);
+    } catch (_) {}
   }
+
+  const hostname = url.searchParams.get('hostname') || 'unknown';
+  const yellCount = logs.filter(l => l.msg?.includes('[YellBurst]') || l.msg?.includes('coins')).length;
+  const chatCount = logs.filter(l => l.msg?.includes('[ChatFlood]')).length;
+
+  if (yellCount > 0 || chatCount > 0) {
+    console.log(`🔥 ${hostname} | 💰:${yellCount} 💬:${chatCount} | total:${logs.length}`);
+  } else {
+    console.log(`[trackLogs] ✅ ${logs.length}L from ${hostname}`);
+  }
+
+  return Response.json(
+    { success: true, received: logs.length, user: user?.email || 'anonymous', env },
+    { status: 200, headers }
+  );
 });

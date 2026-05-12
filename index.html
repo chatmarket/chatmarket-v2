@@ -203,10 +203,10 @@
         100%{transform:translateX(100%)}
       }
     </style>
-    <!-- ★ SW強制クリア v2: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
+    <!-- ★ SW強制クリア v3: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
     <script>
       // 強制キャッシュ削除（デプロイ時）
-      var CACHE_VERSION = '20260430-v2-unified';
+      var CACHE_VERSION = '20260512-v3-no-cache';
       var stored = localStorage.getItem('cm_cache_ver');
       if (stored !== CACHE_VERSION) {
         // 全SW登録解除
