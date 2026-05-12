@@ -205,17 +205,6 @@
         100%{transform:translateX(100%)}
       }
     </style>
-    <!-- base44.app → chatmarket.info リダイレクト（SEO評価を集中） -->
-    <script>
-      (function() {
-        var host = window.location.hostname;
-        if (host && host.indexOf('base44.app') !== -1) {
-          var newUrl = 'https://chatmarket.info' + window.location.pathname + window.location.search + window.location.hash;
-          window.location.replace(newUrl);
-        }
-      })();
-    </script>
-
     <!-- ★ SW強制クリア v3: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
     <script>
       // 強制キャッシュ削除（デプロイ時）
