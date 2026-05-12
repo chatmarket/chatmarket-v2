@@ -539,9 +539,11 @@ export default function Home() {
         ))}
       </div>
 
-      {/* テスト用: セクション表示確認 */}
-      <div className="bg-red-500 text-white p-8 text-center font-bold">
-        🔵 テストセクション表示中
+      {/* 1on1 待機中（カテゴリフィルター対応） */}
+      <div ref={callRef}>
+        {enabledSections.callWaiting && (
+          <CallWaitingRow user={user} categoryFilter={categoryTab} filteredChannels={filteredChannels} />
+        )}
       </div>
 
       {/* ライブ配信中 / 配信予定 */}
