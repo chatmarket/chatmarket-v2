@@ -110,7 +110,19 @@ export default function AppLayout() {
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet-layout", user?.email],
-    queryFn: () => base44.entities.YellCoinWallet.filter({ user_email: user.email }).then(r => r[0] || null),
+    queryFn: async () => {
+      const existing = await base44.entities.YellCoinWallet.filter({ user_email: user.email });
+      if (existing[0]) return existing[0];
+      
+      // ウォレットが存在しない場合は自動作成（0コインで初期化）
+      const newWallet = await base44.entities.YellCoinWallet.create({
+        user_email: user.email,
+        balance: 0,
+        total_charged: 0,
+        total_sent: 0,
+      });
+      return newWallet;
+    },
     enabled: !!user?.email,
   });
 
