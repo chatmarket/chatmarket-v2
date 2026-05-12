@@ -6,13 +6,11 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 html, body {
   background: transparent !important;
   background-color: transparent !important;
   overflow: hidden;
-  width: 100vw;
-  height: 100vh;
+  width: 100vw; height: 100vh;
   -webkit-transform: translateZ(0);
 }
 
@@ -25,80 +23,79 @@ html, body {
   border-radius: 20px;
   padding: 4px 10px;
   display: flex; align-items: center; gap: 5px;
-  z-index: 2147483647;
-  -webkit-transform: translateZ(0) translate3d(0,0,0);
+  z-index: 9999;
 }
-#badge .dot {
+.dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: #22c55e;
   animation: blink 1.2s infinite;
-  -webkit-animation: blink 1.2s infinite;
 }
-#badge span {
+#badge-text {
   font-size: 11px; font-weight: 700; color: #22c55e;
   font-family: -apple-system, sans-serif;
 }
 
-/* ━━ チャット（下から積み上がる） ━━ */
+/* ━━ チャットエリア（下から積み上がる） ━━ */
 #chat {
   position: fixed;
   bottom: 16px; left: 8px; right: 8px;
   display: flex; flex-direction: column;
   gap: 5px;
   align-items: flex-start;
-  z-index: 2147483647;
-  -webkit-transform: translateZ(0) translate3d(0,0,0);
+  z-index: 9999;
 }
 .msg {
   display: inline-flex; gap: 5px;
   font-size: 15px; font-weight: 800; line-height: 1.4;
   font-family: -apple-system, sans-serif;
-  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
-               0 2px 6px rgba(0,0,0,1);
-  max-width: 92vw;
+  /* 背景なし・縁取りだけで浮かせる */
+  text-shadow:
+    1px  1px 0 #000, -1px -1px 0 #000,
+    1px -1px 0 #000, -1px  1px 0 #000,
+    0    2px 6px rgba(0,0,0,0.9);
+  max-width: 94vw;
   animation: msgIn 0.3s ease-out;
-  -webkit-animation: msgIn 0.3s ease-out;
 }
-.msg .name { color: #4ade80; white-space: nowrap; flex-shrink: 0; }
-.msg .text { color: #fff; word-break: break-word; }
+.msg-name { color: #4ade80; white-space: nowrap; flex-shrink: 0; }
+.msg-text { color: #ffffff; word-break: break-word; }
 
-/* ━━ エール通知（中央） ━━ */
+/* ━━ エール通知（中央・背景なし） ━━ */
 #yell {
   position: fixed;
   top: 50%; left: 50%;
-  transform: translate(-50%, -50%) translateZ(0);
-  -webkit-transform: translate(-50%, -50%) translateZ(0);
-  z-index: 2147483646;
+  transform: translate(-50%,-50%);
+  -webkit-transform: translate(-50%,-50%);
+  z-index: 9998;
   text-align: center;
   pointer-events: none;
   display: none;
+}
+#yell.show {
+  display: block;
   animation: yellIn 5s ease-in-out forwards;
   -webkit-animation: yellIn 5s ease-in-out forwards;
 }
 #yell-coins {
-  font-size: clamp(52px, 14vw, 88px);
-  font-weight: 900;
-  color: #fbbf24;
+  font-size: clamp(52px,14vw,88px);
+  font-weight: 900; color: #fbbf24;
   -webkit-text-stroke: 3px #000;
   text-shadow: 0 0 40px rgba(251,191,36,1);
-  line-height: 1.1;
-  margin-bottom: 8px;
+  line-height: 1.1; margin-bottom: 8px;
   font-family: -apple-system, sans-serif;
 }
 #yell-user {
-  font-size: clamp(18px, 5vw, 28px);
-  font-weight: 800;
-  color: #fff;
+  font-size: clamp(18px,5vw,28px);
+  font-weight: 800; color: #fff;
   -webkit-text-stroke: 2px #000;
   text-shadow: 0 0 20px rgba(251,191,36,0.9);
   margin-bottom: 8px;
   font-family: -apple-system, sans-serif;
 }
 #yell-msg {
-  display: inline-block;
-  font-size: clamp(13px, 3.5vw, 18px);
+  display: none;
+  font-size: clamp(13px,3.5vw,18px);
   color: #fde047;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.65);
   border: 2px solid rgba(251,191,36,0.7);
   border-radius: 10px;
   padding: 8px 18px;
@@ -107,27 +104,18 @@ html, body {
   font-family: -apple-system, sans-serif;
 }
 
-@-webkit-keyframes blink {
-  0%,100% { opacity:1; } 50% { opacity:0.2; }
-}
-@keyframes blink {
-  0%,100% { opacity:1; } 50% { opacity:0.2; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+@-webkit-keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+@keyframes msgIn {
+  from { opacity:0; transform: translateX(-10px); }
+  to   { opacity:1; transform: translateX(0); }
 }
 @-webkit-keyframes msgIn {
   from { opacity:0; -webkit-transform: translateX(-10px); }
   to   { opacity:1; -webkit-transform: translateX(0); }
 }
-@keyframes msgIn {
-  from { opacity:0; transform: translateX(-10px); }
-  to   { opacity:1; transform: translateX(0); }
-}
-@-webkit-keyframes yellIn {
-  0%   { opacity:0; -webkit-transform: translate(-50%,-50%) scale(0.6); }
-  12%  { opacity:1; -webkit-transform: translate(-50%,-50%) scale(1.1); }
-  22%  { -webkit-transform: translate(-50%,-50%) scale(1); }
-  82%  { opacity:1; }
-  100% { opacity:0; -webkit-transform: translate(-50%,-50%) scale(0.95); }
-}
+
 @keyframes yellIn {
   0%   { opacity:0; transform: translate(-50%,-50%) scale(0.6); }
   12%  { opacity:1; transform: translate(-50%,-50%) scale(1.1); }
@@ -135,17 +123,19 @@ html, body {
   82%  { opacity:1; }
   100% { opacity:0; transform: translate(-50%,-50%) scale(0.95); }
 }
+@-webkit-keyframes yellIn {
+  0%   { opacity:0; -webkit-transform:translate(-50%,-50%) scale(0.6); }
+  12%  { opacity:1; -webkit-transform:translate(-50%,-50%) scale(1.1); }
+  22%  { -webkit-transform:translate(-50%,-50%) scale(1); }
+  82%  { opacity:1; }
+  100% { opacity:0; -webkit-transform:translate(-50%,-50%) scale(0.95); }
+}
 </style>
 </head>
 <body>
 
-<div id="badge">
-  <div class="dot"></div>
-  <span id="badge-text">CM 接続中...</span>
-</div>
-
+<div id="badge"><div class="dot"></div><span id="badge-text">CM 接続中...</span></div>
 <div id="chat"></div>
-
 <div id="yell">
   <div id="yell-coins"></div>
   <div id="yell-user"></div>
@@ -153,133 +143,137 @@ html, body {
 </div>
 
 <script>
-// URLから streamId を取得 (/overlay.html?id=STREAM_ID)
-var params = new URLSearchParams(window.location.search);
+// ─── 設定 ───────────────────────────────────────────
+var APP_ID = '69c1b541d5db3555833124aa';
+var API    = 'https://api.base44.com/api/apps/' + APP_ID;
+var WS_URL = 'wss://api.base44.com/api/apps/' + APP_ID + '/realtime';
+
+var params   = new URLSearchParams(window.location.search);
 var streamId = params.get('id') || params.get('streamId') || '';
-var appId = '69c1b541d5db3555833124aa';
-var BASE = 'https://api.base44.com/api/apps/' + appId;
 
-var chatEl = document.getElementById('chat');
-var badgeEl = document.getElementById('badge-text');
-var yellEl = document.getElementById('yell');
-var yellTimer = null;
-var messages = [];
+// ─── 状態 ───────────────────────────────────────────
+var messages   = [];
+var seenIds    = {};
+var yellTimer  = null;
+var isLive     = false;
+var viewers    = 0;
 
-function updateBadge(live, viewers) {
-  badgeEl.textContent = live ? ('LIVE · ' + viewers + '人') : 'CM';
-  document.querySelector('#badge .dot').style.background = live ? '#22c55e' : '#666';
+// ─── DOM ────────────────────────────────────────────
+var chatEl    = document.getElementById('chat');
+var badgeText = document.getElementById('badge-text');
+var yellEl    = document.getElementById('yell');
+
+function updateBadge() {
+  badgeText.textContent = isLive ? ('LIVE · ' + viewers + '人') : 'CM';
+  document.querySelector('.dot').style.background = isLive ? '#22c55e' : '#888';
 }
 
-// ── チャット追加 ──
-function addMessage(id, user, text) {
-  messages.push({ id: id, user: user, text: text });
+// ─── チャット描画 ────────────────────────────────────
+function addMsg(id, user, text) {
+  if (!text || seenIds[id]) return;
+  seenIds[id] = true;
+  messages.push({ id:id, user:user, text:text });
   if (messages.length > 8) messages.shift();
   renderChat();
 }
+
 function renderChat() {
   chatEl.innerHTML = '';
+  var total = messages.length;
   messages.forEach(function(m, i) {
-    var total = messages.length;
-    var opacity = 0.45 + (i / (total - 1 || 1)) * 0.55;
+    var opacity = 0.4 + (i / (total - 1 || 1)) * 0.6;
     var div = document.createElement('div');
     div.className = 'msg';
-    div.style.opacity = opacity;
-    div.innerHTML =
-      '<span class="name">' + esc(m.user) + '</span>' +
-      '<span class="text">' + esc(m.text) + '</span>';
+    div.style.opacity = String(opacity);
+    var name = document.createElement('span');
+    name.className = 'msg-name';
+    name.textContent = m.user;
+    var text = document.createElement('span');
+    text.className = 'msg-text';
+    text.textContent = m.text;
+    div.appendChild(name);
+    div.appendChild(text);
     chatEl.appendChild(div);
   });
 }
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 
-// ── エール表示 ──
+// ─── エール表示 ──────────────────────────────────────
 function showYell(user, amount, msg) {
   document.getElementById('yell-coins').textContent = '⭐ ' + Number(amount).toLocaleString();
-  document.getElementById('yell-user').textContent = user + ' さん';
+  document.getElementById('yell-user').textContent  = user + ' さん';
   var msgEl = document.getElementById('yell-msg');
   if (msg) { msgEl.textContent = '💬 ' + msg; msgEl.style.display = 'inline-block'; }
-  else { msgEl.style.display = 'none'; }
-  yellEl.style.display = 'block';
-  yellEl.style.animation = 'none';
-  yellEl.style.webkitAnimation = 'none';
-  // reflow
-  void yellEl.offsetWidth;
-  yellEl.style.animation = 'yellIn 5s ease-in-out forwards';
-  yellEl.style.webkitAnimation = 'yellIn 5s ease-in-out forwards';
+  else      { msgEl.style.display = 'none'; }
+
+  // アニメーションをリセットして再生
+  yellEl.classList.remove('show');
+  void yellEl.offsetWidth; // reflow
+  yellEl.classList.add('show');
+
   if (yellTimer) clearTimeout(yellTimer);
-  yellTimer = setTimeout(function() { yellEl.style.display = 'none'; }, 5100);
+  yellTimer = setTimeout(function() { yellEl.classList.remove('show'); }, 5200);
 }
 
-// ── Base44 WebSocket 購読 ──
-function connectWS(entityName, onEvent) {
-  var wsUrl = 'wss://api.base44.com/api/apps/' + appId + '/entities/' + entityName + '/subscribe';
-  var ws;
-  function connect() {
-    ws = new WebSocket(wsUrl);
-    ws.onopen = function() { console.log('[WS] connected:', entityName); };
-    ws.onmessage = function(e) {
-      try { onEvent(JSON.parse(e.data)); } catch(err) {}
-    };
-    ws.onclose = function() { setTimeout(connect, 3000); };
-    ws.onerror = function() { ws.close(); };
-  }
-  connect();
+// ─── Base44 REST ポーリング ──────────────────────────
+function fetchEntity(entity, filterObj, cb) {
+  fetch(API + '/entities/' + entity + '/filter', {
+    method : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body   : JSON.stringify({ filters: filterObj, sort: '-created_date', limit: 10 })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ cb(null, d.data || d || []); })
+    .catch(function(e){ cb(e, []); });
 }
 
-// ── ポーリング（WS補完） ──
-var lastCommentId = null;
 function pollComments() {
   if (!streamId) return;
-  fetch(BASE + '/entities/Comment/filter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filters: { livestream_id: streamId }, sort: '-created_date', limit: 5 })
-  }).then(function(r){ return r.json(); }).then(function(data){
-    var items = data.data || data || [];
-    items.reverse().forEach(function(c) {
-      if (c.id !== lastCommentId) {
-        lastCommentId = c.id;
-        addMessage(c.id, c.user_name || '匿名', c.content || '');
-      }
+  fetchEntity('Comment', { livestream_id: streamId }, function(err, items) {
+    if (err) return;
+    items.slice().reverse().forEach(function(c) {
+      addMsg(c.id, c.user_name || '匿名', c.content || c.text || '');
     });
-  }).catch(function(){});
+  });
 }
 
-// ── LiveStream状態ポーリング ──
 function pollStream() {
   if (!streamId) return;
-  fetch(BASE + '/entities/LiveStream/filter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filters: { id: streamId }, limit: 1 })
-  }).then(function(r){ return r.json(); }).then(function(data){
-    var s = (data.data || data || [])[0];
-    if (s) updateBadge(s.status === 'live', s.viewer_count || 0);
-  }).catch(function(){});
+  fetchEntity('LiveStream', { id: streamId }, function(err, items) {
+    if (err) return;
+    var s = items[0];
+    if (!s) return;
+    isLive  = s.status === 'live';
+    viewers = s.viewer_count || 0;
+    updateBadge();
+  });
 }
 
-// WebSocket購読（Comment / SuperChat）
-connectWS('Comment', function(ev) {
-  if (ev.type !== 'create') return;
-  var d = ev.data || {};
-  if (d.livestream_id !== streamId && d.stream_id !== streamId) return;
-  addMessage(ev.id || Date.now(), d.user_name || '匿名', d.content || d.text || '');
-});
-connectWS('SuperChat', function(ev) {
-  if (ev.type !== 'create') return;
-  var d = ev.data || {};
-  if (d.livestream_id !== streamId && d.stream_id !== streamId) return;
-  showYell(d.user_name || '匿名', d.amount || 0, d.message || '');
-});
+function pollYells() {
+  if (!streamId) return;
+  fetchEntity('SuperChat', { livestream_id: streamId }, function(err, items) {
+    if (err) return;
+    // 最新1件だけ（すでに見たIDはスキップ）
+    if (items[0] && !seenIds['yell_' + items[0].id]) {
+      seenIds['yell_' + items[0].id] = true;
+      showYell(items[0].user_name || '匿名', items[0].amount || 0, items[0].message || '');
+    }
+  });
+}
 
-// ポーリング（バックアップ）
+// ─── Base44 WebSocket（リアルタイム） ────────────────
+// Base44のエンティティ購読はSDK経由のSSE/WS。
+// 純静的HTMLからは直接REST+ポーリングで確実に受信する。
+// ポーリング間隔: コメント2秒・エール3秒・配信状態10秒
+
 if (streamId) {
+  // 初回即実行
   pollComments();
   pollStream();
-  setInterval(pollComments, 4000);
-  setInterval(pollStream, 10000);
+  pollYells();
+
+  // 定期ポーリング
+  setInterval(pollComments, 2000);
+  setInterval(pollYells,    3000);
+  setInterval(pollStream,  10000);
 }
 </script>
 </body>

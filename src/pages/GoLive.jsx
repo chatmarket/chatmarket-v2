@@ -490,7 +490,7 @@ export default function GoLive() {
               {[
                 { num: "①", label: "配信先（Server URL）", value: `rtmps://${manualIngestEndpoint}:443/app/`, msg: "配信先をコピーしました" },
                 { num: "②", label: "ストリームキー（Stream Key）", value: manualStreamKey, msg: "ストリームキーをコピーしました" },
-                { num: "③", label: "チャット表示用URL", value: `${window.location.origin}/prism-overlay/${liveStreamId}?v=${Date.now()}`, msg: "チャットURLをコピーしました" },
+                { num: "③", label: "チャット表示用URL（Web Overlay）", value: `${window.location.origin}/overlay.html?id=${liveStreamId}`, msg: "チャットURLをコピーしました" },
               ].map(({ num, label, value, msg }) => (
                 <div key={num} className="bg-background/50 border border-purple-500/30 rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-2">
@@ -575,7 +575,7 @@ export default function GoLive() {
                 {/* メインCTA */}
                 <button 
                   onClick={() => { 
-                    navigator.clipboard.writeText(`${window.location.origin}/prism-overlay/${liveStreamId}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/overlay.html?id=${liveStreamId}`);
                     toast.success("✅ Web Overlay URLをコピーしました！\nPRISMに貼り付けてください");
                   }}
                   className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-black text-sm rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2"
@@ -624,12 +624,12 @@ export default function GoLive() {
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/prism-overlay/${liveStreamId || channels[0].id}?v=${Date.now()}`}
+                  value={`${window.location.origin}/overlay.html?id=${liveStreamId || channels[0].id}`}
                   className="flex-1 bg-zinc-950 border border-green-500/40 rounded-lg px-3 py-2.5 text-xs text-green-300 font-mono"
                 />
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/prism-overlay/${liveStreamId || channels[0].id}?v=${Date.now()}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/overlay.html?id=${liveStreamId || channels[0].id}`);
                     toast.success("✅ オーバーレイURLをコピーしました！\nPRISMの「Web Overlay」に貼り付けてください");
                   }}
                   className="shrink-0 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-black font-black text-xs rounded-lg transition-all flex items-center gap-1.5 active:scale-95"
