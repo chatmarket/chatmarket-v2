@@ -18,7 +18,7 @@ const GHOST_CHANNELS = [
   { id: "ghost-6", name: "けんじ", call_theme: "筋トレ・ダイエット指導💪", call_available_dates: "朝6時〜・夜22時〜", avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", tags: ["筋トレ"] },
 ];
 
-export default function CallWaitingRow({ user, categoryFilter = "all", filteredChannels = null }) {
+function CallWaitingRowComponent({ user, categoryFilter = "all", filteredChannels = null }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -278,3 +278,5 @@ function CallWaitingCard({ channel, user, onChat, isOwnChannel, isGhost }) {
     </div>
   );
 }
+
+export default React.memo(CallWaitingRowComponent);

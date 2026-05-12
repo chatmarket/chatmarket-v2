@@ -38,6 +38,7 @@ function ivsPlayerStubPlugin() {
 }
 
 export default defineConfig({
+  // Cache bust: 2026-05-12
   plugins: [
     base44Plugin(),
     react(),

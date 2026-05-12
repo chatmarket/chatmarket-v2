@@ -6,7 +6,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Crown, Coins, Trophy } from "lucide-react";
+// Icons removed - using emoji instead
 
 const MILLIONAIRE_THRESHOLD = 20000000; // 2,000万コイン
 
@@ -68,7 +68,7 @@ export default function MillionaireSupporters() {
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2">
-        <Crown className="w-5 h-5 text-yellow-400" />
+        <span className="text-lg">👑</span>
         <h2 className="text-lg font-bold">
           {isMega ? "👑 ミリオネア・サポーター" : "🏆 TOPサポーター候補"}
         </h2>

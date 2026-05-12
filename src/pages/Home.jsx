@@ -34,17 +34,8 @@ import LiveStreamCard from "../components/cards/LiveStreamCard";
 import MessageModal from "../components/chat/MessageModal";
 import ScrollRow from "../components/home/ScrollRow";
 import CallWaitingRow from "../components/home/CallWaitingRow";
-import PersonalizedCategorySection from "../components/home/PersonalizedCategorySection";
-import GlobalTimeZoneShowcase from "../components/home/GlobalTimeZoneShowcase";
-import CreatorRanking from "../components/home/CreatorRanking";
-import PwaInstallGuideSection from "../components/home/PwaInstallGuideSection";
-import ProgressiveIncentiveSection from "../components/home/ProgressiveIncentiveSection";
-import ServerLimitBanner from "../components/home/ServerLimitBanner";
 import HeroSlot from "../components/home/HeroSlot";
 import GiantKillingBanner from "../components/home/GiantKillingBanner";
-import MillionaireSupporters from "../components/home/MillionaireSupporters";
-import QualityRevolutionBanner from "../components/home/QualityRevolutionBanner";
-import PpvPricingTable from "../components/home/PpvPricingTable";
 
 
 export default function Home() {
@@ -520,11 +511,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* パーソナライズカテゴリセクション */}
-      <PersonalizedCategorySection user={user} />
-
-      {/* 「今この国と繋がる」グローバル特集 */}
-      <GlobalTimeZoneShowcase />
+      {/* Temporarily disabled for performance */}
 
       {/* カテゴリタブ */}
       <div className="flex gap-2 border-b border-border/30 pb-0">
@@ -755,15 +742,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* クリエイターランキング */}
-      <div ref={rankingRef}>
-        {enabledSections.ranking && <CreatorRanking />}
-      </div>
-
-      {/* ミリオネア・サポーター */}
-      <div ref={millionaireRef}>
-        {enabledSections.millionaire && <MillionaireSupporters />}
-      </div>
+      {/* Temporarily disabled for performance */}
 
       {/* 空の状態 */}
        {isEmpty && (
@@ -774,15 +753,7 @@ export default function Home() {
          </div>
        )}
 
-      <div className="px-0">
-        <ProgressiveIncentiveSection />
-      </div>
-
-
-
-      <div className="px-0">
-        <PwaInstallGuideSection />
-      </div>
+      {/* Temporarily disabled for performance */}
 
       {messageTarget && (
         <MessageModal

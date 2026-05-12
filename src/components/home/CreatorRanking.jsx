@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Trophy, Users, Video, TrendingUp, Crown } from "lucide-react";
+import { Trophy, Users, Video, TrendingUp } from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 
 const TABS = [
@@ -153,7 +153,7 @@ export default function CreatorRanking() {
               <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 text-sm font-black ${
                 idx < 3 ? RANK_COLORS[idx] : "text-muted-foreground bg-secondary border-border/50"
               }`}>
-                {idx === 0 ? <Crown className="w-4 h-4" /> : idx + 1}
+                {idx === 0 ? "👑" : idx + 1}
               </div>
 
               {/* アバター */}
