@@ -371,7 +371,9 @@ export default function CallWaitingRoom() {
         call_enabled: true,
         call_theme: title.trim(),
         call_available_dates: description.trim() || null,
-      }).catch(() => {});
+      });
+      // Home側のキャッシュを無効化
+      queryClient.invalidateQueries({ queryKey: ["call-enabled-channels"] });
     }
     setIsWaiting(true);
     initialDoneRef.current = false;
