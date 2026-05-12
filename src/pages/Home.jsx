@@ -547,6 +547,7 @@ export default function Home() {
               <h2 className="text-sm font-black">🔵 今すぐ通話可能</h2>
               <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">待機中</span>
             </div>
+            {console.log("📢 [Home] CallWaitingRow rendering, categoryTab:", categoryTab, "user:", user?.email)}
             <CallWaitingRow user={user} categoryFilter={categoryTab} filteredChannels={filteredChannels} />
           </section>
         )}
