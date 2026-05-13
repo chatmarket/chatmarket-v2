@@ -51,23 +51,9 @@ export default function AdminDashboard() {
   const initialTab = urlParams.get("tab") || "revenue";
 
   const VIEWER_EMAILS = [];
-  const isSuperAdminUser = user && isAdmin(user);
   const ADMIN_EMAILS = [];
   const isViewerOnly = false;
   const displayUserRole = user?.role;
-
-  const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
-    queryKey: ["admin-stripe-balance"],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('getStripeBalance', {});
-      return response.data;
-    },
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    enabled: !!user && user.role === 'admin',
-    retry: false,
-    throwOnError: false,
-  });
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
@@ -85,59 +71,74 @@ export default function AdminDashboard() {
     });
   }, []);
 
+  const isAdminUser = user?.role === 'admin';
+
+  const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
+    queryKey: ["admin-stripe-balance"],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('getStripeBalance', {});
+      return response.data;
+    },
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    enabled: isAdminUser,
+    retry: false,
+    throwOnError: false,
+  });
+
   // 全体統計（User エンティティはRLSで直接listできないためバックエンド関数経由）
   const { data: allUsers = [] } = useQuery({
     queryKey: ["admin-all-users"],
     queryFn: () => base44.functions.invoke('adminGetAllUsers', {}).then(r => r.data?.users || []),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["admin-all-channels"],
     queryFn: () => base44.entities.Channel.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allVideos = [] } = useQuery({
     queryKey: ["admin-all-videos"],
     queryFn: () => base44.entities.Video.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allStreams = [] } = useQuery({
     queryKey: ["admin-all-streams"],
     queryFn: () => base44.entities.LiveStream.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allCalls = [] } = useQuery({
     queryKey: ["admin-all-calls"],
     queryFn: () => base44.entities.VideoCall.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allPurchases = [] } = useQuery({
     queryKey: ["admin-all-purchases"],
     queryFn: () => base44.entities.Purchase.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allYellCoinTransactions = [] } = useQuery({
     queryKey: ["admin-all-yell-transactions"],
     queryFn: () => base44.entities.YellCoinTransaction.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allYellCoinWallets = [] } = useQuery({
     queryKey: ["admin-all-yell-wallets"],
     queryFn: () => base44.entities.YellCoinWallet.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allSubscriptions = [] } = useQuery({
     queryKey: ["admin-all-subscriptions"],
     queryFn: () => base44.entities.PlanSubscription.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   // 管理者・ビューアー以外のサブスク加入者のみカウント
@@ -146,13 +147,13 @@ export default function AdminDashboard() {
   const { data: allCancellationReasons = [] } = useQuery({
     queryKey: ["admin-all-cancellation-reasons"],
     queryFn: () => base44.entities.CancellationReason.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: allCrowdfundingProjects = [] } = useQuery({
     queryKey: ["admin-all-crowdfunding-projects"],
     queryFn: () => base44.entities.CrowdfundingProject.list(),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
   });
 
   const { data: applications = [] } = useQuery({
@@ -162,14 +163,14 @@ export default function AdminDashboard() {
         { channel_id: "recruit_application" },
         "-created_date"
       ),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
     refetchInterval: 15000,
   });
 
   const { data: pendingReports = [] } = useQuery({
     queryKey: ["admin-pending-reports"],
     queryFn: () => base44.entities.ChannelReport.filter({ status: "pending" }),
-    enabled: !!user && isAdmin(user),
+    enabled: isAdminUser,
     refetchInterval: 30000,
   });
 
