@@ -62,9 +62,11 @@ export default function AdminDashboard() {
       const response = await base44.functions.invoke('getStripeBalance', {});
       return response.data;
     },
-    refetchInterval: 60000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
     enabled: !!user && user.role === 'admin',
     retry: false,
+    throwOnError: false,
   });
 
   useEffect(() => {
