@@ -164,14 +164,18 @@ export default function AdminDashboard() {
         "-created_date"
       ),
     enabled: isAdminUser,
-    refetchInterval: 15000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   const { data: pendingReports = [] } = useQuery({
     queryKey: ["admin-pending-reports"],
     queryFn: () => base44.entities.ChannelReport.filter({ status: "pending" }),
     enabled: isAdminUser,
-    refetchInterval: 30000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   if (!user || !isAdmin(user)) {
