@@ -63,7 +63,8 @@ export default function AdminDashboard() {
       return response.data;
     },
     refetchInterval: 60000,
-    enabled: !!user && isSuperAdminUser,
+    enabled: !!user && user.role === 'admin',
+    retry: false,
   });
 
   useEffect(() => {
