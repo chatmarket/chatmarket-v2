@@ -6,11 +6,11 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
 
     // Admin only
-    if (user?.email !== "unei@chatmarket.info") {
+    if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const stripeApiKey = Deno.env.get("STRIPE_API_KEY");
+    const stripeApiKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeApiKey) {
       return Response.json({ error: 'Stripe API key not configured' }, { status: 400 });
     }
@@ -38,9 +38,9 @@ Deno.serve(async (req) => {
     const pendingJPY = pending.find((b) => b.currency === "jpy")?.amount || 0;
 
     return Response.json({
-      available: availableJPY / 100, // Convert from cents
-      pending: pendingJPY / 100,
-      total: (availableJPY + pendingJPY) / 100,
+      available: availableJPY, // JPY is already in yen (no cent conversion)
+      pending: pendingJPY,
+      total: availableJPY + pendingJPY,
       lastUpdated: new Date().toISOString()
     });
   } catch (error) {
