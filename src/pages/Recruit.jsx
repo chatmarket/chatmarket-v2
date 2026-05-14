@@ -673,15 +673,23 @@ export default function Recruit() {
               style={{ boxShadow: "0 0 30px rgba(0,255,157,0.2)" }}
             >
               <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
-              <h3 className="text-xl font-black text-primary">認証手数料のお支払い完了！</h3>
+              <h3 className="text-xl font-black text-primary">登録完了！</h3>
               <p className="text-sm text-muted-foreground">
                 {isProTier
                   ? `Pro特典（全プラン24ヶ月無料）の申請を受け付けました。審査結果をメールでお知らせします。`
-                  : `Standard特典（全プラン12ヶ月無料）が適用されます。設定画面で本人確認を完了してください。`}
+                  : `Standard特典（全プラン12ヶ月無料）が適用されます。さっそくChatMarketをお楽しみください。`}
               </p>
-              <Button onClick={() => navigate("/settings")} className="bg-primary text-black font-bold">
-                設定画面で本人確認を完了する →
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                ※ 本人確認は任意です。設定画面からいつでも行えます。
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <Button onClick={() => navigate("/")} className="bg-primary text-black font-bold">
+                  ChatMarketを始める →
+                </Button>
+                <Button onClick={() => navigate("/settings")} variant="outline" className="text-sm">
+                  設定画面で本人確認する（任意）
+                </Button>
+              </div>
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="bg-card border border-border/50 rounded-2xl p-6 space-y-5">
