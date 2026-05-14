@@ -72,6 +72,7 @@ export default function Recruit() {
   const [snsUrl, setSnsUrl] = useState("");
   const [followers, setFollowers] = useState("");
   const [pr, setPr] = useState("");
+  const [serviceCategory, setServiceCategory] = useState("other");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -151,12 +152,26 @@ export default function Recruit() {
       });
     } catch (_) {}
 
+    // 1.5 チャンネルに service_category を保存（存在すれば更新）
+    try {
+      const channels = await base44.entities.Channel.filter({ owner_email: email });
+      if (channels[0]) {
+        const updatePayload = { service_category: serviceCategory };
+        // 占い師の場合は stream_category も fortune に自動セット
+        if (serviceCategory === "fortune_telling") {
+          updatePayload.stream_category = "fortune";
+        }
+        await base44.entities.Channel.update(channels[0].id, updatePayload);
+      }
+    } catch (_) {}
+
     // 2. 全プラン自動付与（バックエンド経由）
     try {
       const res = await base44.functions.invoke("campaignAutoGrant", {
         email,
         followers: followerCount,
         name,
+        service_category: serviceCategory,
         ...(tutorCategory && {
           category_id: TUTOR_CATEGORY.id,
           tutor_revenue_rate: 0.90,
@@ -731,6 +746,47 @@ export default function Recruit() {
                 <Label>SNS・ウェブリンク</Label>
                 <Input value={snsUrl} onChange={e => setSnsUrl(e.target.value)} placeholder="https://twitter.com/yourhandle" className="bg-secondary border-0" />
                 <p className="text-xs text-muted-foreground">Pro特典審査に使用します</p>
+              </div>
+
+              {/* サービスカテゴリ選択 */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  活動カテゴリ <span className="text-destructive text-xs ml-1">*必須</span>
+                </Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { value: "fortune_telling", label: "🔮 占い師", desc: "タロット・占星術など" },
+                    { value: "business", label: "💼 ビジネス", desc: "コーチング・相談" },
+                    { value: "language", label: "🌍 語学", desc: "英会話・語学指導" },
+                    { value: "fitness", label: "💪 フィットネス", desc: "健康・トレーニング" },
+                    { value: "education", label: "📚 教育", desc: "学習サポート" },
+                    { value: "other", label: "✨ その他", desc: "エンタメ・趣味など" },
+                  ].map((cat) => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => setServiceCategory(cat.value)}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-center ${
+                        serviceCategory === cat.value
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border/50 bg-secondary/50 text-muted-foreground hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="text-base font-bold">{cat.label}</span>
+                      <span className="text-[10px]">{cat.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                {serviceCategory === "fortune_telling" && (
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 flex items-start gap-2">
+                    <span className="text-lg shrink-0">🔮</span>
+                    <div className="text-xs text-purple-300 space-y-0.5">
+                      <p className="font-bold">占い師向け特典が有効になります</p>
+                      <p>✅ チャット鑑定機能（2往復・マスク表示）が自動的に有効化されます</p>
+                      <p>✅ 占い師カテゴリページに専用プロフィールが掲載されます</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {tutorCategory && (

@@ -846,6 +846,8 @@ export default function Settings() {
               await base44.entities.Channel.update(channelId, {
                 tags: channelTags,
                 stream_category: streamCategory,
+                // stream_category に連動して service_category を自動設定
+                service_category: streamCategory === "fortune" ? "fortune_telling" : "other",
                 fortune_arts: fortuneFields.fortune_arts,
                 fortune_experience: fortuneFields.fortune_experience,
                 fortune_genres: fortuneFields.fortune_genres,

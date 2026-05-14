@@ -296,6 +296,18 @@ export default function FortuneChat() {
     return <div className="flex items-center justify-center py-24"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
   }
 
+  // 占い師カテゴリ以外はチャット鑑定機能を無効化
+  if (channel.service_category !== "fortune_telling" && channel.stream_category !== "fortune") {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
+        <p className="text-4xl">🚫</p>
+        <p className="font-bold text-lg">チャット鑑定は占い師カテゴリのみ</p>
+        <p className="text-sm text-muted-foreground">このチャンネルはチャット鑑定機能を有効にしていません。</p>
+        <Button variant="outline" onClick={() => navigate(-1)}>戻る</Button>
+      </div>
+    );
+  }
+
   const ticketPrice = thread?.ticket_price_coins || channel.fortune_chat_price || 500;
 
   return (
