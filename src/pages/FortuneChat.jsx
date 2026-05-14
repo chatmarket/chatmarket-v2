@@ -297,7 +297,9 @@ export default function FortuneChat() {
   }
 
   // 占い師カテゴリ以外はチャット鑑定機能を無効化
-  if (channel.service_category !== "fortune_telling" && channel.stream_category !== "fortune") {
+  // service_category="fortune_telling" または stream_category="fortune" のどちらかが必須
+  const isFortuneTeller = channel.service_category === "fortune_telling" || channel.stream_category === "fortune";
+  if (!isFortuneTeller) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
         <p className="text-4xl">🚫</p>

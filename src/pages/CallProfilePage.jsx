@@ -474,7 +474,7 @@ export default function CallProfilePage() {
         {/* ══════════════════════════════════
             7.5 チャット鑑定バナー（占いカテゴリのみ）
         ══════════════════════════════════ */}
-        {channel.stream_category === "fortune" && !isOwnChannel && (
+        {(channel.service_category === "fortune_telling" || channel.stream_category === "fortune") && !isOwnChannel && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
