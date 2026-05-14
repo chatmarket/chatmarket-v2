@@ -1,4 +1,5 @@
 import React from 'react';
+import { base44 } from '@/api/base44Client';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from '@/lib/query-client';
@@ -97,7 +98,13 @@ import CoachLP from '@/pages/CoachLP';
 
 
 export default function App() {
+  const [isAdmin, setIsAdmin] = React.useState(false);
 
+  React.useEffect(() => {
+    base44.auth.me().then(u => {
+      if (u?.role === 'admin') setIsAdmin(true);
+    }).catch(() => {});
+  }, []);
 
   return (
     <QueryClientProvider client={queryClientInstance}>
@@ -197,7 +204,7 @@ export default function App() {
         </Routes>
         <ErrorHandler />
         <Toaster />
-        <LogViewerOverlay isDev={true} />
+        <LogViewerOverlay isDev={isAdmin} />
       </Router>
     </QueryClientProvider>
   );
