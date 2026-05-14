@@ -245,14 +245,28 @@ export default function Settings() {
       phone: basicInfo.phone,
       region: basicInfo.region,
     });
+    const nowVerified = !!(basicInfo.full_name && basicInfo.address);
+    setIsKycVerified(nowVerified);
+
+    // KYC完了時: チャンネルのbadgesに "verified" を自動付与
+    if (nowVerified && channelId) {
+      const channels = await base44.entities.Channel.filter({ owner_email: user.email });
+      if (channels[0]) {
+        const existingBadges = channels[0].badges || [];
+        if (!existingBadges.includes("verified")) {
+          await base44.entities.Channel.update(channelId, {
+            badges: [...existingBadges, "verified"],
+          });
+        }
+      }
+    }
+
     toast.success("基本情報を保存しました");
     setSaving(false);
     setEditingBasicInfo(false);
     setFullNameChanged(false);
     setAddressChanged(false);
     setVerificationDocs({ full_name_doc: null, address_doc: null });
-    // KYC更新
-    setIsKycVerified(!!(basicInfo.full_name && basicInfo.address));
   };
 
   return (
@@ -295,6 +309,47 @@ export default function Settings() {
 
         {/* Basic Info Tab */}
         <TabsContent value="basic" className="space-y-5">
+
+          {/* KYC済みバッジ or 未確認メリット案内 */}
+          {isKycVerified ? (
+            <div className="bg-green-500/10 border-2 border-green-500/40 rounded-2xl p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                <Shield className="w-6 h-6 text-green-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-black text-green-300">🔵 本人確認済み</p>
+                  <span className="text-[10px] bg-green-500/20 border border-green-500/40 text-green-300 px-2 py-0.5 rounded-full font-bold">verified バッジ表示中</span>
+                </div>
+                <p className="text-xs text-green-300/70">プロフィールに「🔵 本人確認済み」バッジが表示されています。ファンからの信頼度が高まります。</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                <p className="font-black text-sm">本人確認をするメリット</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { emoji: "🔵", title: "「本人確認済み」バッジ取得", desc: "プロフィールに青バッジが表示され、ファンからの信頼度がUP" },
+                  { emoji: "💰", title: "収益の振込申請が可能に", desc: "本人確認なしでは振込申請ができません" },
+                  { emoji: "🔒", title: "アカウントの安全性向上", desc: "不正利用の防止・アカウント復旧がスムーズに" },
+                  { emoji: "🏆", title: "特集・上位表示の優遇", desc: "確認済みライバーは検索結果で優先表示される場合があります" },
+                ].map((item) => (
+                  <div key={item.title} className="flex items-start gap-3 bg-secondary/50 rounded-xl p-3">
+                    <span className="text-xl shrink-0">{item.emoji}</span>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center">↓ 下の「変更する」から氏名・住所・身分証を登録してください</p>
+            </div>
+          )}
+
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-300">氏名・住所の変更には本人確認書類の提出が必須です。</p>
