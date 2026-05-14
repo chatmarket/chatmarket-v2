@@ -76,109 +76,107 @@ export default function AdminDashboard() {
   // userLoadingがfalseになり、かつadminであることが確定してからのみクエリ実行
   const isAdminUser = !userLoading && user?.role === 'admin';
 
+  const adminQueryOptions = {
+    enabled: isAdminUser,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5分キャッシュ
+  };
+
   const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-stripe-balance"],
     queryFn: async () => {
       const response = await base44.functions.invoke('getStripeBalance', {});
       return response.data;
     },
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    enabled: isAdminUser,
-    retry: false,
-    throwOnError: false,
   });
 
   // 全体統計（User エンティティはRLSで直接listできないためバックエンド関数経由）
   const { data: allUsers = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-users"],
     queryFn: () => base44.functions.invoke('adminGetAllUsers', {}).then(r => r.data?.users || []),
-    enabled: isAdminUser,
   });
 
   const { data: allChannels = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-channels"],
     queryFn: () => base44.entities.Channel.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allVideos = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-videos"],
     queryFn: () => base44.entities.Video.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allStreams = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-streams"],
     queryFn: () => base44.entities.LiveStream.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allCalls = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-calls"],
     queryFn: () => base44.entities.VideoCall.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allPurchases = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-purchases"],
     queryFn: () => base44.entities.Purchase.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allYellCoinTransactions = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-yell-transactions"],
     queryFn: () => base44.entities.YellCoinTransaction.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allYellCoinWallets = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-yell-wallets"],
     queryFn: () => base44.entities.YellCoinWallet.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allSubscriptions = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-subscriptions"],
     queryFn: () => base44.entities.PlanSubscription.list(),
-    enabled: isAdminUser,
   });
 
   // 管理者・ビューアー以外のサブスク加入者のみカウント
   const filteredSubscriptions = allSubscriptions.filter((s) => !VIEWER_EMAILS.includes(s.user_email));
 
   const { data: allCancellationReasons = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-cancellation-reasons"],
     queryFn: () => base44.entities.CancellationReason.list(),
-    enabled: isAdminUser,
   });
 
   const { data: allCrowdfundingProjects = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-all-crowdfunding-projects"],
     queryFn: () => base44.entities.CrowdfundingProject.list(),
-    enabled: isAdminUser,
   });
 
   const { data: applications = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-recruit-applications"],
     queryFn: () =>
       base44.entities.BlogPost.filter(
         { channel_id: "recruit_application" },
         "-created_date"
       ),
-    enabled: isAdminUser,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    retry: false,
   });
 
   const { data: pendingReports = [] } = useQuery({
+    ...adminQueryOptions,
     queryKey: ["admin-pending-reports"],
     queryFn: () => base44.entities.ChannelReport.filter({ status: "pending" }),
-    enabled: isAdminUser,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    retry: false,
   });
 
   if (!user || !isAdmin(user)) {
