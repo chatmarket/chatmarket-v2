@@ -39,6 +39,7 @@ import MetaHelmet from "@/components/layout/MetaHelmet";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [stripeApiKey, setStripeApiKey] = useState("");
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
             return;
           }
           setUser(u);
+          setUserLoading(false);
         });
       } else {
         base44.auth.redirectToLogin();
@@ -71,7 +73,8 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  const isAdminUser = user?.role === 'admin';
+  // userLoadingがfalseになり、かつadminであることが確定してからのみクエリ実行
+  const isAdminUser = !userLoading && user?.role === 'admin';
 
   const { data: stripeBalance, isLoading: loadingStripe, refetch: refetchStripe } = useQuery({
     queryKey: ["admin-stripe-balance"],
