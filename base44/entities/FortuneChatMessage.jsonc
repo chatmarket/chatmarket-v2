@@ -1,0 +1,52 @@
+{
+  "name": "FortuneChatMessage",
+  "type": "object",
+  "description": "\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u306e\u30e1\u30c3\u30bb\u30fc\u30b8",
+  "properties": {
+    "thread_id": {
+      "type": "string",
+      "description": "FortuneChatThread ID"
+    },
+    "from_email": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u540d"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "fortune_teller"
+      ],
+      "description": "\u9001\u4fe1\u8005\u30ed\u30fc\u30eb"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u672c\u6587"
+    },
+    "is_trial_reply": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u304a\u8a66\u3057\u8fd4\u4fe1\u30d5\u30e9\u30b0\uff08\u30de\u30b9\u30af\u5bfe\u8c61\uff09"
+    },
+    "is_masked": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30de\u30b9\u30af\u8868\u793a\u3059\u308b\u304b"
+    },
+    "preview_chars": {
+      "type": "number",
+      "default": 60,
+      "description": "\u30d7\u30ec\u30d3\u30e5\u30fc\u8868\u793a\u6587\u5b57\u6570"
+    }
+  },
+  "required": [
+    "thread_id",
+    "from_email",
+    "content",
+    "role"
+  ]
+}

@@ -15,6 +15,7 @@ import AppointmentRequestModal from "@/components/appointment/AppointmentRequest
 import AppointmentDashboard from "@/components/appointment/AppointmentDashboard";
 import { LanguageBadges, LocalTimeClock, LearningStatusBadge } from "@/components/channel/GlobalProfilePanel";
 import ProfileBadges from "@/components/profile/ProfileBadges";
+import { Link } from "react-router-dom";
 
 export default function CallProfilePage() {
   const { channelId } = useParams();
@@ -469,6 +470,57 @@ export default function CallProfilePage() {
             </div>
           )}
         </div>
+
+        {/* ══════════════════════════════════
+            7.5 チャット鑑定バナー（占いカテゴリのみ）
+        ══════════════════════════════════ */}
+        {channel.stream_category === "fortune" && !isOwnChannel && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 rounded-2xl p-5 space-y-3"
+            style={{
+              background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(139,92,246,0.05))",
+              border: "1.5px solid rgba(168,85,247,0.5)",
+              boxShadow: "0 0 24px rgba(168,85,247,0.12)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🔮</span>
+              <div>
+                <p className="font-black text-sm text-purple-300">チャット鑑定が受けられます</p>
+                <p className="text-[11px] text-purple-300/70">テキストで占い師に相談。1通目は無料お試し！</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-2 space-y-1">
+                <p className="text-purple-300 font-bold">①</p>
+                <p className="text-muted-foreground">無料で相談を送る</p>
+              </div>
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-2 space-y-1">
+                <p className="text-purple-300 font-bold">②</p>
+                <p className="text-muted-foreground">お試し鑑定が届く</p>
+              </div>
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2 space-y-1">
+                <p className="text-amber-300 font-bold">③</p>
+                <p className="text-muted-foreground">チケットで本格鑑定</p>
+              </div>
+            </div>
+            <Link to={`/fortune-chat/${channel.id}`}>
+              <button
+                className="w-full rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all py-3"
+                style={{
+                  background: "linear-gradient(135deg, rgba(168,85,247,0.8), rgba(139,92,246,0.9))",
+                  color: "#fff",
+                  boxShadow: "0 0 16px rgba(168,85,247,0.4)",
+                }}
+              >
+                <MessageCircle className="w-4 h-4" />
+                チャット鑑定を申し込む（1通目無料）
+              </button>
+            </Link>
+          </motion.div>
+        )}
 
         {/* ══════════════════════════════════
             8. 予約ダッシュボード（自分 or 相手の予約一覧）

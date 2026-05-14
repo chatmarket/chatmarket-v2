@@ -1,0 +1,62 @@
+{
+  "name": "FortuneChatThread",
+  "type": "object",
+  "description": "\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u30b9\u30ec\u30c3\u30c9\uff082\u5f80\u5fa94\u901a\u3067\u81ea\u52d5\u30af\u30ed\u30fc\u30ba\uff09",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "channel_owner_email": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u30e1\u30fc\u30eb"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u30e1\u30fc\u30eb"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u540d"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "active",
+        "closed"
+      ],
+      "default": "trial",
+      "description": "trial=\u304a\u8a66\u3057\u4e2d / active=\u30c1\u30b1\u30c3\u30c8\u8cfc\u5165\u6e08\u307f / closed=\u5b8c\u4e86\uff084\u901a\uff09"
+    },
+    "message_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u6570\uff084\u901a\u3067closed\uff09"
+    },
+    "ticket_price_coins": {
+      "type": "number",
+      "default": 500,
+      "description": "2\u5f80\u5fa9\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c\uff08\u30b3\u30a4\u30f3\uff09"
+    },
+    "ticket_purchased": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30c1\u30b1\u30c3\u30c8\u8cfc\u5165\u6e08\u307f\u30d5\u30e9\u30b0"
+    },
+    "ticket_purchased_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30c1\u30b1\u30c3\u30c8\u8cfc\u5165\u65e5\u6642"
+    }
+  },
+  "required": [
+    "channel_id",
+    "channel_owner_email",
+    "user_email"
+  ]
+}
