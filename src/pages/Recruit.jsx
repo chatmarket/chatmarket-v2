@@ -13,6 +13,7 @@ import {
 import RevenueModel from "@/components/recruit/RevenueModel";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import BusinessModelShowcase from "@/components/recruit/BusinessModelShowcase";
+import KycFeeGate from "@/components/recruit/KycFeeGate";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
@@ -74,6 +75,8 @@ export default function Recruit() {
   const [pr, setPr] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  // 決済ゲート: "form" → "payment" → "kyc_done"
+  const [step, setStep] = useState("form");
 
   // 家庭教師カテゴリの保護者同意フロー
   const [studentAge, setStudentAge] = useState("");
@@ -177,6 +180,8 @@ export default function Recruit() {
 
     setSubmitting(false);
     setSubmitted(true);
+    // フォーム送信完了 → 決済ゲートへ
+    setStep("payment");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -649,7 +654,18 @@ export default function Recruit() {
             <p className="text-sm text-muted-foreground">フォロワー数に応じて1ヶ月または3ヶ月、全プランが無料</p>
           </div>
 
-          {submitted ? (
+          {step === "payment" ? (
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <CheckCircle2 className="w-12 h-12 text-primary mx-auto" />
+                <h3 className="text-xl font-black text-primary">申し込み受付完了！</h3>
+                <p className="text-sm text-muted-foreground">
+                  次のステップ：本人確認の前に認証手数料（500円）をお支払いください。
+                </p>
+              </div>
+              <KycFeeGate onPaid={() => setStep("kyc_done")} />
+            </div>
+          ) : step === "kyc_done" ? (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -657,14 +673,14 @@ export default function Recruit() {
               style={{ boxShadow: "0 0 30px rgba(0,255,157,0.2)" }}
             >
               <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
-              <h3 className="text-xl font-black text-primary">申し込み受付完了！</h3>
+              <h3 className="text-xl font-black text-primary">認証手数料のお支払い完了！</h3>
               <p className="text-sm text-muted-foreground">
                 {isProTier
                   ? `Pro特典（全プラン24ヶ月無料）の申請を受け付けました。審査結果をメールでお知らせします。`
-                  : `Standard特典（全プラン12ヶ月無料）が適用されます。メールをご確認ください。`}
+                  : `Standard特典（全プラン12ヶ月無料）が適用されます。設定画面で本人確認を完了してください。`}
               </p>
-              <Button onClick={() => navigate("/")} className="bg-primary text-black font-bold">
-                ChatMarketを始める →
+              <Button onClick={() => navigate("/settings")} className="bg-primary text-black font-bold">
+                設定画面で本人確認を完了する →
               </Button>
             </motion.div>
           ) : (
