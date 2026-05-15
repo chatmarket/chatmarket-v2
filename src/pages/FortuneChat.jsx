@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PREVIEW_CHARS = 60; // お試し返信のプレビュー文字数
-const MAX_INPUT = 300;
+const MAX_INPUT = 1000;
 
 function formatTime(dateStr) {
   if (!dateStr) return "";
@@ -434,18 +434,23 @@ export default function FortuneChat() {
                 </Button>
               )}
               {(hasTrialReply || !canFortuneReply) && hasPaidTicket && (
-                <div className="flex items-end gap-2">
-                  <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT))}
-                    placeholder="本格鑑定の返信を入力..."
-                    rows={2}
-                    className="flex-1 resize-none rounded-xl bg-secondary border border-purple-500/30 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                  />
-                  <Button size="icon" onClick={handleFortuneReply} disabled={!input.trim() || sending}
-                    className="w-12 h-12 bg-purple-600 hover:bg-purple-500">
-                    <Send className="w-5 h-5" />
-                  </Button>
+                <div className="space-y-1">
+                  <div className="flex items-end gap-2">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT))}
+                      placeholder="本格鑑定の返信を入力..."
+                      rows={2}
+                      className="flex-1 resize-none rounded-xl bg-secondary border border-purple-500/30 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                    />
+                    <Button size="icon" onClick={handleFortuneReply} disabled={!input.trim() || sending}
+                      className="w-12 h-12 bg-purple-600 hover:bg-purple-500">
+                      <Send className="w-5 h-5" />
+                    </Button>
+                  </div>
+                  <p className={`text-[10px] text-right ${input.length >= MAX_INPUT ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                    {input.length} / {MAX_INPUT}
+                  </p>
                 </div>
               )}
             </div>
@@ -453,8 +458,8 @@ export default function FortuneChat() {
             /* ユーザー側 */
             canUserSend && (
               <div className="flex items-end gap-2">
-                <div className="flex-1 relative">
-                  <textarea
+                  <div className="flex-1 space-y-1">
+                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT))}
                     onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }}}
@@ -462,7 +467,9 @@ export default function FortuneChat() {
                     rows={2}
                     className="w-full resize-none rounded-xl bg-secondary border border-purple-500/20 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
                   />
-                  <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">{input.length}/{MAX_INPUT}</span>
+                  <p className={`text-[10px] text-right ${input.length >= MAX_INPUT ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                    {input.length} / {MAX_INPUT}
+                  </p>
                 </div>
                 <Button size="icon" onClick={handleSend} disabled={!input.trim() || sending}
                   className="w-12 h-12 bg-purple-600 hover:bg-purple-500">
