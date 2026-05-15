@@ -246,52 +246,39 @@
         100%{transform:translateX(100%)}
       }
     </style>
-    <!-- ★ SW強制クリア v3: キャッシュが修正を妨害しないよう全SWを登録解除＋キャッシュ削除 -->
+    <!-- ★ SW登録 v5: Network First + Cache First 戦略 / 古いキャッシュはSW側で自動削除 -->
     <script>
-      // 強制キャッシュ削除（デプロイ時）
-      var CACHE_VERSION = '20260515-v4-no-cache';
+      // SW v5 登録 — キャッシュ戦略はSW内部で管理
+      var CACHE_VERSION = '20260515-v5';
       var stored = localStorage.getItem('cm_cache_ver');
+
+      if ('serviceWorker' in navigator) {
+        // SW登録（更新があれば自動的にskipWaiting→activate→古いキャッシュ削除）
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+          console.log('[SW] Registered:', reg.scope);
+          // バージョン変更時のみ即時更新を促す
+          if (stored !== CACHE_VERSION) {
+            reg.update();
+          }
+        }).catch(function(err) {
+          console.warn('[SW] Registration failed:', err);
+        });
+      }
+
+      // バージョン変更時のみキャッシュバースト（古いSWキャッシュ名を削除）
       if (stored !== CACHE_VERSION) {
-        // 全SW登録解除
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(regs) {
-            regs.forEach(function(reg) { 
-              reg.unregister().catch(function() {});
-              console.log('[CacheClean] SW unregistered:', reg.scope);
-            });
-          });
-        }
-        // 全キャッシュ削除
         if ('caches' in window) {
           caches.keys().then(function(names) {
-            names.forEach(function(name) { 
-              caches.delete(name);
-              console.log('[CacheClean] Cache cleared:', name);
+            names.forEach(function(name) {
+              // v5より古いchatmarketキャッシュのみ削除
+              if (name.startsWith('chatmarket-') && !name.endsWith('-v5')) {
+                caches.delete(name);
+                console.log('[CacheClean] Deleted old cache:', name);
+              }
             });
           });
         }
-        // localStorage / sessionStorage クリア（URL記憶削除・認証キーは除外）
-        Object.keys(localStorage).forEach(function(key) {
-          // 認証・セッション関連のキーは絶対に削除しない
-          if (key.includes('token') || key.includes('auth') || key.includes('session') || key.includes('user') || key.includes('base44')) return;
-          if (key.startsWith('cm_') || key.startsWith('http')) {
-            localStorage.removeItem(key);
-          }
-        });
-        Object.keys(sessionStorage).forEach(function(key) {
-          if (key.includes('token') || key.includes('auth') || key.includes('session') || key.includes('user') || key.includes('base44')) return;
-          if (key.startsWith('cm_')) {
-            sessionStorage.removeItem(key);
-          }
-        });
-        // IndexedDB クリアは認証情報破壊のリスクがあるためスキップ
-        // バージョン更新
         localStorage.setItem('cm_cache_ver', CACHE_VERSION);
-        // 1回のみリロード
-        if (!sessionStorage.getItem('cm_reloaded')) {
-          sessionStorage.setItem('cm_reloaded', '1');
-          window.location.reload(true);
-        }
       }
     </script>
     <!-- ★ vConsole: スマホ画面でブラウザログ直視 -->
