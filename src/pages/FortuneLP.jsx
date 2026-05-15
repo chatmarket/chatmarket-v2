@@ -308,13 +308,6 @@ function ContactForm() {
 // ── メインLP ──
 export default function FortuneLP() {
   const navigate = useNavigate();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
     <div
@@ -356,32 +349,7 @@ export default function FortuneLP() {
         @keyframes twinkle { 0%,100% { opacity: 0.1; } 50% { opacity: 0.7; } }
       `}</style>
 
-      {/* ── ヘッダー ── */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-end justify-between px-5 pb-3 transition-all duration-300"
-        style={{
-          paddingTop: 'calc(env(safe-area-inset-top) + 12px)',
-          background: scrolled ? "rgba(13,10,26,0.95)" : "transparent",
-          backdropFilter: scrolled ? "blur(20px)" : "none",
-          borderBottom: scrolled ? `1px solid ${MYSTIC.border}` : "none",
-          minHeight: 'calc(env(safe-area-inset-top) + 64px)',
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <Moon className="w-5 h-5" style={{ color: MYSTIC.gold }} />
-          <span className="font-black text-sm tracking-widest" style={{ color: MYSTIC.gold, letterSpacing: "0.2em" }}>
-            CHAT<span className="text-white">MARKET</span>
-          </span>
-        </div>
-        <Button
-          size="sm"
-          onClick={() => navigate("/recruit")}
-          className="font-black text-xs"
-          style={{ background: "linear-gradient(135deg, #D4AF37, #A0760F)", color: "#0D0A1A", border: "none" }}
-        >
-          今すぐ登録 →
-        </Button>
-      </header>
+
 
       {/* ── ヒーロー ── */}
       <section
