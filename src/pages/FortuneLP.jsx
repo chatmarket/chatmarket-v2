@@ -607,7 +607,7 @@ export default function FortuneLP() {
               { icon: Shield, title: "完全匿名・安心設計", desc: "本名・住所一切不要。プライバシーを守りながら活動できる。" },
               { icon: Clock, title: "15分単位で稼ぐ", desc: "ビデオ通話鑑定は15分から。隙間時間を完全マネタイズ。" },
               { icon: Eye, title: "霊視・タロット・四柱推命", desc: "あらゆる鑑定スタイルに対応。あなたの強みをそのまま活かせる。" },
-              { icon: Star, title: "ファンクラブで月額収益", desc: "鑑定以外にも月額ファンクラブで安定した継続収益を構築。" },
+              { icon: Star, title: "チャット鑑定で非同期収益", desc: "ビデオ通話が難しいお客様にも対応。テキストで鑑定し、空き時間に返信するだけ。" },
               { icon: Zap, title: "開業3日で初収益", desc: "プロフィール設定後、最短3日でファンからの予約が入った実績あり。" },
             ].map(({ icon: Icon, title, desc }, i) => (
               <motion.div
@@ -632,6 +632,125 @@ export default function FortuneLP() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── チャット鑑定セクション ── */}
+      <section className="relative px-5 py-20">
+        <div className="max-w-4xl mx-auto space-y-10">
+          {/* タイトル */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center space-y-3"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase"
+              style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.4)", color: "#C084FC" }}>
+              💬 NEW FEATURE
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black leading-tight">
+              チャット鑑定で、<br />
+              <span style={{ color: MYSTIC.gold }}>場所・時間を選ばずに稼ぐ</span>
+            </h2>
+            <p className="text-sm text-white/55 max-w-xl mx-auto leading-relaxed">
+              ビデオ通話が難しいお客様にも対応できる非同期テキスト鑑定。相談文を受け取り、空き時間に返信するだけ。ライブ配信・通話と組み合わせて収益の幅を広げましょう。
+            </p>
+          </motion.div>
+
+          {/* 仕組み */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { step: "01", icon: "📩", title: "相談を受け取る", desc: "相談者がテキストで質問を送信します（無料お試し：冒頭60文字）" },
+              { step: "02", icon: "🔮", title: "鑑定を返信する", desc: "空き時間に鑑定内容を入力。最大1,000文字まで丁寧に回答できます" },
+              { step: "03", icon: "💰", title: "チケット収益を受け取る", desc: "相談者がチケットを購入すると即座にコインが振り込まれます（85%還元）" },
+            ].map(({ step, icon, title, desc }) => (
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="relative rounded-2xl p-5 space-y-3"
+                style={{ background: MYSTIC.cardBg, border: `1px solid ${MYSTIC.border}`, backdropFilter: "blur(20px)" }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{icon}</span>
+                  <span className="text-xs font-black tracking-widest" style={{ color: MYSTIC.gold }}>STEP {step}</span>
+                </div>
+                <p className="font-black text-sm text-white">{title}</p>
+                <p className="text-xs text-white/50 leading-relaxed">{desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* 価格設定の自由度 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-3xl p-7 space-y-6"
+            style={{
+              background: "linear-gradient(135deg, rgba(107,33,168,0.25), rgba(212,175,55,0.08))",
+              border: `1px solid ${MYSTIC.gold}`,
+              boxShadow: `0 0 40px rgba(212,175,55,0.1)`,
+              backdropFilter: "blur(20px)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎯</span>
+              <div>
+                <p className="font-black text-white text-lg">チケット価格は自由に設定できる</p>
+                <p className="text-xs text-white/50 mt-0.5">最低500円（コイン換算500コイン）以上で、自分の鑑定スタイルに合わせて自由に設定</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { price: "500コイン", yen: "≒ ¥500〜", label: "ライト相談", desc: "恋愛・仕事の気軽な相談", color: "#A855F7" },
+                { price: "1,000コイン", yen: "≒ ¥1,000〜", label: "スタンダード", desc: "1〜2テーマの詳細鑑定", color: "#D4AF37" },
+                { price: "3,000コイン", yen: "≒ ¥3,000〜", label: "プレミアム", desc: "複数テーマの深掘り鑑定", color: "#F59E0B" },
+                { price: "自由設定", yen: "上限なし", label: "カスタム", desc: "実力に見合った価格設定", color: "#34D399" },
+              ].map(({ price, yen, label, desc, color }) => (
+                <div key={label} className="rounded-2xl p-4 text-center space-y-1.5"
+                  style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${color}44` }}>
+                  <p className="font-black text-sm" style={{ color }}>{price}</p>
+                  <p className="text-[10px] text-white/40">{yen}</p>
+                  <p className="font-bold text-xs text-white">{label}</p>
+                  <p className="text-[10px] text-white/40 leading-snug">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white/5 rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-bold text-white/80">💡 収益シミュレーション（例：1,000コイン設定の場合）</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-lg font-black" style={{ color: MYSTIC.gold }}>¥850</p>
+                  <p className="text-[10px] text-white/40">1件の手取り（85%還元）</p>
+                </div>
+                <div>
+                  <p className="text-lg font-black" style={{ color: "#A855F7" }}>¥4,250</p>
+                  <p className="text-[10px] text-white/40">5件 / 日</p>
+                </div>
+                <div>
+                  <p className="text-lg font-black" style={{ color: "#34D399" }}>¥127,500</p>
+                  <p className="text-[10px] text-white/40">30日継続</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 flex items-start gap-2 text-xs text-white/50">
+                <span className="text-green-400 mt-0.5 shrink-0">✓</span>2往復（計4通）の往復鑑定が1チケットで完結
+              </div>
+              <div className="flex-1 flex items-start gap-2 text-xs text-white/50">
+                <span className="text-green-400 mt-0.5 shrink-0">✓</span>冒頭60文字は無料プレビューで購入率アップ
+              </div>
+              <div className="flex-1 flex items-start gap-2 text-xs text-white/50">
+                <span className="text-green-400 mt-0.5 shrink-0">✓</span>最低価格500コイン（約500円）以上で自由設定
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
