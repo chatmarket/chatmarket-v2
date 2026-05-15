@@ -320,6 +320,14 @@ export default function FortuneChat() {
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </button>
+        {isFortuneOwner && (
+          <button
+            onClick={() => navigate("/fortune-chat-dashboard")}
+            className="text-[11px] text-purple-400 border border-purple-500/40 rounded-full px-3 py-1 hover:bg-purple-500/10 transition-all font-bold"
+          >
+            管理画面
+          </button>
+        )}
         <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center overflow-hidden">
           {channel.avatar_url
             ? <img src={channel.avatar_url} alt="" className="w-full h-full object-cover" />

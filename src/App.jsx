@@ -84,6 +84,7 @@ import PrismOverlayTest from '@/pages/PrismOverlayTest';
 // PrismWebOverlay は AppLayout の外側に直接配置（ヘッダー・ナビ完全排除）
 import FortuneCalendar from '@/pages/FortuneCalendar';
 import FortuneChat from '@/pages/FortuneChat';
+import FortuneChatDashboard from '@/pages/FortuneChatDashboard';
 import ReminderLogs from '@/pages/ReminderLogs';
 import Dashboard from '@/pages/Dashboard';
 import FortuneLP from '@/pages/FortuneLP';
@@ -187,6 +188,7 @@ export default function App() {
             <Route path="/prism-test" element={<PrismOverlayTest />} />
             <Route path="/fortune-calendar" element={<FortuneCalendar />} />
             <Route path="/fortune-chat/:channelId" element={<FortuneChat />} />
+            <Route path="/fortune-chat-dashboard" element={<FortuneChatDashboard />} />
             <Route path="/admin/reminder-logs" element={<ReminderLogs />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/fortune-lp" element={<FortuneLP />} />
