@@ -1,0 +1,59 @@
+{
+  "name": "FortuneReview",
+  "type": "object",
+  "description": "\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u30fb\u30d3\u30c7\u30aa\u901a\u8a71\u9451\u5b9a\u5f8c\u306e\u30e6\u30fc\u30b6\u30fc\u8a55\u4fa1\uff081\u4ef6=1\u30bb\u30c3\u30b7\u30e7\u30f3\uff09",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_owner_email": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u30e1\u30fc\u30eb"
+    },
+    "reviewer_email": {
+      "type": "string",
+      "description": "\u8a55\u4fa1\u8005\uff08\u30e6\u30fc\u30b6\u30fc\uff09\u306e\u30e1\u30fc\u30eb"
+    },
+    "reviewer_name": {
+      "type": "string",
+      "description": "\u8a55\u4fa1\u8005\u306e\u8868\u793a\u540d"
+    },
+    "session_type": {
+      "type": "string",
+      "enum": [
+        "fortune_chat",
+        "video_call"
+      ],
+      "default": "fortune_chat",
+      "description": "\u9451\u5b9a\u30bb\u30c3\u30b7\u30e7\u30f3\u7a2e\u5225"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "FortuneChatThread.id \u307e\u305f\u306f VideoCall.id"
+    },
+    "rating": {
+      "type": "number",
+      "description": "\u661f\u8a55\u4fa1\uff081\u301c5\uff09"
+    },
+    "comment": {
+      "type": "string",
+      "description": "\u30b3\u30e1\u30f3\u30c8\uff08\u4efb\u610f\u30fb\u6700\u5927300\u6587\u5b57\uff09",
+      "maxLength": 300
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u8a55\u4fa1\u30bf\u30b0\uff08\u4f8b: \u5f53\u305f\u3063\u305f, \u89aa\u5207, \u7684\u78ba\uff09"
+    }
+  },
+  "required": [
+    "channel_id",
+    "channel_owner_email",
+    "reviewer_email",
+    "rating",
+    "session_id"
+  ]
+}

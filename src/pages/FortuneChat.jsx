@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Lock, Unlock, Sparkles, Coins, MessageCircle, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import FortuneRatingModal from "@/components/fortune/FortuneRatingModal";
 
 const PREVIEW_CHARS = 60; // お試し返信のプレビュー文字数
 const MAX_INPUT = 1000;
@@ -104,6 +105,8 @@ export default function FortuneChat() {
   const [showTrialReplyModal, setShowTrialReplyModal] = useState(false);
   const [trialReply, setTrialReply] = useState("");
   const [sendingTrialReply, setSendingTrialReply] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingShown, setRatingShown] = useState(false);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(async (ok) => {
@@ -141,6 +144,28 @@ export default function FortuneChat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 鑑定完了時に評価モーダルを表示（ユーザー側のみ・1回だけ）
+  useEffect(() => {
+    if (
+      !isFortuneOwner &&
+      isClosed &&
+      thread?.ticket_purchased &&
+      !ratingShown &&
+      user
+    ) {
+      // 既に評価済みか確認
+      base44.entities.FortuneReview.filter({
+        session_id: thread.id,
+        reviewer_email: user.email,
+      }).then((res) => {
+        if (res.length === 0) {
+          setShowRatingModal(true);
+          setRatingShown(true);
+        }
+      }).catch(() => {});
+    }
+  }, [isClosed, thread?.ticket_purchased, isFortuneOwner, user, ratingShown]);
 
   // リアルタイム購読
   useEffect(() => {
@@ -494,6 +519,16 @@ export default function FortuneChat() {
             </p>
           )}
         </div>
+      )}
+
+      {/* ── 評価モーダル（ユーザー用・鑑定完了後） ── */}
+      {showRatingModal && user && channel && thread && (
+        <FortuneRatingModal
+          thread={thread}
+          channel={channel}
+          user={user}
+          onClose={() => setShowRatingModal(false)}
+        />
       )}
 
       {/* ── お試し返信モーダル（占い師用） ── */}

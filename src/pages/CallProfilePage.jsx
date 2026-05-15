@@ -284,6 +284,24 @@ export default function CallProfilePage() {
               <LocalTimeClock countryCode={channel.resident_country} />
             )}
 
+            {/* 星評価 */}
+            {channel.avg_rating > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="flex">
+                  {[1,2,3,4,5].map(s => (
+                    <svg key={s} className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                      <path
+                        fill={s <= Math.round(channel.avg_rating) ? "#D4AF37" : "rgba(255,255,255,0.15)"}
+                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                      />
+                    </svg>
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-amber-400">{channel.avg_rating}</span>
+                <span className="text-[10px] text-muted-foreground">({channel.review_count || 0}件)</span>
+              </div>
+            )}
+
             {channel.tags?.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {channel.tags.slice(0, 4).map(tag => (

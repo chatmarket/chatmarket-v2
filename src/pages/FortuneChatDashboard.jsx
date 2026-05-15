@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, MessageCircle, CheckCircle2, Clock, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { Sparkles, Coins, MessageCircle, CheckCircle2, Clock, TrendingUp, Users, ArrowRight, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 const STATUS_LABEL = {
@@ -102,6 +102,14 @@ export default function FortuneChatDashboard() {
         <StatCard icon={Clock} label="対応中" value={totalActive} color="text-blue-400" />
         <StatCard icon={CheckCircle2} label="鑑定完了" value={totalClosed} color="text-green-400" />
         <StatCard icon={Coins} label="累計収益(コイン)" value={totalRevenue.toLocaleString()} color="text-yellow-400" />
+        {channel.avg_rating > 0 && (
+          <StatCard
+            icon={Star}
+            label={`平均評価 (${channel.review_count || 0}件)`}
+            value={`★ ${channel.avg_rating}`}
+            color="text-amber-400"
+          />
+        )}
       </div>
 
       {/* お試し中の注意 */}
