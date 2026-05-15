@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Sparkles, Moon, Eye, Clock, Shield, TrendingUp, ChevronDown, Crown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 
 // ── ミスティック・ラグジュアリーカラー ──
 const MYSTIC = {
@@ -320,6 +321,11 @@ export default function FortuneLP() {
       className="min-h-screen relative overflow-x-hidden"
       style={{ background: MYSTIC.deepBg, color: "#fff", fontFamily: "'M PLUS Rounded 1c', sans-serif" }}
     >
+      <MetaHelmet
+        title="占い師向けプラットフォーム | ChatMarket（チャットマーケット）"
+        description="占い師・タロット・霊視・四柱推命の鑑定師向け最高峰プラットフォーム。ビデオ通話・チャット鑑定・ライブ配信で月収100万円超の実績。1年間Basicプラン無料。今すぐ無料登録。"
+        image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/27cf5990b_generated_image.png"
+      />
       {/* 宇宙的背景エフェクト */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-10"
