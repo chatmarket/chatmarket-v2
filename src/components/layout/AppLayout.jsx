@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,8 @@ export default function AppLayout() {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [creatorMode, setCreatorMode] = useState(false);
+  const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
+  const [lpMenuOpen, setLpMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -205,16 +207,23 @@ export default function AppLayout() {
 
         {user && !creatorMode && (
           <>
-            <div className="pt-3 pb-1 px-3">
-              <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者メニュー</p>
+            {/* 配信者メニュー — アコーディオン */}
+            <div className="pt-3 pb-1">
+              <button
+                onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+              >
+                <Radio className="w-4 h-4 shrink-0" />
+                <span className="flex-1 text-left">配信者メニュー</span>
+                {creatorMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+              </button>
             </div>
-            {CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
-              // ファンクラブメニューは動的に分岐
+            {creatorMenuOpen && CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
               if (path === "/fanclub" && myChannel) {
                 return (
                   <Link key={path} to="/fanclub-manage" onClick={onCloseFn}>
                     <div className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
                       isActive("/fanclub-manage")
                         ? "bg-amber-500/20 text-amber-400"
                         : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-400"
@@ -225,12 +234,11 @@ export default function AppLayout() {
                   </Link>
                 );
               }
-
               const isWaiting = highlight && myChannel?.call_enabled && !isActive(path);
               return (
                 <Link key={path} to={path} onClick={onCloseFn}>
                   <div className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
                     isWaiting
                       ? "bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse"
                       : isActive(path)
@@ -246,9 +254,40 @@ export default function AppLayout() {
                 </Link>
               );
             })}
-
           </>
         )}
+
+        {/* LP一覧メニュー — 全ユーザーに公開 */}
+        <div className="pt-3 pb-1">
+          <button
+            onClick={() => setLpMenuOpen(!lpMenuOpen)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+          >
+            <Star className="w-4 h-4 shrink-0" />
+            <span className="flex-1 text-left">配信者向けLP</span>
+            {lpMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+          </button>
+        </div>
+        {lpMenuOpen && [
+          { path: "/fortune-lp", icon: Star, label: "占い師LP" },
+          { path: "/idol-lp", icon: Heart, label: "アイドルLP" },
+          { path: "/musician", icon: Music, label: "ミュージシャンLP" },
+          { path: "/lp/tutor", icon: BookOpen, label: "家庭教師LP" },
+          { path: "/lp/expert", icon: Globe, label: "有識者LP" },
+          { path: "/lp/fitness", icon: Zap, label: "フィットネスLP" },
+        ].map(({ path, icon: Icon, label }) => (
+          <Link key={path} to={path} onClick={onCloseFn}>
+            <div className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
+              isActive(path)
+                ? "bg-amber-500/20 text-amber-300"
+                : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-300"
+            )}>
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+            </div>
+          </Link>
+        ))}
 
         {/* 管理者メニュー — creatorMode に関わらず常に表示 */}
         {user && isAdmin(user) && (
