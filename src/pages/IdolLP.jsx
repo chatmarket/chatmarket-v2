@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Star, Heart, Sparkles, ChevronRight, Play, Shield, TrendingUp, Coins, Radio, Phone, Crown, Instagram, Twitter, ArrowRight, CheckCircle2, Zap, Send } from "lucide-react";
 import IdolApplicationForm from "../components/recruit/IdolApplicationForm";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 
 const STATS = [
   { value: "85%", label: "収益還元率", sub: "業界最高水準" },
@@ -315,6 +316,18 @@ export default function IdolLP() {
             </span>
           </button>
           <p className="text-xs text-white/30">※応募は無料です。選考結果はメールでお知らせします。</p>
+        </div>
+      </section>
+
+      {/* ── 実際に活躍中のアイドル ── */}
+      <section className="py-16 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #000 100%)" }}>
+        <div className="max-w-5xl mx-auto">
+          <ActiveCreatorsSection
+            serviceCategory="other"
+            title="実際に活躍中のクリエイター"
+            accentColor="#ec4899"
+            theme="dark"
+          />
         </div>
       </section>
 

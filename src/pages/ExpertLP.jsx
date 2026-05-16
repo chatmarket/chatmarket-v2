@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { Crown, Zap, TrendingUp, Users, Mic2, DollarSign, CheckCircle2, ArrowRight, Sparkles, Calendar, Clock, Phone } from "lucide-react";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -505,6 +506,18 @@ export default function ExpertLP() {
           </div>
         </section>
       )}
+
+      {/* ── 実際に活躍中の有識者 ── */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <ActiveCreatorsSection
+            serviceCategory="business"
+            title="実際に活躍中の有識者・専門家"
+            accentColor="#fbbf24"
+            theme="dark"
+          />
+        </div>
+      </section>
 
       {/* ── FINAL CTA ── */}
       <section className="py-24 px-6 text-center">

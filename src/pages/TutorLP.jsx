@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Shield, Clock, TrendingUp, BookOpen, Award, ArrowRight, ChevronDown } from "lucide-react";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 
 const STATS = [
   { value: "90%", label: "講師収益還元率", sub: "業界最高水準" },
@@ -329,6 +330,18 @@ export default function TutorLP() {
           <p className="text-xs text-blue-200">
             さらに、12ヶ月間の無料期間を活かすことで、運営コストは限りなく「ゼロ」に近づきます。これが勝つための戦略です。
           </p>
+        </div>
+      </section>
+
+      {/* ── 実際に活躍中の講師 ── */}
+      <section className="py-16 px-5 bg-slate-50">
+        <div className="max-w-5xl mx-auto">
+          <ActiveCreatorsSection
+            serviceCategory="language"
+            title="実際に活躍中の講師"
+            accentColor="#1F4A9D"
+            theme="light"
+          />
         </div>
       </section>
 

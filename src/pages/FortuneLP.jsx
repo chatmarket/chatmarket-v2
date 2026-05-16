@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, Sparkles, Moon, Eye, Clock, Shield, TrendingUp, ChevronDown, Crown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 
 // SEO: 占い師LP専用メタタグ
 
@@ -727,6 +728,18 @@ export default function FortuneLP() {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* ── 実際に活躍中の鑑定師 ── */}
+      <section className="relative px-5 py-16">
+        <div className="max-w-5xl mx-auto">
+          <ActiveCreatorsSection
+            serviceCategory="fortune_telling"
+            title="実際に活躍中の鑑定師"
+            accentColor="#D4AF37"
+            theme="dark"
+          />
         </div>
       </section>
 

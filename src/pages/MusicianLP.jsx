@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Music, Mic2, Radio, Phone, TrendingUp, Zap, Crown, Send, Star, CheckCircle2, DollarSign, Award, Sparkles, ChevronRight, Monitor, Settings, SlidersHorizontal } from "lucide-react";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 import { Button } from "@/components/ui/button";
 
 const STATS = [
@@ -546,6 +547,18 @@ export default function MusicianLP() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── 実際に活躍中のミュージシャン ── */}
+      <section className="py-16 px-5" style={{ background: "linear-gradient(180deg, #1a0033 0%, #0a0510 100%)" }}>
+        <div className="max-w-5xl mx-auto">
+          <ActiveCreatorsSection
+            serviceCategory="other"
+            title="実際に活躍中のミュージシャン"
+            accentColor="#a855f7"
+            theme="dark"
+          />
         </div>
       </section>
 

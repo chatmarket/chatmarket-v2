@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 
 // ── カラー ──
 const C = {
@@ -610,6 +611,18 @@ export default function FitnessLP() {
               </p>
             </form>
           )}
+        </div>
+      </section>
+
+      {/* ── 実際に活躍中のインストラクター ── */}
+      <section className="py-16 px-5" style={{ background: C.bg }}>
+        <div className="max-w-5xl mx-auto">
+          <ActiveCreatorsSection
+            serviceCategory="fitness"
+            title="実際に活躍中のインストラクター"
+            accentColor={C.orange}
+            theme="light"
+          />
         </div>
       </section>
 
