@@ -112,8 +112,9 @@ export default function MyChannel() {
         <h2 className="text-xl font-bold mb-4">チャンネルを作成しましょう</h2>
         <Button
           onClick={async () => {
+            const displayName = user.full_name || user.email?.split("@")[0] || "マイ";
             await base44.entities.Channel.create({
-              name: user.full_name + "のチャンネル",
+              name: displayName + "のチャンネル",
               owner_email: user.email,
             });
             queryClient.invalidateQueries({ queryKey: ["my-channels"] });

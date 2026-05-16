@@ -24,17 +24,11 @@ function CallWaitingRowComponent({ user, categoryFilter = "all", filteredChannel
 
   const { data: allChannels = [] } = useQuery({
     queryKey: ["call-enabled-channels"],
-    queryFn: async () => {
-      console.log("🔍 [CallWaitingRow] Fetching call_enabled channels...");
-      const result = await base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 200);
-      console.log("✅ [CallWaitingRow] Fetched:", result.length, "channels", result);
-      return result;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: "always",
+    queryFn: () => base44.entities.Channel.filter({ call_enabled: true }, "-updated_date", 200),
+    staleTime: 30000,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // 10秒ポーリング — 待機開始を即反映
+    // リアルタイム購読（subscribe）で変更を検知するためポーリング不要
   });
 
   // Channel の変更をリアルタイム購読 → 待機ON/OFFを即座に反映
