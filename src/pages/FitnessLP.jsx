@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 
 // ── カラー ──
 const C = {
@@ -154,6 +155,11 @@ export default function FitnessLP() {
 
   return (
     <div className="min-h-screen font-inter overflow-x-hidden" style={{ background: C.bg, color: C.navy }}>
+      <MetaHelmet
+        title="フィットネス・ヨガ・パーソナルトレーナー向けプラットフォーム | ChatMarket（チャットマーケット）"
+        description="フィットネストレーナー・ヨガ講師・パーソナルジム向け収益化プラットフォーム。1対1ビデオ通話レッスン・ライブ配信で還元率85%。先着50名限定12ヶ月無料キャンペーン実施中。"
+        image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/2a7791b65_generated_image.png"
+      />
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex items-center justify-center px-5 pt-20 pb-16 overflow-hidden">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Heart, Sparkles, ChevronRight, Play, Shield, TrendingUp, Coins, Radio, Phone, Crown, Instagram, Twitter, ArrowRight, CheckCircle2, Zap, Send } from "lucide-react";
 import IdolApplicationForm from "../components/recruit/IdolApplicationForm";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 
 const STATS = [
   { value: "85%", label: "収益還元率", sub: "業界最高水準" },
@@ -63,6 +64,11 @@ export default function IdolLP() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-inter">
+      <MetaHelmet
+        title="アイドル・タレント向け収益化プラットフォーム | ChatMarket（チャットマーケット）"
+        description="アイドル・タレント・インフルエンサー向けライブ配信・動画販売プラットフォーム。事務所不要・初期費用0円。1対1ビデオ通話・PPVライブ・ファンクラブで還元率85%の収益化。登録から1年間Basicプラン無料。"
+        image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/e8cd1b6f2_generated_image.png"
+      />
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-5 overflow-hidden">

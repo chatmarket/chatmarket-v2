@@ -94,10 +94,9 @@ export default function TutorLP() {
     <div className="min-h-screen bg-white text-slate-900 font-inter">
       {/* Meta Tags */}
       <MetaHelmet
-        page="tutor-lp"
-        title="家庭教師プロジェクト | Chat Market - 講師の価値を最大化する次世代プラットフォーム"
-        description="講師向け高還元率プラットフォーム。90%の収益還元率、12ヶ月無料、PRISM連携で業界最高水準の教育配信環境を実現。"
-        image="https://chatmarket.info/og-tutor-lp.png"
+        title="家庭教師・オンライン講師向けプラットフォーム | ChatMarket（チャットマーケット）"
+        description="家庭教師・オンライン講師・塾講師向け高還元率プラットフォーム。講師収益還元率90%・12ヶ月間完全無料・1対1ビデオ授業対応。既存モデルの高額中間マージンを排除し、あなたの収益を最大化。今すぐ無料登録。"
+        image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/bb603a708_generated_image.png"
       />
 
       {/* HERO */}

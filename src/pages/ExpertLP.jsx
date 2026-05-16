@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { Crown, Zap, TrendingUp, Users, Mic2, DollarSign, CheckCircle2, ArrowRight, Sparkles, Calendar, Clock, Phone } from "lucide-react";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -139,6 +140,11 @@ export default function ExpertLP() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 text-white overflow-x-hidden font-inter">
+      <MetaHelmet
+        title="有識者・コンサルタント向けオンライン講演プラットフォーム | ChatMarket（チャットマーケット）"
+        description="有識者・著名人・コンサルタント向けライブ配信プラットフォーム。3,000名規模のPPVオンライン講演会・個別相談を還元率85%で収益化。初期費用0円・クレカ不要で今すぐ登録。"
+        image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/707796e00_generated_image.png"
+      />
       {/* ── ExpertLP独自のCTAボタン（AppLayoutヘッダーの下に表示） ── */}
       <div
         className="fixed left-0 right-0 z-40 flex justify-end px-6 py-2 pointer-events-none"

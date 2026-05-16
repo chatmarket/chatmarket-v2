@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Music, Mic2, Radio, Phone, TrendingUp, Zap, Crown, Send, Star, CheckCircle2, DollarSign, Award, Sparkles, ChevronRight, Monitor, Settings, SlidersHorizontal } from "lucide-react";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { Button } from "@/components/ui/button";
 
 const STATS = [
@@ -114,6 +115,11 @@ export default function MusicianLP() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-inter">
+      <MetaHelmet
+        title="ミュージシャン・シンガーソングライター・バンド向けプラットフォーム | ChatMarket（チャットマーケット）"
+        description="ミュージシャン・シンガーソングライター・バンド・ビートメーカー向け収益化プラットフォーム。楽曲販売・1対1レッスン・ライブ配信で還元率85%。OBS対応プロ配信環境・初期費用0円で今すぐデビュー。"
+        image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/34a7860b4_generated_image.png"
+      />
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-5 overflow-hidden">
         {/* 背景グラデーション */}
