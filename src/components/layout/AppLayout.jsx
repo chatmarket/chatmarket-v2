@@ -257,28 +257,21 @@ export default function AppLayout() {
           </>
         )}
 
-        {/* LP一覧メニュー — 全ユーザーに公開 */}
-        <div className="pt-3 pb-1">
-          <button
-            onClick={() => setLpMenuOpen(!lpMenuOpen)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
-          >
-            <Star className="w-4 h-4 shrink-0" />
-            <span className="flex-1 text-left">配信者向けLP</span>
-            {lpMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
-          </button>
+        {/* 配信者向けメニュー — 全ユーザーに公開 */}
+        <div className="pt-3 pb-1 px-3">
+          <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者向け</p>
         </div>
-        {lpMenuOpen && [
-          { path: "/fortune-lp", icon: Star, label: "占い師LP" },
-          { path: "/idol-lp", icon: Heart, label: "アイドルLP" },
-          { path: "/musician", icon: Music, label: "ミュージシャンLP" },
-          { path: "/lp/tutor", icon: BookOpen, label: "家庭教師LP" },
-          { path: "/lp/expert", icon: Globe, label: "有識者LP" },
-          { path: "/lp/fitness", icon: Zap, label: "フィットネスLP" },
+        {[
+          { path: "/fortune-lp", icon: Star, label: "占い師" },
+          { path: "/idol-lp", icon: Heart, label: "アイドル" },
+          { path: "/musician", icon: Music, label: "ミュージシャン" },
+          { path: "/lp/tutor", icon: BookOpen, label: "家庭教師" },
+          { path: "/lp/expert", icon: Globe, label: "有識者" },
+          { path: "/lp/fitness", icon: Zap, label: "フィットネス" },
         ].map(({ path, icon: Icon, label }) => (
           <Link key={path} to={path} onClick={onCloseFn}>
             <div className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
               isActive(path)
                 ? "bg-amber-500/20 text-amber-300"
                 : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-300"
