@@ -75,6 +75,7 @@ export default function Recruit() {
   const [serviceCategory, setServiceCategory] = useState("other");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   // 家庭教師カテゴリの保護者同意フロー
   const [studentAge, setStudentAge] = useState("");
@@ -114,6 +115,10 @@ export default function Recruit() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email) { toast.error("お名前とメールアドレスは必須です"); return; }
+    if (!termsAgreed) {
+      toast.error("利用規約・秘密保持条項への同意が必要です");
+      return;
+    }
     if (tutorCategory && parentalConsentRequired && !parentalConsent.agreed) {
       toast.error("未成年生徒の場合、保護者の同意確認が必須です");
       return;
@@ -845,19 +850,32 @@ export default function Recruit() {
                 <p className="text-xs text-muted-foreground text-right">{pr.length}/300</p>
               </div>
 
-              <div className="bg-secondary rounded-xl p-3">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  申し込みにより、
-                  <Link to="/terms" target="_blank" className="text-primary underline font-semibold">利用規約</Link>
-                  および
-                  <Link to="/privacy" target="_blank" className="text-primary underline font-semibold">プライバシーポリシー</Link>
-                  に同意したものとみなします。
-                </p>
+              <div className={`rounded-xl p-4 border-2 transition-colors ${termsAgreed ? "bg-primary/5 border-primary/40" : "bg-secondary border-border/50"}`}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAgreed}
+                    onChange={(e) => setTermsAgreed(e.target.checked)}
+                    className="w-5 h-5 mt-0.5 accent-primary shrink-0"
+                    required
+                  />
+                  <div className="text-xs leading-relaxed">
+                    <span className="font-bold text-foreground">
+                      <Link to="/terms" target="_blank" className="text-primary underline">利用規約</Link>
+                      （第16条「秘密保持」を含む）および
+                      <Link to="/privacy" target="_blank" className="text-primary underline">プライバシーポリシー</Link>
+                      に同意します。
+                    </span>
+                    <p className="text-muted-foreground mt-1">
+                      ※ 第16条に基づき、システム情報およびユーザーの相談内容を第三者に漏洩することを禁じます。本同意はNDAと同等の法的効力を持ちます。
+                    </p>
+                  </div>
+                </label>
               </div>
 
               <Button
                 type="submit"
-                disabled={submitting || !name || !email}
+                disabled={submitting || !name || !email || !termsAgreed}
                 className="w-full h-14 font-black text-base bg-primary text-black hover:bg-primary/90 gap-2 rounded-2xl"
                 style={{ boxShadow: "0 0 20px rgba(0,255,157,0.3)" }}
               >
