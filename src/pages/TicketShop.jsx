@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Ticket, MapPin, Calendar, Users, CheckCircle2, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Ticket, MapPin, Calendar, Users, CheckCircle2, Plus, Trash2, ChevronDown, ChevronUp, Lock } from "lucide-react";
+import { resolveUserPlan, hasFeature } from "@/lib/userPlan";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -151,12 +152,19 @@ export default function TicketShop() {
   const { channelId } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [hasPpv, setHasPpv] = useState(false);
   const [buyTarget, setBuyTarget] = useState(null); // { event, tier }
   const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(isAuth => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) {
+        base44.auth.me().then(async (u) => {
+          setUser(u);
+          const planInfo = await resolveUserPlan(u);
+          setHasPpv(hasFeature(planInfo, 'live_ppv'));
+        }).catch(() => {});
+      }
     });
   }, []);
 
@@ -203,8 +211,22 @@ export default function TicketShop() {
         </div>
       )}
 
-      {/* Owner: create form */}
-      {isOwner && channel && <EventCreateForm channel={channel} onCreated={refetch} />}
+      {/* Owner: create form — PPVプラン加入者のみ */}
+      {isOwner && channel && (
+        hasPpv ? (
+          <EventCreateForm channel={channel} onCreated={refetch} />
+        ) : (
+          <div className="bg-card border border-border/50 rounded-2xl p-5 flex items-center gap-3 text-sm text-muted-foreground">
+            <Lock className="w-5 h-5 shrink-0 text-yellow-500" />
+            <div>
+              <p className="font-semibold text-foreground">イベント作成にはPPVプランが必要です</p>
+              <p className="text-xs mt-0.5">
+                <button className="text-primary underline" onClick={() => navigate("/plan-select")}>プランを確認する</button>
+              </p>
+            </div>
+          </div>
+        )
+      )}
 
       {/* Event list */}
       {events.length === 0 ? (
