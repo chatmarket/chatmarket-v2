@@ -58,9 +58,9 @@ export default function WithdrawalRequest() {
   const callRevenue = allCallsCallee.reduce((sum, c) => sum + (c.price || 0), 0);
   const totalRevenue = videoRevenue + callRevenue;
 
-  // クリエイター配分（動画85%、通話70%）
+  // クリエイター配分（動画・通話ともに85%）
   const videoEarning = Math.floor(videoRevenue * 0.85);
-  const callEarning = Math.floor(callRevenue * 0.70);
+  const callEarning = Math.floor(callRevenue * 0.85);
   const totalEarning = videoEarning + callEarning;
 
   // 既に申請・承認・振込中の金額
@@ -142,7 +142,7 @@ export default function WithdrawalRequest() {
         <div className="bg-card rounded-lg sm:rounded-xl border border-border/50 p-4 space-y-2">
           <p className="text-xs sm:text-sm text-muted-foreground">累計収益（ビデオ通話）</p>
           <p className="text-xl sm:text-2xl font-black text-cyan-400">¥{callRevenue.toLocaleString()}</p>
-          <p className="text-xs sm:text-sm text-muted-foreground">収益 {callRevenue > 0 ? `→ 70%` : ""} ¥{callEarning.toLocaleString()}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">収益 {callRevenue > 0 ? `→ 85%` : ""} ¥{callEarning.toLocaleString()}</p>
         </div>
 
         <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg sm:rounded-xl border border-primary/40 p-4 space-y-2">
