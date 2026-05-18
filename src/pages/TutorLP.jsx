@@ -5,7 +5,7 @@ import MetaHelmet from "@/components/layout/MetaHelmet";
 import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 
 const STATS = [
-  { value: "90%", label: "講師収益還元率", sub: "業界最高水準" },
+  { value: "85%", label: "講師収益還元率", sub: "業界最高水準" },
   { value: "0円", label: "初期費用", sub: "完全無料スタート" },
   { value: "12ヶ月", label: "サブスク無料", sub: "参入障壁ゼロ" },
 ];
@@ -15,7 +15,7 @@ const COMPARISON = [
     label: "Chat Market",
     highlight: true,
     items: [
-      "✓ 講師収益還元率 90%を実現",
+      "✓ 講師収益還元率 85%を実現",
       "✓ PRISM連携による高画質・低遅延",
       "✓ 即時性の高い精算と透明な報酬体系",
       "✓ 12ヶ月間の無料サブスク",
@@ -54,7 +54,7 @@ const FEATURES = [
 const REASONS = [
   {
     icon: "✓",
-    title: "業界最高の還元率 90%",
+    title: "業界最高の還元率 85%",
     desc: "業界の追随を許しません。",
   },
   {
@@ -96,7 +96,7 @@ export default function TutorLP() {
       {/* Meta Tags */}
       <MetaHelmet
         title="家庭教師・オンライン講師向けプラットフォーム | ChatMarket（チャットマーケット）"
-        description="家庭教師・オンライン講師・塾講師向け高還元率プラットフォーム。講師収益還元率90%・12ヶ月間完全無料・1対1ビデオ授業対応。既存モデルの高額中間マージンを排除し、あなたの収益を最大化。今すぐ無料登録。"
+        description="家庭教師・オンライン講師・塾講師向け高還元率プラットフォーム。講師収益還元率85%・12ヶ月間完全無料・1対1ビデオ授業対応。既存モデルの高額中間マージンを排除し、あなたの収益を最大化。今すぐ無料登録。"
         image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/bb603a708_generated_image.png"
       />
 
@@ -227,13 +227,13 @@ export default function TutorLP() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
-              <p className="text-xl font-bold text-yellow-400">なぜ「90%」なのか？</p>
+              <p className="text-xl font-bold text-yellow-400">なぜ「85%」なのか？</p>
               <p className="text-blue-100 leading-relaxed">
                 私たちは、教育の質は「講師のモチベーション」に直結すると信じています。中抜きのコストを極限まで削り、講師に還元することで、最高品質の授業を実現します。
               </p>
               <ul className="space-y-3 text-blue-100">
                 <li className="flex items-center gap-2">
-                  <span className="text-yellow-400">💰</span> 授業料の90%を講師がダイレクトに受領
+                 <span className="text-yellow-400">💰</span> 授業料の85%を講師がダイレクトに受領
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-yellow-400">⚡</span> 業界最安水準のプラットフォーム利用料
@@ -246,7 +246,7 @@ export default function TutorLP() {
 
             <div className="flex items-center justify-center">
               <div className="text-center space-y-3">
-                <p className="text-7xl font-black text-yellow-400">90%</p>
+                <p className="text-7xl font-black text-yellow-400">85%</p>
                 <p className="text-2xl font-bold text-white">講師収益還元率</p>
               </div>
             </div>
@@ -322,10 +322,10 @@ export default function TutorLP() {
       {/* 圧倒的な数字のインパクト */}
       <section className="py-20 px-5 bg-gradient-to-r from-blue-900 to-blue-800 text-white">
         <div className="max-w-3xl mx-auto text-center space-y-6">
-          <p className="text-5xl sm:text-6xl font-black">90%</p>
+          <p className="text-5xl sm:text-6xl font-black">85%</p>
           <p className="text-3xl font-bold">講師収益還元率</p>
           <p className="text-blue-100 leading-relaxed max-w-md mx-auto">
-            「せこくて買い」収益最大化。他のプラットフォームで1万円の授業をしても、あなたの手元に残るのは5,000円～7,000円。Chat Marketなら9,000円があなたのもので す。
+            「せこくて買い」収益最大化。他のプラットフォームで1万円の授業をしても、あなたの手元に残るのは5,000円～7,000円。Chat Marketなら8,500円があなたのものです。
           </p>
           <p className="text-xs text-blue-200">
             さらに、12ヶ月間の無料期間を活かすことで、運営コストは限りなく「ゼロ」に近づきます。これが勝つための戦略です。
