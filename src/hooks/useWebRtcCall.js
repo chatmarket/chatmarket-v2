@@ -151,10 +151,13 @@ export function useWebRtcCall({
         }
       };
 
-      // ローカルトラックを全て追加
-      const tracks = localStream.getTracks();
+      // ローカルトラックを追加（audio_onlyモードではオーディオのみ）
+      const isAudioOnly = call?.call_mode === 'audio_only';
+      const tracks = isAudioOnly
+        ? localStream.getAudioTracks()
+        : localStream.getTracks();
       if (tracks.length === 0) {
-        reportStatus('error', 'カメラ・マイクが取得できていません');
+        reportStatus('error', 'マイクが取得できていません');
         return;
       }
       tracks.forEach(track => {

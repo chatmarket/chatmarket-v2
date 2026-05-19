@@ -22,6 +22,15 @@
       "type": "string",
       "description": "\u7740\u4fe1\u8005\u306e\u30c1\u30e3\u30f3\u30cd\u30ebID"
     },
+    "call_mode": {
+      "type": "string",
+      "enum": [
+        "video",
+        "audio_only"
+      ],
+      "default": "video",
+      "description": "\u901a\u8a71\u30e2\u30fc\u30c9: video=\u30d3\u30c7\u30aa\u901a\u8a71 / audio_only=\u97f3\u58f0\u9451\u5b9a\uff08\u96fb\u8a71\u9451\u5b9a\uff09"
+    },
     "status": {
       "type": "string",
       "enum": [

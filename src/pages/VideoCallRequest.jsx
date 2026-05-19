@@ -87,6 +87,10 @@ export default function VideoCallRequest() {
   const [freeSlotDuration, setFreeSlotDuration] = useState(10);
   const [recordingEnabled, setRecordingEnabled] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const [callMode, setCallMode] = useState("video"); // "video" | "audio_only"
+
+  // 占いカテゴリかどうか（service_category === "fortune_telling"）
+  const isFortuneTelling = channel?.service_category === "fortune_telling";
 
   // 録画オプション料金（15分ごとに追加）
   const RECORDING_OPTION_PRICE_PER_15MIN = 50;
@@ -164,7 +168,8 @@ export default function VideoCallRequest() {
       duration_minutes: actualDuration,
       recording_option: recordingOptEnabled,
       recording_option_price: recordingOptEnabled ? RECORDING_OPTION_PRICE_PER_15MIN : 0,
-      message: `【希望日時】${preferredDate}${message ? `\n${message}` : ""}`,
+      call_mode: callMode,
+      message: `【希望日時】${preferredDate}${callMode === "audio_only" ? "\n【音声鑑定モード】" : ""}${message ? `\n${message}` : ""}`,
       thread_id: threadId,
     });
 
@@ -252,7 +257,7 @@ export default function VideoCallRequest() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold flex items-center gap-2">
-          <PhoneCall className="w-5 h-5 text-primary" /> 1対1ビデオ通話を申し込む
+          <PhoneCall className="w-5 h-5 text-primary" /> 1対1通話を申し込む
         </h1>
       </div>
 
@@ -291,6 +296,45 @@ export default function VideoCallRequest() {
             <p className="font-semibold text-xs text-primary mb-0.5">説明・通話可能スケジュール</p>
             <p className="text-xs text-foreground whitespace-pre-wrap">{channel.call_available_dates}</p>
           </div>
+        </div>
+      )}
+
+      {/* 通話モード選択（占いカテゴリのみ表示） */}
+      {isFortuneTelling && (
+        <div className="bg-card rounded-2xl border border-border/50 p-4 mb-4 space-y-3">
+          <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+            📞 通話モードを選択
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setCallMode("video")}
+              className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                callMode === "video" ? "border-primary bg-primary/10" : "border-border bg-secondary hover:border-primary/40"
+              }`}
+            >
+              <span className="text-2xl">📹</span>
+              <span className={`font-bold text-sm ${callMode === "video" ? "text-primary" : "text-foreground"}`}>ビデオ通話</span>
+              <span className="text-[10px] text-muted-foreground text-center">カメラ・マイク両方</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCallMode("audio_only")}
+              className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                callMode === "audio_only" ? "border-amber-400 bg-amber-500/10" : "border-border bg-secondary hover:border-amber-400/40"
+              }`}
+            >
+              <span className="text-2xl">🔮</span>
+              <span className={`font-bold text-sm ${callMode === "audio_only" ? "text-amber-400" : "text-foreground"}`}>音声鑑定</span>
+              <span className="text-[10px] text-muted-foreground text-center">マイクのみ（電話鑑定）</span>
+            </button>
+          </div>
+          {callMode === "audio_only" && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-amber-300 space-y-0.5">
+              <p className="font-semibold">🔮 音声鑑定モード</p>
+              <p>カメラは使用せず、音声のみで鑑定を行います。通話中は相手のプロフィール画像が表示されます。</p>
+            </div>
+          )}
         </div>
       )}
 

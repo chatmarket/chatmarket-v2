@@ -723,8 +723,11 @@ export default function VideoCallPage() {
     return () => clearInterval(timer);
   }, [callStartTime, effectiveDuration, extendPaid, call?.id]);
 
+  // 音声のみモード判定（call_mode === "audio_only"）
+  const isAudioOnly = call?.call_mode === "audio_only";
+
   // スマートカメラ選択 hook からストリームを取得
-  const { stream: smartStream, videoDevices, audioDevices, selectedCameraId, selectedMicId, switchCamera, switchMic } = useSmartCameraSelection();
+  const { stream: smartStream, videoDevices, audioDevices, selectedCameraId, selectedMicId, switchCamera, switchMic } = useSmartCameraSelection({ audioOnly: isAudioOnly });
   useEffect(() => {
     if (smartStream) {
       setLocalStream(smartStream);
@@ -1198,84 +1201,83 @@ export default function VideoCallPage() {
         <FloatingItem key={f.id} item={f.emoji} type={f.type} onDone={() => removeFloating(f.id)} />
       ))}
 
-      {/* VIDEO AREA — 16:9固定（paddingトリックで確実に比率維持） */}
+      {/* VIDEO AREA */}
       <div className="relative bg-black w-full" style={{ flexShrink: 0 }}>
       <div ref={videoContainerRef} className="w-full" style={{ paddingTop: '56.25%', position: 'relative', backgroundColor: '#000', overflow: 'hidden' }}>
 
-        {/* ── 常時マウント: リモート映像（active時のみ表示）— 16:9比率死守 ── */}
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          webkit-playsinline="true"
-          x5-playsinline="true"
-          onLoadedMetadata={e => {
-            e.target.muted = false;
-            e.target.volume = 1.0;
-            e.target.play().catch(() => {});
-          }}
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            width: '100%', height: '100%',
-            objectFit: 'contain',
-            objectPosition: 'center center',
-            backgroundColor: '#000',
-            verticalAlign: 'middle',
-            overflow: 'hidden',
-            display: call?.status === 'active' ? 'block' : 'none',
-            zIndex: 1,
-          }}
-        />
+        {/* 音声鑑定モード: active時はアバター背景 */}
+        {isAudioOnly && call?.status === 'active' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-5"
+            style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
+            <div className="relative">
+              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white/20"
+                style={{ boxShadow: '0 0 40px rgba(0,255,157,0.3)' }}>
+                {calleeChannel?.avatar_url
+                  ? <img src={calleeChannel.avatar_url} alt={otherName} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-4xl font-black"
+                      style={{ background: '#0d2a1a', color: '#00ff9d' }}>{otherName?.[0] || "?"}</div>
+                }
+              </div>
+              <div className="absolute inset-0 rounded-full animate-ping opacity-20"
+                style={{ background: 'rgba(0,255,157,0.4)', animationDuration: '1.5s' }} />
+            </div>
+            <p className="mt-4 text-white font-bold text-lg">{otherName}</p>
+            <p className="text-white/50 text-sm mt-1">🔮 音声鑑定中</p>
+            <video ref={remoteVideoRef} autoPlay playsInline style={{ display: 'none' }} />
+          </div>
+        )}
 
-        {/* ── 常時マウント: ローカル映像（active時はワイプ右下、それ以外はフルスクリーン） ── */}
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          webkit-playsinline="true"
+        {/* 音声鑑定モード: pending/accepted 時 */}
+        {isAudioOnly && call?.status !== 'active' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-5"
+            style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
+            {calleeChannel?.avatar_url
+              ? <img src={calleeChannel.avatar_url} alt={otherName}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white/20 opacity-60" />
+              : <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl opacity-60"
+                  style={{ background: '#0d2a1a', color: '#00ff9d' }}>{otherName?.[0] || "🔮"}</div>
+            }
+            <p className="mt-3 text-white/60 text-sm">🔮 音声鑑定 ({otherName})</p>
+          </div>
+        )}
+
+        {/* 通常モード: リモート映像 */}
+        {!isAudioOnly && (
+          <video ref={remoteVideoRef} autoPlay playsInline webkit-playsinline="true" x5-playsinline="true"
+            onLoadedMetadata={e => { e.target.muted = false; e.target.volume = 1.0; e.target.play().catch(() => {}); }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%',
+              objectFit: 'contain', objectPosition: 'center center', backgroundColor: '#000',
+              display: call?.status === 'active' ? 'block' : 'none', zIndex: 1 }} />
+        )}
+
+        {/* ローカル映像 */}
+        <video ref={localVideoRef} autoPlay muted playsInline webkit-playsinline="true"
           onLoadedMetadata={e => e.target.play().catch(() => {})}
-          style={call?.status === 'active' ? {
-            // active: 右下ワイプ（縦長4:3、スマホカメラ比率）
-            position: 'absolute',
-            bottom: 8, right: 8,
-            width: 72, height: 96,
-            objectFit: 'cover',
-            borderRadius: 8,
-            border: '2px solid rgba(255,255,255,0.5)',
-            boxShadow: '0 0 12px rgba(0,255,157,0.4)',
-            backgroundColor: '#000',
-            zIndex: 10,
+          style={isAudioOnly ? { display: 'none' } : call?.status === 'active' ? {
+            position: 'absolute', bottom: 8, right: 8, width: 72, height: 96,
+            objectFit: 'cover', borderRadius: 8, border: '2px solid rgba(255,255,255,0.5)',
+            boxShadow: '0 0 12px rgba(0,255,157,0.4)', backgroundColor: '#000', zIndex: 10,
             filter: currentFilter?.style || '',
           } : {
-            // pending / accepted: 16:9コンテナ内でcontain＋中央表示
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            width: '100%', height: '100%',
-            objectFit: 'contain',
-            objectPosition: 'center center',
-            backgroundColor: '#000',
-            verticalAlign: 'middle',
-            zIndex: 1,
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%',
+            objectFit: 'contain', objectPosition: 'center center', backgroundColor: '#000', zIndex: 1,
             filter: call?.status === 'pending' && !isCaller ? 'brightness(0.5)' : '',
           }}
         />
 
-        {/* active: カメラOFF時のワイプ黒幕 */}
-        {call?.status === 'active' && !camOn && (
+        {/* videoモードのみ: カメラOFF黒幕 / ワイプラベル */}
+        {!isAudioOnly && call?.status === 'active' && !camOn && (
           <div className="absolute bg-black/80 flex items-center justify-center z-20"
             style={{ bottom: 8, right: 8, width: 72, height: 96, borderRadius: 8 }}>
             <CameraOff className="w-4 h-4 text-white/40" />
           </div>
         )}
-        {/* active: ワイプラベル */}
-        {call?.status === 'active' && (
+        {!isAudioOnly && call?.status === 'active' && (
           <div className="absolute z-20 text-center" style={{ bottom: 10, right: 8, width: 72 }}>
             <span className="text-[8px] text-white/70 bg-black/60 px-1 py-0.5 rounded-full">あなた</span>
           </div>
         )}
-
-        {/* pending / accepted: カメラOFF時のフルスクリーン黒幕 */}
-        {call?.status !== 'active' && !camOn && (
+        {!isAudioOnly && call?.status !== 'active' && !camOn && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
             <CameraOff className="w-16 h-16 text-white/30" />
           </div>
@@ -1318,7 +1320,7 @@ export default function VideoCallPage() {
                 <PhoneCall className="w-16 h-16 text-primary mx-auto" style={{ filter: 'drop-shadow(0 0 20px rgba(0,255,157,0.8))' }} />
               </motion.div>
               <p className="text-white font-black text-xl">{call.caller_name || call.caller_email}</p>
-              <p className="text-white/60 text-sm">からビデオ通話のリクエスト</p>
+              <p className="text-white/60 text-sm">{isAudioOnly ? "から音声鑑定のリクエスト" : "からビデオ通話のリクエスト"}</p>
             </div>
             {/* 拒否/応答ボタン: 最低64px高さで誤タップ防止 */}
             <div className="flex gap-4 w-full max-w-xs">
@@ -1491,15 +1493,12 @@ export default function VideoCallPage() {
               )}
             </div>
 
-            {/* カメラボタン: OFF時は赤背景+斜線アイコン */}
-            <button
-              onClick={() => setCamOn(!camOn)}
-              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}
-              aria-label={camOn ? "カメラON" : "カメラOFF"}
-            >
+            {/* カメラボタン（videoモードのみ） */}
+            {!isAudioOnly && <button onClick={() => setCamOn(!camOn)}
+              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all relative ${camOn ? "bg-white/10 hover:bg-white/20" : "bg-red-600 ring-2 ring-red-400"}`}>
               {camOn ? <Camera className="w-5 h-5 text-white" /> : <CameraOff className="w-5 h-5 text-white" />}
               {!camOn && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-black" />}
-            </button>
+            </button>}
 
             {/* 設定 */}
             <button
@@ -1517,9 +1516,10 @@ export default function VideoCallPage() {
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${micOn ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
                 {micOn ? "MIC ON" : "MIC OFF"}
               </span>
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${camOn ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+              {!isAudioOnly && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${camOn ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
                 {camOn ? "CAM ON" : "CAM OFF"}
-              </span>
+              </span>}
+              {isAudioOnly && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">🔮 音声鑑定</span>}
             </div>
             {/* コイン残高（両者に表示） */}
             {coinBalance !== null && (

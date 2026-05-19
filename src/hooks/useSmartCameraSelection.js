@@ -42,7 +42,7 @@ async function probeCamera(deviceId) {
   }
 }
 
-export function useSmartCameraSelection() {
+export function useSmartCameraSelection({ audioOnly = false } = {}) {
   const [stream, setStream] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,6 +54,25 @@ export function useSmartCameraSelection() {
   useEffect(() => {
     const initializeDevices = async () => {
       try {
+        // 音声のみモード: カメラを取得せずマイクだけ
+        if (audioOnly) {
+          const aDevices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+          setAudioDevices(aDevices);
+          setVideoDevices([]);
+          const micId = localStorage.getItem('selectedMicId') || aDevices[0]?.deviceId;
+          const s = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: micId ? { deviceId: { exact: micId }, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                         : { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          });
+          setStream(s);
+          const resolvedMicId = s.getAudioTracks()[0]?.getSettings()?.deviceId || aDevices[0]?.deviceId || null;
+          setSelectedMicId(resolvedMicId);
+          if (resolvedMicId) localStorage.setItem('selectedMicId', resolvedMicId);
+          setLoading(false);
+          return;
+        }
+
         // 1. まず権限を取得してラベルを確定させる
         const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
         if (tempStream) tempStream.getTracks().forEach(t => t.stop());
