@@ -490,9 +490,9 @@ export default function AdminDashboard() {
                 </TabsTrigger>
                 <TabsTrigger value="recruit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary relative">
                   <Zap className="w-4 h-4" /> 申込
-                  {applications.length > 0 && (
+                  {applications.filter(a => !a.recruit_status || a.recruit_status === "未対応").length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-3 h-3 rounded-full flex items-center justify-center text-[8px]">
-                      {applications.length > 9 ? "9+" : applications.length}
+                      {applications.filter(a => !a.recruit_status || a.recruit_status === "未対応").length > 9 ? "9+" : applications.filter(a => !a.recruit_status || a.recruit_status === "未対応").length}
                     </span>
                   )}
                 </TabsTrigger>
