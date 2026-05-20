@@ -114,7 +114,7 @@ export default function Recruit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email) { toast.error("お名前とメールアドレスは必須です"); return; }
+    if (!name || !email || !snsUrl) { toast.error("お名前・メールアドレス・SNS/ウェブリンクは必須です"); return; }
     if (!termsAgreed) {
       toast.error("利用規約・秘密保持条項への同意が必要です");
       return;
@@ -748,9 +748,9 @@ export default function Recruit() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>SNS・ウェブリンク</Label>
-                <Input value={snsUrl} onChange={e => setSnsUrl(e.target.value)} placeholder="https://twitter.com/yourhandle" className="bg-secondary border-0" />
-                <p className="text-xs text-muted-foreground">Pro特典審査に使用します</p>
+                <Label>SNS・ウェブリンク<span className="text-destructive text-xs ml-1">*必須</span></Label>
+                <Input value={snsUrl} onChange={e => setSnsUrl(e.target.value)} placeholder="https://twitter.com/yourhandle" className="bg-secondary border-0" required />
+                <p className="text-xs text-muted-foreground">YouTube・X・Instagram・TikTok・ウェブサイト等のURLを入力してください</p>
               </div>
 
               {/* サービスカテゴリ選択 */}
@@ -875,7 +875,7 @@ export default function Recruit() {
 
               <Button
                 type="submit"
-                disabled={submitting || !name || !email || !termsAgreed}
+                disabled={submitting || !name || !email || !snsUrl || !termsAgreed}
                 className="w-full h-14 font-black text-base bg-primary text-black hover:bg-primary/90 gap-2 rounded-2xl"
                 style={{ boxShadow: "0 0 20px rgba(0,255,157,0.3)" }}
               >
