@@ -1,15 +1,17 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, MessageCircle, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Users, MessageCircle, Download, ExternalLink, Mail, Calendar, Instagram, Twitter, Youtube, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecruitApplicationManagement({ applications: propsApplications = [] }) {
   const queryClient = useQueryClient();
   const prevCountRef = useRef(0);
+  const [selectedApp, setSelectedApp] = useState(null);
 
   // AdminDashboardからpropsで受け取ったapplicationsを使用
   const applications = propsApplications && propsApplications.length > 0 ? propsApplications : [];
@@ -156,7 +158,7 @@ export default function RecruitApplicationManagement({ applications: propsApplic
                 const isTierPro = (data.followers || 0) >= 10000;
 
                 return (
-                  <tr key={app.id} className="border-b border-border/30 hover:bg-secondary/50 transition-colors">
+                  <tr key={app.id} className="border-b border-border/30 hover:bg-secondary/50 transition-colors cursor-pointer" onClick={() => setSelectedApp(app)}>
                     <td className="py-3 px-4">
                       <div>
                         <p className="font-bold flex items-center gap-2">
@@ -222,6 +224,84 @@ export default function RecruitApplicationManagement({ applications: propsApplic
           </table>
         </div>
       )}
+
+      {/* 詳細モーダル */}
+      {selectedApp && (() => {
+        const d = JSON.parse(selectedApp.content);
+        const isTierPro = (d.followers || 0) >= 10000;
+        return (
+          <Dialog open={!!selectedApp} onOpenChange={() => setSelectedApp(null)}>
+            <DialogContent className="bg-card border-border max-w-lg max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  申込詳細
+                  {isTierPro && <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-xs">Pro</Badge>}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 text-sm">
+                {/* 基本情報 */}
+                <div className="bg-secondary rounded-xl p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground font-bold mb-2">📋 基本情報</p>
+                  <div className="flex justify-between"><span className="text-muted-foreground">名前</span><span className="font-bold">{d.name || "—"}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-muted-foreground">メール</span><span className="font-mono text-xs flex items-center gap-1"><Mail className="w-3 h-3" />{d.email || "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">フォロワー数</span><span className="font-bold flex items-center gap-1"><Users className="w-3.5 h-3.5 text-primary" />{(d.followers || 0).toLocaleString()}人</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">申込日時</span><span className="text-xs flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(selectedApp.created_date).toLocaleString("ja-JP")}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-muted-foreground">ステータス</span>
+                    <Select value={selectedApp.recruit_status || "未対応"} onValueChange={(s) => { handleStatusChange(selectedApp, s); setSelectedApp({...selectedApp, recruit_status: s}); }}>
+                      <SelectTrigger className="w-24 h-7 text-xs bg-background border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="未対応">未対応</SelectItem>
+                        <SelectItem value="審査中">審査中</SelectItem>
+                        <SelectItem value="採用">採用</SelectItem>
+                        <SelectItem value="不採用">不採用</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* SNS・URL */}
+                {d.sns_url && (
+                  <div className="bg-secondary rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground font-bold mb-2">🔗 SNS / URL</p>
+                    <a href={d.sns_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs flex items-center gap-1 hover:underline break-all">
+                      <Globe className="w-3 h-3 shrink-0" />{d.sns_url}
+                    </a>
+                  </div>
+                )}
+
+                {/* 自己PR */}
+                {d.pr && (
+                  <div className="bg-secondary rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground font-bold mb-2">💬 自己PR</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{d.pr}</p>
+                  </div>
+                )}
+
+                {/* その他フィールド */}
+                {Object.entries(d).filter(([k]) => !["name","email","followers","sns_url","pr"].includes(k)).length > 0 && (
+                  <div className="bg-secondary rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground font-bold mb-2">📄 その他情報</p>
+                    <div className="space-y-1.5">
+                      {Object.entries(d).filter(([k]) => !["name","email","followers","sns_url","pr"].includes(k)).map(([k, v]) => (
+                        <div key={k} className="flex justify-between gap-2">
+                          <span className="text-muted-foreground text-xs">{k}</span>
+                          <span className="text-xs text-right break-all">{String(v)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* アクション */}
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" onClick={() => { handleApprove(selectedApp); setSelectedApp(null); }} className="flex-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/40" variant="outline">承認してメール送信</Button>
+                  <Button size="sm" onClick={() => { handleReject(selectedApp); setSelectedApp(null); }} className="flex-1 border-red-500/40 text-red-400 hover:bg-red-500/10" variant="outline">却下してメール送信</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* 説明 */}
       <div className="bg-secondary rounded-xl p-4 text-xs text-muted-foreground space-y-1">
