@@ -16,6 +16,21 @@ export default function RecruitApplicationManagement({ applications: propsApplic
   // AdminDashboardからpropsで受け取ったapplicationsを使用
   const applications = propsApplications && propsApplications.length > 0 ? propsApplications : [];
 
+  // 重複メールを検出（同一メールで複数申込）
+  const emailCountMap = applications.reduce((acc, app) => {
+    try {
+      const d = JSON.parse(app.content);
+      if (d.email) acc[d.email] = (acc[d.email] || 0) + 1;
+    } catch {}
+    return acc;
+  }, {});
+  const isDuplicate = (app) => {
+    try {
+      const d = JSON.parse(app.content);
+      return d.email && emailCountMap[d.email] > 1;
+    } catch { return false; }
+  };
+
   // 新しい申し込みの通知
   useEffect(() => {
     if (applications.length > prevCountRef.current) {
@@ -27,6 +42,24 @@ export default function RecruitApplicationManagement({ applications: propsApplic
     }
     prevCountRef.current = applications.length;
   }, [applications.length]);
+
+  const handleDuplicateNotify = async (app) => {
+    try {
+      const data = JSON.parse(app.content);
+      await base44.functions.invoke("notifyAdminNewUser", {
+        type: "recruit_rejected",
+        to_email: data.email,
+        to_name: data.name,
+        subject: "【ChatMarket】ライバー申込 - 重複申込のお知らせ",
+        body: `${data.name}様\n\nいつもお世話になっております。\n\nこの度はChatMarketのライバー申込をいただきありがとうございました。\n\nご確認したところ、同一のメールアドレスで既にお申込みいただいている記録がございます。\n\n重複申込となりますので、本申込はお断りさせていただきます。\n既にご登録済みの方は、そのままサービスをご利用いただけます。\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n\n---\nChatMarket 運営チーム`,
+      }).catch(() => {});
+      await base44.entities.BlogPost.update(app.id, { recruit_status: "不採用" });
+      queryClient.invalidateQueries({ queryKey: ["admin-recruit-applications"] });
+      toast.success(`${data.name}に重複申込メールを送信しました`);
+    } catch (err) {
+      toast.error("処理に失敗しました: " + err.message);
+    }
+  };
 
   const handleApprove = async (app) => {
     try {
@@ -156,16 +189,22 @@ export default function RecruitApplicationManagement({ applications: propsApplic
               {applications.map((app) => {
                 const data = JSON.parse(app.content);
                 const isTierPro = (data.followers || 0) >= 10000;
+                const dup = isDuplicate(app);
 
                 return (
-                  <tr key={app.id} className="border-b border-border/30 hover:bg-secondary/50 transition-colors cursor-pointer" onClick={() => setSelectedApp(app)}>
+                  <tr key={app.id} className={`border-b border-border/30 hover:bg-secondary/50 transition-colors cursor-pointer ${dup ? "bg-orange-500/5" : ""}`} onClick={() => setSelectedApp(app)}>
                     <td className="py-3 px-4">
                       <div>
-                        <p className="font-bold flex items-center gap-2">
+                        <p className="font-bold flex items-center gap-2 flex-wrap">
                           {data.name}
                           {isTierPro && (
                             <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-xs">
                               Pro
+                            </Badge>
+                          )}
+                          {dup && (
+                            <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/40 text-xs">
+                              重複申込
                             </Badge>
                           )}
                         </p>
@@ -198,23 +237,36 @@ export default function RecruitApplicationManagement({ applications: propsApplic
                       {new Date(app.created_date).toLocaleString("ja-JP")}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <div className="flex gap-1 justify-center">
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(app)}
-                          className="h-7 px-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/40"
-                          variant="outline"
-                        >
-                          承認
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleReject(app)}
-                          className="h-7 px-2 border-red-500/40 text-red-400 hover:bg-red-500/10"
-                          variant="outline"
-                        >
-                          却下
-                        </Button>
+                      <div className="flex gap-1 justify-center flex-wrap">
+                        {dup ? (
+                          <Button
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleDuplicateNotify(app); }}
+                            className="h-7 px-2 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/40"
+                            variant="outline"
+                          >
+                            重複通知
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleApprove(app); }}
+                              className="h-7 px-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/40"
+                              variant="outline"
+                            >
+                              承認
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleReject(app); }}
+                              className="h-7 px-2 border-red-500/40 text-red-400 hover:bg-red-500/10"
+                              variant="outline"
+                            >
+                              却下
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -229,13 +281,15 @@ export default function RecruitApplicationManagement({ applications: propsApplic
       {selectedApp && (() => {
         const d = JSON.parse(selectedApp.content);
         const isTierPro = (d.followers || 0) >= 10000;
+        const dup = isDuplicate(selectedApp);
         return (
           <Dialog open={!!selectedApp} onOpenChange={() => setSelectedApp(null)}>
             <DialogContent className="bg-card border-border max-w-lg max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
+                <DialogTitle className="flex items-center gap-2 flex-wrap">
                   申込詳細
                   {isTierPro && <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-xs">Pro</Badge>}
+                  {dup && <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/40 text-xs">重複申込</Badge>}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 text-sm">
@@ -292,10 +346,23 @@ export default function RecruitApplicationManagement({ applications: propsApplic
                   </div>
                 )}
 
+                {/* 重複警告 */}
+                {dup && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 text-xs text-orange-300">
+                    ⚠️ 同一メールアドレスで複数の申込があります。「重複通知を送信」ボタンで申請者にすでに登録済みである旨をメールで自動通知できます。
+                  </div>
+                )}
+
                 {/* アクション */}
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" onClick={() => { handleApprove(selectedApp); setSelectedApp(null); }} className="flex-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/40" variant="outline">承認してメール送信</Button>
-                  <Button size="sm" onClick={() => { handleReject(selectedApp); setSelectedApp(null); }} className="flex-1 border-red-500/40 text-red-400 hover:bg-red-500/10" variant="outline">却下してメール送信</Button>
+                  {dup ? (
+                    <Button size="sm" onClick={() => { handleDuplicateNotify(selectedApp); setSelectedApp(null); }} className="flex-1 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/40" variant="outline">重複通知を送信</Button>
+                  ) : (
+                    <>
+                      <Button size="sm" onClick={() => { handleApprove(selectedApp); setSelectedApp(null); }} className="flex-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/40" variant="outline">承認してメール送信</Button>
+                      <Button size="sm" onClick={() => { handleReject(selectedApp); setSelectedApp(null); }} className="flex-1 border-red-500/40 text-red-400 hover:bg-red-500/10" variant="outline">却下してメール送信</Button>
+                    </>
+                  )}
                 </div>
               </div>
             </DialogContent>
@@ -307,6 +374,7 @@ export default function RecruitApplicationManagement({ applications: propsApplic
       <div className="bg-secondary rounded-xl p-4 text-xs text-muted-foreground space-y-1">
         <p>• 承認: 申請者に確認メールを送信 → プロフィール設定に進める</p>
         <p>• 却下: 申請者に却下メールを送信 → 再度申し込み可能</p>
+        <p>• <span className="text-orange-400">重複申込</span>（同一メールで複数申込）: 「重複通知を送信」で既に登録済みである旨を自動メール送信</p>
         <p className="pt-2 border-t border-border/50">
           Pro申し込み（フォロワー1万人以上）は3ヶ月無料、通常申し込みは初月無料
         </p>
