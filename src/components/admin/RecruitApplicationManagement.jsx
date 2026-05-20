@@ -29,15 +29,17 @@ export default function RecruitApplicationManagement({ applications: propsApplic
   const handleApprove = async (app) => {
     try {
       const data = JSON.parse(app.content);
-      // 申請者にメール送信
-      await base44.integrations.Core.SendEmail({
-        to: data.email,
+      // バックエンド関数経由でメール送信（アプリ外ユーザーにも送信可能）
+      await base44.functions.invoke("notifyAdminNewUser", {
+        type: "recruit_approved",
+        to_email: data.email,
+        to_name: data.name,
         subject: "【ChatMarket】ライバー申込 - 承認のお知らせ",
-        body: `${data.name}様\n\nいつもお世話になっております。\n\nこの度はChatMarketのライバー申込をいただきありがとうございました。\n\nご申込内容を確認させていただき、承認させていただきました。\n\n全プランの無料期間が自動的に適用されております。\nお気軽にChatMarketをお始めください。\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n\n---\nChatMarket 運営チーム`,
-      });
+        body: `${data.name}様\n\nいつもお世話になっております。\n\nこの度はChatMarketのライバー申込をいただきありがとうございました。\n\nご申込内容を確認させていただき、承認させていただきました。\n\nお気軽にChatMarketをお始めください。\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n\n---\nChatMarket 運営チーム`,
+      }).catch(() => {}); // メール失敗しても処理継続
 
-      // BlogPostを削除（承認済み）
-      await base44.entities.BlogPost.delete(app.id);
+      // ステータスを採用に更新
+      await base44.entities.BlogPost.update(app.id, { recruit_status: "採用" });
       queryClient.invalidateQueries({ queryKey: ["admin-recruit-applications"] });
       toast.success(`${data.name}の申込を承認しました`);
     } catch (err) {
@@ -48,15 +50,17 @@ export default function RecruitApplicationManagement({ applications: propsApplic
   const handleReject = async (app) => {
     try {
       const data = JSON.parse(app.content);
-      // 申請者にメール送信
-      await base44.integrations.Core.SendEmail({
-        to: data.email,
+      // バックエンド関数経由でメール送信
+      await base44.functions.invoke("notifyAdminNewUser", {
+        type: "recruit_rejected",
+        to_email: data.email,
+        to_name: data.name,
         subject: "【ChatMarket】ライバー申込 - 審査結果のお知らせ",
         body: `${data.name}様\n\nいつもお世話になっております。\n\nこの度はChatMarketのライバー申込をいただきありがとうございました。\n\nご申込内容を確認させていただきましたが、現在のところご参加をお断りさせていただいております。\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n\n---\nChatMarket 運営チーム`,
-      });
+      }).catch(() => {}); // メール失敗しても処理継続
 
-      // BlogPostを削除（却下済み）
-      await base44.entities.BlogPost.delete(app.id);
+      // ステータスを不採用に更新
+      await base44.entities.BlogPost.update(app.id, { recruit_status: "不採用" });
       queryClient.invalidateQueries({ queryKey: ["admin-recruit-applications"] });
       toast.success(`${data.name}の申込を却下しました`);
     } catch (err) {

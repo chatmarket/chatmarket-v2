@@ -5,6 +5,17 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const payload = await req.json();
 
+    // ライバー申込の承認/却下メール送信リクエストに対応
+    if (payload.type === 'recruit_approved' || payload.type === 'recruit_rejected') {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: payload.to_email,
+        from_name: 'ChatMarket 運営チーム',
+        subject: payload.subject,
+        body: payload.body,
+      });
+      return Response.json({ status: 'success', type: payload.type });
+    }
+
     const data = payload.data || {};
     const userEmail = data.user_email;
 
