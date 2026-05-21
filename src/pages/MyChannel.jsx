@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCode from "qrcode.react";
-import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode, Archive, ToggleLeft, ToggleRight, Coins } from "lucide-react";
+import { Video, Radio, Edit, Save, Upload, Settings, CreditCard, CheckCircle, XCircle, Clock, DollarSign, PhoneCall, Share2, Copy, QrCode, Archive, ToggleLeft, ToggleRight, Coins, Camera } from "lucide-react";
+import ChekiSettingsPanel from "@/components/cheki/ChekiSettingsPanel";
 import SocialLinks from "@/components/channel/SocialLinks";
 import { GlobalProfileEditor, LanguageBadges, LocalTimeClock, LearningStatusBadge } from "@/components/channel/GlobalProfilePanel";
 import { Switch } from "@/components/ui/switch";
@@ -370,6 +371,9 @@ export default function MyChannel() {
           <TabsTrigger value="archives" className="flex items-center gap-1">
             <Archive className="w-3.5 h-3.5" /> アーカイブ販売
           </TabsTrigger>
+          <TabsTrigger value="cheki" className="flex items-center gap-1">
+            <Camera className="w-3.5 h-3.5" /> チェキ販売
+          </TabsTrigger>
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
             {subscriptions.filter(s => s.status === "active").length > 0 && (
@@ -522,6 +526,12 @@ export default function MyChannel() {
               </div>
             );
           })()}
+        </TabsContent>
+
+        <TabsContent value="cheki">
+          <div className="bg-card rounded-xl border border-pink-500/30 p-5">
+            <ChekiSettingsPanel channel={channel} user={user} />
+          </div>
         </TabsContent>
 
         <TabsContent value="plans">
