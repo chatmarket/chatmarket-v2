@@ -57,16 +57,16 @@ Deno.serve(async (req) => {
     staticPages.forEach(page => {
       const lastmod = new Date().toISOString().split('T')[0];
       xmlContent += `  <url>\n`;
-      xmlContent += `    <loc>https://chatmarket.jp${page.url}</loc>\n`;
+      xmlContent += `    <loc>https://live-chat-market.com${page.url}</loc>\n`;
       
       // hreflang ブロック（日本語版と英語版）
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://chatmarket.jp${page.url}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com${page.url}" />\n`;
       if (page.url === '/') {
-        xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.jp/en/" />\n`;
+        xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/" />\n`;
       } else {
-        xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.jp/en${page.url}" />\n`;
+        xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en${page.url}" />\n`;
       }
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://chatmarket.jp${page.url}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com${page.url}" />\n`;
       
       xmlContent += `    <lastmod>${lastmod}</lastmod>\n`;
       xmlContent += `    <changefreq>${page.changefreq}</changefreq>\n`;
@@ -82,12 +82,12 @@ Deno.serve(async (req) => {
         ? new Date(channel.updated_date).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0];
       xmlContent += `  <url>\n`;
-      xmlContent += `    <loc>https://chatmarket.jp/channel/${channel.id}</loc>\n`;
+      xmlContent += `    <loc>https://live-chat-market.com/channel/${channel.id}</loc>\n`;
       
       // hreflang ブロック
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://chatmarket.jp/channel/${channel.id}" />\n`;
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.jp/en/channel/${channel.id}" />\n`;
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://chatmarket.jp/channel/${channel.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/${channel.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/${channel.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/${channel.id}" />\n`;
       
       xmlContent += `    <lastmod>${lastmod}</lastmod>\n`;
       xmlContent += `    <changefreq>weekly</changefreq>\n`;
@@ -103,12 +103,12 @@ Deno.serve(async (req) => {
         ? new Date(video.updated_date).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0];
       xmlContent += `  <url>\n`;
-      xmlContent += `    <loc>https://chatmarket.jp/watch/${video.id}</loc>\n`;
+      xmlContent += `    <loc>https://live-chat-market.com/watch/${video.id}</loc>\n`;
       
       // hreflang ブロック
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://chatmarket.jp/watch/${video.id}" />\n`;
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://chatmarket.jp/en/watch/${video.id}" />\n`;
-      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://chatmarket.jp/watch/${video.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/${video.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/${video.id}" />\n`;
+      xmlContent += `    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/${video.id}" />\n`;
       
       if (video.thumbnail_url) {
         xmlContent += `    <image:image>\n`;
