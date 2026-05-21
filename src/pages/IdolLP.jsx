@@ -376,10 +376,10 @@ export default function IdolLP() {
               </p>
             </div>
             <div className="p-5 rounded-2xl space-y-3" style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.25)" }}>
-              <div className="text-2xl">🔮</div>
-              <h3 className="font-black text-sm" style={{ color: "#c4b5fd" }}>将来のLINE譲渡機能も準備済み</h3>
+              <div className="text-2xl">💚</div>
+              <h3 className="font-black text-sm" style={{ color: "#c4b5fd" }}>LINEでチケット譲渡・送付に対応！</h3>
               <p className="text-white/60 text-xs leading-relaxed">
-                購入したチケットを友達にLINEで送る「分配機能」の土台設計が完了。アップデートでいつでも有効化できます。
+                購入したチケットを友達にLINEで送る「分配機能」が利用可能に。転売防止のため、QRコードは受け取った相手にのみ発行されます。
               </p>
             </div>
           </div>
