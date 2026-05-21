@@ -5,6 +5,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@16.12.0';
 
+async function sendLineNotify(message) {
+  const token = Deno.env.get('LINE_NOTIFY_TOKEN');
+  if (!token) { console.warn('[LineNotify] LINE_NOTIFY_TOKEN未設定。スキップ。'); return; }
+  const res = await fetch('https://notify-api.line.me/api/notify', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ message }),
+  });
+  if (!res.ok) console.error(`[LineNotify] 失敗 ${res.status}: ${await res.text()}`);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -70,6 +81,20 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.TicketEvent.update(event_id, { ticket_types: updatedTypes });
 
       console.log(`[EventTicketWebhook] ${qty}枚発券: ${buyer_email} -> ${ticketEvent.event_name} [${prefix}-${String(startSerial).padStart(3,'0')} ~ ${prefix}-${String(startSerial+qty-1).padStart(3,'0')}]`);
+
+      // LINE Notify 通知
+      const totalYen = Math.round((session.amount_total || 0) / 100);
+      const lineMsg = [
+        '',
+        '🎟️ チケット購入通知',
+        `イベント: ${ticketEvent.event_name}`,
+        `席種: ${tier_name}`,
+        `枚数: ${qty}枚`,
+        `金額: ¥${totalYen.toLocaleString()}`,
+        `購入者: ${buyer_name || buyer_email}`,
+        `チャンネル: ${ticketEvent.channel_name || ''}`,
+      ].join('\n');
+      await sendLineNotify(lineMsg);
     }
 
     return Response.json({ received: true });

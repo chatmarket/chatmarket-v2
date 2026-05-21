@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star, Ticket, Percent } from "lucide-react";
+import { DollarSign, Users, TrendingUp, CreditCard, Settings, AlertCircle, Copy, Check, Coins, RefreshCw, FileText, Home, CheckCircle, XCircle, ExternalLink, ShieldAlert, Ban, Radio, Phone, Tag, Zap, Music, Star, Ticket, Percent, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -34,6 +34,7 @@ import NgWordManagement from "../components/admin/NgWordManagement";
 import IdolApplicationManagement from "../components/admin/IdolApplicationManagement";
 import TicketBuyerExport from "../components/admin/TicketBuyerExport";
 import SpecialRateManager from "../components/admin/SpecialRateManager";
+import LineNotifySettings from "../components/admin/LineNotifySettings";
 import { isAdmin } from "@/lib/adminConfig";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 
@@ -477,6 +478,13 @@ export default function AdminDashboard() {
               <div className="flex gap-0 border-r border-border/30">
                 <TabsTrigger value="special-rates" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Percent className="w-4 h-4" /> 特別料率
+                </TabsTrigger>
+              </div>
+
+              {/* 🔔 通知設定 */}
+              <div className="flex gap-0 border-r border-border/30">
+                <TabsTrigger value="line-notify" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <MessageCircle className="w-4 h-4" /> LINE通知
                 </TabsTrigger>
               </div>
 
@@ -955,6 +963,11 @@ export default function AdminDashboard() {
         {/* NGワード管理タブ */}
         <TabsContent value="ng-words" className="space-y-6">
           <NgWordManagement />
+        </TabsContent>
+
+        {/* LINE Notify設定タブ */}
+        <TabsContent value="line-notify" className="space-y-6">
+          <LineNotifySettings />
         </TabsContent>
 
         {/* ユーザー管理タブ */}

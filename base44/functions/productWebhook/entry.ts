@@ -1,6 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@14.21.0';
 
+async function sendLineNotify(message) {
+  const token = Deno.env.get('LINE_NOTIFY_TOKEN');
+  if (!token) { console.warn('[LineNotify] LINE_NOTIFY_TOKEN未設定。スキップ。'); return; }
+  const res = await fetch('https://notify-api.line.me/api/notify', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ message }),
+  });
+  if (!res.ok) console.error(`[LineNotify] 失敗 ${res.status}: ${await res.text()}`);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -47,6 +58,19 @@ Deno.serve(async (req) => {
             sold_count: (product.sold_count || 0) + 1,
           });
         }
+
+        // LINE Notify 通知
+        const totalYen = Math.round((session.amount_total || 0) / 100);
+        const isDigitalFlag = is_digital === '1';
+        const lineMsg = [
+          '',
+          `🛍️ グッズ${isDigitalFlag ? '(デジタル)' : ''}購入通知`,
+          `商品: ${product ? product.title : product_id}`,
+          `金額: ¥${totalYen.toLocaleString()}`,
+          `購入者: ${session.customer_details?.email || buyer_email || '不明'}`,
+          `納品方式: ${delivery_mode === 'custom_order' ? '手動納品(要対応)' : '即時DL'}`,
+        ].join('\n');
+        await sendLineNotify(lineMsg);
       }
     }
 
