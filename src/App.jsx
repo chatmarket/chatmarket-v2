@@ -98,6 +98,7 @@ import AdminDashboardMetrics from '@/pages/AdminDashboardMetrics';
 import EnglishLP from '@/pages/EnglishLP';
 import CoachLP from '@/pages/CoachLP';
 import ChekiCaptureEditor from '@/pages/ChekiCaptureEditor';
+import MyPurchases from '@/pages/MyPurchases';
 
 
 export default function App() {
@@ -203,6 +204,7 @@ export default function App() {
             <Route path="/lp/english" element={<EnglishLP />} />
             <Route path="/lp/coach" element={<CoachLP />} />
             <Route path="/cheki-editor" element={<ChekiCaptureEditor />} />
+            <Route path="/my-purchases" element={<MyPurchases />} />
 
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />

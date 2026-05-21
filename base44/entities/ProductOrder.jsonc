@@ -1,0 +1,114 @@
+{
+  "name": "ProductOrder",
+  "type": "object",
+  "description": "\u30b0\u30c3\u30ba\u30fb\u30c7\u30b8\u30bf\u30eb\u30b3\u30f3\u30c6\u30f3\u30c4\u6ce8\u6587\u8a18\u9332",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Product ID"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "buyer_email": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u8005\u30e1\u30fc\u30eb"
+    },
+    "buyer_name": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u8005\u540d"
+    },
+    "product_title": {
+      "type": "string",
+      "description": "\u5546\u54c1\u30bf\u30a4\u30c8\u30eb\uff08\u30b9\u30ca\u30c3\u30d7\u30b7\u30e7\u30c3\u30c8\uff09"
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\u8cfc\u5165\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "is_digital": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30c7\u30b8\u30bf\u30eb\u5546\u54c1\u30d5\u30e9\u30b0"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "\u30c7\u30b8\u30bf\u30eb\u5546\u54c1\u306eS3 private URI\uff08\u7f72\u540dURL\u751f\u6210\u306b\u4f7f\u7528\uff09"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30d5\u30a1\u30a4\u30eb\u540d"
+    },
+    "download_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u56de\u6570"
+    },
+    "download_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u6709\u52b9\u671f\u9650"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "\u6ce8\u6587\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout Session ID"
+    },
+    "shipping_name": {
+      "type": "string",
+      "description": "\u3010\u7269\u7406\u5546\u54c1\u306e\u307f\u3011\u304a\u5c4a\u3051\u5148\u6c0f\u540d"
+    },
+    "shipping_postal": {
+      "type": "string",
+      "description": "\u3010\u7269\u7406\u5546\u54c1\u306e\u307f\u3011\u90f5\u4fbf\u756a\u53f7"
+    },
+    "shipping_address": {
+      "type": "string",
+      "description": "\u3010\u7269\u7406\u5546\u54c1\u306e\u307f\u3011\u4f4f\u6240"
+    },
+    "shipping_phone": {
+      "type": "string",
+      "description": "\u3010\u7269\u7406\u5546\u54c1\u306e\u307f\u3011\u96fb\u8a71\u756a\u53f7"
+    },
+    "shipping_status": {
+      "type": "string",
+      "enum": [
+        "waiting",
+        "preparing",
+        "shipped",
+        "delivered"
+      ],
+      "default": "waiting",
+      "description": "\u3010\u7269\u7406\u5546\u54c1\u306e\u307f\u3011\u767a\u9001\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "tracking_number": {
+      "type": "string",
+      "description": "\u3010\u7269\u7406\u5546\u54c1\u306e\u307f\u3011\u8ffd\u8de1\u756a\u53f7"
+    }
+  },
+  "required": [
+    "product_id",
+    "channel_id",
+    "owner_email",
+    "buyer_email",
+    "price_yen"
+  ]
+}
