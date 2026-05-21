@@ -104,6 +104,7 @@
       "type": "string",
       "enum": [
         "fortune_telling",
+        "idol",
         "business",
         "language",
         "fitness",
@@ -111,7 +112,7 @@
         "other"
       ],
       "default": "other",
-      "description": "\u30b5\u30fc\u30d3\u30b9\u30ab\u30c6\u30b4\u30ea\uff08\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u7b49\u306e\u6a5f\u80fd\u5236\u5fa1\u306b\u4f7f\u7528\uff09\u3002fortune_telling = \u5360\u3044\u5e2b\u5c02\u7528\u6a5f\u80fd\u304c\u6709\u52b9"
+      "description": "\u30b5\u30fc\u30d3\u30b9\u30ab\u30c6\u30b4\u30ea\uff08\u6a5f\u80fd\u5236\u5fa1\u306b\u4f7f\u7528\uff09\u3002fortune_telling=\u5360\u3044\u5e2b\u5c02\u7528\u6a5f\u80fd\u6709\u52b9, idol=\u30c7\u30b8\u30bf\u30eb\u30c1\u30a7\u30ad\u6a5f\u80fd\u6709\u52b9"
     },
     "fortune_arts": {
       "type": "string",
@@ -275,7 +276,7 @@
       "items": {
         "type": "string"
       },
-      "description": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u30d0\u30c3\u30b8\uff08storecka_100, toeic_900, certified_coach, years_5, years_10, youtube_10k, twitter_10k, top_creator, verified \u306a\u3069\uff09"
+      "description": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u30d0\u30c3\u30b8"
     },
     "campaign_allowed": {
       "type": "boolean",

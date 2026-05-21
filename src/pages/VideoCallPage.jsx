@@ -31,6 +31,7 @@ import OutgoingCallScreen from "../components/call/OutgoingCallScreen";
 import MobileVideoCallUI from "../components/call/MobileVideoCallUI";
 import CallDebugPanel from "../components/debug/CallDebugPanel";
 import WebRtcStatusPanel from "../components/call/WebRtcStatusPanel";
+import ChekiCallEndBanner from "../components/cheki/ChekiCallEndBanner";
 
 // ---- プラン別定数（バックエンドと同期） ----
 const PLAN_MATRIX = {
@@ -284,6 +285,7 @@ export default function VideoCallPage() {
   const [showYellModal, setShowYellModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showChekiBanner, setShowChekiBanner] = useState(false);
   const [selectedYell, setSelectedYell] = useState(null);
   const [yellSending, setYellSending] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -865,9 +867,9 @@ export default function VideoCallPage() {
         return; // ここではナビゲートしない
       }
     }
-    // active 以外（accepted, pending など）では ended に変更しない
     localStream?.getTracks().forEach((t) => t.stop());
     toast.success("通話を終了しました");
+    if (user && call && user.email === call.callee_email && calleeChannel?.service_category === "idol") { setShowChekiBanner(true); return; }
     navigate(-1);
   };
 
@@ -1944,7 +1946,7 @@ export default function VideoCallPage() {
         />
       )}
 
-      {/* Reconnection Notification (After call ended while extension pending) */}
+      <ChekiCallEndBanner show={showChekiBanner} onClose={() => { setShowChekiBanner(false); navigate(-1); }} localVideoRef={localVideoRef} remoteVideoRef={remoteVideoRef} call={call} />
       {showReconnectionNotification && call && (
         <ReconnectionNotification
           call={call}
