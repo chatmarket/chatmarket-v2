@@ -84,64 +84,52 @@ function EventCreateForm({ channel, onCreated }) {
 // ---- Ticket Purchase Modal ----
 function PurchaseModal({ event, tier, user, onClose, onPurchased }) {
   const [purchasing, setPurchasing] = useState(false);
-  const [done, setDone] = useState(false);
 
   const handleBuy = async () => {
     setPurchasing(true);
-    const ticketNumber = `T-${Date.now().toString(36).toUpperCase()}`;
-    await base44.entities.DigitalTicket.create({
-      owner_email: user.email,
-      owner_name: user.full_name || user.email,
-      event_id: event.id,
-      event_name: event.event_name,
-      event_date: event.event_date,
-      event_location: event.location || "",
-      ticket_type: tier.type,
-      channel_id: event.channel_id,
-      channel_name: event.channel_name,
-      price: tier.price,
-      status: "valid",
-      ticket_number: ticketNumber,
-      thumbnail_url: event.thumbnail_url || "",
-    });
-    // 売上カウントを更新（sold+1）
-    const updated = event.ticket_types.map(t =>
-      t.name === tier.name ? { ...t, sold: (t.sold || 0) + 1 } : t
-    );
-    await base44.entities.TicketEvent.update(event.id, { ticket_types: updated });
-    setDone(true);
-    setPurchasing(false);
-    setTimeout(() => { onPurchased(); onClose(); }, 1800);
+    try {
+      const res = await base44.functions.invoke("createEventTicketCheckout", {
+        event_id: event.id,
+        tier_name: tier.name,
+        tier_type: tier.type,
+      });
+      const { checkout_url, free, success } = res.data;
+      if (free && success) {
+        // 無料チケット：直接マイチケットへ
+        onPurchased();
+        onClose();
+        return;
+      }
+      window.location.href = checkout_url;
+    } catch (e) {
+      toast.error(e.message || "購入処理に失敗しました");
+      setPurchasing(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
-        {done ? (
-          <div className="text-center py-4 space-y-3">
-            <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto" />
-            <p className="font-bold text-xl">購入完了！</p>
-            <p className="text-sm text-muted-foreground">マイチケットに追加されました</p>
+        <h3 className="font-bold text-lg">{event.event_name}</h3>
+        {event.event_date && (
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.event_date), "yyyy/MM/dd HH:mm")}</span>
+            {event.location && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{event.location}</span>}
           </div>
-        ) : (
-          <>
-            <h3 className="font-bold text-lg">{event.event_name}</h3>
-            <div className="bg-secondary rounded-xl p-4 space-y-1 text-sm">
-              <p className="text-muted-foreground">チケット種別</p>
-              <p className="font-semibold">{tier.name}</p>
-              <p className="text-2xl font-black text-primary mt-2">¥{tier.price.toLocaleString()}</p>
-            </div>
-            <p className="text-xs text-muted-foreground text-center">
-              ※ モック決済です。実際の請求は発生しません。
-            </p>
-            <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={onClose}>キャンセル</Button>
-              <Button className="flex-1" disabled={purchasing} onClick={handleBuy}>
-                {purchasing ? "処理中..." : "購入する（モック）"}
-              </Button>
-            </div>
-          </>
         )}
+        <div className="bg-secondary rounded-xl p-4 space-y-1 text-sm">
+          <p className="text-muted-foreground">チケット種別</p>
+          <p className="font-semibold">{tier.name}</p>
+          <p className="text-2xl font-black text-primary mt-2">
+            {tier.price === 0 ? "無料" : `¥${tier.price.toLocaleString()}`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1" onClick={onClose}>キャンセル</Button>
+          <Button className="flex-1" disabled={purchasing} onClick={handleBuy}>
+            {purchasing ? "処理中..." : tier.price === 0 ? "無料で取得" : "Stripe決済へ"}
+          </Button>
+        </div>
       </div>
     </div>
   );

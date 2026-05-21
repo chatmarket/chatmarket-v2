@@ -20,6 +20,7 @@ import { ja } from "date-fns/locale";
 import { minutesUntilLocal, getTimezoneHint, formatAppointmentDateTime } from "@/lib/timezone";
 import { getLang } from "@/lib/i18n";
 import AppointmentRequestModal from "@/components/appointment/AppointmentRequestModal";
+import { Ticket, MapPin, Users } from "lucide-react";
 
 const STATUS_CONFIG = {
   pending:          { label: "リクエスト中", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
@@ -307,6 +308,7 @@ export default function FortuneCalendar() {
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [callableAppts, setCallableAppts] = useState([]);
+  const [calendarTab, setCalendarTab] = useState("appointments"); // "appointments" | "events"
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(isAuth => {
@@ -393,6 +395,13 @@ export default function FortuneCalendar() {
     return () => clearInterval(timer);
   }, [appointments, user]);
 
+  // チャンネルのTicketEvents
+  const { data: ticketEvents = [] } = useQuery({
+    queryKey: ["ticket-events-calendar", myChannel?.id],
+    queryFn: () => base44.entities.TicketEvent.filter({ channel_id: myChannel.id }, "event_date", 50),
+    enabled: !!myChannel?.id,
+  });
+
   // カレンダー日付
   const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
   const firstDayOfWeek = startOfMonth(currentMonth).getDay(); // 0=日
@@ -418,11 +427,18 @@ export default function FortuneCalendar() {
   const getApptDot = (day) => {
     const dayStr = format(day, "yyyy-MM-dd");
     const list = appointments.filter(a => (a.confirmed_date || a.requested_date) === dayStr);
-    if (list.length === 0) return null;
+    const hasEvent = ticketEvents.some(e => e.event_date && e.event_date.slice(0, 10) === dayStr);
+    if (list.length === 0 && !hasEvent) return null;
     if (list.some(a => a.status === "accepted")) return "green";
+    if (hasEvent) return "purple";
     if (list.some(a => a.status === "pending" || a.status === "counter_proposed")) return "yellow";
     return "gray";
   };
+
+  // 選択日のTicketEvents
+  const dayEvents = ticketEvents.filter(e =>
+    e.event_date && isSameDay(parseISO(e.event_date.slice(0, 10)), selectedDay)
+  );
 
   if (!user) return null;
 
@@ -515,7 +531,7 @@ export default function FortuneCalendar() {
                   {format(day, "d")}
                   {dot && (
                     <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
-                      dot === "green" ? "bg-green-400" : dot === "yellow" ? "bg-yellow-400" : "bg-gray-500"
+                      dot === "green" ? "bg-green-400" : dot === "yellow" ? "bg-yellow-400" : dot === "purple" ? "bg-violet-400" : "bg-gray-500"
                     }`} />
                   )}
                 </button>
@@ -524,43 +540,90 @@ export default function FortuneCalendar() {
           </div>
 
           {/* 凡例 */}
-          <div className="flex gap-4 text-xs text-muted-foreground">
+          <div className="flex gap-4 text-xs text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> 確定</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" /> 待機中</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> イベント</span>
           </div>
 
-          {/* 選択日の予約一覧 */}
-          <div className="border-t border-border/40 pt-4">
+          {/* タブ切替 */}
+          <div className="flex border-b border-border/40">
+            <button
+              onClick={() => setCalendarTab("appointments")}
+              className={`flex-1 text-xs font-semibold pb-2 transition-colors ${calendarTab === "appointments" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+            >予約</button>
+            <button
+              onClick={() => setCalendarTab("events")}
+              className={`flex-1 text-xs font-semibold pb-2 transition-colors flex items-center justify-center gap-1 ${calendarTab === "events" ? "text-violet-400 border-b-2 border-violet-400" : "text-muted-foreground"}`}
+            >
+              <Ticket className="w-3 h-3" />
+              イベント {dayEvents.length > 0 && <span className="bg-violet-500/20 text-violet-400 rounded-full px-1.5 text-[10px]">{dayEvents.length}</span>}
+            </button>
+          </div>
+
+          {/* 選択日の内容 */}
+          <div className="pt-2">
             <p className="text-xs font-bold text-muted-foreground mb-2">
-              {format(selectedDay, "M月d日(EEE)", { locale: ja })} の予約
+              {format(selectedDay, "M月d日(EEE)", { locale: ja })}
             </p>
-            {dayAppts.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">予約はありません</p>
-            ) : (
-              <div className="space-y-2">
-                {dayAppts.map(a => {
-                  const cfg = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending;
-                  const d = a.confirmed_date || a.requested_date;
-                  const t = a.confirmed_time || a.requested_time;
-                  const mins = minutesUntilLocal(d, t);
-                  const nearTime = a.status === "accepted" && mins !== null && mins >= -5 && mins <= 30;
-                  return (
-                    <button key={a.id} onClick={() => setSelectedAppt(a)}
-                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all hover:brightness-110 border ${cfg.color} ${nearTime ? "ring-2 ring-green-500/50" : ""}`}
-                    >
-                      <Clock className="w-3.5 h-3.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold truncate">
-                          {user?.email === a.channel_owner_email ? a.requester_name || a.requester_email : a.channel_name}
+
+            {calendarTab === "appointments" && (
+              dayAppts.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">予約はありません</p>
+              ) : (
+                <div className="space-y-2">
+                  {dayAppts.map(a => {
+                    const cfg = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending;
+                    const d = a.confirmed_date || a.requested_date;
+                    const t = a.confirmed_time || a.requested_time;
+                    const mins = minutesUntilLocal(d, t);
+                    const nearTime = a.status === "accepted" && mins !== null && mins >= -5 && mins <= 30;
+                    return (
+                      <button key={a.id} onClick={() => setSelectedAppt(a)}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all hover:brightness-110 border ${cfg.color} ${nearTime ? "ring-2 ring-green-500/50" : ""}`}
+                      >
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold truncate">
+                            {user?.email === a.channel_owner_email ? a.requester_name || a.requester_email : a.channel_name}
+                          </p>
+                          <p className="text-[10px] opacity-70">{t} ({a.duration_minutes}分)</p>
+                        </div>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${cfg.color}`}>{cfg.label}</span>
+                        {nearTime && <Phone className="w-3.5 h-3.5 text-green-400 animate-pulse" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )
+            )}
+
+            {calendarTab === "events" && (
+              dayEvents.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">イベントはありません</p>
+              ) : (
+                <div className="space-y-2">
+                  {dayEvents.map(ev => {
+                    const totalSold = (ev.ticket_types || []).reduce((s, t) => s + (t.sold || 0), 0);
+                    const totalCap = (ev.ticket_types || []).reduce((s, t) => s + (t.capacity || 0), 0);
+                    return (
+                      <div key={ev.id} className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2.5 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-violet-300">{ev.event_name}</p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${ev.status === "on_sale" ? "bg-green-500/20 text-green-400" : "bg-muted text-muted-foreground"}`}>
+                            {ev.status === "on_sale" ? "販売中" : ev.status === "sold_out" ? "SOLD OUT" : ev.status === "ended" ? "終了" : "下書き"}
+                          </span>
+                        </div>
+                        {ev.event_date && <p className="text-[10px] text-violet-300/70">{format(new Date(ev.event_date), "HH:mm")} 開始</p>}
+                        {ev.location && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><MapPin className="w-2.5 h-2.5" />{ev.location}</p>}
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Users className="w-2.5 h-2.5" />販売枚数: {totalSold} / {totalCap || "∞"}
                         </p>
-                        <p className="text-[10px] opacity-70">{t} ({a.duration_minutes}分)</p>
                       </div>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${cfg.color}`}>{cfg.label}</span>
-                      {nearTime && <Phone className="w-3.5 h-3.5 text-green-400 animate-pulse" />}
-                    </button>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
         </div>

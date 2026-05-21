@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Ticket, User, Calendar, MapPin, RefreshCw, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import SwipeToEnter from "@/components/tickets/SwipeToEnter";
 
 // 30秒ごとに変わる時刻スロット（転売防止）
 function getTimeSlot() {
@@ -133,6 +134,11 @@ function TicketCard({ ticket, user }) {
               <p className="text-[10px] text-muted-foreground text-center px-4">
                 このQRコードは30秒ごとに変わります。スクリーンショットは無効です。
               </p>
+
+              {/* スワイプもぎり（スタッフ用） */}
+              <div className="w-full max-w-[280px] pt-2 border-t border-border/30">
+                <SwipeToEnter ticket={ticket} userEmail={user.email} onUsed={() => {}} />
+              </div>
             </div>
           )}
         </div>
