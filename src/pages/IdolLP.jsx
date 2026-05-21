@@ -214,6 +214,185 @@ export default function IdolLP() {
        </div>
       </section>
 
+      {/* ── NEW FEATURES: アイドル特化 3大機能 ── */}
+
+      {/* ブロック01: デジタルチェキ */}
+      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a000d 100%)" }}>
+        <div className="max-w-3xl mx-auto space-y-10">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>NEW FEATURE 01</p>
+            <h2 className="text-2xl sm:text-3xl font-black leading-snug">
+              その場で手書き、スクショ泥棒を<br />完全シャットアウト！<br />
+              <span style={{ background: "linear-gradient(135deg, #f9a8d4, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                「リアルタイム・ツーショット・<br className="sm:hidden" />デジタルチェキ」
+              </span>
+            </h2>
+            <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto">
+              1対1の通話中に、推しとファンの最高の瞬間をその場でパシャリ！<br />
+              通話終了後、アイドルがスマホ画面で直接サインやメッセージを手書きして、ファンのマイページへ即時納品されます。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                emoji: "👤",
+                title: "顔出しNGでも安心",
+                desc: "ファン側がカメラOFFの場合でも、自動でファンアイコンとアイドルが並ぶ優しい設計。",
+                color: "#ec4899",
+              },
+              {
+                emoji: "🛡️",
+                title: "SAMPLE透かしで海賊版0",
+                desc: "購入確定前のプレビューに「SAMPLE」ウォーターマークを多重配置。不正スクショを完全防止。",
+                color: "#a855f7",
+              },
+              {
+                emoji: "💰",
+                title: "原価は完全0円",
+                desc: "フィルム代などの実費は一切不要。デジタルなので在庫リスクもゼロ。売上はすべてあなたの利益に。",
+                color: "#f59e0b",
+              },
+            ].map((item) => (
+              <div key={item.title} className="p-5 rounded-2xl space-y-3 hover:scale-[1.02] transition-transform"
+                style={{ background: `${item.color}10`, border: `1px solid ${item.color}30` }}>
+                <div className="text-3xl">{item.emoji}</div>
+                <h3 className="font-black text-sm" style={{ color: item.color }}>{item.title}</h3>
+                <p className="text-white/60 text-xs leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ラベル */}
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
+              style={{ background: "rgba(236,72,153,0.15)", border: "1px solid rgba(236,72,153,0.4)", color: "#f9a8d4" }}>
+              ✨ アイドルの現場に寄り添った神仕様
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ブロック02: 物販 & データ販売 */}
+      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #1a000d 0%, #001a0d 100%)" }}>
+        <div className="max-w-3xl mx-auto space-y-10">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#10b981" }}>NEW FEATURE 02</p>
+            <h2 className="text-2xl sm:text-3xl font-black leading-snug">
+              配送先エラーゼロの安心グッズ物販 ＆<br />
+              <span style={{ background: "linear-gradient(135deg, #6ee7b7, #10b981)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                寝ている間も自動で売れるデータ販売
+              </span>
+            </h2>
+            <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto">
+              Tシャツ・マフラータオル・アクスタなどの「物理グッズ」から、<br />
+              限定ボイスや未公開デジタル写真集などの「デジタルコンテンツ」まで、<br />
+              あなたのマイページがそのまま直営ECショップになります。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="p-6 rounded-2xl space-y-4" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
+              <div className="text-3xl">📦</div>
+              <h3 className="font-black text-base" style={{ color: "#6ee7b7" }}>グッズ物販（住所バリデーション付き）</h3>
+              <p className="text-white/60 text-sm leading-relaxed">
+                物理グッズの購入時、Stripe決済へ進む前に「配送先住所の入力」をシステムが強制チェック。聞き忘れ・発送トラブルが起きない設計です。
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["Tシャツ", "タオル", "アクスタ", "ブロマイド"].map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{ background: "rgba(16,185,129,0.15)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.3)" }}>{t}</span>
+                ))}
+              </div>
+            </div>
+            <div className="p-6 rounded-2xl space-y-4" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
+              <div className="text-3xl">⚡</div>
+              <h3 className="font-black text-base" style={{ color: "#fcd34d" }}>インスタント配信モード（不労所得）</h3>
+              <p className="text-white/60 text-sm leading-relaxed">
+                限定ボイス（MP3）やPDFデータは、一度アップすれば24時間システムが自動で納品。在庫リスクも発送の手間もゼロの完全な不労所得が作れます。
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["限定ボイス", "写真集PDF", "MP3", "ZIP"].map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{ background: "rgba(245,158,11,0.15)", color: "#fcd34d", border: "1px solid rgba(245,158,11,0.3)" }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
+              style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#6ee7b7" }}>
+              🛒 直営ECショップとして即日開設可能
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ブロック03: チケット & スワイプもぎり */}
+      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #001a0d 0%, #00001a 100%)" }}>
+        <div className="max-w-3xl mx-auto space-y-10">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#60a5fa" }}>NEW FEATURE 03</p>
+            <h2 className="text-2xl sm:text-3xl font-black leading-snug">
+              外部サイト不要！カレンダー告知から<br />
+              <span style={{ background: "linear-gradient(135deg, #93c5fd, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                現場での「スワイプもぎり」まで一元管理
+              </span>
+            </h2>
+            <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto">
+              公式カレンダーにライブ情報を登録するだけでチケット販売がスタート。<br />
+              ファンはスケジュール確認から購入までChat Market内で完結できます。
+            </p>
+          </div>
+
+          {/* スワイプもぎりのビジュアル説明 */}
+          <div className="relative rounded-2xl overflow-hidden p-6 space-y-3"
+            style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.25)" }}>
+            <div className="text-3xl">👆</div>
+            <h3 className="font-black text-base" style={{ color: "#93c5fd" }}>現場の受付は1秒で完了</h3>
+            <p className="text-white/60 text-sm leading-relaxed">
+              QRリーダーや専用機械は一切不要。ライブハウスの受付でスタッフがファンの画面を
+              <strong className="text-white">「右にシュッとスワイプ」</strong>
+              するだけで入場処理（もぎり）が完了します。
+            </p>
+            {/* スワイプUIイメージ */}
+            <div className="flex items-center gap-3 mt-4 px-2">
+              <div className="flex-1 h-12 rounded-xl flex items-center px-4 text-xs font-bold text-white/40"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                ← スワイプして入場 →
+              </div>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg"
+                style={{ background: "linear-gradient(135deg, #3b82f6, #6366f1)", boxShadow: "0 0 20px rgba(59,130,246,0.5)" }}>→</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl space-y-3" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)" }}>
+              <div className="text-2xl">🎟️</div>
+              <h3 className="font-black text-sm" style={{ color: "#a5b4fc" }}>連番チケット・複数枚対応</h3>
+              <p className="text-white/60 text-xs leading-relaxed">
+                友達の分もまとめて購入可能。システムが自動で「VIP-001」「VIP-002」と綺麗な連番で採番。スタッフは連続スワイプで同時入場を捌けます。
+              </p>
+            </div>
+            <div className="p-5 rounded-2xl space-y-3" style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.25)" }}>
+              <div className="text-2xl">🔮</div>
+              <h3 className="font-black text-sm" style={{ color: "#c4b5fd" }}>将来のLINE譲渡機能も準備済み</h3>
+              <p className="text-white/60 text-xs leading-relaxed">
+                購入したチケットを友達にLINEで送る「分配機能」の土台設計が完了。アップデートでいつでも有効化できます。
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
+              style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.4)", color: "#93c5fd" }}>
+              📅 カレンダー登録 → チケット販売 → スワイプもぎり まで完全一気通貫
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* ── 収益シミュレーター（簡易） ── */}
       <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a0033 100%)" }}>
        <div className="max-w-md mx-auto text-center space-y-8">
@@ -352,6 +531,21 @@ export default function IdolLP() {
               </span>
             </button>
           </Link>
+          {/* ダメ押しメッセージ */}
+          <div className="mt-6 p-5 rounded-2xl text-left space-y-2"
+            style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)" }}>
+            <p className="text-xs font-black text-center mb-3" style={{ color: "#c084fc" }}>🏆 なぜChat Marketなのか</p>
+            <p className="text-white/70 text-xs leading-relaxed text-center">
+              これだけのフルスペック機能が揃って、<strong className="text-white">初期費用・月額システム料は完全無料。</strong><br />
+              AppleやGoogleへの30%の通行税も、PWA採用により<strong className="text-white">1円も発生しません。</strong><br /><br />
+              あなたのファンの「応援の気持ち」を、<br />
+              業界最高水準の
+              <strong className="text-lg" style={{ background: "linear-gradient(135deg, #f0abfc, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                　還元率85%
+              </strong>
+              　で、<br />あなたの手元にダイレクトに届けます。
+            </p>
+          </div>
           <p className="text-xs text-white/30">登録はメールアドレスだけ。クレカ不要。いつでも退会できます。</p>
         </div>
       </section>
