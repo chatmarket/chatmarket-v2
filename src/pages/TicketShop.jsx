@@ -8,6 +8,7 @@ import { Ticket, MapPin, Calendar, Users, CheckCircle2, Plus, Trash2, ChevronDow
 import { resolveUserPlan, hasFeature } from "@/lib/userPlan";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import XShareButton from "@/components/share/XShareButton";
 
 // ---- Owner: Event Create Form ----
 function EventCreateForm({ channel, onCreated }) {
@@ -172,6 +173,32 @@ function PurchaseModal({ event, tier, user, onClose, onPurchased }) {
   );
 }
 
+// ---- Purchase Complete Share Modal ----
+function PurchaseCompleteModal({ event, tier, channelId, onClose }) {
+  const shareText = `🎟️ 「${event.event_name}」（${tier.name}）のチケットをゲット！\n#ChatMarket`;
+  const shareUrl = `${window.location.origin}/tickets/${channelId}`;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={onClose}>
+      <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full space-y-4 text-center" onClick={e => e.stopPropagation()}>
+        <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
+          <CheckCircle2 className="w-9 h-9 text-green-400" />
+        </div>
+        <div>
+          <p className="font-black text-lg">チケット取得完了！</p>
+          <p className="text-sm text-muted-foreground mt-1">{event.event_name} / {tier.name}</p>
+        </div>
+        <p className="text-xs text-muted-foreground">Xでシェアして友達を誘おう 🎉</p>
+        <div className="space-y-2">
+          <XShareButton text={shareText} url={shareUrl} size="default" className="w-full justify-center" />
+          <button onClick={onClose} className="w-full text-xs text-muted-foreground py-2 hover:text-foreground transition-colors">
+            シェアしない
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Main Page ----
 export default function TicketShop() {
   const { channelId } = useParams();
@@ -179,6 +206,7 @@ export default function TicketShop() {
   const [user, setUser] = useState(null);
   const [hasPpv, setHasPpv] = useState(false);
   const [buyTarget, setBuyTarget] = useState(null); // { event, tier }
+  const [shareTarget, setShareTarget] = useState(null); // { event, tier } — 購入完了後シェア促進
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -348,7 +376,18 @@ export default function TicketShop() {
           onPurchased={() => {
             queryClient.invalidateQueries({ queryKey: ["my-ticket-event-ids", user?.email] });
             queryClient.invalidateQueries({ queryKey: ["ticket-events"] });
+            setShareTarget(buyTarget);
+            setBuyTarget(null);
           }}
+        />
+      )}
+
+      {shareTarget && (
+        <PurchaseCompleteModal
+          event={shareTarget.event}
+          tier={shareTarget.tier}
+          channelId={channelId}
+          onClose={() => setShareTarget(null)}
         />
       )}
     </div>

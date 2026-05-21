@@ -3,8 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, CreditCard, Loader2, X } from "lucide-react";
+import { Camera, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import XShareButton from "@/components/share/XShareButton";
 
 export default function ChekiPurchaseModal({ cheki, channel, user, open, onClose }) {
   const [message, setMessage] = useState("");
@@ -83,6 +84,16 @@ export default function ChekiPurchaseModal({ cheki, channel, user, open, onClose
                 : <><CreditCard className="w-4 h-4" /> ¥{cheki.price.toLocaleString()} 購入</>
               }
             </Button>
+          </div>
+
+          {/* 購入後シェア促進 */}
+          <div className="border-t border-border/30 pt-3 space-y-2">
+            <p className="text-[11px] text-center text-muted-foreground">購入完了後はXでシェアして推しを応援しよう！</p>
+            <XShareButton
+              text={`📸 ${channel?.name || ""} さんのデジタルチェキ「${cheki.title}」を購入しました！\n#ChatMarket`}
+              url={`${window.location.origin}/channel/${channel?.id || ""}`}
+              className="w-full justify-center opacity-80 hover:opacity-100"
+            />
           </div>
         </div>
       </DialogContent>

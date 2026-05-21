@@ -8,6 +8,7 @@ import { Ticket, User, Calendar, MapPin, RefreshCw, CheckCircle2, XCircle, Clock
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import SwipeToEnter from "@/components/tickets/SwipeToEnter";
+import XShareButton from "@/components/share/XShareButton";
 
 // 30秒ごとに変わる時刻スロット（転売防止）
 function getTimeSlot() {
@@ -146,6 +147,17 @@ function TicketCard({ ticket, user }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* X シェアボタン（有効チケットのみ） */}
+      {ticket.status === "valid" && (
+        <div className="border-t border-border/30 px-4 py-3">
+          <XShareButton
+            text={`🎟️ ${ticket.event_name}（${ticket.tier_name || ticket.ticket_type || "一般"}）のチケットをゲットしました！\n#ChatMarket`}
+            url={`${window.location.origin}/tickets/${ticket.channel_id || ""}`}
+            className="w-full justify-center"
+          />
         </div>
       )}
 
