@@ -34,6 +34,12 @@ Deno.serve(async (req) => {
         return Response.json({ received: true });
       }
 
+      // 席種別連番を計算
+      const existingTickets = await base44.asServiceRole.entities.DigitalTicket.filter({ event_id, tier_name: tier_name });
+      const tierSerial = (existingTickets.length || 0) + 1;
+      const prefix = (tier_name || '').replace(/[^a-zA-Z0-9\u3040-\u9FFF]/g, '').slice(0, 6).toUpperCase() || 'TKT';
+      const finalTicketNumber = `${prefix}-${String(tierSerial).padStart(3, '0')}`;
+
       // DigitalTicket生成
       await base44.asServiceRole.entities.DigitalTicket.create({
         owner_email: buyer_email,
@@ -43,11 +49,13 @@ Deno.serve(async (req) => {
         event_date: ticketEvent.event_date,
         event_location: ticketEvent.location || '',
         ticket_type: tier_type || 'general',
+        tier_name: tier_name || '',
+        tier_serial: tierSerial,
         channel_id: ticketEvent.channel_id,
         channel_name: ticketEvent.channel_name,
         price: session.amount_total || 0,
         status: 'valid',
-        ticket_number: ticket_number || `T-${Date.now().toString(36).toUpperCase()}`,
+        ticket_number: finalTicketNumber,
         thumbnail_url: ticketEvent.thumbnail_url || '',
       });
 

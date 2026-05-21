@@ -13,7 +13,7 @@
     },
     "event_id": {
       "type": "string",
-      "description": "\u30a4\u30d9\u30f3\u30c8ID\uff08\u30d5\u30a1\u30f3\u30af\u30e9\u30d6\u7b49\uff09"
+      "description": "\u30a4\u30d9\u30f3\u30c8ID"
     },
     "event_name": {
       "type": "string",
@@ -36,7 +36,15 @@
         "fanclub"
       ],
       "default": "general",
-      "description": "\u30c1\u30b1\u30c3\u30c8\u7a2e\u5225"
+      "description": "\u30c1\u30b1\u30c3\u30c8\u7a2e\u5225\uff08\u5f8c\u65b9\u4e92\u63db\u7528\uff09"
+    },
+    "tier_name": {
+      "type": "string",
+      "description": "\u5e2d\u7a2e\u540d\uff08\u4f8b: VIP\u5e2d, \u4e00\u822c\u5e2d\uff09"
+    },
+    "tier_serial": {
+      "type": "number",
+      "description": "\u5e2d\u7a2e\u5225\u9023\u756a\uff08\u4f8b: VIP-001\u306e1\uff09"
     },
     "channel_id": {
       "type": "string",
@@ -72,7 +80,7 @@
     },
     "ticket_number": {
       "type": "string",
-      "description": "\u30c1\u30b1\u30c3\u30c8\u756a\u53f7\uff08\u8868\u793a\u7528\uff09"
+      "description": "\u30c1\u30b1\u30c3\u30c8\u756a\u53f7\uff08\u5e2d\u7a2e\u30d7\u30ec\u30d5\u30a3\u30c3\u30af\u30b9+\u9023\u756a: VIP-001\uff09"
     },
     "seat_info": {
       "type": "string",

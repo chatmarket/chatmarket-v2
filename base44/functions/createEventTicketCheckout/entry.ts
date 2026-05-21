@@ -28,7 +28,12 @@ Deno.serve(async (req) => {
     const remaining = (tier.capacity || 0) - (tier.sold || 0);
     if (remaining <= 0) return Response.json({ error: 'Sold out' }, { status: 400 });
 
-    const ticketNumber = `T-${Date.now().toString(36).toUpperCase()}`;
+    // 席種別連番を計算（同イベント・同席種の既発行数+1）
+    const existingTickets = await base44.entities.DigitalTicket.filter({ event_id, tier_name: tier.name });
+    const tierSerial = (existingTickets.length || 0) + 1;
+    // プレフィックス: 席種名の最初の4文字（英数字のみ）を大文字化
+    const prefix = tier.name.replace(/[^a-zA-Z0-9\u3040-\u9FFF]/g, '').slice(0, 6).toUpperCase() || 'TKT';
+    const ticketNumber = `${prefix}-${String(tierSerial).padStart(3, '0')}`;
     const appUrl = Deno.env.get('PUBLIC_APP_URL') || 'http://localhost:5173';
 
     // コイン決済は price=0 の場合に直接発行（無料チケット）
@@ -41,6 +46,8 @@ Deno.serve(async (req) => {
         event_date: event.event_date,
         event_location: event.location || '',
         ticket_type: tier_type || 'general',
+        tier_name: tier.name,
+        tier_serial: tierSerial,
         channel_id: event.channel_id,
         channel_name: event.channel_name,
         price: 0,
@@ -79,6 +86,7 @@ Deno.serve(async (req) => {
         tier_name: tier.name,
         tier_type: tier_type || 'general',
         ticket_number: ticketNumber,
+        tier_serial: String(tierSerial),
       },
     });
 

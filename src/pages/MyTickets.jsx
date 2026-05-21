@@ -36,12 +36,9 @@ function TicketCard({ ticket, user }) {
 
   const qrPayload = buildQRPayload(ticket, user, timeSlot);
 
-  const typeConfig = {
-    vip: { label: "VIP", color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40" },
-    fanclub: { label: "ファンクラブ", color: "bg-primary/20 text-primary border-primary/40" },
-    general: { label: "一般", color: "bg-secondary text-foreground border-border" },
-  };
-  const tc = typeConfig[ticket.ticket_type] || typeConfig.general;
+  // tier_nameがあればそれを優先、なければticket_typeのラベルにフォールバック
+  const tierDisplayName = ticket.tier_name || ticket.ticket_type || "一般";
+  const ticketDisplayNumber = ticket.ticket_number || ticket.id.slice(-8).toUpperCase();
 
   const statusConfig = {
     valid: { label: "有効", icon: CheckCircle2, color: "text-green-400" },
@@ -70,12 +67,16 @@ function TicketCard({ ticket, user }) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <Badge className={`text-[10px] border ${tc.color}`}>{tc.label}</Badge>
+            <Badge className="text-[10px] border bg-primary/20 text-primary border-primary/40 font-bold">
+              {tierDisplayName}
+            </Badge>
             <span className={`flex items-center gap-1 text-[10px] font-semibold ${sc.color}`}>
               <StatusIcon className="w-3 h-3" />{sc.label}
             </span>
           </div>
           <p className="font-bold text-sm leading-tight">{ticket.event_name}</p>
+          {/* 整理番号を目立つ形で表示 */}
+          <p className="text-lg font-black text-primary tracking-widest mt-1">{ticketDisplayNumber}</p>
           {ticket.channel_name && (
             <p className="text-xs text-primary mt-0.5">{ticket.channel_name}</p>
           )}
@@ -110,12 +111,17 @@ function TicketCard({ ticket, user }) {
           {expanded && (
             <div className="mt-4 flex flex-col items-center gap-3">
               {/* Profile + QR */}
-              <div className="bg-white rounded-2xl p-4 flex flex-col items-center gap-2 w-full max-w-[260px]">
+              <div className="bg-white rounded-2xl p-4 flex flex-col items-center gap-2 w-full max-w-[280px]">
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
                   {user.full_name?.[0] || "?"}
                 </div>
                 <p className="text-black font-bold text-sm">{user.full_name}</p>
                 <p className="text-gray-500 text-[10px]">{user.email}</p>
+                {/* 席種名と整理番号を大きく */}
+                <div className="text-center bg-gray-50 rounded-xl px-4 py-2 w-full">
+                  <p className="text-black text-xs font-semibold">{ticket.tier_name || ticket.ticket_type}</p>
+                  <p className="text-black text-2xl font-black tracking-widest">{ticketDisplayNumber}</p>
+                </div>
                 <QRCodeSVG
                   value={qrPayload}
                   size={180}
@@ -123,7 +129,6 @@ function TicketCard({ ticket, user }) {
                   fgColor="#000000"
                   level="M"
                 />
-                <p className="text-[10px] text-gray-400">No. {ticket.ticket_number || ticket.id.slice(-8).toUpperCase()}</p>
               </div>
 
               {/* Countdown */}
