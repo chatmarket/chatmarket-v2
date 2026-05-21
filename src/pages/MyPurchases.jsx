@@ -3,19 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Package, FileText, Music, Archive, Image, Video, File, Loader2, CheckCircle2, Clock } from "lucide-react";
+import { Download, Package, FileText, Music, Archive, Image, Video, File, Loader2, CheckCircle2, Clock, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
 const FILE_ICONS = {
-  pdf: FileText,
-  mp3: Music,
-  zip: Archive,
-  jpg: Image,
-  png: Image,
-  mp4: Video,
-  other: File,
+  pdf: FileText, mp3: Music, zip: Archive, jpg: Image, png: Image, mp4: Video, other: File,
 };
 
 function DigitalDownloadButton({ order }) {
@@ -44,15 +38,74 @@ function DigitalDownloadButton({ order }) {
   const expired = order.download_expires_at && new Date(order.download_expires_at) < new Date();
 
   return (
-    <Button
-      size="sm"
-      onClick={handleDownload}
-      disabled={loading || expired}
-      className="gap-2"
-    >
+    <Button size="sm" onClick={handleDownload} disabled={loading || expired} className="gap-2">
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
       {expired ? "期限切れ" : "ダウンロード"}
     </Button>
+  );
+}
+
+function DigitalOrderRow({ order }) {
+  const isCustomOrder = order.delivery_mode === "custom_order";
+  const isPendingDelivery = order.delivery_status === "pending_delivery";
+  const isDelivered = order.delivery_status === "delivered";
+  const canDownload = !isCustomOrder || isDelivered;
+
+  const ext = (order.file_name || order.delivered_file_name || "").split(".").pop().toLowerCase();
+  const IconComp = FILE_ICONS[ext] || File;
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-4">
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+          {isCustomOrder ? <ClipboardList className="w-5 h-5 text-primary" /> : <IconComp className="w-5 h-5 text-primary" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-medium text-foreground truncate">{order.product_title}</p>
+            {isCustomOrder && (
+              <Badge className={`text-xs shrink-0 ${isDelivered ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                {isDelivered ? "納品済み" : "納品待ち"}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">{order.channel_name}</p>
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+            <span>¥{order.price_yen?.toLocaleString()}</span>
+            <span>{format(new Date(order.created_date), "yyyy/MM/dd", { locale: ja })}</span>
+            {order.download_count > 0 && (
+              <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />{order.download_count}回DL済</span>
+            )}
+            {order.download_expires_at && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {format(new Date(order.download_expires_at), "yyyy/MM/dd", { locale: ja })}まで
+              </span>
+            )}
+          </div>
+
+          {/* オーダーメイド：納品待ちメッセージ */}
+          {isCustomOrder && isPendingDelivery && (
+            <div className="mt-2 text-xs text-yellow-400 bg-yellow-500/10 rounded-lg px-3 py-2">
+              ⏳ 販売者が個別に作成・納品中です。しばらくお待ちください。
+            </div>
+          )}
+
+          {/* オーダーメイド：納品完了メッセージ */}
+          {isCustomOrder && isDelivered && order.delivery_message && (
+            <div className="mt-2 text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
+              <span className="text-foreground font-medium">販売者より：</span> {order.delivery_message}
+            </div>
+          )}
+        </div>
+
+        {canDownload && (
+          <div className="shrink-0">
+            <DigitalDownloadButton order={order} />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -94,32 +147,7 @@ export default function MyPurchases() {
             <p className="text-muted-foreground text-sm py-4">購入済みのデジタルコンテンツはありません</p>
           ) : (
             <div className="space-y-3">
-              {digitalOrders.map(order => {
-                const IconComp = FILE_ICONS[order.file_name?.split(".").pop()] || File;
-                return (
-                  <div key={order.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <IconComp className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">{order.product_title}</p>
-                      <p className="text-sm text-muted-foreground">{order.channel_name}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>¥{order.price_yen?.toLocaleString()}</span>
-                        <span>{format(new Date(order.created_date), "yyyy/MM/dd", { locale: ja })}</span>
-                        {order.download_count > 0 && <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />{order.download_count}回DL済</span>}
-                        {order.download_expires_at && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(order.download_expires_at), "yyyy/MM/dd", { locale: ja })}まで
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <DigitalDownloadButton order={order} />
-                  </div>
-                );
-              })}
+              {digitalOrders.map(order => <DigitalOrderRow key={order.id} order={order} />)}
             </div>
           )}
         </section>

@@ -19,15 +19,23 @@ Deno.serve(async (req) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const { order_id, product_id, buyer_email, is_digital } = session.metadata || {};
+      const { order_id, product_id, buyer_email, is_digital, delivery_mode } = session.metadata || {};
 
       if (!order_id) return Response.json({ received: true });
 
-      // 注文を completed に更新
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1年
+
+      // delivery_mode に応じて delivery_status をセット
+      // instant: ファイルURLは既にOrderに入っているのでDL可能
+      // custom_order: 販売者が手動納品するまで pending_delivery
+      const deliveryStatus =
+        is_digital !== '1' ? 'not_applicable' :
+        delivery_mode === 'custom_order' ? 'pending_delivery' : 'not_applicable';
+
       await base44.asServiceRole.entities.ProductOrder.update(order_id, {
         status: 'completed',
-        download_expires_at: is_digital === '1' ? expiresAt : null,
+        delivery_status: deliveryStatus,
+        download_expires_at: (is_digital === '1' && delivery_mode !== 'custom_order') ? expiresAt : null,
       });
 
       // 商品の sold_count をインクリメント
