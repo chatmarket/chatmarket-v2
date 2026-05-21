@@ -10,6 +10,7 @@ export default function MetaHelmet({
   lang = 'ja',
   title,
   description,
+  keywords,
   image,
   noindex = false,
 }) {
@@ -50,6 +51,17 @@ export default function MetaHelmet({
       }
       el.setAttribute('content', content);
     };
+
+    // keywords
+    if (keywords) {
+      let kwEl = document.querySelector('meta[name="keywords"]');
+      if (!kwEl) {
+        kwEl = document.createElement('meta');
+        kwEl.setAttribute('name', 'keywords');
+        document.head.appendChild(kwEl);
+      }
+      kwEl.setAttribute('content', keywords);
+    }
 
     setMeta('og:title', finalTitle);
     setMeta('og:description', finalDescription);

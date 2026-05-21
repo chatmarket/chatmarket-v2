@@ -66,8 +66,9 @@ export default function IdolLP() {
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-inter">
       <MetaHelmet
-        title="アイドル・タレント向け収益化プラットフォーム | ChatMarket（チャットマーケット）"
-        description="アイドル・タレント・インフルエンサー向けライブ配信・動画販売プラットフォーム。事務所不要・初期費用0円。1対1ビデオ通話・PPVライブ・ファンクラブで還元率85%の収益化。登録から1年間Basicプラン無料。"
+        title="【公式】Chat Market | アイドルのオンラインチェキ・チケット販売・ファンクラブ総合インフラ"
+        description="初期・月額無料＆業界最高水準の還元率85%！Chat Marketは、セルフプロデュースアイドル向けの総合インフラです。1対1通話、スクショ防止の手書きデジタルチェキ、カレンダー連動の電子チケット事前決済から現場のスワイプもぎり、グッズ物販までスマホ1つで一元管理。"
+        keywords="Chat Market,チャットマーケット,アイドル 特典会 アプリ,オンラインチェキ 販売,デジタルチェキ 手書き,WithLIVE 代替,電子チケット もぎり アプリ,アイドル 物販 EC,フリーアイドル マネタイズ,インディーズアイドル ファンクラブ,還元率 高い 配信アプリ"
         image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/e8cd1b6f2_generated_image.png"
       />
 
