@@ -12,7 +12,18 @@ Deno.serve(async (req) => {
     const staticPages = [
       { url: '/', changefreq: 'daily', priority: '1.0' },
       { url: '/recruit', changefreq: 'weekly', priority: '0.9' },
+      // LP ページ（高優先度・新機能対応済み）
+      { url: '/idol-lp', changefreq: 'weekly', priority: '0.95' },
+      { url: '/fortune-lp', changefreq: 'weekly', priority: '0.9' },
+      { url: '/musician', changefreq: 'weekly', priority: '0.85' },
+      { url: '/lp/tutor', changefreq: 'weekly', priority: '0.85' },
+      { url: '/lp/expert', changefreq: 'weekly', priority: '0.85' },
+      { url: '/lp/fitness', changefreq: 'weekly', priority: '0.85' },
+      { url: '/lp/career', changefreq: 'weekly', priority: '0.85' },
+      { url: '/lp/english', changefreq: 'weekly', priority: '0.85' },
+      { url: '/lp/coach', changefreq: 'weekly', priority: '0.85' },
       { url: '/info', changefreq: 'monthly', priority: '0.8' },
+      { url: '/blog', changefreq: 'weekly', priority: '0.7' },
       { url: '/terms', changefreq: 'monthly', priority: '0.5' },
       { url: '/privacy', changefreq: 'monthly', priority: '0.5' },
       { url: '/company', changefreq: 'monthly', priority: '0.6' },
