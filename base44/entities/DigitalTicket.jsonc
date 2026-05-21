@@ -5,11 +5,28 @@
   "properties": {
     "owner_email": {
       "type": "string",
-      "description": "\u6240\u6709\u8005\u30e1\u30fc\u30eb\uff08\u8cfc\u5165\u8005\u30fb\u5909\u66f4\u4e0d\u53ef\uff09"
+      "description": "\u73fe\u5728\u306e\u6240\u6709\u8005\u30e1\u30fc\u30eb"
     },
     "owner_name": {
       "type": "string",
-      "description": "\u6240\u6709\u8005\u540d"
+      "description": "\u73fe\u5728\u306e\u6240\u6709\u8005\u540d"
+    },
+    "original_buyer_email": {
+      "type": "string",
+      "description": "\u6700\u521d\u306e\u8cfc\u5165\u8005\u30e1\u30fc\u30eb\uff08\u8b72\u6e21\u5f8c\u3082\u5909\u308f\u3089\u306a\u3044\uff09"
+    },
+    "transfer_from_email": {
+      "type": "string",
+      "description": "\u8b72\u6e21\u5143\u30e1\u30fc\u30eb\uff08\u5c06\u6765\u306e\u5206\u914d\u6a5f\u80fd\u7528\u3002\u76f4\u63a5\u8cfc\u5165\u306e\u5834\u5408\u306fnull\uff09"
+    },
+    "transferred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u8b72\u6e21\u65e5\u6642\uff08\u5c06\u6765\u306e\u5206\u914d\u6a5f\u80fd\u7528\uff09"
+    },
+    "purchase_session_id": {
+      "type": "string",
+      "description": "\u540c\u4e00\u8cfc\u5165\u30bb\u30c3\u30b7\u30e7\u30f3\u306e\u30b0\u30eb\u30fc\u30d7ID\uff08\u8907\u6570\u679a\u8cfc\u5165\u6642\u306e\u7d10\u4ed8\u3051\u7528\uff09"
     },
     "event_id": {
       "type": "string",
@@ -64,15 +81,16 @@
       "enum": [
         "valid",
         "used",
-        "cancelled"
+        "cancelled",
+        "transferred"
       ],
       "default": "valid",
-      "description": "\u30c1\u30b1\u30c3\u30c8\u72b6\u614b"
+      "description": "\u30c1\u30b1\u30c3\u30c8\u72b6\u614b\uff08transferred=\u8b72\u6e21\u6e08\u307f\uff09"
     },
     "used_at": {
       "type": "string",
       "format": "date-time",
-      "description": "\u4f7f\u7528\u65e5\u6642\uff08\u5165\u5834\u6e08\u307f\uff09"
+      "description": "\u4f7f\u7528\u65e5\u6642"
     },
     "used_by_email": {
       "type": "string",
@@ -80,7 +98,7 @@
     },
     "ticket_number": {
       "type": "string",
-      "description": "\u30c1\u30b1\u30c3\u30c8\u756a\u53f7\uff08\u5e2d\u7a2e\u30d7\u30ec\u30d5\u30a3\u30c3\u30af\u30b9+\u9023\u756a: VIP-001\uff09"
+      "description": "\u6574\u7406\u756a\u53f7\uff08\u4f8b: VIP-001\uff09"
     },
     "seat_info": {
       "type": "string",
@@ -92,7 +110,7 @@
     },
     "description": {
       "type": "string",
-      "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
+      "description": "\u30e1\u30e2\u30fb\u5099\u8003",
       "maxLength": 1000
     }
   },

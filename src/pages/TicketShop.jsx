@@ -84,6 +84,11 @@ function EventCreateForm({ channel, onCreated }) {
 // ---- Ticket Purchase Modal ----
 function PurchaseModal({ event, tier, user, onClose, onPurchased }) {
   const [purchasing, setPurchasing] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  const remaining = (tier.capacity || 0) - (tier.sold || 0);
+  const maxQty = Math.min(10, remaining);
+  const totalPrice = tier.price * quantity;
 
   const handleBuy = async () => {
     setPurchasing(true);
@@ -92,10 +97,10 @@ function PurchaseModal({ event, tier, user, onClose, onPurchased }) {
         event_id: event.id,
         tier_name: tier.name,
         tier_type: tier.type,
+        quantity,
       });
       const { checkout_url, free, success } = res.data;
       if (free && success) {
-        // 無料チケット：直接マイチケットへ
         onPurchased();
         onClose();
         return;
@@ -120,14 +125,46 @@ function PurchaseModal({ event, tier, user, onClose, onPurchased }) {
         <div className="bg-secondary rounded-xl p-4 space-y-1 text-sm">
           <p className="text-muted-foreground">チケット種別</p>
           <p className="font-semibold">{tier.name}</p>
-          <p className="text-2xl font-black text-primary mt-2">
-            {tier.price === 0 ? "無料" : `¥${tier.price.toLocaleString()}`}
+          <p className="text-xl font-black text-primary mt-1">
+            {tier.price === 0 ? "無料" : `¥${tier.price.toLocaleString()} / 枚`}
           </p>
         </div>
+
+        {/* 枚数選択 */}
+        <div className="bg-secondary rounded-xl p-4 space-y-2">
+          <p className="text-xs text-muted-foreground font-semibold">枚数を選択（最大{maxQty}枚）</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center text-lg font-bold hover:bg-muted transition-colors"
+                disabled={quantity <= 1}
+              >−</button>
+              <span className="text-2xl font-black w-8 text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity(q => Math.min(maxQty, q + 1))}
+                className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center text-lg font-bold hover:bg-muted transition-colors"
+                disabled={quantity >= maxQty}
+              >＋</button>
+            </div>
+            {tier.price > 0 && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">合計</p>
+                <p className="text-xl font-black text-primary">¥{totalPrice.toLocaleString()}</p>
+              </div>
+            )}
+          </div>
+          {quantity > 1 && (
+            <p className="text-[10px] text-muted-foreground">
+              ※{quantity}枚の個別チケットが発行されます（友人への入場にも使用可）
+            </p>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <Button variant="secondary" className="flex-1" onClick={onClose}>キャンセル</Button>
           <Button className="flex-1" disabled={purchasing} onClick={handleBuy}>
-            {purchasing ? "処理中..." : tier.price === 0 ? "無料で取得" : "Stripe決済へ"}
+            {purchasing ? "処理中..." : tier.price === 0 ? `無料で${quantity}枚取得` : `${quantity}枚 Stripe決済へ`}
           </Button>
         </div>
       </div>
@@ -167,11 +204,17 @@ export default function TicketShop() {
     queryFn: () => base44.entities.TicketEvent.filter({ channel_id: channelId, sale_type: "public", status: "on_sale" }, "event_date"),
   });
 
-  const { data: myTicketIds = [] } = useQuery({
+  // event_id + tier_name ごとの購入枚数を記録
+  const { data: myTicketCounts = {} } = useQuery({
     queryKey: ["my-ticket-event-ids", user?.email],
     queryFn: async () => {
       const tickets = await base44.entities.DigitalTicket.filter({ owner_email: user.email });
-      return tickets.map(t => t.event_id + "_" + t.ticket_type);
+      const counts = {};
+      tickets.forEach(t => {
+        const key = `${t.event_id}_${t.tier_name || t.ticket_type}`;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return counts;
     },
     enabled: !!user,
   });
@@ -255,7 +298,7 @@ export default function TicketShop() {
                 <div className="space-y-2">
                   {(event.ticket_types || []).map((tier, i) => {
                     const remaining = tier.capacity - (tier.sold || 0);
-                    const alreadyOwned = myTicketIds.includes(event.id + "_" + tier.type);
+                    const ownedCount = myTicketCounts[`${event.id}_${tier.name}`] || 0;
                     return (
                       <div key={i} className="flex items-center justify-between bg-secondary/60 rounded-xl px-3 py-2.5">
                         <div>
@@ -263,17 +306,15 @@ export default function TicketShop() {
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Users className="w-3 h-3" /> 残り {remaining} 枚
                           </p>
+                          {ownedCount > 0 && (
+                            <p className="text-[10px] text-green-400 flex items-center gap-0.5 mt-0.5">
+                              <CheckCircle2 className="w-3 h-3" /> {ownedCount}枚所持
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-primary font-bold text-sm">¥{tier.price.toLocaleString()}</p>
-                          {alreadyOwned ? (
-                            <button
-                              onClick={() => navigate("/my-tickets")}
-                              className="text-[11px] text-green-400 flex items-center gap-0.5 mt-1"
-                            >
-                              <CheckCircle2 className="w-3 h-3" /> 購入済み
-                            </button>
-                          ) : remaining <= 0 ? (
+                          {remaining <= 0 ? (
                             <span className="text-[11px] text-muted-foreground">SOLD OUT</span>
                           ) : (
                             <Button
@@ -305,7 +346,7 @@ export default function TicketShop() {
           user={user}
           onClose={() => setBuyTarget(null)}
           onPurchased={() => {
-            queryClient.invalidateQueries({ queryKey: ["my-ticket-event-ids"] });
+            queryClient.invalidateQueries({ queryKey: ["my-ticket-event-ids", user?.email] });
             queryClient.invalidateQueries({ queryKey: ["ticket-events"] });
           }}
         />

@@ -1,7 +1,6 @@
 /**
  * eventTicketWebhook
- * Stripe決済完了後、DigitalTicketを自動生成する
- * Stripeダッシュボードのwebhook URLに登録してください
+ * Stripe決済完了後、DigitalTicketを枚数分まとめて生成する
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@16.12.0';
@@ -23,7 +22,7 @@ Deno.serve(async (req) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const { event_id, buyer_email, buyer_name, tier_name, tier_type, ticket_number } = session.metadata || {};
+      const { event_id, buyer_email, buyer_name, tier_name, tier_type, quantity, start_serial, purchase_session_id } = session.metadata || {};
 
       if (!event_id) return Response.json({ received: true }); // 他のwebhookを無視
 
@@ -34,38 +33,43 @@ Deno.serve(async (req) => {
         return Response.json({ received: true });
       }
 
-      // 席種別連番を計算
-      const existingTickets = await base44.asServiceRole.entities.DigitalTicket.filter({ event_id, tier_name: tier_name });
-      const tierSerial = (existingTickets.length || 0) + 1;
+      const qty = parseInt(quantity) || 1;
+      const startSerial = parseInt(start_serial) || 1;
       const prefix = (tier_name || '').replace(/[^a-zA-Z0-9\u3040-\u9FFF]/g, '').slice(0, 6).toUpperCase() || 'TKT';
-      const finalTicketNumber = `${prefix}-${String(tierSerial).padStart(3, '0')}`;
+      const pricePerTicket = Math.round((session.amount_total || 0) / qty);
 
-      // DigitalTicket生成
-      await base44.asServiceRole.entities.DigitalTicket.create({
-        owner_email: buyer_email,
-        owner_name: buyer_name || buyer_email,
-        event_id,
-        event_name: ticketEvent.event_name,
-        event_date: ticketEvent.event_date,
-        event_location: ticketEvent.location || '',
-        ticket_type: tier_type || 'general',
-        tier_name: tier_name || '',
-        tier_serial: tierSerial,
-        channel_id: ticketEvent.channel_id,
-        channel_name: ticketEvent.channel_name,
-        price: session.amount_total || 0,
-        status: 'valid',
-        ticket_number: finalTicketNumber,
-        thumbnail_url: ticketEvent.thumbnail_url || '',
-      });
+      // 枚数分DigitalTicketを生成
+      for (let i = 0; i < qty; i++) {
+        const serial = startSerial + i;
+        const ticketNumber = `${prefix}-${String(serial).padStart(3, '0')}`;
+        await base44.asServiceRole.entities.DigitalTicket.create({
+          owner_email: buyer_email,
+          owner_name: buyer_name || buyer_email,
+          original_buyer_email: buyer_email,
+          purchase_session_id: purchase_session_id || `PS-${session.id}`,
+          event_id,
+          event_name: ticketEvent.event_name,
+          event_date: ticketEvent.event_date,
+          event_location: ticketEvent.location || '',
+          ticket_type: tier_type || 'general',
+          tier_name: tier_name || '',
+          tier_serial: serial,
+          channel_id: ticketEvent.channel_id,
+          channel_name: ticketEvent.channel_name,
+          price: pricePerTicket,
+          status: 'valid',
+          ticket_number: ticketNumber,
+          thumbnail_url: ticketEvent.thumbnail_url || '',
+        });
+      }
 
-      // sold_count インクリメント
+      // sold_count インクリメント（枚数分）
       const updatedTypes = (ticketEvent.ticket_types || []).map(t =>
-        t.name === tier_name ? { ...t, sold: (t.sold || 0) + 1 } : t
+        t.name === tier_name ? { ...t, sold: (t.sold || 0) + qty } : t
       );
       await base44.asServiceRole.entities.TicketEvent.update(event_id, { ticket_types: updatedTypes });
 
-      console.log(`[EventTicketWebhook] Ticket issued: ${buyer_email} -> ${ticketEvent.event_name}`);
+      console.log(`[EventTicketWebhook] ${qty}枚発券: ${buyer_email} -> ${ticketEvent.event_name} [${prefix}-${String(startSerial).padStart(3,'0')} ~ ${prefix}-${String(startSerial+qty-1).padStart(3,'0')}]`);
     }
 
     return Response.json({ received: true });
