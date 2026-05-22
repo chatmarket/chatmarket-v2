@@ -8,11 +8,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // 基本ページ
+    // 公開向け静的ページのみ（管理・ログイン後ページは除外）
     const staticPages = [
       { url: '/', changefreq: 'daily', priority: '1.0' },
       { url: '/recruit', changefreq: 'weekly', priority: '0.9' },
-      // LP ページ（高優先度・新機能対応済み）
+      // LP ページ
       { url: '/idol-lp', changefreq: 'weekly', priority: '0.95' },
       { url: '/fortune-lp', changefreq: 'weekly', priority: '0.9' },
       { url: '/musician', changefreq: 'weekly', priority: '0.85' },
@@ -22,8 +22,7 @@ Deno.serve(async (req) => {
       { url: '/lp/career', changefreq: 'weekly', priority: '0.85' },
       { url: '/lp/english', changefreq: 'weekly', priority: '0.85' },
       { url: '/lp/coach', changefreq: 'weekly', priority: '0.85' },
-      { url: '/info', changefreq: 'monthly', priority: '0.8' },
-      { url: '/blog', changefreq: 'weekly', priority: '0.7' },
+      // 法的・会社情報
       { url: '/terms', changefreq: 'monthly', priority: '0.5' },
       { url: '/privacy', changefreq: 'monthly', priority: '0.5' },
       { url: '/company', changefreq: 'monthly', priority: '0.6' },
