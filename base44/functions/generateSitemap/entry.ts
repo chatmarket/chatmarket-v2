@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       
       if (video.thumbnail_url) {
         xmlContent += `    <image:image>\n`;
-        xmlContent += `      <image:loc>${video.thumbnail_url}</image:loc>\n`;
+        xmlContent += `      <image:loc>${video.thumbnail_url.replace(/&/g, '&amp;')}</image:loc>\n`;
         xmlContent += `      <image:title>${(video.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</image:title>\n`;
         xmlContent += `    </image:image>\n`;
       }
