@@ -100,13 +100,12 @@ export default function CrowdfundingLP() {
       </section>
 
       {/* ── HERO IMAGE ── */}
-      <section className="px-4 sm:px-8 pb-4 -mt-6">
+      <section className="px-4 sm:px-8 py-8">
         <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl">
           <img
             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f967cf9_generated_image.png"
             alt="NPO・政治団体向けクラウドファンディング — 社会貢献活動を支える仲間たち"
-            className="w-full h-auto object-cover"
-            style={{ maxHeight: "420px", objectPosition: "center top" }}
+            className="w-full h-auto block"
           />
         </div>
       </section>
