@@ -50,6 +50,7 @@ import CrowdfundingList from '@/pages/CrowdfundingList';
 import CrowdfundingDetail from '@/pages/CrowdfundingDetail';
 import CrowdfundingNew from '@/pages/CrowdfundingNew';
 import CrowdfundingLP from '@/pages/CrowdfundingLP';
+import CrowdfundingManage from '@/pages/CrowdfundingManage';
 import CrowdfundingApply from '@/pages/CrowdfundingApply';
 import DonorDashboard from '@/pages/DonorDashboard';
 import NotificationCenter from '@/pages/NotificationCenter';
@@ -161,6 +162,7 @@ export default function App() {
             <Route path="/crowdfunding" element={<CrowdfundingList />} />
             <Route path="/crowdfunding/lp" element={<CrowdfundingLP />} />
             <Route path="/crowdfunding/apply" element={<CrowdfundingApply />} />
+            <Route path="/crowdfunding/manage" element={<CrowdfundingManage />} />
             <Route path="/crowdfunding/:projectId" element={<CrowdfundingDetail />} />
             <Route path="/crowdfunding/new" element={<CrowdfundingNew />} />
             <Route path="/donor-dashboard" element={<DonorDashboard />} />
