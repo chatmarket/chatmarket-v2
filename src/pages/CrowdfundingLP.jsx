@@ -200,6 +200,35 @@ export default function CrowdfundingLP() {
         </div>
       </section>
 
+      {/* ── COMING SOON ── */}
+      <section className="py-20 px-5 border-t border-border/30">
+        <div className="max-w-2xl mx-auto rounded-2xl p-8 space-y-5"
+          style={{ background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.25)" }}>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black"
+            style={{ background: "rgba(99,102,241,0.2)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.4)" }}>
+            🔔 COMING SOON
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black leading-snug">
+            【近日公開】NPO・政治団体特化型 審査制クラウドファンディング<br />
+            <span style={{ color: "#a5b4fc" }}>（最高還元率95%・完全分別管理）</span>
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Chat Marketは、社会貢献を行うNPO法人や正式な政治団体を対象とした、厳格な審査制クラウドファンディング機能を間もなくリリースします。
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            総額2,000万円を超える大型プロジェクトにおいて<strong className="text-foreground">【業界最高峰の還元率95%（手数料わずか5%）】</strong>を実現。さらに、スタートアップとしての信頼性と安全性を担保するため、お預かりする支援金は当社の運転資金とは完全に隔離された<strong className="text-foreground">【信託口での分別管理】</strong>を徹底。決済インフラは国際基準のセキュリティをクリアした大手決済機関と直接連動し、プラットフォームによる資金移動リスクをゼロ化しました。不正や持ち逃げの余地を一切排除した、日本一クリーンで安全な大型ドネーション特化型インフラです。
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {["信託口分別管理", "政治資金規正法対応", "還元率最高95%", "Stripe国際基準決済", "厳格審査制"].map(tag => (
+              <span key={tag} className="px-3 py-1 rounded-full text-xs font-bold"
+                style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)" }}>
+                ✓ {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ── */}
       <section className="py-24 px-5 text-center border-t border-border/30">
         <div className="max-w-md mx-auto space-y-6">
