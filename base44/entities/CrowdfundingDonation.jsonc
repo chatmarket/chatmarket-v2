@@ -1,0 +1,78 @@
+{
+  "name": "CrowdfundingDonation",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8ID"
+    },
+    "project_title": {
+      "type": "string",
+      "description": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u30bf\u30a4\u30c8\u30eb\uff08\u30b9\u30ca\u30c3\u30d7\u30b7\u30e7\u30c3\u30c8\uff09"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "donor_email": {
+      "type": "string",
+      "description": "\u652f\u63f4\u8005\u30e1\u30fc\u30eb"
+    },
+    "donor_name": {
+      "type": "string",
+      "description": "\u652f\u63f4\u8005\u540d"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u652f\u63f4\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "stripe_fee_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "Stripe\u624b\u6570\u6599\uff08\u5186\uff09"
+    },
+    "platform_fee_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0\u624b\u6570\u6599\uff08\u5186\uff09"
+    },
+    "progressive_rate": {
+      "type": "number",
+      "default": 0.85,
+      "description": "\u9069\u7528\u9084\u5143\u7387\uff080.85\u301c0.95\uff09"
+    },
+    "payout_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u56e3\u4f53\u3078\u306e\u5b9f\u632f\u8fbc\u984d\uff08\u5186\uff09"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u5fdc\u63f4\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "\u652f\u63f4\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "is_anonymous": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u533f\u540d\u652f\u63f4"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout Session ID"
+    }
+  },
+  "required": [
+    "project_id",
+    "donor_email",
+    "amount"
+  ]
+}
