@@ -42,6 +42,7 @@ const LP_NAV_ITEMS = [
   { key: "lp-career", path: "/lp/career", icon: Zap, label: "キャリアLP" },
   { key: "lp-english", path: "/lp/english", icon: Globe, label: "英会話講師LP" },
   { key: "lp-coach", path: "/lp/coach", icon: Star, label: "コーチLP" },
+  { key: "lp-crowdfunding", path: "/crowdfunding/lp", icon: Heart, label: "クラウドファンディングLP" },
 ];
 
 const NAV_ITEMS = [
