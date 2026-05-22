@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- ===== 静的ページ ===== -->
   <url>
     <loc>https://live-chat-market.com/</loc>
     <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/" />
@@ -135,4 +137,195 @@
     <priority>0.6</priority>
     <mobile:mobile/>
   </url>
+
+  <!-- ===== チャンネルページ ===== -->
+  <url>
+    <loc>https://live-chat-market.com/channel/69fc6c9b99e1323ba3c9abd6</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/69fc6c9b99e1323ba3c9abd6" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/69fc6c9b99e1323ba3c9abd6" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/69fc6c9b99e1323ba3c9abd6" />
+    <lastmod>2026-05-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/channel/69ec5bd642df7a0fafa9e29b</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/69ec5bd642df7a0fafa9e29b" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/69ec5bd642df7a0fafa9e29b" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/69ec5bd642df7a0fafa9e29b" />
+    <lastmod>2026-05-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/channel/69e2291e5a07bb1520f794c3</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/69e2291e5a07bb1520f794c3" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/69e2291e5a07bb1520f794c3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/69e2291e5a07bb1520f794c3" />
+    <lastmod>2026-05-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/channel/69dc3979800fa3015a613dda</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/69dc3979800fa3015a613dda" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/69dc3979800fa3015a613dda" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/69dc3979800fa3015a613dda" />
+    <lastmod>2026-05-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/channel/69c756da263a034bad725225</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/69c756da263a034bad725225" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/69c756da263a034bad725225" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/69c756da263a034bad725225" />
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/channel/69c63069e04a1019dafac1fb</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/channel/69c63069e04a1019dafac1fb" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/channel/69c63069e04a1019dafac1fb" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/channel/69c63069e04a1019dafac1fb" />
+    <lastmod>2026-05-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <mobile:mobile/>
+  </url>
+
+  <!-- ===== 動画ページ ===== -->
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb0</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb0" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8bb0" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb0" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1516321318423-f06fe8c50e9b?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>Docker コンテナ化技術</image:title>
+    </image:image>
+    <lastmod>2026-05-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8bab</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bab" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8bab" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bab" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1516321318423-f06fe8c50e9b?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>Svelte 最新フレームワーク</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8baf</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8baf" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8baf" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8baf" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>TypeScript 型システム</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8ba9</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8ba9" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8ba9" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8ba9" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>React Hook 完全マスター</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8bae</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bae" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8bae" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bae" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1517694712642-f4a0be2b1d18?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>Rust システムプログラミング</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8baa</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8baa" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8baa" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8baa" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1517694712645-2f3c256a1101?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>Vue 3.0 フレームワーク解説</image:title>
+    </image:image>
+    <lastmod>2026-05-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb2</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb2" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8bb2" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb2" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1533241749318-6b8da08a523e?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>GraphQL API 設計</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb3</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb3" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8bb3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb3" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>データベース最適化</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+  <url>
+    <loc>https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb5</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb5" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://live-chat-market.com/en/watch/69ecad19d35e68a36acf8bb5" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://live-chat-market.com/watch/69ecad19d35e68a36acf8bb5" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1516321318423-f06fe8c50e9b?w=400&amp;h=225&amp;fit=crop</image:loc>
+      <image:title>CI/CD パイプライン構築</image:title>
+    </image:image>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+  </url>
+
 </urlset>
