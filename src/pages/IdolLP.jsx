@@ -66,9 +66,9 @@ export default function IdolLP() {
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden font-inter">
       <MetaHelmet
-        title="【公式】Chat Market | アイドルのオンラインチェキ・チケット販売・ファンクラブ総合インフラ"
-        description="初期・月額無料＆業界最高水準の還元率85%！Chat Marketは、セルフプロデュースアイドル向けの総合インフラです。1対1通話、スクショ防止の手書きデジタルチェキ、カレンダー連動の電子チケット事前決済から現場のスワイプもぎり、グッズ物販までスマホ1つで一元管理。"
-        keywords="Chat Market,チャットマーケット,アイドル 特典会 アプリ,オンラインチェキ 販売,デジタルチェキ 手書き,WithLIVE 代替,電子チケット もぎり アプリ,アイドル 物販 EC,フリーアイドル マネタイズ,インディーズアイドル ファンクラブ,還元率 高い 配信アプリ"
+        title="Chat Market（チャットマーケット）| アイドル特化型ライブ配信＆オンラインチェキシステム"
+        description="アイドル・タレント専用の総合インフラ「Chat Market（チャットマーケット）」。業界最高水準の還元率85%で、高画質ライブ配信、スクショ防止オンラインチェキ、限定チケット販売、公式LINEログイン連携までをワンストップで実現。他社アプリを凌駕するファンエンゲージメントを提供します。"
+        keywords="Chat Market,チャットマーケット,アイドル ライブ配信 システム,オンラインチェキ スクショ防止,デジタルチェキ 手書き,チケット販売 スワイプもぎり,アイドル 物販 EC,フリーアイドル マネタイズ,インディーズアイドル ファンクラブ,還元率 高い 配信アプリ,LINE連携"
         image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/e8cd1b6f2_generated_image.png"
       />
 
@@ -186,7 +186,7 @@ export default function IdolLP() {
        <div className="max-w-3xl mx-auto space-y-10">
          <div className="text-center space-y-3">
            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#c084fc" }}>FEATURES</p>
-           <h2 className="text-3xl sm:text-4xl font-black">4つの収益化ルート</h2>
+           <h2 className="text-3xl sm:text-4xl font-black">業界最高水準の低遅延・高画質アイドルライブ配信システム｜4つの収益化ルート</h2>
            <p className="text-white/50 text-sm">あなたのスタイルに合わせて選べる</p>
          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -223,7 +223,7 @@ export default function IdolLP() {
           <div className="text-center space-y-3">
             <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>NEW FEATURE 01</p>
             <h2 className="text-2xl sm:text-3xl font-black leading-snug">
-              その場で手書き、スクショ泥棒を<br />完全シャットアウト！<br />
+              タレントの価値を守るスクショ防止機能付き<br />オンラインチェキ・サイン会<br />
               <span style={{ background: "linear-gradient(135deg, #f9a8d4, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 「リアルタイム・ツーショット・<br className="sm:hidden" />デジタルチェキ」
               </span>
@@ -336,9 +336,9 @@ export default function IdolLP() {
           <div className="text-center space-y-3">
             <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#60a5fa" }}>NEW FEATURE 03</p>
             <h2 className="text-2xl sm:text-3xl font-black leading-snug">
-              外部サイト不要！カレンダー告知から<br />
+              公式LINEログイン連携とチケット譲渡プッシュ通知機能<br />
               <span style={{ background: "linear-gradient(135deg, #93c5fd, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                現場での「スワイプもぎり」まで一元管理
+                カレンダー告知から現場「スワイプもぎり」まで一元管理
               </span>
             </h2>
             <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto">
