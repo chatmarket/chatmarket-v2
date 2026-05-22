@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Heart, Shield, CheckCircle2, TrendingUp, Building2, Users, FileText, Phone, ChevronRight, Star, Zap, Globe } from "lucide-react";
+import ProgressiveIncentiveChart from "@/components/plan/ProgressiveIncentiveChart";
 
 const FEATURES = [
   {
@@ -152,6 +153,34 @@ export default function CrowdfundingLP() {
                   <p className="font-black text-base">{s.title}</p>
                   <p className="text-muted-foreground text-sm mt-0.5">{s.desc}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── プログレッシブインセンティブ ── */}
+      <section className="py-20 px-5 border-t border-border/30">
+        <div className="max-w-2xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <p className="text-xs font-black tracking-widest uppercase text-muted-foreground">REVENUE MODEL</p>
+            <h2 className="text-3xl font-black">集まるほど、還元率が上がる</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Chat Marketのクラウドファンディングには<strong className="text-foreground">プログレッシブインセンティブ</strong>が導入されています。<br />
+              月間累計支援額が増えるほど自動的に還元率がアップ。申請・手続き不要です。
+            </p>
+          </div>
+          <ProgressiveIncentiveChart />
+          <div className="grid grid-cols-3 gap-3 text-center">
+            {[
+              { label: "スタート時", rate: "85%", sub: "〜100万円" },
+              { label: "成長フェーズ", rate: "91%", sub: "600万円〜" },
+              { label: "最大還元", rate: "95%", sub: "2000万円〜" },
+            ].map(item => (
+              <div key={item.label} className="p-4 rounded-2xl bg-card border border-border/40 space-y-1">
+                <p className="text-xs text-muted-foreground">{item.label}</p>
+                <p className="text-2xl font-black text-primary">{item.rate}</p>
+                <p className="text-xs text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </div>
