@@ -49,6 +49,8 @@ import Forum from '@/pages/Forum';
 import CrowdfundingList from '@/pages/CrowdfundingList';
 import CrowdfundingDetail from '@/pages/CrowdfundingDetail';
 import CrowdfundingNew from '@/pages/CrowdfundingNew';
+import CrowdfundingLP from '@/pages/CrowdfundingLP';
+import CrowdfundingApply from '@/pages/CrowdfundingApply';
 import DonorDashboard from '@/pages/DonorDashboard';
 import NotificationCenter from '@/pages/NotificationCenter';
 import LegalCommercial from '@/pages/LegalCommercial';
@@ -157,6 +159,8 @@ export default function App() {
             <Route path="/equipment" element={<Navigate to="/obs-guide" replace />} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/crowdfunding" element={<CrowdfundingList />} />
+            <Route path="/crowdfunding/lp" element={<CrowdfundingLP />} />
+            <Route path="/crowdfunding/apply" element={<CrowdfundingApply />} />
             <Route path="/crowdfunding/:projectId" element={<CrowdfundingDetail />} />
             <Route path="/crowdfunding/new" element={<CrowdfundingNew />} />
             <Route path="/donor-dashboard" element={<DonorDashboard />} />

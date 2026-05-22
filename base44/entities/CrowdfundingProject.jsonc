@@ -1,0 +1,137 @@
+{
+  "name": "CrowdfundingProject",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u8aac\u660e\uff08\u6700\u59271\u4e07\u6587\u5b57\uff09"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "organization_type": {
+      "type": "string",
+      "enum": [
+        "public",
+        "npo",
+        "political",
+        "individual",
+        "company"
+      ],
+      "description": "\u56e3\u4f53\u7a2e\u5225"
+    },
+    "organization_name": {
+      "type": "string",
+      "description": "\u6b63\u5f0f\u56e3\u4f53\u540d"
+    },
+    "corporate_number": {
+      "type": "string",
+      "description": "\u6cd5\u4eba\u756a\u53f7\uff0813\u6841\uff09"
+    },
+    "political_party_code": {
+      "type": "string",
+      "description": "\u653f\u6cbb\u56e3\u4f53\u5c4a\u51fa\u756a\u53f7"
+    },
+    "representative_name": {
+      "type": "string",
+      "description": "\u4ee3\u8868\u8005\u6c0f\u540d"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "\u62c5\u5f53\u8005\u6c0f\u540d"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "\u62c5\u5f53\u8005\u96fb\u8a71\u756a\u53f7\uff08\u5f8c\u65e5\u78ba\u8a8d\u96fb\u8a71\u3042\u308a\uff09"
+    },
+    "address_postal": {
+      "type": "string",
+      "description": "\u90f5\u4fbf\u756a\u53f7"
+    },
+    "address": {
+      "type": "string",
+      "description": "\u4f4f\u6240\uff08\u90fd\u9053\u5e9c\u770c\u30fb\u5e02\u533a\u753a\u6751\u30fb\u756a\u5730\uff09"
+    },
+    "address_building": {
+      "type": "string",
+      "description": "\u5efa\u7269\u540d\u30fb\u90e8\u5c4b\u756a\u53f7"
+    },
+    "hp_url": {
+      "type": "string",
+      "description": "\u516c\u5f0fHP\u30ea\u30f3\u30af"
+    },
+    "certificate_url": {
+      "type": "string",
+      "description": "\u8a3c\u660e\u66f8\u985eURL\uff08\u767b\u8a18\u30fb\u8a8d\u8a3c\u72b6\uff09"
+    },
+    "political_notification_url": {
+      "type": "string",
+      "description": "\u653f\u6cbb\u56e3\u4f53\u8a2d\u7acb\u5c4a\u7d44\u7e54\u63a7\u3048URL\uff08\u5c0f\u898f\u6a21\u56e3\u4f53\u5411\u3051\uff09"
+    },
+    "image_url_1": {
+      "type": "string",
+      "description": "\u753b\u50cf1URL"
+    },
+    "image_url_2": {
+      "type": "string",
+      "description": "\u753b\u50cf2URL"
+    },
+    "image_url_3": {
+      "type": "string",
+      "description": "\u753b\u50cf3URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "reviewing",
+        "approved",
+        "rejected",
+        "active"
+      ],
+      "default": "pending",
+      "description": "\u5be9\u67fb\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "admin_note": {
+      "type": "string",
+      "description": "\u5be9\u67fb\u62c5\u5f53\u8005\u30e1\u30e2"
+    },
+    "goal_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "\u76ee\u6a19\u91d1\u984d\uff080\u306e\u5834\u5408\u306f\u76ee\u6a19\u306a\u3057\uff09"
+    },
+    "total_raised": {
+      "type": "number",
+      "default": 0,
+      "description": "\u7d2f\u8a08\u652f\u63f4\u91d1\u984d"
+    },
+    "supporter_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u652f\u63f4\u8005\u6570"
+    }
+  },
+  "required": [
+    "title",
+    "organization_name",
+    "organization_type",
+    "representative_name",
+    "contact_name",
+    "contact_phone",
+    "address"
+  ]
+}
