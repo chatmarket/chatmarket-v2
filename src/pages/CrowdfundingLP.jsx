@@ -99,6 +99,18 @@ export default function CrowdfundingLP() {
         </div>
       </section>
 
+      {/* ── HERO IMAGE ── */}
+      <section className="px-4 sm:px-8 pb-4 -mt-6">
+        <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl">
+          <img
+            src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f967cf9_generated_image.png"
+            alt="NPO・政治団体向けクラウドファンディング — 社会貢献活動を支える仲間たち"
+            className="w-full h-auto object-cover"
+            style={{ maxHeight: "420px", objectPosition: "center top" }}
+          />
+        </div>
+      </section>
+
       {/* ── 対象団体 ── */}
       <section className="py-16 px-5 border-y border-border/30">
         <div className="max-w-3xl mx-auto text-center space-y-6">
@@ -197,6 +209,41 @@ export default function CrowdfundingLP() {
             <li>献金者ご自身が法令を遵守の上でご支援ください。</li>
             <li>当プラットフォームは献金額の法令適合性を保証するものではありません。</li>
           </ul>
+        </div>
+      </section>
+
+      {/* ── SECURITY IMAGE ── */}
+      <section className="py-12 px-4 sm:px-8 border-t border-border/30">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <p className="text-xs font-black tracking-widest uppercase text-muted-foreground">SECURITY</p>
+            <h2 className="text-2xl sm:text-3xl font-black">鉄壁の資金安全管理</h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
+              支援金は当社運転資金と完全に隔離された信託口で分別管理。<br className="hidden sm:block" />
+              国際基準Stripe決済により持ち逃げリスクをゼロ化しています。
+            </p>
+          </div>
+          <div className="rounded-2xl overflow-hidden shadow-2xl">
+            <img
+              src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/021f66753_generated_image.png"
+              alt="信託口分別管理・セキュア資金フロー可視化"
+              className="w-full h-auto object-cover"
+              style={{ maxHeight: "380px", objectFit: "cover" }}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { icon: "🔐", title: "信託口 分別管理", desc: "支援金は運転資金と完全隔離。信託口座で安全に保全。" },
+              { icon: "🌐", title: "Stripe 国際基準決済", desc: "PCI DSS準拠の国際決済インフラで資金移動を直接処理。" },
+              { icon: "📜", title: "政治資金規正法対応", desc: "献金上限チェックを自動搭載。法令遵守を仕組みで担保。" },
+            ].map(item => (
+              <div key={item.title} className="p-5 rounded-2xl bg-card border border-border/40 space-y-2">
+                <div className="text-2xl">{item.icon}</div>
+                <p className="font-black text-sm text-foreground">{item.title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
