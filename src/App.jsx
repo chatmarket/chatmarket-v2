@@ -102,6 +102,7 @@ import EnglishLP from '@/pages/EnglishLP';
 import CoachLP from '@/pages/CoachLP';
 import ChekiCaptureEditor from '@/pages/ChekiCaptureEditor';
 import MyPurchases from '@/pages/MyPurchases';
+import ProfileLP from '@/pages/ProfileLP';
 
 
 export default function App() {
@@ -212,6 +213,7 @@ export default function App() {
             <Route path="/cheki-editor" element={<ChekiCaptureEditor />} />
             <Route path="/my-purchases" element={<MyPurchases />} />
 
+            <Route path="/@:username" element={<ProfileLP />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
