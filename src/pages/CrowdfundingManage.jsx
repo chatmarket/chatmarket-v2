@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Heart, TrendingUp, Users, Banknote, AlertTriangle, CheckCircle2,
-  Clock, XCircle, Plus, ExternalLink, FileText, ArrowDownToLine, Loader2
+  Clock, XCircle, Plus, ExternalLink, FileText, ArrowDownToLine, Loader2, CreditCard, ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,10 +129,18 @@ function WithdrawalModal({ project, availableYen, onClose, onSuccess }) {
   );
 }
 
+const CONNECT_STATUS = {
+  not_started:        { label: "未設定",             color: "bg-secondary text-muted-foreground border-0" },
+  pending_onboarding: { label: "設定中",             color: "bg-yellow-500/20 text-yellow-300 border-0" },
+  active:             { label: "Stripe Connect 有効", color: "bg-green-500/20 text-green-300 border-0" },
+  restricted:         { label: "制限あり",           color: "bg-red-500/20 text-red-300 border-0" },
+};
+
 export default function CrowdfundingManage() {
   const [user, setUser] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showWithdrawal, setShowWithdrawal] = useState(false);
+  const [connectLoading, setConnectLoading] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -191,6 +199,23 @@ export default function CrowdfundingManage() {
 
   // 出金ボタンは審査通過(approved/active)のプロジェクトのみ
   const canWithdraw = proj && ["approved", "active"].includes(proj.status) && availableYen >= 1000;
+
+  const handleConnectOnboarding = async () => {
+    if (!proj) return;
+    setConnectLoading(true);
+    try {
+      const res = await base44.functions.invoke('createConnectAccount', { project_id: proj.id });
+      if (res.data?.onboarding_url) {
+        window.location.href = res.data.onboarding_url;
+      } else {
+        toast.error('オンボーディングURLの取得に失敗しました');
+      }
+    } catch (err) {
+      toast.error('エラーが発生しました: ' + err.message);
+    } finally {
+      setConnectLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
@@ -329,6 +354,68 @@ export default function CrowdfundingManage() {
                   </div>
                 )}
               </div>
+
+              {/* Stripe Connect オンボーディング */}
+              {["approved", "active"].includes(proj.status) && (
+                <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="font-bold">Stripe Connect 設定</h3>
+                        <p className="text-xs text-muted-foreground">NPO口座への自動振込を設定します</p>
+                      </div>
+                    </div>
+                    <Badge className={CONNECT_STATUS[proj.stripe_connect_status || 'not_started']?.color}>
+                      {CONNECT_STATUS[proj.stripe_connect_status || 'not_started']?.label}
+                    </Badge>
+                  </div>
+
+                  {proj.stripe_connect_status === 'active' ? (
+                    <div className="rounded-xl p-4 flex gap-3 text-sm"
+                      style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
+                      <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                      <div className="text-emerald-300 space-y-1">
+                        <p className="font-bold">Stripe Connect が有効です</p>
+                        <p className="text-xs text-emerald-300/80">
+                          支援金は Destination Charges 方式でNPO口座へ直接振込されます。
+                          プラットフォーム手数料（5〜15%）は自動徴収されます。
+                          Stripe手数料3.6%は支援者負担です。
+                        </p>
+                        <p className="text-xs text-emerald-300/60">アカウントID: {proj.stripe_connect_account_id}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="rounded-xl p-4 text-sm space-y-2"
+                        style={{ background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                        <p className="font-bold text-indigo-300">Stripe Connectとは</p>
+                        <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                          <li>支援金がNPO団体の口座へ<strong className="text-foreground">直接・自動振込</strong></li>
+                          <li>プラットフォームがapplication_feeとして手数料を自動徴収</li>
+                          <li>Stripe手数料3.6%は支援者側に上乗せ表示（NPO負担ゼロ）</li>
+                          <li>税務・会計の透明性が大幅に向上</li>
+                        </ul>
+                      </div>
+                      <Button
+                        onClick={handleConnectOnboarding}
+                        disabled={connectLoading}
+                        className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700 text-white h-11"
+                      >
+                        {connectLoading
+                          ? <><Loader2 className="w-4 h-4 animate-spin" />設定中...</>
+                          : <><CreditCard className="w-4 h-4" />
+                            {proj.stripe_connect_status === 'pending_onboarding' ? 'オンボーディングを再開' : 'Stripe Connectを設定する'}
+                          </>
+                        }
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        設定にはStripe社のKYC審査（身分証等）が必要です
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 支援履歴 */}
               <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">

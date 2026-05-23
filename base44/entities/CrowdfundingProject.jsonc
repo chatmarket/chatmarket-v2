@@ -27,11 +27,10 @@
       "enum": [
         "public",
         "npo",
-        "political",
         "individual",
         "company"
       ],
-      "description": "\u56e3\u4f53\u7a2e\u5225"
+      "description": "\u56e3\u4f53\u7a2e\u5225\uff08\u653f\u6cbb\u56e3\u4f53\u306f\u5bfe\u8c61\u5916\uff09"
     },
     "organization_name": {
       "type": "string",
@@ -39,11 +38,7 @@
     },
     "corporate_number": {
       "type": "string",
-      "description": "\u6cd5\u4eba\u756a\u53f7\uff0813\u6841\uff09"
-    },
-    "political_party_code": {
-      "type": "string",
-      "description": "\u653f\u6cbb\u56e3\u4f53\u5c4a\u51fa\u756a\u53f7"
+      "description": "\u6cd5\u4eba\u756a\u53f7\uff0813\u6841\u30fb\u56fd\u7a0e\u5e81\u7167\u5408\u7528\uff09"
     },
     "representative_name": {
       "type": "string",
@@ -76,10 +71,6 @@
     "certificate_url": {
       "type": "string",
       "description": "\u8a3c\u660e\u66f8\u985eURL\uff08\u767b\u8a18\u30fb\u8a8d\u8a3c\u72b6\uff09"
-    },
-    "political_notification_url": {
-      "type": "string",
-      "description": "\u653f\u6cbb\u56e3\u4f53\u8a2d\u7acb\u5c4a\u7d44\u7e54\u63a7\u3048URL\uff08\u5c0f\u898f\u6a21\u56e3\u4f53\u5411\u3051\uff09"
     },
     "image_url_1": {
       "type": "string",
@@ -123,6 +114,21 @@
       "type": "number",
       "default": 0,
       "description": "\u652f\u63f4\u8005\u6570"
+    },
+    "stripe_connect_account_id": {
+      "type": "string",
+      "description": "Stripe Connect Express \u30a2\u30ab\u30a6\u30f3\u30c8ID"
+    },
+    "stripe_connect_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending_onboarding",
+        "active",
+        "restricted"
+      ],
+      "default": "not_started",
+      "description": "Stripe Connect\u30aa\u30f3\u30dc\u30fc\u30c7\u30a3\u30f3\u30b0\u72b6\u614b"
     }
   },
   "required": [

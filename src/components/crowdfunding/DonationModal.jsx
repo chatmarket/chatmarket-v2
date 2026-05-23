@@ -64,7 +64,7 @@ export default function DonationModal({ project, user, onClose, onSuccess }) {
       return;
     }
     setProcessing(true);
-    const res = await base44.functions.invoke("createCrowdfundingCheckout", {
+    const res = await base44.functions.invoke("createCrowdfundingCheckoutV2", {
       project_id: project.id,
       amount: amountNum,
       message: message.trim() || "",
@@ -132,12 +132,16 @@ export default function DonationModal({ project, user, onClose, onSuccess }) {
                   <span>支援額</span>
                   <span className="text-foreground font-bold">¥{amountNum.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Stripe手数料 (3.6%)</span>
-                  <span>- ¥{stripeFee.toLocaleString()}</span>
+                <div className="flex justify-between text-blue-300">
+                  <span>+ 決済手数料 (3.6% 支援者負担)</span>
+                  <span>+ ¥{stripeFee.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-t border-border/30 pt-1 mt-1 text-blue-200">
+                  <span className="font-bold">お支払い総額</span>
+                  <span className="font-black">¥{(amountNum + stripeFee).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>プラットフォーム手数料</span>
+                  <span>うちプラットフォーム手数料</span>
                   <span>- ¥{platformFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between border-t border-border/30 pt-1 mt-1">
@@ -181,7 +185,7 @@ export default function DonationModal({ project, user, onClose, onSuccess }) {
           >
             {processing
               ? <><Loader2 className="w-4 h-4 animate-spin" />処理中...</>
-              : <><ExternalLink className="w-4 h-4" />Stripeで ¥{amountNum.toLocaleString()} を支援する</>
+              : <><ExternalLink className="w-4 h-4" />Stripeで ¥{(amountNum + Math.ceil(amountNum * 0.036)).toLocaleString()} を支払う</>
             }
           </Button>
           <p className="text-xs text-muted-foreground text-center">Stripe 安全決済 · クレジットカード対応</p>
