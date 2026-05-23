@@ -13,8 +13,8 @@ export default function RecruitApplicationManagement({ applications: propsApplic
   const prevCountRef = useRef(0);
   const [selectedApp, setSelectedApp] = useState(null);
 
-  // AdminDashboardからpropsで受け取ったapplicationsを使用
-  const applications = propsApplications && propsApplications.length > 0 ? propsApplications : [];
+  // AdminDashboardからpropsで受け取ったapplicationsを使用（採用済みは除外）
+  const applications = (propsApplications || []).filter(app => app.recruit_status !== "採用");
 
   // 重複メールを検出（同一メールで複数申込）
   const emailCountMap = applications.reduce((acc, app) => {
