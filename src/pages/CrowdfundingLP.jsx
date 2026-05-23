@@ -39,9 +39,9 @@ const STEPS = [
 
 const TARGETS = [
   { icon: "🏛️", label: "NPO法人・一般社団法人" },
-  { icon: "⚖️", label: "政治団体・政党支部" },
   { icon: "🌱", label: "市民活動・ボランティア団体" },
   { icon: "🎓", label: "学術・文化・教育団体" },
+  { icon: "❤️", label: "公益・福祉・環境団体" },
 ];
 
 export default function CrowdfundingLP() {
@@ -56,7 +56,7 @@ export default function CrowdfundingLP() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border"
             style={{ background: "rgba(99,102,241,0.15)", borderColor: "rgba(99,102,241,0.4)", color: "#a5b4fc" }}>
             <Heart className="w-3.5 h-3.5 fill-current" />
-            NPO・政治団体向けクラウドファンディング
+            NPO・市民活動団体向けクラウドファンディング
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-black leading-[1.1] tracking-tight">
@@ -67,7 +67,7 @@ export default function CrowdfundingLP() {
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Chat Marketのクラウドファンディングは、<strong className="text-foreground">NPO法人・政治団体専用</strong>の<br className="hidden sm:block" />
+            Chat Marketのクラウドファンディングは、<strong className="text-foreground">NPO法人・市民活動団体専用</strong>の<br className="hidden sm:block" />
             厳格審査つき資金調達プラットフォームです。<br />
             還元率<strong className="text-primary">業界最高水準95%</strong>で、支援が直接届きます。
           </p>
@@ -94,7 +94,7 @@ export default function CrowdfundingLP() {
 
           <div className="flex items-center justify-center gap-2 pt-2">
             <Shield className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-muted-foreground">政治資金規正法・NPO法に完全準拠</span>
+            <span className="text-xs text-muted-foreground">NPO法に完全準拠・厳正審査制</span>
           </div>
         </div>
       </section>
@@ -104,7 +104,7 @@ export default function CrowdfundingLP() {
         <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl">
           <img
             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/44f967cf9_generated_image.png"
-            alt="NPO・政治団体向けクラウドファンディング — 社会貢献活動を支える仲間たち"
+            alt="NPO・市民活動団体向けクラウドファンディング — 社会貢献活動を支える仲間たち"
             className="w-full h-auto block"
           />
         </div>
@@ -198,18 +198,7 @@ export default function CrowdfundingLP() {
         </div>
       </section>
 
-      {/* ── 法令対応注記 ── */}
-      <section className="py-10 px-5">
-        <div className="max-w-2xl mx-auto bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 space-y-2 text-sm text-yellow-200">
-          <p className="font-bold text-base">⚠️ 政治献金に関する重要な注意事項</p>
-          <ul className="space-y-1 list-disc list-inside text-yellow-200/80">
-            <li>政治団体への個人献金には政治資金規正法による限度額があります。</li>
-            <li>企業・団体献金は法律により制限される場合があります。</li>
-            <li>献金者ご自身が法令を遵守の上でご支援ください。</li>
-            <li>当プラットフォームは献金額の法令適合性を保証するものではありません。</li>
-          </ul>
-        </div>
-      </section>
+
 
       {/* ── SECURITY IMAGE ── */}
       <section className="py-12 px-4 sm:px-8 border-t border-border/30">
@@ -234,7 +223,7 @@ export default function CrowdfundingLP() {
             {[
               { icon: "🔐", title: "信託口 分別管理", desc: "支援金は運転資金と完全隔離。信託口座で安全に保全。" },
               { icon: "🌐", title: "Stripe 国際基準決済", desc: "PCI DSS準拠の国際決済インフラで資金移動を直接処理。" },
-              { icon: "📜", title: "政治資金規正法対応", desc: "献金上限チェックを自動搭載。法令遵守を仕組みで担保。" },
+              { icon: "📜", title: "NPO法・法令完全対応", desc: "厳正な審査により適切な団体のみ掲載。法令遵守を仕組みで担保。" },
             ].map(item => (
               <div key={item.title} className="p-5 rounded-2xl bg-card border border-border/40 space-y-2">
                 <div className="text-2xl">{item.icon}</div>
@@ -255,17 +244,17 @@ export default function CrowdfundingLP() {
             🔔 COMING SOON
           </div>
           <h2 className="text-xl sm:text-2xl font-black leading-snug">
-            【近日公開】NPO・政治団体特化型 審査制クラウドファンディング<br />
+            【近日公開】NPO・市民活動団体特化型 審査制クラウドファンディング<br />
             <span style={{ color: "#a5b4fc" }}>（最高還元率95%・完全分別管理）</span>
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Chat Marketは、社会貢献を行うNPO法人や正式な政治団体を対象とした、厳格な審査制クラウドファンディング機能を間もなくリリースします。
+            Chat Marketは、社会貢献を行うNPO法人や市民活動団体を対象とした、厳格な審査制クラウドファンディング機能を間もなくリリースします。
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed">
             総額2,000万円を超える大型プロジェクトにおいて<strong className="text-foreground">【業界最高峰の還元率95%（手数料わずか5%）】</strong>を実現。さらに、スタートアップとしての信頼性と安全性を担保するため、お預かりする支援金は当社の運転資金とは完全に隔離された<strong className="text-foreground">【信託口での分別管理】</strong>を徹底。決済インフラは国際基準のセキュリティをクリアした大手決済機関と直接連動し、プラットフォームによる資金移動リスクをゼロ化しました。不正や持ち逃げの余地を一切排除した、日本一クリーンで安全な大型ドネーション特化型インフラです。
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
-            {["信託口分別管理", "政治資金規正法対応", "還元率最高95%", "Stripe国際基準決済", "厳格審査制"].map(tag => (
+            {["信託口分別管理", "NPO法完全対応", "還元率最高95%", "Stripe国際基準決済", "厳格審査制"].map(tag => (
               <span key={tag} className="px-3 py-1 rounded-full text-xs font-bold"
                 style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)" }}>
                 ✓ {tag}

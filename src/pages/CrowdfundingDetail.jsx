@@ -78,8 +78,8 @@ export default function CrowdfundingDetail() {
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
       <div className="space-y-3">
-        <Badge className={project.organization_type === "npo" ? "bg-blue-500/20 text-blue-300 border-0" : "bg-purple-500/20 text-purple-300 border-0"}>
-          {project.organization_type === "npo" ? "NPO法人" : "政治政党"}
+        <Badge className="bg-blue-500/20 text-blue-300 border-0">
+          NPO法人
         </Badge>
         <h1 className="text-2xl font-bold">{project.title}</h1>
         <p className="text-muted-foreground text-sm">{project.organization_name}</p>
@@ -142,17 +142,6 @@ export default function CrowdfundingDetail() {
         </div>
         </div>
       </div>
-
-      {/* Political donation notice */}
-      {project.organization_type === "political_party" && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">
-          <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
-          <div className="text-sm text-yellow-200 space-y-1">
-            <p className="font-semibold">政治献金に関する重要なお知らせ</p>
-            <p>政治団体・政治家個人への献金には、政治資金規正法に基づく限度額が設けられています。献金額は個人で管理・把握し、法令を遵守した上でご支援ください。ご不明点は専門家または各政党窓口にご相談ください。</p>
-          </div>
-        </div>
-      )}
 
       {/* Description */}
       <div className="bg-card border border-border/50 rounded-2xl p-6">

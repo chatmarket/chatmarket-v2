@@ -91,13 +91,6 @@ export default function DonationModal({ project, user, onClose, onSuccess }) {
         </div>
 
         <div className="p-5 space-y-5">
-          {(project.organization_type === "political" || project.organization_type === "public") && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 flex gap-2">
-              <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-yellow-200">政治団体への個人献金には法律上の限度額があります。法令を遵守した上でご支援ください。</p>
-            </div>
-          )}
-
           {/* 金額選択 */}
           <div className="space-y-2">
             <Label>支援金額（円）</Label>

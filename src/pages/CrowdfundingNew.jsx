@@ -108,7 +108,7 @@ export default function CrowdfundingNew() {
       <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-8 text-sm text-blue-200 space-y-2">
         <p className="font-semibold">📋 審査について</p>
         <ul className="space-y-1 list-disc list-inside text-blue-200/80">
-          <li>対象：正式なNPO団体・正式な政治政党のみ</li>
+          <li>対象：正式なNPO団体のみ</li>
           <li>各種証明書類の提出が必要です</li>
           <li>チャットマーケットが独自審査を行います</li>
           <li>審査後、代表者・担当者に電話にてご確認いたします</li>
@@ -126,7 +126,6 @@ export default function CrowdfundingNew() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="npo">正式なNPO法人</SelectItem>
-              <SelectItem value="political_party">正式な政治政党</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -213,14 +212,6 @@ export default function CrowdfundingNew() {
             ))}
           </div>
         </div>
-
-        {/* Political notice */}
-        {form.organization_type === "political_party" && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">
-            <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
-            <p className="text-sm text-yellow-200">政治団体への個人献金には法律上の限度額があります。支援者には個人で管理・把握していただくよう、ページ上に注意事項が表示されます。</p>
-          </div>
-        )}
 
         <Button type="submit" disabled={submitting} className="w-full h-12 bg-primary hover:bg-primary/90 text-base gap-2">
           {submitting ? <><Loader2 className="w-5 h-5 animate-spin" />送信中...</> : <><Heart className="w-5 h-5" />審査申請を送信する</>}

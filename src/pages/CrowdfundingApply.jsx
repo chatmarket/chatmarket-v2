@@ -9,7 +9,6 @@ import { FileText, Upload, Phone, Shield, AlertCircle, CheckCircle2 } from "luci
 
 const ORG_TYPES = [
   { value: "npo", label: "NPO法人 / 一般社団法人 / 公益法人" },
-  { value: "political", label: "政治団体 / 政党支部" },
   { value: "public", label: "市民活動・ボランティア団体（任意団体）" },
   { value: "company", label: "一般企業・その他" },
 ];
@@ -46,13 +45,11 @@ export default function CrowdfundingApply() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
-  const [uploadingPolitical, setUploadingPolitical] = useState(false);
 
   const [form, setForm] = useState({
     organization_type: "",
     organization_name: "",
     corporate_number: "",
-    political_party_code: "",
     representative_name: "",
     contact_name: "",
     contact_phone: "",
@@ -64,7 +61,7 @@ export default function CrowdfundingApply() {
     description: "",
     goal_amount: "",
     certificate_url: "",
-    political_notification_url: "",
+
   });
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
@@ -160,12 +157,6 @@ export default function CrowdfundingApply() {
             <Input value={form.corporate_number} onChange={e => set("corporate_number", e.target.value)} placeholder="例：1234567890123" maxLength={13} />
           </Field>
 
-          {form.organization_type === "political" && (
-            <Field label="政治団体届出番号" hint="総務省・都道府県選挙管理委員会への届出番号">
-              <Input value={form.political_party_code} onChange={e => set("political_party_code", e.target.value)} placeholder="例：東京都第○○号" />
-            </Field>
-          )}
-
           <Field label="代表者氏名" required>
             <Input value={form.representative_name} onChange={e => set("representative_name", e.target.value)} placeholder="例：山田 太郎" required />
           </Field>
@@ -224,7 +215,7 @@ export default function CrowdfundingApply() {
         <div className="bg-card border border-border/40 rounded-2xl p-6 space-y-5">
           <SectionTitle icon={Shield} title="証明書類のアップロード" sub="PDF・JPEG・PNG形式。審査に利用します。" />
 
-          <Field label="登記証明書・認証状・法人証明書類" hint="NPO法人：都道府県知事認証状 / 政治団体：届出受理書 / 一般社団法人：登記事項証明書">
+          <Field label="登記証明書・認証状・法人証明書類" hint="NPO法人：都道府県知事認証状 / 一般社団法人：登記事項証明書">
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-border/60 hover:border-primary/50 cursor-pointer bg-secondary/50 text-sm font-medium transition-colors w-full">
                 <Upload className="w-4 h-4 text-muted-foreground" />
@@ -235,20 +226,7 @@ export default function CrowdfundingApply() {
             </div>
           </Field>
 
-          <Field
-            label="政治団体設立届の組織控え"
-            hint="小規模な政治団体・任意団体で法人登記がない場合はこちらを提出してください"
-          >
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-border/60 hover:border-primary/50 cursor-pointer bg-secondary/50 text-sm font-medium transition-colors w-full">
-                <Upload className="w-4 h-4 text-muted-foreground" />
-                {uploadingPolitical ? "アップロード中..." : form.political_notification_url ? "✅ アップロード済み" : "ファイルを選択"}
-                <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={e => handleFileUpload(e, "political_notification_url", setUploadingPolitical)} />
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground">※登記証明書がある場合は不要です。</p>
-          </Field>
+
         </div>
 
         {/* ── セクション5: プロジェクト内容 ── */}
