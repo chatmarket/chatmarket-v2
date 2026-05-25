@@ -271,18 +271,28 @@ export default function Home() {
       {/* サブスク無料キャンペーンバナー */}
       <Link to="/recruit" className="block">
         <div
-          className="relative overflow-hidden rounded-2xl px-5 py-3 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          className="relative overflow-hidden rounded-2xl px-5 py-6 sm:py-8 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
           style={{
             background: "linear-gradient(135deg, #1a0a2e 0%, #2d1060 50%, #1a0a2e 100%)",
             border: "2px solid #a855f7",
-            boxShadow: "0 0 30px rgba(168,85,247,0.6), 0 0 60px rgba(168,85,247,0.2)",
+            boxShadow: "0 0 40px rgba(168,85,247,0.7), 0 0 80px rgba(168,85,247,0.25)",
           }}
         >
-          <p className="font-black text-lg sm:text-xl" style={{ color: "#f5e27a", textShadow: "0 0 20px rgba(245,226,122,0.6)" }}>
-            🎁 ライバー登録で12ヶ月無料！
+          {/* 輝きエフェクト */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.25) 0%, transparent 70%)",
+          }} />
+          <p className="relative font-black text-base sm:text-lg" style={{ color: "#c084fc", letterSpacing: "0.05em" }}>
+            🎉 期間限定キャンペーン
           </p>
-          <p className="text-xs mt-1" style={{ color: "#c084fc" }}>
-            期間限定キャンペーン →
+          <p className="relative font-black text-2xl sm:text-3xl md:text-4xl mt-2" style={{ color: "#f5e27a", textShadow: "0 0 30px rgba(245,226,122,0.7)" }}>
+            配信者・視聴者どなたでも
+          </p>
+          <p className="relative font-black text-3xl sm:text-4xl md:text-5xl mt-1" style={{ color: "#fff", textShadow: "0 0 40px rgba(168,85,247,0.9)" }}>
+            12ヶ月<span style={{ color: "#f5e27a" }}>完全無料</span>！
+          </p>
+          <p className="relative text-sm sm:text-base mt-3" style={{ color: "#d8b4fe" }}>
+            登録するだけで全員が対象 → 今すぐ確認
           </p>
         </div>
       </Link>
