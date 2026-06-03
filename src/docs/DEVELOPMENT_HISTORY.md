@@ -115,17 +115,17 @@ if (!call.recording_option) {
 | アーカイブ有料販売 | ❌ | ✅ | ✅ | ❌ |
 | VODアップロード | ❌ | ❌ | ✅ | ❌ |
 
-### 4-2. VOD最低価格バリデーション（確定：¥150）
+### 4-2. VOD最低価格バリデーション（確定：¥100）
 
 ```javascript
-// VODアーカイブ・動画販売の最低価格は ¥150
-const MIN_VOD_PRICE = 150;
-if (archivePrice < MIN_VOD_PRICE) {
-  throw new Error('アーカイブ販売価格は¥150以上に設定してください');
+// VOD動画販売の最低価格は ¥100（エールコイン）
+const VOD_MIN_PRICE = 100;
+if (price < VOD_MIN_PRICE) {
+  throw new Error('動画販売価格は100円以上に設定してください');
 }
 ```
 
-**¥150未満のVOD設定を許可するコードは生成禁止。**
+**¥100未満のVOD設定を許可するコードは生成禁止。**
 
 ### 4-3. CALL&ANSERプラン 無料枠ルール（確定）
 
@@ -225,7 +225,7 @@ if (isMillionaireChallengePeriod()) {
 ```
 ❌ 150円通話の運営利益を削るコード
 ❌ recording_option なしで録画を起動するコード
-❌ VOD価格を¥150未満で設定できるコード
+❌ VOD価格を¥100未満で設定できるコード
 ❌ ミリオネア期間中に15分以外の通話時間を許可するコード
 ❌ FREEプランの通話を完全禁止にするコード（FREEでも通話可能が大原則）
 ❌ ライバー還元率を85%未満にするコード（BASICプラン以上）
@@ -234,6 +234,7 @@ if (isMillionaireChallengePeriod()) {
 ❌ コインボーナス率を8%超に設定するコード（逆ざやリスク）
 ❌ YellCoinTransactionに coins_purchased / bonus_coins を分離せず記録するコード
 ❌ ウォレットの total_charged にボーナスコインを含めて累計するコード
+❌ Mux（mux.com）を VOD配信・アップロードに使用するコード（完全廃止）
 ```
 
 ---
@@ -299,10 +300,85 @@ if (isMillionaireChallengePeriod()) {
 - **バックエンド関数はすべて Deno Deploy（Base44 Functions）**
 - **フロントエンド: React + Tailwind CSS + shadcn/ui**
 - **DB: Base44 Entities**（スキーマ変更は entities/*.json で管理）
-- **動画配信: AWS IVS（ライブ）+ Mux（VOD）**
+- **動画配信: AWS IVS（ライブ）+ AWS S3 + CloudFront（VOD）**
 - **通話: AWS Chime SDK のみ**（Agoraは廃止）
 - **録画: AWS S3 + CloudFront**（署名付きURL）
 - **決済: Stripe（JPY建て）**
+- **Mux: 完全廃止済み（2026-06-03）**
+
+---
+
+## 12. 🎬 VOD（動画販売）フロー — 現行仕様（S3/CloudFront構成）確定版
+
+> **最終更新: 2026-06-03 — Mux完全廃止・AWS S3+CloudFront構成に移行完了**
+
+### アップロードフロー
+
+```
+クリエイター: /upload
+  ├→ checkUsageLimit()          // 利用制限チェック（日次2時間上限）
+  ├→ uploadVideoToS3()          // S3 Presigned PUT URL 生成（15分有効）
+  │    └→ フロントが PUT で S3 に直接アップロード
+  │         └→ 完了後 CloudFront URL（https://CF_DOMAIN/s3_key）を取得
+  ├→ Core.UploadFile()          // サムネイル画像を Base44 ストレージに保存
+  └→ Video エンティティ作成     // video_url=CloudFront URL, moderation_status="pending"
+
+保存先:
+  S3バケット:  S3_BUCKET_VOD
+  S3キー:      channels/{channel_id}/{timestamp}-{filename}
+  再生URL:     https://{CLOUDFRONT_DOMAIN}/{s3_key}
+
+審査:
+  管理者が /admin/video-moderation で pending → approved/rejected に変更
+```
+
+### 再生フロー
+
+```
+視聴者: /watch/:videoId
+  ├→ Video エンティティ取得
+  ├→ 無料動画: getSignedVideoUrl() → CF署名付きURL（6時間有効）で直接再生
+  ├→ 有料動画（未購入）:
+  │    ├→ 30秒プレビュー（クライアント側でロック）
+  │    ├→ "SAMPLE" ウォーターマーク表示
+  │    └→ Preview30SecPaywallModal → エールコイン購入
+  └→ 有料動画（購入済み）:
+       └→ Purchase エンティティ確認 → getSignedVideoUrl() → CF署名付きURL再生
+```
+
+### 購入・収益
+
+```
+購入フロー:
+  Purchase エンティティ（item_type="video", status="completed"）が存在すれば視聴可
+
+収益分配:
+  クリエイター: 85% / プラットフォーム: 15%
+  最低販売価格: 100エールコイン（100円相当）
+```
+
+### 使用エンティティ
+
+| エンティティ | 用途 |
+|---|---|
+| `Video` | 動画メタデータ（video_url = CloudFront URL） |
+| `Purchase` | 購入記録（item_type="video"） |
+| `WatchHistory` | 視聴履歴 |
+| `Favorite` | お気に入り |
+| `Channel` | チャンネル情報 |
+| `YellCoinTransaction` / `CreatorEarning` | 収益管理 |
+
+### 廃止済み（削除完了 2026-06-03）
+
+| 削除対象 | 理由 |
+|---|---|
+| `components/mux/MuxVideoPlayer` | Mux廃止 |
+| `components/mux/MuxUploadForm` | Mux廃止 |
+| `functions/createMuxUploadUrl` | Mux廃止（スタブ → 削除） |
+| `functions/muxWebhook` | Mux廃止（スタブ → 削除） |
+| `entities/MuxVideo` | Mux廃止（データなし → 削除） |
+| `Video.mux_playback_id` | 未使用フィールド → 削除 |
+| `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` | 未使用環境変数 → 要手動削除 |
 
 ---
 
@@ -357,5 +433,6 @@ if (isMillionaireChallengePeriod()) {
 
 ---
 
-*最終更新: 2026-05-12*  
+*最終更新: 2026-06-03*  
+*VOD: Mux完全廃止 → AWS S3 + CloudFront 構成に移行完了*  
 *Version 1.0 Stable 認定: 小野社長の厳命により凍結*

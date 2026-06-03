@@ -12,11 +12,7 @@
     },
     "video_url": {
       "type": "string",
-      "description": "\u52d5\u753b\u30d5\u30a1\u30a4\u30ebURL"
-    },
-    "mux_playback_id": {
-      "type": "string",
-      "description": "Mux Playback ID\uff08HLS\u518d\u751f\u7528\uff09"
+      "description": "\u52d5\u753b\u30d5\u30a1\u30a4\u30ebURL\uff08CloudFront URL\uff09"
     },
     "thumbnail_url": {
       "type": "string",
@@ -37,7 +33,7 @@
     "price": {
       "type": "number",
       "default": 0,
-      "description": "\u4fa1\u683c\uff08\u5186\uff09"
+      "description": "\u4fa1\u683c\uff08\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3 / \u5186\u76f8\u5f53\uff09"
     },
     "is_free": {
       "type": "boolean",
