@@ -92,18 +92,31 @@ async function safeDeleteAttendee(chime, meetingId, attendeeId) {
 
 // ---- メインハンドラ ----
 Deno.serve(async (req) => {
+  // 認証チェック（最初に実施・例外も含め 401 を返す）
+  let base44, user;
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return errRes("unauthorized");
+    base44 = createClientFromRequest(req);
+    user = await base44.auth.me();
+  } catch (authErr) {
+    console.warn("[createChimeMeeting] auth failed:", authErr?.message);
+    return errRes("unauthorized");
+  }
+  if (!user) return errRes("unauthorized");
+
+  try {
 
     const body = await req.json();
     const { action, roomId, inviteCode, targetEmail } = body;
     if (!roomId) return Response.json({ error_code: "bad_request", error: "roomId が必要です。" }, { status: 400 });
 
-    // ---- ルーム取得 ----
-    const rooms = await base44.asServiceRole.entities.ClassRoom.filter({ id: roomId });
-    const room = rooms[0];
+    // ---- ルーム取得（ID不正・存在しない場合は 404）----
+    let room;
+    try {
+      const rooms = await base44.asServiceRole.entities.ClassRoom.filter({ id: roomId });
+      room = rooms[0];
+    } catch (_) {
+      return errRes("room_not_found");
+    }
     if (!room) return errRes("room_not_found");
 
     const isHost = room.host_user_id === user.id || room.host_email === user.email;
@@ -448,7 +461,7 @@ Deno.serve(async (req) => {
     return errRes("unknown_action");
 
   } catch (error) {
-    console.error("[createChimeMeeting] Unhandled error:", error);
+    console.error("[createChimeMeeting] Unhandled error:", error?.message ?? error);
     return Response.json({ error_code: "internal", error: ERRORS.internal.message }, { status: 500 });
   }
 });
