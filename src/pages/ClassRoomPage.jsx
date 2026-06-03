@@ -158,25 +158,49 @@ export default function ClassRoomPage() {
     if (chimeJoinError) toast.error(`Chime接続エラー: ${chimeJoinError}`);
   }, [chimeJoinError]);
 
+  // ---- Heartbeat: 30秒ごとに last_seen_at を更新（タブ生存確認）----
+  useEffect(() => {
+    if (!roomId || !user || loading || ticketRequired) return;
+
+    const sendHeartbeat = () => {
+      base44.functions.invoke("createChimeMeeting", { action: "heartbeat", roomId }).catch(() => {});
+    };
+    sendHeartbeat(); // 入室直後に1発
+    const interval = setInterval(sendHeartbeat, 30_000);
+
+    // タブ/ブラウザ閉じ時に leave を送信（ベストエフォート）
+    const handleUnload = () => {
+      // sendBeacon は非同期リクエストを保証する唯一の手段
+      const payload = JSON.stringify({ action: "leave", roomId });
+      const url = `/api/functions/createChimeMeeting`; // base44 関数エンドポイント
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([payload], { type: "application/json" }));
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [roomId, user?.email, loading, ticketRequired]);
+
   // ---- クラス終了 / 退出 ----
   const handleEndClass = useCallback(async () => {
     if (!window.confirm(isHost ? "クラスを終了しますか？" : "クラスから退出しますか？")) return;
 
-    const participants = room?.participants || [];
-    const updated = participants.filter((p) => p.email !== user?.email);
-    const updateData = { participants: updated, current_participants_count: updated.length };
-
     if (isHost) {
-      // Chime Meeting を削除
+      // ホスト: Meeting 削除（全員強制退出）
       await base44.functions.invoke("createChimeMeeting", { action: "delete", roomId }).catch(() => {});
     } else {
-      await base44.entities.ClassRoom.update(roomId, updateData).catch(() => {});
+      // 生徒: leave アクションで -1・left_at 記録
+      await base44.functions.invoke("createChimeMeeting", { action: "leave", roomId }).catch(() => {});
     }
 
     localStream?.getTracks().forEach((t) => t.stop());
     toast.success(isHost ? "クラスを終了しました" : "クラスから退出しました");
     navigate(-1);
-  }, [isHost, room, user, localStream, roomId, navigate]);
+  }, [isHost, user, localStream, roomId, navigate]);
 
   useEffect(() => {
     return () => { localStream?.getTracks().forEach((t) => t.stop()); };
