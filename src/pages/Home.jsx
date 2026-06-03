@@ -39,7 +39,6 @@ import GiantKillingBanner from "../components/home/GiantKillingBanner";
 
 
 export default function Home() {
-  console.log("🏠 [Home] Component mounted");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
