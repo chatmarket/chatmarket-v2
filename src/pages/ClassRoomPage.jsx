@@ -1,15 +1,21 @@
 /**
- * ClassRoomPage — クラス配信（1対9 グループビデオ通話）
+ * ClassRoomPage — Amazon Chime SDK クラス配信（1対9）
  * ルート: /classroom/:roomId
  *
- * ■ 講師（ホスト）: 720p, HostMainView
- * ■ 生徒（ゲスト）: 360p, GuestMainView
+ * ■ 講師（ホスト）: Meeting作成 → HostMainView
+ * ■ 生徒（ゲスト）: チケット購入済み確認 → Meeting参加 → GuestMainView
+ *
+ * 【認可ガード】
+ *   生徒は SchoolTicket エンティティに session_id === roomId かつ
+ *   status === "active" のレコードが存在しなければ入室不可。
+ *   未購入の場合は /school-tickets へリダイレクト。
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShoppingCart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useClassRoom, getClassRoomStream } from "@/hooks/useClassRoom";
 import HostMainView from "@/components/classroom/HostMainView";
 import GuestMainView from "@/components/classroom/GuestMainView";
@@ -26,20 +32,22 @@ export default function ClassRoomPage() {
   const [isHost, setIsHost] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mediaError, setMediaError] = useState(null);
+  // 生徒チケット未購入フラグ
+  const [ticketRequired, setTicketRequired] = useState(false);
   const [micOn, setMicOnState] = useState(true);
   const [camOn, setCamOnState] = useState(true);
 
-  // マイク/カメラ切り替えをトラックに反映
   const setMicOn = (v) => {
     setMicOnState(v);
     localStream?.getAudioTracks().forEach((t) => { t.enabled = v; });
+    // Chime SDK にも反映（sessionRef は useClassRoom 内部で管理）
   };
   const setCamOn = (v) => {
     setCamOnState(v);
     localStream?.getVideoTracks().forEach((t) => { t.enabled = v; });
   };
 
-  // ---- 初期化 ----
+  // ---- 初期化 + 認可チェック ----
   useEffect(() => {
     let mounted = true;
     const init = async () => {
@@ -60,11 +68,28 @@ export default function ClassRoomPage() {
       const hostFlag = rm.host_email === u.email;
       setIsHost(hostFlag);
 
-      // 招待コード検証（生徒のみ）
-      if (!hostFlag && rm.invite_code && inviteCode !== rm.invite_code) {
-        toast.error("招待コードが正しくありません");
-        navigate(-1);
-        return;
+      // ---- 生徒: チケット購入済みチェック ----
+      if (!hostFlag) {
+        // 招待コード検証
+        if (rm.invite_code && inviteCode !== rm.invite_code) {
+          toast.error("招待コードが正しくありません");
+          navigate(-1);
+          return;
+        }
+
+        // SchoolTicket: session_id === roomId && student_email === user.email && status === "active"
+        const tickets = await base44.entities.SchoolTicket.filter({
+          session_id: roomId,
+          student_email: u.email,
+          status: "active",
+        });
+
+        if (!tickets || tickets.length === 0) {
+          // 未購入 → ガード表示（リダイレクトではなくページ内で案内）
+          setTicketRequired(true);
+          setLoading(false);
+          return;
+        }
       }
 
       // メディアストリーム取得
@@ -92,7 +117,6 @@ export default function ClassRoomPage() {
         await base44.entities.ClassRoom.update(roomId, {
           participants: updated,
           current_participants_count: updated.length,
-          status: "active",
         });
       }
 
@@ -107,55 +131,55 @@ export default function ClassRoomPage() {
     return () => { mounted = false; };
   }, [roomId, inviteCode]);
 
-  // ---- WebRTC フック ----
+  // ---- Chime フック ----
   const {
     room: liveRoom,
     remoteStreams,
+    attendeeNames,
     connectionStates,
+    chimeJoinError,
     muteAll,
     unmuteAll,
     muteParticipant,
     unmuteParticipant,
   } = useClassRoom({
-    roomId: loading ? null : roomId,
+    roomId: loading || ticketRequired ? null : roomId,
     user,
     isHost,
     localStream,
   });
 
-  // liveRoom が更新されたら state に反映
   useEffect(() => {
     if (liveRoom) setRoom(liveRoom);
   }, [liveRoom]);
 
-  // ---- クラス終了 ----
-  const handleEndClass = useCallback(async () => {
-    if (!window.confirm(isHost ? "クラスを終了しますか？全員が退出します。" : "クラスから退出しますか？")) return;
+  // Chimeエラートースト
+  useEffect(() => {
+    if (chimeJoinError) toast.error(`Chime接続エラー: ${chimeJoinError}`);
+  }, [chimeJoinError]);
 
-    // 参加者リストから自分を削除
+  // ---- クラス終了 / 退出 ----
+  const handleEndClass = useCallback(async () => {
+    if (!window.confirm(isHost ? "クラスを終了しますか？" : "クラスから退出しますか？")) return;
+
     const participants = room?.participants || [];
     const updated = participants.filter((p) => p.email !== user?.email);
-    const updateData = {
-      participants: updated,
-      current_participants_count: updated.length,
-    };
-    if (isHost) {
-      updateData.status = "ended";
-      updateData.ended_at = new Date().toISOString();
-    }
-    await base44.entities.ClassRoom.update(roomId, updateData).catch(() => {});
+    const updateData = { participants: updated, current_participants_count: updated.length };
 
-    // ストリーム停止
+    if (isHost) {
+      // Chime Meeting を削除
+      await base44.functions.invoke("createChimeMeeting", { action: "delete", roomId }).catch(() => {});
+    } else {
+      await base44.entities.ClassRoom.update(roomId, updateData).catch(() => {});
+    }
+
     localStream?.getTracks().forEach((t) => t.stop());
     toast.success(isHost ? "クラスを終了しました" : "クラスから退出しました");
     navigate(-1);
   }, [isHost, room, user, localStream, roomId, navigate]);
 
-  // ---- ページ離脱時クリーンアップ ----
   useEffect(() => {
-    return () => {
-      localStream?.getTracks().forEach((t) => t.stop());
-    };
+    return () => { localStream?.getTracks().forEach((t) => t.stop()); };
   }, [localStream]);
 
   // ---- ロード中 ----
@@ -165,6 +189,38 @@ export default function ClassRoomPage() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
           <p className="text-white font-bold">クラスルームに接続中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- 生徒: チケット未購入ガード ----
+  if (ticketRequired) {
+    return (
+      <div className="bg-black flex items-center justify-center p-6" style={{ height: "100dvh" }}>
+        <div className="text-center space-y-5 max-w-sm">
+          <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto">
+            <ShoppingCart className="w-8 h-8 text-yellow-400" />
+          </div>
+          <p className="text-white font-bold text-xl">チケットが必要です</p>
+          <p className="text-white/60 text-sm leading-relaxed">
+            このクラスに参加するには、事前にレッスンチケットを購入する必要があります。
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => navigate("/school-tickets")}
+              className="w-full gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              チケットを購入する
+            </Button>
+            <button
+              onClick={() => navigate(-1)}
+              className="text-white/40 text-sm hover:text-white/60 underline"
+            >
+              戻る
+            </button>
+          </div>
         </div>
       </div>
     );

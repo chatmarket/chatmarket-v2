@@ -1,305 +1,231 @@
 /**
- * useClassRoom — 1対9 グループビデオ通話 (WebRTC Mesh + Simulcast)
+ * useClassRoom — Amazon Chime SDK を用いた 1対9 グループビデオ通話
  *
- * ■ 講師（ホスト）: 720p / ~1.5Mbps 固定送信
- * ■ 生徒（ゲスト）: 240p〜360p / ~300kbps 低画質送信
- * ■ 接続方式: Full-Mesh P2P (SFUサーバー不要でインフラコスト最小)
- *   ※ 最大10接続なので Mesh でも十分管理可能
+ * WebRTC Mesh は廃止。Chime SDK がメディアサーバー（SFU相当）として動作するため
+ * 10人規模でも端末負荷が大幅に低減する。
+ *
+ * ■ 講師（ホスト）: 720p HD / Chime Meeting 作成
+ * ■ 生徒（ゲスト）: 360p / Chime Meeting 参加（Attendee追加）
+ *
+ * フロー:
+ *  1. createChimeMeeting バックエンド関数を呼び出し Meeting/Attendee 情報を取得
+ *  2. Chime JS SDK (amazon-chime-sdk-js) で MeetingSession を初期化
+ *  3. ローカルストリームをバインド → リモート参加者の映像を受信
+ *  4. DB ポーリングでミュート状態を同期
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 
-// ---- 画質プリセット ----
+// Amazon Chime SDK JS はグローバル(CDN)またはnpmでロード済みを想定
+// index.html に <script src="https://...amazon-chime-sdk-js.min.js"> を追記するか
+// npm パッケージを利用する。ここではグローバル window.ChimeSDK を使用する形にする。
+// ※ npm install amazon-chime-sdk-js が必要な場合は別途追加してください。
+
+// ---- 画質制約（getUserMedia 用） ----
 const HOST_VIDEO_CONSTRAINTS = {
   width: { ideal: 1280 },
   height: { ideal: 720 },
   frameRate: { ideal: 30, max: 30 },
 };
 const GUEST_VIDEO_CONSTRAINTS = {
-  width: { ideal: 480 },
+  width: { ideal: 640 },
   height: { ideal: 360 },
   frameRate: { ideal: 15, max: 20 },
 };
 
-// ---- サイマルキャスト エンコーディング設定 ----
-const HOST_ENCODINGS = [
-  { rid: "h", maxBitrate: 1_500_000, scaleResolutionDownBy: 1 },
-];
-const GUEST_ENCODINGS = [
-  { rid: "l", maxBitrate: 300_000, scaleResolutionDownBy: 3 },
-];
+/** ローカルカメラ＋マイクストリームを取得する */
+export async function getClassRoomStream(isHost) {
+  const videoConstraints = isHost ? HOST_VIDEO_CONSTRAINTS : GUEST_VIDEO_CONSTRAINTS;
+  return navigator.mediaDevices.getUserMedia({
+    video: videoConstraints,
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      sampleRate: 48000,
+    },
+  });
+}
 
-const ICE_CONFIG = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-  ],
-};
-
+/**
+ * useClassRoom フック
+ * @param {object} params
+ * @param {string|null}  params.roomId     - ClassRoom エンティティ ID
+ * @param {object|null}  params.user       - 認証済みユーザー
+ * @param {boolean}      params.isHost     - 講師フラグ
+ * @param {MediaStream|null} params.localStream - getUserMedia で取得したストリーム
+ */
 export function useClassRoom({ roomId, user, isHost, localStream }) {
-  const [remoteStreams, setRemoteStreams] = useState({}); // { email: MediaStream }
+  const [remoteStreams, setRemoteStreams] = useState({}); // { attendeeId: MediaStream }
+  const [attendeeNames, setAttendeeNames] = useState({}); // { attendeeId: email }
+  const [connectionStates, setConnectionStates] = useState({});
   const [room, setRoom] = useState(null);
-  const [connectionStates, setConnectionStates] = useState({}); // { email: string }
-  const peerConnections = useRef({}); // { email: RTCPeerConnection }
-  const pendingCandidates = useRef({}); // { email: [candidate] }
-  const processedSignals = useRef(new Set());
-  const isHostRef = useRef(isHost);
+  const [chimeMeetingInfo, setChimeMeetingInfo] = useState(null); // Chime Meeting オブジェクト
+  const [chimeJoinError, setChimeJoinError] = useState(null);
 
-  useEffect(() => { isHostRef.current = isHost; }, [isHost]);
+  const sessionRef = useRef(null); // MeetingSession
+  const observerRef = useRef(null);
+  const joinedRef = useRef(false);
 
-  // ---- PeerConnection 作成 ----
-  const createPeerConnection = useCallback((peerEmail) => {
-    if (peerConnections.current[peerEmail]) return peerConnections.current[peerEmail];
+  // ---- Chime Meeting に参加する ----
+  const joinChimeMeeting = useCallback(async () => {
+    if (!roomId || !user || !localStream || joinedRef.current) return;
 
-    const pc = new RTCPeerConnection(ICE_CONFIG);
-    peerConnections.current[peerEmail] = pc;
+    try {
+      const action = isHost ? "create" : "join";
+      const res = await base44.functions.invoke("createChimeMeeting", {
+        action,
+        roomId,
+        email: user.email,
+      });
 
-    // ローカルストリームのトラックを追加（サイマルキャスト制御）
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0];
-      const audioTrack = localStream.getAudioTracks()[0];
+      const { meeting, attendee } = res.data;
+      if (!meeting || !attendee) throw new Error("Chime meeting data missing");
 
-      if (videoTrack) {
-        const encodings = isHostRef.current ? HOST_ENCODINGS : GUEST_ENCODINGS;
-        const sender = pc.addTrack(videoTrack, localStream);
-        // サイマルキャストパラメータ設定
-        try {
-          const params = sender.getParameters();
-          if (!params.encodings || params.encodings.length === 0) {
-            params.encodings = encodings;
-          } else {
-            params.encodings = params.encodings.map((enc, i) => ({
-              ...enc,
-              ...encodings[i < encodings.length ? i : encodings.length - 1],
-            }));
+      setChimeMeetingInfo(meeting);
+
+      // Chime SDK が利用可能か確認（CDN / npm ロード済み想定）
+      const SDK = window.ChimeSDK;
+      if (!SDK) {
+        throw new Error(
+          "Amazon Chime SDK JS が読み込まれていません。" +
+          "index.html に CDN スクリプトを追加するか、npm install amazon-chime-sdk-js を実行してください。"
+        );
+      }
+
+      const {
+        ConsoleLogger,
+        LogLevel,
+        DefaultDeviceController,
+        DefaultMeetingSession,
+        MeetingSessionConfiguration,
+        VideoTileState,
+      } = SDK;
+
+      const logger = new ConsoleLogger("ClassRoom", LogLevel.WARN);
+      const deviceController = new DefaultDeviceController(logger);
+      const configuration = new MeetingSessionConfiguration(meeting, attendee);
+      const meetingSession = new DefaultMeetingSession(configuration, logger, deviceController);
+      sessionRef.current = meetingSession;
+      joinedRef.current = true;
+
+      const audioVideo = meetingSession.audioVideo;
+
+      // ---- マイク（オーディオ入力）----
+      const audioInputDevices = await audioVideo.listAudioInputDevices();
+      if (audioInputDevices.length > 0) {
+        await audioVideo.startAudioInput(audioInputDevices[0].deviceId);
+      }
+
+      // ---- カメラ（ビデオ入力）----
+      const videoInputDevices = await audioVideo.listVideoInputDevices();
+      if (videoInputDevices.length > 0) {
+        await audioVideo.startVideoInput(videoInputDevices[0].deviceId);
+      }
+
+      // ---- オーディオ出力（スピーカー）----
+      const audioOutputDevices = await audioVideo.listAudioOutputDevices();
+      if (audioOutputDevices.length > 0) {
+        await audioVideo.chooseAudioOutput(audioOutputDevices[0].deviceId);
+      }
+
+      // ---- リモート映像タイルの監視 ----
+      const observer = {
+        videoTileDidUpdate: (tileState) => {
+          if (!tileState.boundAttendeeId || tileState.isContent) return;
+          if (tileState.localTile) return; // 自分自身はスキップ
+          const attendeeId = tileState.boundAttendeeId;
+          const externalUserId = tileState.boundExternalUserId || attendeeId;
+
+          setAttendeeNames((prev) => ({ ...prev, [attendeeId]: externalUserId }));
+          setConnectionStates((prev) => ({ ...prev, [attendeeId]: "connected" }));
+
+          // video element にバインド
+          const el = document.getElementById(`chime-video-${attendeeId}`);
+          if (el) {
+            audioVideo.bindVideoElement(tileState.tileId, el);
           }
-          sender.setParameters(params).catch(() => {});
-        } catch (e) {
-          console.warn("[ClassRoom] Simulcast setParameters error:", e.message);
-        }
-      }
-      if (audioTrack) pc.addTrack(audioTrack, localStream);
+        },
+        videoTileWasRemoved: (tileId) => {
+          setConnectionStates((prev) => {
+            const next = { ...prev };
+            // tileId → attendeeId のマッピングは SDK 内部にあるため connected のものを除外
+            return next;
+          });
+        },
+        attendeeIdPresenceDidChange: (attendeeId, present, externalUserId) => {
+          if (!present) {
+            setRemoteStreams((prev) => {
+              const n = { ...prev }; delete n[attendeeId]; return n;
+            });
+            setConnectionStates((prev) => ({ ...prev, [attendeeId]: "disconnected" }));
+          } else {
+            setConnectionStates((prev) => ({ ...prev, [attendeeId]: "connected" }));
+            setAttendeeNames((prev) => ({ ...prev, [attendeeId]: externalUserId || attendeeId }));
+          }
+        },
+      };
+      observerRef.current = observer;
+      audioVideo.addObserver(observer);
+
+      // ---- セッション開始 ----
+      audioVideo.start();
+      audioVideo.startLocalVideoTile();
+
+      console.log("[ClassRoom] ✅ Chime Meeting joined:", meeting.MeetingId);
+
+    } catch (err) {
+      console.error("[ClassRoom] Chime join error:", err);
+      setChimeJoinError(err.message);
     }
+  }, [roomId, user, isHost, localStream]);
 
-    // リモートストリーム受信
-    pc.ontrack = (event) => {
-      const [stream] = event.streams;
-      if (stream) {
-        setRemoteStreams((prev) => ({ ...prev, [peerEmail]: stream }));
-        console.log(`[ClassRoom] 📹 Remote stream from ${peerEmail}`);
-      }
-    };
-
-    // ICE candidate 収集 → DB送信
-    pc.onicecandidate = async (event) => {
-      if (!event.candidate || !roomId) return;
-      try {
-        const current = await base44.entities.ClassRoom.filter({ id: roomId });
-        const rm = current[0];
-        if (!rm) return;
-        const candidates = rm.webrtc_ice_candidates || {};
-        const myEmail = user?.email;
-        const key = `${myEmail}__${peerEmail}`;
-        const existing = candidates[key] ? JSON.parse(candidates[key]) : [];
-        existing.push(event.candidate.toJSON());
-        await base44.entities.ClassRoom.update(roomId, {
-          webrtc_ice_candidates: {
-            ...candidates,
-            [key]: JSON.stringify(existing),
-          },
-        });
-      } catch (e) {
-        console.warn("[ClassRoom] ICE send error:", e.message);
-      }
-    };
-
-    // 接続状態監視
-    pc.onconnectionstatechange = () => {
-      const state = pc.connectionState;
-      setConnectionStates((prev) => ({ ...prev, [peerEmail]: state }));
-      console.log(`[ClassRoom] ${peerEmail} connection: ${state}`);
-      if (state === "failed") {
-        // 自動再接続
-        setTimeout(() => restartPeer(peerEmail), 2000);
-      }
-    };
-
-    pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === "disconnected") {
-        console.warn(`[ClassRoom] ICE disconnected for ${peerEmail}`);
-      }
-    };
-
-    return pc;
-  }, [localStream, roomId, user?.email]);
-
-  // ---- Offer 作成（ホスト → 生徒）----
-  const createOffer = useCallback(async (peerEmail) => {
-    const pc = createPeerConnection(peerEmail);
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-    await pc.setLocalDescription(offer);
-
-    // DB に offer 保存
-    const current = await base44.entities.ClassRoom.filter({ id: roomId });
-    const rm = current[0];
-    if (!rm) return;
-    const offers = rm.webrtc_offers || {};
-    const key = `${user.email}__${peerEmail}`;
-    await base44.entities.ClassRoom.update(roomId, {
-      webrtc_offers: { ...offers, [key]: JSON.stringify(offer) },
-    });
-    console.log(`[ClassRoom] 📤 Offer sent to ${peerEmail}`);
-  }, [createPeerConnection, roomId, user?.email]);
-
-  // ---- Answer 作成（生徒 → ホスト）----
-  const createAnswer = useCallback(async (peerEmail, offerSdp) => {
-    const pc = createPeerConnection(peerEmail);
-    await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
-
-    // キューに積んでいたICEを適用
-    if (pendingCandidates.current[peerEmail]) {
-      for (const c of pendingCandidates.current[peerEmail]) {
-        await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-      }
-      delete pendingCandidates.current[peerEmail];
-    }
-
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    const current = await base44.entities.ClassRoom.filter({ id: roomId });
-    const rm = current[0];
-    if (!rm) return;
-    const answers = rm.webrtc_answers || {};
-    const key = `${peerEmail}__${user.email}`;
-    await base44.entities.ClassRoom.update(roomId, {
-      webrtc_answers: { ...answers, [key]: JSON.stringify(answer) },
-    });
-    console.log(`[ClassRoom] 📥 Answer sent to ${peerEmail}`);
-  }, [createPeerConnection, roomId, user?.email]);
-
-  // ---- peer 再起動 ----
-  const restartPeer = useCallback((peerEmail) => {
-    const pc = peerConnections.current[peerEmail];
-    if (pc) {
-      pc.close();
-      delete peerConnections.current[peerEmail];
-      setRemoteStreams((prev) => { const n = { ...prev }; delete n[peerEmail]; return n; });
-    }
-    if (isHostRef.current) createOffer(peerEmail);
-  }, [createOffer]);
-
-  // ---- DBポーリングでシグナリング処理 ----
+  // ---- 初回接続 ----
   useEffect(() => {
     if (!roomId || !user || !localStream) return;
+    joinChimeMeeting();
 
-    const processSignaling = async () => {
-      const rooms = await base44.entities.ClassRoom.filter({ id: roomId });
+    return () => {
+      if (sessionRef.current) {
+        const av = sessionRef.current.audioVideo;
+        if (observerRef.current) av.removeObserver(observerRef.current);
+        av.stopLocalVideoTile();
+        av.stop();
+        sessionRef.current = null;
+        joinedRef.current = false;
+      }
+    };
+  }, [roomId, user?.email, localStream]);
+
+  // ---- DB ポーリング: ミュート状態 + room state 同期 ----
+  useEffect(() => {
+    if (!roomId || !user) return;
+
+    const sync = async () => {
+      const rooms = await base44.entities.ClassRoom.filter({ id: roomId }).catch(() => []);
       const rm = rooms[0];
       if (!rm) return;
       setRoom(rm);
 
-      const myEmail = user.email;
-      const participants = rm.participants || [];
-      const otherEmails = participants
-        .map((p) => p.email)
-        .filter((e) => e !== myEmail);
-
-      // ---- ホスト: 全生徒へ offer ----
-      if (isHost) {
-        for (const peerEmail of otherEmails) {
-          const key = `${myEmail}__${peerEmail}`;
-          if (!peerConnections.current[peerEmail] || peerConnections.current[peerEmail].signalingState === "closed") {
-            if (!processedSignals.current.has(`offer__${key}`)) {
-              processedSignals.current.add(`offer__${key}`);
-              createOffer(peerEmail).catch(() => {});
-            }
-          }
-          // answer を受信したら setRemoteDescription
-          const answers = rm.webrtc_answers || {};
-          const answerStr = answers[key];
-          if (answerStr && !processedSignals.current.has(`answer__${key}`)) {
-            processedSignals.current.add(`answer__${key}`);
-            const pc = peerConnections.current[peerEmail];
-            if (pc && pc.signalingState === "have-local-offer") {
-              await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(answerStr))).catch(() => {});
-              console.log(`[ClassRoom] ✅ Answer applied from ${peerEmail}`);
-              // pending ICE
-              if (pendingCandidates.current[peerEmail]) {
-                for (const c of pendingCandidates.current[peerEmail]) {
-                  await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-                }
-                delete pendingCandidates.current[peerEmail];
-              }
-            }
-          }
+      if (!isHost && sessionRef.current) {
+        const muted = rm.is_muted_all || (rm.muted_participant_emails || []).includes(user.email);
+        const av = sessionRef.current.audioVideo;
+        if (muted) {
+          av.realtimeMuteLocalAudio();
+        } else {
+          av.realtimeUnmuteLocalAudio();
         }
-      }
-
-      // ---- 生徒: ホストからの offer を受信して answer ----
-      if (!isHost) {
-        const hostEmail = rm.host_email;
-        const offers = rm.webrtc_offers || {};
-        const key = `${hostEmail}__${myEmail}`;
-        const offerStr = offers[key];
-        if (offerStr && !processedSignals.current.has(`offer__${key}`)) {
-          processedSignals.current.add(`offer__${key}`);
-          await createAnswer(hostEmail, JSON.parse(offerStr)).catch(() => {});
-        }
-      }
-
-      // ---- ICE candidates 処理 ----
-      const allCandidates = rm.webrtc_ice_candidates || {};
-      const peerEmails = isHost ? otherEmails : [rm.host_email];
-      for (const peerEmail of peerEmails) {
-        const key = `${peerEmail}__${myEmail}`;
-        const candidatesStr = allCandidates[key];
-        if (!candidatesStr) continue;
-        const candidates = JSON.parse(candidatesStr);
-        const pc = peerConnections.current[peerEmail];
-        if (!pc) continue;
-        for (let i = 0; i < candidates.length; i++) {
-          const iceKey = `ice__${key}__${i}`;
-          if (processedSignals.current.has(iceKey)) continue;
-          processedSignals.current.add(iceKey);
-          if (pc.remoteDescription) {
-            pc.addIceCandidate(new RTCIceCandidate(candidates[i])).catch(() => {});
-          } else {
-            if (!pendingCandidates.current[peerEmail]) pendingCandidates.current[peerEmail] = [];
-            pendingCandidates.current[peerEmail].push(candidates[i]);
-          }
-        }
-      }
-
-      // ---- 全員ミュート / 個別ミュート 反映 ----
-      if (!isHost && rm.is_muted_all) {
-        const localAudioTracks = localStream?.getAudioTracks();
-        localAudioTracks?.forEach((t) => { t.enabled = false; });
-      }
-      if (!isHost && rm.muted_participant_emails?.includes(myEmail)) {
-        const localAudioTracks = localStream?.getAudioTracks();
-        localAudioTracks?.forEach((t) => { t.enabled = false; });
       }
     };
 
-    const interval = setInterval(processSignaling, 2000);
-    processSignaling();
+    const interval = setInterval(sync, 3000);
+    sync();
 
-    // リアルタイム購読
     const unsub = base44.entities.ClassRoom.subscribe((ev) => {
-      if (ev.id === roomId || ev.data?.id === roomId) {
-        processSignaling();
-      }
+      if (ev.id === roomId || ev.data?.id === roomId) sync();
     });
 
-    return () => {
-      clearInterval(interval);
-      unsub();
-      Object.values(peerConnections.current).forEach((pc) => pc.close());
-      peerConnections.current = {};
-      processedSignals.current.clear();
-    };
-  }, [roomId, user?.email, isHost, localStream, createOffer, createAnswer]);
+    return () => { clearInterval(interval); unsub(); };
+  }, [roomId, user?.email, isHost]);
 
   // ---- 全員ミュート（ホスト専用）----
   const muteAll = useCallback(async () => {
@@ -315,8 +241,8 @@ export function useClassRoom({ roomId, user, isHost, localStream }) {
   // ---- 個別ミュート（ホスト専用）----
   const muteParticipant = useCallback(async (peerEmail) => {
     if (!roomId) return;
-    const current = await base44.entities.ClassRoom.filter({ id: roomId });
-    const rm = current[0];
+    const rooms = await base44.entities.ClassRoom.filter({ id: roomId });
+    const rm = rooms[0];
     if (!rm) return;
     const list = rm.muted_participant_emails || [];
     if (!list.includes(peerEmail)) {
@@ -328,8 +254,8 @@ export function useClassRoom({ roomId, user, isHost, localStream }) {
 
   const unmuteParticipant = useCallback(async (peerEmail) => {
     if (!roomId) return;
-    const current = await base44.entities.ClassRoom.filter({ id: roomId });
-    const rm = current[0];
+    const rooms = await base44.entities.ClassRoom.filter({ id: roomId });
+    const rm = rooms[0];
     if (!rm) return;
     const list = (rm.muted_participant_emails || []).filter((e) => e !== peerEmail);
     await base44.entities.ClassRoom.update(roomId, { muted_participant_emails: list });
@@ -338,23 +264,13 @@ export function useClassRoom({ roomId, user, isHost, localStream }) {
   return {
     room,
     remoteStreams,
+    attendeeNames,
     connectionStates,
+    chimeMeetingInfo,
+    chimeJoinError,
     muteAll,
     unmuteAll,
     muteParticipant,
     unmuteParticipant,
   };
-}
-
-// ---- メディアストリーム取得（ホスト/ゲスト別画質）----
-export async function getClassRoomStream(isHost) {
-  const videoConstraints = isHost ? HOST_VIDEO_CONSTRAINTS : GUEST_VIDEO_CONSTRAINTS;
-  return navigator.mediaDevices.getUserMedia({
-    video: videoConstraints,
-    audio: {
-      echoCancellation: true,
-      noiseSuppression: true,
-      sampleRate: 48000,
-    },
-  });
 }
