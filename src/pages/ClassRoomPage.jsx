@@ -23,6 +23,7 @@ import GuestMainView from "@/components/classroom/GuestMainView";
 // エラーコード → 日本語メッセージ（バックエンドと整合）
 const ERROR_MESSAGES = {
   unauthorized:        "ログインが必要です。",
+  room_not_found:      "ルームが見つかりません。",
   invite_invalid:      "招待コードが正しくありません。",
   ticket_required:     "有効なチケットがありません。",
   blocked:             "この授業への再入室は制限されています。",
@@ -50,7 +51,7 @@ export default function ClassRoomPage() {
   const [loading, setLoading] = useState(true);
   const [mediaError, setMediaError] = useState(null);
   const [ticketRequired, setTicketRequired] = useState(false);
-  const [accessError, setAccessError] = useState(null); // invite_invalid / blocked / room_not_active
+  const [accessError, setAccessError] = useState(null); // invite_invalid / blocked / room_not_active / room_not_found / unauthorized
   const [micOn, setMicOnState] = useState(true);
   const [camOn, setCamOnState] = useState(true);
 
@@ -75,10 +76,21 @@ export default function ClassRoomPage() {
       if (!mounted) return;
       setUser(u);
 
-      // ルーム取得
-      const rooms = await base44.entities.ClassRoom.filter({ id: roomId });
-      const rm = rooms[0];
-      if (!rm) { toast.error("ルームが見つかりません"); navigate(-1); return; }
+      // ルーム取得（無効ID・存在しない場合は room_not_found 画面）
+      let rm;
+      try {
+        const rooms = await base44.entities.ClassRoom.filter({ id: roomId });
+        rm = rooms[0];
+      } catch (_) {
+        setAccessError("room_not_found");
+        setLoading(false);
+        return;
+      }
+      if (!rm) {
+        setAccessError("room_not_found");
+        setLoading(false);
+        return;
+      }
       if (!mounted) return;
 
       setRoom(rm);
@@ -139,6 +151,7 @@ export default function ClassRoomPage() {
 
     init().catch((e) => {
       console.error("[ClassRoom] Init error:", e);
+      setAccessError("internal");
       setLoading(false);
     });
 
@@ -168,9 +181,15 @@ export default function ClassRoomPage() {
     if (liveRoom) setRoom(liveRoom);
   }, [liveRoom]);
 
-  // Chimeエラートースト（エラーコード対応）
+  // Chimeエラー処理（401/404は画面遷移、それ以外はトースト）
   useEffect(() => {
-    if (chimeJoinError) toast.error(getErrorMessage({ error_code: chimeJoinError }) || `接続エラー: ${chimeJoinError}`);
+    if (!chimeJoinError) return;
+    const screenErrors = ["unauthorized", "room_not_found", "room_not_active", "meeting_ended", "blocked", "invite_invalid", "ticket_required"];
+    if (screenErrors.includes(chimeJoinError)) {
+      setAccessError(chimeJoinError);
+    } else {
+      toast.error(getErrorMessage({ error_code: chimeJoinError }) || `接続エラー: ${chimeJoinError}`);
+    }
   }, [chimeJoinError]);
 
   // ---- Heartbeat: 30秒ごとに last_seen_at を更新（タブ生存確認）----
@@ -250,6 +269,8 @@ export default function ClassRoomPage() {
       invite_invalid:  { icon: "🔒", title: "招待コードが正しくありません", body: "正しい招待コードをホストに確認してください。" },
       blocked:         { icon: "🚫", title: "入室が制限されています",       body: "この授業への再入室は制限されています。" },
       room_not_active: { icon: "🏁", title: "授業は終了しています",         body: "この授業はすでに終了しています。" },
+      room_not_found:  { icon: "🔍", title: "ルームが見つかりません",       body: "URLを確認するか、ホストに招待リンクを再送してもらってください。" },
+      internal:        { icon: "⚠️", title: "接続エラーが発生しました",     body: "時間をおいて再試行してください。" },
     };
     const info = msgs[accessError] || { icon: "⚠️", title: "入室できません", body: ERROR_MESSAGES[accessError] || "" };
     return (
