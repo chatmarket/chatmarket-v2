@@ -24,6 +24,7 @@ import {
   CreateMeetingCommand,
   CreateAttendeeCommand,
   DeleteMeetingCommand,
+  DeleteAttendeeCommand,
   GetMeetingCommand,
 } from "npm:@aws-sdk/client-chime-sdk-meetings@3";
 
@@ -245,45 +246,90 @@ Deno.serve(async (req) => {
         meeting = res.Meeting;
       } catch (_) { return Response.json({ error: msg("meeting_ended") }, { status: 410 }); }
 
-      // ---- タイムアウト退出者を先にクリーン ----
-      const cleaned = evictTimedOut(room.participants);
+      // ================================================================
+      // 同時入室の競合対策（7ステップ）
+      // ================================================================
+      const now = new Date().toISOString();
 
-      // ---- 6. 重複チェック（同一ユーザーの既存アクティブエントリを除外して再登録）----
+      // --- Step 1: 最新 Room を再取得してタイムアウト退出者をクリーン ---
+      const freshRooms1 = await base44.asServiceRole.entities.ClassRoom.filter({ id: roomId });
+      const fresh1 = freshRooms1[0];
+      if (!fresh1) return Response.json({ error: msg("room_not_found") }, { status: 404 });
+      const cleaned = evictTimedOut(fresh1.participants);
+
+      // --- Step 2: active 人数を再計算 ---
       const alreadyActive = cleaned.find((p) => p.email === user.email && !p.left_at);
+      const activeCountBefore = countActive(cleaned);
 
-      // ---- 5 & 1. 定員チェックは Attendee 作成前に実施（同時入室競合への最善策）----
-      // 既存アクティブでなければ人数確認
-      if (!alreadyActive) {
-        const activeCount = countActive(cleaned);
-        if (activeCount >= MAX_PARTICIPANTS) {
-          return Response.json({ error: msg("room_full") }, { status: 409 });
-        }
+      // --- Step 3: 10名以上なら Attendee 作らず 409 ---
+      if (!alreadyActive && activeCountBefore >= MAX_PARTICIPANTS) {
+        return Response.json({ error: msg("room_full") }, { status: 409 });
       }
 
-      // ---- Attendee 作成（認可完了後）----
+      // --- Attendee 作成（認可・定員確認完了後）---
       const attendeeRes = await chime.send(new CreateAttendeeCommand({
         MeetingId: room.chime_meeting_id,
         ExternalUserId: user.email.slice(0, 64),
       }));
+      const attendeeId = attendeeRes.Attendee.AttendeeId;
 
-      // ---- 1. Attendee 作成成功後に DB を更新（カウントが先走りしない）----
-      const now = new Date().toISOString();
-      const withoutMe = cleaned.filter((p) => p.email !== user.email);
+      // --- Step 4: DB 更新直前に再度 Room を再取得 ---
+      const freshRooms2 = await base44.asServiceRole.entities.ClassRoom.filter({ id: roomId });
+      const fresh2 = freshRooms2[0];
+      if (!fresh2) {
+        // Roomが消えた場合は Attendee を削除して終了
+        await chime.send(new DeleteAttendeeCommand({ MeetingId: room.chime_meeting_id, AttendeeId: attendeeId })).catch(() => {});
+        return Response.json({ error: msg("room_not_found") }, { status: 404 });
+      }
+      const cleaned2 = evictTimedOut(fresh2.participants);
+      const alreadyActive2 = cleaned2.find((p) => p.email === user.email && !p.left_at);
+      const activeCountBefore2 = countActive(cleaned2);
+
+      // --- Step 5: 10名以上になっていた場合は Attendee を削除して 409 ---
+      if (!alreadyActive2 && activeCountBefore2 >= MAX_PARTICIPANTS) {
+        await chime.send(new DeleteAttendeeCommand({ MeetingId: room.chime_meeting_id, AttendeeId: attendeeId })).catch(() => {});
+        return Response.json({ error: msg("room_full") }, { status: 409 });
+      }
+
+      // --- DB 更新（atomic: $inc + $push で participants 配列を更新）---
+      const withoutMe = cleaned2.filter((p) => p.email !== user.email);
       const guestEntry = {
         email: user.email,
         name: user.full_name || user.email,
         role: "guest",
-        joined_at: alreadyActive?.joined_at || now,
+        joined_at: alreadyActive2?.joined_at || now,
         last_seen_at: now,
         left_at: null,
       };
       const participants = [...withoutMe, guestEntry];
-      const activeCount = countActive(participants);
+      const newActiveCount = countActive(participants);
 
       await base44.asServiceRole.entities.ClassRoom.update(roomId, {
         participants,
-        current_participants_count: activeCount,
+        current_participants_count: newActiveCount,
       });
+
+      // --- Step 6 & 7: DB 更新後に参加者数が上限超えていないか最終確認 ---
+      const freshRooms3 = await base44.asServiceRole.entities.ClassRoom.filter({ id: roomId });
+      const fresh3 = freshRooms3[0];
+      if (fresh3) {
+        const finalCount = countActive(fresh3.participants);
+        if (finalCount > MAX_PARTICIPANTS) {
+          // 超過していた場合: 当該ユーザーを leave 扱いにして 409
+          const fixedParticipants = (fresh3.participants || []).map((p) =>
+            p.email === user.email && !p.left_at
+              ? { ...p, left_at: now, exit_reason: "capacity_rollback" }
+              : p
+          );
+          await base44.asServiceRole.entities.ClassRoom.update(roomId, {
+            participants: fixedParticipants,
+            current_participants_count: countActive(fixedParticipants),
+          });
+          // 作成済み Attendee も削除
+          await chime.send(new DeleteAttendeeCommand({ MeetingId: room.chime_meeting_id, AttendeeId: attendeeId })).catch(() => {});
+          return Response.json({ error: msg("room_full") }, { status: 409 });
+        }
+      }
 
       // 7. 認可済みユーザーにのみ返却（AWS 認証情報は含まない）
       return Response.json({ meeting, attendee: attendeeRes.Attendee });
