@@ -88,11 +88,20 @@
     },
     "ivs_stream_key": {
       "type": "string",
-      "description": "Amazon IVS \u30b9\u30c8\u30ea\u30fc\u30e0\u30ad\u30fc"
+      "description": "Amazon IVS \u30b9\u30c8\u30ea\u30fc\u30e0\u30ad\u30fc\uff08PRISM\u914d\u4fe1\u6642\u306f\u5fc5\u9808\u30fb\u6697\u53f7\u5316\u4fdd\u7ba1\uff09"
     },
     "ivs_ingest_endpoint": {
       "type": "string",
       "description": "Amazon IVS \u914d\u4fe1\u30a8\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8"
+    },
+    "aspect_ratio": {
+      "type": "string",
+      "enum": [
+        "16:9",
+        "9:16"
+      ],
+      "default": "16:9",
+      "description": "PRISM \u304b\u3089\u306e\u4fe1\u53f7\u3067\u81ea\u52d5\u66f4\u65b0\uff1a16:9\uff08\u6a2a\uff09or 9:16\uff08\u7e26\uff09"
     },
     "webrtc_offer": {
       "type": "string",

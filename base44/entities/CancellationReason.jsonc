@@ -1,0 +1,49 @@
+{
+  "name": "CancellationReason",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "\u30d7\u30e9\u30f3ID"
+    },
+    "plan_name": {
+      "type": "string",
+      "description": "\u30d7\u30e9\u30f3\u540d"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "cost",
+        "unused",
+        "poor_quality",
+        "better_alternative",
+        "technical_issues",
+        "other"
+      ],
+      "description": "\u89e3\u7d04\u7406\u7531"
+    },
+    "reason_ja": {
+      "type": "string",
+      "description": "\u89e3\u7d04\u7406\u7531\uff08\u65e5\u672c\u8a9e\u8868\u8a18\uff09"
+    },
+    "comments": {
+      "type": "string",
+      "description": "\u305d\u306e\u4ed6\u306e\u30b3\u30e1\u30f3\u30c8"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u89e3\u7d04\u65e5\u6642"
+    }
+  },
+  "required": [
+    "user_email",
+    "plan_id",
+    "plan_name",
+    "reason"
+  ]
+}

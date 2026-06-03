@@ -1,0 +1,78 @@
+{
+  "name": "DigitalChekiPurchase",
+  "type": "object",
+  "description": "\u30c7\u30b8\u30bf\u30eb\u30c1\u30a7\u30ad\u8cfc\u5165\u8a18\u9332",
+  "properties": {
+    "cheki_id": {
+      "type": "string",
+      "description": "DigitalCheki ID"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "buyer_email": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u8005\u30e1\u30fc\u30eb"
+    },
+    "buyer_name": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u8005\u540d"
+    },
+    "cheki_title": {
+      "type": "string",
+      "description": "\u30c1\u30a7\u30ad\u30bf\u30a4\u30c8\u30eb"
+    },
+    "cheki_image_url": {
+      "type": "string",
+      "description": "\u30c1\u30a7\u30ad\u753b\u50cfURL"
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\u8cfc\u5165\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "\u8cfc\u5165\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout Session ID"
+    },
+    "message_from_buyer": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u8005\u304b\u3089\u306e\u30e1\u30c3\u30bb\u30fc\u30b8\uff08\u4efb\u610f\uff09",
+      "maxLength": 200
+    },
+    "message_from_owner": {
+      "type": "string",
+      "description": "\u30aa\u30fc\u30ca\u30fc\u304b\u3089\u306e\u30e1\u30c3\u30bb\u30fc\u30b8\uff08\u4efb\u610f\uff09",
+      "maxLength": 200
+    },
+    "delivered_image_url": {
+      "type": "string",
+      "description": "\u7d0d\u54c1\u30c1\u30a7\u30ad\u753b\u50cfURL\uff08\u500b\u5225\u30e1\u30c3\u30bb\u30fc\u30b8\u5165\u308a\u7b49\uff09"
+    }
+  },
+  "required": [
+    "cheki_id",
+    "channel_id",
+    "owner_email",
+    "buyer_email",
+    "price_yen"
+  ]
+}

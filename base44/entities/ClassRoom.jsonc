@@ -1,0 +1,107 @@
+{
+  "name": "ClassRoom",
+  "type": "object",
+  "description": "1\u5bfe9\u30b0\u30eb\u30fc\u30d7\u30d3\u30c7\u30aa\u901a\u8a71\u30eb\u30fc\u30e0\uff08\u30af\u30e9\u30b9\u914d\u4fe1\uff09",
+  "properties": {
+    "room_name": {
+      "type": "string",
+      "description": "\u30af\u30e9\u30b9\u30eb\u30fc\u30e0\u540d"
+    },
+    "host_user_id": {
+      "type": "string",
+      "description": "\u8b1b\u5e2b\u306e\u30e6\u30fc\u30b6\u30fcID\uff08Host_User_ID\uff09"
+    },
+    "host_email": {
+      "type": "string",
+      "description": "\u8b1b\u5e2b\u306e\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9"
+    },
+    "host_name": {
+      "type": "string",
+      "description": "\u8b1b\u5e2b\u306e\u8868\u793a\u540d"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "waiting",
+        "active",
+        "ended"
+      ],
+      "default": "waiting",
+      "description": "\u30eb\u30fc\u30e0\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "max_participants": {
+      "type": "number",
+      "default": 10,
+      "description": "\u6700\u5927\u53c2\u52a0\u4eba\u6570\uff08\u5b9a\u657010: \u8b1b\u5e2b1 + \u751f\u5f929\uff09"
+    },
+    "current_participants_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u73fe\u5728\u306e\u53c2\u52a0\u4eba\u6570\u30ab\u30a6\u30f3\u30c8"
+    },
+    "is_muted_all": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u5168\u54e1\u30df\u30e5\u30fc\u30c8\u30d5\u30e9\u30b0\uff08Is_Muted_All\uff09"
+    },
+    "muted_participant_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u500b\u5225\u30df\u30e5\u30fc\u30c8\u3055\u308c\u305f\u53c2\u52a0\u8005\u30e1\u30fc\u30eb\u30ea\u30b9\u30c8"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\u53c2\u52a0\u8005\u30ea\u30b9\u30c8 [{email, name, joined_at, is_muted}]"
+    },
+    "invite_code": {
+      "type": "string",
+      "description": "\u62db\u5f85\u30b3\u30fc\u30c9\uff08\u751f\u5f92\u304c\u5165\u5ba4\u3059\u308b\u305f\u3081\u306e6\u6841\u30b3\u30fc\u30c9\uff09"
+    },
+    "webrtc_offers": {
+      "type": "object",
+      "description": "WebRTC SDP\u30aa\u30d5\u30a1\u30fc {email: offer}"
+    },
+    "webrtc_answers": {
+      "type": "object",
+      "description": "WebRTC SDP\u30a2\u30f3\u30b5\u30fc {email: answer}"
+    },
+    "webrtc_ice_candidates": {
+      "type": "object",
+      "description": "ICE candidates {email: [candidate...]}"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u4e88\u5b9a\u958b\u59cb\u65e5\u6642"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u5b9f\u969b\u306e\u958b\u59cb\u65e5\u6642"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u7d42\u4e86\u65e5\u6642"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30af\u30e9\u30b9\u306e\u8aac\u660e\u30fb\u30c6\u30fc\u30de"
+    }
+  },
+  "required": [
+    "host_user_id",
+    "host_email",
+    "host_name",
+    "room_name"
+  ]
+}

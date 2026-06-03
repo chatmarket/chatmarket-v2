@@ -103,6 +103,8 @@ import CoachLP from '@/pages/CoachLP';
 import ChekiCaptureEditor from '@/pages/ChekiCaptureEditor';
 import MyPurchases from '@/pages/MyPurchases';
 import ProfileLP from '@/pages/ProfileLP';
+import ClassRoomPage from '@/pages/ClassRoomPage';
+import ClassRoomCreate from '@/pages/ClassRoomCreate';
 
 
 export default function App() {
@@ -214,6 +216,8 @@ export default function App() {
             <Route path="/my-purchases" element={<MyPurchases />} />
 
             <Route path="/@:username" element={<ProfileLP />} />
+            <Route path="/classroom/create" element={<ClassRoomCreate />} />
+            <Route path="/classroom/:roomId" element={<ClassRoomPage />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>

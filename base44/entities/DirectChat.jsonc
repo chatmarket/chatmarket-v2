@@ -1,0 +1,50 @@
+{
+  "name": "DirectChat",
+  "type": "object",
+  "properties": {
+    "from_email": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u540d"
+    },
+    "to_channel_owner_email": {
+      "type": "string",
+      "description": "\u5b9b\u5148\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "to_channel_id": {
+      "type": "string",
+      "description": "\u5b9b\u5148\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "to_channel_name": {
+      "type": "string",
+      "description": "\u5b9b\u5148\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u5185\u5bb9\uff08\u6700\u592750\u6587\u5b57\uff09"
+    },
+    "yell_coin": {
+      "type": "number",
+      "default": 0,
+      "description": "\u6dfb\u4ed8\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u679a\u6570"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u65e2\u8aad\u30d5\u30e9\u30b0"
+    },
+    "thread_id": {
+      "type": "string",
+      "description": "\u30b9\u30ec\u30c3\u30c9ID\uff08\u9001\u4fe1\u8005\u3068\u53d7\u4fe1\u8005\u306e\u30e1\u30fc\u30eb\u3092\u7d50\u5408\u3057\u305f\u3082\u306e\uff09"
+    }
+  },
+  "required": [
+    "from_email",
+    "to_channel_owner_email",
+    "content",
+    "thread_id"
+  ]
+}

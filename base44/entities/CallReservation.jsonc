@@ -1,0 +1,71 @@
+{
+  "name": "CallReservation",
+  "type": "object",
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "description": "\u4e88\u7d04\u67a0ID"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u914d\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u4e88\u7d04\u8005\u30e1\u30fc\u30eb"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u4e88\u7d04\u8005\u540d"
+    },
+    "date": {
+      "type": "string",
+      "description": "\u4e88\u7d04\u65e5 (YYYY-MM-DD)"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "\u958b\u59cb\u6642\u523b (HH:mm)"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "\u901a\u8a71\u6642\u9593\uff08\u5206\uff09"
+    },
+    "price": {
+      "type": "number",
+      "description": "\u6599\u91d1\uff08\u5186\uff09"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u4e88\u7d04\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_payment",
+        "confirmed",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending_payment",
+      "description": "\u4e88\u7d04\u30b9\u30c6\u30fc\u30bf\u30b9"
+    }
+  },
+  "required": [
+    "slot_id",
+    "channel_id",
+    "owner_email",
+    "user_email",
+    "date",
+    "start_time",
+    "duration_minutes",
+    "price"
+  ]
+}

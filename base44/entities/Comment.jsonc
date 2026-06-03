@@ -1,0 +1,35 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "\u30b3\u30e1\u30f3\u30c8\u5185\u5bb9"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "livestream"
+      ],
+      "description": "\u52d5\u753b or \u30e9\u30a4\u30d6\u914d\u4fe1"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "\u52d5\u753bID or \u30e9\u30a4\u30d6\u914d\u4fe1ID"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u540d"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    }
+  },
+  "required": [
+    "content",
+    "target_type",
+    "target_id"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "SuperChat",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "\u30b9\u30d1\u30c1\u30e3\u30e1\u30c3\u30bb\u30fc\u30b8"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "livestream_id": {
+      "type": "string",
+      "description": "\u30e9\u30a4\u30d6\u914d\u4fe1ID"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u540d"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
+    },
+    "color": {
+      "type": "string",
+      "enum": [
+        "green",
+        "yellow",
+        "orange",
+        "red"
+      ],
+      "default": "green",
+      "description": "\u30b9\u30d1\u30c1\u30e3\u30ab\u30e9\u30fc"
+    }
+  },
+  "required": [
+    "amount",
+    "livestream_id"
+  ]
+}

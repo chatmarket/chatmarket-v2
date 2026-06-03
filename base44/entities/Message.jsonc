@@ -1,0 +1,44 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "from_email": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u540d"
+    },
+    "to_channel_id": {
+      "type": "string",
+      "description": "\u5b9b\u5148\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "to_channel_owner_email": {
+      "type": "string",
+      "description": "\u5b9b\u5148\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u5185\u5bb9"
+    },
+    "video_id": {
+      "type": "string",
+      "description": "\u95a2\u9023\u52d5\u753bID"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "from_email",
+    "to_channel_owner_email",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

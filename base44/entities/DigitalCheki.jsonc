@@ -1,0 +1,61 @@
+{
+  "name": "DigitalCheki",
+  "type": "object",
+  "description": "\u30a2\u30a4\u30c9\u30eb\u30ab\u30c6\u30b4\u30ea\u306e\u30c7\u30b8\u30bf\u30eb\u30c1\u30a7\u30ad\u5546\u54c1",
+  "properties": {
+    "channel_id": {
+      "type": "string",
+      "description": "\u8ca9\u58f2\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u30aa\u30fc\u30ca\u30fc\u30e1\u30fc\u30eb"
+    },
+    "title": {
+      "type": "string",
+      "description": "\u30c1\u30a7\u30ad\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30c1\u30a7\u30ad\u8aac\u660e\uff08\u6700\u5927300\u6587\u5b57\uff09",
+      "maxLength": 300
+    },
+    "price": {
+      "type": "number",
+      "description": "\u4fa1\u683c\uff08\u5186\uff09500\u5186\u5358\u4f4d\u30fb\u6700\u592710000\u5186"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "\u30c1\u30a7\u30ad\u753b\u50cfURL\uff08\u30b5\u30e0\u30cd\u30a4\u30eb\uff09"
+    },
+    "stock": {
+      "type": "number",
+      "default": -1,
+      "description": "\u5728\u5eab\u6570\uff08-1=\u7121\u5236\u9650\uff09"
+    },
+    "sold_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u8ca9\u58f2\u6e08\u307f\u6570"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u8ca9\u58f2\u4e2d\u30d5\u30e9\u30b0"
+    },
+    "stripe_price_id": {
+      "type": "string",
+      "description": "Stripe Price ID"
+    }
+  },
+  "required": [
+    "channel_id",
+    "owner_email",
+    "title",
+    "price"
+  ]
+}
