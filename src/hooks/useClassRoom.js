@@ -49,12 +49,13 @@ export async function getClassRoomStream(isHost) {
 /**
  * useClassRoom フック
  * @param {object} params
- * @param {string|null}  params.roomId     - ClassRoom エンティティ ID
- * @param {object|null}  params.user       - 認証済みユーザー
- * @param {boolean}      params.isHost     - 講師フラグ
+ * @param {string|null}  params.roomId      - ClassRoom エンティティ ID
+ * @param {object|null}  params.user        - 認証済みユーザー
+ * @param {boolean}      params.isHost      - 講師フラグ
  * @param {MediaStream|null} params.localStream - getUserMedia で取得したストリーム
+ * @param {string|null}  params.inviteCode  - 生徒の招待コード（join 時にバックエンドへ送信）
  */
-export function useClassRoom({ roomId, user, isHost, localStream }) {
+export function useClassRoom({ roomId, user, isHost, localStream, inviteCode }) {
   const [remoteStreams, setRemoteStreams] = useState({}); // { attendeeId: MediaStream }
   const [attendeeNames, setAttendeeNames] = useState({}); // { attendeeId: email }
   const [connectionStates, setConnectionStates] = useState({});
@@ -76,6 +77,8 @@ export function useClassRoom({ roomId, user, isHost, localStream }) {
         action,
         roomId,
         email: user.email,
+        // 生徒は inviteCode を必ずバックエンドへ送信（サーバー側で必須検証）
+        ...(isHost ? {} : { inviteCode: inviteCode || "" }),
       });
 
       const { meeting, attendee } = res.data;
@@ -206,8 +209,11 @@ export function useClassRoom({ roomId, user, isHost, localStream }) {
       if (!rm) return;
       setRoom(rm);
 
+      // 5. ミュート制御: 講師は is_muted_all の対象外
       if (!isHost && sessionRef.current) {
-        const muted = rm.is_muted_all || (rm.muted_participant_emails || []).includes(user.email);
+        const isMutedAll = rm.is_muted_all === true;
+        const isIndividuallyMuted = (rm.muted_participant_emails || []).includes(user.email);
+        const muted = isMutedAll || isIndividuallyMuted;
         const av = sessionRef.current.audioVideo;
         if (muted) {
           av.realtimeMuteLocalAudio();

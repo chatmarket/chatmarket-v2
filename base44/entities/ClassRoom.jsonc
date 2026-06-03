@@ -9,7 +9,7 @@
     },
     "host_user_id": {
       "type": "string",
-      "description": "\u8b1b\u5e2b\u306e\u30e6\u30fc\u30b6\u30fcID\uff08Host_User_ID\uff09"
+      "description": "\u8b1b\u5e2b\u306e\u30e6\u30fc\u30b6\u30fcID"
     },
     "host_email": {
       "type": "string",
@@ -36,17 +36,17 @@
     "max_participants": {
       "type": "number",
       "default": 10,
-      "description": "\u6700\u5927\u53c2\u52a0\u4eba\u6570\uff08\u5b9a\u657010: \u8b1b\u5e2b1 + \u751f\u5f929\uff09"
+      "description": "\u6700\u5927\u53c2\u52a0\u4eba\u6570\uff08\u8b1b\u5e2b1 + \u751f\u5f929 = 10\u56fa\u5b9a\uff09"
     },
     "current_participants_count": {
       "type": "number",
       "default": 0,
-      "description": "\u73fe\u5728\u306e\u53c2\u52a0\u4eba\u6570\u30ab\u30a6\u30f3\u30c8"
+      "description": "\u30a2\u30af\u30c6\u30a3\u30d6\u53c2\u52a0\u8005\u6570\uff08left_at===null\u306e\u4ef6\u6570\uff09"
     },
     "is_muted_all": {
       "type": "boolean",
       "default": false,
-      "description": "\u5168\u54e1\u30df\u30e5\u30fc\u30c8\u30d5\u30e9\u30b0\uff08Is_Muted_All\uff09"
+      "description": "\u5168\u54e1\u30df\u30e5\u30fc\u30c8\u30d5\u30e9\u30b0\uff08\u8b1b\u5e2b\u306f\u5bfe\u8c61\u5916\uff09"
     },
     "muted_participant_emails": {
       "type": "array",
@@ -55,28 +55,27 @@
       },
       "description": "\u500b\u5225\u30df\u30e5\u30fc\u30c8\u3055\u308c\u305f\u53c2\u52a0\u8005\u30e1\u30fc\u30eb\u30ea\u30b9\u30c8"
     },
+    "blocked_participant_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "kick\u6e08\u307f\u30fb\u518d\u5165\u5ba4\u7981\u6b62\u306e\u53c2\u52a0\u8005\u30e1\u30fc\u30eb\u30ea\u30b9\u30c8"
+    },
     "participants": {
       "type": "array",
       "items": {
         "type": "object"
       },
-      "description": "\u53c2\u52a0\u8005\u30ea\u30b9\u30c8 [{email, name, joined_at, is_muted}]"
+      "description": "\u53c2\u52a0\u8005\u30ea\u30b9\u30c8 [{email, name, role, chime_attendee_id, external_user_id, joined_at, last_seen_at, left_at, exit_reason}]"
     },
     "invite_code": {
       "type": "string",
-      "description": "\u62db\u5f85\u30b3\u30fc\u30c9\uff08\u751f\u5f92\u304c\u5165\u5ba4\u3059\u308b\u305f\u3081\u306e6\u6841\u30b3\u30fc\u30c9\uff09"
+      "description": "\u62db\u5f85\u30b3\u30fc\u30c9\uff08\u751f\u5f92\u5165\u5ba4\u306b\u5fc5\u9808\u306e6\u6841\u30b3\u30fc\u30c9\uff09"
     },
-    "webrtc_offers": {
-      "type": "object",
-      "description": "WebRTC SDP\u30aa\u30d5\u30a1\u30fc {email: offer}"
-    },
-    "webrtc_answers": {
-      "type": "object",
-      "description": "WebRTC SDP\u30a2\u30f3\u30b5\u30fc {email: answer}"
-    },
-    "webrtc_ice_candidates": {
-      "type": "object",
-      "description": "ICE candidates {email: [candidate...]}"
+    "chime_meeting_id": {
+      "type": "string",
+      "description": "Amazon Chime Meeting ID"
     },
     "scheduled_at": {
       "type": "string",
@@ -96,6 +95,31 @@
     "description": {
       "type": "string",
       "description": "\u30af\u30e9\u30b9\u306e\u8aac\u660e\u30fb\u30c6\u30fc\u30de"
+    },
+    "recording_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u3010\u5c06\u6765\u62e1\u5f35\u3011\u9332\u753b\u6709\u52b9\u30d5\u30e9\u30b0"
+    },
+    "recording_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "scheduled",
+        "recording",
+        "completed",
+        "failed"
+      ],
+      "default": "none",
+      "description": "\u3010\u5c06\u6765\u62e1\u5f35\u3011\u9332\u753b\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "recording_s3_url": {
+      "type": "string",
+      "description": "\u3010\u5c06\u6765\u62e1\u5f35\u3011\u9332\u753bS3 URL"
+    },
+    "archive_product_id": {
+      "type": "string",
+      "description": "\u3010\u5c06\u6765\u62e1\u5f35\u3011\u30a2\u30fc\u30ab\u30a4\u30d6\u8ca9\u58f2Product ID"
     }
   },
   "required": [
