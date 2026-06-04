@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-06-04T14:00:00+09:00",
+  "note": "詳細スキーマはentities/*.jsonを参照。主要エンティティの重要フィールドのみ記載。",
+  "entities": [
+    {
+      "name": "YellCoinWallet",
+      "purpose": "エールコインウォレット（ユーザー1人につき1レコード）",
+      "key_fields": { "user_email": "string(required)", "balance": "number(default:0)", "total_charged": "number(default:0)", "total_sent": "number(default:0)", "first_terms_agreed_at": "datetime", "terms_version": "string" },
+      "rls": "create=admin, read/update=owner_or_admin, delete=admin",
+      "constraints": "total_charged にはbonus_coinsを含めない（廃止済み）"
+    },
+    {
+      "name": "YellCoinTransaction",
+      "purpose": "コイン入出金履歴",
+      "key_fields": { "user_email": "string", "type": "enum[charge,send,receive,refund]", "amount": "number", "yen_amount": "number", "service_type": "string", "coins_purchased": "number", "bonus_coins": "number(always=0)", "charge_amount_jpy": "number", "stripe_session_id": "string" },
+      "constraints": "bonus_coins は常に0（廃止済み）。stripe_session_idは冪等性キー。"
+    },
+    {
+      "name": "PlanSubscription",
+      "purpose": "プランサブスクリプション記録",
+      "key_fields": { "user_email": "string(required)", "plan_id": "string(required)", "plan_name": "string", "status": "enum[active,cancelled,past_due,incomplete]", "stripe_subscription_id": "string", "stripe_session_id": "string" },
+      "note": "plan_id = free|call-anser|basic|vod|ppv|sanctum_{channel_id}"
+    },
+    {
+      "name": "CampaignLiveGrantee",
+      "purpose": "キャンペーン対象者（期間限定全機能開放）",
+      "key_fields": { "email": "string(required)", "granted_at": "datetime(required)", "expires_at": "datetime(required)", "grant_source": "enum[campaign_link,admin_designated,special_scout]", "benefit_months": "number(12 or 24)", "campaign_id": "string", "campaign_code": "string" }
+    },
+    {
+      "name": "Campaign",
+      "purpose": "公開キャンペーン管理",
+      "key_fields": { "campaign_code": "string(required)", "name": "string", "status": "enum[draft,active,closed]", "max_participants": "number(default:300)", "approved_participants_count": "number(default:0)", "benefit_type": "string" },
+      "constraints": "max_participants(300)は非公開"
+    },
+    {
+      "name": "VideoCall",
+      "purpose": "1対1ビデオ通話セッション",
+      "key_fields": { "caller_email": "string(required)", "callee_email": "string(required)", "status": "enum[pending,accepted,calling,active,ended,declined,cancelled]", "coins_consumed": "number", "billing_started_at": "datetime", "creator_revenue_coins": "number", "platform_revenue_coins": "number", "webrtc_offer": "string", "webrtc_answer": "string", "webrtc_callee_ready": "boolean" },
+      "rls": "read/update = caller or callee or admin"
+    },
+    {
+      "name": "ClassRoom",
+      "purpose": "1対9クラス配信ルーム（Amazon Chime SDK）",
+      "key_fields": { "host_user_id": "string(required)", "host_email": "string(required)", "room_name": "string(required)", "status": "enum[waiting,active,ended]", "max_participants": "number(fixed=10)", "invite_code": "string(6桁)", "chime_meeting_id": "string", "participants": "array", "blocked_participant_emails": "array" },
+      "constraints": "max_participants=10固定（変更禁止）"
+    },
+    {
+      "name": "SchoolTicket",
+      "purpose": "クラス受講チケット",
+      "key_fields": { "student_email": "string(required)", "teacher_email": "string(required)", "session_id": "string(required=ClassRoom.id)", "price": "number(required)", "status": "enum[pending_payment,active,used,cancelled,expired]", "payment_method": "enum[yell_coin,stripe]", "revenue_rate_at_purchase": "number" },
+      "constraints": "session_id は ClassRoom.id（SchoolSession.id ではない）。最低価格: Math.ceil(duration/15)×150円"
+    },
+    {
+      "name": "Channel",
+      "purpose": "クリエイターチャンネル",
+      "key_fields": { "name": "string(required)", "owner_email": "string(required)", "service_category": "enum[fortune_telling,idol,business,language,fitness,education,other]", "ivs_stream_key": "string", "ivs_channel_arn": "string", "fanclub_tiers": "array", "progressive_rate": "number(default:0.85)", "monthly_revenue_coins": "number", "username": "string(unique)" }
+    },
+    {
+      "name": "Video",
+      "purpose": "VOD動画",
+      "key_fields": { "title": "string(required)", "channel_id": "string(required)", "video_url": "string(CloudFront URL)", "price": "number(min:100 if paid)", "moderation_status": "enum[pending,approved,rejected]" },
+      "constraints": "video_url はCloudFront URL（S3直URL禁止）。moderation_status=approvedのみ公開"
+    },
+    {
+      "name": "FortuneChatThread",
+      "purpose": "チャット鑑定スレッド",
+      "key_fields": { "channel_id": "string(required)", "user_email": "string(required)", "status": "enum[trial,active,closed]", "message_count": "number(4通でclosed)", "ticket_purchased": "boolean" }
+    },
+    {
+      "name": "Purchase",
+      "purpose": "コイン消費購入記録",
+      "key_fields": { "item_type": "enum[video,live_ticket,yell_coin,school_ticket]", "item_id": "string", "amount": "number", "buyer_email": "string", "status": "enum[pending,completed,refunded]", "stripe_session_id": "string" }
+    }
+  ]
+}

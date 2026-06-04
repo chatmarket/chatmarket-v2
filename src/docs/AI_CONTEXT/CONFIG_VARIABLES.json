@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-06-04T14:00:00+09:00",
+  "note": "値は一切含まない。変数名と用途のみ記載。",
+  "variables": [
+    { "name": "STRIPE_SECRET_KEY", "purpose": "Stripe API authentication", "required_by": ["createCoinCheckoutSession", "createCheckoutSession", "createFanclubCheckout", "createProductCheckout", "createEventTicketCheckout", "createLiveTicketCheckout", "createCrowdfundingCheckoutV2", "createPlanCheckoutSession", "createKycFeeCheckout", "createSchoolTicketCheckout", "fanclubWebhook", "productWebhook", "liveTicketWebhook", "getStripeBalance", "createCustomerPortalSession", "createConnectAccount"], "value": "REDACTED" },
+    { "name": "STRIPE_WEBHOOK_SECRET", "purpose": "Stripe webhook signature verification (general)", "required_by": ["stripeWebhook"], "value": "REDACTED" },
+    { "name": "STRIPE_FANCLUB_WEBHOOK_SECRET", "purpose": "Stripe webhook signature verification (fanclub)", "required_by": ["fanclubWebhook"], "value": "REDACTED" },
+    { "name": "STRIPE_FANCLUB_PRICE_STANDARD", "purpose": "Stripe Price ID for fanclub standard tier", "required_by": ["createFanclubCheckout"], "value": "REDACTED" },
+    { "name": "STRIPE_FANCLUB_PRICE_PREMIUM", "purpose": "Stripe Price ID for fanclub premium tier", "required_by": ["createFanclubCheckout"], "value": "REDACTED" },
+    { "name": "STRIPE_FANCLUB_PRICE_DIAMOND", "purpose": "Stripe Price ID for fanclub diamond tier", "required_by": ["createFanclubCheckout"], "value": "REDACTED" },
+    { "name": "AWS_ACCESS_KEY_ID", "purpose": "AWS SDK authentication (IVS, Chime, S3, CloudFront)", "required_by": ["provisionChannelStreamKey", "createChimeMeeting", "uploadVideoToS3", "getSignedVideoUrl", "generateSignedCloudFrontUrl", "ivsSessionWebhook", "detectIvsStreamStart", "cleanupStaleIvsChannels", "healthCheckIvsChannel", "forceReprovisionIvsChannel", "refreshIvsStreamKey", "enableIvsAutoArchive"], "value": "REDACTED" },
+    { "name": "AWS_SECRET_ACCESS_KEY", "purpose": "AWS SDK authentication secret", "required_by": ["same as AWS_ACCESS_KEY_ID"], "value": "REDACTED" },
+    { "name": "AWS_REGION", "purpose": "AWS region for S3, IVS (ap-northeast-1)", "required_by": ["uploadVideoToS3", "provisionChannelStreamKey"], "value": "REDACTED" },
+    { "name": "S3_BUCKET_VOD", "purpose": "S3 bucket name for VOD storage", "required_by": ["uploadVideoToS3", "getSignedVideoUrl"], "value": "REDACTED" },
+    { "name": "CLOUDFRONT_DOMAIN", "purpose": "CloudFront distribution domain for VOD delivery", "required_by": ["uploadVideoToS3", "getSignedVideoUrl", "generateSignedCloudFrontUrl"], "value": "REDACTED" },
+    { "name": "CLOUDFRONT_KEY_PAIR_ID", "purpose": "CloudFront key pair ID for signed URL", "required_by": ["getSignedVideoUrl", "generateSignedCloudFrontUrl"], "value": "REDACTED" },
+    { "name": "CLOUDFRONT_PRIVATE_KEY", "purpose": "CloudFront private key (PEM) for signed URL generation", "required_by": ["getSignedVideoUrl", "generateSignedCloudFrontUrl"], "value": "REDACTED" },
+    { "name": "IVS_WEBHOOK_SECRET", "purpose": "AWS IVS webhook HMAC signature verification", "required_by": ["ivsSessionWebhook"], "value": "REDACTED" },
+    { "name": "IVS_STAGES_ARN", "purpose": "IVS Stages ARN (for future stages API use)", "required_by": ["未使用の可能性"], "value": "REDACTED" },
+    { "name": "TWILIO_ACCOUNT_SID", "purpose": "Twilio account SID for TURN server token generation", "required_by": ["getTwilioIceServers", "checkTwilioCostAlert"], "value": "REDACTED" },
+    { "name": "TWILIO_AUTH_TOKEN", "purpose": "Twilio auth token for NTS API", "required_by": ["getTwilioIceServers", "checkTwilioCostAlert"], "value": "REDACTED" },
+    { "name": "LINE_CHANNEL_ID", "purpose": "LINE Messaging API channel ID for admin notifications", "required_by": ["notifyLineAdminSale"], "value": "REDACTED" },
+    { "name": "LINE_CHANNEL_SECRET", "purpose": "LINE Messaging API channel secret", "required_by": ["notifyLineAdminSale"], "value": "REDACTED" },
+    { "name": "SUPER_ADMIN_EMAILS", "purpose": "Comma-separated list of super admin email addresses", "required_by": ["setAdminRole", "grantAdminAccess"], "value": "REDACTED" },
+    { "name": "ENVIRONMENT", "purpose": "Environment identifier (e.g. production)", "required_by": ["trackLogs", "条件分岐全般"], "value": "REDACTED" },
+    { "name": "google_oauth_client_secret", "purpose": "Google OAuth client secret for user authentication", "required_by": ["Base44 Platform auth"], "value": "REDACTED" },
+    { "name": "AGORA_APP_ID", "purpose": "Agora App ID (DEPRECATED - 使用禁止)", "required_by": ["廃止済み"], "value": "REDACTED" },
+    { "name": "MUX_TOKEN_ID", "purpose": "Mux API token ID (DEPRECATED - 使用禁止)", "required_by": ["廃止済み"], "value": "REDACTED" },
+    { "name": "MUX_TOKEN_SECRET", "purpose": "Mux API token secret (DEPRECATED - 使用禁止)", "required_by": ["廃止済み"], "value": "REDACTED" }
+  ]
+}
