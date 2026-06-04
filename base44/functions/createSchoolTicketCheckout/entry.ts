@@ -54,22 +54,21 @@ Deno.serve(async (req) => {
     return Response.json({ error: "already_has_session" }, { status: 400 });
   }
 
-  // 講師プラン確認
-  const teacherChannels = await base44.asServiceRole.entities.Channel.filter({ owner_email: ticket.teacher_email });
-  const teacherChannel = teacherChannels[0];
-
-  // CampaignLiveGrantee or PlanSubscription でbasicか判定
+  // ── クラスルーム専用 収益還元率判定（call-anser は除外）──
+  // ❌ Red Line: call-anser をクラス収益率判定に使用しない（全ユーザー自動付与のため）
   let teacherPlan = "free";
   let revenueRate = 0.70;
   try {
+    // 1. CampaignLiveGrantee（12か月無料 or 24か月特別スカウト）
     const grants = await base44.asServiceRole.entities.CampaignLiveGrantee.filter({ email: ticket.teacher_email });
     const activeGrant = grants.find(g => g.expires_at && new Date(g.expires_at) > new Date());
     if (activeGrant) {
-      teacherPlan = "basic";
+      teacherPlan = activeGrant.reason === "influencer_campaign" ? "special_scout" : "campaign_basic";
       revenueRate = 0.85;
     } else {
+      // 2. PlanSubscription — basic のみ（call-anser 除外）
       const subs = await base44.asServiceRole.entities.PlanSubscription.filter({ user_email: ticket.teacher_email, status: "active" });
-      if (subs.some(s => s.plan_id === "basic" || s.plan_id === "call-anser")) {
+      if (subs.some(s => s.plan_id === "basic")) {
         teacherPlan = "basic";
         revenueRate = 0.85;
       }

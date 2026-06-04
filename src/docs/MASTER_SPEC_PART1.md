@@ -284,12 +284,23 @@ Chime:
 student_email（必須）, student_name
 teacher_email（必須）
 channel_id, channel_name
-session_id（必須）← ClassRoom.id
+session_id（必須）← ClassRoom.id を参照
 session_title, scheduled_at, duration_minutes
-price（円）
+price（円）← 生徒1名あたりの受講価格
+           ← 最低価格: Math.ceil(duration_minutes/15) × 150円
 status（pending_payment|active|used|cancelled|expired・default:pending_payment）
+payment_method（yell_coin|stripe）
+payment_status（pending|completed|failed|refunded）
+price_yen, coin_amount, stripe_session_id
+teacher_plan_at_purchase（free|basic|campaign_basic|special_scout）← 購入時点のプラン
+revenue_rate_at_purchase（0.70|0.85）← 購入時点の還元率（後から変更禁止）
+teacher_revenue_yen, platform_revenue_yen
 used_at, cancelled_at, expired_at
 description（最大1000文字）
+
+★ クラスルーム収益還元率判定: resolveClassroomRevenueRate（call-anser は除外）
+   basic PlanSubscription あり OR CampaignLiveGrantee 有効 → 0.85
+   それ以外 → 0.70
 ```
 
 ## FortuneChatThread（チャット鑑定スレッド）
@@ -771,6 +782,20 @@ DAILY_LIMIT_SECONDS = 7200（2時間 = 120分）
 ❌ public/overlay.html（Prism Web Overlay）
 ❌ pages/PrismWebOverlay
 ❌ hooks/usePreview30SecLock.js
+
+クラスルーム専用 Red Lines:
+❌ 1対1 VideoCallのWebRTC P2P実装をChimeへ勝手に置換するコード
+❌ 1対9 ClassRoomのChime実装をWebRTC P2Pへ置換するコード
+❌ freeプランの講師がクラスを開催できないようにするコード
+❌ call-anserプランをクラス収益還元率判定に使用するコード（全ユーザー自動付与のため除外必須）
+❌ SchoolTicketを15分あたり150円未満で作成・更新できるコード
+❌ SchoolTicket最低価格チェックをフロントエンドだけで行うコード
+❌ エールコイン決済をフロントエンドだけで完結させるコード（→ purchaseSchoolTicketWithYellCoin を使用）
+❌ Stripe成功ページへの遷移だけでSchoolTicketをactiveにするコード（→ Webhook確認後のみ）
+❌ 生徒に月額プラン加入を必須とするコード
+❌ 通常登録者へBasicプラン12か月無料を自動付与するコード（キャンペーン対象者・管理者指定のみ）
+❌ 「全新規登録者が12か月無料」と誤解させるLP表現
+❌ 特別スカウトの24か月無料特典を一般公開するコード
 ```
 
 ---

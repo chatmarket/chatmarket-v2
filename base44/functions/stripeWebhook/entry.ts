@@ -108,6 +108,36 @@ Deno.serve(async (req) => {
           stripe_session_id: session.id,
         });
       }
+
+      // ── スクールチケット Stripe 決済完了 ──────────────────────
+      // ❌ Red Line: 成功ページ遷移だけでactiveにしない → Webhookで確認した場合のみactive化
+      if (meta.type === 'school_ticket' && meta.school_ticket_id) {
+        const tickets = await base44.asServiceRole.entities.SchoolTicket.filter({ id: meta.school_ticket_id });
+        const ticket = tickets[0];
+        // 二重処理防止・pending_payment のみ処理
+        if (ticket && ticket.status === 'pending_payment') {
+          await base44.asServiceRole.entities.SchoolTicket.update(ticket.id, {
+            status: 'active',
+            payment_method: 'stripe',
+            payment_status: 'completed',
+            price_yen: session.amount_total,
+            stripe_session_id: session.id,
+            teacher_plan_at_purchase: meta.teacher_plan_at_purchase || 'free',
+            revenue_rate_at_purchase: parseFloat(meta.revenue_rate_at_purchase || '0.70'),
+            teacher_revenue_yen: parseInt(meta.teacher_revenue_yen || '0'),
+            platform_revenue_yen: parseInt(meta.platform_revenue_yen || '0'),
+          });
+          await base44.asServiceRole.entities.Purchase.create({
+            item_type: 'school_ticket',
+            item_id: ticket.id,
+            amount: session.amount_total,
+            buyer_email: meta.student_email,
+            status: 'completed',
+            stripe_session_id: session.id,
+          });
+          console.log(`[SchoolTicket] activated: ${ticket.id} via Stripe ${session.id}`);
+        }
+      }
     }
 
     return Response.json({ ok: true });

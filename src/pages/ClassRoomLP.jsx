@@ -336,7 +336,7 @@ export default function ClassRoomLP() {
                   <span className="font-serif text-4xl font-black text-violet-300">¥3,300</span>
                   <span className="text-muted-foreground text-sm mb-1">/月</span>
                 </div>
-                <p className="text-xs text-violet-300/80 mt-1 font-bold">★ 登録から12か月間は月額料金無料</p>
+                <p className="text-xs text-violet-300/80 mt-1 font-bold">★ キャンペーン対象者は12か月間月額無料</p>
               </div>
               <ul className="space-y-2.5">
                 {[
@@ -360,10 +360,10 @@ export default function ClassRoomLP() {
                 onClick={() => navigate("/recruit")}
                 className="w-full gap-2 bg-violet-600 hover:bg-violet-500 text-white py-5 rounded-2xl shadow-lg shadow-violet-500/30"
               >
-                BASICで始める（12か月無料）
+                BASICで始める
                 <ArrowRight className="w-5 h-5" />
               </Button>
-              <p className="text-xs text-muted-foreground text-center">通常月額3,300円 ／ 解約いつでも可</p>
+              <p className="text-xs text-muted-foreground text-center">通常月額3,300円 ／ 解約いつでも可 ／ キャンペーン対象者は12か月無料</p>
             </div>
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function ClassRoomLP() {
               { q: "生徒は月額プランに加入する必要がありますか？", a: "いいえ。生徒は無料登録後、受講したい授業のチケット代を支払うだけで参加できます。月額プランへの加入は不要です。" },
               { q: "生徒はどうやって入室しますか？", a: "招待リンク（6桁コード付き）と事前購入チケットがあれば入室できます。チケット未購入の生徒は自動ブロックされます。" },
               { q: "スマホでも使えますか？", a: "はい。PCブラウザ・スマホブラウザ（Chrome/Safari）に対応しています。" },
-              { q: "Basicプランの月額料金はいつから発生しますか？", a: "登録から12か月間は月額料金無料です。12か月経過後、通常月額3,300円が発生します。解約はいつでも可能です。" },
+              { q: "Basicプランの月額料金はいつから発生しますか？", a: "通常は申し込み直後から月額3,300円が発生します。キャンペーン対象の方には12か月間の無料期間が適用されます。解約はいつでも可能です。" },
             ].map((faq) => (
               <div key={faq.q} className="bg-card border border-border rounded-xl p-5">
                 <p className="font-bold text-sm mb-2">Q. {faq.q}</p>

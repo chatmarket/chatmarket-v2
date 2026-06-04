@@ -101,27 +101,29 @@ export default function SchoolTickets() {
     });
 
     if (payMethod === "yell_coin") {
-      // エールコイン決済
-      const balance = wallet?.balance || 0;
-      if (balance < buyTarget.ticket_price) {
-        toast.error(`コイン残高が不足しています（残高: ${balance}コイン）`);
-        await base44.entities.SchoolTicket.update(ticket.id, { status: "cancelled", cancelled_at: new Date().toISOString() });
-        setPaying(false);
-        return;
-      }
-      // コイン消費
-      await base44.entities.YellCoinWallet.update(wallet.id, { balance: balance - buyTarget.ticket_price });
-      await base44.entities.SchoolTicket.update(ticket.id, {
-        status: "active",
-        payment_status: "completed",
-        coin_amount: buyTarget.ticket_price,
+      // ❌ Red Line: フロントだけで残高確認・消費・active化を行わない → バックエンド関数で一括処理
+      const res = await base44.functions.invoke("purchaseSchoolTicketWithYellCoin", {
+        school_ticket_id: ticket.id,
       });
-      queryClient.invalidateQueries({ queryKey: ["my-school-tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["all-school-tickets-count"] });
-      setWallet(prev => prev ? { ...prev, balance: prev.balance - buyTarget.ticket_price } : prev);
-      setBuyTarget(null);
       setPaying(false);
-      toast.success("エールコインで決済しました！チケットが有効になりました。");
+      if (res.data?.ok) {
+        queryClient.invalidateQueries({ queryKey: ["my-school-tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["all-school-tickets-count"] });
+        setWallet(prev => prev ? { ...prev, balance: res.data.new_balance } : prev);
+        setBuyTarget(null);
+        toast.success("エールコインで決済しました！チケットが有効になりました。");
+      } else {
+        const err = res.data?.error;
+        // キャンセル処理
+        await base44.entities.SchoolTicket.update(ticket.id, { status: "cancelled", cancelled_at: new Date().toISOString() });
+        if (err === "insufficient_balance") {
+          toast.error(`コイン残高が不足しています（残高: ${res.data?.balance || 0}コイン）`);
+        } else if (res.data?.error_code === "school_ticket_price_too_low") {
+          toast.error(res.data.error);
+        } else {
+          toast.error("決済に失敗しました");
+        }
+      }
     } else {
       // Stripe決済
       const res = await base44.functions.invoke("createSchoolTicketCheckout", {
