@@ -174,7 +174,7 @@ export default function AdminAnalytics() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-full overflow-x-hidden">
-      <MetaHelmet title="プラットフォーム分析 | ChatMarket" noindex={true} />
+      <MetaHelmet page="admin" noindex={true} />
       {/* ヘッダー */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-black">📊 プラットフォーム分析</h1>

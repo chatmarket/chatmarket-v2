@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { useNavigate } from "react-router-dom";
 import { resolveUserPlan } from "@/lib/userPlan";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,8 @@ const PLANS = [
     iconColor: "text-blue-400",
     badge: "1対1ビデオ通話",
     badgeColor: "bg-blue-500/20 text-blue-300",
-    description: "Amazon Chime SDK採用。1対1の有料ビデオ通話で収益化。プログレッシブ・インセンティブで最大95%還元。",
-    features: ["Amazon Chime SDK による超低遅延ビデオ通話", "1対1 有料ビデオ通話（配信者が料金設定・申込者が支払い）", "通話料金：15分 150円〜（配信最低設定金額、上限なし）", "スケジュール制・事前申し込み方式", "無料通話枠なし・有料通話のみ", "プログレッシブ・インセンティブに自動参加（月間売上で還元率最大95%）", "視聴者からエールコイン受取"],
+    description: "WebRTC P2P採用。1対1の有料ビデオ通話で収益化。プログレッシブ・インセンティブで最大95%還元。",
+    features: ["WebRTC P2P による低遅延1対1ビデオ通話", "1対1 有料ビデオ通話（配信者が料金設定・申込者が支払い）", "通話料金：15分 150円〜（配信最低設定金額、上限なし）", "スケジュール制・事前申し込み方式", "無料通話枠なし・有料通話のみ", "プログレッシブ・インセンティブに自動参加（月間売上で還元率最大95%）", "視聴者からエールコイン受取"],
   },
   {
     id: "call-anser",
@@ -348,6 +349,7 @@ export default function PlanSelect() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <MetaHelmet page="plan-select" />
       {planInfo?.isAdmin && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
           <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>

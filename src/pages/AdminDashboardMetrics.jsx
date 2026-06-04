@@ -135,7 +135,7 @@ export default function AdminDashboardMetrics() {
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-8">
-      <MetaHelmet title="管理ダッシュボード | ChatMarket" noindex={true} />
+      <MetaHelmet page="admin" noindex={true} />
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
         <div>

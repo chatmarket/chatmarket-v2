@@ -285,13 +285,13 @@ export default function Home() {
             🎉 期間限定キャンペーン
           </p>
           <p className="relative font-black text-2xl sm:text-3xl md:text-4xl mt-2" style={{ color: "#f5e27a", textShadow: "0 0 30px rgba(245,226,122,0.7)" }}>
-            配信者・視聴者どなたでも
+            キャンペーン対象者は
           </p>
           <p className="relative font-black text-3xl sm:text-4xl md:text-5xl mt-1" style={{ color: "#fff", textShadow: "0 0 40px rgba(168,85,247,0.9)" }}>
-            12ヶ月<span style={{ color: "#f5e27a" }}>完全無料</span>！
+            Basicプラン<span style={{ color: "#f5e27a" }}>12か月無料</span>
           </p>
           <p className="relative text-sm sm:text-base mt-3" style={{ color: "#d8b4fe" }}>
-            登録するだけで全員が対象 → 今すぐ確認
+            対象条件を確認する → 今すぐ申し込み
           </p>
         </div>
       </Link>

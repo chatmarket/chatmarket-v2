@@ -7,6 +7,7 @@
  * 1対9: ClassRoom (Amazon Chime) ← 既存ロジック維持
  */
 import React from "react";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,7 @@ export default function ClassRoomLP() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <MetaHelmet page="classroom-lp" />
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden py-20 px-4">

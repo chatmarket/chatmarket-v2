@@ -1,4 +1,5 @@
 import React from "react";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { Link } from "react-router-dom";
 import { ArrowLeft, FileText } from "lucide-react";
 
@@ -12,6 +13,7 @@ const Section = ({ title, children }) => (
 export default function Terms() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      <MetaHelmet page="terms" />
       <div className="flex items-center gap-3 mb-8">
         <Link to="/" className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />

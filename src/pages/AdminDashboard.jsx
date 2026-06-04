@@ -38,6 +38,7 @@ import SpecialRateManager from "../components/admin/SpecialRateManager";
 import LineNotifySettings from "../components/admin/LineNotifySettings";
 import { isAdmin } from "@/lib/adminConfig";
 import MetaHelmet from "@/components/layout/MetaHelmet";
+// noindex設定済み — 管理者専用ページ
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -254,7 +255,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <MetaHelmet title="運営管理ダッシュボード | ChatMarket" noindex={true} />
+      <MetaHelmet page="admin" noindex={true} />
       <div className="flex items-center justify-between gap-3 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">

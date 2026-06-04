@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { Building2, User, Calendar, Banknote, Landmark, Hash, Briefcase, MapPin, Phone, ArrowLeft } from "lucide-react";
 
 const INFO_ITEMS = [
@@ -17,6 +18,7 @@ const INFO_ITEMS = [
 export default function CompanyInfo() {
   return (
     <div className="min-h-screen bg-background">
+      <MetaHelmet page="company" />
       <div className="max-w-2xl mx-auto px-4 py-10 sm:py-16 space-y-8">
         {/* 戻るリンク */}
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">

@@ -1,75 +1,100 @@
 import { useEffect } from 'react';
-import { getMeta, GLOBAL_META } from '@/lib/i18n';
+import { useLocation } from 'react-router-dom';
+import { getMeta, GLOBAL_META, getLang } from '@/lib/i18n';
+
+const BASE_URL = 'https://live-chat-market.com';
 
 /**
  * MetaHelmet コンポーネント
- * document.titleとmeta descriptionを直接操作（react-helmet-async不要）
+ * document.title / meta description / OGP / hreflang / canonical を管理
  */
 export default function MetaHelmet({ 
   page = 'home', 
-  lang = 'ja',
+  lang,
   title,
   description,
   keywords,
   image,
   noindex = false,
 }) {
-  const meta = getMeta(page, lang);
-  const finalTitle = title || meta.title || GLOBAL_META.siteName;
+  const location = useLocation();
+  const currentLang = lang || getLang() || 'ja';
+  const meta = getMeta(page, currentLang);
+
+  const finalTitle = title || meta.title || `Chat Market`;
   const finalDescription = description || meta.description || '';
   const finalImage = image || GLOBAL_META.image;
+  const canonical = `${BASE_URL}${location.pathname}`;
 
   useEffect(() => {
     // title
     document.title = finalTitle;
 
-    // robots (noindex制御)
-    const setRobots = (content) => {
-      let el = document.querySelector('meta[name="robots"]');
+    // html lang 属性
+    document.documentElement.setAttribute('lang', currentLang);
+
+    // robots
+    const setMeta = (nameOrProp, content, attr = 'name') => {
+      let el = document.querySelector(`meta[${attr}="${nameOrProp}"]`);
       if (!el) {
         el = document.createElement('meta');
-        el.setAttribute('name', 'robots');
+        el.setAttribute(attr, nameOrProp);
         document.head.appendChild(el);
       }
       el.setAttribute('content', content);
     };
+
     if (noindex) {
-      setRobots('noindex, nofollow');
+      setMeta('robots', 'noindex, nofollow');
     }
 
     // description
-    let descEl = document.querySelector('meta[name="description"]');
-    if (descEl) descEl.setAttribute('content', finalDescription);
-
-    // OG tags
-    const setMeta = (property, content, attr = 'property') => {
-      let el = document.querySelector(`meta[${attr}="${property}"]`);
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute(attr, property);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', content);
-    };
+    setMeta('description', finalDescription);
 
     // keywords
-    if (keywords) {
-      let kwEl = document.querySelector('meta[name="keywords"]');
-      if (!kwEl) {
-        kwEl = document.createElement('meta');
-        kwEl.setAttribute('name', 'keywords');
-        document.head.appendChild(kwEl);
-      }
-      kwEl.setAttribute('content', keywords);
+    if (meta.keywords || keywords) {
+      setMeta('keywords', keywords || meta.keywords);
     }
 
-    setMeta('og:title', finalTitle);
-    setMeta('og:description', finalDescription);
-    setMeta('og:image', finalImage);
-    setMeta('twitter:title', finalTitle);
-    setMeta('twitter:description', finalDescription);
-    setMeta('twitter:image', finalImage);
-  }, [finalTitle, finalDescription, finalImage, noindex]);
+    // OG tags
+    setMeta('og:title', finalTitle, 'property');
+    setMeta('og:description', finalDescription, 'property');
+    setMeta('og:image', finalImage, 'property');
+    setMeta('og:url', canonical, 'property');
+    setMeta('og:locale', currentLang === 'ja' ? 'ja_JP' : currentLang === 'ko' ? 'ko_KR' : currentLang === 'zh' ? 'zh_CN' : 'en_US', 'property');
+    setMeta('og:site_name', 'Chat Market', 'property');
+
+    // Twitter Card
+    setMeta('twitter:title', finalTitle, 'name');
+    setMeta('twitter:description', finalDescription, 'name');
+    setMeta('twitter:image', finalImage, 'name');
+
+    // Canonical URL
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) {
+      canonicalEl = document.createElement('link');
+      canonicalEl.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalEl);
+    }
+    canonicalEl.setAttribute('href', canonical);
+
+    // hreflang — remove old ones first
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+
+    const hrefLangs = [
+      { lang: 'ja', href: `${BASE_URL}${location.pathname}` },
+      { lang: 'en', href: `${BASE_URL}${location.pathname}` },
+      { lang: 'x-default', href: `${BASE_URL}${location.pathname}` },
+    ];
+    hrefLangs.forEach(({ lang: l, href }) => {
+      const el = document.createElement('link');
+      el.setAttribute('rel', 'alternate');
+      el.setAttribute('hreflang', l);
+      el.setAttribute('href', href);
+      document.head.appendChild(el);
+    });
+
+  }, [finalTitle, finalDescription, finalImage, noindex, currentLang, canonical, location.pathname]);
 
   return null;
 }

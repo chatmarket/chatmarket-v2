@@ -48,9 +48,9 @@ export const translations = {
     message: "メッセージ",
     supportProject: "支援",
     viewAll: "すべて見る →",
-    recruitBannerText: "【4/16解禁】全有料プラン完全無料！先行ライバー300名限定募集！",
-    limitedPeriod: "⏰ 期間限定 〜 4/30まで",
-    securePro: "Pro枠を確保 →",
+    recruitBannerText: "キャンペーン対象者はBasicプランが12か月間無料",
+    limitedPeriod: "⏰ 期間限定キャンペーン実施中",
+    securePro: "詳細を確認する →",
     freeSpeak: "言論の自由を体感してください、法的な問題発言以外は当サイトにおいて規制はかけません",
     freeSpeak_sub: "＊配信者が設定するNGワードがありますので、配信者は安心して配信に集中できます",
     freeSpeakEn: "Experience free speech. No restrictions apply here, except for illegal remarks.",
@@ -114,9 +114,9 @@ export const translations = {
     message: "Message",
     supportProject: "Support",
     viewAll: "View all →",
-    recruitBannerText: "[4/16 Launch] All Paid Plans FREE! Limited to 300 Early Creators!",
-    limitedPeriod: "⏰ Limited Period ~ Until 4/30",
-    securePro: "Secure Pro Slot →",
+    recruitBannerText: "Eligible campaign participants get Basic plan free for 12 months",
+    limitedPeriod: "⏰ Limited-time campaign",
+    securePro: "Check eligibility →",
     freeSpeak: "Experience free speech. No restrictions apply here, except for illegal remarks.",
     freeSpeakSub: "*Streamers can filter out specific words, so they can stream safely.",
     freeSpeakEn: "Experience free speech. No restrictions apply here, except for illegal remarks.",
@@ -177,9 +177,9 @@ export const translations = {
     message: "메시지",
     supportProject: "지원",
     viewAll: "모두 보기 →",
-    recruitBannerText: "[4/16 출시] 모든 유료 플랜 무료! 선착순 300명 크리에이터 모집!",
-    limitedPeriod: "⏰ 기간 한정 ~ 4/30까지",
-    securePro: "Pro 슬롯 확보 →",
+    recruitBannerText: "캠페인 대상자는 Basic 플랜 12개월 무료",
+    limitedPeriod: "⏰ 기간 한정 캠페인 진행 중",
+    securePro: "자격 확인하기 →",
     freeSpeak: "자유로운 발언을 경험하세요. 불법 발언을 제외한 제한이 없습니다.",
     freeSpeakSub: "*방송인이 설정한 금지 단어가 있으므로 안전하게 방송할 수 있습니다.",
     progressive_title: "프로그레시브 인센티브",
@@ -565,26 +565,26 @@ export function t(key) {
 export const PAGE_META = {
   home: {
     ja: {
-      title: "チャットマーケット | ライブ配信・動画販売・1対1ビデオ通話プラットフォーム【ChatMarket】",
-      description: "チャットマーケット（ChatMarket）は有料ライブ配信・動画販売・1対1有料ビデオ通話・占い鑑定予約をこのプラットフォーム一つで実現。チャットマーケットなら最大95%の高収益還元率でクリエイターの収益化を強力にサポートします。",
-      keywords: "チャットマーケット,チャットマーケット ライバー,チャットマーケット 占い,チャットマーケット 配信,ライブ配信,動画販売,ビデオ通話,有料配信,クリエイター,収益化",
+      title: "Chat Market｜ライブ配信・個別相談・オンラインレッスン・動画販売",
+      description: "Chat Marketは、個人のスキルやファンとのつながりを、ライブ配信、1対1ビデオ通話、少人数レッスン、動画販売、ファンクラブなどで収益化できるグローバルプラットフォームです。",
+      keywords: "チャットマーケット,Chat Market,ライブ配信,1対1ビデオ通話,動画販売,オンラインレッスン,占い師,クリエイター収益化",
     },
     en: {
-      title: "ChatMarket | Live Streaming, Video Sales & 1-on-1 Video Calls Platform",
-      description: "ChatMarket is the all-in-one platform for creators to monetize through live streaming, video sales, and 1-on-1 video calls. Earn up to 95% revenue share.",
-      keywords: "live streaming,video monetization,creator platform,streaming earnings,video calls",
+      title: "Chat Market | Live Streaming, Private Sessions, Classes and Creator Monetization",
+      description: "Chat Market is a global platform where creators, teachers and independent professionals can connect with their audience through live streaming, private video sessions, small-group classes, video sales and fan memberships.",
+      keywords: "live streaming,creator monetization,private video sessions,online classes,video sales",
     },
   },
   recruit: {
     ja: {
-      title: "ライバー募集 | ChatMarket | 全有料プラン3ヶ月完全無料",
-      description: "ChatMarket先着300名限定キャンペーン。全有料プラン（月額¥29,700相当）が無料に。フォロワー1万人以上でさらに3ヶ月追加無料。",
-      keywords: "ライバー募集,有料プラン無料,プロクリエイター,配信プラットフォーム",
+      title: "クリエイター募集｜Chat Market",
+      description: "Chat Marketでクリエイターとして活動しませんか？ライブ配信・1対1ビデオ通話・動画販売・少人数レッスンで収益化。キャンペーン対象者はBasicプランを12か月間無料で利用できます。",
+      keywords: "クリエイター募集,ライバー募集,配信プラットフォーム,Chat Market,収益化",
     },
     en: {
-      title: "Creator Recruitment | ChatMarket | All Paid Plans FREE for 300 Creators",
-      description: "Limited-time campaign: All premium features ($297/month equivalent) FREE for 300 selected creators. Influencers with 10K+ followers get 3 extra months.",
-      keywords: "creator recruitment,live streaming platform,premium features free,streaming monetization",
+      title: "Join Chat Market as a Creator",
+      description: "Start monetizing your skills on Chat Market through live streaming, private video sessions, group lessons and video sales. Eligible campaign participants can use the Basic plan free of charge for 12 months.",
+      keywords: "creator platform,live streaming,monetization,online lessons,Chat Market",
     },
   },
   watch: {
@@ -601,26 +601,134 @@ export const PAGE_META = {
   },
   privacy: {
     ja: {
-      title: "プライバシーポリシー | ChatMarket",
-      description: "ChatMarketのプライバシーポリシーをご確認ください。",
-      keywords: "プライバシー,個人情報保護",
+      title: "プライバシーポリシー｜Chat Market",
+      description: "Chat Marketにおける個人情報の収集・利用・管理方針についてご説明します。お客様の情報は厳重に保護されます。",
+      keywords: "プライバシーポリシー,個人情報保護,Chat Market",
     },
     en: {
-      title: "Privacy Policy | ChatMarket",
-      description: "ChatMarket Privacy Policy - Learn how we protect your data.",
-      keywords: "privacy policy,data protection",
+      title: "Privacy Policy | Chat Market",
+      description: "Learn how Chat Market collects, uses and protects your personal information. Your privacy and data security are our priority.",
+      keywords: "privacy policy,data protection,Chat Market",
     },
   },
   terms: {
     ja: {
-      title: "利用規約 | ChatMarket",
-      description: "ChatMarketの利用規約です。ご利用前に必ずお読みください。",
-      keywords: "利用規約,サービス利用",
+      title: "利用規約｜Chat Market",
+      description: "Chat Marketの利用規約です。サービスをご利用いただく前に必ずお読みください。収益還元率・料金・禁止事項などを定めています。",
+      keywords: "利用規約,Chat Market,サービス規約",
     },
     en: {
-      title: "Terms of Service | ChatMarket",
-      description: "ChatMarket Terms of Service - Please read before using our platform.",
-      keywords: "terms of service,user agreement",
+      title: "Terms of Service | Chat Market",
+      description: "Chat Market Terms of Service. Please read before using our platform. Covers revenue sharing, fees, prohibited content and more.",
+      keywords: "terms of service,user agreement,Chat Market",
+    },
+  },
+  legal: {
+    ja: {
+      title: "特定商取引法に基づく表記｜Chat Market",
+      description: "Chat Market（株式会社 ONE STEP）の特定商取引法に基づく表記です。販売事業者・料金・返金条件・決済方法などを記載しています。",
+      keywords: "特定商取引法,Chat Market,販売事業者",
+    },
+    en: {
+      title: "Legal Notice | Chat Market",
+      description: "Legal disclosure for Chat Market (ONE STEP Inc.) including operator details, pricing, refund policy and payment methods, as required under Japanese law.",
+      keywords: "legal notice,Chat Market,terms",
+    },
+  },
+  company: {
+    ja: {
+      title: "運営会社情報｜Chat Market",
+      description: "Chat Marketを運営する株式会社 ONE STEPの会社情報です。代表者、所在地、設立日、事業内容をご確認いただけます。",
+      keywords: "企業情報,Chat Market,株式会社ONE STEP",
+    },
+    en: {
+      title: "Company Information | Chat Market",
+      description: "Corporate information for ONE STEP Inc., the operator of Chat Market. Includes representative, address, founding date and business overview.",
+      keywords: "company information,Chat Market,ONE STEP Inc",
+    },
+  },
+  "plan-select": {
+    ja: {
+      title: "料金プラン｜Chat Market",
+      description: "Chat Marketの料金プランをご確認ください。無料のFREEプランから、収益還元率85%のBasicプラン、VOD・PPVなど目的に合わせて選べます。",
+      keywords: "料金プラン,Chat Market,Basicプラン,収益還元率",
+    },
+    en: {
+      title: "Pricing Plans | Chat Market",
+      description: "Explore Chat Market pricing plans. Start free or choose the Basic plan for 85% revenue share. Additional plans for live streaming, video sales and more.",
+      keywords: "pricing,Chat Market,Basic plan,revenue share",
+    },
+  },
+  "classroom-lp": {
+    ja: {
+      title: "クラスルーム｜1対1から最大1対9のオンラインレッスン｜Chat Market",
+      description: "Chat Marketのクラスルーム機能で、1対1のプライベートセッションから最大9名の少人数グループレッスンまで開催できます。チケット制で確実に収益化。初期費用0円。",
+      keywords: "オンラインレッスン,クラスルーム,Chat Market,少人数授業,グループレッスン",
+    },
+    en: {
+      title: "Classroom | Private and Small-Group Online Lessons | Chat Market",
+      description: "Host private 1-on-1 sessions or small-group lessons for up to 9 students on Chat Market. Ticket-based system, zero setup cost.",
+      keywords: "online lessons,classroom,Chat Market,private sessions,group lessons",
+    },
+  },
+  "fortune-lp": {
+    ja: {
+      title: "占い師向けプラットフォーム｜Chat Market",
+      description: "占い師・タロット師・鑑定士として収益化するならChat Market。ビデオ鑑定・チャット鑑定・ライブ配信で活躍。収益還元率最大95%。",
+      keywords: "占い師,Chat Market,チャット鑑定,ビデオ鑑定,収益化",
+    },
+    en: {
+      title: "For Fortune Tellers & Spiritual Advisors | Chat Market",
+      description: "Chat Market is the platform for fortune tellers, tarot readers and spiritual advisors to connect with clients via video sessions, chat readings and live streams. Up to 95% revenue share.",
+      keywords: "fortune teller platform,tarot,spiritual advisor,Chat Market,video readings",
+    },
+  },
+  search: {
+    ja: {
+      title: "クリエイターを探す｜Chat Market",
+      description: "Chat Marketで占い師、講師、クリエイターを探してみましょう。ライブ配信中のチャンネルや動画も検索できます。",
+      keywords: "クリエイター検索,Chat Market,占い師,ライブ配信",
+    },
+    en: {
+      title: "Discover Creators | Chat Market",
+      description: "Find fortune tellers, tutors, fitness coaches and creators on Chat Market. Browse live streams, videos and private session providers.",
+      keywords: "discover creators,Chat Market,live streaming,fortune tellers",
+    },
+  },
+  watch: {
+    ja: {
+      title: "動画を視聴｜Chat Market",
+      description: "Chat Marketのクリエイターが制作した動画を視聴できます。有料動画・無料動画、幅広いコンテンツをお楽しみください。",
+      keywords: "動画視聴,Chat Market,有料動画,クリエイター",
+    },
+    en: {
+      title: "Watch Video | Chat Market",
+      description: "Watch creator videos on Chat Market. Browse paid and free content from teachers, fortune tellers, fitness coaches and more.",
+      keywords: "watch video,Chat Market,creator content",
+    },
+  },
+  dashboard: {
+    ja: {
+      title: "マイページ｜Chat Market",
+      description: "Chat Marketのマイページです。収益・予約・通知を確認できます。",
+      keywords: "マイページ,Chat Market",
+    },
+    en: {
+      title: "My Dashboard | Chat Market",
+      description: "Your personal dashboard on Chat Market. View earnings, reservations and notifications.",
+      keywords: "dashboard,Chat Market",
+    },
+  },
+  admin: {
+    ja: {
+      title: "管理者ダッシュボード｜Chat Market",
+      description: "Chat Market運営管理ページ。",
+      keywords: "",
+    },
+    en: {
+      title: "Admin Dashboard | Chat Market",
+      description: "Chat Market admin dashboard.",
+      keywords: "",
     },
   },
 };
@@ -629,10 +737,10 @@ export const PAGE_META = {
  * グローバルメタデータ（言語共通）
  */
 export const GLOBAL_META = {
-  siteUrl: "https://chatmarket.info",
-  siteName: "ChatMarket",
-  twitterHandle: "@ChatMarket",
-  image: "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png",
+  siteUrl: "https://live-chat-market.com",
+  siteName: "Chat Market",
+  twitterHandle: "@ChatMarket_jp",
+  image: "https://media.base44.com/images/public/69c1b541d5db3555833124aa/e2af471ca_generated_image.png",
 };
 
 /**
