@@ -305,14 +305,14 @@ Appointment             ← 予約
 新規ユーザー登録（Base44 Auth）
   ↓
 onUserRegistered（Entity Automation: User.create）
-  ├→ PlanSubscription 作成: plan_id="call-anser", status="active"
-  │    ※ 全ユーザーがデフォルトで call-anser プランを取得
+  ├→ YellCoinWallet 作成: balance=500（初回ボーナス500コイン）
+  │    ※ call-anser は有料プラン（¥3,300/月）のため自動付与なし
   ├→ YellCoinWallet 作成: balance=500（初回ボーナス500コイン）
   ├→ Admin向け通知（Notification エンティティ + メール）
   └→ IVSチャンネルが存在する場合は自動プロビジョニング
 ```
 
-**重要:** 全ユーザーは登録時に自動的に `call-anser` プランが付与されます（無料）。
+**重要:** `call-anser` プランは月額¥3,300の有料プランです。登録時の自動付与は廃止されています。
 
 ---
 
@@ -323,10 +323,10 @@ onUserRegistered（Entity Automation: User.create）
 | プランID | 名称 | 月額 | 主な機能 | 収益率 |
 |---------|------|------|---------|-------|
 | free | FREEプラン | ¥0 | 1対1通話（有料）、コイン受取 | 70% |
-| call-anser | CALL&ANSERプラン | ¥0（現在無料キャンペーン中）| 1対1通話、無料通話枠60分/日 | 85% |
+| call-anser | CALL&ANSERプラン | ¥3,300/月 | 1対1通話、無料通話枠60分/日 | 85% |
 | basic | BASICプラン | ¥3,300/月 | ライブ配信、アーカイブ販売 | 85%〜 |
-| vod | VODプラン | ¥9,900/月 | 動画アップロード販売、録画 | 85% |
-| ppv | PPVプラン | ¥9,900/月 | 有料ライブ配信 | 85% |
+| vod | VODプラン | ¥3,300/月 | 動画アップロード販売、録画 | 85% |
+| ppv | PPVプラン | ¥3,300/月 | 有料ライブ配信 | 85% |
 
 ### プラン判定ロジック（`lib/userPlan.js`）
 
@@ -934,6 +934,14 @@ SUPER_ADMIN_EMAILS 環境変数に含まれるメールアドレス
 ## 18. 絶対不変ルール（Red Lines）
 
 以下のルールはいかなる理由があっても変更禁止です。
+
+### 料金方針（2026-06-04確定・最優先）
+```
+❌ Free以外の有料プランを月額¥3,300以外として表示・請求するコード
+❌ CALL&ANSERを月額¥0として扱うコード
+❌ VOD・PPVを月額¥9,900として扱うコード
+❌ 古い仕様書の価格（call-anser=¥0, vod=¥9,900, ppv=¥9,900）を正として使用するコード
+```
 
 ### 収益モデル
 ```

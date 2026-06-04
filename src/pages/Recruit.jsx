@@ -24,11 +24,11 @@ const CAMPAIGN_START = new Date("2026-04-16T20:00:00+09:00");
 // 全有料プラン一覧（CALL&ANSERは全ユーザー自動付与・¥0）
 const ALL_PLANS = [
   { name: "BASIC",      price: "¥3,300",  color: "#00ff9d", desc: "配信・通話で 最大85〜95%を稼ぐ" },
-  { name: "CALL&ANSER", price: "¥0（自動付与）", color: "#00d4ff", desc: "通話：15分で 150円以上 稼ぐ（上限なし）" },
-  { name: "VOD",        price: "¥9,900",  color: "#f59e0b", desc: "動画アーカイブ販売で 収益化" },
-  { name: "PPV",        price: "¥9,900",  color: "#ff6b6b", desc: "有料ライブ配信で 最大95%還元" },
+  { name: "CALL&ANSER", price: "¥3,300",  color: "#00d4ff", desc: "通話：15分で 150円以上 稼ぐ（上限なし）" },
+  { name: "VOD",        price: "¥3,300",  color: "#f59e0b", desc: "動画アーカイブ販売で 収益化" },
+  { name: "PPV",        price: "¥3,300",  color: "#ff6b6b", desc: "有料ライブ配信で 最大95%還元" },
 ];
-const TOTAL_VALUE = "¥23,100"; // 月額合計（BASIC ¥3,300 + VOD ¥9,900 + PPV ¥9,900）
+const TOTAL_VALUE = "¥13,200"; // 月額合計（BASIC ¥3,300 + CALL&ANSER ¥3,300 + VOD ¥3,300 + PPV ¥3,300）
 
 function useCountdown(targetDate) {
   const [diff, setDiff] = useState(targetDate - Date.now());
@@ -444,7 +444,7 @@ export default function Recruit() {
               <div className="bg-primary/20 border border-primary/40 rounded-xl p-3 text-center">
                 <p className="text-primary font-black text-lg">12ヶ月で最大 {TOTAL_VALUE} × 12ヶ月 FREE</p>
               </div>
-              <p className="text-xs text-muted-foreground text-center">キャンペーン対象者は、Basicプランを12か月無料で利用できます。</p>
+              <p className="text-xs text-muted-foreground text-center">キャンペーン対象者は、全プランを12か月無料で利用できます。</p>
             </motion.div>
           </div>
         </div>
@@ -614,8 +614,8 @@ export default function Recruit() {
           {[
             { value: "95%", label: "最大還元率", color: "text-primary" },
             { value: "全4プラン", label: "同時無料開放", color: "text-red-400" },
-            { value: TOTAL_VALUE, label: "月額相当が無料", color: "text-amber-400" },
-            { value: "全4プラン", label: "同時開放", color: "text-cyan-400" },
+            { value: TOTAL_VALUE, label: "月額合計相当が無料", color: "text-amber-400" },
+            { value: "¥3,300", label: "各プラン月額（税込）", color: "text-cyan-400" },
           ].map((s, i) => (
             <div key={i} className="bg-card border border-border/50 rounded-xl p-5">
               <p className={`text-2xl sm:text-3xl font-black ${s.color}`}>{s.value}</p>

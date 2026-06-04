@@ -461,10 +461,10 @@ IvsChannelRegistry, InstantCallBypass, YellCoinTransaction
 | plan_id | 月額 | 収益率 | 15分単価 | 備考 |
 |---------|------|-------|---------|------|
 | free | ¥0 | 70% | 200コイン | - |
-| call-anser | ¥0 | 85% | 150コイン | ★全ユーザーに自動付与 |
+| call-anser | ¥3,300 | 85% | 150コイン | ★有料プラン（¥3,300/月） |
 | basic | ¥3,300 | 85%〜95% | 150コイン | - |
-| vod | ¥9,900 | 85% | - | - |
-| ppv | ¥9,900 | 85%〜95% | - | - |
+| vod | ¥3,300 | 85% | - | - |
+| ppv | ¥3,300 | 85%〜95% | - | - |
 
 ## プラン判定ロジック（resolveUserPlan）
 
@@ -497,7 +497,7 @@ PLAN_FEATURES = {
     'channel',        // チャンネルページ
     'community',      // コミュニティ閲覧のみ（投稿不可）
   ],
-  'call-anser': [     // ★全ユーザーが登録時に自動付与
+  'call-anser': [     // ★有料プラン（¥3,300/月）
     'video_call',
     'free_call_daily', // 1日60分の無料通話枠（10分×6スロット）
     'yell_coin', 'channel', 'community',
@@ -632,11 +632,8 @@ Base44 Automation: User エンティティ create イベント → `onUserRegist
 ```
 payload.data.email を取得（なければ skipped を返す）
 
-Step1: PlanSubscription 作成（重複チェック付き）
-  filter({ user_email:email, plan_id:"call-anser" })
-  → 既存なし: create({ plan_id:"call-anser", plan_name:"CALL&ANSERプラン", status:"active" })
-  → 既存あり: スキップ
-  ★ 全ユーザーは登録時点から call-anser プランを保有
+Step1: YellCoinWallet 作成（重複チェック付き）
+  ※ call-anser は有料プラン（¥3,300/月）のため登録時の自動付与は廃止
 
 Step2: YellCoinWallet 作成（重複チェック付き）
   filter({ user_email:email })
@@ -787,7 +784,7 @@ DAILY_LIMIT_SECONDS = 7200（2時間 = 120分）
 ❌ 1対1 VideoCallのWebRTC P2P実装をChimeへ勝手に置換するコード
 ❌ 1対9 ClassRoomのChime実装をWebRTC P2Pへ置換するコード
 ❌ freeプランの講師がクラスを開催できないようにするコード
-❌ call-anserプランをクラス収益還元率判定に使用するコード（全ユーザー自動付与のため除外必須）
+❌ call-anserプランをクラス収益還元率判定に使用するコード（有料プランのため除外推奨）
 ❌ SchoolTicketを15分あたり150円未満で作成・更新できるコード
 ❌ SchoolTicket最低価格チェックをフロントエンドだけで行うコード
 ❌ フロントエンドから SchoolTicket.create を直接呼ぶコード（→ validateAndCreateSchoolTicket 経由のみ）
@@ -817,4 +814,25 @@ DAILY_LIMIT_SECONDS = 7200（2時間 = 120分）
 ```
 
 ---
+## 料金方針（最新・2026-06-04確定・最優先）
+
+| plan_id | 月額 | 備考 |
+|---------|------|------|
+| free | ¥0 | 無料プラン |
+| call-anser | ¥3,300 | 有料プラン |
+| basic | ¥3,300 | 有料プラン |
+| vod | ¥3,300 | 有料プラン |
+| ppv | ¥3,300 | 有料プラン |
+
+**Free以外の全有料プランは月額¥3,300（税込）で統一。この方針は本ドキュメント内の他の記述より優先される。**
+
+## 追加 Red Lines（料金関連）
+
+```
+❌ Free以外の有料プランを月額¥3,300以外として表示・請求するコード
+❌ CALL&ANSERを月額¥0として扱うコード
+❌ VOD・PPVを月額¥9,900として扱うコード
+❌ 古いMASTER_SPECの価格表（call-anser=¥0, vod=¥9,900, ppv=¥9,900）を正として使用するコード
+```
+
 *PART2に続く → MASTER_SPEC_PART2.md*
