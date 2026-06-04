@@ -790,12 +790,30 @@ DAILY_LIMIT_SECONDS = 7200（2時間 = 120分）
 ❌ call-anserプランをクラス収益還元率判定に使用するコード（全ユーザー自動付与のため除外必須）
 ❌ SchoolTicketを15分あたり150円未満で作成・更新できるコード
 ❌ SchoolTicket最低価格チェックをフロントエンドだけで行うコード
+❌ フロントエンドから SchoolTicket.create を直接呼ぶコード（→ validateAndCreateSchoolTicket 経由のみ）
+❌ ClassRoomが存在しないSchoolSessionのチケットを発行するコード
+❌ SchoolTicket.session_id に SchoolSession.id（非ClassRoom.id）を保存するコード
 ❌ エールコイン決済をフロントエンドだけで完結させるコード（→ purchaseSchoolTicketWithYellCoin を使用）
 ❌ Stripe成功ページへの遷移だけでSchoolTicketをactiveにするコード（→ Webhook確認後のみ）
+❌ 返金済み・キャンセル済みSchoolTicketでClassRoomへ入室できるコード
 ❌ 生徒に月額プラン加入を必須とするコード
-❌ 通常登録者へBasicプラン12か月無料を自動付与するコード（キャンペーン対象者・管理者指定のみ）
+❌ キャンペーンコードなし・管理者指定なしの一般申請者へBasicプランを自動付与するコード
 ❌ 「全新規登録者が12か月無料」と誤解させるLP表現
 ❌ 特別スカウトの24か月無料特典を一般公開するコード
+❌ CampaignLiveGrantee.expires_at が期限切れのアカウントを85%還元として扱うコード
+
+## キャンペーン付与経路（唯一の正規経路）
+1. campaignAutoGrant(campaign_code="LAUNCH2026") — Recruitページのみ・キャンペーン期間内
+2. campaignAutoGrant(admin_grant=true) — 管理者が手動付与（12か月）
+3. campaignAutoGrant(admin_grant=true, is_influencer=true) — 管理者が手動付与（24か月・非公開）
+
+## SchoolTicket書き込み経路（全経路でバリデーション必須）
+全ての SchoolTicket 作成は validateAndCreateSchoolTicket を経由すること:
+1. validateAndCreateSchoolTicket → pending_payment 作成
+2. purchaseSchoolTicketWithYellCoin → active 化（エールコイン）
+3. createSchoolTicketCheckout → stripe_session_id 記録（Stripe）
+4. stripeWebhook (checkout.session.completed) → active 化（Stripe確認後）
+5. stripeWebhook (charge.refunded) → cancelled 化（未使用）または記録のみ（used済み）
 ```
 
 ---
