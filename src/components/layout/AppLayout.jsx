@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart, ChevronDown, ChevronUp
+  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart, ChevronDown, ChevronUp, School
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,7 @@ const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
   { path: "/dashboard", icon: BarChart3, label: "マイページ" },
   { path: "/search", icon: Search, label: "さがす" },
+  { path: "/classroom-lp", icon: School, label: "クラスルーム", highlight: "violet" },
   { path: "/community", icon: Users, label: "コミュニティ" },
   { path: "/fanclub", icon: Crown, label: "ファンクラブ" },
   { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
@@ -189,16 +190,23 @@ export default function AppLayout() {
           </div>
         )}
 
-        {NAV_ITEMS.map(({ path, icon: Icon, label, showNew }) => (
+        {NAV_ITEMS.map(({ path, icon: Icon, label, showNew, highlight }) => (
           <Link key={path} to={path} onClick={onCloseFn}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-              isActive(path)
-                ? "bg-pink-500/20 text-pink-400"
-                : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
+              highlight === "violet"
+                ? isActive(path)
+                  ? "bg-violet-500/20 text-violet-300"
+                  : "text-violet-400/80 hover:bg-violet-500/10 hover:text-violet-300"
+                : isActive(path)
+                  ? "bg-pink-500/20 text-pink-400"
+                  : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
             )}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{label}</span>
+              {highlight === "violet" && !isActive(path) && (
+                <span className="text-[9px] font-black bg-violet-500 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+              )}
               {showNew && hasNewBlog && (
                 <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">NEW</span>
               )}
