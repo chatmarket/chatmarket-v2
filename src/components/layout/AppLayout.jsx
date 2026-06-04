@@ -274,9 +274,6 @@ export default function AppLayout() {
           { path: "/fortune-lp", icon: Star, label: "占い師" },
           { path: "/idol-lp", icon: Heart, label: "アイドル" },
           { path: "/musician", icon: Music, label: "ミュージシャン" },
-          { path: "/lp/tutor", icon: BookOpen, label: "家庭教師" },
-          { path: "/lp/expert", icon: Globe, label: "有識者" },
-          { path: "/lp/fitness", icon: Zap, label: "フィットネス" },
         ].map(({ path, icon: Icon, label }) => (
           <Link key={path} to={path} onClick={onCloseFn}>
             <div className={cn(

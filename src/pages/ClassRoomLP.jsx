@@ -1,40 +1,63 @@
 /**
- * ClassRoomLP — クラスルーム（1対9配信）ランディングページ
+ * ClassRoomLP — 全方位クラスルームLPブランド統合
  * ルート: /classroom-lp
+ *
+ * ブランドは統合・技術は分離
+ * 1対1: VideoCall (WebRTC P2P) ← 既存ロジック維持
+ * 1対9: ClassRoom (Amazon Chime) ← 既存ロジック維持
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Video, Star, CheckCircle, ArrowRight, Zap, Shield, Clock } from "lucide-react";
+import {
+  Users, Video, Star, CheckCircle, ArrowRight, Zap, Shield, Clock,
+  User, GraduationCap, MessageCircle, Dumbbell, Briefcase, Globe, Heart,
+} from "lucide-react";
 
-const CLASSROOM_IMAGE_1 = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/2896090d7_generated_image.png";
-const CLASSROOM_IMAGE_2 = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/05b9e7271_generated_image.png";
-
-const FEATURES = [
-  { icon: Users, title: "最大9名に同時配信", desc: "講師1名 + 生徒9名のリアルタイム双方向授業。全員の顔を見ながら指導できます。" },
-  { icon: Video, title: "HD高画質・低遅延", desc: "Amazon Chime SDK採用。720p HDの鮮明な映像でプロ級のオンライン授業体験。" },
-  { icon: Shield, title: "招待制・プライベート", desc: "6桁の招待コードで管理。不正入室ゼロ・安全な学習空間を保証。" },
-  { icon: Zap, title: "ミュート・退出管理", desc: "講師が全員ミュートや個別退出を瞬時に操作。授業の主導権は常に講師側に。" },
-  { icon: Clock, title: "チケット制で収益化", desc: "事前購入チケットで参加管理。生徒のドタキャンゼロ、確実な収益を保証。" },
-  { icon: Star, title: "あらゆる分野に対応", desc: "語学・ヨガ・料理・音楽・ビジネスなど、どんなジャンルのコーチングにも最適。" },
-];
+// 固定の自社管理画像のみ使用
+const CLASSROOM_IMG_GROUP = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/2896090d7_generated_image.png";
+const CLASSROOM_IMG_YOGA = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/05b9e7271_generated_image.png";
 
 const USE_CASES = [
-  { emoji: "📚", label: "語学・学習指導" },
+  { emoji: "📚", label: "家庭教師・学習指導" },
+  { emoji: "🌏", label: "語学レッスン" },
   { emoji: "🧘", label: "ヨガ・フィットネス" },
+  { emoji: "💪", label: "パーソナルトレーニング" },
+  { emoji: "💼", label: "キャリア・ビジネスコーチング" },
+  { emoji: "🎓", label: "専門講座・資格対策" },
+  { emoji: "🌱", label: "ライフコーチ・相談" },
   { emoji: "🎸", label: "音楽・楽器レッスン" },
-  { emoji: "🍳", label: "料理・クッキング" },
-  { emoji: "💼", label: "ビジネスコーチング" },
-  { emoji: "🎨", label: "アート・デザイン" },
+];
+
+const SESSION_TYPES = [
+  {
+    icon: User,
+    label: "1対1\nプライベートセッション",
+    desc: "講師とマンツーマンで、自分のペースと課題に集中。",
+    color: "from-primary/20 to-primary/5",
+    border: "border-primary/30",
+  },
+  {
+    icon: Users,
+    label: "少人数\nグループレッスン",
+    desc: "講師1名に対して最大9名。仲間と学ぶ双方向授業。",
+    color: "from-violet-500/20 to-violet-500/5",
+    border: "border-violet-500/30",
+  },
+];
+
+const TEACHER_FEATURES = [
+  { icon: Shield, title: "初期費用0円", desc: "無料プランからすぐにクラスを開設できます。" },
+  { icon: Video, title: "HD高画質・低遅延", desc: "スタジオに近い映像品質。スマホからでも高品質配信。" },
+  { icon: Zap, title: "招待制・安全な空間", desc: "6桁コードで参加者を管理。不正入室ゼロ。" },
+  { icon: Clock, title: "チケット制で確実収益", desc: "事前購入チケット制で、ドタキャンをなくせます。" },
+  { icon: Star, title: "柔軟なプライシング", desc: "授業時間・内容に合わせて自由に価格設定。" },
+  { icon: MessageCircle, title: "あらゆる分野に対応", desc: "語学・ヨガ・コーチング・専門講座まで。" },
 ];
 
 export default function ClassRoomLP() {
   const navigate = useNavigate();
-
-  const handleApply = () => {
-    navigate("/recruit");
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -44,68 +67,97 @@ export default function ClassRoomLP() {
         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/30 via-background to-primary/10 pointer-events-none" />
         <div className="relative max-w-5xl mx-auto text-center space-y-6">
           <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 text-sm px-4 py-1.5">
-            🎓 NEW — クラスルーム機能
+            🎓 オンラインレッスン・コーチング
           </Badge>
           <h1 className="font-serif text-4xl md:text-6xl font-black leading-tight">
-            <span className="text-white">1対9のリアルタイム</span>
+            <span className="text-white">1対1のプライベート指導から</span>
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-primary">
-              グループ授業・コーチング
+              最大1対9の少人数グループレッスンまで。
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            講師1名が最大9名の生徒に同時配信。<br className="hidden sm:block" />
-            語学・ヨガ・コーチング…どんな分野でもオンライン教室を即開設。
+            家庭教師、語学、ヨガ、トレーニング、キャリア相談、専門講座など。<br className="hidden sm:block" />
+            目的に合わせて、自分だけの個別セッションも、仲間と学ぶ少人数クラスも選べます。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             <Button
               size="lg"
-              onClick={handleApply}
+              onClick={() => navigate("/recruit")}
               className="gap-2 bg-violet-600 hover:bg-violet-500 text-white text-lg px-8 py-6 rounded-2xl shadow-lg shadow-violet-500/30"
             >
-              無料で今すぐ始める
+              無料でクラスを始める
               <ArrowRight className="w-5 h-5" />
             </Button>
             <Button
               size="lg"
               variant="outline"
-              onClick={() => document.getElementById("features").scrollIntoView({ behavior: "smooth" })}
+              onClick={() => document.getElementById("for-student").scrollIntoView({ behavior: "smooth" })}
               className="text-lg px-8 py-6 rounded-2xl border-white/20"
             >
-              詳しく見る
+              受講したい方はこちら
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">✓ 初期費用0円 ✓ 月額0円から開始 ✓ 最短5分でクラス開設</p>
+          <p className="text-sm text-muted-foreground">
+            ✓ 初期費用0円 ✓ 月額0円から開始 ✓ 生徒1名あたり15分150円から
+          </p>
         </div>
       </section>
 
-      {/* ── 画像セクション ── */}
+      {/* ── セッション形式 ── */}
       <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-serif text-3xl font-black text-center mb-3">2つのセッション形式</h2>
+          <p className="text-center text-muted-foreground mb-10 text-sm">
+            講師とじっくり向き合う個別指導と、仲間と学ぶグループレッスン。どちらも同じプラットフォームで開催できます。
+          </p>
+          <div className="grid md:grid-cols-2 gap-6">
+            {SESSION_TYPES.map((t) => (
+              <div
+                key={t.label}
+                className={`bg-gradient-to-br ${t.color} border ${t.border} rounded-2xl p-7 space-y-3`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                  <t.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-bold text-lg whitespace-pre-line leading-snug">{t.label}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{t.desc}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            ※ 1対1と少人数グループは、それぞれ独立した仕組みで動作しています。
+          </p>
+        </div>
+      </section>
+
+      {/* ── 画像 ── */}
+      <section className="py-8 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-2xl group">
               <img
-                src={CLASSROOM_IMAGE_1}
-                alt="オンライン授業の様子"
+                src={CLASSROOM_IMG_GROUP}
+                alt="グループオンライン授業の様子"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4">
                 <Badge className="bg-black/70 text-white border-white/20 backdrop-blur-sm">
-                  📚 オンライン授業・語学レッスン
+                  👨‍🏫 語学・学習 グループレッスン
                 </Badge>
               </div>
             </div>
             <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-2xl group">
               <img
-                src={CLASSROOM_IMAGE_2}
-                alt="ヨガコーチングの様子"
+                src={CLASSROOM_IMG_YOGA}
+                alt="ヨガ・フィットネスコーチングの様子"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4">
                 <Badge className="bg-black/70 text-white border-white/20 backdrop-blur-sm">
-                  🧘 ヨガ・フィットネスコーチング
+                  🧘 ヨガ・フィットネス指導
                 </Badge>
               </div>
             </div>
@@ -116,7 +168,7 @@ export default function ClassRoomLP() {
       {/* ── 活用シーン ── */}
       <section className="py-12 px-4 bg-secondary/30">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6">こんな授業・コーチングに使われています</p>
+          <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6">こんな指導・レッスンに使われています</p>
           <div className="flex flex-wrap justify-center gap-3">
             {USE_CASES.map((u) => (
               <div key={u.label} className="flex items-center gap-2 bg-card border border-border rounded-full px-4 py-2.5 text-sm font-semibold">
@@ -128,18 +180,19 @@ export default function ClassRoomLP() {
         </div>
       </section>
 
-      {/* ── 機能一覧 ── */}
-      <section id="features" className="py-20 px-4">
+      {/* ── 先生向け機能 ── */}
+      <section id="for-teacher" className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
+            <Badge className="bg-primary/20 text-primary border-primary/30 mb-4">先生・講師の方へ</Badge>
             <h2 className="font-serif text-3xl md:text-4xl font-black mb-4">
-              クラスルームの<span className="text-primary">6つの強み</span>
+              教えることに、<span className="text-primary">集中できる設計</span>
             </h2>
-            <p className="text-muted-foreground text-lg">教える側のストレスをゼロに。収益に集中できる設計。</p>
+            <p className="text-muted-foreground text-lg">システム管理や集金トラブルをなくし、授業に専念。</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="bg-card border border-border rounded-2xl p-6 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5">
+            {TEACHER_FEATURES.map((f) => (
+              <div key={f.title} className="bg-card border border-border rounded-2xl p-6 hover:border-primary/40 transition-all">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                   <f.icon className="w-5 h-5 text-primary" />
                 </div>
@@ -151,11 +204,62 @@ export default function ClassRoomLP() {
         </div>
       </section>
 
-      {/* ── 仕組み ── */}
-      <section className="py-16 px-4 bg-secondary/30">
+      {/* ── 生徒向け ── */}
+      <section id="for-student" className="py-16 px-4 bg-secondary/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 mb-4">受講したい方へ</Badge>
+            <h2 className="font-serif text-3xl font-black mb-3">受けたい授業だけ、受講できます</h2>
+            <p className="text-muted-foreground">月額プランの加入は不要。受けたい授業のチケット代だけお支払いください。</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                <h3 className="font-bold">1対1プライベートセッションを探す</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                各講師のチャンネルから直接申し込み。相性の合う先生と、自分だけの時間を作れます。
+              </p>
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => navigate("/search")}
+              >
+                講師を探す
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-violet-400" />
+                <h3 className="font-bold">少人数グループレッスンを探す</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                開催予定の授業一覧からチケットを購入。招待コードをもらって当日参加するだけ。
+              </p>
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-violet-500/30 text-violet-400 hover:bg-violet-500/10"
+                onClick={() => navigate("/school-tickets")}
+              >
+                グループレッスンを探す
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-5 text-center">
+            <p className="font-bold text-base mb-1">生徒1名あたり、15分150円から受講できます</p>
+            <p className="text-sm text-muted-foreground">※ 15分あたり150円は最低価格です。授業時間・内容によって料金は異なります。</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 仕組み（先生向け） ── */}
+      <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <h2 className="font-serif text-3xl font-black text-center mb-12">
-            授業開始まで<span className="text-primary">3ステップ</span>
+            グループレッスン開始まで<span className="text-primary">3ステップ</span>
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -175,13 +279,16 @@ export default function ClassRoomLP() {
         </div>
       </section>
 
-      {/* ── 料金・CTA ── */}
-      <section className="py-20 px-4">
+      {/* ── 料金（先生向け） ── */}
+      <section className="py-20 px-4 bg-secondary/20">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h2 className="font-serif text-3xl md:text-4xl font-black text-center mb-2">
-            シンプルな<span className="text-primary">料金設計</span>
-          </h2>
-          <p className="text-center text-muted-foreground mb-8">初期費用0円。月額0円からクラスを開催できます。</p>
+          <div className="text-center mb-2">
+            <Badge className="bg-primary/20 text-primary border-primary/30 mb-4">先生・講師向け料金</Badge>
+            <h2 className="font-serif text-3xl md:text-4xl font-black">
+              無料から始めて、<span className="text-primary">収益を最大化</span>
+            </h2>
+          </div>
+          <p className="text-center text-muted-foreground">初期費用0円。まずは無料プランで試してみてください。</p>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* 無料プラン */}
@@ -196,8 +303,7 @@ export default function ClassRoomLP() {
               </div>
               <ul className="space-y-2.5">
                 {[
-                  "クラスルーム開設・運営",
-                  "最大9名に同時配信",
+                  "グループレッスン開設・運営（最大9名）",
                   "チケット販売による収益化",
                   ["収益還元率", "70%", "text-yellow-400"],
                 ].map((item) => (
@@ -209,8 +315,13 @@ export default function ClassRoomLP() {
                   </li>
                 ))}
               </ul>
-              <Button size="lg" onClick={handleApply} variant="outline" className="w-full py-5 rounded-2xl border-white/20">
-                無料で始める
+              <Button
+                size="lg"
+                onClick={() => navigate("/recruit")}
+                variant="outline"
+                className="w-full py-5 rounded-2xl border-white/20"
+              >
+                無料でクラスを始める
               </Button>
             </div>
 
@@ -225,13 +336,13 @@ export default function ClassRoomLP() {
                   <span className="font-serif text-4xl font-black text-violet-300">¥3,300</span>
                   <span className="text-muted-foreground text-sm mb-1">/月</span>
                 </div>
-                <p className="text-xs text-violet-300/70 mt-1 font-bold">★ 登録から12か月間は月額無料</p>
+                <p className="text-xs text-violet-300/80 mt-1 font-bold">★ 登録から12か月間は月額料金無料</p>
               </div>
               <ul className="space-y-2.5">
                 {[
                   "無料プランの全機能",
                   ["収益還元率", "85%", "text-primary"],
-                  "1対1ビデオ通話",
+                  "1対1プライベートセッション（ビデオ通話）",
                   "ライブ配信（PPV）",
                   "プログレッシブ還元率（最大95%）",
                   "解約いつでも可",
@@ -244,18 +355,16 @@ export default function ClassRoomLP() {
                   </li>
                 ))}
               </ul>
-              <Button size="lg" onClick={handleApply} className="w-full gap-2 bg-violet-600 hover:bg-violet-500 text-white py-5 rounded-2xl shadow-lg shadow-violet-500/30">
+              <Button
+                size="lg"
+                onClick={() => navigate("/recruit")}
+                className="w-full gap-2 bg-violet-600 hover:bg-violet-500 text-white py-5 rounded-2xl shadow-lg shadow-violet-500/30"
+              >
                 BASICで始める（12か月無料）
                 <ArrowRight className="w-5 h-5" />
               </Button>
+              <p className="text-xs text-muted-foreground text-center">通常月額3,300円 ／ 解約いつでも可</p>
             </div>
-          </div>
-
-          {/* 生徒側 */}
-          <div className="bg-secondary/40 border border-border rounded-2xl p-6 text-center space-y-2">
-            <p className="font-bold text-sm text-muted-foreground uppercase tracking-widest">生徒側</p>
-            <p className="font-bold text-base">生徒は無料登録後、授業料を支払うだけで受講できます。</p>
-            <p className="text-sm text-muted-foreground">月額プランへの加入は一切不要。受けたい授業のチケット代だけお支払いください。</p>
           </div>
         </div>
       </section>
@@ -266,11 +375,12 @@ export default function ClassRoomLP() {
           <h2 className="font-serif text-2xl font-black text-center mb-10">よくある質問</h2>
           <div className="space-y-4">
             {[
-              { q: "1対9は同時に9名まで繋げられますか？", a: "はい。講師1名 + 生徒最大9名の合計10名が同時接続できます。" },
+              { q: "無料プランでもグループレッスンを開催できますか？", a: "はい。無料プランからすぐにクラスを開設・開催できます。収益還元率は70%です。" },
+              { q: "1対1と1対9の両方を使えますか？", a: "はい。BASICプランなら1対1プライベートセッション（ビデオ通話）と少人数グループレッスンの両方が利用できます。" },
+              { q: "生徒は月額プランに加入する必要がありますか？", a: "いいえ。生徒は無料登録後、受講したい授業のチケット代を支払うだけで参加できます。月額プランへの加入は不要です。" },
               { q: "生徒はどうやって入室しますか？", a: "招待リンク（6桁コード付き）と事前購入チケットがあれば入室できます。チケット未購入の生徒は自動ブロックされます。" },
-              { q: "授業中に生徒をミュートや退出させられますか？", a: "はい。講師は全員一括ミュート・個別ミュート・強制退出（再入室禁止）が可能です。" },
               { q: "スマホでも使えますか？", a: "はい。PCブラウザ・スマホブラウザ（Chrome/Safari）に対応しています。" },
-              { q: "解約はいつでもできますか？", a: "はい。翌月の更新前であればいつでも解約できます。違約金はありません。" },
+              { q: "Basicプランの月額料金はいつから発生しますか？", a: "登録から12か月間は月額料金無料です。12か月経過後、通常月額3,300円が発生します。解約はいつでも可能です。" },
             ].map((faq) => (
               <div key={faq.q} className="bg-card border border-border rounded-xl p-5">
                 <p className="font-bold text-sm mb-2">Q. {faq.q}</p>
@@ -285,17 +395,28 @@ export default function ClassRoomLP() {
       <section className="py-16 px-4 bg-gradient-to-br from-violet-900/20 to-primary/10 border-t border-border/50">
         <div className="max-w-xl mx-auto text-center space-y-5">
           <h2 className="font-serif text-3xl font-black">あなたの教室、今日から開設</h2>
-          <p className="text-muted-foreground">最短5分でクラスを作り、最大9名に授業を届けましょう。</p>
-          <Button
-            size="lg"
-            onClick={handleApply}
-            className="gap-2 bg-violet-600 hover:bg-violet-500 text-white text-lg px-10 py-6 rounded-2xl"
-          >
-            月額3,300円で申し込む
-            <ArrowRight className="w-5 h-5" />
-          </Button>
+          <p className="text-muted-foreground">初期費用0円。最短5分でクラスを作り、授業を始められます。</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              size="lg"
+              onClick={() => navigate("/recruit")}
+              variant="outline"
+              className="gap-2 text-lg px-8 py-6 rounded-2xl border-white/20"
+            >
+              無料で始める
+            </Button>
+            <Button
+              size="lg"
+              onClick={() => navigate("/recruit")}
+              className="gap-2 bg-violet-600 hover:bg-violet-500 text-white text-lg px-8 py-6 rounded-2xl shadow-lg shadow-violet-500/30"
+            >
+              BASICで始める（12か月無料）
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </section>
+
     </div>
   );
 }

@@ -32,6 +32,23 @@ Deno.serve(async (req) => {
   if (ticket.student_email !== user.email) return Response.json({ error: "forbidden" }, { status: 403 });
   if (ticket.status !== "pending_payment") return Response.json({ error: "ticket_not_pending" }, { status: 400 });
 
+  // ── 最低価格バリデーション（15分あたり150円）──
+  const durationMin = ticket.duration_minutes;
+  const priceCheck = ticket.price;
+  if (!durationMin || !isFinite(durationMin) || durationMin <= 0) {
+    return Response.json({ error_code: "school_ticket_price_too_low", error: "duration_minutes が不正です" }, { status: 400 });
+  }
+  if (!priceCheck || !isFinite(priceCheck) || priceCheck <= 0) {
+    return Response.json({ error_code: "school_ticket_price_too_low", error: "最低金額は15分あたり150円以上です" }, { status: 400 });
+  }
+  const minPriceYen = Math.ceil(durationMin / 15) * 150;
+  if (priceCheck < minPriceYen) {
+    return Response.json({
+      error_code: "school_ticket_price_too_low",
+      error: `最低金額は15分あたり150円以上です（${durationMin}分の最低価格: ¥${minPriceYen}）`,
+    }, { status: 400 });
+  }
+
   // 二重決済防止
   if (ticket.stripe_session_id) {
     return Response.json({ error: "already_has_session" }, { status: 400 });

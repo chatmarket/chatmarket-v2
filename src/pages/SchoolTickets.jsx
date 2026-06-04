@@ -139,6 +139,12 @@ export default function SchoolTickets() {
     }
   };
 
+  // 最低価格計算（15分あたり150円）
+  const calcMinPrice = (durationMinutes) => {
+    if (!durationMinutes || durationMinutes <= 0) return 0;
+    return Math.ceil(durationMinutes / 15) * 150;
+  };
+
   const upcomingTickets = myTickets.filter((t) => t.status === "active" || t.status === "pending_payment");
   const pastTickets = myTickets.filter((t) => t.status === "used" || t.status === "cancelled");
 
@@ -230,7 +236,8 @@ export default function SchoolTickets() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-lg font-black text-yellow-400">¥{s.ticket_price.toLocaleString()}</p>
-                      <p className="text-[10px] text-muted-foreground">/1回</p>
+                      <p className="text-[10px] text-muted-foreground">生徒1名 / 1回</p>
+                      <p className="text-[10px] text-muted-foreground">{s.duration_minutes}分</p>
                     </div>
                   </div>
                   <Button
@@ -264,8 +271,11 @@ export default function SchoolTickets() {
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="w-3 h-3" />{format(new Date(buyTarget.scheduled_at), "M月d日(E) HH:mm", { locale: ja })}
                 </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />{buyTarget.duration_minutes}分
+                </p>
                 <p className="flex justify-between border-t border-border/50 pt-2 font-bold">
-                  <span>授業料</span>
+                  <span>授業料（生徒1名）</span>
                   <span className="text-primary">¥{buyTarget.ticket_price.toLocaleString()}</span>
                 </p>
               </div>
