@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import MetaHelmet from '@/components/layout/MetaHelmet';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -61,6 +62,7 @@ export default function VideoModeration() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      <MetaHelmet page="admin" noindex={true} />
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <AlertTriangle className="w-8 h-8 text-yellow-400" />

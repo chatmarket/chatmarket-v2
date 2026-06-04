@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import MetaHelmet from "@/components/layout/MetaHelmet";
 import { base44 } from "@/api/base44Client";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -58,6 +60,17 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function NgWordAnalytics() {
   const [rangeDays, setRangeDays] = useState(7);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (!isAuth) { base44.auth.redirectToLogin(); return; }
+      base44.auth.me().then((u) => {
+        if (u?.role !== 'admin') { window.location.href = '/'; return; }
+        setUser(u);
+      });
+    });
+  }, []);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["ng-word-logs"],
@@ -112,6 +125,14 @@ export default function NgWordAnalytics() {
 
   const totalCount = filteredLogs.length;
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -122,6 +143,7 @@ export default function NgWordAnalytics() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <MetaHelmet page="admin" noindex={true} />
       {/* ヘッダー */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
