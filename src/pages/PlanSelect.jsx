@@ -580,43 +580,50 @@ export default function PlanSelect() {
                       </div>
                     </div>
                   )}
-                  <Button 
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      const isAuth = await base44.auth.isAuthenticated();
-                      if (!isAuth) {
-                        base44.auth.redirectToLogin(`/plan-confirm?plans=${plan.id}`);
-                        return;
-                      }
-
-                      // FREE プランは即座に有効化
-                      if (plan.id === "free") {
-                        try {
-                          await base44.auth.updateMe({ plan_subscribed: "free", free_plan_activated_at: new Date().toISOString() });
-                          toast.success("FREEプランを有効にしました！");
-                          navigate("/creator-dashboard");
-                        } catch (err) {
-                          toast.error("無料プラン有効化に失敗しました");
+                  {/* キャンペーン対象者：Stripe不可・利用中表示 */}
+                  {(planInfo?.isAdmin || planInfo?.isCampaign) && ['call-anser','basic','vod','ppv'].includes(plan.id) ? (
+                    <div className="w-full h-9 rounded-lg border border-blue-500/40 bg-blue-500/10 flex items-center justify-center gap-2 text-sm text-blue-300 font-bold">
+                      ✅ キャンペーン適用中 — 追加料金なし
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const isAuth = await base44.auth.isAuthenticated();
+                        if (!isAuth) {
+                          base44.auth.redirectToLogin(`/plan-confirm?plans=${plan.id}`);
+                          return;
                         }
-                        return;
-                      }
 
-                      // 有料プランはStripe決済へ
-                      const months = planInfo?.isCampaign ? 24 : 12;
-                      const stripeLink = getStripeLinkByPlan(plan.id, months);
-                      if (!stripeLink) {
-                        toast.error(`${plan.name}のStripeリンクが見つかりません`);
-                        return;
-                      }
-                      const returnUrl = `${window.location.origin}/plan-confirm?plans=${plan.id}&stripe_success=true`;
-                      window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
-                    }}
-                    disabled={plan.comingSoon}
-                    className="w-full gap-2 bg-primary hover:bg-primary/90"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    {plan.comingSoon ? "準備中" : "このプランで申し込む"}
-                  </Button>
+                        // FREE プランは即座に有効化
+                        if (plan.id === "free") {
+                          try {
+                            await base44.auth.updateMe({ plan_subscribed: "free", free_plan_activated_at: new Date().toISOString() });
+                            toast.success("FREEプランを有効にしました！");
+                            navigate("/creator-dashboard");
+                          } catch (err) {
+                            toast.error("無料プラン有効化に失敗しました");
+                          }
+                          return;
+                        }
+
+                        // 有料プランはStripe決済へ（通常ユーザーのみ）
+                        const months = 12;
+                        const stripeLink = getStripeLinkByPlan(plan.id, months);
+                        if (!stripeLink) {
+                          toast.error(`${plan.name}のStripeリンクが見つかりません`);
+                          return;
+                        }
+                        const returnUrl = `${window.location.origin}/plan-confirm?plans=${plan.id}&stripe_success=true`;
+                        window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
+                      }}
+                      disabled={plan.comingSoon}
+                      className="w-full gap-2 bg-primary hover:bg-primary/90"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      {plan.comingSoon ? "準備中" : "このプランで申し込む"}
+                    </Button>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             );

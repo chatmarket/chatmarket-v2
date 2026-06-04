@@ -814,6 +814,41 @@ DAILY_LIMIT_SECONDS = 7200（2時間 = 120分）
 ```
 
 ---
+## キャンペーン無料利用仕様（2026-06-04確定・最優先）
+
+### 公開キャンペーン（LAUNCH2026）対象者の権限
+- 承認日から**12か月間**、以下の全プランを**追加料金なし**で利用可能
+  - CALL&ANSER / Basic / VOD / PPV（全プランの組み合わせも無料）
+- 権限管理: `CampaignLiveGrantee` エンティティ（`grant_source="campaign_link"`, `benefit_months=12`）
+- 上限: 内部で最大300名（非公開・公開画面には表示しない）
+- 管理者指定12か月・特別スカウト24か月は別枠
+
+### キャンペーン期間中のStripe制約
+```
+❌ キャンペーン対象者へStripe Checkout Sessionを作成する
+❌ キャンペーン対象者へStripe Subscriptionを作成する
+❌ キャンペーン対象者にカード登録を要求する
+❌ キャンペーン対象者へtrial subscriptionを作成する
+❌ キャンペーン期間終了後に自動課金する
+```
+
+### キャンペーン終了後
+- 自動課金なし・自動Subscription作成なし
+- 本人が明示的に申し込んだ場合のみ有料契約を開始
+
+### DBとStripeの役割分離
+| エンティティ | 役割 |
+|------------|------|
+| CampaignLiveGrantee | キャンペーン無料権限の正・付与期間管理 |
+| PlanSubscription | 通常有料契約の正・Stripe Payment紐づき |
+
+### 実装保護箇所
+- `pages/PlanSelect`: キャンペーン対象者の対象プランボタンを「キャンペーン適用中」表示に置換
+- `pages/PlanConfirm`: キャンペーン対象者の`handlePaidPlan`でStripe誘導をブロック
+- `lib/userPlan.js`: `resolveUserPlan`でCampaignLiveGranteeを優先チェック
+
+---
+
 ## 料金方針（最新・2026-06-04確定・最優先）
 
 | plan_id | 月額 | 備考 |

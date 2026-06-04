@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Check, ArrowLeft, ExternalLink, Video, Radio, PhoneCall, Play, Heart, Phone, AlertCircle } from "lucide-react";
+import { Check, ArrowLeft, ExternalLink, AlertCircle, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { getStripeLinkByPlan } from "@/lib/stripeLinks";
+import { resolveUserPlan } from "@/lib/userPlan";
 
-const ADMIN_EMAILS = ["unei@chatmarket.info", "ono@onestep-corp.com"];
+// キャンペーン対象プラン（これらはキャンペーン期間中にStripe Checkoutを作成しない）
+const CAMPAIGN_COVERED_PLANS = ['call-anser', 'basic', 'vod', 'ppv'];
 
 const PLAN_INFO = {
   free:          { name: "FREEプラン",                     price: 0,     badge: "無料スタート",       badgeColor: "bg-gray-500/20 text-gray-300" },
@@ -22,6 +22,7 @@ const PLAN_INFO = {
 export default function PlanConfirm() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [planInfo, setPlanInfo] = useState(null);
   const params = new URLSearchParams(window.location.search);
   const planIds = (params.get("plans") || "").split(",").filter(Boolean);
   const stripeSuccess = params.get("stripe_success") === "true";
@@ -29,7 +30,11 @@ export default function PlanConfirm() {
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) {
-        base44.auth.me().then(setUser);
+        base44.auth.me().then(async (u) => {
+          setUser(u);
+          const info = await resolveUserPlan(u);
+          setPlanInfo(info);
+        });
       }
     });
   }, []);
@@ -58,10 +63,20 @@ export default function PlanConfirm() {
   const selectedPlans = planIds.map((id) => ({ id, ...PLAN_INFO[id] })).filter((p) => p.name);
   const totalPrice = selectedPlans.reduce((sum, p) => sum + p.price, 0);
 
-  const isAdmin = ADMIN_EMAILS.includes(user?.email);
+  const isAdmin = planInfo?.isAdmin ?? false;
+  const isCampaign = planInfo?.isCampaign ?? false;
   const hasFreeOnly = planIds.includes("free") && planIds.length === 1;
   const hasCrowdfunding = planIds.includes("crowdfunding");
-  const paidPlans = selectedPlans.filter((p) => p.price > 0 && p.id !== "crowdfunding");
+  // キャンペーン対象者には、対象プランのStripe決済ボタンを出さない
+  const paidPlans = selectedPlans.filter((p) => {
+    if (p.price === 0 || p.id === "crowdfunding") return false;
+    if ((isAdmin || isCampaign) && CAMPAIGN_COVERED_PLANS.includes(p.id)) return false;
+    return true;
+  });
+  // キャンペーン対象プランのうち選択されているもの
+  const campaignPlans = (isAdmin || isCampaign)
+    ? selectedPlans.filter(p => CAMPAIGN_COVERED_PLANS.includes(p.id))
+    : [];
 
   const handleFreeStart = async () => {
     try {
@@ -75,7 +90,12 @@ export default function PlanConfirm() {
   const handleCrowdfunding = () => navigate("/crowdfunding/new");
 
   const handlePaidPlan = (planId) => {
-    const months = 12; // デフォルト：12ヶ月
+    // キャンペーン対象者は対象プランへのStripe決済を作成しない
+    if ((isAdmin || isCampaign) && CAMPAIGN_COVERED_PLANS.includes(planId)) {
+      toast.info("キャンペーン適用中のため、追加料金なしで利用できます");
+      return;
+    }
+    const months = 12;
     const stripeLink = getStripeLinkByPlan(planId, months);
     if (stripeLink) {
       const returnUrl = `${window.location.origin}/plan-confirm?plans=${planId}&stripe_success=true`;
@@ -138,42 +158,70 @@ export default function PlanConfirm() {
           <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="text-sm font-bold text-primary">運営管理者アカウント</p>
-            <p className="text-xs text-primary/80">このアカウントでの加入は収益に反映されません。プラン確認用です。</p>
+            <p className="text-xs text-primary/80">全プランが開放されています。</p>
+          </div>
+        </div>
+      )}
+
+      {/* キャンペーン適用中通知 */}
+      {isCampaign && campaignPlans.length > 0 && (
+        <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4 flex items-start gap-3">
+          <Gift className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-blue-300">🎉 キャンペーン適用中</p>
+            <p className="text-xs text-blue-300/80">
+              期間中は追加料金なしで全プランをご利用いただけます。カード登録・お支払いは不要です。
+            </p>
+            {planInfo?.campaignExpiresAt && (
+              <p className="text-xs text-blue-300 font-bold">
+                無料期間終了日: {planInfo.campaignExpiresAt.toLocaleDateString('ja-JP')}
+              </p>
+            )}
           </div>
         </div>
       )}
 
       {/* 申し込みアクション */}
-      {!isAdmin ? (
-        <div className="space-y-3">
-          {hasFreeOnly && (
-            <Button onClick={handleFreeStart} className="w-full h-12 text-base font-bold">
-              無料で始める
-            </Button>
-          )}
+      <div className="space-y-3">
+        {hasFreeOnly && (
+          <Button onClick={handleFreeStart} className="w-full h-12 text-base font-bold">
+            無料で始める
+          </Button>
+        )}
 
-          {paidPlans.map((plan) => (
-            <Button
-              key={plan.id}
-              onClick={() => handlePaidPlan(plan.id)}
-              className="w-full h-12 text-base font-bold gap-2 bg-primary hover:bg-primary/90"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {plan.name}を申し込む
-            </Button>
-          ))}
+        {/* キャンペーン対象プランは「利用中」ボタンを表示（Stripe不可） */}
+        {campaignPlans.map((plan) => (
+          <div key={plan.id} className="w-full h-12 rounded-lg border-2 border-blue-500/40 bg-blue-500/10 flex items-center justify-center gap-2">
+            <Check className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-bold text-blue-300">{plan.name} — キャンペーン適用中（追加料金なし）</span>
+          </div>
+        ))}
 
-          {hasCrowdfunding && (
-            <Button onClick={handleCrowdfunding} className="w-full h-12 text-base font-bold gap-2 bg-red-500 hover:bg-red-600 text-white">
-              クラウドファンディングプランを申請する
-            </Button>
-          )}
-        </div>
-      ) : (
-        <Button onClick={() => navigate("/plan-select")} className="w-full h-12 text-base font-bold">
-          プラン選択に戻る
-        </Button>
-      )}
+        {/* 通常有料プラン（キャンペーン非対象） */}
+        {paidPlans.map((plan) => (
+          <Button
+            key={plan.id}
+            onClick={() => handlePaidPlan(plan.id)}
+            className="w-full h-12 text-base font-bold gap-2 bg-primary hover:bg-primary/90"
+          >
+            <ExternalLink className="w-4 h-4" />
+            {plan.name}を申し込む
+          </Button>
+        ))}
+
+        {hasCrowdfunding && (
+          <Button onClick={handleCrowdfunding} className="w-full h-12 text-base font-bold gap-2 bg-red-500 hover:bg-red-600 text-white">
+            クラウドファンディングプランを申請する
+          </Button>
+        )}
+
+        {/* キャンペーン対象者で全選択プランがキャンペーン対象の場合 → ダッシュボードへ */}
+        {(isAdmin || isCampaign) && paidPlans.length === 0 && !hasFreeOnly && !hasCrowdfunding && campaignPlans.length > 0 && (
+          <Button onClick={() => navigate("/creator-dashboard")} className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90">
+            ダッシュボードへ →
+          </Button>
+        )}
+      </div>
 
       <div className="bg-secondary/60 border border-border/50 rounded-xl px-4 py-3 text-xs text-muted-foreground space-y-1">
         <p>※ 各プランは個別の決済リンクでお申し込みいただきます。</p>
