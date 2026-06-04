@@ -23,6 +23,7 @@ import VideoCallCostMonitor from "../components/admin/VideoCallCostMonitor";
 import CallProfitBreakdown from "../components/admin/CallProfitBreakdown";
 import RecordingCostBreakdown from "../components/admin/RecordingCostBreakdown";
 import CampaignChannelManagement from "../components/admin/CampaignChannelManagement";
+import CampaignManagement from "../components/admin/CampaignManagement";
 import DrameSettingsManagement from "../components/admin/DrameSettingsManagement";
 import CallUsageLimitManagement from "../components/admin/CallUsageLimitManagement";
 import TestUserCreationForm from "../components/admin/TestUserCreationForm";
@@ -896,6 +897,8 @@ export default function AdminDashboard() {
 
         {/* キャンペーン管理タブ */}
         <TabsContent value="campaign" className="space-y-6">
+          <CampaignManagement />
+          <hr className="border-border/40" />
           <CampaignChannelManagement />
         </TabsContent>
 

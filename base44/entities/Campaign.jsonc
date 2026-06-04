@@ -1,0 +1,64 @@
+{
+  "name": "Campaign",
+  "type": "object",
+  "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u7ba1\u7406\uff08\u516c\u958b\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u4e0a\u9650\u30fb\u72b6\u614b\u3092\u7ba1\u7406\uff09",
+  "properties": {
+    "campaign_code": {
+      "type": "string",
+      "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u30b3\u30fc\u30c9\uff08\u4f8b: LAUNCH2026\uff09"
+    },
+    "name": {
+      "type": "string",
+      "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u540d\uff08\u8868\u793a\u7528\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "closed"
+      ],
+      "default": "active",
+      "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u72b6\u614b"
+    },
+    "max_participants": {
+      "type": "number",
+      "default": 300,
+      "description": "\u6700\u5927\u627f\u8a8d\u4eba\u6570\uff08\u516c\u958b\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u67a0\uff09"
+    },
+    "approved_participants_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u627f\u8a8d\u6e08\u307f\u4eba\u6570\uff08grant_source=campaign_link \u306e\u307f\u30ab\u30a6\u30f3\u30c8\uff09"
+    },
+    "benefit_type": {
+      "type": "string",
+      "enum": [
+        "basic_12_months",
+        "all_plans_12_months",
+        "all_plans_24_months"
+      ],
+      "default": "all_plans_12_months",
+      "description": "\u4ed8\u4e0e\u7279\u5178\u7a2e\u5225"
+    },
+    "starts_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u958b\u59cb\u65e5\u6642"
+    },
+    "ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u7d42\u4e86\u65e5\u6642\uff08null\u306f\u7121\u671f\u9650\uff09"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u7ba1\u7406\u8005\u30e1\u30e2"
+    }
+  },
+  "required": [
+    "campaign_code",
+    "name",
+    "max_participants"
+  ]
+}

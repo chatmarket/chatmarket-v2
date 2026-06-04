@@ -173,23 +173,19 @@ export default function Recruit() {
     // 2. 全プラン自動付与（バックエンド経由）
     try {
       const res = await base44.functions.invoke("campaignAutoGrant", {
+        mode: "campaign_link",
         email,
-        followers: followerCount,
+        campaign_code: "LAUNCH2026",
         name,
         service_category: serviceCategory,
-        ...(tutorCategory && {
-          category_id: TUTOR_CATEGORY.id,
-          tutor_revenue_rate: 0.90,
-          tutor_free_subscription_months: 12,
-        }),
       });
-      if (res.data?.success) {
-        const months = res.data.months;
-        const message = tutorCategory
-          ? `✅ 家庭教師カテゴリで登録完了！90%還元率 + 12ヶ月無料が自動適用されました`
-          : `✅ 全プランを${months}ヶ月間、自動で有効化しました！`;
-        toast.success(message);
+      const data = res.data;
+      if (data?.ok && !data?.skipped) {
+        toast.success(`✅ キャンペーン特典が適用されました！全プラン${data.benefit_months}か月間、自動で有効化しました。`);
+      } else if (data?.skipped && data?.reason === "already_granted") {
+        toast.info("キャンペーン特典は既に適用済みです。");
       }
+      // 上限到達・その他はサイレント（公開画面には上限を表示しない）
     } catch (err) {
       // 付与失敗はサイレント（申請は通す）
       console.error("campaignAutoGrant error:", err);
@@ -223,7 +219,7 @@ export default function Recruit() {
             style={{ boxShadow: "0 0 20px rgba(255,80,80,0.3)" }}
           >
             <Flame className="w-4 h-4" />
-            先着300名が埋まり次第終了
+            キャンペーン実施中
           </motion.div>
 
           <motion.h1
@@ -341,7 +337,7 @@ export default function Recruit() {
             className="inline-flex items-center gap-3 bg-red-500/10 border border-red-500/40 rounded-xl px-5 py-3 text-sm"
           >
             <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse inline-block" />
-            <span className="text-red-300 font-bold">限定人数に達し次第終了</span>
+            <span className="text-red-300 font-bold">キャンペーン対象者限定</span>
           </motion.div>
         </div>
       </section>
@@ -351,10 +347,10 @@ export default function Recruit() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
-              🎉 先着300名限定キャンペーン
+              🎉 キャンペーン対象者限定
             </span>
             <h2 className="text-3xl sm:text-4xl font-black mt-4">今だけ、全部タダ。</h2>
-            <p className="text-muted-foreground mt-2 text-sm">BASIC・CALL&ANSER・VOD・PPV — すべてのプランが同時に無料（埋まり次第終了）</p>
+            <p className="text-muted-foreground mt-2 text-sm">BASIC・CALL&ANSER・VOD・PPV — すべてのプランが同時に無料</p>
           </div>
 
           {/* 全プランカード */}
@@ -431,7 +427,7 @@ export default function Recruit() {
               style={{ boxShadow: "0 0 30px rgba(0,255,157,0.15)" }}
             >
               <div className="absolute -top-4 left-6 bg-primary text-black px-4 py-1 rounded-full text-xs font-black">
-                🎁 新規登録者 全員対象
+                🎁 スタンダード特典
               </div>
               <div className="pt-2 space-y-1">
                 <p className="text-primary font-black text-3xl">12ヶ月間 完全無料</p>
@@ -440,15 +436,15 @@ export default function Recruit() {
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-2 text-sm">
                 <p className="text-primary font-bold">✅ 適用条件</p>
                 <ul className="text-muted-foreground space-y-1 text-xs">
-                  <li>• 新規ライバー登録（先着300名が埋まるまで）</li>
+                  <li>• キャンペーン対象者</li>
                   <li>• 利用規約への同意</li>
-                  <li>• 審査不要・即時適用</li>
+                  <li>• 即時適用</li>
                 </ul>
               </div>
               <div className="bg-primary/20 border border-primary/40 rounded-xl p-3 text-center">
                 <p className="text-primary font-black text-lg">12ヶ月で最大 {TOTAL_VALUE} × 12ヶ月 FREE</p>
               </div>
-              <p className="text-xs text-muted-foreground text-center">先着300名限定・埋まり次第終了</p>
+              <p className="text-xs text-muted-foreground text-center">キャンペーン対象者は、Basicプランを12か月無料で利用できます。</p>
             </motion.div>
           </div>
         </div>
@@ -618,7 +614,7 @@ export default function Recruit() {
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
             { value: "95%", label: "最大還元率", color: "text-primary" },
-            { value: "300名", label: "限定先着枠", color: "text-red-400" },
+            { value: "全4プラン", label: "同時無料開放", color: "text-red-400" },
             { value: TOTAL_VALUE, label: "月額相当が無料", color: "text-amber-400" },
             { value: "全4プラン", label: "同時開放", color: "text-cyan-400" },
           ].map((s, i) => (
@@ -954,7 +950,7 @@ export default function Recruit() {
       {/* ===== Footer CTA ===== */}
       <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-br from-amber-500/10 to-background border-t border-amber-500/20">
         <div className="max-w-xl mx-auto text-center space-y-5">
-          <p className="text-amber-400 font-bold text-sm">限定人数に達し次第終了</p>
+          <p className="text-amber-400 font-bold text-sm">キャンペーン対象者は全プラン無料</p>
           <h2 className="text-3xl font-black">今すぐ全プラン無料でデビュー</h2>
           <p className="text-muted-foreground text-sm">{TOTAL_VALUE}/月相当が、今だけタダ。</p>
           <Button
