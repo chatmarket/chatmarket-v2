@@ -33,7 +33,7 @@ export default function ClassRoomLP() {
   const navigate = useNavigate();
 
   const handleApply = () => {
-    navigate("/plan-confirm?plan=basic&from=classroom");
+    navigate("/recruit");
   };
 
   return (
@@ -63,7 +63,7 @@ export default function ClassRoomLP() {
               onClick={handleApply}
               className="gap-2 bg-violet-600 hover:bg-violet-500 text-white text-lg px-8 py-6 rounded-2xl shadow-lg shadow-violet-500/30"
             >
-              月額3,300円で今すぐ始める
+              無料で今すぐ始める
               <ArrowRight className="w-5 h-5" />
             </Button>
             <Button
@@ -75,7 +75,7 @@ export default function ClassRoomLP() {
               詳しく見る
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">✓ 初月から収益化 ✓ 最短5分でクラス開設 ✓ 解約いつでも可</p>
+          <p className="text-sm text-muted-foreground">✓ 初期費用0円 ✓ 月額0円から開始 ✓ 最短5分でクラス開設</p>
         </div>
       </section>
 
@@ -177,42 +177,85 @@ export default function ClassRoomLP() {
 
       {/* ── 料金・CTA ── */}
       <section className="py-20 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-gradient-to-br from-violet-900/40 via-card to-primary/10 border border-violet-500/30 rounded-3xl p-8 md:p-12 text-center space-y-6 shadow-2xl shadow-violet-500/10">
-            <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30">
-              BASICプラン
-            </Badge>
-            <h2 className="font-serif text-4xl md:text-5xl font-black">
-              月額<span className="text-primary">¥3,300</span>
-            </h2>
-            <p className="text-muted-foreground text-base leading-relaxed">
-              クラスルーム機能を含む全機能が使い放題。<br />
-              1対1通話・ライブ配信・VOD販売も同時利用可能。
-            </p>
-            <ul className="text-left space-y-3 max-w-xs mx-auto">
-              {[
-                "クラスルーム（1対9配信）無制限",
-                "1対1ビデオ通話",
-                "ライブ配信（PPVプランと併用可）",
-                "VOD動画アップロード販売",
-                "プログレッシブ還元率（85%〜95%）",
-                "解約はいつでも可能",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-sm">
-                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <Button
-              size="lg"
-              onClick={handleApply}
-              className="w-full gap-2 bg-violet-600 hover:bg-violet-500 text-white text-lg py-6 rounded-2xl shadow-lg shadow-violet-500/30"
-            >
-              今すぐ申し込む（¥3,300/月）
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            <p className="text-xs text-muted-foreground">クレジットカード不要で登録、後から決済設定も可能</p>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <h2 className="font-serif text-3xl md:text-4xl font-black text-center mb-2">
+            シンプルな<span className="text-primary">料金設計</span>
+          </h2>
+          <p className="text-center text-muted-foreground mb-8">初期費用0円。月額0円からクラスを開催できます。</p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* 無料プラン */}
+            <div className="bg-card border border-border rounded-3xl p-8 space-y-5">
+              <div>
+                <Badge className="bg-secondary text-muted-foreground border-border mb-3">無料プラン</Badge>
+                <div className="flex items-end gap-1">
+                  <span className="font-serif text-4xl font-black">¥0</span>
+                  <span className="text-muted-foreground text-sm mb-1">/月（永続）</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">初期費用なし・月額なし</p>
+              </div>
+              <ul className="space-y-2.5">
+                {[
+                  "クラスルーム開設・運営",
+                  "最大9名に同時配信",
+                  "チケット販売による収益化",
+                  ["収益還元率", "70%", "text-yellow-400"],
+                ].map((item) => (
+                  <li key={Array.isArray(item) ? item[0] : item} className="flex items-center gap-2.5 text-sm">
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    {Array.isArray(item)
+                      ? <span>{item[0]}：<strong className={item[2]}>{item[1]}</strong></span>
+                      : <span>{item}</span>}
+                  </li>
+                ))}
+              </ul>
+              <Button size="lg" onClick={handleApply} variant="outline" className="w-full py-5 rounded-2xl border-white/20">
+                無料で始める
+              </Button>
+            </div>
+
+            {/* BASICプラン */}
+            <div className="bg-gradient-to-br from-violet-900/40 via-card to-primary/10 border border-violet-500/40 rounded-3xl p-8 space-y-5 shadow-xl shadow-violet-500/10 relative overflow-hidden">
+              <div className="absolute top-4 right-4">
+                <Badge className="bg-violet-500 text-white border-0 text-xs">おすすめ</Badge>
+              </div>
+              <div>
+                <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 mb-3">BASICプラン</Badge>
+                <div className="flex items-end gap-1">
+                  <span className="font-serif text-4xl font-black text-violet-300">¥3,300</span>
+                  <span className="text-muted-foreground text-sm mb-1">/月</span>
+                </div>
+                <p className="text-xs text-violet-300/70 mt-1 font-bold">★ 登録から12か月間は月額無料</p>
+              </div>
+              <ul className="space-y-2.5">
+                {[
+                  "無料プランの全機能",
+                  ["収益還元率", "85%", "text-primary"],
+                  "1対1ビデオ通話",
+                  "ライブ配信（PPV）",
+                  "プログレッシブ還元率（最大95%）",
+                  "解約いつでも可",
+                ].map((item) => (
+                  <li key={Array.isArray(item) ? item[0] : item} className="flex items-center gap-2.5 text-sm">
+                    <CheckCircle className="w-4 h-4 text-violet-400 shrink-0" />
+                    {Array.isArray(item)
+                      ? <span>{item[0]}：<strong className={item[2]}>{item[1]}</strong></span>
+                      : <span>{item}</span>}
+                  </li>
+                ))}
+              </ul>
+              <Button size="lg" onClick={handleApply} className="w-full gap-2 bg-violet-600 hover:bg-violet-500 text-white py-5 rounded-2xl shadow-lg shadow-violet-500/30">
+                BASICで始める（12か月無料）
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* 生徒側 */}
+          <div className="bg-secondary/40 border border-border rounded-2xl p-6 text-center space-y-2">
+            <p className="font-bold text-sm text-muted-foreground uppercase tracking-widest">生徒側</p>
+            <p className="font-bold text-base">生徒は無料登録後、授業料を支払うだけで受講できます。</p>
+            <p className="text-sm text-muted-foreground">月額プランへの加入は一切不要。受けたい授業のチケット代だけお支払いください。</p>
           </div>
         </div>
       </section>

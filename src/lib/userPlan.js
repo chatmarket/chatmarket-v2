@@ -19,19 +19,25 @@ import { base44 } from '@/api/base44Client';
 // 各プランで利用できる機能セット
 const PLAN_FEATURES = {
   free: [
-    'video_call',        // 有料1対1通話（収益率70%）
-    'yell_coin',         // エールコイン受取
-    'channel',           // チャンネルページ
-    'community',         // コミュニティ閲覧
+    'video_call',           // 有料1対1通話（収益率70%）
+    'yell_coin',            // エールコイン受取
+    'channel',              // チャンネルページ
+    'community',            // コミュニティ閲覧
+    'classroom_create',     // クラスルーム開設（無料プランも可）
+    'classroom_host',       // クラスルーム講師（無料プランも可）
+    'classroom_ticket_sales', // チケット販売（収益率70%）
   ],
   basic: [
-    'video_call',        // 有料1対1通話（収益率85%）
+    'video_call',           // 有料1対1通話（収益率85%）
     'yell_coin',
     'channel',
     'community',
-    'community_post',    // コミュニティ投稿
-    'fan_community',     // ファンコミュニティ
-    'progressive_rate',  // プログレッシブ・インセンティブ
+    'community_post',       // コミュニティ投稿
+    'fan_community',        // ファンコミュニティ
+    'progressive_rate',     // プログレッシブ・インセンティブ
+    'classroom_create',     // クラスルーム開設
+    'classroom_host',       // クラスルーム講師
+    'classroom_ticket_sales', // チケット販売（収益率85%）
   ],
   'call-anser': [
     'video_call',
@@ -69,6 +75,7 @@ const ALL_FEATURES = [
   'video_call', 'free_call_daily', 'yell_coin', 'channel', 'community',
   'community_post', 'fan_community', 'progressive_rate', 'vod_upload',
   'vod_archive', 'recording', 'live_ppv',
+  'classroom_create', 'classroom_host', 'classroom_ticket_sales',
 ];
 
 /**

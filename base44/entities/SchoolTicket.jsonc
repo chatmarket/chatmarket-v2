@@ -55,10 +55,64 @@
       "default": "pending_payment",
       "description": "\u30c1\u30b1\u30c3\u30c8\u30b9\u30c6\u30fc\u30bf\u30b9: active=\u6388\u696d\u4e2d\u3082\u7dad\u6301, used=\u6388\u696d\u7d42\u4e86\u6642\u306bdelete\u767a\u52d5, cancelled=\u30ad\u30e3\u30f3\u30bb\u30eb, expired=\u671f\u9650\u5207\u308c"
     },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "yell_coin",
+        "stripe"
+      ],
+      "description": "\u6c7a\u6e08\u65b9\u6cd5"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "failed",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "\u6c7a\u6e08\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\u6388\u696d\u6599\uff08\u5186\uff09"
+    },
+    "coin_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "\u6d88\u8cbb\u3057\u305f\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u6570"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout Session ID"
+    },
+    "teacher_plan_at_purchase": {
+      "type": "string",
+      "enum": [
+        "free",
+        "basic"
+      ],
+      "description": "\u8cfc\u5165\u6642\u70b9\u306e\u8b1b\u5e2b\u30d7\u30e9\u30f3"
+    },
+    "revenue_rate_at_purchase": {
+      "type": "number",
+      "description": "\u8cfc\u5165\u6642\u70b9\u306e\u9084\u5143\u7387\uff080.70\u307e\u305f\u306f0.85\uff09"
+    },
+    "teacher_revenue_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u8b1b\u5e2b\u53ce\u76ca\uff08\u5186\uff09"
+    },
+    "platform_revenue_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0\u53ce\u76ca\uff08\u5186\uff09"
+    },
     "used_at": {
       "type": "string",
       "format": "date-time",
-      "description": "\u4f7f\u7528\u78ba\u5b9a\u65e5\u6642\uff08delete\u767a\u52d5\u6642\u306b\u8a18\u9332\uff09"
+      "description": "\u4f7f\u7528\u78ba\u5b9a\u65e5\u6642"
     },
     "cancelled_at": {
       "type": "string",

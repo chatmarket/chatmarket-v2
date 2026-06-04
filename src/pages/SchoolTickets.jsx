@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Ticket, GraduationCap, Calendar, Clock, CheckCircle2, XCircle, ShoppingCart } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Ticket, GraduationCap, Calendar, Clock, CheckCircle2, XCircle, ShoppingCart, Coins, CreditCard, Star } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
@@ -18,14 +18,31 @@ const STATUS_MAP = {
 
 export default function SchoolTickets() {
   const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [tab, setTab] = useState("mine"); // mine | available
   const [buyTarget, setBuyTarget] = useState(null);
+  const [payMethod, setPayMethod] = useState("yell_coin"); // yell_coin | stripe
+  const [paying, setPaying] = useState(false);
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      toast.success("決済が完了しました！チケットが有効化されます。");
+    }
+  }, []);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
-      else base44.auth.redirectToLogin();
+      if (isAuth) {
+        base44.auth.me().then(async (u) => {
+          setUser(u);
+          const wallets = await base44.entities.YellCoinWallet.filter({ user_email: u.email });
+          setWallet(wallets[0] || null);
+        }).catch(() => {});
+      } else {
+        base44.auth.redirectToLogin();
+      }
     });
   }, []);
 
@@ -56,13 +73,16 @@ export default function SchoolTickets() {
   const getEnrolledCount = (sessionId) => allTickets.filter((t) => t.session_id === sessionId).length;
 
   const handleBuy = async () => {
-    if (!buyTarget || !user) return;
+    if (!buyTarget || !user || paying) return;
     const enrolled = getEnrolledCount(buyTarget.id);
     if (enrolled >= buyTarget.max_students) {
       toast.error("この授業は満席です");
       setBuyTarget(null);
       return;
     }
+    setPaying(true);
+
+    // まずpending_paymentでチケット作成
     const ticket = await base44.entities.SchoolTicket.create({
       student_email: user.email,
       student_name: user.full_name || user.email,
@@ -74,12 +94,49 @@ export default function SchoolTickets() {
       scheduled_at: buyTarget.scheduled_at,
       duration_minutes: buyTarget.duration_minutes,
       price: buyTarget.ticket_price,
+      price_yen: buyTarget.ticket_price,
+      payment_method: payMethod,
+      payment_status: "pending",
       status: "pending_payment",
     });
-    queryClient.invalidateQueries({ queryKey: ["my-school-tickets"] });
-    queryClient.invalidateQueries({ queryKey: ["all-school-tickets-count"] });
-    setBuyTarget(null);
-    toast.success("チケットを購入しました！授業当日にアクセスしてください。");
+
+    if (payMethod === "yell_coin") {
+      // エールコイン決済
+      const balance = wallet?.balance || 0;
+      if (balance < buyTarget.ticket_price) {
+        toast.error(`コイン残高が不足しています（残高: ${balance}コイン）`);
+        await base44.entities.SchoolTicket.update(ticket.id, { status: "cancelled", cancelled_at: new Date().toISOString() });
+        setPaying(false);
+        return;
+      }
+      // コイン消費
+      await base44.entities.YellCoinWallet.update(wallet.id, { balance: balance - buyTarget.ticket_price });
+      await base44.entities.SchoolTicket.update(ticket.id, {
+        status: "active",
+        payment_status: "completed",
+        coin_amount: buyTarget.ticket_price,
+      });
+      queryClient.invalidateQueries({ queryKey: ["my-school-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["all-school-tickets-count"] });
+      setWallet(prev => prev ? { ...prev, balance: prev.balance - buyTarget.ticket_price } : prev);
+      setBuyTarget(null);
+      setPaying(false);
+      toast.success("エールコインで決済しました！チケットが有効になりました。");
+    } else {
+      // Stripe決済
+      const res = await base44.functions.invoke("createSchoolTicketCheckout", {
+        school_ticket_id: ticket.id,
+        success_url: `${window.location.origin}/school-tickets?payment=success`,
+        cancel_url: `${window.location.origin}/school-tickets?payment=cancel`,
+      });
+      setPaying(false);
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        toast.error("決済ページの作成に失敗しました");
+        await base44.entities.SchoolTicket.update(ticket.id, { status: "cancelled", cancelled_at: new Date().toISOString() });
+      }
+    }
   };
 
   const upcomingTickets = myTickets.filter((t) => t.status === "active" || t.status === "pending_payment");
@@ -193,11 +250,11 @@ export default function SchoolTickets() {
       )}
 
       {/* 購入確認モーダル */}
-      <Dialog open={!!buyTarget} onOpenChange={(o) => !o && setBuyTarget(null)}>
+      <Dialog open={!!buyTarget} onOpenChange={(o) => { if (!o && !paying) setBuyTarget(null); }}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-primary" /> チケット購入確認
+              <ShoppingCart className="w-5 h-5 text-primary" /> チケット購入
             </DialogTitle>
           </DialogHeader>
           {buyTarget && (
@@ -208,13 +265,54 @@ export default function SchoolTickets() {
                   <Calendar className="w-3 h-3" />{format(new Date(buyTarget.scheduled_at), "M月d日(E) HH:mm", { locale: ja })}
                 </p>
                 <p className="flex justify-between border-t border-border/50 pt-2 font-bold">
-                  <span>チケット料金</span>
+                  <span>授業料</span>
                   <span className="text-primary">¥{buyTarget.ticket_price.toLocaleString()}</span>
                 </p>
               </div>
+
+              {/* 支払い方法選択 */}
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-muted-foreground">支払い方法を選択</p>
+                <button
+                  onClick={() => setPayMethod("yell_coin")}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-sm font-semibold transition-all ${payMethod === "yell_coin" ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary text-muted-foreground hover:border-primary/50"}`}
+                >
+                  <Coins className="w-5 h-5 shrink-0" />
+                  <div className="flex-1 text-left">
+                    <p className="font-bold flex items-center gap-1.5">
+                      エールコインで支払う
+                      <span className="text-[10px] bg-yellow-500 text-black px-1.5 py-0.5 rounded-full font-black">おすすめ</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">残高: {wallet?.balance || 0} コイン</p>
+                  </div>
+                  {payMethod === "yell_coin" && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
+                </button>
+                <button
+                  onClick={() => setPayMethod("stripe")}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-sm font-semibold transition-all ${payMethod === "stripe" ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary text-muted-foreground hover:border-primary/50"}`}
+                >
+                  <CreditCard className="w-5 h-5 shrink-0" />
+                  <div className="flex-1 text-left">
+                    <p className="font-bold">クレジットカードで直接支払う</p>
+                    <p className="text-xs text-muted-foreground">コイン購入不要、今回の授業料のみ</p>
+                  </div>
+                  {payMethod === "stripe" && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
+                </button>
+              </div>
+
+              {payMethod === "yell_coin" && (wallet?.balance || 0) < buyTarget.ticket_price && (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-xs text-yellow-400 flex items-center gap-2">
+                  <Coins className="w-4 h-4 shrink-0" />
+                  コイン残高が不足しています。
+                  <Link to="/coin-charge" className="underline font-bold">チャージする →</Link>
+                </div>
+              )}
+
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setBuyTarget(null)}>キャンセル</Button>
-                <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleBuy}>購入する</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setBuyTarget(null)} disabled={paying}>キャンセル</Button>
+                <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleBuy} disabled={paying}>
+                  {paying ? "処理中..." : "購入する"}
+                </Button>
               </div>
             </div>
           )}
