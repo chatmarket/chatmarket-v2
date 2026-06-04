@@ -46,7 +46,6 @@ const PLANS = [
     icon: Phone,
     name: "CALL＆ANSERプラン",
     price: 3300,
-    oldPrice: 6600,
     period: "/月",
     color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30",
     iconColor: "text-cyan-400",
@@ -67,7 +66,6 @@ const PLANS = [
     icon: Video,
     name: "VODプラン",
     price: 3300,
-    oldPrice: 9900,
     period: "/月",
     revenueShare: "85%",
     color: "from-primary/20 to-primary/10 border-primary/40",
@@ -90,7 +88,6 @@ const PLANS = [
     icon: Radio,
     name: "PPVプラン",
     price: 3300,
-    oldPrice: 9900,
     period: "/月",
     revenueShare: "85%",
     color: "from-red-500/20 to-red-600/10 border-red-500/30",
@@ -541,31 +538,15 @@ export default function PlanSelect() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      {plan.oldPrice ? (
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-xs text-gray-500 line-through">¥{plan.oldPrice.toLocaleString()}</span>
-                          <span className="text-2xl font-bold text-red-500">¥{plan.price.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">/月</span></span>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-lg font-black">{plan.priceDisplay || `¥${plan.price.toLocaleString()}`}</span>
-                          {!plan.priceDisplay && <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>}
-                        </>
-                      )}
+                      <span className="text-lg font-black">{plan.priceDisplay || `¥${plan.price.toLocaleString()}`}</span>
+                      {!plan.priceDisplay && <span className="text-muted-foreground text-xs ml-1">{plan.period}</span>}
                     </div>
                   </div>
                 </AccordionTrigger>
 
                 {/* アコーディオンコンテンツ：機能リストと申し込みボタン */}
                 <AccordionContent className="pt-4 pb-4 space-y-4">
-                  {plan.oldPrice && (
-                    <div className="flex items-center gap-2 bg-red-500/15 border border-red-500/40 rounded-xl px-4 py-2.5">
-                      <span className="text-base">🚀</span>
-                      <p className="text-sm font-black text-red-400">システム拡充中につき特別価格！</p>
-                      <span className="ml-auto text-xs text-red-400/70 line-through">¥{plan.oldPrice.toLocaleString()}</span>
-                      <span className="text-sm font-black text-red-400">→ ¥{plan.price.toLocaleString()}</span>
-                    </div>
-                  )}
+  
                   <ul className="space-y-2">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">

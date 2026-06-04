@@ -501,9 +501,8 @@ export default function Recruit() {
               <p className="text-center font-black text-lg text-amber-300">本注文（有料プラン）</p>
               <p className="text-center text-xs text-muted-foreground">気に入ったら<br/>フル機能へアップグレード</p>
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
-                <p className="text-xs text-gray-400 line-through">各 ¥6,600〜¥9,900</p>
                 <p className="text-2xl font-black text-red-400">各 ¥3,300</p>
-                <p className="text-xs text-amber-400/70">システム拡充中特別価格</p>
+                <p className="text-xs text-amber-400/70">/月（税込）</p>
               </div>
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-amber-400" />還元率 最大95%（BASIC）</li>
@@ -893,7 +892,7 @@ export default function Recruit() {
           <h2 className="text-xl font-black mb-6 text-center">よくある質問</h2>
           <div className="space-y-3">
             {[
-              { q: "「全有料プラン無料」とは何が含まれますか？", a: `BASIC（¥3,300）・CALL&ANSER（¥6,600）・VOD（¥9,900）・PPV（¥9,900）のすべてが無料になります。通常月額${TOTAL_VALUE}相当の機能を全部タダで使えます。` },
+              { q: "「全有料プラン無料」とは何が含まれますか？", a: `BASIC（¥3,300）・CALL&ANSER（¥3,300）・VOD（¥3,300）・PPV（¥3,300）のすべてが無料になります。通常月額${TOTAL_VALUE}相当の機能を全部タダで使えます。` },
               { q: "無料期間終了後はどうなりますか？", a: "無料期間終了後は通常の各プラン月額に自動移行します。継続しない場合は期間中にキャンセルしてください。" },
               { q: "Pro特典（3ヶ月）の審査基準は？", a: "SNSアカウントのフォロワー数が合算1万人以上であることが基準です。複数SNSの合算も可能です。審査は通常2〜3営業日以内に完了します。" },
               { q: "既存ユーザーは対象ですか？", a: "本キャンペーンは4/16以降の新規ライバー登録者が対象です。" },

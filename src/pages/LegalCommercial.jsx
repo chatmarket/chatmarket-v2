@@ -77,9 +77,9 @@ export default function LegalCommercial() {
               <p className="font-bold text-foreground text-xs mb-1.5">▼ 月額サブスクリプション</p>
               <ul className="list-disc list-inside pl-2 space-y-1">
                 <li>BASICプラン：¥3,300/月（税込）</li>
-                <li>CALL&ANSERプラン：¥6,600/月（税込）</li>
-                <li>VODプラン：¥9,900/月（税込）</li>
-                <li>PPVプラン：¥9,900/月（税込）</li>
+                <li>CALL&ANSERプラン：¥3,300/月（税込）</li>
+                <li>VODプラン：¥3,300/月（税込）</li>
+                <li>PPVプラン：¥3,300/月（税込）</li>
                 <li>各プランの詳細は<Link to="/plan-select" className="text-primary underline">プラン選択ページ</Link>をご確認ください。</li>
               </ul>
             </div>
