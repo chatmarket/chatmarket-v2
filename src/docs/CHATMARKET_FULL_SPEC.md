@@ -364,32 +364,45 @@ onUserRegistered（Entity Automation: User.create）
 ### 基本仕様
 ```
 1 エールコイン = 1 円（JPY等価）
-Stripe手数料: 視聴者負担（外乗せ方式）
-  chargeYen = ceil(coinAmount / (1 - 0.036))
-  例: 1,000コイン → ceil(1000/0.964) = 1,037円請求
+エールコイン購入手数料: 5%（税込・外乗せ方式・2026-06-04確定）
+  coin_purchase_fee_yen = Math.ceil(coins × 0.05)
+  viewer_total_yen      = coins + coin_purchase_fee_yen
+  granted_coins         = coins（手数料分のコインは付与しない）
+
+  例: 1,000コイン → 手数料50円 → 支払1,050円 → 付与1,000コイン
+
+Stripe実手数料（3.6%）はエールコイン購入手数料とは別物のコストとして管理する。
+ボーナスコイン: 廃止（2026-06-04より）
 ```
 
-### コイン購入プラン（確定・変更禁止）
+### コイン購入プラン（2026-06-04確定）
 
-| プランID | 定価 | 請求額 | 付与コイン | うちボーナス | ボーナス率 |
-|---------|------|-------|----------|------------|----------|
-| plan_1000 | ¥1,000 | ¥1,038 | 1,000コイン | 0 | 0% |
-| plan_5000 | ¥5,000 | ¥5,187 | 5,400コイン | +400 | 8% |
-| plan_10000 | ¥10,000 | ¥10,374 | 10,800コイン | +800 | 8% |
+| plan_id | 付与コイン | 本体価格 | 購入手数料5%（税込） | Stripe請求額 |
+|---------|-------:|------:|-------------:|--------:|
+| plan_1000 | 1,000コイン | ¥1,000 | ¥50 | **¥1,050** |
+| plan_3000 | 3,000コイン | ¥3,000 | ¥150 | **¥3,150** |
+| plan_5000 | 5,000コイン | ¥5,000 | ¥250 | **¥5,250** |
+| plan_10000 | 10,000コイン | ¥10,000 | ¥500 | **¥10,500** |
 
-**ボーナス上限8%厳守（逆ざやリスクのため）**
+**ボーナスコイン廃止。granted_coins = 購入コイン数のみ。**
+**5%はエールコイン購入時のみ適用。他サービスの直接Stripe決済には適用しない。**
+**30,000コインプランは未提供（バックエンド未定義）。**
 
 ### コイン購入フロー
 ```
-1. 視聴者が /coin-charge でプラン選択
+1. 視聴者が /coin-charge または 設定 → コイン購入 でプラン選択
 2. createCoinCheckoutSession → Stripe Checkout Session 作成
-   metadata: { type:"yell_coin_purchase", userEmail, planId, base_price,
-               charge_amount, coins_purchased, bonus_coins }
-3. Stripe決済完了
+   metadata: {
+     type: "yell_coin_purchase", userEmail, planId,
+     coin_base_amount_yen, coin_purchase_fee_rate, coin_purchase_fee_yen,
+     viewer_total_yen, granted_coins
+   }
+3. Stripe決済完了（Stripe請求額 = viewer_total_yen）
 4. stripeWebhook → checkout.session.completed
-   ├→ YellCoinWallet.balance += coins_purchased + bonus_coins
-   ├→ YellCoinWallet.total_charged += coins_purchased（ボーナス除く）
-   └→ YellCoinTransaction 作成（入金・付与を分離記録）
+   ├→ 冪等性チェック: stripe_session_idで重複スキップ
+   ├→ YellCoinWallet.balance += granted_coins
+   ├→ YellCoinWallet.total_charged += granted_coins
+   └→ YellCoinTransaction 作成（coins_purchased=granted_coins, bonus_coins=0）
 ```
 
 ### コイン利用フロー
@@ -403,11 +416,13 @@ Stripe手数料: 視聴者負担（外乗せ方式）
 
 ### ウォレット記録ルール（厳守）
 ```javascript
-YellCoinWallet.total_charged  // coins_purchased のみ累計（ボーナス含めない）
-YellCoinTransaction.amount         = coins_purchased + bonus_coins  // 付与合計
-YellCoinTransaction.coins_purchased = N   // 入金対応コイン
-YellCoinTransaction.bonus_coins     = N   // ボーナスコイン
-YellCoinTransaction.charge_amount_jpy = N // 実請求額
+YellCoinWallet.balance        += granted_coins   // 購入コイン数のみ
+YellCoinWallet.total_charged  += granted_coins   // 購入コイン数のみ（ボーナス廃止）
+YellCoinTransaction.amount         = granted_coins    // 付与コイン（= 購入コイン）
+YellCoinTransaction.coins_purchased = granted_coins   // 購入コイン数
+YellCoinTransaction.bonus_coins     = 0               // ボーナス廃止
+YellCoinTransaction.charge_amount_jpy = viewer_total_yen // 視聴者支払総額
+YellCoinTransaction.stripe_session_id = session.id   // 冪等性キー
 ```
 
 ### 初回ボーナス

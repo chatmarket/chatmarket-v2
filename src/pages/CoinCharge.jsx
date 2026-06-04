@@ -8,8 +8,8 @@ const COIN_PURCHASE_FEE_RATE = 0.05;
 const calcCoinFee = (coins) => Math.ceil(coins * COIN_PURCHASE_FEE_RATE);
 
 const CHARGE_PLANS = [
-  { coins: 1000,  fee: calcCoinFee(1000),  total: 1000  + calcCoinFee(1000),  popular: true  },
-  { coins: 3000,  fee: calcCoinFee(3000),  total: 3000  + calcCoinFee(3000),  popular: false },
+  { coins: 1000,  fee: calcCoinFee(1000),  total: 1000  + calcCoinFee(1000),  popular: false },
+  { coins: 3000,  fee: calcCoinFee(3000),  total: 3000  + calcCoinFee(3000),  popular: true  },
   { coins: 5000,  fee: calcCoinFee(5000),  total: 5000  + calcCoinFee(5000),  popular: false },
   { coins: 10000, fee: calcCoinFee(10000), total: 10000 + calcCoinFee(10000), popular: false },
 ];

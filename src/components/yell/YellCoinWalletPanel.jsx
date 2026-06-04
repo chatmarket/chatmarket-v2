@@ -5,19 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Coins, Plus, ArrowUpRight, ArrowDownLeft, Zap, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { calcCoinCharge } from "@/lib/pricing";
+const TERMS_VERSION = "2026-06";
 
-const TERMS_VERSION = "2026-04";
-
-// 外乗せ方式: ユーザーには純粋なコイン数を付与。請求額はStripe手数料込み。
-// ceil((coins + 40) / (1 - 0.036))
+// 正式購入プラン（2026-06-04確定）: エールコイン購入手数料 5%（税込）
+// viewer_total = coins + Math.ceil(coins * 0.05) / 付与コイン = coins のみ
 const CHARGE_PLANS = [
   { coins: 1000 },
   { coins: 3000, popular: true },
   { coins: 5000 },
   { coins: 10000 },
-  { coins: 30000 },
-].map(p => ({ ...p, yen: calcCoinCharge(p.coins).chargeYen, label: `${p.coins.toLocaleString()}コイン` }));
+].map(p => ({
+  ...p,
+  fee: Math.ceil(p.coins * 0.05),
+  yen: p.coins + Math.ceil(p.coins * 0.05),
+  label: `${p.coins.toLocaleString()}コイン`,
+}));
 
 export default function YellCoinWalletPanel({ user }) {
   const [showCharge, setShowCharge] = useState(false);
@@ -131,6 +133,7 @@ export default function YellCoinWalletPanel({ user }) {
           <p className="text-[11px] text-yellow-200/70 leading-relaxed">
             エールコインは<strong className="text-yellow-300">購入日から180日</strong>の有効期限があります。期限を過ぎたコインは自動的に失効します。
             <strong className="text-red-400"> 購入後の払い戻し（返金）は一切できません。</strong>
+            エールコイン購入時には、エールコイン購入手数料5%（税込）が加算されます。
           </p>
         </div>
       </div>
@@ -149,7 +152,7 @@ export default function YellCoinWalletPanel({ user }) {
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 ・エールコインは<strong className="text-foreground">購入日から180日</strong>の有効期限です。期限後は自動失効します。<br />
                 ・購入後の返金は<strong className="text-red-400">一切できません。</strong>（資金決済法第31条対応）<br />
-                ・1コイン = 1円（Stripe手数料は別途外乗せ）<br />
+                ・1コイン = 1円 / エールコイン購入時に購入手数料5%（税込）が加算されます。<br />
                 ・同意時刻は当社サーバーに永久保存されます。
               </p>
             </div>
@@ -194,7 +197,7 @@ export default function YellCoinWalletPanel({ user }) {
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] px-2">人気</Badge>
                 )}
                 <p className="font-bold text-yellow-400">{plan.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">¥{plan.yen.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">¥{plan.yen.toLocaleString()} <span className="text-yellow-500/60">（手数料5%込）</span></p>
               </button>
             ))}
           </div>

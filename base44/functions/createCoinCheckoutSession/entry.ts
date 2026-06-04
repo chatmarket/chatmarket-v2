@@ -25,31 +25,22 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // 確定販売プラン（2026-06-04改定）
 // coin_purchase_fee_rate = 0.05（外乗せ方式）
+// 正式購入プラン（2026-06-04確定）: 1,000 / 3,000 / 5,000 / 10,000コイン
+// coin_purchase_fee_rate = 0.05（外乗せ）/ ボーナスコイン廃止
+const makePlan = (coins) => ({
+  coin_base_amount_yen: coins,
+  coin_purchase_fee_rate: 0.05,
+  coin_purchase_fee_yen: Math.ceil(coins * 0.05),
+  viewer_total_yen: coins + Math.ceil(coins * 0.05),
+  granted_coins: coins,
+  label: `¥${coins.toLocaleString()}プラン（${coins.toLocaleString()}コイン）`,
+});
+
 const COIN_PLANS = {
-  plan_1000: {
-    coin_base_amount_yen: 1000,
-    coin_purchase_fee_rate: 0.05,
-    coin_purchase_fee_yen: Math.ceil(1000 * 0.05), // 50
-    viewer_total_yen: 1000 + Math.ceil(1000 * 0.05), // 1050
-    granted_coins: 1000,
-    label: '¥1,000プラン（1,000コイン）',
-  },
-  plan_5000: {
-    coin_base_amount_yen: 5000,
-    coin_purchase_fee_rate: 0.05,
-    coin_purchase_fee_yen: Math.ceil(5000 * 0.05), // 250
-    viewer_total_yen: 5000 + Math.ceil(5000 * 0.05), // 5250
-    granted_coins: 5000,
-    label: '¥5,000プラン（5,000コイン）',
-  },
-  plan_10000: {
-    coin_base_amount_yen: 10000,
-    coin_purchase_fee_rate: 0.05,
-    coin_purchase_fee_yen: Math.ceil(10000 * 0.05), // 500
-    viewer_total_yen: 10000 + Math.ceil(10000 * 0.05), // 10500
-    granted_coins: 10000,
-    label: '¥10,000プラン（10,000コイン）',
-  },
+  plan_1000:  makePlan(1000),
+  plan_3000:  makePlan(3000),
+  plan_5000:  makePlan(5000),
+  plan_10000: makePlan(10000),
 };
 
 Deno.serve(async (req) => {

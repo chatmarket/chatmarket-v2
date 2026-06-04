@@ -3,39 +3,23 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Coins, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { YELL_COIN_SETTINGS } from "@/lib/constants";
+// エールコイン購入プラン（2026-06-04確定）
+// エールコイン購入手数料 5%（税込）= Math.ceil(coins × 0.05)
+// viewer_total_yen = coins + fee  /  granted_coins = coins（手数料分は付与しない）
+const COIN_FEE_RATE = 0.05;
+const makePlan = (id, coins, popular = false) => ({
+  id,
+  coins,
+  fee: Math.ceil(coins * COIN_FEE_RATE),
+  total: coins + Math.ceil(coins * COIN_FEE_RATE),
+  popular,
+});
 
-// ⚠️ エールコイン販売テーブル（LOCKED: 社長要求 2026-05-11）
-// 定義: lib/constants.js の YELL_COIN_SETTINGS を参照
-// ⚠️ ボーナス率を8%以上にするのは逆ざやリスクのため禁止（PROTECTED）
 const COIN_PLANS = [
-  {
-    id: "plan_1000",
-    base_price: 1000,
-    charge_amount: 1038,
-    coins: 1000,
-    bonus_coins: 0,
-    bonus_rate: 0,
-    popular: false,
-  },
-  {
-    id: "plan_5000",
-    base_price: 5000,
-    charge_amount: 5187,
-    coins: 5000,
-    bonus_coins: 400,
-    bonus_rate: 8,
-    popular: true,
-  },
-  {
-    id: "plan_10000",
-    base_price: 10000,
-    charge_amount: 10374,
-    coins: 10000,
-    bonus_coins: 800,
-    bonus_rate: 8,
-    popular: false,
-  },
+  makePlan("plan_1000",  1000),
+  makePlan("plan_3000",  3000, true),
+  makePlan("plan_5000",  5000),
+  makePlan("plan_10000", 10000),
 ];
 
 export default function CoinPurchasePanel({ onSuccess }) {
@@ -106,7 +90,6 @@ export default function CoinPurchasePanel({ onSuccess }) {
       {/* 料金プラン */}
       <div className="grid gap-3">
         {COIN_PLANS.map((plan) => {
-          const totalCoins = plan.coins + plan.bonus_coins;
           const isSelected = selectedPlan === plan.id;
           return (
             <div
@@ -125,26 +108,14 @@ export default function CoinPurchasePanel({ onSuccess }) {
               )}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xl font-black text-foreground">
-                      {totalCoins.toLocaleString()}コイン
-                    </span>
-                    {plan.bonus_coins > 0 && (
-                      <span className="text-xs font-bold text-primary bg-primary/10 border border-primary/30 px-1.5 py-0.5 rounded-full">
-                        +{plan.bonus_rate}%ボーナス
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
-                    <p>
-                      購入: {plan.coins.toLocaleString()}コイン
-                      {plan.bonus_coins > 0 && (
-                        <span className="text-primary font-semibold"> + ボーナス{plan.bonus_coins}コイン</span>
-                      )}
-                    </p>
-                    <p>お支払い: <span className="font-semibold text-foreground/80">¥{plan.charge_amount.toLocaleString()}</span>
-                      <span className="text-muted-foreground/60"> (定価¥{plan.base_price.toLocaleString()} + 事務手数料3.6%)</span>
-                    </p>
+                  <span className="text-xl font-black text-foreground">
+                    {plan.coins.toLocaleString()}コイン
+                  </span>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    <div className="flex justify-between"><span>コイン本体価格</span><span>¥{plan.coins.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-yellow-400/80"><span>エールコイン購入手数料 5%（税込）</span><span>¥{plan.fee.toLocaleString()}</span></div>
+                    <div className="flex justify-between font-semibold text-foreground/90 border-t border-border/40 pt-0.5 mt-0.5"><span>お支払総額</span><span>¥{plan.total.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-primary"><span>付与されるコイン数</span><span>{plan.coins.toLocaleString()}コイン</span></div>
                   </div>
                 </div>
                 <Button
@@ -171,16 +142,13 @@ export default function CoinPurchasePanel({ onSuccess }) {
         <p>購入を行うことで、<a href="/terms" className="text-primary underline" target="_blank">利用規約</a>に同意したものとみなされます。通信環境やブラウザ設定に起因する接続不良については、利用規約に基づき補償の対象外となります。</p>
       </div>
 
-
-
       {/* 注意書き */}
       <div className="bg-secondary rounded-xl p-3 space-y-1 text-xs text-muted-foreground">
         <div className="flex items-start gap-1.5">
           <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary/60" />
           <div className="space-y-1">
-            <p>・表示の支払額には事務手数料（3.6%）が含まれます。</p>
+            <p>・エールコイン購入時には、エールコイン購入手数料5%（税込）が加算されます。</p>
             <p>・コインの有効期限は購入日から180日です。</p>
-            <p>・ボーナスコインを含む払い出しには通常のライバー還元率（85〜95%）が適用されます。</p>
             <p>・購入後のキャンセル・返金はできません。</p>
           </div>
         </div>

@@ -4,10 +4,10 @@
  * ─── エールコイン基準 ───────────────────────────────────────────────
  *   1 エールコイン = 1 円（決済手数料はユーザー負担・外乗せ方式）
  *
- * ─── 外乗せ方式 ────────────────────────────────────────────────────
+ * ─── エールコイン購入手数料（外乗せ方式）─────────────────────────
  *   ユーザーが「1000コイン」を選択した場合:
- *     請求額 = ceil(1000 × 1.036) = 1036円
- *     DB残高 = 1000コイン（端数なし）
+ *     手数料 = ceil(1000 × 0.05) = 50円
+ *     請求額 = 1050円 / 付与コイン = 1000コイン
  *
  * ─── AWS インフラ実費（確定） ──────────────────────────────────────
  *   IVS 入力 (場所代):    30円 / 時間
@@ -226,8 +226,9 @@ export const VOD_RULES = {
 
 // ─── 後方互換エクスポート ─────────────────────────────────────────
 export const PLANS = {
-  FREE:  { id: 'free',  name: 'FREEプラン',  monthlyFee: 0,    revenueShare: PLAN_REVENUE_SHARE.free },
-  BASIC: { id: 'basic', name: 'BASICプラン', monthlyFee: 3300, revenueShare: PLAN_REVENUE_SHARE.basic },
-  VOD:   { id: 'vod',   name: 'VODプラン',   monthlyFee: 9900, revenueShare: PLAN_REVENUE_SHARE.vod },
-  PPV:   { id: 'ppv',   name: 'PPVプラン',   monthlyFee: 9900, revenueShare: PLAN_REVENUE_SHARE.ppv },
+  FREE:       { id: 'free',        name: 'FREEプラン',        monthlyFee: 0,    revenueShare: PLAN_REVENUE_SHARE.free },
+  BASIC:      { id: 'basic',       name: 'BASICプラン',       monthlyFee: 3300, revenueShare: PLAN_REVENUE_SHARE.basic },
+  VOD:        { id: 'vod',         name: 'VODプラン',         monthlyFee: 3300, revenueShare: PLAN_REVENUE_SHARE.vod },
+  PPV:        { id: 'ppv',         name: 'PPVプラン',         monthlyFee: 3300, revenueShare: PLAN_REVENUE_SHARE.ppv },
+  CALL_ANSER: { id: 'call-anser',  name: 'CALL&ANSERプラン',  monthlyFee: 3300, revenueShare: PLAN_REVENUE_SHARE['call-anser'] },
 };

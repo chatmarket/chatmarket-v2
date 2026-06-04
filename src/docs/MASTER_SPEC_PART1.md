@@ -567,12 +567,14 @@ Stripe実手数料を推測値として確定値に保存しない。
 ボーナスコイン: 廃止（2026-06-04より）
 ```
 
-## コイン購入プラン（2026-06-04改定）
+## コイン購入プラン（2026-06-04確定）
 
 ```javascript
-// coin_purchase_fee_rate = 0.05 固定
+// coin_purchase_fee_rate = 0.05（外乗せ方式）/ ボーナスコイン廃止
+// 正式プラン: 1,000 / 3,000 / 5,000 / 10,000コイン（30,000コインは未提供）
 const COIN_PLANS = {
   plan_1000:  { coin_base_amount_yen:1000,  coin_purchase_fee_yen:50,  viewer_total_yen:1050,  granted_coins:1000  },
+  plan_3000:  { coin_base_amount_yen:3000,  coin_purchase_fee_yen:150, viewer_total_yen:3150,  granted_coins:3000  },
   plan_5000:  { coin_base_amount_yen:5000,  coin_purchase_fee_yen:250, viewer_total_yen:5250,  granted_coins:5000  },
   plan_10000: { coin_base_amount_yen:10000, coin_purchase_fee_yen:500, viewer_total_yen:10500, granted_coins:10000 },
 }
