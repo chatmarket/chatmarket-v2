@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins, Phone, GraduationCap, Building2, Ticket, Zap } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Radio, Video, Settings, CreditCard, BookOpen, Heart, Library, DollarSign, BarChart3, Coins, Phone, GraduationCap, Building2, Ticket, Zap, School } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LangSwitcher from "./LangSwitcher";
 import { t } from "@/lib/i18n";
@@ -85,6 +85,12 @@ export default function Navbar() {
 
         {/* Nav links */}
          <div className="hidden md:flex items-center gap-1 shrink-0">
+           <Link to="/classroom-lp">
+             <Button size="sm" variant="ghost" className="gap-1.5 text-sm text-violet-400 hover:text-violet-300 hover:bg-violet-500/10">
+               <School className="w-3.5 h-3.5" />
+               クラスルーム
+             </Button>
+           </Link>
            <Link to="/plan-select">
              <Button size="sm" variant="ghost" className="gap-1.5 text-sm">
                <CreditCard className="w-3.5 h-3.5" />
@@ -295,11 +301,18 @@ export default function Navbar() {
             </div>
           </form>
           <div className="flex gap-2">
+            <Link to="/classroom-lp" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+              <Button variant="secondary" className="w-full gap-2 text-xs text-violet-400">
+                <School className="w-4 h-4" /> クラスルーム
+              </Button>
+            </Link>
             <Link to="/plan-select" className="flex-1" onClick={() => setIsMenuOpen(false)}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <CreditCard className="w-4 h-4" /> 料金プラン
               </Button>
             </Link>
+          </div>
+          <div className="flex gap-2">
             <Link to="/blog" className="flex-1 relative" onClick={() => setIsMenuOpen(false)}>
               <Button variant="secondary" className="w-full gap-2 text-xs">
                 <BookOpen className="w-4 h-4" /> 運営ブログ
