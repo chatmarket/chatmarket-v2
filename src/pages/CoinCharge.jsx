@@ -2,11 +2,16 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Coins, CreditCard, Gift, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle, Zap, ExternalLink, ShieldCheck } from "lucide-react";
 
+// エールコイン購入手数料: 5%（外乗せ方式）
+// viewer_total_yen = coins + Math.ceil(coins * 0.05)
+const COIN_PURCHASE_FEE_RATE = 0.05;
+const calcCoinFee = (coins) => Math.ceil(coins * COIN_PURCHASE_FEE_RATE);
+
 const CHARGE_PLANS = [
-  { coins: 1000, yen: 1036, bonus: 0, popular: true },
-  { coins: 3000, yen: 3108, bonus: 0, popular: false },
-  { coins: 5000, yen: 5180, bonus: 0, popular: false },
-  { coins: 10000, yen: 10360, bonus: 0, popular: false },
+  { coins: 1000,  fee: calcCoinFee(1000),  total: 1000  + calcCoinFee(1000),  popular: true  },
+  { coins: 3000,  fee: calcCoinFee(3000),  total: 3000  + calcCoinFee(3000),  popular: false },
+  { coins: 5000,  fee: calcCoinFee(5000),  total: 5000  + calcCoinFee(5000),  popular: false },
+  { coins: 10000, fee: calcCoinFee(10000), total: 10000 + calcCoinFee(10000), popular: false },
 ];
 
 const STEPS_CREDIT = [
@@ -77,17 +82,18 @@ export default function CoinCharge() {
           {CHARGE_PLANS.map((plan) => (
             <div
               key={plan.coins}
-              className={`relative rounded-xl border p-4 text-center space-y-1 ${plan.popular ? "border-yellow-500/60 bg-yellow-500/10" : "border-border/50 bg-card"}`}
+              className={`relative rounded-xl border p-4 text-center space-y-1.5 ${plan.popular ? "border-yellow-500/60 bg-yellow-500/10" : "border-border/50 bg-card"}`}
             >
               {plan.popular && (
                 <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-black bg-yellow-500 text-black px-2.5 py-0.5 rounded-full whitespace-nowrap">人気No.1</span>
               )}
               <p className="text-2xl font-black text-yellow-400">{plan.coins.toLocaleString()}<span className="text-sm font-bold ml-1">コイン</span></p>
-              <p className="text-sm font-bold text-white">¥{plan.yen.toLocaleString()}</p>
-              {plan.bonus > 0 && (
-                <p className="text-xs text-green-400 font-bold">+{plan.bonus}コイン ボーナス</p>
-              )}
-              <p className="text-[10px] text-muted-foreground">1コイン = 1円（+ 3.6% 手数料）</p>
+              <div className="text-left text-[10px] text-muted-foreground space-y-0.5 border-t border-border/30 pt-1.5 mt-1">
+                <div className="flex justify-between"><span>コイン本体価格</span><span>¥{plan.coins.toLocaleString()}</span></div>
+                <div className="flex justify-between text-yellow-400/70"><span>購入手数料 5%</span><span>¥{plan.fee.toLocaleString()}</span></div>
+              </div>
+              <p className="text-sm font-black text-white border-t border-border/30 pt-1">支払総額 ¥{plan.total.toLocaleString()}</p>
+              <p className="text-[10px] text-primary">付与: {plan.coins.toLocaleString()}コイン</p>
             </div>
           ))}
         </div>

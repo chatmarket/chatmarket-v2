@@ -52,13 +52,31 @@ Deno.serve(async (req) => {
 
       // ── コイン購入 ───────────────────────────────────────────
       if (meta.type === 'yell_coin_purchase' && meta.userEmail) {
-        const userEmail      = meta.userEmail;
-        const planId         = meta.planId;
-        const basePrice      = parseInt(meta.base_price || '0');
-        const chargeAmount   = parseInt(meta.charge_amount || '0');
-        const coinsPurchased = parseInt(meta.coins_purchased || '0'); // 入金対応コイン
-        const bonusCoins     = parseInt(meta.bonus_coins || '0');     // ボーナスコイン（別記）
-        const totalCoins     = coinsPurchased + bonusCoins;           // 付与合計
+        const userEmail = meta.userEmail;
+        const planId    = meta.planId;
+
+        // ── 冪等性チェック（重複Webhook防止） ──
+        // 同一stripe_session_idでの二重付与を防止
+        const existingTx = await base44.asServiceRole.entities.YellCoinTransaction.filter({
+          stripe_session_id: session.id,
+        });
+        if (existingTx.length > 0) {
+          console.log(`[CoinPurchase] duplicate session skipped: ${session.id}`);
+          return Response.json({ ok: true, skipped: 'duplicate_session' });
+        }
+
+        // ── 2026-06-04確定仕様フィールドを優先、旧フィールドにフォールバック ──
+        const coinBaseAmountYen    = parseInt(meta.coin_base_amount_yen   || meta.base_price        || '0');
+        const coinPurchaseFeeRate  = parseFloat(meta.coin_purchase_fee_rate || '0.05');
+        const coinPurchaseFeeYen   = parseInt(meta.coin_purchase_fee_yen  || '0');
+        const viewerTotalYen       = parseInt(meta.viewer_total_yen       || meta.charge_amount     || '0');
+        // granted_coins: 手数料分は付与しない（ボーナス廃止）
+        const grantedCoins         = parseInt(meta.granted_coins          || meta.coins_purchased   || '0');
+
+        if (grantedCoins <= 0) {
+          console.warn(`[CoinPurchase] granted_coins=0, skipping: ${session.id}`);
+          return Response.json({ ok: true, skipped: 'no_coins' });
+        }
 
         // ウォレット取得 or 作成
         const wallets = await base44.asServiceRole.entities.YellCoinWallet.filter({ user_email: userEmail });
@@ -71,30 +89,30 @@ Deno.serve(async (req) => {
           });
         }
 
-        // 残高加算
+        // 残高加算（手数料分は付与しない: balance += grantedCoins のみ）
         await base44.asServiceRole.entities.YellCoinWallet.update(wallet.id, {
-          balance: (wallet.balance || 0) + totalCoins,
-          total_charged: (wallet.total_charged || 0) + coinsPurchased, // 入金分のみ累計
+          balance:       (wallet.balance       || 0) + grantedCoins,
+          total_charged: (wallet.total_charged || 0) + grantedCoins, // 付与コインのみ累計
         });
 
-        // トランザクション記録（入金額・付与額を明確に分離）
+        // トランザクション記録（2026-06-04確定仕様）
         await base44.asServiceRole.entities.YellCoinTransaction.create({
-          user_email: userEmail,
-          type: 'charge',
-          amount: totalCoins,           // 付与合計コイン
-          yen_amount: basePrice,        // 定価（Stripe手数料前）
-          service_type: 'charge',
-          message: `コイン購入: ${planId} / 入金¥${chargeAmount} / 付与${totalCoins}コイン（購入${coinsPurchased}+ボーナス${bonusCoins}）`,
-          // 追加フィールド: 入金・付与の内訳
-          coins_purchased: coinsPurchased,
-          bonus_coins: bonusCoins,
-          charge_amount_jpy: chargeAmount,
-          stripe_session_id: session.id,
-          terms_agreed_at: new Date().toISOString(),
-          terms_version: '2026-04',
+          user_email:            userEmail,
+          type:                  'charge',
+          amount:                grantedCoins,       // 付与コイン数
+          yen_amount:            coinBaseAmountYen,  // コイン本体価格
+          service_type:          'charge',
+          message:               `エールコイン購入: ${planId} / コイン本体¥${coinBaseAmountYen} / 購入手数料¥${coinPurchaseFeeYen}(${Math.round(coinPurchaseFeeRate * 100)}%) / 支払総額¥${viewerTotalYen} / 付与${grantedCoins}コイン`,
+          // 2026-06-04確定仕様フィールド
+          coins_purchased:       grantedCoins,       // 付与コイン数（手数料分は含まない）
+          bonus_coins:           0,                  // ボーナス廃止
+          charge_amount_jpy:     viewerTotalYen,     // 視聴者支払総額
+          stripe_session_id:     session.id,
+          terms_agreed_at:       new Date().toISOString(),
+          terms_version:         '2026-06',
         });
 
-        console.log(`[CoinPurchase] ${userEmail}: +${totalCoins}コイン (購入${coinsPurchased}+ボーナス${bonusCoins}) ¥${chargeAmount}課金`);
+        console.log(`[CoinPurchase] ${userEmail}: +${grantedCoins}コイン / 本体¥${coinBaseAmountYen} + 手数料¥${coinPurchaseFeeYen} = ¥${viewerTotalYen} / session:${session.id}`);
       }
 
       // ── 動画購入 ─────────────────────────────────────────────

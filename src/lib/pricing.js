@@ -19,27 +19,41 @@
 // ─── エールコイン ────────────────────────────────────────────────────
 export const COIN_TO_YEN = 1; // 1コイン = 1円（確定）
 
-// ─── Stripe手数料（視聴者負担・外出し） ───────────────────────────
-// Stripe Japan 国内カード: 3.6%のみ・固定手数料なし（公式: stripe.com/jp/pricing 確認済み）
-// ※ STRIPE_FEE_FIXED=40は Stripe US の料金。Stripe Japan 国内カードには適用されない。
-export const STRIPE_FEE_RATE  = 0.036; // 3.6%のみ
-export const STRIPE_FEE_FIXED = 0;     // 固定費なし（Stripe Japan 国内カード）
+// ─── エールコイン購入手数料（2026-06-04確定） ──────────────────────
+// エールコイン購入手数料: 5%（外乗せ方式・ユーザー負担）
+// Stripe実手数料（3.6%）とは別物。購入手数料がStripeコストをカバーする設計。
+export const COIN_PURCHASE_FEE_RATE = 0.05; // 5%
 
 /**
- * 視聴者が実際に支払う金額（Stripe手数料込み・外乗せ）
- * Stripe Japan 国内カード: ceil(coins / (1 - 0.036))
- * 例: 150円 → ceil(150 / 0.964) = 156円
- * @param {number} coinAmount  購入コイン数（= 円相当）
- * @returns {{ chargeYen: number, coinAmount: number }}
+ * エールコイン購入時の視聴者支払総額を計算する
+ * coin_purchase_fee_yen = Math.ceil(coins × 0.05)
+ * viewer_total_yen      = coins + coin_purchase_fee_yen
+ * granted_coins         = coins（手数料分のコインは付与しない）
+ *
+ * 例: 1000コイン → 手数料50円 → 支払1,050円 → 付与1,000コイン
+ *
+ * @param {number} coins 購入コイン数（= コイン本体価格円）
+ * @returns {{ coinBaseAmountYen, coinPurchaseFeeYen, viewerTotalYen, grantedCoins }}
  */
-export function calcCoinCharge(coinAmount) {
-  const chargeYen = Math.ceil(coinAmount / (1 - STRIPE_FEE_RATE));
-  return { chargeYen, coinAmount }; // DB残高は coinAmount のみ（端数なし）
+export function calcCoinPurchase(coins) {
+  const coinBaseAmountYen   = coins;
+  const coinPurchaseFeeYen  = Math.ceil(coins * COIN_PURCHASE_FEE_RATE);
+  const viewerTotalYen      = coinBaseAmountYen + coinPurchaseFeeYen;
+  const grantedCoins        = coins; // 手数料分は付与しない
+  return { coinBaseAmountYen, coinPurchaseFeeYen, viewerTotalYen, grantedCoins };
 }
 
 /** 後方互換 */
+export const STRIPE_FEE_RATE  = 0.036; // Stripe Japan 実手数料（参考値・コスト計算用）
+export const STRIPE_FEE_FIXED = 0;
+
+export function calcCoinCharge(coinAmount) {
+  const { viewerTotalYen } = calcCoinPurchase(coinAmount);
+  return { chargeYen: viewerTotalYen, coinAmount };
+}
+
 export function calcChargeAmount(desiredAmount) {
-  return calcCoinCharge(desiredAmount).chargeYen;
+  return calcCoinPurchase(desiredAmount).viewerTotalYen;
 }
 
 // ─── AWS コスト定数 ────────────────────────────────────────────────

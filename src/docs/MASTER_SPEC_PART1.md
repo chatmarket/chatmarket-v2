@@ -551,20 +551,33 @@ resetDailyFreeCallQuota（毎日JST 0:00に実行）:
 ## 基本規則
 ```
 1 エールコイン = 1 円（確定・変更禁止）
-Stripe手数料: 視聴者負担・外乗せ方式
-  chargeYen = ceil(coinAmount / (1 - 0.036))
-  例: 1000コイン → ceil(1000 / 0.964) = 1038円請求
+
+エールコイン購入手数料: 5%（外乗せ方式・2026-06-04確定）
+  coin_purchase_fee_yen = Math.ceil(coins × 0.05)
+  viewer_total_yen      = coins + coin_purchase_fee_yen
+  granted_coins         = coins（手数料分のコインは付与しない）
+
+  例: 1000コイン → 手数料50円 → 支払1,050円 → 付与1,000コイン
+  例: 5000コイン → 手数料250円 → 支払5,250円 → 付与5,000コイン
+  例: 10000コイン → 手数料500円 → 支払10,500円 → 付与10,000コイン
+
+Stripe実手数料（3.6%）はエールコイン購入手数料とは別物のコストとして管理する。
+Stripe実手数料を推測値として確定値に保存しない。
+
+ボーナスコイン: 廃止（2026-06-04より）
 ```
 
-## コイン購入プラン（変更禁止）
+## コイン購入プラン（2026-06-04改定）
 
 ```javascript
+// coin_purchase_fee_rate = 0.05 固定
 const COIN_PLANS = {
-  plan_1000:  { base_price:1000,  coins:1000,  bonus_coins:0,   charge_amount:1038 },
-  plan_5000:  { base_price:5000,  coins:5000,  bonus_coins:400, charge_amount:5187 },
-  plan_10000: { base_price:10000, coins:10000, bonus_coins:800, charge_amount:10374 },
+  plan_1000:  { coin_base_amount_yen:1000,  coin_purchase_fee_yen:50,  viewer_total_yen:1050,  granted_coins:1000  },
+  plan_5000:  { coin_base_amount_yen:5000,  coin_purchase_fee_yen:250, viewer_total_yen:5250,  granted_coins:5000  },
+  plan_10000: { coin_base_amount_yen:10000, coin_purchase_fee_yen:500, viewer_total_yen:10500, granted_coins:10000 },
 }
-// ボーナス率最大8%（これを超えると逆ざや → 絶対禁止）
+// ★ ボーナスコイン廃止。granted_coins = coin_base_amount_yen のみ。
+// ★ 5%はエールコイン購入時のみ適用。他サービスの直接Stripe決済には適用しない。
 ```
 
 ## コイン購入フロー
@@ -576,36 +589,36 @@ const COIN_PLANS = {
 バックエンド createCoinCheckoutSession:
   plan = COIN_PLANS[planId]（無効 → 400）
   Stripe Checkout Session作成:
-    mode: "payment", amount: plan.charge_amount（例: 1038円）
+    mode: "payment", amount: plan.viewer_total_yen（例: 1050円）
     metadata = {
-      type:            "yell_coin_purchase",
-      userEmail:       user.email,
+      type:                   "yell_coin_purchase",
+      userEmail:              user.email,
       planId,
-      base_price:      String(plan.base_price),
-      charge_amount:   String(plan.charge_amount),
-      coins_purchased: String(plan.coins),       ← 入金対応コイン（ボーナス除く）
-      bonus_coins:     String(plan.bonus_coins), ← ボーナスコイン
-      total_coins:     String(totalCoins),       ← 付与合計
+      coin_base_amount_yen:   String(plan.coin_base_amount_yen),
+      coin_purchase_fee_rate: "0.05",
+      coin_purchase_fee_yen:  String(plan.coin_purchase_fee_yen),
+      viewer_total_yen:       String(plan.viewer_total_yen),
+      granted_coins:          String(plan.granted_coins),
     }
-  → { checkoutUrl, sessionId }
+  → { checkoutUrl, sessionId, breakdown }
 
 stripeWebhook → checkout.session.completed:
   meta.type === "yell_coin_purchase":
-    coinsPurchased = parseInt(meta.coins_purchased)
-    bonusCoins     = parseInt(meta.bonus_coins)
-    totalCoins     = coinsPurchased + bonusCoins
+    ★ 冪等性チェック: stripe_session_idでYellCoinTransactionを検索し重複スキップ
+    grantedCoins = parseInt(meta.granted_coins)  ← 手数料分は付与しない
 
     YellCoinWallet なければ作成
     YellCoinWallet.update({
-      balance:       wallet.balance + totalCoins,          ← 付与合計を加算
-      total_charged: wallet.total_charged + coinsPurchased, ← ★ボーナス含めない
+      balance:       wallet.balance + grantedCoins,
+      total_charged: wallet.total_charged + grantedCoins,
     })
     YellCoinTransaction.create({
-      type: "charge", amount: totalCoins,
-      coins_purchased: coinsPurchased,  ← ★必ず分離記録
-      bonus_coins: bonusCoins,          ← ★必ず分離記録
-      charge_amount_jpy: chargeAmount,
-      terms_version: "2026-04",
+      type: "charge", amount: grantedCoins,
+      coins_purchased: grantedCoins,
+      bonus_coins: 0,               ← ボーナス廃止
+      charge_amount_jpy: viewerTotalYen,
+      stripe_session_id: session.id,
+      terms_version: "2026-06",
     })
 ```
 
@@ -750,7 +763,10 @@ DAILY_LIMIT_SECONDS = 7200（2時間 = 120分）
 ❌ freeプランライバー還元率を70%未満にするコード
 ❌ FREEプランの通話を完全禁止にするコード（FREEでも通話可能が大原則）
 ❌ Stripe手数料をプラットフォーム側が負担するコード
-❌ ボーナスコイン率を8%超に設定するコード（逆ざやリスク）
+❌ エールコイン購入手数料を5%以外に設定するコード（2026-06-04確定）
+❌ エールコイン購入手数料分のコインを付与するコード
+❌ エールコイン購入以外のサービス（SchoolTicket/VOD/PPV等）に5%を加算するコード
+❌ ボーナスコインを復活させるコード（廃止済み）
 ❌ 1コイン≠1円 にする換算ロジック
 ❌ COIN_PLANS テーブルの金額・コイン数を変更するコード
 
