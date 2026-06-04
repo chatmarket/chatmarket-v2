@@ -6,6 +6,10 @@
       "type": "string",
       "description": "\u30e6\u30fc\u30b6\u30fc\u30e1\u30fc\u30eb"
     },
+    "user_id": {
+      "type": "string",
+      "description": "\u30e6\u30fc\u30b6\u30fcID"
+    },
     "plan_id": {
       "type": "string",
       "description": "\u30d7\u30e9\u30f3ID\uff08basic, vod, ppv, call-anser\u7b49\uff09"
@@ -18,7 +22,9 @@
       "type": "string",
       "enum": [
         "active",
-        "cancelled"
+        "cancelled",
+        "past_due",
+        "incomplete"
       ],
       "default": "active",
       "description": "\u30b9\u30c6\u30fc\u30bf\u30b9"
@@ -32,6 +38,57 @@
       "type": "string",
       "format": "date-time",
       "description": "\u89e3\u7d04\u65e5"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe Customer ID"
+    },
+    "stripe_subscription_id": {
+      "type": "string",
+      "description": "Stripe Subscription ID"
+    },
+    "stripe_price_id": {
+      "type": "string",
+      "description": "Stripe Price ID"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout Session ID\uff08\u521d\u56de\u8cfc\u5165\u6642\uff09"
+    },
+    "current_period_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u73fe\u5728\u306e\u8acb\u6c42\u671f\u9593\u958b\u59cb"
+    },
+    "current_period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u73fe\u5728\u306e\u8acb\u6c42\u671f\u9593\u7d42\u4e86"
+    },
+    "cancel_at_period_end": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u671f\u9593\u7d42\u4e86\u6642\u306b\u30ad\u30e3\u30f3\u30bb\u30eb"
+    },
+    "last_payment_status": {
+      "type": "string",
+      "enum": [
+        "succeeded",
+        "failed",
+        "pending",
+        ""
+      ],
+      "default": "",
+      "description": "\u6700\u65b0\u306e\u652f\u6255\u3044\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "source": {
+      "type": "string",
+      "description": "\u7533\u8fbc\u5143\uff08plan_confirm\u7b49\uff09"
+    },
+    "campaign_applied": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u9069\u7528\u30d5\u30e9\u30b0\uff08\u30ad\u30e3\u30f3\u30da\u30fc\u30f3\u5bfe\u8c61\u8005\u306f\u5e38\u306bfalse\uff09"
     },
     "description": {
       "type": "string",

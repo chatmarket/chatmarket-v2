@@ -39,26 +39,14 @@ export default function PlanConfirm() {
     });
   }, []);
 
-  // Stripe決済成功時：プランを自動有効化
+  // Stripe決済成功時：案内のみ表示（PlanSubscription有効化はWebhook経由のみ）
+  // ❌ Red Line: 成功URLへの遷移だけでactiveにしない
   useEffect(() => {
-    if (stripeSuccess && user && planIds.length > 0) {
-      const activatePlans = async () => {
-        try {
-          const planInfo = {
-            subscribed_plans: planIds,
-            subscription_activated_at: new Date().toISOString(),
-            last_payment_status: "completed",
-          };
-          await base44.auth.updateMe(planInfo);
-          toast.success("プランが有効になりました！");
-          setTimeout(() => navigate("/creator-dashboard"), 2000);
-        } catch (err) {
-          toast.error("プラン有効化に失敗しました");
-        }
-      };
-      activatePlans();
+    if (stripeSuccess && user) {
+      toast.success("お申し込みありがとうございます！Stripe処理完了後にプランが有効になります。");
+      setTimeout(() => navigate("/creator-dashboard"), 2500);
     }
-  }, [stripeSuccess, user, planIds]);
+  }, [stripeSuccess, user]);
 
   const selectedPlans = planIds.map((id) => ({ id, ...PLAN_INFO[id] })).filter((p) => p.name);
   const totalPrice = selectedPlans.reduce((sum, p) => sum + p.price, 0);
@@ -89,19 +77,52 @@ export default function PlanConfirm() {
 
   const handleCrowdfunding = () => navigate("/crowdfunding/new");
 
-  const handlePaidPlan = (planId) => {
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handlePaidPlan = async (planId) => {
     // キャンペーン対象者は対象プランへのStripe決済を作成しない
     if ((isAdmin || isCampaign) && CAMPAIGN_COVERED_PLANS.includes(planId)) {
       toast.info("キャンペーン適用中のため、追加料金なしで利用できます");
       return;
     }
-    const months = 12;
-    const stripeLink = getStripeLinkByPlan(planId, months);
-    if (stripeLink) {
-      const returnUrl = `${window.location.origin}/plan-confirm?plans=${planId}&stripe_success=true`;
-      window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
-    } else {
-      toast.error("決済リンクが見つかりません");
+
+    setCheckoutLoading(true);
+    try {
+      const successUrl = `${window.location.origin}/plan-confirm?plans=${planId}&stripe_success=true`;
+      const cancelUrl = `${window.location.origin}/plan-confirm?plans=${planId}`;
+
+      // バックエンドでCheckout Session（subscription mode）を作成
+      const res = await base44.functions.invoke("createPlanCheckoutSession", {
+        planId,
+        successUrl,
+        cancelUrl,
+      });
+
+      if (res.data?.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl;
+      } else if (res.data?.error === 'stripe_price_not_configured') {
+        // Price ID未設定の場合はPayment Linkにフォールバック
+        const stripeLink = getStripeLinkByPlan(planId === 'call-anser' ? 'call' : planId, 12);
+        if (stripeLink) {
+          const returnUrl = `${window.location.origin}/plan-confirm?plans=${planId}&stripe_success=true`;
+          window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
+        } else {
+          toast.error("決済リンクが見つかりません");
+        }
+      } else {
+        toast.error(res.data?.message || "決済セッションの作成に失敗しました");
+      }
+    } catch (err) {
+      // バックエンド失敗時はPayment Linkにフォールバック
+      const stripeLink = getStripeLinkByPlan(planId === 'call-anser' ? 'call' : planId, 12);
+      if (stripeLink) {
+        const returnUrl = `${window.location.origin}/plan-confirm?plans=${planId}&stripe_success=true`;
+        window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
+      } else {
+        toast.error("決済セッションの作成に失敗しました");
+      }
+    } finally {
+      setCheckoutLoading(false);
     }
   };
 
@@ -202,10 +223,11 @@ export default function PlanConfirm() {
           <Button
             key={plan.id}
             onClick={() => handlePaidPlan(plan.id)}
+            disabled={checkoutLoading}
             className="w-full h-12 text-base font-bold gap-2 bg-primary hover:bg-primary/90"
           >
             <ExternalLink className="w-4 h-4" />
-            {plan.name}を申し込む
+            {checkoutLoading ? "処理中..." : `${plan.name}を申し込む（月額¥3,300）`}
           </Button>
         ))}
 
