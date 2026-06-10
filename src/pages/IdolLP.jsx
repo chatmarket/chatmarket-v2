@@ -230,65 +230,7 @@ export default function IdolLP() {
        </div>
       </section>
 
-      {/* ── NEW FEATURES: アイドル特化 3大機能 ── */}
-
-      {/* ブロック01: デジタルチェキ */}
-      <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #0d001a 0%, #1a000d 100%)" }}>
-        <div className="max-w-3xl mx-auto space-y-10">
-          <div className="text-center space-y-3">
-            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>NEW FEATURE 01</p>
-            <h2 className="text-2xl sm:text-3xl font-black leading-snug">
-              タレントの価値を守るスクショ防止機能付き<br />オンラインチェキ・サイン会<br />
-              <span style={{ background: "linear-gradient(135deg, #f9a8d4, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                「リアルタイム・ツーショット・<br className="sm:hidden" />デジタルチェキ」
-              </span>
-            </h2>
-            <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto">
-              1対1の通話中に、推しとファンの最高の瞬間をその場でパシャリ！<br />
-              通話終了後、アイドルがスマホ画面で直接サインやメッセージを手書きして、ファンのマイページへ即時納品されます。
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              {
-                emoji: "👤",
-                title: "顔出しNGでも安心",
-                desc: "ファン側がカメラOFFの場合でも、自動でファンアイコンとアイドルが並ぶ優しい設計。",
-                color: "#ec4899",
-              },
-              {
-                emoji: "🛡️",
-                title: "SAMPLE透かしで海賊版0",
-                desc: "購入確定前のプレビューに「SAMPLE」ウォーターマークを多重配置。不正スクショを完全防止。",
-                color: "#a855f7",
-              },
-              {
-                emoji: "💰",
-                title: "原価は完全0円",
-                desc: "フィルム代などの実費は一切不要。デジタルなので在庫リスクもゼロ。売上はすべてあなたの利益に。",
-                color: "#f59e0b",
-              },
-            ].map((item) => (
-              <div key={item.title} className="p-5 rounded-2xl space-y-3 hover:scale-[1.02] transition-transform"
-                style={{ background: `${item.color}10`, border: `1px solid ${item.color}30` }}>
-                <div className="text-3xl">{item.emoji}</div>
-                <h3 className="font-black text-sm" style={{ color: item.color }}>{item.title}</h3>
-                <p className="text-white/60 text-xs leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* ラベル */}
-          <div className="text-center">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
-              style={{ background: "rgba(236,72,153,0.15)", border: "1px solid rgba(236,72,153,0.4)", color: "#f9a8d4" }}>
-              ✨ アイドルの現場に寄り添った神仕様
-            </span>
-          </div>
-        </div>
-      </section>
-
+      {/* ── NEW FEATURES: アイドル特化機能 ── */}
       {/* ブロック02: 物販 & データ販売 */}
       <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #1a000d 0%, #001a0d 100%)" }}>
         <div className="max-w-3xl mx-auto space-y-10">
