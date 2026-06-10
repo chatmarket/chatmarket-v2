@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Download, Package } from "lucide-react";
+import { Download } from "lucide-react";
 import ProductPurchaseModal from "./ProductPurchaseModal";
 
 export default function ProductCard({ product }) {
@@ -19,14 +19,14 @@ export default function ProductCard({ product }) {
           <img src={product.image_url} alt={product.title} className="w-full aspect-square object-cover" />
         ) : (
           <div className="w-full aspect-square bg-muted flex items-center justify-center">
-            {product.is_digital ? <Download className="w-10 h-10 text-muted-foreground" /> : <Package className="w-10 h-10 text-muted-foreground" />}
+            <Download className="w-10 h-10 text-muted-foreground" />
           </div>
         )}
         <div className="p-3 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <p className="font-medium text-foreground text-sm line-clamp-2">{product.title}</p>
-            <Badge className={`text-xs shrink-0 ${product.is_digital ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"}`}>
-              {product.is_digital ? "デジタル" : "グッズ"}
+            <Badge className="text-xs shrink-0 bg-primary/20 text-primary">
+              デジタル
             </Badge>
           </div>
           {product.description && <p className="text-xs text-muted-foreground line-clamp-2">{product.description}</p>}
@@ -38,8 +38,8 @@ export default function ProductCard({ product }) {
               onClick={() => setShowModal(true)}
               className="gap-1.5"
             >
-              {product.is_digital ? <Download className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
-              {soldOut ? "売切れ" : product.is_digital ? "購入" : "購入"}
+              <Download className="w-3.5 h-3.5" />
+              {soldOut ? "売切れ" : "購入"}
             </Button>
           </div>
           {product.stock !== -1 && (

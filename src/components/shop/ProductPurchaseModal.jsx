@@ -1,26 +1,14 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Download, Package, Loader2, ShoppingCart } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
 export default function ProductPurchaseModal({ open, onClose, product }) {
   const [loading, setLoading] = useState(false);
-  const [shipping, setShipping] = useState({ name: "", postal: "", address: "", phone: "" });
-
-  const isDigital = product?.is_digital;
 
   const handlePurchase = async () => {
-    if (!isDigital) {
-      if (!shipping.name || !shipping.postal || !shipping.address) {
-        toast.error("お届け先情報を入力してください");
-        return;
-      }
-    }
-
     setLoading(true);
     try {
       const user = await base44.auth.me().catch(() => null);
@@ -30,8 +18,6 @@ export default function ProductPurchaseModal({ open, onClose, product }) {
       }
 
       const payload = { product_id: product.id };
-      if (!isDigital) payload.shipping = shipping;
-
       const res = await base44.functions.invoke("createProductCheckout", payload);
       const { checkout_url } = res.data;
       window.location.href = checkout_url;
