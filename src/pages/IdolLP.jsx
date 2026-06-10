@@ -214,8 +214,8 @@ export default function IdolLP() {
          </div>
          <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ boxShadow: "0 0 60px rgba(236,72,153,0.3), 0 0 120px rgba(168,85,247,0.15)" }}>
            <img 
-             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/1d18c161f_generated_image.png"
-             alt="日本のアイドルとファンが1対1ビデオ通話でエールコインを送り合っている推し活シーン"
+             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/e46b6651a_chatmarketidol2.png"
+             alt="アイドルとファンが1対1ビデオ通話でエールコインを送り合っている推し活シーン"
              className="w-full h-auto object-cover"
            />
          </div>
