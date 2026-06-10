@@ -593,8 +593,8 @@ export default function FortuneLP() {
               }}
             >
               <img
-                src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/27cf5990b_generated_image.png"
-                alt="女性占い師がオンラインで鑑定中"
+                src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/0d68e9d13_generated_image.png"
+                alt="女性占い師が1対1ビデオ通話で恋愛相談を行っている様子"
                 className="w-full h-auto object-cover aspect-[4/3] md:aspect-auto"
               />
             </motion.div>
