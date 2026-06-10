@@ -7,6 +7,9 @@ import ProductPurchaseModal from "./ProductPurchaseModal";
 export default function ProductCard({ product }) {
   const [showModal, setShowModal] = useState(false);
 
+  // 物理グッズは現在非公開（将来対応候補）
+  if (!product.is_digital) return null;
+
   const soldOut = product.stock !== -1 && product.sold_count >= product.stock;
 
   return (

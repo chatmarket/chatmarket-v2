@@ -12,11 +12,12 @@ import { toast } from "sonner";
 
 const FILE_ACCEPT = ".pdf,.mp3,.zip,.jpg,.png,.mp4";
 
+// 物理グッズ販売は将来候補・現在非公開。is_digital は常に true で固定。
 const EMPTY_FORM = {
   title: "", description: "", price: 500, stock: -1,
-  is_digital: false, delivery_mode: "instant",
+  is_digital: true, delivery_mode: "instant",
   file_url: "", file_name: "", file_type: "other",
-  image_url: "", category: "goods",
+  image_url: "", category: "digital",
   custom_order_description: "", delivery_days_estimate: 7,
 };
 
@@ -69,10 +70,11 @@ export default function ProductManagePanel({ channel }) {
     try {
       await base44.entities.Product.create({
         ...form,
+        is_digital: true, // 物理グッズは現在非公開・強制的にデジタルのみ
         channel_id: channel.id,
         channel_name: channel.name,
         owner_email: channel.owner_email,
-        category: form.is_digital ? "digital" : "goods",
+        category: "digital",
         sold_count: 0,
         is_active: true,
       });
@@ -102,7 +104,7 @@ export default function ProductManagePanel({ channel }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-foreground">物販・デジタル販売</h3>
+        <h3 className="font-semibold text-foreground">デジタルコンテンツ販売</h3>
         <Button size="sm" onClick={() => setShowForm(v => !v)} className="gap-2">
           <Plus className="w-4 h-4" />新規登録
         </Button>
@@ -111,17 +113,9 @@ export default function ProductManagePanel({ channel }) {
       {showForm && (
         <div className="bg-muted/40 border border-border rounded-xl p-4 space-y-4">
 
-          {/* デジタル商品トグル */}
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">デジタル商品</Label>
-            <Switch
-              checked={form.is_digital}
-              onCheckedChange={v => setForm(f => ({ ...f, is_digital: v, delivery_mode: "instant" }))}
-            />
-          </div>
-
-          {/* デジタルの場合：配信モード選択 */}
-          {form.is_digital && (
+          {/* デジタル商品のみ対応（物理グッズは将来候補・現在非公開） */}
+          {/* 配信モード選択 */}
+          {(
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -132,7 +126,7 @@ export default function ProductManagePanel({ channel }) {
                   <Zap className={`w-4 h-4 ${form.delivery_mode === "instant" ? "text-primary" : "text-muted-foreground"}`} />
                   <span className="text-xs font-semibold text-foreground">即時配信</span>
                 </div>
-                <p className="text-xs text-muted-foreground">事前にファイルをアップ。購入と同時に自動でDL付与（アイドル向け既製品）</p>
+                <p className="text-xs text-muted-foreground">事前にファイルをアップ。購入と同時に自動でDL付与（PDF・音声・資料販売）</p>
               </button>
               <button
                 type="button"
@@ -245,7 +239,7 @@ export default function ProductManagePanel({ channel }) {
                 <img src={product.image_url} className="w-12 h-12 object-cover rounded-lg shrink-0" alt="" />
               ) : (
                 <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center shrink-0">
-                  {product.is_digital ? <Download className="w-5 h-5 text-muted-foreground" /> : <Package className="w-5 h-5 text-muted-foreground" />}
+                  <Download className="w-5 h-5 text-muted-foreground" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
@@ -256,9 +250,7 @@ export default function ProductManagePanel({ channel }) {
                       {product.delivery_mode === "custom_order" ? "オーダーメイド" : "即時配信"}
                     </Badge>
                   )}
-                  {!product.is_digital && (
-                    <Badge className="text-xs shrink-0 bg-secondary text-secondary-foreground">グッズ</Badge>
-                  )}
+                  {/* 物理グッズバッジは非表示（将来候補） */}
                 </div>
                 <p className="text-sm text-muted-foreground">¥{product.price?.toLocaleString()} · {product.sold_count || 0}件販売</p>
               </div>

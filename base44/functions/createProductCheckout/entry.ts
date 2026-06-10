@@ -15,6 +15,11 @@ Deno.serve(async (req) => {
     if (!product) return Response.json({ error: 'Product not found' }, { status: 404 });
     if (!product.is_active) return Response.json({ error: 'Product is not active' }, { status: 400 });
 
+    // 物理グッズは現在非公開（将来候補）
+    if (!product.is_digital) {
+      return Response.json({ error: '物理グッズ販売は現在準備中です。' }, { status: 400 });
+    }
+
     // 在庫チェック
     if (product.stock !== -1 && product.stock <= product.sold_count) {
       return Response.json({ error: '在庫切れです' }, { status: 400 });

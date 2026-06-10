@@ -129,7 +129,8 @@ export default function MyPurchases() {
   );
 
   const digitalOrders = orders.filter(o => o.is_digital && o.status === "completed");
-  const physicalOrders = orders.filter(o => !o.is_digital);
+  // 物理グッズは現在非公開（将来候補）
+  // const physicalOrders = orders.filter(o => !o.is_digital);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -152,41 +153,7 @@ export default function MyPurchases() {
           )}
         </section>
 
-        {/* 物理グッズ */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Package className="w-5 h-5 text-primary" />グッズ注文
-          </h2>
-          {isLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-          ) : physicalOrders.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4">グッズの注文履歴はありません</p>
-          ) : (
-            <div className="space-y-3">
-              {physicalOrders.map(order => {
-                const statusLabel = { waiting: "受付済", preparing: "準備中", shipped: "発送済", delivered: "お届け済" };
-                const statusColor = { waiting: "bg-muted text-muted-foreground", preparing: "bg-yellow-500/20 text-yellow-400", shipped: "bg-blue-500/20 text-blue-400", delivered: "bg-green-500/20 text-green-400" };
-                return (
-                  <div key={order.id} className="bg-card border border-border rounded-xl p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-foreground">{order.product_title}</p>
-                        <p className="text-sm text-muted-foreground">{order.channel_name}</p>
-                        <p className="text-sm text-muted-foreground mt-1">¥{order.price_yen?.toLocaleString()} · {format(new Date(order.created_date), "yyyy/MM/dd", { locale: ja })}</p>
-                      </div>
-                      <Badge className={`text-xs shrink-0 ${statusColor[order.shipping_status] || "bg-muted text-muted-foreground"}`}>
-                        {statusLabel[order.shipping_status] || order.status}
-                      </Badge>
-                    </div>
-                    {order.tracking_number && (
-                      <p className="mt-2 text-xs text-muted-foreground">追跡番号: {order.tracking_number}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        {/* 物理グッズ注文セクション: 現在非公開（将来候補） */}
       </div>
     </div>
   );
