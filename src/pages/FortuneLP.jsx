@@ -832,7 +832,7 @@ export default function FortuneLP() {
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 shrink-0" style={{ color: MYSTIC.purpleLight }} />
               <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
-                初期メンバーとして、<br />占い師さんの声を聞かせてください
+                初期メンバー募集と<br />キャンペーンについて
               </h2>
             </div>
 
@@ -899,7 +899,7 @@ export default function FortuneLP() {
                 color: "#fff",
               }}
             >
-              占い師向けLPから応募する →
+              初期メンバーとして応募する →
             </motion.button>
           </motion.div>
         </div>
