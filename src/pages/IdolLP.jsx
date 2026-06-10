@@ -204,13 +204,28 @@ export default function IdolLP() {
 
       {/* ── ONE-ON-ONE CALL IMAGE ── */}
       <section className="py-16 sm:py-20 px-5" style={{ background: "#0d001a" }}>
-       <div className="max-w-4xl mx-auto">
-         <div className="rounded-2xl overflow-hidden shadow-2xl">
+       <div className="max-w-4xl mx-auto space-y-4">
+         <div className="text-center space-y-2">
+           <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>1対1ビデオ通話</p>
+           <h2 className="text-2xl sm:text-3xl font-black leading-snug">
+             推しとの<span style={{ background: "linear-gradient(135deg, #f0abfc, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>奇跡の時間</span>が、ここにある。
+           </h2>
+           <p className="text-white/50 text-sm">エールコインを送って気持ちを届けよう。ファンも推しも笑顔になれる推し活の新形態。</p>
+         </div>
+         <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ boxShadow: "0 0 60px rgba(236,72,153,0.3), 0 0 120px rgba(168,85,247,0.15)" }}>
            <img 
-             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/27cf5990b_generated_image.png"
-             alt="1対1オンラインビデオ通話"
+             src="https://media.base44.com/images/public/69c1b541d5db3555833124aa/1d18c161f_generated_image.png"
+             alt="日本のアイドルとファンが1対1ビデオ通話でエールコインを送り合っている推し活シーン"
              className="w-full h-auto object-cover"
            />
+         </div>
+         <div className="flex flex-wrap justify-center gap-3 pt-2">
+           {["💰 エールコインが飛び交う", "📱 スマホ1台でOK", "💕 ファンも推しも幸せ", "✨ 推し活の新定番"].map(tag => (
+             <span key={tag} className="px-3 py-1.5 rounded-full text-xs font-bold"
+               style={{ background: "rgba(236,72,153,0.15)", border: "1px solid rgba(236,72,153,0.4)", color: "#f9a8d4" }}>
+               {tag}
+             </span>
+           ))}
          </div>
        </div>
       </section>
