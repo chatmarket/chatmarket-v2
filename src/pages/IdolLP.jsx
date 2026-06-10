@@ -250,9 +250,9 @@ export default function IdolLP() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="p-6 rounded-2xl space-y-4" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
               <div className="text-3xl">⚡</div>
-              <h3 className="font-black text-base" style={{ color: "#fcd34d" }}>即時配信モード（不労所得）</h3>
+              <h3 className="font-black text-base" style={{ color: "#fcd34d" }}>決済後すぐに届けられるデジタル販売</h3>
               <p className="text-white/60 text-sm leading-relaxed">
-                限定ボイス（MP3）やPDFデータは、一度アップすれば24時間システムが自動で納品。完全な不労所得が作れます。
+                限定ボイス（MP3）やPDFデータは、一度アップすれば24時間システムが自動で納品。ファンはいつでも購入できます。
               </p>
               <div className="flex flex-wrap gap-2">
                 {["限定ボイス", "写真集PDF", "MP3", "ZIP"].map(t => (
