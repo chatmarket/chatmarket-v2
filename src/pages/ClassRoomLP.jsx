@@ -41,8 +41,8 @@ const SESSION_TYPES = [
   },
   {
     icon: Users,
-    label: "少人数\nグループレッスン",
-    desc: "講師1名に対して最大9名。仲間と学ぶ双方向授業。",
+    label: "1対2〜最大9名\nグループレッスン",
+    desc: "講師1名に対して2〜9名の少人数クラス。仲間と学ぶ双方向授業。",
     color: "from-violet-500/20 to-violet-500/5",
     border: "border-violet-500/30",
   },
@@ -75,7 +75,7 @@ export default function ClassRoomLP() {
             <span className="text-white">1対1のプライベート指導から</span>
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-primary">
-              最大1対9の少人数グループレッスンまで。
+              1対2〜最大9名の少人数グループレッスンまで。
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -267,7 +267,7 @@ export default function ClassRoomLP() {
             {[
               { step: "01", title: "クラスを作成", desc: "タイトルと招待コードを設定。30秒で完了。" },
               { step: "02", title: "生徒に招待リンクを共有", desc: "6桁コード付きURLを送るだけ。チケット購入後に入室可能。" },
-              { step: "03", title: "ライブ授業スタート", desc: "最大9名が同時接続。HD映像でリアルタイム指導。" },
+              { step: "03", title: "ライブ授業スタート", desc: "2〜最大9名が同時接続。HD映像でリアルタイム指導。" },
             ].map((s) => (
               <div key={s.step} className="text-center space-y-3">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto">
@@ -305,7 +305,7 @@ export default function ClassRoomLP() {
               </div>
               <ul className="space-y-2.5">
                 {[
-                  "グループレッスン開設・運営（最大9名）",
+                  "少人数レッスン開設・運営（1対2〜最大9名）",
                   "チケット販売による収益化",
                   ["収益還元率", "70%", "text-yellow-400"],
                 ].map((item) => (
@@ -338,7 +338,7 @@ export default function ClassRoomLP() {
                   <span className="font-serif text-4xl font-black text-violet-300">¥3,300</span>
                   <span className="text-muted-foreground text-sm mb-1">/月</span>
                 </div>
-                <p className="text-xs text-violet-300/80 mt-1 font-bold">★ キャンペーン対象者は12か月間月額無料</p>
+                <p className="text-xs text-violet-300/80 mt-1 font-bold">★ 初期メンバー向け：Basicプラン12か月無料（条件あり）</p>
               </div>
               <ul className="space-y-2.5">
                 {[
@@ -377,8 +377,8 @@ export default function ClassRoomLP() {
           <h2 className="font-serif text-2xl font-black text-center mb-10">よくある質問</h2>
           <div className="space-y-4">
             {[
-              { q: "無料プランでもグループレッスンを開催できますか？", a: "はい。無料プランからすぐにクラスを開設・開催できます。収益還元率は70%です。" },
-              { q: "1対1と1対9の両方を使えますか？", a: "はい。BASICプランなら1対1プライベートセッション（ビデオ通話）と少人数グループレッスンの両方が利用できます。" },
+              { q: "無料プランでも少人数レッスンを開催できますか？", a: "はい。無料プランからすぐに1対2〜最大9名のクラスを開設・開催できます。収益還元率は70%です。" },
+              { q: "1対1と少人数グループの両方を使えますか？", a: "はい。BASICプランなら1対1プライベートセッション（ビデオ通話）と1対2〜最大9名の少人数グループレッスンの両方が利用できます。" },
               { q: "生徒は月額プランに加入する必要がありますか？", a: "いいえ。生徒は無料登録後、受講したい授業のチケット代を支払うだけで参加できます。月額プランへの加入は不要です。" },
               { q: "生徒はどうやって入室しますか？", a: "招待リンク（6桁コード付き）と事前購入チケットがあれば入室できます。チケット未購入の生徒は自動ブロックされます。" },
               { q: "スマホでも使えますか？", a: "はい。PCブラウザ・スマホブラウザ（Chrome/Safari）に対応しています。" },

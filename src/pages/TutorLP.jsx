@@ -7,7 +7,7 @@ import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
 const STATS = [
   { value: "85%", label: "講師収益還元率", sub: "業界最高水準" },
   { value: "0円", label: "初期費用", sub: "完全無料スタート" },
-  { value: "12ヶ月", label: "サブスク無料", sub: "参入障壁ゼロ" },
+  { value: "最大9名", label: "少人数レッスン対応", sub: "1対2〜最大9名まで" },
 ];
 
 const COMPARISON = [
@@ -15,10 +15,10 @@ const COMPARISON = [
     label: "Chat Market",
     highlight: true,
     items: [
-      "✓ 講師収益還元率 85%を実現",
-      "✓ PRISM連携による高画質・低遅延",
+      "✓ 講師収益還元率 85%（最大95%）を実現",
+      "✓ 1対1個別指導から1対2〜最大9名の少人数レッスンまで",
       "✓ 即時性の高い精算と透明な報酬体系",
-      "✓ 12ヶ月間の無料サブスク",
+      "✓ 初期メンバー向けBasicプラン12か月無料",
     ],
   },
   {
@@ -35,19 +35,19 @@ const COMPARISON = [
 
 const FEATURES = [
   {
-    icon: "📹",
-    title: "高画質配信",
-    desc: "PRISM Live Studioとの連携により、複雑な板書や教材も鮮明に伝える。",
+    icon: "👤",
+    title: "1対1個別指導",
+    desc: "生徒とマンツーマンで丁寧に指導。個別の課題に集中した指導ができます。",
   },
   {
-    icon: "🔒",
-    title: "鉄壁の防犯",
-    desc: "防犯メディア直営だからこその安心感。トラブルを未然に防ぐセキュアな環境。",
+    icon: "👥",
+    title: "1対2〜最大9名の少人数レッスン",
+    desc: "小グループでの授業に対応。兄弟・友人グループ・少人数補習にも使えます。",
   },
   {
     icon: "☑️",
-    title: "自律型管理",
-    desc: "スケジュール、決済、顧客管理をワンストップ。事務作業を極限まで削減し、教えることに集中。",
+    title: "受付・決済・指導まで完結",
+    desc: "スケジュール、決済、授業管理をワンストップ。事務作業を極限まで削減し、教えることに集中。",
   },
 ];
 
@@ -116,7 +116,8 @@ export default function TutorLP() {
             THE HOME TEACHER
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 leading-relaxed">
-            家庭教師プロジェクト：教育者の価値を最大化する次世代プラットフォーム
+            1対1個別指導から、1対2〜最大9名の少人数レッスンまで。<br />
+            個別指導にも、オンライン塾にも使える教育者向けプラットフォーム。
           </p>
           <div className="pt-8">
             <button
@@ -127,7 +128,7 @@ export default function TutorLP() {
               講師として登録する
             </button>
             <p className="text-sm text-slate-500 mt-4">
-              ※12ヶ月無料キャンペーンは先着100名様限定です。
+              ※Basicプラン12か月無料の適用には条件があります。
             </p>
           </div>
         </div>
@@ -254,31 +255,74 @@ export default function TutorLP() {
         </div>
       </section>
 
-      {/* 12ヶ月間サブスク無料 */}
+      {/* 2つの指導スタイル */}
+      <section className="py-20 px-5">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-block w-1 h-8 bg-yellow-500 rounded-full mb-4" />
+          <h2 className="text-3xl font-black text-blue-900 mb-10">2つの指導スタイル</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 1対1 */}
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-8 space-y-4">
+              <div className="text-4xl">👤</div>
+              <h3 className="text-xl font-black text-blue-900">1対1 個別指導</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                生徒と1対1のマンツーマンビデオ通話。個別の課題にじっくり向き合い、丁寧に指導できます。
+              </p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-0.5">✓</span>既存の生徒・保護者へ案内しやすい</li>
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-0.5">✓</span>追加指導・補習にも活用できる</li>
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-0.5">✓</span>受付・決済・指導までオンラインで完結</li>
+              </ul>
+            </div>
+
+            {/* 1対2〜9 */}
+            <div className="bg-indigo-50 border-2 border-indigo-300 rounded-2xl p-8 space-y-4">
+              <div className="text-4xl">👥</div>
+              <h3 className="text-xl font-black text-blue-900">1対2〜最大9名の少人数レッスン</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                オンライン塾・少人数クラスに対応。顔が見える距離感で、質問しやすい環境を作れます。
+              </p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>兄弟・友人グループ・少人数補習に対応</li>
+                <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>生徒も質問しやすく、講師も管理しやすい</li>
+                <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>チケット制で確実に収益化できる</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Basicプラン12か月無料 */}
       <section className="py-20 px-5">
         <div className="max-w-3xl mx-auto">
           <div className="inline-block w-1 h-8 bg-yellow-500 rounded-full mb-4" />
-          <h2 className="text-3xl font-black text-blue-900 mb-10">12ヶ月間サブスク無料</h2>
+          <h2 className="text-3xl font-black text-blue-900 mb-10">初期メンバー向け：Basicプラン12か月無料</h2>
 
           <div className="bg-blue-900 text-white p-8 rounded-3xl space-y-6">
-            <p className="text-xl font-bold">完全リスクゼロのスタートアップ</p>
+            <p className="text-xl font-bold">リスクゼロで始められる</p>
             <p className="text-blue-100 leading-relaxed">
-              通常月額費用がかかるサブスクリプション機能を、今なら1年間完全に無料で提供します。
+              初期メンバーとして参加いただいた方は、Basicプランを最大12か月間無料で利用できます。
             </p>
             <ul className="space-y-3 text-blue-100">
               <li className="flex items-start gap-3">
                 <span className="text-yellow-400 font-bold mt-1">•</span>
-                <span>月額固定費0円で全機能開放</span>
+                <span>1対1個別指導・少人数レッスンの全機能が利用可能</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-yellow-400 font-bold mt-1">•</span>
-                <span>1対1通話、予約管理、教材共有を網羅</span>
+                <span>収益還元率85%（実績に応じて最大95%）</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-yellow-400 font-bold mt-1">•</span>
-                <span>1年間の猶予期間で自身の顧客ベースを構築</span>
+                <span>12か月の間に自分の生徒・顧客基盤を構築できる</span>
               </li>
             </ul>
+            <p className="text-xs text-blue-300 leading-relaxed">
+              ※Basicプラン12か月無料の適用には条件があります。<br />
+              ※12か月無料期間終了後、自動的に課金が開始されることはありません。継続利用を希望する場合は、利用者本人による有料プラン申込が必要です。<br />
+              ※収益還元率は対象プラン・適用条件により異なります。最大95%は所定条件を満たした場合のプログレッシブインセンティブ適用時の還元率です。
+            </p>
           </div>
         </div>
       </section>
@@ -363,8 +407,8 @@ export default function TutorLP() {
             </span>
           </button>
           <p className="text-xs text-slate-500">
-            www.chatmarket.info/lp/tutor<br />
-            ※12ヶ月無料キャンペーンは先着100名様限定です。
+            生徒一人ひとりに近い距離で教えられるオンライン指導環境。<br />
+            ※Basicプラン12か月無料の適用には条件があります。
           </p>
         </div>
       </section>

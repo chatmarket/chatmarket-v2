@@ -403,7 +403,7 @@ export default function FortuneLP() {
             }}
           >
             <p className="text-xs font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>
-              🎁 キャンペーン実施中
+              ✨ 初期メンバー向け特典
             </p>
             <p className="text-2xl sm:text-3xl font-black text-white leading-tight">
               <span style={{ color: MYSTIC.gold }}>Basicプラン</span>を<br />12ヶ月間<span style={{ color: MYSTIC.gold }}>無料</span>で利用可能
@@ -524,7 +524,7 @@ export default function FortuneLP() {
                 className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white/70 border transition-all hover:border-white/40"
                 style={{ borderColor: MYSTIC.border, background: "rgba(255,255,255,0.04)" }}
               >
-                12ヶ月無料キャンペーンを確認する
+                詳細・条件を確認する
               </button>
             </div>
           </motion.div>
@@ -888,6 +888,17 @@ export default function FortuneLP() {
             <p className="text-sm text-white/65 leading-relaxed">
               あなたの言葉や鑑定を必要としている人へ届けるために。まずは、Chat Marketでオンライン鑑定の第一歩を始めてみませんか。
             </p>
+
+            <div
+              className="rounded-xl p-4 space-y-1"
+              style={{ background: "rgba(212,175,55,0.05)", border: `1px solid rgba(212,175,55,0.15)` }}
+            >
+              <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>🎓 将来の活動拡張について</p>
+              <p className="text-xs text-white/50 leading-relaxed">
+                1対1鑑定だけでなく、将来的には占い講座や少人数レッスンにも対応予定です。<br />
+                まずは1対1鑑定から始め、慣れてきたら活動の幅を広げることもできます。
+              </p>
+            </div>
 
             <motion.button
               whileTap={{ scale: 0.97 }}

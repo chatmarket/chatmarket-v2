@@ -291,7 +291,7 @@ export default function Home() {
             Basicプラン<span style={{ color: "#f5e27a" }}>12か月無料</span>
           </p>
           <p className="relative text-xs sm:text-sm mt-2" style={{ color: "#c084fc" }}>
-            占い師・講師・配信者の方へ。あなたの活動ページを一緒に作ります
+            1対1相談・個別指導・少人数レッスンを始めたい方へ。あなたの活動ページを一緒に作ります
           </p>
           <p className="relative text-sm sm:text-base mt-3" style={{ color: "#d8b4fe" }}>
             条件を確認する → 今すぐ申し込み
