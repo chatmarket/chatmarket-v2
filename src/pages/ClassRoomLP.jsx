@@ -72,10 +72,8 @@ export default function ClassRoomLP() {
             🎓 オンラインレッスン・コーチング
           </Badge>
           <h1 className="font-serif text-4xl md:text-6xl font-black leading-tight">
-            <span className="text-white">1対1のプライベート指導から</span>
-            <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-primary">
-              1対2〜最大9名の少人数グループレッスンまで。
+              1対2〜最大9名の少人数グループレッスン。
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
