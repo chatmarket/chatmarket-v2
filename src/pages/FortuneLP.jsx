@@ -893,10 +893,10 @@ export default function FortuneLP() {
               className="rounded-xl p-4 space-y-1"
               style={{ background: "rgba(212,175,55,0.05)", border: `1px solid rgba(212,175,55,0.15)` }}
             >
-              <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>🎓 将来の活動拡張について</p>
+              <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>🎓 活動の幅を広げたい方へ</p>
               <p className="text-xs text-white/50 leading-relaxed">
-                1対1鑑定だけでなく、将来的には占い講座や少人数レッスンにも対応予定です。<br />
-                まずは1対1鑑定から始め、慣れてきたら活動の幅を広げることもできます。
+                1対1鑑定だけでなく、占い講座や少人数レッスンにも活用できます。<br />
+                まずは1対1鑑定から始め、慣れてきたらグループレッスンへ活動の幅を広げることもできます。
               </p>
             </div>
 
