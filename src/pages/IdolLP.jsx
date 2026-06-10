@@ -231,43 +231,28 @@ export default function IdolLP() {
       </section>
 
       {/* ── NEW FEATURES: アイドル特化機能 ── */}
-      {/* ブロック02: 物販 & データ販売 */}
+      {/* ブロック02: デジタルコンテンツ販売 */}
       <section className="py-20 px-5" style={{ background: "linear-gradient(180deg, #1a000d 0%, #001a0d 100%)" }}>
         <div className="max-w-3xl mx-auto space-y-10">
           <div className="text-center space-y-3">
             <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#10b981" }}>NEW FEATURE 02</p>
             <h2 className="text-2xl sm:text-3xl font-black leading-snug">
-              配送先エラーゼロの安心グッズ物販 ＆<br />
               <span style={{ background: "linear-gradient(135deg, #6ee7b7, #10b981)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                寝ている間も自動で売れるデータ販売
+                寝ている間も販売できるデジタルコンテンツ販売
               </span>
             </h2>
             <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto">
-              Tシャツ・マフラータオル・アクスタなどの「物理グッズ」から、<br />
-              限定ボイスや未公開デジタル写真集などの「デジタルコンテンツ」まで、<br />
-              あなたのマイページがそのまま直営ECショップになります。
+              限定ボイス、未公開デジタル写真集、PDF教材、鑑定書、音声コンテンツなどを、<br />
+              あなたのマイページから販売できます。
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="p-6 rounded-2xl space-y-4" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
-              <div className="text-3xl">📦</div>
-              <h3 className="font-black text-base" style={{ color: "#6ee7b7" }}>グッズ物販（住所バリデーション付き）</h3>
-              <p className="text-white/60 text-sm leading-relaxed">
-                物理グッズの購入時、Stripe決済へ進む前に「配送先住所の入力」をシステムが強制チェック。聞き忘れ・発送トラブルが起きない設計です。
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {["Tシャツ", "タオル", "アクスタ", "ブロマイド"].map(t => (
-                  <span key={t} className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    style={{ background: "rgba(16,185,129,0.15)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.3)" }}>{t}</span>
-                ))}
-              </div>
-            </div>
             <div className="p-6 rounded-2xl space-y-4" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
               <div className="text-3xl">⚡</div>
-              <h3 className="font-black text-base" style={{ color: "#fcd34d" }}>インスタント配信モード（不労所得）</h3>
+              <h3 className="font-black text-base" style={{ color: "#fcd34d" }}>即時配信モード（不労所得）</h3>
               <p className="text-white/60 text-sm leading-relaxed">
-                限定ボイス（MP3）やPDFデータは、一度アップすれば24時間システムが自動で納品。在庫リスクも発送の手間もゼロの完全な不労所得が作れます。
+                限定ボイス（MP3）やPDFデータは、一度アップすれば24時間システムが自動で納品。完全な不労所得が作れます。
               </p>
               <div className="flex flex-wrap gap-2">
                 {["限定ボイス", "写真集PDF", "MP3", "ZIP"].map(t => (
@@ -276,12 +261,25 @@ export default function IdolLP() {
                 ))}
               </div>
             </div>
+            <div className="p-6 rounded-2xl space-y-4" style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)" }}>
+              <div className="text-3xl">📋</div>
+              <h3 className="font-black text-base" style={{ color: "#c084fc" }}>オーダーメイド納品</h3>
+              <p className="text-white/60 text-sm leading-relaxed">
+                注文後に個別作成して納品するモード。ファンへのメッセージ入り写真集、個別鑑定書など、あなただけのオリジナルコンテンツを届けられます。
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["個別メッセージ", "手書き風PDF", "カスタム素材"].map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{ background: "rgba(168,85,247,0.15)", color: "#c084fc", border: "1px solid rgba(168,85,247,0.3)" }}>{t}</span>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="text-center">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
-              style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#6ee7b7" }}>
-              🛒 直営ECショップとして即日開設可能
+              style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", color: "#fcd34d" }}>
+              ⚡ 決済完了後、マイページからダウンロード可能
             </span>
           </div>
         </div>
