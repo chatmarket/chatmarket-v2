@@ -267,7 +267,7 @@ export default function Home() {
       {/* ジャイアント・キリング速報バナー（グローバル固定） */}
       <GiantKillingBanner />
 
-      {/* サブスク無料キャンペーンバナー */}
+      {/* 初期メンバー募集バナー */}
       <Link to="/recruit" className="block">
         <div
           className="relative overflow-hidden rounded-2xl px-5 py-6 sm:py-8 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
@@ -282,16 +282,19 @@ export default function Home() {
             background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.25) 0%, transparent 70%)",
           }} />
           <p className="relative font-black text-base sm:text-lg" style={{ color: "#c084fc", letterSpacing: "0.05em" }}>
-            🎉 期間限定キャンペーン
+            ✨ 初期メンバー募集中
           </p>
           <p className="relative font-black text-2xl sm:text-3xl md:text-4xl mt-2" style={{ color: "#f5e27a", textShadow: "0 0 30px rgba(245,226,122,0.7)" }}>
-            キャンペーン対象者は
+            一緒に育ててくださる方へ
           </p>
           <p className="relative font-black text-3xl sm:text-4xl md:text-5xl mt-1" style={{ color: "#fff", textShadow: "0 0 40px rgba(168,85,247,0.9)" }}>
             Basicプラン<span style={{ color: "#f5e27a" }}>12か月無料</span>
           </p>
+          <p className="relative text-xs sm:text-sm mt-2" style={{ color: "#c084fc" }}>
+            占い師・講師・配信者の方へ。あなたの活動ページを一緒に作ります
+          </p>
           <p className="relative text-sm sm:text-base mt-3" style={{ color: "#d8b4fe" }}>
-            対象条件を確認する → 今すぐ申し込み
+            条件を確認する → 今すぐ申し込み
           </p>
         </div>
       </Link>
