@@ -319,19 +319,7 @@ export default function ChannelPage() {
                     </Link>
                   </>
                 )}
-                {chekis.length > 0 && (
-                  <Button
-                    size="sm"
-                    className="gap-2 w-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-300 border border-pink-500/40 font-bold"
-                    onClick={() => {
-                      if (!currentUser) { base44.auth.redirectToLogin(); return; }
-                      setSelectedCheki(chekis[0]);
-                    }}
-                  >
-                    <Camera className="w-4 h-4" />
-                    チェキを購入 ({chekis.length}種)
-                  </Button>
-                )}
+                {/* Digital Cheki feature is frozen / hidden for now. Cheki purchase button suppressed. */}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -357,7 +345,7 @@ export default function ChannelPage() {
       <div className="border-b border-border/50 mb-6 sm:mb-8 flex gap-1 overflow-x-auto scrollbar-hide">
         {[
           { key: "videos", icon: Video, label: `動画 (${videos.length})` },
-          ...(chekis.length > 0 ? [{ key: "cheki", icon: Camera, label: `チェキ (${chekis.length})`, badge: "NEW", badgeColor: "bg-pink-500/20 text-pink-400" }] : []),
+          // Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed.
           { key: "vault", icon: Gem, label: "宝物庫", badge: "NEW", badgeColor: "bg-amber-500/20 text-amber-400" },
           { key: "sanctum", icon: Shield, label: "The Sanctum", badge: "FC", badgeColor: "bg-purple-500/20 text-purple-400" },
           { key: "community", icon: UsersIcon, label: "コミュニティ" },
@@ -413,43 +401,7 @@ export default function ChannelPage() {
         </section>
       )}
 
-      {/* Cheki tab */}
-      {activeTab === "cheki" && (
-        <section>
-          <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
-            <Camera className="w-5 h-5 text-pink-400" /> デジタルチェキ
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            {chekis.map((cheki) => (
-              <div
-                key={cheki.id}
-                className="bg-card border border-pink-500/30 rounded-xl overflow-hidden cursor-pointer hover:border-pink-400/60 transition-all hover:shadow-lg hover:shadow-pink-500/10"
-                onClick={() => {
-                  if (!currentUser) { base44.auth.redirectToLogin(); return; }
-                  setSelectedCheki(cheki);
-                }}
-              >
-                {cheki.image_url ? (
-                  <div className="aspect-square w-full overflow-hidden">
-                    <img src={cheki.image_url} alt={cheki.title} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="aspect-square w-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-                    <Camera className="w-10 h-10 text-pink-400/40" />
-                  </div>
-                )}
-                <div className="p-3 space-y-1">
-                  <p className="font-bold text-sm truncate">{cheki.title}</p>
-                  <p className="text-pink-400 font-black">¥{cheki.price.toLocaleString()}</p>
-                  <Button size="sm" className="w-full mt-1 bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30 text-xs font-bold">
-                    購入する
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Digital Cheki feature is frozen / hidden for now. Cheki tab content suppressed. */}
 
       {/* Vault tab */}
       {activeTab === "vault" && (
@@ -471,16 +423,7 @@ export default function ChannelPage() {
         />
       )}
 
-      {/* チェキ購入モーダル */}
-      {selectedCheki && (
-        <ChekiPurchaseModal
-          cheki={selectedCheki}
-          channel={channel}
-          user={currentUser}
-          open={!!selectedCheki}
-          onClose={() => setSelectedCheki(null)}
-        />
-      )}
+      {/* Digital Cheki feature is frozen / hidden for now. ChekiPurchaseModal suppressed. */}
 
       {/* オーナー向け：SNS紹介シェアパネル */}
       {isOwner && (

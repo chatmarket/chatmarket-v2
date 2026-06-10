@@ -7,13 +7,9 @@ import { useNavigate } from "react-router-dom";
 export function useChekiCapture({ user, call, calleeChannel, localVideoRef, remoteVideoRef }) {
   const navigate = useNavigate();
 
-  /**
-   * アイドルカテゴリ(callee側)かどうか判定
-   */
-  const isIdolCallee =
-    user && call &&
-    user.email === call.callee_email &&
-    calleeChannel?.service_category === "idol";
+  // Digital Cheki feature is frozen / hidden for now.
+  // isIdolCallee is forced to false to prevent any auto-navigation to /cheki-editor.
+  const isIdolCallee = false; // was: user && call && user.email === call.callee_email && calleeChannel?.service_category === "idol"
 
   /**
    * 通話終了後にチェキエディターへ遷移（アイドル側のみ）

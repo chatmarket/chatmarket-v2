@@ -371,9 +371,7 @@ export default function MyChannel() {
           <TabsTrigger value="archives" className="flex items-center gap-1">
             <Archive className="w-3.5 h-3.5" /> アーカイブ販売
           </TabsTrigger>
-          <TabsTrigger value="cheki" className="flex items-center gap-1">
-            <Camera className="w-3.5 h-3.5" /> チェキ販売
-          </TabsTrigger>
+          {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
             {subscriptions.filter(s => s.status === "active").length > 0 && (
@@ -528,11 +526,7 @@ export default function MyChannel() {
           })()}
         </TabsContent>
 
-        <TabsContent value="cheki">
-          <div className="bg-card rounded-xl border border-pink-500/30 p-5">
-            <ChekiSettingsPanel channel={channel} user={user} />
-          </div>
-        </TabsContent>
+        {/* Digital Cheki feature is frozen / hidden for now. ChekiSettingsPanel suppressed. */}
 
         <TabsContent value="plans">
           <div className="space-y-4">
