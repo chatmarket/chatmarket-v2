@@ -403,16 +403,16 @@ export default function FortuneLP() {
             }}
           >
             <p className="text-xs font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>
-              🎁 期間限定・特別オファー
+              🎁 キャンペーン実施中
             </p>
             <p className="text-2xl sm:text-3xl font-black text-white leading-tight">
-              <span style={{ color: MYSTIC.gold }}>Basicプラン</span>が<br />登録から<span style={{ color: MYSTIC.gold }}>1年間</span>、完全無料！
+              <span style={{ color: MYSTIC.gold }}>Basicプラン</span>を<br />12ヶ月間<span style={{ color: MYSTIC.gold }}>無料</span>で利用可能
             </p>
             <p className="text-sm text-white/60">
               通常月額 <span className="line-through text-white/40">¥3,300</span>
-              　→　<span className="font-black text-white">¥0</span>／月（12ヶ月間）
+              　→　<span className="font-black text-white">¥0</span>／月（キャンペーン対象者）
             </p>
-            <p className="text-[10px] text-white/35 mt-0.5">※ Basicプランのみ対象。1年経過後は月額3,300円（税込）が発生します</p>
+            <p className="text-[10px] text-white/35 mt-0.5">※キャンペーンの適用には条件があります。12ヶ月無料期間終了後、自動的に課金が開始されることはありません。</p>
           </motion.div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
@@ -426,7 +426,7 @@ export default function FortuneLP() {
                 boxShadow: "0 0 30px rgba(212,175,55,0.4)",
               }}
             >
-              ✨ 無料で鑑定師登録する
+              ✨ 初期メンバーとして参加する
             </motion.button>
             <button
               onClick={() => document.getElementById("profiles")?.scrollIntoView({ behavior: "smooth" })}
@@ -446,6 +446,89 @@ export default function FortuneLP() {
         >
           <ChevronDown className="w-6 h-6 text-white/20" />
         </motion.div>
+      </section>
+
+      {/* ── 一緒に育てる：メインセクション ── */}
+      <section className="relative px-5 py-16">
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="rounded-3xl p-8 space-y-6"
+            style={{
+              background: "linear-gradient(135deg, rgba(107,33,168,0.2), rgba(212,175,55,0.06))",
+              border: `1px solid rgba(212,175,55,0.4)`,
+              backdropFilter: "blur(20px)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <Moon className="w-5 h-5 shrink-0" style={{ color: MYSTIC.gold }} />
+              <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                一緒に、オンライン鑑定の<br />新しい場所を作りませんか？
+              </h2>
+            </div>
+
+            <div className="space-y-4 text-sm text-white/70 leading-relaxed">
+              <p>
+                Chat Marketは、占い師さんが自分専用のページを持ち、相談者と1対1でオンライン鑑定を行えるサービスです。
+              </p>
+              <p>
+                まだ立ち上げ初期だからこそ、すでに鑑定活動をされている方、これから占い師として本格的に活動したい方と一緒に、より使いやすいオンライン鑑定の場を育てていきたいと考えています。
+              </p>
+              <p>
+                既存のお客様への案内にも、新しく鑑定活動を始める第一歩にも。あなたの鑑定を必要としている人へ届ける場所として、Chat Marketを一緒に育ててください。
+              </p>
+            </div>
+
+            {/* 収益ポイント */}
+            <div
+              className="rounded-2xl p-5 space-y-3"
+              style={{ background: "rgba(212,175,55,0.07)", border: `1px solid ${MYSTIC.border}` }}
+            >
+              <p className="text-xs font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>💰 Basicプランの収益について</p>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2 text-sm text-white/75">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-black shrink-0 mt-0.5" style={{ background: MYSTIC.gold }}>✓</span>
+                  収益還元率85%（キャンペーン対象者はBasicプランを12ヶ月無料で利用可能）
+                </li>
+                <li className="flex items-start gap-2 text-sm text-white/75">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-black shrink-0 mt-0.5" style={{ background: MYSTIC.gold }}>✓</span>
+                  実績に応じたプログレッシブインセンティブにより、最大95%の収益還元を目指せます
+                </li>
+                <li className="flex items-start gap-2 text-sm text-white/75">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-black shrink-0 mt-0.5" style={{ background: MYSTIC.gold }}>✓</span>
+                  低リスクで始め、自分のペースで鑑定活動を広げられます
+                </li>
+              </ul>
+              <p className="text-[10px] text-white/35 leading-relaxed pt-1">
+                ※キャンペーンの適用には条件があります。<br />
+                ※12ヶ月無料期間終了後、自動的に課金が開始されることはありません。継続利用を希望する場合は、利用者本人による有料プラン申込が必要です。<br />
+                ※収益還元率は対象プラン・適用条件により異なります。<br />
+                ※最大95%は所定条件を満たした場合のプログレッシブインセンティブ適用時の還元率です。
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/recruit")}
+                className="flex-1 py-3.5 rounded-2xl font-black text-sm"
+                style={{ background: "linear-gradient(135deg, #D4AF37, #A0760F)", color: "#0D0A1A" }}
+              >
+                ✨ 初期メンバーとして参加する
+              </motion.button>
+              <button
+                onClick={() => document.getElementById("campaign-notes")?.scrollIntoView({ behavior: "smooth" })}
+                className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white/70 border transition-all hover:border-white/40"
+                style={{ borderColor: MYSTIC.border, background: "rgba(255,255,255,0.04)" }}
+              >
+                12ヶ月無料キャンペーンを確認する
+              </button>
+            </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* ── 数字で語る ── */}
@@ -731,6 +814,97 @@ export default function FortuneLP() {
         </div>
       </section>
 
+      {/* ── 初期メンバー募集：補足セクション ── */}
+      <section id="campaign-notes" className="relative px-5 py-16">
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="rounded-3xl p-8 space-y-6"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 shrink-0" style={{ color: MYSTIC.purpleLight }} />
+              <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                初期メンバーとして、<br />占い師さんの声を聞かせてください
+              </h2>
+            </div>
+
+            <p className="text-sm text-white/65 leading-relaxed">
+              Chat Marketは、占い師さんの活動を一方的に決めるサービスではありません。
+            </p>
+
+            {/* 声の引用風カード */}
+            <div className="space-y-3">
+              {[
+                "こんな鑑定メニューを出したい",
+                "既存のお客様に案内しやすいページにしたい",
+                "オンライン鑑定を始めたいけれど、決済や受付の導線が不安",
+                "SNSから鑑定につなげる場所がほしい",
+              ].map((voice, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)" }}
+                >
+                  <span className="text-sm" style={{ color: MYSTIC.purpleLight }}>「</span>
+                  <p className="text-sm text-white/80 leading-relaxed">{voice}</p>
+                  <span className="text-sm" style={{ color: MYSTIC.purpleLight }}>」</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm text-white/65 leading-relaxed">
+              そんな声を聞きながら、占い師さんにとって使いやすいオンライン鑑定サービスへ成長していきます。
+            </p>
+
+            <div className="space-y-4 pt-2">
+              <div
+                className="rounded-2xl p-5 space-y-2"
+                style={{ background: "rgba(212,175,55,0.07)", border: `1px solid ${MYSTIC.border}` }}
+              >
+                <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>すでに相談者をお持ちの方</p>
+                <p className="text-sm text-white/65 leading-relaxed">
+                  既存のお客様へご自身の Chat Market ページを案内することで、オンライン鑑定の受付・決済・1対1鑑定までをスムーズに行えます。
+                </p>
+              </div>
+              <div
+                className="rounded-2xl p-5 space-y-2"
+                style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)" }}
+              >
+                <p className="text-xs font-bold" style={{ color: MYSTIC.purpleLight }}>これから鑑定活動を始めたい方</p>
+                <p className="text-sm text-white/65 leading-relaxed">
+                  自分専用の鑑定ページを持ち、メニューを整え、相談者とつながる第一歩としてご利用いただけます。
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-white/65 leading-relaxed">
+              あなたの言葉や鑑定を必要としている人へ届けるために。まずは、Chat Marketでオンライン鑑定の第一歩を始めてみませんか。
+            </p>
+
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/recruit")}
+              className="w-full py-4 rounded-2xl font-black text-base transition-all"
+              style={{
+                background: "linear-gradient(135deg, rgba(168,85,247,0.4), rgba(212,175,55,0.3))",
+                border: `1px solid ${MYSTIC.gold}`,
+                color: "#fff",
+              }}
+            >
+              占い師向けLPから応募する →
+            </motion.button>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── 実際に活躍中の鑑定師 ── */}
       <section className="relative px-5 py-16">
         <div className="max-w-5xl mx-auto">
@@ -784,10 +958,13 @@ export default function FortuneLP() {
               boxShadow: "0 0 40px rgba(212,175,55,0.5)",
             }}
           >
-            ✨ 今すぐ鑑定師として登録する（無料）
+            ✨ 初期メンバーとして参加する
           </motion.button>
           <p className="text-xs text-white/30">
-            審査通過後、最短当日から活動可能。Basicプランのみ登録から1年間無料。2年目以降は月額3,300円（税込）。
+            審査通過後、最短当日から活動可能。キャンペーン対象者はBasicプランを12ヶ月無料で利用可能。
+          </p>
+          <p className="text-[10px] text-white/20 leading-relaxed">
+            ※キャンペーンの適用には条件があります。12ヶ月無料期間終了後、自動的に課金が開始されることはありません。継続利用を希望する場合は、利用者本人による有料プラン申込が必要です。収益還元率は対象プラン・適用条件により異なります。最大95%は所定条件を満たした場合のプログレッシブインセンティブ適用時の還元率です。
           </p>
         </div>
       </section>
