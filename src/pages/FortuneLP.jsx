@@ -46,8 +46,8 @@ const FORTUNE_PROFILES = [
     tags: ["結婚", "人間関係", "開運"],
   },
   {
-    name: "霊視・天音",
-    specialty: "霊視・前世リーディング",
+    name: "神秘・天音",
+    specialty: "前世リーディング・直感鑑定",
     years: 8,
     rating: 4.93,
     reviews: 892,
@@ -318,8 +318,8 @@ export default function FortuneLP() {
       style={{ background: MYSTIC.deepBg, color: "#fff", fontFamily: "'M PLUS Rounded 1c', sans-serif" }}
     >
       <MetaHelmet
-        title="占い師・タロット・霊視・四柱推命向けプラットフォーム | ChatMarket（チャットマーケット）"
-        description="占い師・タロット・西洋占星術・四柱推命・霊視の鑑定師専用プラットフォーム。1対1ビデオ通話鑑定・チャット鑑定・ライブ配信で月収100万円超の実績多数。Basicプラン登録から1年間無料。収益還元率85%（業界最高水準）。"
+        title="占い師・タロット・四柱推命向けプラットフォーム | ChatMarket（チャットマーケット）"
+        description="占い師・タロット・西洋占星術・四柱推命の鑑定師専用プラットフォーム。1対1ビデオ通話鑑定・チャット鑑定・ライブ配信で月収100万円超の実績多数。Basicプラン登録から1年間無料。収益還元率85%（業界最高水準）。"
         image="https://media.base44.com/images/public/69c1b541d5db3555833124aa/27cf5990b_generated_image.png"
       />
       {/* 宇宙的背景エフェクト */}
@@ -378,7 +378,7 @@ export default function FortuneLP() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              霊感・鑑定力を
+              鑑定力を
             </span>
             収益に変えろ。
           </h1>
@@ -666,7 +666,7 @@ export default function FortuneLP() {
               { icon: TrendingUp, title: "業界最高85%還元", desc: "コイン収益の85%があなたの報酬。中間業者なし、直接ファンから。" },
               { icon: Shield, title: "完全匿名・安心設計", desc: "本名・住所一切不要。プライバシーを守りながら活動できる。" },
               { icon: Clock, title: "15分単位で稼ぐ", desc: "ビデオ通話鑑定は15分から。隙間時間を完全マネタイズ。" },
-              { icon: Eye, title: "霊視・タロット・四柱推命", desc: "あらゆる鑑定スタイルに対応。あなたの強みをそのまま活かせる。" },
+              { icon: Eye, title: "タロット・四柱推命など多彩な鑑定", desc: "あらゆる鑑定スタイルに対応。あなたの強みをそのまま活かせる。" },
               { icon: Star, title: "チャット鑑定で非同期収益", desc: "ビデオ通話が難しいお客様にも対応。テキストで鑑定し、空き時間に返信するだけ。" },
               { icon: Zap, title: "開業3日で初収益", desc: "プロフィール設定後、最短3日でファンからの予約が入った実績あり。" },
             ].map(({ icon: Icon, title, desc }, i) => (
