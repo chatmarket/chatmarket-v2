@@ -762,7 +762,7 @@ export default function Recruit() {
                     { value: "language", label: "🌍 語学", desc: "英会話・語学指導" },
                     { value: "fitness", label: "💪 フィットネス", desc: "健康・トレーニング" },
                     { value: "education", label: "📚 教育", desc: "学習サポート" },
-                    { value: "other", label: "✨ その他", desc: "エンタメ・趣味など" },
+                    { value: "other", label: "✨ その他", desc: "エンタメ・趣味・その他" },
                   ].map((cat) => (
                     <button
                       key={cat.value}

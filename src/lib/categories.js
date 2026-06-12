@@ -17,14 +17,8 @@ export const CATEGORIES = [
     emoji: "🎯",
     tags: ["音楽", "絵画", "カメラ", "釣り", "旅行", "擬似旅行", "ドライブ実況", "旅先紹介"],
   },
-  {
-    id: "game",
-    label: "ゲーム・ギャンブル",
-    color: "from-purple-500/20 to-purple-600/10 border-purple-500/30",
-    badgeColor: "bg-purple-500/20 text-purple-300",
-    emoji: "🎮",
-    tags: ["ゲーム", "攻略解説", "囲碁", "将棋", "ギャンブル", "対局"],
-  },
+  // ゲーム・ギャンブルカテゴリは内部的に保持（既存データ互換）
+  // 表側には現在表示しない方針
   {
     id: "chat",
     label: "雑談",

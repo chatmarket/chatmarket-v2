@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 // thumbnail_url / channel_avatar は null にしてコンポーネント側のフォールバックを使用
 const SAMPLE_LIVESTREAMS = [
   { id: "sample_1", title: "朝のおはよう配信💖", channel_name: "あおいのチャンネル", channel_avatar: null, thumbnail_url: null, viewer_count: 342, price: 200, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
-  { id: "sample_2", title: "ゲーム配信🎮", channel_name: "げーまーゆき", channel_avatar: null, thumbnail_url: null, viewer_count: 1205, price: 300, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
+  { id: "sample_2", title: "お悩み相談🌙", channel_name: "こころの相談室", channel_avatar: null, thumbnail_url: null, viewer_count: 1205, price: 300, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
   { id: "sample_3", title: "料理の時間🍳", channel_name: "シェフたかし", channel_avatar: null, thumbnail_url: null, viewer_count: 567, price: 150, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
   { id: "sample_4", title: "音楽ライブ🎵", channel_name: "ミュージシャン太郎", channel_avatar: null, thumbnail_url: null, viewer_count: 2341, price: 500, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
   { id: "sample_5", title: "フィットネス配信💪", channel_name: "トレーナーアキ", channel_avatar: null, thumbnail_url: null, viewer_count: 876, price: 250, status: "live", live_started_at: new Date().toISOString(), stream_type: "ivs" },
@@ -362,7 +362,7 @@ export default function Home() {
               { emoji: "📚", label: "教育", color: "#60a5fa" },
               { emoji: "💬", label: "雑談", color: "#00ff9d" },
               { emoji: "🎵", label: "音楽", color: "#f59e0b" },
-              { emoji: "🎮", label: "ゲーム", color: "#ef4444" },
+              { emoji: "🔯", label: "相談", color: "#ef4444" },
             ].map((cat) => (
               <button
                 key={cat.label}
@@ -622,7 +622,7 @@ export default function Home() {
             )}
             {/* カテゴリハッシュタグ */}
             <div className="pt-2 flex flex-wrap gap-2">
-              {["エンタメ","音楽","ゲーム","教育","スポーツ","テクノロジー","ニュース","その他"].map((cat) => (
+              {["エンタメ","音楽","占い","教育","スポーツ","語学","相談","その他"].map((cat) => (
                 <Link
                   key={cat}
                   to={`/search?q=${encodeURIComponent(cat)}`}
