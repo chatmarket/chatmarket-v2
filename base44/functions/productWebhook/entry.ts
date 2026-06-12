@@ -103,11 +103,30 @@ Deno.serve(async (req) => {
               stripe_session_id: session.id,
               stripe_payment_intent_id: session.payment_intent || '',
               status: 'confirmed',
-              message: `音源販売: ${product.title} (運営${Math.round(platformFeeRate * 100)}%+決済${paymentFeeRate * 100}%)`,
+              message: `[audio_product] 音源販売: ${product.title} (運営${Math.round(platformFeeRate * 100)}%+決済${paymentFeeRate * 100}%)`,
+            });
+          } else {
+            // 通常デジタル商品（占い師の鑑定書・教材PDF等）：手数料率未定義のため gross のみ記録
+            // creator_amount_yen は暫定 gross のままとし、管理者が後から精算可能にする
+            await base44.asServiceRole.entities.CreatorEarning.create({
+              creator_email: product.owner_email,
+              channel_id: product.channel_id,
+              channel_name: product.channel_name || '',
+              sender_email: session.customer_details?.email || buyer_email || '',
+              service_type: 'product',
+              service_id: order_id,
+              payment_provider: 'stripe',
+              gross_amount_yen: grossYen,
+              creator_rate: null,
+              creator_amount_yen: grossYen,
+              platform_amount_yen: 0,
+              yen_equivalent: grossYen,
+              stripe_session_id: session.id,
+              stripe_payment_intent_id: session.payment_intent || '',
+              status: 'confirmed',
+              message: `[digital_product] デジタル販売: ${product.title} (手数料率未確定)`,
             });
           }
-          // 通常デジタル商品（占い師の鑑定書・教材PDFなど）は手数料未定義のためCreatorEarning非記録
-          // 必要に応じて別途ルール追加予定
         }
 
         // LINE Notify 通知

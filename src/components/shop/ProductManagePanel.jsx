@@ -38,7 +38,16 @@ function isMusicFile(fileType) {
   return MUSIC_FILE_TYPES.includes(fileType);
 }
 
+// 音源販売対象カテゴリ判定（prop の isMusician は canSellAudio の意味で使用）
+const AUDIO_SELLER_SERVICE_CATS = ["musician", "idol", "singer", "voice_actor", "voice_creator"];
+const AUDIO_SELLER_CAT_IDS = ["music", "idol", "voice"];
+
 export default function ProductManagePanel({ channel, isMusician = false }) {
+  // isMusician prop は親から canSellAudio として渡されるが、念のちゃんと channel でも再判定
+  const isAudioSeller = isMusician || !!(channel && (
+    AUDIO_SELLER_SERVICE_CATS.includes(channel.service_category) ||
+    AUDIO_SELLER_CAT_IDS.includes(channel.category_id)
+  ));
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -84,15 +93,15 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
     if (form.is_digital && form.delivery_mode === "instant" && !form.file_url) {
       toast.error("即時配信モードではファイルのアップロードが必要です"); return;
     }
-    // ミュージシャンチャンネルで音源ファイルの場合のみ権利確認チェックが必須
-    if (isMusician && isMusicFile(form.file_type) && !rightsConfirmed) {
+    // 音源販売対象チャンネルで音源ファイルの場合のみ権利確認チェックが必須
+    if (isAudioSeller && isMusicFile(form.file_type) && !rightsConfirmed) {
       toast.error("音源の権利確認チェックボックスにチェックを入れてください");
       return;
     }
     setSaving(true);
     try {
       // 音源向け任意フィールドを整理（空文字は undefined にして保存しない）
-      const musicFields = isMusician ? {
+      const musicFields = isAudioSeller ? {
         ...(form.music_release_type ? { music_release_type: form.music_release_type } : {}),
         ...(form.track_count ? { track_count: Number(form.track_count) } : {}),
         ...(form.audio_format_label ? { audio_format_label: form.audio_format_label } : {}),
@@ -145,10 +154,10 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-foreground">
-          {isMusician ? "楽曲・音源販売" : "デジタルコンテンツ販売"}
+          {isAudioSeller ? "楽曲・音源販売" : "デジタルコンテンツ販売"}
         </h3>
         <Button size="sm" onClick={() => setShowForm(v => !v)} className="gap-2">
-          <Plus className="w-4 h-4" />{isMusician ? "作品を追加" : "新規登録"}
+          <Plus className="w-4 h-4" />{isAudioSeller ? "作品を追加" : "新規登録"}
         </Button>
       </div>
 
@@ -187,21 +196,21 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
           {/* 共通フィールド */}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">{isMusician ? "作品タイトル *" : "タイトル *"}</Label>
+              <Label className="text-xs">{isAudioSeller ? "作品タイトル *" : "タイトル *"}</Label>
               <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                placeholder={isMusician ? "例：星の帰り道" : "商品名"} />
+                placeholder={isAudioSeller ? "例：星の帰り道" : "商品名"} />
             </div>
             <div className="col-span-2">
-              <Label className="text-xs">{isMusician ? "作品説明" : "説明"}</Label>
+              <Label className="text-xs">{isAudioSeller ? "作品説明" : "説明"}</Label>
               <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder={isMusician ? "楽曲の雰囲気、収録内容、使用用途などを記載してください" : "商品の説明"} rows={2} />
+                placeholder={isAudioSeller ? "楽曲の雰囲気、収録内容、使用用途などを記載してください" : "商品の説明"} rows={2} />
             </div>
             <div className="col-span-2">
               <Label className="text-xs">販売価格（円）*</Label>
               <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} min={0}
                 placeholder="例：500" />
               {/* 音源販売対象チャンネル × 音源ファイルの組み合わせのみ手数料表示 */}
-              {form.price > 0 && isMusician && isMusicFile(form.file_type) && (
+              {form.price > 0 && isAudioSeller && isMusicFile(form.file_type) && (
                 <div className="mt-2 bg-secondary/60 rounded-lg p-2.5 space-y-1 text-[11px]">
                   <div className="flex justify-between text-muted-foreground">
                     <span>運営手数料 10%</span>
@@ -225,8 +234,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
             </div>
           </div>
 
-          {/* ミュージシャン向け追加項目 */}
-          {isMusician && (
+          {/* 音源販売対象向け追加項目 */}
+          {isAudioSeller && (
             <div className="space-y-3 p-3 bg-card rounded-xl border border-border">
               <p className="text-xs font-bold text-primary flex items-center gap-1.5">🎵 音源情報（任意）</p>
 
@@ -285,8 +294,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
 
           {/* サムネイル */}
           <div>
-            <Label className="text-xs">{isMusician ? "ジャケット画像" : "サムネイル画像"}</Label>
-            {isMusician && <p className="text-[10px] text-muted-foreground mb-1">正方形のジャケット画像を設定すると、アルバムのように表示されます</p>}
+            <Label className="text-xs">{isAudioSeller ? "ジャケット画像" : "サムネイル画像"}</Label>
+            {isAudioSeller && <p className="text-[10px] text-muted-foreground mb-1">正方形のジャケット画像を設定すると、アルバムのように表示されます</p>}
             <div className="flex items-center gap-2 mt-1">
               {form.image_url && <img src={form.image_url} className="w-12 h-12 rounded-lg object-cover" alt="" />}
               <label className="cursor-pointer">
@@ -301,8 +310,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
           {/* 即時配信：ファイルアップロード */}
           {isInstant && (
             <div className="space-y-2">
-              <Label className="text-xs">{isMusician ? "音源ファイル（MP3 / ZIP など）*" : "販売ファイル（PDF / MP3 / ZIP など）*"}</Label>
-              {isMusician && <p className="text-[10px] text-muted-foreground -mt-1">MP3、ZIPなどの音源ファイルをアップロードできます</p>}
+              <Label className="text-xs">{isAudioSeller ? "音源ファイル（MP3 / ZIP など）*" : "販売ファイル（PDF / MP3 / ZIP など）*"}</Label>
+              {isAudioSeller && <p className="text-[10px] text-muted-foreground -mt-1">MP3、ZIPなどの音源ファイルをアップロードできます</p>}
               <div className="flex items-center gap-2 mt-1">
                 {form.file_name && <span className="text-xs text-primary bg-primary/10 rounded px-2 py-1">{form.file_name}</span>}
                 <label className="cursor-pointer">
@@ -313,8 +322,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
                 </label>
               </div>
 
-              {/* 音源ファイルの場合のみ著作権注意表示（ミュージシャンチャンネルのみ） */}
-              {isMusician && isMusicFile(form.file_type) && (
+              {/* 音源ファイルの場合のみ著作権注意表示（音源販売対象チャンネルのみ） */}
+              {isAudioSeller && isMusicFile(form.file_type) && (
                 <div className="space-y-3 mt-3">
                   {/* 注意バナー */}
                   <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 space-y-2">
