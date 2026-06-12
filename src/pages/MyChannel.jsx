@@ -20,6 +20,8 @@ import VideoEditPanel from "../components/channel/VideoEditPanel";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import ChatReadingMenuPanel from "@/components/fortune/ChatReadingMenuPanel";
 import FortuneSetupChecklist from "@/components/fortune/FortuneSetupChecklist.jsx";
+import ProductManagePanel from "@/components/shop/ProductManagePanel";
+import { Music } from "lucide-react";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
@@ -65,6 +67,7 @@ export default function MyChannel() {
   });
 
   const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
+  const isMusician = channel && channel.service_category === "other"; // ミュージシャン含む全クリエイターに音源販売タブを提供
 
   const { data: chatMenus = [] } = useQuery({
     queryKey: ["chat-reading-menus-checklist", channel?.id],
@@ -386,6 +389,9 @@ export default function MyChannel() {
               <span>🔮</span> チャット鑑定
             </TabsTrigger>
           )}
+          <TabsTrigger value="music-sales" className="flex items-center gap-1">
+            <Music className="w-3.5 h-3.5" /> 音源販売
+          </TabsTrigger>
           {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
@@ -542,6 +548,19 @@ export default function MyChannel() {
         </TabsContent>
 
         {/* Digital Cheki feature is frozen / hidden for now. ChekiSettingsPanel suppressed. */}
+
+        <TabsContent value="music-sales">
+          {channel && (
+            <div className="space-y-4">
+              <div className="bg-purple-500/10 border border-purple-500/25 rounded-xl p-4 space-y-1">
+                <p className="text-sm font-black text-purple-300 flex items-center gap-2"><Music className="w-4 h-4" /> 自作曲・BGM・音源販売</p>
+                <p className="text-xs text-muted-foreground">自作曲・BGM・音源ファイルをデジタル商品として販売できます。購入者は決済後、マイページから音源ファイルをダウンロードできます。</p>
+                <p className="text-xs text-muted-foreground">対応形式：MP3、ZIP（音源セット）など。完全オリジナル音源のみ販売可能です。</p>
+              </div>
+              <ProductManagePanel channel={channel} />
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="chat-reading">
           {channel && user && (

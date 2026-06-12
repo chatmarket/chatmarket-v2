@@ -21,6 +21,7 @@ import { isMusician } from "@/lib/roleTerminology";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import ChekiPurchaseModal from "@/components/cheki/ChekiPurchaseModal.jsx";
 import ChatReadingApplyModal from "@/components/fortune/ChatReadingApplyModal";
+import ProductCard from "@/components/shop/ProductCard";
 
 export default function ChannelPage() {
   const { channelId } = useParams();
@@ -57,6 +58,12 @@ export default function ChannelPage() {
   const { data: chatMenus = [] } = useQuery({
     queryKey: ["channel-chat-menus", channelId],
     queryFn: () => base44.entities.ChatReadingMenu.filter({ channel_id: channelId, is_active: true }, "sort_order"),
+    enabled: !!channelId,
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["channel-products", channelId],
+    queryFn: () => base44.entities.Product.filter({ channel_id: channelId, is_active: true, is_digital: true }, "-created_date", 20),
     enabled: !!channelId,
   });
 
@@ -446,6 +453,20 @@ export default function ChannelPage() {
           isOwner={isOwner}
           isFollower={isFollowing}
         />
+      )}
+
+      {/* 音源・デジタル商品販売セクション */}
+      {products.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
+            <span>🎵</span> 楽曲・音源販売
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {products.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* チャット鑑定メニュー（占い師チャンネルのみ） */}
