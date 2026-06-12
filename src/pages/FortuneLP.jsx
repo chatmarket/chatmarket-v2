@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Sparkles, Moon, Eye, Clock, Shield, TrendingUp, ChevronDown, Crown, Zap, MessageSquare, Video, Users, Lock } from "lucide-react";
+import { Star, Sparkles, Moon, Eye, Clock, Shield, TrendingUp, ChevronDown, Crown, Zap, MessageSquare, Video, Users, Lock, CheckCircle2, Circle } from "lucide-react";
 import FortunePagePreview from "@/components/fortune/FortunePagePreview.jsx";
 import { Button } from "@/components/ui/button";
 import MetaHelmet from "@/components/layout/MetaHelmet";

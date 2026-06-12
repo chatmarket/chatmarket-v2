@@ -12,6 +12,13 @@ import { toast } from "sonner";
 
 const EMPTY_FORM = { title: "", description: "", price_yen: 3000, estimated_reply_hours: 24, is_active: true };
 
+const TEMPLATES = [
+  { title: "恋愛相談チャット鑑定", description: "恋愛・復縁・片思いなど、恋愛全般についてテキストで丁寧に鑑定します。2往復のやり取りで、あなたのお悩みに向き合います。", price_yen: 3000, estimated_reply_hours: 24 },
+  { title: "仕事・転職チャット鑑定", description: "転職のタイミング・職場の人間関係・キャリアの方向性など、仕事に関するお悩みを鑑定します。", price_yen: 3500, estimated_reply_hours: 24 },
+  { title: "総合運チャット鑑定", description: "恋愛・仕事・家族など複数のテーマをまとめて鑑定。今のあなたの運気と、これからの流れをお伝えします。", price_yen: 5000, estimated_reply_hours: 48 },
+  { title: "相性診断チャット鑑定", description: "気になる相手との相性を深く読み解きます。お相手の情報（生年月日など）があるとより詳しく鑑定できます。", price_yen: 3000, estimated_reply_hours: 24 },
+];
+
 function MenuForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -97,7 +104,7 @@ function MenuForm({ initial, onSave, onCancel }) {
 
 export default function ChatReadingMenuPanel({ channel, user }) {
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(null); // null=非表示, true=空フォーム, object=テンプレート
   const [editingMenu, setEditingMenu] = useState(null);
 
   const { data: menus = [], isLoading } = useQuery({
@@ -114,7 +121,8 @@ export default function ChatReadingMenuPanel({ channel, user }) {
       channel_name: channel.name || "",
     });
     queryClient.invalidateQueries({ queryKey: ["chat-reading-menus", channel.id] });
-    setShowForm(false);
+    queryClient.invalidateQueries({ queryKey: ["chat-reading-menus-checklist", channel.id] });
+    setShowForm(null);
     toast.success("メニューを作成しました");
   };
 
@@ -149,6 +157,7 @@ export default function ChatReadingMenuPanel({ channel, user }) {
           <Button
             size="sm"
             onClick={() => setShowForm(true)}
+
             className="gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs"
           >
             <Plus className="w-3.5 h-3.5" /> メニューを追加
@@ -156,22 +165,51 @@ export default function ChatReadingMenuPanel({ channel, user }) {
         )}
       </div>
 
+      {/* テンプレートから作成 */}
+      {!showForm && !editingMenu && menus.length === 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-bold">✨ テンプレートから始める</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {TEMPLATES.map((tpl, i) => (
+              <button
+                key={i}
+                onClick={() => { setShowForm(true); }}
+                className="text-left p-3 rounded-xl border border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20 transition-all space-y-1"
+                onMouseDown={() => {}}
+                // テンプレート選択時にフォームへ値を流す（MenuFormへ渡すために一時stateを使う）
+                onClick={() => {
+                  setShowForm({ ...tpl, is_active: true });
+                }}
+              >
+                <p className="font-bold text-xs text-purple-200">{tpl.title}</p>
+                <p className="text-[10px] text-muted-foreground">¥{tpl.price_yen.toLocaleString()} / {tpl.estimated_reply_hours}h以内</p>
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground text-center">またはゼロから作成：</p>
+        </div>
+      )}
+
       {showForm && (
-        <MenuForm onSave={handleCreate} onCancel={() => setShowForm(false)} />
+        <MenuForm
+          initial={typeof showForm === 'object' ? showForm : undefined}
+          onSave={handleCreate}
+          onCancel={() => setShowForm(false)}
+        />
       )}
 
       {isLoading ? (
         <div className="py-6 text-center text-sm text-muted-foreground">読み込み中...</div>
       ) : menus.length === 0 && !showForm ? (
-        <div className="text-center py-10 bg-secondary/30 rounded-2xl border border-border/50">
+        <div className="text-center py-6 bg-secondary/30 rounded-2xl border border-border/50">
           <p className="text-3xl mb-2">🔮</p>
-          <p className="text-sm text-muted-foreground">チャット鑑定メニューがまだありません</p>
+          <p className="text-sm text-muted-foreground mb-3">チャット鑑定メニューがまだありません</p>
           <Button
             size="sm"
             onClick={() => setShowForm(true)}
-            className="mt-3 bg-purple-600 hover:bg-purple-500 gap-2"
+            className="bg-purple-600 hover:bg-purple-500 gap-2"
           >
-            <Plus className="w-4 h-4" /> 最初のメニューを作成
+            <Plus className="w-4 h-4" /> 空のフォームで作成
           </Button>
         </div>
       ) : (
