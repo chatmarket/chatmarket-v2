@@ -136,7 +136,7 @@ export default function MiniSchool() {
             <h1 className="text-2xl font-black flex items-center gap-2">
               <GraduationCap className="w-6 h-6 text-primary" /> ミニスクール管理
             </h1>
-            <p className="text-sm text-muted-foreground">最大9人の少人数授業を開催</p>
+            <p className="text-sm text-muted-foreground">1対2〜最大9名の少人数授業を開催</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -236,7 +236,7 @@ export default function MiniSchool() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>最大生徒数（最大9人）</Label>
+                <Label>最大生徒数（2〜9名）</Label>
                 <Input type="number" min={1} max={9} value={form.max_students} onChange={(e) => setForm({ ...form, max_students: Math.min(9, parseInt(e.target.value) || 1) })} className="bg-secondary border-0" />
               </div>
               <div className="space-y-1.5">
