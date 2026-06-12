@@ -40,9 +40,33 @@
         "direct_chat",
         "chat_reading",
         "video_call",
-        "school_ticket"
+        "school_ticket",
+        "product"
       ],
       "description": "\u5831\u916c\u767a\u751f\u30b5\u30fc\u30d3\u30b9\u7a2e\u5225"
+    },
+    "product_type": {
+      "type": "string",
+      "enum": [
+        "audio",
+        "digital",
+        "physical",
+        "ticket"
+      ],
+      "description": "\u3010product\u7cfb\u3011\u5546\u54c1\u533a\u5206: audio=\u97f3\u6e90\u8ca9\u58f2(\u624b\u6570\u659910%+3.6%), digital=\u901a\u5e38\u30c7\u30b8\u30bf\u30eb\u5546\u54c1(\u624b\u6570\u6599\u672a\u78ba\u5b9a), physical=\u7269\u7406\u30b0\u30c3\u30ba, ticket=\u30c1\u30b1\u30c3\u30c8"
+    },
+    "platform_fee_rate": {
+      "type": "number",
+      "description": "\u3010product\u7cfb\u3011\u9069\u7528\u3057\u305f\u904b\u55b6\u624b\u6570\u6599\u7387\uff08\u4f8b: 0.10\uff09"
+    },
+    "payment_fee_rate": {
+      "type": "number",
+      "description": "\u3010product\u7cfb\u3011\u9069\u7528\u3057\u305f\u6c7a\u6e08\u624b\u6570\u6599\u7387\uff08\u4f8b: 0.036\uff09"
+    },
+    "payment_fee_amount_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3010product\u7cfb\u3011\u6c7a\u6e08\u624b\u6570\u6599\u984d\uff08\u5186\uff09"
     },
     "service_id": {
       "type": "string",
@@ -54,7 +78,7 @@
     },
     "message": {
       "type": "string",
-      "description": "\u9001\u4ed8\u6642\u306e\u30e1\u30c3\u30bb\u30fc\u30b8"
+      "description": "\u9001\u4ed8\u6642\u306e\u30e1\u30c3\u30bb\u30fc\u30b8 / \u88dc\u52a9\u30bf\u30b0"
     },
     "is_settled": {
       "type": "boolean",
@@ -74,7 +98,7 @@
     "creator_amount_yen": {
       "type": "number",
       "default": 0,
-      "description": "\u3010Stripe\u7cfb\u3011\u5360\u3044\u5e2b\u624b\u53d6\u308a\u984d\uff08\u5186\uff09"
+      "description": "\u3010Stripe\u7cfb\u3011\u30af\u30ea\u30a8\u30a4\u30bf\u30fc\u624b\u53d6\u308a\u984d\uff08\u5186\uff09"
     },
     "platform_amount_yen": {
       "type": "number",

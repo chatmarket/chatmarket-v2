@@ -93,12 +93,16 @@ Deno.serve(async (req) => {
               channel_name: product.channel_name || '',
               sender_email: session.customer_details?.email || buyer_email || '',
               service_type: 'product',
+              product_type: 'audio',
               service_id: order_id,
               payment_provider: 'stripe',
               gross_amount_yen: grossYen,
               creator_rate: 1 - platformFeeRate - paymentFeeRate,
               creator_amount_yen: creatorAmountYen,
               platform_amount_yen: platformFeeYen,
+              platform_fee_rate: platformFeeRate,
+              payment_fee_rate: paymentFeeRate,
+              payment_fee_amount_yen: paymentFeeYen,
               yen_equivalent: grossYen,
               stripe_session_id: session.id,
               stripe_payment_intent_id: session.payment_intent || '',
@@ -106,20 +110,23 @@ Deno.serve(async (req) => {
               message: `[audio_product] 音源販売: ${product.title} (運営${Math.round(platformFeeRate * 100)}%+決済${paymentFeeRate * 100}%)`,
             });
           } else {
-            // 通常デジタル商品（占い師の鑑定書・教材PDF等）：手数料率未定義のため gross のみ記録
-            // creator_amount_yen は暫定 gross のままとし、管理者が後から精算可能にする
+            // 通常デジタル商品（占い師の鑑定書・教材PDF等）：手数料率未確定のため gross のみ記録
             await base44.asServiceRole.entities.CreatorEarning.create({
               creator_email: product.owner_email,
               channel_id: product.channel_id,
               channel_name: product.channel_name || '',
               sender_email: session.customer_details?.email || buyer_email || '',
               service_type: 'product',
+              product_type: 'digital',
               service_id: order_id,
               payment_provider: 'stripe',
               gross_amount_yen: grossYen,
               creator_rate: null,
               creator_amount_yen: grossYen,
               platform_amount_yen: 0,
+              platform_fee_rate: null,
+              payment_fee_rate: null,
+              payment_fee_amount_yen: 0,
               yen_equivalent: grossYen,
               stripe_session_id: session.id,
               stripe_payment_intent_id: session.payment_intent || '',
