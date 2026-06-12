@@ -84,8 +84,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
     if (form.is_digital && form.delivery_mode === "instant" && !form.file_url) {
       toast.error("即時配信モードではファイルのアップロードが必要です"); return;
     }
-    // 音源ファイルの場合は権利確認チェックが必須
-    if (isMusicFile(form.file_type) && !rightsConfirmed) {
+    // ミュージシャンチャンネルで音源ファイルの場合のみ権利確認チェックが必須
+    if (isMusician && isMusicFile(form.file_type) && !rightsConfirmed) {
       toast.error("音源の権利確認チェックボックスにチェックを入れてください");
       return;
     }
@@ -295,8 +295,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
                 </label>
               </div>
 
-              {/* 音源ファイルの場合のみ著作権注意表示 */}
-              {isMusicFile(form.file_type) && (
+              {/* 音源ファイルの場合のみ著作権注意表示（ミュージシャンチャンネルのみ） */}
+              {isMusician && isMusicFile(form.file_type) && (
                 <div className="space-y-3 mt-3">
                   {/* 注意バナー */}
                   <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 space-y-2">

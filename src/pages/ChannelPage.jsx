@@ -460,10 +460,12 @@ export default function ChannelPage() {
       {products.length > 0 && (() => {
         const isFortune = channel.stream_category === "fortune" || channel.service_category === "fortune_telling";
         const isEdu = channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education";
+        // ミュージシャン判定：チャンネルオーナーの role または 音楽タグ。service_category === "idol" はミュージシャンではなく除外
         const isMusic = !isFortune && !isEdu
-          && (channel.category_id === "hobby" || channel.category_id === "entertainment" || !channel.category_id)
-          && (channel.service_category === "other" || channel.service_category === "idol" || !channel.service_category)
-          && (channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t));
+          && (channel.service_category === "other" || !channel.service_category)
+          && ((channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t))
+            || channel.category_id === "hobby"
+            || channel.category_id === "entertainment");
         const sectionLabel = isFortune ? "🔮 鑑定書・デジタルコンテンツ"
           : isEdu ? "📚 教材・デジタル資料"
           : isMusic ? "🎵 楽曲・音源販売"

@@ -68,11 +68,15 @@ export default function MyChannel() {
 
   const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
   const isEducation = channel && (channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education");
-  // ミュージシャン判定：service_category が占い・教育・ビジネス・フィットネス・アイドル以外 かつ カテゴリが hobby/entertainment/music系
+  // ミュージシャン判定：user.role === "musician" を最優先。それ以外は占い・教育・アイドル以外かつ音楽タグ一致で判定
   const isMusicianChannel = channel && !isFortuneTeller && !isEducation
-    && (channel.service_category === "other" || channel.service_category === "idol" || !channel.service_category)
-    && (channel.category_id === "hobby" || channel.category_id === "entertainment" || !channel.category_id
-        || (channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t)));
+    && (user?.role === "musician"
+      || channel.service_category === "other"
+      || !channel.service_category)
+    && (user?.role === "musician"
+      || (channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t))
+      || channel.category_id === "hobby"
+      || channel.category_id === "entertainment");
 
   // デジタルコンテンツタブのラベルをカテゴリで分ける
   const digitalTabLabel = isFortuneTeller ? "鑑定書・デジタル" : isEducation ? "教材・資料" : isMusicianChannel ? "音源販売" : "デジタル販売";
