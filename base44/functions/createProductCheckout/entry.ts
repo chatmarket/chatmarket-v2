@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
       product_title: product.title,
       price_yen: product.price,
       is_digital: product.is_digital || false,
+      delivery_mode: product.delivery_mode || 'instant',
       file_url: product.is_digital ? (product.file_url || '') : '',
       file_name: product.is_digital ? (product.file_name || '') : '',
       status: 'pending',
