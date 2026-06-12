@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Upload, Download, Package, Loader2, ToggleLeft, ToggleRight, Zap, ClipboardList } from "lucide-react";
+import { Plus, Trash2, Upload, Download, Package, Loader2, ToggleLeft, ToggleRight, Zap, ClipboardList, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 const FILE_ACCEPT = ".pdf,.mp3,.zip,.jpg,.png,.mp4";
@@ -21,6 +21,12 @@ const EMPTY_FORM = {
   custom_order_description: "", delivery_days_estimate: 7,
 };
 
+// 音源ファイル種別（mp3 / zip）は著作権確認が必要
+const MUSIC_FILE_TYPES = ["mp3", "zip"];
+function isMusicFile(fileType) {
+  return MUSIC_FILE_TYPES.includes(fileType);
+}
+
 export default function ProductManagePanel({ channel }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -28,6 +34,7 @@ export default function ProductManagePanel({ channel }) {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products", channel?.id],
@@ -66,11 +73,23 @@ export default function ProductManagePanel({ channel }) {
     if (form.is_digital && form.delivery_mode === "instant" && !form.file_url) {
       toast.error("即時配信モードではファイルのアップロードが必要です"); return;
     }
+    // 音源ファイルの場合は権利確認チェックが必須
+    if (isMusicFile(form.file_type) && !rightsConfirmed) {
+      toast.error("音源の権利確認チェックボックスにチェックを入れてください");
+      return;
+    }
     setSaving(true);
     try {
+      const extraFields = isMusicFile(form.file_type) ? {
+        rights_confirmed: true,
+        rights_confirmation_type: "original_music_only",
+        rights_confirmed_at: new Date().toISOString(),
+        rights_confirmed_by: channel.owner_email,
+      } : {};
       await base44.entities.Product.create({
         ...form,
-        is_digital: true, // 物理グッズは現在非公開・強制的にデジタルのみ
+        ...extraFields,
+        is_digital: true,
         channel_id: channel.id,
         channel_name: channel.name,
         owner_email: channel.owner_email,
@@ -82,6 +101,7 @@ export default function ProductManagePanel({ channel }) {
       toast.success("商品を登録しました");
       setShowForm(false);
       setForm(EMPTY_FORM);
+      setRightsConfirmed(false);
     } catch { toast.error("保存に失敗しました"); }
     finally { setSaving(false); }
   };
@@ -178,7 +198,7 @@ export default function ProductManagePanel({ channel }) {
 
           {/* 即時配信：ファイルアップロード */}
           {isInstant && (
-            <div>
+            <div className="space-y-2">
               <Label className="text-xs">販売ファイル（PDF / MP3 / ZIP など）*</Label>
               <div className="flex items-center gap-2 mt-1">
                 {form.file_name && <span className="text-xs text-primary bg-primary/10 rounded px-2 py-1">{form.file_name}</span>}
@@ -189,6 +209,45 @@ export default function ProductManagePanel({ channel }) {
                   </Button>
                 </label>
               </div>
+
+              {/* 音源ファイルの場合のみ著作権注意表示 */}
+              {isMusicFile(form.file_type) && (
+                <div className="space-y-3 mt-3">
+                  {/* 注意バナー */}
+                  <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs font-bold text-amber-300">音源販売に関する重要事項</p>
+                    </div>
+                    <p className="text-xs text-amber-200/80 leading-relaxed">
+                      販売できる音源は、ご自身が権利を持つ完全オリジナル音源に限ります。他人の楽曲のカバー、歌ってみた、演奏してみた、既存曲のアレンジ、カラオケ音源を使用した録音、権利者の許可が不明確な音源の販売は禁止されています。
+                    </p>
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 space-y-1">
+                      <p className="text-[10px] font-bold text-amber-400">📋 販売禁止の音源（例）</p>
+                      <ul className="text-[10px] text-amber-200/70 space-y-0.5">
+                        <li>✗ 他人の楽曲のカバー音源 / 歌ってみた / 演奏してみた</li>
+                        <li>✗ 既存曲のアレンジ・カラオケ音源使用録音</li>
+                        <li>✗ 市販楽曲・配信楽曲・CD音源を含むもの</li>
+                        <li>✗ 権利関係が不明確なAI生成音源</li>
+                      </ul>
+                    </div>
+                    <p className="text-[10px] text-amber-300/60">カバー曲や歌ってみた音源は、たとえ自分で歌唱・演奏していても、Chat Market上での販売対象外です。</p>
+                  </div>
+
+                  {/* 必須チェックボックス */}
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${rightsConfirmed ? "border-green-500/60 bg-green-500/10" : "border-border bg-card hover:border-amber-500/40"}`}>
+                    <input
+                      type="checkbox"
+                      checked={rightsConfirmed}
+                      onChange={e => setRightsConfirmed(e.target.checked)}
+                      className="w-4 h-4 mt-0.5 shrink-0 accent-green-500"
+                    />
+                    <span className="text-xs leading-relaxed text-foreground/90">
+                      私は、この音源が自分の権利を持つ完全オリジナル音源であり、他人の楽曲のカバー・歌ってみた・演奏してみた・既存曲のアレンジではないことを確認しました。
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
           )}
 
@@ -219,7 +278,7 @@ export default function ProductManagePanel({ channel }) {
           )}
 
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}>キャンセル</Button>
+            <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); setRightsConfirmed(false); }}>キャンセル</Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}保存
             </Button>

@@ -29,8 +29,8 @@ const FEATURES = [
   },
   {
     icon: "🎵",
-    title: "音源販売",
-    desc: "制作した楽曲・レコーディング・オリジナル作品を繰り返し販売。寝ている間も稼げる。",
+    title: "音源販売（完全オリジナルのみ）",
+    desc: "ご自身が権利を持つオリジナル楽曲・BGM・インスト・サンプルパックを繰り返し販売。カバー曲・歌ってみた・演奏してみたは販売対象外です。",
     color: "#f59e0b",
   },
   {
@@ -282,6 +282,14 @@ export default function MusicianLP() {
               <p className="text-base text-white/60 leading-relaxed">
                 ChatMarketなら、あなたのオリジナル楽曲・世界観・個性がそのまま商品になります。カバー曲に頼る必要はありません。
               </p>
+
+              {/* 音源販売ルール注意 */}
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
+                <p className="text-xs font-black text-amber-300 flex items-center gap-1.5">⚠️ 音源販売について</p>
+                <p className="text-xs text-amber-200/80 leading-relaxed">
+                  販売可能な音源は、ご自身が権利を持つ<strong className="text-white">完全オリジナル音源のみ</strong>です。カバー曲・歌ってみた・演奏してみた・既存曲のアレンジ・カラオケ音源を使用した録音は販売できません。
+                </p>
+              </div>
 
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
