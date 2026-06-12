@@ -1,7 +1,7 @@
 {
   "name": "CreatorEarning",
   "type": "object",
-  "description": "\u30e9\u30a4\u30d0\u30fc\u5831\u916c\u30c6\u30fc\u30d6\u30eb\uff08\u30e6\u30fc\u30b6\u30fc\u306e\u30b3\u30a4\u30f3\u6b8b\u9ad8\u3068\u306f\u5225\u30c6\u30fc\u30d6\u30eb\u3067\u7ba1\u7406\u30fb\u6cd5\u52d9\u5206\u96e2\uff09",
+  "description": "\u30e9\u30a4\u30d0\u30fc\u5831\u916c\u30c6\u30fc\u30d6\u30eb\uff08\u30b3\u30a4\u30f3\u53ce\u76ca + Stripe\u76f4\u63a5\u6c7a\u6e08\u53ce\u76ca\u3092\u7d71\u5408\u7ba1\u7406\uff09",
   "properties": {
     "creator_email": {
       "type": "string",
@@ -17,7 +17,7 @@
     },
     "sender_email": {
       "type": "string",
-      "description": "\u9001\u4ed8\u8005\uff08\u8996\u8074\u8005\uff09\u306e\u30e1\u30fc\u30eb"
+      "description": "\u9001\u4ed8\u8005\uff08\u8996\u8074\u8005/\u76f8\u8ac7\u8005\uff09\u306e\u30e1\u30fc\u30eb"
     },
     "sender_name": {
       "type": "string",
@@ -25,27 +25,32 @@
     },
     "coin_amount": {
       "type": "number",
-      "description": "\u53d7\u3051\u53d6\u3063\u305f\u30b3\u30a4\u30f3\u679a\u6570"
+      "default": 0,
+      "description": "\u53d7\u3051\u53d6\u3063\u305f\u30b3\u30a4\u30f3\u679a\u6570\uff08\u30b3\u30a4\u30f3\u7cfb\u306f\u5fc5\u9808\u3001Stripe\u7cfb\u306f0\uff09"
     },
     "yen_equivalent": {
       "type": "number",
-      "description": "\u5186\u76f8\u5f53\u984d\uff08coin_amount \u00d7 1.1\uff09"
+      "default": 0,
+      "description": "\u5186\u76f8\u5f53\u984d\uff08\u30b3\u30a4\u30f3\u7cfb: coin_amount\u00d71.1 / Stripe\u7cfb: gross_amount_yen\uff09"
     },
     "service_type": {
       "type": "string",
       "enum": [
         "superchat",
-        "direct_chat"
+        "direct_chat",
+        "chat_reading",
+        "video_call",
+        "school_ticket"
       ],
       "description": "\u5831\u916c\u767a\u751f\u30b5\u30fc\u30d3\u30b9\u7a2e\u5225"
     },
     "service_id": {
       "type": "string",
-      "description": "\u95a2\u9023\u3059\u308b\u30b5\u30fc\u30d3\u30b9ID\uff08livestream_id / thread_id\uff09"
+      "description": "\u95a2\u9023\u3059\u308b\u30b5\u30fc\u30d3\u30b9ID\uff08order_id / thread_id \u306a\u3069\uff09"
     },
     "transaction_id": {
       "type": "string",
-      "description": "\u5bfe\u5fdc\u3059\u308bYellCoinTransaction\u306eID\uff08\u8a3c\u8de1\u7d10\u4ed8\u3051\uff09"
+      "description": "\u5bfe\u5fdc\u3059\u308bYellCoinTransaction\u306eID\uff08\u30b3\u30a4\u30f3\u7cfb\uff09"
     },
     "message": {
       "type": "string",
@@ -55,12 +60,59 @@
       "type": "boolean",
       "default": false,
       "description": "\u7cbe\u7b97\u6e08\u307f\u30d5\u30e9\u30b0"
+    },
+    "gross_amount_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3010Stripe\u7cfb\u3011\u7dcf\u8acb\u6c42\u984d\uff08\u5186\uff09"
+    },
+    "creator_rate": {
+      "type": "number",
+      "default": 0.85,
+      "description": "\u3010Stripe\u7cfb\u3011\u9069\u7528\u9084\u5143\u7387"
+    },
+    "creator_amount_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3010Stripe\u7cfb\u3011\u5360\u3044\u5e2b\u624b\u53d6\u308a\u984d\uff08\u5186\uff09"
+    },
+    "platform_amount_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u3010Stripe\u7cfb\u3011\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0\u624b\u6570\u6599\uff08\u5186\uff09"
+    },
+    "payment_provider": {
+      "type": "string",
+      "enum": [
+        "coin",
+        "stripe"
+      ],
+      "default": "coin",
+      "description": "\u6c7a\u6e08\u30d7\u30ed\u30d0\u30a4\u30c0\u30fc"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "\u3010Stripe\u7cfb\u3011Checkout Session ID\uff08\u51aa\u7b49\u6027\u30ad\u30fc\uff09"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "description": "\u3010Stripe\u7cfb\u3011Payment Intent ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "settled",
+        "refunded"
+      ],
+      "default": "confirmed",
+      "description": "\u53ce\u76ca\u30b9\u30c6\u30fc\u30bf\u30b9"
     }
   },
   "required": [
     "creator_email",
     "sender_email",
-    "coin_amount",
     "service_type"
   ]
 }

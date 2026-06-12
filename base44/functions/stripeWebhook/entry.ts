@@ -148,7 +148,42 @@ Deno.serve(async (req) => {
               paid_at: new Date().toISOString(),
             });
 
-            // 収益記録（CreatorEarningは既存スキーマがコイン専用のため、ChatReadingOrderに収益情報を保持）
+            // ── CreatorEarning 作成（冪等性: stripe_session_id で重複チェック） ──
+            try {
+              const existingEarning = await base44.asServiceRole.entities.CreatorEarning.filter({
+                service_type: 'chat_reading',
+                service_id: order.id,
+              });
+              if (existingEarning.length === 0) {
+                const platformAmountYen = priceYen - creatorRevenueYen;
+                await base44.asServiceRole.entities.CreatorEarning.create({
+                  creator_email: meta.creator_email || order.creator_email,
+                  channel_id: order.channel_id || '',
+                  channel_name: order.channel_name || '',
+                  sender_email: meta.buyer_email || order.buyer_email,
+                  sender_name: order.buyer_name || '',
+                  coin_amount: 0,
+                  yen_equivalent: priceYen,
+                  service_type: 'chat_reading',
+                  service_id: order.id,
+                  gross_amount_yen: priceYen,
+                  creator_rate: creatorRate,
+                  creator_amount_yen: creatorRevenueYen,
+                  platform_amount_yen: platformAmountYen,
+                  payment_provider: 'stripe',
+                  stripe_session_id: session.id,
+                  stripe_payment_intent_id: session.payment_intent || '',
+                  status: 'confirmed',
+                  is_settled: false,
+                });
+                console.log(`[ChatReading] CreatorEarning created: order=${order.id} creator=${meta.creator_email} amount=${creatorRevenueYen}yen`);
+              } else {
+                console.log(`[ChatReading] CreatorEarning already exists for order ${order.id}, skipped`);
+              }
+            } catch (earningErr) {
+              console.error('[ChatReading] CreatorEarning creation failed:', earningErr.message);
+            }
+
             // 通知用Notification作成（占い師へ）
             try {
               await base44.asServiceRole.entities.Notification.create({

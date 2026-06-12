@@ -839,7 +839,7 @@ export default function FortuneLP() {
               <p className="text-sm text-white/65 leading-relaxed">
                 Chat Marketのチャット鑑定は、相談内容への鑑定結果に加え、追加質問や補足に一度対応できる2往復制です。無制限のやり取りではなく、あらかじめ対応範囲を明確にすることで、相談者にも占い師にも分かりやすく、安心して利用しやすい鑑定スタイルを目指します。
               </p>
-              <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>追加質問・補足は1回まで対応できます。</p>
+              <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>追加質問・補足は1回まで対応できます。返信目安はメニューごとに占い師が設定します。</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-center">
                 {[
                   { step: "①", label: "相談内容を送信", sub: "相談者", color: "#A855F7" },
