@@ -825,7 +825,38 @@ export default function FortuneLP() {
               </div>
             </div>
 
-            {/* Stripe決済型チャット鑑定 追記 */}
+            {/* 2往復制説明 */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="rounded-2xl p-6 space-y-3"
+              style={{ background: "linear-gradient(135deg, rgba(107,33,168,0.18), rgba(212,175,55,0.08))", border: `2px solid ${MYSTIC.gold}`, boxShadow: `0 0 30px rgba(212,175,55,0.1)` }}
+            >
+              <p className="font-black text-white text-base flex items-center gap-2">
+                <span style={{ color: MYSTIC.gold }}>🔁</span> チャット鑑定は安心の2往復制
+              </p>
+              <p className="text-sm text-white/65 leading-relaxed">
+                Chat Marketのチャット鑑定は、相談内容への鑑定結果に加え、追加質問や補足に一度対応できる2往復制です。無制限のやり取りではなく、あらかじめ対応範囲を明確にすることで、相談者にも占い師にも分かりやすく、安心して利用しやすい鑑定スタイルを目指します。
+              </p>
+              <p className="text-xs font-bold" style={{ color: MYSTIC.gold }}>追加質問・補足は1回まで対応できます。</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-center">
+                {[
+                  { step: "①", label: "相談内容を送信", sub: "相談者", color: "#A855F7" },
+                  { step: "②", label: "鑑定結果を返信", sub: "占い師（1回目）", color: "#D4AF37" },
+                  { step: "③", label: "追加質問を送信", sub: "相談者（1回まで）", color: "#A855F7" },
+                  { step: "④", label: "最終回答を返信", sub: "占い師（2回目）", color: "#D4AF37" },
+                ].map(s => (
+                  <div key={s.step} className="rounded-xl p-3 space-y-1" style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${s.color}44` }}>
+                    <p className="font-black text-base" style={{ color: s.color }}>{s.step}</p>
+                    <p className="font-bold text-white/80">{s.label}</p>
+                    <p className="text-white/40">{s.sub}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+          {/* Stripe決済型チャット鑑定 追記 */}
             <div className="rounded-2xl p-5 space-y-3"
               style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(212,175,55,0.08))", border: "1px solid rgba(168,85,247,0.40)" }}>
               <div className="flex items-center gap-2">
