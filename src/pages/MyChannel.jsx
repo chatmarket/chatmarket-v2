@@ -68,15 +68,12 @@ export default function MyChannel() {
 
   const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
   const isEducation = channel && (channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education");
-  // ミュージシャン判定：user.role === "musician" を最優先。それ以外は占い・教育・アイドル以外かつ音楽タグ一致で判定
-  const isMusicianChannel = channel && !isFortuneTeller && !isEducation
-    && (user?.role === "musician"
-      || channel.service_category === "other"
-      || !channel.service_category)
-    && (user?.role === "musician"
-      || (channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t))
-      || channel.category_id === "hobby"
-      || channel.category_id === "entertainment");
+  // ミュージシャン判定：明確なミュージシャン条件のみ。タグ・hobby・entertainment・idol は使用しない
+  const isMusicianChannel = !!(channel && (
+    user?.role === "musician" ||
+    channel.service_category === "musician" ||
+    channel.category_id === "music"
+  ));
 
   // デジタルコンテンツタブのラベルをカテゴリで分ける
   const digitalTabLabel = isFortuneTeller ? "鑑定書・デジタル" : isEducation ? "教材・資料" : isMusicianChannel ? "音源販売" : "デジタル販売";
@@ -408,9 +405,11 @@ export default function MyChannel() {
               <span>🔮</span> チャット鑑定
             </TabsTrigger>
           )}
-          <TabsTrigger value="music-sales" className="flex items-center gap-1">
-            <Music className="w-3.5 h-3.5" /> {digitalTabLabel}
-          </TabsTrigger>
+          {isMusicianChannel && (
+            <TabsTrigger value="music-sales" className="flex items-center gap-1">
+              <Music className="w-3.5 h-3.5" /> 音源販売
+            </TabsTrigger>
+          )}
           {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
