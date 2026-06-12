@@ -33,7 +33,7 @@
     },
     "consultation_genre": {
       "type": "string",
-      "description": "\u76f8\u8ac7\u30b8\u30e3\u30f3\u30eb\uff08\u604b\u611b\u30fb\u4ed5\u4e8b\u30fb\u4eba\u9593\u95a2\u4fc2\u306a\u3069\uff09"
+      "description": "\u76f8\u8ac7\u30b8\u30e3\u30f3\u30eb"
     },
     "consultation_text": {
       "type": "string",
@@ -62,6 +62,7 @@
         "paid",
         "in_progress",
         "answered",
+        "follow_up_received",
         "completed",
         "cancelled",
         "refunded"
@@ -100,7 +101,17 @@
     "answered_at": {
       "type": "string",
       "format": "date-time",
-      "description": "\u56de\u7b54\u5b8c\u4e86\u65e5\u6642"
+      "description": "\u5360\u3044\u5e2b1\u56de\u76ee\u56de\u7b54\u5b8c\u4e86\u65e5\u6642"
+    },
+    "follow_up_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u76f8\u8ac7\u8005\u8ffd\u52a0\u8cea\u554f\u9001\u4fe1\u65e5\u6642"
+    },
+    "final_answered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u5360\u3044\u5e2b\u6700\u7d42\u56de\u7b54\u65e5\u6642"
     },
     "completed_at": {
       "type": "string",
@@ -109,8 +120,28 @@
     },
     "creator_reply": {
       "type": "string",
-      "description": "\u5360\u3044\u5e2b\u306e\u6700\u521d\u306e\u56de\u7b54\uff08\u30b7\u30f3\u30d7\u30eb\u8a2d\u8a08\uff09",
+      "description": "\u5360\u3044\u5e2b\u306e1\u56de\u76ee\u56de\u7b54",
       "maxLength": 5000
+    },
+    "buyer_follow_up": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u306e\u8ffd\u52a0\u8cea\u554f",
+      "maxLength": 3000
+    },
+    "creator_final_reply": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u6700\u7d42\u56de\u7b54",
+      "maxLength": 5000
+    },
+    "buyer_message_count": {
+      "type": "number",
+      "default": 1,
+      "description": "\u76f8\u8ac7\u8005\u30e1\u30c3\u30bb\u30fc\u30b8\u6570\uff08\u521d\u56de=1\uff09"
+    },
+    "creator_message_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u5360\u3044\u5e2b\u8fd4\u4fe1\u6570"
     },
     "refund_reason": {
       "type": "string",
@@ -142,7 +173,14 @@
           "data.buyer_email": "{{user.email}}"
         },
         {
-          "data.creator_email": "{{user.email}}"
+          "$and": [
+            {
+              "data.creator_email": "{{user.email}}"
+            },
+            {
+              "data.payment_status": "paid"
+            }
+          ]
         },
         {
           "user_condition": {
@@ -152,16 +190,9 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "data.creator_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {
