@@ -59,7 +59,7 @@
         "custom_order"
       ],
       "default": "instant",
-      "description": "instant=\u4e8b\u524d\u30d5\u30a1\u30a4\u30eb\u30a2\u30c3\u30d7\u30fb\u8cfc\u5165\u5373\u6642DL\uff08\u30a2\u30a4\u30c9\u30eb\u5411\u3051\u65e2\u88fd\u54c1\uff09 / custom_order=\u6ce8\u6587\u5f8c\u306b\u8ca9\u58f2\u8005\u304c\u500b\u5225\u7d0d\u54c1\uff08\u5360\u3044\u5e2b\u5411\u3051\u30aa\u30fc\u30c0\u30fc\u30e1\u30a4\u30c9\uff09"
+      "description": "instant=\u4e8b\u524d\u30d5\u30a1\u30a4\u30eb\u30a2\u30c3\u30d7\u30fb\u8cfc\u5165\u5373\u6642DL\u4ed8\u4e0e\uff08\u30a2\u30a4\u30c9\u30eb\u5411\u3051\u65e2\u88fd\u54c1\uff09 / custom_order=\u6ce8\u6587\u5f8c\u306b\u8ca9\u58f2\u8005\u304c\u500b\u5225\u7d0d\u54c1\uff08\u5360\u3044\u5e2b\u5411\u3051\u30aa\u30fc\u30c0\u30fc\u30e1\u30a4\u30c9\uff09"
     },
     "file_url": {
       "type": "string",
@@ -84,7 +84,7 @@
     },
     "custom_order_description": {
       "type": "string",
-      "description": "\u3010custom_order\u306e\u307f\u3011\u30aa\u30fc\u30c0\u30fc\u30e1\u30a4\u30c9\u306e\u6ce8\u610f\u4e8b\u9805\u30fb\u7d0d\u54c1\u76ee\u5b89\uff08\u6700\u5927300\u6587\u5b57\uff09",
+      "description": "\u3010custom_order\u306e\u307f\u3011\u30aa\u30fc\u30c0\u30fc\u30e1\u30a4\u30c9\u306e\u6ce8\u610f\u4e8b\u9805\u30fb\u7d0d\u54c1\u5185\u5bb9\u306e\u8aac\u660e\uff08\u6700\u5927300\u6587\u5b57\uff09",
       "maxLength": 300
     },
     "delivery_days_estimate": {
@@ -106,6 +106,32 @@
       ],
       "default": "goods",
       "description": "\u5546\u54c1\u30ab\u30c6\u30b4\u30ea"
+    },
+    "music_release_type": {
+      "type": "string",
+      "enum": [
+        "single",
+        "ep",
+        "album",
+        "sample_pack"
+      ],
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u4f5c\u54c1\u30bf\u30a4\u30d7: single=\u30b7\u30f3\u30b0\u30eb, ep=EP, album=\u30a2\u30eb\u30d0\u30e0, sample_pack=\u30b5\u30f3\u30d7\u30eb\u30d1\u30c3\u30af\uff08\u4efb\u610f\uff09"
+    },
+    "track_count": {
+      "type": "number",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u53ce\u9332\u66f2\u6570\uff08\u4efb\u610f\uff09"
+    },
+    "audio_format_label": {
+      "type": "string",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u97f3\u6e90\u5f62\u5f0f\u30e9\u30d9\u30eb\uff08\u4f8b: MP3, ZIP, MP3+PDF\uff09\uff08\u4efb\u610f\uff09"
+    },
+    "artist_name": {
+      "type": "string",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u30a2\u30fc\u30c6\u30a3\u30b9\u30c8\u540d\uff08\u4efb\u610f\uff09"
+    },
+    "release_year": {
+      "type": "number",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u30ea\u30ea\u30fc\u30b9\u5e74\uff08\u4efb\u610f\uff09"
     }
   },
   "required": [

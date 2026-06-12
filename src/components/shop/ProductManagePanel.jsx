@@ -19,7 +19,18 @@ const EMPTY_FORM = {
   file_url: "", file_name: "", file_type: "other",
   image_url: "", category: "digital",
   custom_order_description: "", delivery_days_estimate: 7,
+  // 音源向け任意フィールド
+  music_release_type: "", track_count: "", audio_format_label: "", artist_name: "", release_year: "",
 };
+
+const RELEASE_TYPES = [
+  { value: "single", label: "Single", hint: "1曲単品の販売に向いています" },
+  { value: "ep", label: "EP", hint: "複数曲をZIPでまとめて販売する場合に向いています" },
+  { value: "album", label: "Album", hint: "複数曲をZIPでまとめて販売する場合に向いています" },
+  { value: "sample_pack", label: "Sample Pack", hint: "BGM素材、効果音、ループ素材、ボイス素材などの販売に向いています" },
+];
+
+const AUDIO_FORMAT_OPTIONS = ["MP3", "ZIP", "MP3 + PDF", "ZIP音源パック"];
 
 // 音源ファイル種別（mp3 / zip）は著作権確認が必要
 const MUSIC_FILE_TYPES = ["mp3", "zip"];
@@ -27,7 +38,7 @@ function isMusicFile(fileType) {
   return MUSIC_FILE_TYPES.includes(fileType);
 }
 
-export default function ProductManagePanel({ channel }) {
+export default function ProductManagePanel({ channel, isMusician = false }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -80,6 +91,14 @@ export default function ProductManagePanel({ channel }) {
     }
     setSaving(true);
     try {
+      // 音源向け任意フィールドを整理（空文字は undefined にして保存しない）
+      const musicFields = isMusician ? {
+        ...(form.music_release_type ? { music_release_type: form.music_release_type } : {}),
+        ...(form.track_count ? { track_count: Number(form.track_count) } : {}),
+        ...(form.audio_format_label ? { audio_format_label: form.audio_format_label } : {}),
+        ...(form.artist_name ? { artist_name: form.artist_name } : {}),
+        ...(form.release_year ? { release_year: Number(form.release_year) } : {}),
+      } : {};
       const extraFields = isMusicFile(form.file_type) ? {
         rights_confirmed: true,
         rights_confirmation_type: "original_music_only",
@@ -88,6 +107,7 @@ export default function ProductManagePanel({ channel }) {
       } : {};
       await base44.entities.Product.create({
         ...form,
+        ...musicFields,
         ...extraFields,
         is_digital: true,
         channel_id: channel.id,
@@ -124,9 +144,11 @@ export default function ProductManagePanel({ channel }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-foreground">デジタルコンテンツ販売</h3>
+        <h3 className="font-semibold text-foreground">
+          {isMusician ? "楽曲・音源販売" : "デジタルコンテンツ販売"}
+        </h3>
         <Button size="sm" onClick={() => setShowForm(v => !v)} className="gap-2">
-          <Plus className="w-4 h-4" />新規登録
+          <Plus className="w-4 h-4" />{isMusician ? "作品を追加" : "新規登録"}
         </Button>
       </div>
 
@@ -165,16 +187,19 @@ export default function ProductManagePanel({ channel }) {
           {/* 共通フィールド */}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">タイトル *</Label>
-              <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="商品名" />
+              <Label className="text-xs">{isMusician ? "作品タイトル *" : "タイトル *"}</Label>
+              <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder={isMusician ? "例：星の帰り道" : "商品名"} />
             </div>
             <div className="col-span-2">
-              <Label className="text-xs">説明</Label>
-              <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="商品の説明" rows={2} />
+              <Label className="text-xs">{isMusician ? "作品説明" : "説明"}</Label>
+              <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder={isMusician ? "楽曲の雰囲気、収録内容、使用用途などを記載してください" : "商品の説明"} rows={2} />
             </div>
             <div>
-              <Label className="text-xs">価格（円）*</Label>
-              <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} min={0} />
+              <Label className="text-xs">販売価格（円）*</Label>
+              <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} min={0}
+                placeholder="例：500" />
             </div>
             <div>
               <Label className="text-xs">在庫数（-1=無制限）</Label>
@@ -182,9 +207,68 @@ export default function ProductManagePanel({ channel }) {
             </div>
           </div>
 
+          {/* ミュージシャン向け追加項目 */}
+          {isMusician && (
+            <div className="space-y-3 p-3 bg-card rounded-xl border border-border">
+              <p className="text-xs font-bold text-primary flex items-center gap-1.5">🎵 音源情報（任意）</p>
+
+              {/* 作品タイプ */}
+              <div>
+                <Label className="text-xs">作品タイプ</Label>
+                <div className="grid grid-cols-2 gap-1.5 mt-1">
+                  {RELEASE_TYPES.map(rt => (
+                    <button
+                      key={rt.value}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, music_release_type: f.music_release_type === rt.value ? "" : rt.value }))}
+                      className={`text-left rounded-lg border p-2 transition-colors ${form.music_release_type === rt.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}
+                    >
+                      <p className="text-xs font-bold">{rt.label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{rt.hint}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* アーティスト名 */}
+                <div>
+                  <Label className="text-xs">アーティスト名</Label>
+                  <Input value={form.artist_name} onChange={e => setForm(f => ({ ...f, artist_name: e.target.value }))}
+                    placeholder={channel?.name || "アーティスト名"} className="text-xs" />
+                </div>
+                {/* 収録曲数 */}
+                <div>
+                  <Label className="text-xs">収録曲数</Label>
+                  <Input type="number" min={1} value={form.track_count} onChange={e => setForm(f => ({ ...f, track_count: e.target.value }))}
+                    placeholder="例：4" className="text-xs" />
+                </div>
+                {/* リリース年 */}
+                <div>
+                  <Label className="text-xs">リリース年</Label>
+                  <Input type="number" min={2000} max={2099} value={form.release_year} onChange={e => setForm(f => ({ ...f, release_year: e.target.value }))}
+                    placeholder={String(new Date().getFullYear())} className="text-xs" />
+                </div>
+                {/* 音源形式 */}
+                <div>
+                  <Label className="text-xs">音源形式</Label>
+                  <select
+                    value={form.audio_format_label}
+                    onChange={e => setForm(f => ({ ...f, audio_format_label: e.target.value }))}
+                    className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">選択してください</option>
+                    {AUDIO_FORMAT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* サムネイル */}
           <div>
-            <Label className="text-xs">サムネイル画像</Label>
+            <Label className="text-xs">{isMusician ? "ジャケット画像" : "サムネイル画像"}</Label>
+            {isMusician && <p className="text-[10px] text-muted-foreground mb-1">正方形のジャケット画像を設定すると、アルバムのように表示されます</p>}
             <div className="flex items-center gap-2 mt-1">
               {form.image_url && <img src={form.image_url} className="w-12 h-12 rounded-lg object-cover" alt="" />}
               <label className="cursor-pointer">
@@ -199,7 +283,8 @@ export default function ProductManagePanel({ channel }) {
           {/* 即時配信：ファイルアップロード */}
           {isInstant && (
             <div className="space-y-2">
-              <Label className="text-xs">販売ファイル（PDF / MP3 / ZIP など）*</Label>
+              <Label className="text-xs">{isMusician ? "音源ファイル（MP3 / ZIP など）*" : "販売ファイル（PDF / MP3 / ZIP など）*"}</Label>
+              {isMusician && <p className="text-[10px] text-muted-foreground -mt-1">MP3、ZIPなどの音源ファイルをアップロードできます</p>}
               <div className="flex items-center gap-2 mt-1">
                 {form.file_name && <span className="text-xs text-primary bg-primary/10 rounded px-2 py-1">{form.file_name}</span>}
                 <label className="cursor-pointer">

@@ -572,7 +572,7 @@ export default function MyChannel() {
                 <p className="text-xs text-muted-foreground">{digitalTabDesc}</p>
                 {isMusicianChannel && <p className="text-xs text-muted-foreground">対応形式：MP3、ZIP（音源セット）など。完全オリジナル音源のみ販売可能です。</p>}
               </div>
-              <ProductManagePanel channel={channel} />
+              <ProductManagePanel channel={channel} isMusician={isMusicianChannel} />
             </div>
           )}
         </TabsContent>
