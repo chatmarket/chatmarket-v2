@@ -460,24 +460,35 @@ export default function ChannelPage() {
       {products.length > 0 && (() => {
         const isFortune = channel.stream_category === "fortune" || channel.service_category === "fortune_telling";
         const isEdu = channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education";
-        // ミュージシャン判定：明確なミュージシャン条件のみ。タグ・hobby・entertainment・idol は使用しない
-        const isMusic = (
-          channel.service_category === "musician" ||
-          channel.category_id === "music"
-        );
+        // 音源販売対象判定：role/service_category/category_id の明示的な値のみ。タグ・hobby・entertainmentのみでは表示しない
+        const AUDIO_CATS = ["musician", "idol", "singer", "voice_actor", "voice_creator"];
+        const AUDIO_CAT_IDS = ["music", "idol", "voice"];
+        const isAudioSeller = AUDIO_CATS.includes(channel.service_category) || AUDIO_CAT_IDS.includes(channel.category_id);
+        const isIdol = channel.service_category === "idol" || channel.category_id === "idol";
+        const isVoice = channel.service_category === "voice_actor" || channel.service_category === "voice_creator" || channel.category_id === "voice";
+
         const sectionLabel = isFortune ? "🔮 鑑定書・デジタルコンテンツ"
           : isEdu ? "📚 教材・デジタル資料"
-          : isMusic ? "🎵 楽曲・音源販売"
+          : isIdol ? "🎤 楽曲・ボイス販売"
+          : isVoice ? "🎙️ ボイス・音声販売"
+          : isAudioSeller ? "🎵 楽曲・音源販売"
           : "💾 デジタルコンテンツ";
+        const sectionSubcopy = isIdol
+          ? "オリジナル曲、ライブ音源、限定ボイスなどをデジタルコンテンツとして購入できます。"
+          : isVoice
+          ? "ボイスメッセージ、音声作品、オリジナル音声素材などを購入できます。"
+          : isAudioSeller
+          ? "オリジナル曲、EP、BGM素材などをデジタル作品として購入できます。"
+          : null;
         return (
           <section className="mb-6">
             <h2 className="text-base sm:text-lg font-bold mb-1">{sectionLabel}</h2>
-            {isMusic && (
-              <p className="text-xs text-muted-foreground mb-3">オリジナル曲、EP、BGM素材などをデジタル作品として購入できます。</p>
+            {sectionSubcopy && (
+              <p className="text-xs text-muted-foreground mb-3">{sectionSubcopy}</p>
             )}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {products.map(product => (
-                isMusic
+                isAudioSeller
                   ? <MusicProductCard key={product.id} product={product} />
                   : <ProductCard key={product.id} product={product} />
               ))}

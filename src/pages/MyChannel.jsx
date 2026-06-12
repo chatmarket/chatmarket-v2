@@ -68,22 +68,30 @@ export default function MyChannel() {
 
   const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
   const isEducation = channel && (channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education");
-  // ミュージシャン判定：明確なミュージシャン条件のみ。タグ・hobby・entertainment・idol は使用しない
-  const isMusicianChannel = !!(channel && (
-    user?.role === "musician" ||
-    channel.service_category === "musician" ||
-    channel.category_id === "music"
+
+  // 音源販売対象カテゴリ判定
+  // 対象：ミュージシャン・アイドル・シンガー・声優・ボイスクリエイター
+  // 非対象：占い師・家庭教師・講師・相談系・その他。タグ・hobby・entertainmentのみでは表示しない
+  const AUDIO_SELLER_ROLES = ["musician", "idol", "singer", "voice_actor", "voice_creator"];
+  const AUDIO_SELLER_SERVICE_CATS = ["musician", "idol", "singer", "voice_actor", "voice_creator"];
+  const AUDIO_SELLER_CATEGORY_IDS = ["music", "idol", "voice"];
+  const canSellAudio = !!(channel && (
+    AUDIO_SELLER_ROLES.includes(user?.role) ||
+    AUDIO_SELLER_SERVICE_CATS.includes(channel.service_category) ||
+    AUDIO_SELLER_CATEGORY_IDS.includes(channel.category_id)
   ));
 
-  // デジタルコンテンツタブのラベルをカテゴリで分ける
-  const digitalTabLabel = isFortuneTeller ? "鑑定書・デジタル" : isEducation ? "教材・資料" : isMusicianChannel ? "音源販売" : "デジタル販売";
-  const digitalTabDesc = isFortuneTeller
-    ? "PDF鑑定書・開運レポート・音声メッセージなどをデジタル商品として販売できます。"
-    : isEducation
-    ? "教材PDF・レッスン資料・学習コンテンツをデジタル商品として販売できます。"
-    : isMusicianChannel
-    ? "自作曲・BGM・音源ファイルをデジタル商品として販売できます。購入者は決済後、マイページから音源ファイルをダウンロードできます。"
-    : "デジタルコンテンツをデジタル商品として販売できます。";
+  // 音源販売タブ名をカテゴリ別に分ける
+  const audioTabLabel = (channel?.service_category === "idol" || channel?.category_id === "idol")
+    ? "楽曲・ボイス販売"
+    : (channel?.service_category === "voice_actor" || channel?.service_category === "voice_creator" || channel?.category_id === "voice")
+    ? "ボイス・音声販売"
+    : "音源販売";
+  const audioTabDesc = (channel?.service_category === "idol" || channel?.category_id === "idol")
+    ? "オリジナル曲、ライブ音源、限定ボイスなどをデジタルコンテンツとして販売できます。購入者は決済後、マイページからダウンロードできます。"
+    : (channel?.service_category === "voice_actor" || channel?.service_category === "voice_creator" || channel?.category_id === "voice")
+    ? "ボイスメッセージ、音声作品、オリジナル音声素材などを販売できます。購入者は決済後、マイページからダウンロードできます。"
+    : "自作曲・BGM・音源ファイルをデジタル商品として販売できます。購入者は決済後、マイページから音源ファイルをダウンロードできます。";
 
   const { data: chatMenus = [] } = useQuery({
     queryKey: ["chat-reading-menus-checklist", channel?.id],
@@ -405,9 +413,9 @@ export default function MyChannel() {
               <span>🔮</span> チャット鑑定
             </TabsTrigger>
           )}
-          {isMusicianChannel && (
+          {canSellAudio && (
             <TabsTrigger value="music-sales" className="flex items-center gap-1">
-              <Music className="w-3.5 h-3.5" /> 音源販売
+              <Music className="w-3.5 h-3.5" /> {audioTabLabel}
             </TabsTrigger>
           )}
           {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
@@ -568,14 +576,14 @@ export default function MyChannel() {
         {/* Digital Cheki feature is frozen / hidden for now. ChekiSettingsPanel suppressed. */}
 
         <TabsContent value="music-sales">
-          {channel && (
+          {channel && canSellAudio && (
             <div className="space-y-4">
               <div className="bg-secondary/50 border border-border/50 rounded-xl p-4 space-y-1">
-                <p className="text-sm font-black flex items-center gap-2"><Music className="w-4 h-4 text-primary" /> {digitalTabLabel}</p>
-                <p className="text-xs text-muted-foreground">{digitalTabDesc}</p>
-                {isMusicianChannel && <p className="text-xs text-muted-foreground">対応形式：MP3、ZIP（音源セット）など。完全オリジナル音源のみ販売可能です。</p>}
+                <p className="text-sm font-black flex items-center gap-2"><Music className="w-4 h-4 text-primary" /> {audioTabLabel}</p>
+                <p className="text-xs text-muted-foreground">{audioTabDesc}</p>
+                <p className="text-xs text-muted-foreground">対応形式：MP3、ZIP（音源セット）など。本人または所属先が販売権利を持つオリジナル音源のみ販売可能です。</p>
               </div>
-              <ProductManagePanel channel={channel} isMusician={isMusicianChannel} />
+              <ProductManagePanel channel={channel} isMusician={canSellAudio} />
             </div>
           )}
         </TabsContent>

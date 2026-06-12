@@ -328,7 +328,7 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
                       className="w-4 h-4 mt-0.5 shrink-0 accent-green-500"
                     />
                     <span className="text-xs leading-relaxed text-foreground/90">
-                      私は、この音源が自分の権利を持つ完全オリジナル音源であり、他人の楽曲のカバー・歌ってみた・演奏してみた・既存曲のアレンジではないことを確認しました。
+                      私は、この音源が自分または所属先が販売権利を持つオリジナル音源であり、他人の楽曲のカバー・歌ってみた・演奏してみた・既存曲のアレンジではないことを確認しました。
                     </span>
                   </label>
                 </div>
