@@ -384,8 +384,8 @@ export default function FortuneLP() {
           </h1>
 
           <p className="text-base sm:text-lg text-white/60 leading-relaxed max-w-lg mx-auto">
-            月収100万円超の鑑定師が続出。<br />
-            ChatMarketが占い師の才能を、圧倒的な収益へと昇華させる。
+            新しいプラットフォームなので占い師さんの<br />
+            使いやすいように改善いたします。
           </p>
 
           <SlotsWidget />
