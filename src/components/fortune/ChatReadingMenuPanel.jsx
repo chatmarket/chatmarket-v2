@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit2, Trash2, Clock, Sparkles } from "lucide-react";
+import { Plus, Edit2, Trash2, Clock, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 const EMPTY_FORM = { title: "", description: "", price_yen: 3000, estimated_reply_hours: 24, is_active: true };
@@ -102,9 +102,57 @@ function MenuForm({ initial, onSave, onCancel }) {
   );
 }
 
+// テンプレート選択パネル（0件時は展開表示、1件以上はトグル）
+function TemplateSelector({ onSelect, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  if (!defaultOpen && !open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1.5 text-xs font-bold text-purple-300 hover:text-purple-200 transition-colors px-3 py-1.5 rounded-xl border border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20"
+      >
+        <Sparkles className="w-3.5 h-3.5" /> テンプレートから追加
+        <ChevronDown className="w-3.5 h-3.5" />
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-2 bg-purple-900/10 border border-purple-500/25 rounded-2xl p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-purple-300">✨ テンプレートから作成</p>
+        {!defaultOpen && (
+          <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+            <ChevronUp className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {TEMPLATES.map((tpl, i) => (
+          <button
+            key={i}
+            onClick={() => onSelect(tpl)}
+            className="text-left p-3 rounded-xl border border-purple-500/30 bg-purple-900/10 hover:bg-purple-600/20 transition-all space-y-1"
+          >
+            <p className="font-bold text-xs text-purple-200">{tpl.title}</p>
+            <p className="text-[10px] text-muted-foreground">¥{tpl.price_yen.toLocaleString()} / {tpl.estimated_reply_hours}h以内</p>
+            <p className="text-[10px] text-white/40 line-clamp-2">{tpl.description}</p>
+            <p className="text-[10px] font-bold text-purple-400 mt-1">このテンプレートで作成 →</p>
+          </button>
+        ))}
+      </div>
+      {defaultOpen && (
+        <p className="text-[10px] text-muted-foreground text-center pt-1">選択後、内容を自由に編集できます</p>
+      )}
+    </div>
+  );
+}
+
 export default function ChatReadingMenuPanel({ channel, user }) {
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(null); // null=非表示, true=空フォーム, object=テンプレート
+  // formInitial: null=非表示, {} or templateObj=フォーム表示
+  const [formInitial, setFormInitial] = useState(null);
   const [editingMenu, setEditingMenu] = useState(null);
 
   const { data: menus = [], isLoading } = useQuery({
@@ -122,7 +170,7 @@ export default function ChatReadingMenuPanel({ channel, user }) {
     });
     queryClient.invalidateQueries({ queryKey: ["chat-reading-menus", channel.id] });
     queryClient.invalidateQueries({ queryKey: ["chat-reading-menus-checklist", channel.id] });
-    setShowForm(null);
+    setFormInitial(null);
     toast.success("メニューを作成しました");
   };
 
@@ -145,72 +193,51 @@ export default function ChatReadingMenuPanel({ channel, user }) {
     toast.success("削除しました");
   };
 
+  const openBlankForm = () => setFormInitial(EMPTY_FORM);
+  const openTemplateForm = (tpl) => setFormInitial({ ...tpl, is_active: true });
+
+  const showingForm = formInitial !== null;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-purple-400" />
           <h3 className="font-black text-sm">チャット鑑定メニュー</h3>
           <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">Stripe決済</span>
         </div>
-        {!showForm && !editingMenu && (
-          <Button
-            size="sm"
-            onClick={() => setShowForm(true)}
-
-            className="gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs"
-          >
-            <Plus className="w-3.5 h-3.5" /> メニューを追加
-          </Button>
+        {!showingForm && !editingMenu && menus.length > 0 && (
+          <div className="flex items-center gap-2">
+            <TemplateSelector onSelect={openTemplateForm} defaultOpen={false} />
+            <Button size="sm" onClick={openBlankForm} className="gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs">
+              <Plus className="w-3.5 h-3.5" /> メニューを追加
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* テンプレートから作成 */}
-      {!showForm && !editingMenu && menus.length === 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground font-bold">✨ テンプレートから始める</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {TEMPLATES.map((tpl, i) => (
-              <button
-                key={i}
-                onClick={() => { setShowForm(true); }}
-                className="text-left p-3 rounded-xl border border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20 transition-all space-y-1"
-                onMouseDown={() => {}}
-                // テンプレート選択時にフォームへ値を流す（MenuFormへ渡すために一時stateを使う）
-                onClick={() => {
-                  setShowForm({ ...tpl, is_active: true });
-                }}
-              >
-                <p className="font-bold text-xs text-purple-200">{tpl.title}</p>
-                <p className="text-[10px] text-muted-foreground">¥{tpl.price_yen.toLocaleString()} / {tpl.estimated_reply_hours}h以内</p>
-              </button>
-            ))}
-          </div>
-          <p className="text-[10px] text-muted-foreground text-center">またはゼロから作成：</p>
-        </div>
-      )}
-
-      {showForm && (
+      {/* 新規作成フォーム */}
+      {showingForm && (
         <MenuForm
-          initial={typeof showForm === 'object' ? showForm : undefined}
+          initial={formInitial}
           onSave={handleCreate}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => setFormInitial(null)}
         />
       )}
 
+      {/* メニューリスト or 空状態 */}
       {isLoading ? (
         <div className="py-6 text-center text-sm text-muted-foreground">読み込み中...</div>
-      ) : menus.length === 0 && !showForm ? (
-        <div className="text-center py-6 bg-secondary/30 rounded-2xl border border-border/50">
-          <p className="text-3xl mb-2">🔮</p>
-          <p className="text-sm text-muted-foreground mb-3">チャット鑑定メニューがまだありません</p>
-          <Button
-            size="sm"
-            onClick={() => setShowForm(true)}
-            className="bg-purple-600 hover:bg-purple-500 gap-2"
-          >
-            <Plus className="w-4 h-4" /> 空のフォームで作成
-          </Button>
+      ) : menus.length === 0 && !showingForm ? (
+        <div className="space-y-4">
+          {/* 0件：テンプレートを大きく表示 */}
+          <TemplateSelector onSelect={openTemplateForm} defaultOpen={true} />
+          <div className="text-center">
+            <button onClick={openBlankForm} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors">
+              ゼロから作成する
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
