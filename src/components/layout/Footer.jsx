@@ -30,6 +30,11 @@ export default function Footer() {
             <h3 className="font-bold text-sm">法務・サポート</h3>
             <ul className="space-y-1.5 text-xs">
               <li>
+                <Link to="/about-chat-market" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Chat Marketとは
+                </Link>
+              </li>
+              <li>
                 <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
                   利用規約
                 </Link>
