@@ -73,6 +73,7 @@ export default function Recruit() {
   const [followers, setFollowers] = useState("");
   const [pr, setPr] = useState("");
   const [serviceCategory, setServiceCategory] = useState("other");
+  const [fortuneSessionTypes, setFortuneSessionTypes] = useState(["video"]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
@@ -162,9 +163,10 @@ export default function Recruit() {
       const channels = await base44.entities.Channel.filter({ owner_email: email });
       if (channels[0]) {
         const updatePayload = { service_category: serviceCategory };
-        // 占い師の場合は stream_category も fortune に自動セット
+        // 占い師の場合は stream_category も fortune に自動セット & 鑑定種別を保存
         if (serviceCategory === "fortune_telling") {
           updatePayload.stream_category = "fortune";
+          updatePayload.fortune_session_types = fortuneSessionTypes;
         }
         await base44.entities.Channel.update(channels[0].id, updatePayload);
       }
@@ -778,12 +780,66 @@ export default function Recruit() {
                   ))}
                 </div>
                 {serviceCategory === "fortune_telling" && (
-                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 flex items-start gap-2">
-                    <span className="text-lg shrink-0">🔮</span>
-                    <div className="text-xs text-purple-300 space-y-0.5">
-                      <p className="font-bold">占い師向け特典が有効になります</p>
-                      <p>✅ チャット鑑定機能（2往復・マスク表示）が自動的に有効化されます</p>
-                      <p>✅ 占い師カテゴリページに専用プロフィールが掲載されます</p>
+                  <div className="space-y-3">
+                    <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 flex items-start gap-2">
+                      <span className="text-lg shrink-0">🔮</span>
+                      <div className="text-xs text-purple-300 space-y-0.5">
+                        <p className="font-bold">占い師向け特典が有効になります</p>
+                        <p>✅ 占い師カテゴリページに専用プロフィールが掲載されます</p>
+                      </div>
+                    </div>
+                    {/* 鑑定スタイル選択 */}
+                    <div className="bg-purple-900/20 border border-purple-500/40 rounded-xl p-4 space-y-3">
+                      <p className="text-sm font-black text-purple-300">🔮 対応する鑑定スタイルを選択 <span className="text-destructive text-xs ml-1">*必須</span></p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {[
+                          { value: "video", emoji: "📹", label: "ビデオ鑑定", desc: "1対1ビデオ通話で鑑定" },
+                          { value: "chat", emoji: "💬", label: "チャット鑑定", desc: "テキストメッセージで鑑定" },
+                        ].map((type) => {
+                          const selected = fortuneSessionTypes.includes(type.value);
+                          return (
+                            <button
+                              key={type.value}
+                              type="button"
+                              onClick={() => {
+                                if (selected) {
+                                  if (fortuneSessionTypes.length > 1) {
+                                    setFortuneSessionTypes(fortuneSessionTypes.filter(t => t !== type.value));
+                                  }
+                                } else {
+                                  setFortuneSessionTypes([...fortuneSessionTypes, type.value]);
+                                }
+                              }}
+                              className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all text-center ${
+                                selected
+                                  ? "border-purple-400 bg-purple-500/20 text-foreground"
+                                  : "border-border/50 bg-secondary/50 text-muted-foreground hover:border-purple-400/40"
+                              }`}
+                            >
+                              <span className="text-xl">{type.emoji}</span>
+                              <span className="text-sm font-black">{type.label}</span>
+                              <span className="text-[10px]">{type.desc}</span>
+                              {selected && <span className="text-[10px] font-black text-purple-300">✓ 選択中</span>}
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setFortuneSessionTypes(["video", "chat"])}
+                          className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all text-center ${
+                            fortuneSessionTypes.includes("video") && fortuneSessionTypes.includes("chat")
+                              ? "border-purple-400 bg-purple-500/20 text-foreground"
+                              : "border-border/50 bg-secondary/50 text-muted-foreground hover:border-purple-400/40"
+                          }`}
+                        >
+                          <span className="text-xl">✨</span>
+                          <span className="text-sm font-black">両方対応</span>
+                          <span className="text-[10px]">ビデオ＋チャット</span>
+                          {fortuneSessionTypes.includes("video") && fortuneSessionTypes.includes("chat") && (
+                            <span className="text-[10px] font-black text-purple-300">✓ 選択中</span>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -114,6 +114,20 @@
       "default": "other",
       "description": "\u30b5\u30fc\u30d3\u30b9\u30ab\u30c6\u30b4\u30ea\uff08\u6a5f\u80fd\u5236\u5fa1\u306b\u4f7f\u7528\uff09\u3002fortune_telling=\u5360\u3044\u5e2b\u5c02\u7528\u6a5f\u80fd\u6709\u52b9, idol=\u30c7\u30b8\u30bf\u30eb\u30c1\u30a7\u30ad\u6a5f\u80fd\u6709\u52b9"
     },
+    "fortune_session_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "video",
+          "chat"
+        ]
+      },
+      "default": [
+        "video"
+      ],
+      "description": "\u5360\u3044\u5e2b\u306e\u5bfe\u5fdc\u9451\u5b9a\u7a2e\u5225: video=\u30d3\u30c7\u30aa\u9451\u5b9a, chat=\u30c1\u30e3\u30c3\u30c8\uff08\u30e1\u30c3\u30bb\u30fc\u30b8\uff09\u9451\u5b9a"
+    },
     "fortune_arts": {
       "type": "string",
       "description": "\u3010\u5360\u3044\u3011\u5360\u8853\uff08\u30bf\u30ed\u30c3\u30c8\u30fb\u897f\u6d0b\u5360\u661f\u8853\u30fb\u56db\u67f1\u63a8\u547d\u306a\u3069\uff09"

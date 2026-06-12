@@ -189,6 +189,23 @@ export default function ChannelPage() {
             {channel.stream_category === "fortune" && !isMusician(currentUser) && (
               <div className="mt-3 bg-gradient-to-br from-purple-500/10 to-indigo-500/5 border border-purple-500/25 rounded-xl p-3 space-y-2">
                 <p className="text-xs font-black text-purple-400 flex items-center gap-1.5">🔮 占い師プロフィール</p>
+
+                {/* 対応鑑定スタイルバッジ */}
+                {channel.fortune_session_types?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {channel.fortune_session_types.includes("video") && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                        📹 ビデオ鑑定
+                      </span>
+                    )}
+                    {channel.fortune_session_types.includes("chat") && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                        💬 チャット鑑定
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {channel.fortune_arts && (
                   <div>
                     <p className="text-[10px] text-purple-400/70 font-semibold uppercase tracking-widest">占術</p>
