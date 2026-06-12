@@ -455,19 +455,28 @@ export default function ChannelPage() {
         />
       )}
 
-      {/* 音源・デジタル商品販売セクション */}
-      {products.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
-            <span>🎵</span> 楽曲・音源販売
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {products.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* デジタル商品販売セクション（カテゴリ別セクション名） */}
+      {products.length > 0 && (() => {
+        const isFortune = channel.stream_category === "fortune" || channel.service_category === "fortune_telling";
+        const isEdu = channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education";
+        const isMusic = !isFortune && !isEdu && (channel.category_id === "hobby" || channel.category_id === "entertainment" || !channel.category_id)
+          && (channel.service_category === "other" || channel.service_category === "idol" || !channel.service_category)
+          && (channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t));
+        const sectionLabel = isFortune ? "🔮 鑑定書・デジタルコンテンツ"
+          : isEdu ? "📚 教材・デジタル資料"
+          : isMusic ? "🎵 楽曲・音源販売"
+          : "💾 デジタルコンテンツ";
+        return (
+          <section className="mb-6">
+            <h2 className="text-base sm:text-lg font-bold mb-3">{sectionLabel}</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {products.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* チャット鑑定メニュー（占い師チャンネルのみ） */}
       {channel.stream_category === "fortune" && chatMenus.length > 0 && !isOwner && (

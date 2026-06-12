@@ -67,7 +67,22 @@ export default function MyChannel() {
   });
 
   const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
-  const isMusician = channel && channel.service_category === "other"; // ミュージシャン含む全クリエイターに音源販売タブを提供
+  const isEducation = channel && (channel.service_category === "language" || channel.service_category === "education" || channel.category_id === "education");
+  // ミュージシャン判定：service_category が占い・教育・ビジネス・フィットネス・アイドル以外 かつ カテゴリが hobby/entertainment/music系
+  const isMusicianChannel = channel && !isFortuneTeller && !isEducation
+    && (channel.service_category === "other" || channel.service_category === "idol" || !channel.service_category)
+    && (channel.category_id === "hobby" || channel.category_id === "entertainment" || !channel.category_id
+        || (channel.tags || []).some(t => ["音楽", "ミュージシャン", "バンド", "作曲", "DTM", "シンガー"].includes(t)));
+
+  // デジタルコンテンツタブのラベルをカテゴリで分ける
+  const digitalTabLabel = isFortuneTeller ? "鑑定書・デジタル" : isEducation ? "教材・資料" : isMusicianChannel ? "音源販売" : "デジタル販売";
+  const digitalTabDesc = isFortuneTeller
+    ? "PDF鑑定書・開運レポート・音声メッセージなどをデジタル商品として販売できます。"
+    : isEducation
+    ? "教材PDF・レッスン資料・学習コンテンツをデジタル商品として販売できます。"
+    : isMusicianChannel
+    ? "自作曲・BGM・音源ファイルをデジタル商品として販売できます。購入者は決済後、マイページから音源ファイルをダウンロードできます。"
+    : "デジタルコンテンツをデジタル商品として販売できます。";
 
   const { data: chatMenus = [] } = useQuery({
     queryKey: ["chat-reading-menus-checklist", channel?.id],
@@ -390,7 +405,7 @@ export default function MyChannel() {
             </TabsTrigger>
           )}
           <TabsTrigger value="music-sales" className="flex items-center gap-1">
-            <Music className="w-3.5 h-3.5" /> 音源販売
+            <Music className="w-3.5 h-3.5" /> {digitalTabLabel}
           </TabsTrigger>
           {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
           <TabsTrigger value="plans" className="flex items-center gap-1">
@@ -552,10 +567,10 @@ export default function MyChannel() {
         <TabsContent value="music-sales">
           {channel && (
             <div className="space-y-4">
-              <div className="bg-purple-500/10 border border-purple-500/25 rounded-xl p-4 space-y-1">
-                <p className="text-sm font-black text-purple-300 flex items-center gap-2"><Music className="w-4 h-4" /> 自作曲・BGM・音源販売</p>
-                <p className="text-xs text-muted-foreground">自作曲・BGM・音源ファイルをデジタル商品として販売できます。購入者は決済後、マイページから音源ファイルをダウンロードできます。</p>
-                <p className="text-xs text-muted-foreground">対応形式：MP3、ZIP（音源セット）など。完全オリジナル音源のみ販売可能です。</p>
+              <div className="bg-secondary/50 border border-border/50 rounded-xl p-4 space-y-1">
+                <p className="text-sm font-black flex items-center gap-2"><Music className="w-4 h-4 text-primary" /> {digitalTabLabel}</p>
+                <p className="text-xs text-muted-foreground">{digitalTabDesc}</p>
+                {isMusicianChannel && <p className="text-xs text-muted-foreground">対応形式：MP3、ZIP（音源セット）など。完全オリジナル音源のみ販売可能です。</p>}
               </div>
               <ProductManagePanel channel={channel} />
             </div>
