@@ -49,13 +49,59 @@ Deno.serve(async (req) => {
         download_expires_at: (is_digital === '1' && delivery_mode !== 'custom_order') ? expiresAt : null,
       });
 
-      // 商品の sold_count をインクリメント
+      // 商品の sold_count をインクリメント + CreatorEarning 記録
       if (product_id) {
         const products = await base44.asServiceRole.entities.Product.filter({ id: product_id });
         const product = products[0];
         if (product) {
           await base44.asServiceRole.entities.Product.update(product_id, {
             sold_count: (product.sold_count || 0) + 1,
+          });
+        }
+
+        // CreatorEarning を記録
+        // 音源販売対象カテゴリ：運営10% + 決済3.6% = クリエイター86.4%
+        // それ以外のデジタル商品：運営15% + 決済3.6% = クリエイター81.4%（将来拡張用に分岐）
+        const grossYen = Math.round((session.amount_total || 0) / 100);
+        if (grossYen > 0 && product) {
+          const AUDIO_SELLER_SERVICE_CATS = ["musician", "idol", "singer", "voice_actor", "voice_creator"];
+
+          // チャンネル情報を取得して音源販売対象か判定
+          const channels = await base44.asServiceRole.entities.Channel.filter({ id: product.channel_id });
+          const channel = channels[0];
+          const isAudioProduct = channel && (
+            AUDIO_SELLER_SERVICE_CATS.includes(channel.service_category) ||
+            ["music", "idol", "voice"].includes(channel.category_id)
+          );
+
+          // 音源販売：運営10% + 決済3.6%
+          // 通常デジタル：運営10% + 決済3.6%（同一レートで統一）
+          const platformFeeRate = 0.10;
+          const paymentFeeRate = 0.036;
+          const platformFeeYen = Math.floor(grossYen * platformFeeRate);
+          const paymentFeeYen = Math.floor(grossYen * paymentFeeRate);
+          const creatorAmountYen = grossYen - platformFeeYen - paymentFeeYen;
+
+          const orders = await base44.asServiceRole.entities.ProductOrder.filter({ id: order_id });
+          const order = orders[0];
+
+          await base44.asServiceRole.entities.CreatorEarning.create({
+            creator_email: product.owner_email,
+            channel_id: product.channel_id,
+            channel_name: product.channel_name || '',
+            sender_email: session.customer_details?.email || buyer_email || '',
+            service_type: 'product',
+            service_id: order_id,
+            payment_provider: 'stripe',
+            gross_amount_yen: grossYen,
+            creator_rate: 1 - platformFeeRate - paymentFeeRate,
+            creator_amount_yen: creatorAmountYen,
+            platform_amount_yen: platformFeeYen,
+            yen_equivalent: grossYen,
+            stripe_session_id: session.id,
+            stripe_payment_intent_id: session.payment_intent || '',
+            status: 'confirmed',
+            message: `${isAudioProduct ? '音源' : 'デジタル'}販売: ${product.title} (運営${Math.round(platformFeeRate * 100)}%+決済${paymentFeeRate * 100}%)`,
           });
         }
 

@@ -196,10 +196,27 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
               <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 placeholder={isMusician ? "楽曲の雰囲気、収録内容、使用用途などを記載してください" : "商品の説明"} rows={2} />
             </div>
-            <div>
+            <div className="col-span-2">
               <Label className="text-xs">販売価格（円）*</Label>
               <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} min={0}
                 placeholder="例：500" />
+              {form.price > 0 && (
+                <div className="mt-2 bg-secondary/60 rounded-lg p-2.5 space-y-1 text-[11px]">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>運営手数料 10%</span>
+                    <span>−¥{Math.floor(form.price * 0.10).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>決済手数料 3.6%</span>
+                    <span>−¥{Math.floor(form.price * 0.036).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-primary border-t border-border pt-1 mt-1">
+                    <span>受取予定額</span>
+                    <span>¥{(form.price - Math.floor(form.price * 0.10) - Math.floor(form.price * 0.036)).toLocaleString()}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-0.5">音源販売の運営手数料は10%です。決済手数料3.6%は売上から差し引かれます。購入者に表示される価格は販売価格のみです。</p>
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-xs">在庫数（-1=無制限）</Label>
