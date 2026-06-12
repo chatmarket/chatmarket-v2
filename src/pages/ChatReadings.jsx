@@ -8,21 +8,24 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageCircle, CheckCircle2, Send, ArrowRight, Loader2, Info } from "lucide-react";
+import { Sparkles, MessageCircle, CheckCircle2, Send, ArrowRight, Loader2, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
 const STATUS_INFO = {
   pending_payment:   { label: "決済待ち",   color: "text-muted-foreground",   bg: "bg-secondary border-secondary" },
-  paid:              { label: "受付完了",   color: "text-blue-400",           bg: "bg-blue-500/15 border-blue-500/30" },
-  in_progress:       { label: "鑑定中",     color: "text-yellow-400",         bg: "bg-yellow-500/15 border-yellow-500/30" },
+  paid:              { label: "鑑定待ち",   color: "text-yellow-400",         bg: "bg-yellow-500/15 border-yellow-500/30" },
+  in_progress:       { label: "鑑定待ち",   color: "text-yellow-400",         bg: "bg-yellow-500/15 border-yellow-500/30" },
   answered:          { label: "回答済み",   color: "text-purple-400",         bg: "bg-purple-500/15 border-purple-500/30" },
   follow_up_received:{ label: "追加質問受信", color: "text-orange-400",       bg: "bg-orange-500/15 border-orange-500/30" },
   completed:         { label: "完了",       color: "text-green-400",          bg: "bg-green-500/15 border-green-500/30" },
   cancelled:         { label: "キャンセル", color: "text-muted-foreground",   bg: "bg-secondary border-secondary" },
   refunded:          { label: "返金済み",   color: "text-orange-400",         bg: "bg-orange-500/15 border-orange-500/30" },
 };
+
+// 要対応ステータス判定（paid と in_progress は同一扱い）
+const isUrgent = (status) => ["paid", "in_progress"].includes(status);
 
 function StatusBadge({ status }) {
   const info = STATUS_INFO[status] || STATUS_INFO.in_progress;
@@ -253,7 +256,7 @@ function OrderDetailModal({ order, user, onClose, onRefresh }) {
                 {replyText.length} / {isCreator ? 5000 : 3000}
               </span>
               <div className="flex gap-2">
-                {isCreator && ["answered", "follow_up_received"].includes(order.status) && (
+                {isCreator && order.status === "answered" && (
                   <Button onClick={handleComplete} size="sm" variant="outline" disabled={sending}
                     className="gap-1 text-green-400 border-green-500/40 hover:bg-green-500/10 text-xs">
                     <CheckCircle2 className="w-3.5 h-3.5" /> 完了にする
@@ -269,13 +272,26 @@ function OrderDetailModal({ order, user, onClose, onRefresh }) {
           </div>
         )}
 
-        {/* 完了表示 / 上限到達 */}
+        {/* 完了表示 / 上限到達 / 手動完了ボタン（canSend=false時） */}
         {!canSend && isActive && (
-          <div className="p-4 border-t border-border/50 shrink-0">
+          <div className="p-4 border-t border-border/50 shrink-0 space-y-2">
+            {/* answered状態かつcanSendでない（入力エリアなし）場合に占い師が手動完了できるボタン */}
+            {isCreator && order.status === "answered" && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-muted-foreground text-center">相談者からの追加質問がなければ、鑑定を完了できます</p>
+                <Button onClick={handleComplete} size="sm" variant="outline" disabled={sending}
+                  className="w-full gap-1.5 text-green-400 border-green-500/40 hover:bg-green-500/10 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> 鑑定を完了にする
+                </Button>
+              </div>
+            )}
             {order.status === "answered" && isBuyer && buyerCount >= 2 && (
               <p className="text-xs text-muted-foreground text-center">追加質問の上限（1回）に達しています</p>
             )}
-            {isCreator && creatorCount >= 2 && (
+            {isCreator && order.status === "follow_up_received" && (
+              <p className="text-xs text-amber-400 text-center font-bold">追加質問が届いています。最終回答を送信してください。</p>
+            )}
+            {isCreator && creatorCount >= 2 && order.status !== "follow_up_received" && (
               <p className="text-xs text-muted-foreground text-center">返信の上限（2回）に達しています</p>
             )}
             {order.status === "follow_up_received" && isBuyer && (
@@ -331,16 +347,33 @@ export default function ChatReadings() {
 
   const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
 
+  // 要対応 = paid + in_progress（同一扱い）、追加質問 = follow_up_received
   const filteredCreatorOrders = creatorOrders.filter(o => {
-    if (creatorFilter === "active")    return ["paid", "in_progress", "follow_up_received"].includes(o.status);
+    if (creatorFilter === "active")    return isUrgent(o.status) || o.status === "follow_up_received";
     if (creatorFilter === "answered")  return o.status === "answered";
     if (creatorFilter === "completed") return o.status === "completed";
     return true;
   });
 
-  const urgentCount  = creatorOrders.filter(o => ["paid", "in_progress", "follow_up_received"].includes(o.status)).length;
-  const totalRevenue = creatorOrders.filter(o => ["answered", "completed"].includes(o.status) || o.creator_message_count > 0)
-    .reduce((s, o) => s + (o.creator_revenue_yen || 0), 0);
+  const urgentCount       = creatorOrders.filter(o => isUrgent(o.status) || o.status === "follow_up_received").length;
+  const needsReplyCount   = creatorOrders.filter(o => isUrgent(o.status)).length;
+  const followUpCount     = creatorOrders.filter(o => o.status === "follow_up_received").length;
+  const completedCount    = creatorOrders.filter(o => o.status === "completed").length;
+
+  // 収益集計: CreatorEarning が正本（別途useQueryで取得）
+  const { data: earnings = [] } = useQuery({
+    queryKey: ["creator-earnings-chat", user?.email],
+    queryFn: () => base44.entities.CreatorEarning.filter({ creator_email: user.email, service_type: "chat_reading" }, "-created_date", 200),
+    enabled: !!user?.email && !!channel,
+  });
+
+  const totalCreatorAmount = earnings.reduce((s, e) => s + (e.creator_amount_yen || 0), 0);
+  const totalGrossAmount   = earnings.reduce((s, e) => s + (e.gross_amount_yen || 0), 0);
+
+  // CreatorEarning が存在しないのに完了済みOrderがある場合 → 不整合チェック
+  const completedOrders = creatorOrders.filter(o => o.status === "completed" || o.payment_status === "paid");
+  const earningOrderIds = new Set(earnings.map(e => e.service_id));
+  const missingEarnings = completedOrders.filter(o => !earningOrderIds.has(o.id));
 
   const handleRefresh = async (orderId) => {
     refetchBuyer();
@@ -374,7 +407,7 @@ export default function ChatReadings() {
         <div className="flex gap-2">
           {[
             { key: "buyer",   label: "依頼した鑑定" },
-            { key: "creator", label: `受けた依頼${urgentCount > 0 ? ` (${urgentCount})` : ""}` },
+            { key: "creator", label: `受けた依頼${urgentCount > 0 ? ` 🔴${urgentCount}` : ""}` },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`px-4 py-2 rounded-full text-sm font-bold transition-all border ${
@@ -439,9 +472,9 @@ export default function ChatReadings() {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "要対応", value: creatorOrders.filter(o => ["paid", "in_progress"].includes(o.status)).length, color: "text-yellow-400" },
-              { label: "追加質問", value: creatorOrders.filter(o => o.status === "follow_up_received").length, color: "text-orange-400" },
-              { label: "完了", value: creatorOrders.filter(o => o.status === "completed").length, color: "text-green-400" },
+              { label: "要対応", value: needsReplyCount, color: "text-yellow-400" },
+              { label: "追加質問", value: followUpCount, color: "text-orange-400" },
+              { label: "完了", value: completedCount, color: "text-green-400" },
             ].map(s => (
               <div key={s.label} className="bg-card border border-border rounded-xl p-3 text-center">
                 <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
@@ -450,16 +483,33 @@ export default function ChatReadings() {
             ))}
           </div>
 
-          {totalRevenue > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between">
-              <span className="text-sm font-bold">収益合計（還元後）</span>
-              <span className="text-lg font-black text-amber-400">¥{totalRevenue.toLocaleString()}</span>
+          {/* 収益表示: CreatorEarning を正本として表示 */}
+          {totalCreatorAmount > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold">収益合計（還元後）</span>
+                <span className="text-lg font-black text-amber-400">¥{totalCreatorAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>総売上（税込）</span>
+                <span>¥{totalGrossAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+
+          {/* 不整合警告: 決済済みOrderにCreatorEarningが未作成 */}
+          {missingEarnings.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-300">
+                {missingEarnings.length}件の注文で収益レコードが見つかりません。管理者にお問い合わせください。
+              </p>
             </div>
           )}
 
           <div className="flex gap-2 flex-wrap">
             {[
-              { key: "active",    label: "要対応" },
+              { key: "active",    label: `要対応${urgentCount > 0 ? ` (${urgentCount})` : ""}` },
               { key: "answered",  label: "回答済み" },
               { key: "completed", label: "完了" },
               { key: "all",       label: "すべて" },
@@ -491,7 +541,7 @@ export default function ChatReadings() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-sm">{order.buyer_name || order.buyer_email}</p>
                         <StatusBadge status={order.status} />
-                        {["paid", "in_progress"].includes(order.status) && (
+                        {isUrgent(order.status) && (
                           <span className="text-[10px] font-black text-yellow-400 animate-pulse">要対応</span>
                         )}
                         {order.status === "follow_up_received" && (

@@ -28,9 +28,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: '決済が完了していません' }, { status: 400 });
     }
 
-    // ③ 完了可能ステータスチェック（answered または follow_up_received）
-    if (!['answered', 'follow_up_received'].includes(order.status)) {
-      return Response.json({ error: `ステータス（${order.status}）では完了できません` }, { status: 400 });
+    // ③ 完了可能ステータスチェック
+    // answered → 相談者が追加質問しなかった場合に占い師が手動完了できる
+    // follow_up_received → 追加質問が届いている状態なので最終回答なしで完了は禁止
+    if (order.status !== 'answered') {
+      return Response.json({ error: `「追加質問受信」状態では、最終回答を送信してください。手動完了は「回答済み」状態のみ可能です。` }, { status: 400 });
     }
 
     await base44.asServiceRole.entities.ChatReadingOrder.update(order.id, {
