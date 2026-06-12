@@ -108,7 +108,7 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
         ...(form.artist_name ? { artist_name: form.artist_name } : {}),
         ...(form.release_year ? { release_year: Number(form.release_year) } : {}),
       } : {};
-      const extraFields = isMusicFile(form.file_type) ? {
+      const extraFields = isAudioSeller && isMusicFile(form.file_type) ? {
         rights_confirmed: true,
         rights_confirmation_type: "original_music_only",
         rights_confirmed_at: new Date().toISOString(),

@@ -32,6 +32,13 @@ Deno.serve(async (req) => {
       const session = event.data.object;
       const { order_id, product_id, buyer_email, is_digital, delivery_mode } = session.metadata || {};
 
+      // 冪等性チェック：同一stripe_session_idでCreatorEarningが既に存在する場合はスキップ
+      const existingEarnings = await base44.asServiceRole.entities.CreatorEarning.filter({ stripe_session_id: session.id });
+      if (existingEarnings.length > 0) {
+        console.log(`[productWebhook] duplicate event skipped: session_id=${session.id}`);
+        return Response.json({ received: true });
+      }
+
       if (!order_id) return Response.json({ received: true });
 
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1年
@@ -42,6 +49,7 @@ Deno.serve(async (req) => {
       const deliveryStatus =
         is_digital !== '1' ? 'not_applicable' :
         delivery_mode === 'custom_order' ? 'pending_delivery' : 'not_applicable';
+      // custom_order の場合はダウンロード期限を設定しない（納品後にgetProductDownloadUrlで対応）
 
       await base44.asServiceRole.entities.ProductOrder.update(order_id, {
         status: 'completed',

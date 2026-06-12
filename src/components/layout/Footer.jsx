@@ -45,7 +45,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/legal/commercial" className="text-muted-foreground hover:text-foreground transition-colors">
                   特定商取引法に基づく表記
                 </Link>
               </li>
@@ -93,7 +93,7 @@ export default function Footer() {
             <Link to="/privacy" className="hover:text-foreground transition-colors underline underline-offset-2">
               プライバシー
             </Link>
-            <Link to="/legal" className="hover:text-foreground transition-colors underline underline-offset-2">
+            <Link to="/legal/commercial" className="hover:text-foreground transition-colors underline underline-offset-2">
               特商法表記
             </Link>
             <span>made with ❤️ in Japan</span>

@@ -17,10 +17,26 @@ Deno.serve(async (req) => {
     if (!order) return Response.json({ error: 'Order not found' }, { status: 404 });
     if (order.buyer_email !== user.email) return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (order.status !== 'completed') return Response.json({ error: '決済が完了していません' }, { status: 400 });
-    if (!order.is_digital || !order.file_url) return Response.json({ error: 'デジタルファイルが存在しません' }, { status: 400 });
+    if (!order.is_digital) return Response.json({ error: 'デジタルファイルが存在しません' }, { status: 400 });
 
-    // ダウンロード有効期限チェック
-    if (order.download_expires_at && new Date(order.download_expires_at) < new Date()) {
+    // custom_order: 納品済み(delivered)の場合のみ delivered_file_url を使用
+    let downloadFileUrl = order.file_url;
+    let downloadFileName = order.file_name;
+    if (order.delivery_mode === 'custom_order') {
+      if (order.delivery_status !== 'delivered') {
+        return Response.json({ error: 'まだ納品が完了していません。販売者からの納品をお待ちください。' }, { status: 400 });
+      }
+      if (!order.delivered_file_url) {
+        return Response.json({ error: '納品ファイルが見つかりません' }, { status: 404 });
+      }
+      downloadFileUrl = order.delivered_file_url;
+      downloadFileName = order.delivered_file_name || order.file_name || 'download';
+    } else {
+      if (!downloadFileUrl) return Response.json({ error: 'ダウンロードファイルが存在しません' }, { status: 400 });
+    }
+
+    // ダウンロード有効期限チェック（instant のみ）
+    if (order.delivery_mode !== 'custom_order' && order.download_expires_at && new Date(order.download_expires_at) < new Date()) {
       return Response.json({ error: 'ダウンロード期限が切れています' }, { status: 403 });
     }
 
@@ -33,16 +49,15 @@ Deno.serve(async (req) => {
       },
     });
 
-    // file_url は "s3://bucket/key" 形式 または "bucket/key" 形式を想定
+    // file_url は "s3://bucket/key" 形式 または "https://..." 形式を想定
     let bucket, key;
-    if (order.file_url.startsWith('s3://')) {
-      const withoutScheme = order.file_url.replace('s3://', '');
+    if (downloadFileUrl.startsWith('s3://')) {
+      const withoutScheme = downloadFileUrl.replace('s3://', '');
       const slash = withoutScheme.indexOf('/');
       bucket = withoutScheme.substring(0, slash);
       key = withoutScheme.substring(slash + 1);
     } else {
-      // https://bucket.s3.amazonaws.com/key 形式
-      const url = new URL(order.file_url);
+      const url = new URL(downloadFileUrl);
       bucket = url.hostname.split('.')[0];
       key = url.pathname.replace(/^\//, '');
     }
@@ -50,7 +65,7 @@ Deno.serve(async (req) => {
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
-      ResponseContentDisposition: `attachment; filename="${order.file_name || 'download'}"`,
+      ResponseContentDisposition: `attachment; filename="${downloadFileName || 'download'}"`,
     });
 
     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15分
@@ -60,7 +75,7 @@ Deno.serve(async (req) => {
       download_count: (order.download_count || 0) + 1,
     });
 
-    return Response.json({ signed_url: signedUrl, file_name: order.file_name });
+    return Response.json({ signed_url: signedUrl, file_name: downloadFileName });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

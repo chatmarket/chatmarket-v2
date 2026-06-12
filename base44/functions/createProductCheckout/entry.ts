@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
         product_id: product.id,
         buyer_email: user.email,
         is_digital: product.is_digital ? '1' : '0',
+        delivery_mode: product.delivery_mode || 'instant',
       },
     });
 

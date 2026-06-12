@@ -59,7 +59,7 @@
         "custom_order"
       ],
       "default": "instant",
-      "description": "instant=\u4e8b\u524d\u30d5\u30a1\u30a4\u30eb\u30a2\u30c3\u30d7\u30fb\u8cfc\u5165\u5373\u6642DL\u4ed8\u4e0e\uff08\u30a2\u30a4\u30c9\u30eb\u5411\u3051\u65e2\u88fd\u54c1\uff09 / custom_order=\u6ce8\u6587\u5f8c\u306b\u8ca9\u58f2\u8005\u304c\u500b\u5225\u7d0d\u54c1\uff08\u5360\u3044\u5e2b\u5411\u3051\u30aa\u30fc\u30c0\u30fc\u30e1\u30a4\u30c9\uff09"
+      "description": "instant=\u4e8b\u524d\u30d5\u30a1\u30a4\u30eb\u30a2\u30c3\u30d7\u30fb\u8cfc\u5165\u5373\u6642DL\u4ed8\u4e0e / custom_order=\u6ce8\u6587\u5f8c\u306b\u8ca9\u58f2\u8005\u304c\u500b\u5225\u7d0d\u54c1"
     },
     "file_url": {
       "type": "string",
@@ -115,7 +115,7 @@
         "album",
         "sample_pack"
       ],
-      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u4f5c\u54c1\u30bf\u30a4\u30d7: single=\u30b7\u30f3\u30b0\u30eb, ep=EP, album=\u30a2\u30eb\u30d0\u30e0, sample_pack=\u30b5\u30f3\u30d7\u30eb\u30d1\u30c3\u30af\uff08\u4efb\u610f\uff09"
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u4f5c\u54c1\u30bf\u30a4\u30d7\uff08\u4efb\u610f\uff09"
     },
     "track_count": {
       "type": "number",
@@ -132,6 +132,29 @@
     "release_year": {
       "type": "number",
       "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u30ea\u30ea\u30fc\u30b9\u5e74\uff08\u4efb\u610f\uff09"
+    },
+    "rights_confirmation_type": {
+      "type": "string",
+      "enum": [
+        "original_music_only",
+        "none"
+      ],
+      "default": "none",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u6a29\u5229\u78ba\u8a8d\u7a2e\u5225: original_music_only=\u672c\u4eba/\u6240\u5c5e\u5148\u304c\u8ca9\u58f2\u6a29\u5229\u3092\u6301\u3064\u30aa\u30ea\u30b8\u30ca\u30eb\u97f3\u6e90\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d\u6e08\u307f"
+    },
+    "rights_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u97f3\u6e90\u6a29\u5229\u78ba\u8a8d\u30c1\u30a7\u30c3\u30af\u6e08\u307f\u30d5\u30e9\u30b0"
+    },
+    "rights_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u6a29\u5229\u78ba\u8a8d\u65e5\u6642"
+    },
+    "rights_confirmed_by": {
+      "type": "string",
+      "description": "\u3010\u97f3\u6e90\u8ca9\u58f2\u3011\u6a29\u5229\u78ba\u8a8d\u8005\u30e1\u30fc\u30eb"
     }
   },
   "required": [
