@@ -697,25 +697,39 @@ export default function FortuneLP() {
 
       {/* ── チャット鑑定セクション ── */}
       <section className="relative px-5 py-20">
-        <div className="max-w-4xl mx-auto space-y-10">
+        {/* セクション背景 */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(180deg, transparent 0%, rgba(107,33,168,0.12) 30%, rgba(212,175,55,0.06) 70%, transparent 100%)" }} />
+
+        <div className="max-w-4xl mx-auto space-y-10 relative">
           {/* タイトル */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center space-y-3"
+            className="text-center space-y-4"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase"
-              style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.4)", color: "#C084FC" }}>
-              💬 NEW FEATURE
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-black tracking-widest uppercase animate-pulse"
+              style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(212,175,55,0.2))", border: "2px solid rgba(168,85,247,0.6)", color: "#E879F9", boxShadow: "0 0 20px rgba(168,85,247,0.4)" }}>
+              💬 チャット鑑定
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black leading-tight">
-              チャット鑑定で、<br />
-              <span style={{ color: MYSTIC.gold }}>場所・時間を選ばずに稼ぐ</span>
+            <h2 className="text-3xl sm:text-4xl font-black leading-tight">
+              <span style={{ color: MYSTIC.gold }}>テキストで鑑定。</span><br />
+              時間も場所も選ばない、<br className="sm:hidden" />新しい収益の柱。
             </h2>
-            <p className="text-sm text-white/55 max-w-xl mx-auto leading-relaxed">
-              ビデオ通話が難しいお客様にも対応できる非同期テキスト鑑定。相談文を受け取り、空き時間に返信するだけ。ライブ配信・通話と組み合わせて収益の幅を広げましょう。
+            <p className="text-base text-white/65 max-w-xl mx-auto leading-relaxed">
+              ビデオ通話が難しいお客様にも対応できる<strong className="text-white">非同期テキスト鑑定</strong>。<br />
+              相談文を受け取り、空き時間に返信するだけ。<br />
+              ライブ配信・通話と組み合わせて収益の幅を広げましょう。
             </p>
+            {/* 強調バナー */}
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl mx-auto"
+              style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.15), rgba(168,85,247,0.15))", border: `2px solid ${MYSTIC.gold}`, boxShadow: `0 0 30px rgba(212,175,55,0.2)` }}>
+              <span className="text-2xl">🔮</span>
+              <p className="font-black text-white text-sm sm:text-base">
+                1件の返信で最大 <span style={{ color: MYSTIC.gold }}>¥2,550〜</span> の収益
+              </p>
+            </div>
           </motion.div>
 
           {/* 仕組み */}
