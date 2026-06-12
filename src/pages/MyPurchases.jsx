@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Package, FileText, Music, Archive, Image, Video, File, Loader2, CheckCircle2, Clock, ClipboardList } from "lucide-react";
+import { Download, Package, FileText, Music, Archive, Image, Video, File, Loader2, CheckCircle2, Clock, ClipboardList, Sparkles, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -122,6 +123,12 @@ export default function MyPurchases() {
     enabled: !!user?.email,
   });
 
+  const { data: chatOrders = [], isLoading: chatLoading } = useQuery({
+    queryKey: ["my-chat-reading-orders", user?.email],
+    queryFn: () => base44.entities.ChatReadingOrder.filter({ buyer_email: user.email }, "-created_date", 50),
+    enabled: !!user?.email,
+  });
+
   if (!user) return (
     <div className="min-h-screen flex items-center justify-center">
       <Button onClick={() => base44.auth.redirectToLogin()}>ログイン</Button>
@@ -149,6 +156,58 @@ export default function MyPurchases() {
           ) : (
             <div className="space-y-3">
               {digitalOrders.map(order => <DigitalOrderRow key={order.id} order={order} />)}
+            </div>
+          )}
+        </section>
+
+        {/* チャット鑑定履歴 */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" /> 鑑定依頼（チャット鑑定）
+          </h2>
+          {chatLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          ) : chatOrders.filter(o => o.status !== "pending_payment").length === 0 ? (
+            <p className="text-muted-foreground text-sm py-4">チャット鑑定の依頼履歴はありません</p>
+          ) : (
+            <div className="space-y-3">
+              {chatOrders.filter(o => o.status !== "pending_payment").map(order => {
+                const STATUS_MAP = {
+                  paid: { label: "受付完了", color: "text-blue-400" },
+                  in_progress: { label: "鑑定中", color: "text-yellow-400" },
+                  answered: { label: "回答済み", color: "text-purple-400" },
+                  completed: { label: "完了", color: "text-green-400" },
+                  cancelled: { label: "キャンセル", color: "text-muted-foreground" },
+                  refunded: { label: "返金済み", color: "text-orange-400" },
+                };
+                const st = STATUS_MAP[order.status] || { label: order.status, color: "text-muted-foreground" };
+                return (
+                  <Link to="/chat-readings" key={order.id}>
+                    <div className="bg-card border border-border rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
+                          <Sparkles className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium truncate">{order.menu_title}</p>
+                            <span className={`text-xs font-bold ${st.color}`}>{st.label}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{order.channel_name}</p>
+                          <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                            <span>¥{order.price_yen?.toLocaleString()}</span>
+                            <span>{format(new Date(order.created_date), "yyyy/MM/dd", { locale: ja })}</span>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </div>
+                      {order.status === "answered" && (
+                        <p className="mt-2 text-xs text-purple-400 font-bold">🔮 鑑定結果が届いています！</p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>

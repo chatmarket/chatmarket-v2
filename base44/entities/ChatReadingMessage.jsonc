@@ -1,0 +1,54 @@
+{
+  "name": "ChatReadingMessage",
+  "type": "object",
+  "description": "\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u306e\u8ffd\u52a0\u30e1\u30c3\u30bb\u30fc\u30b8\uff08\u62e1\u5f35\u7528\uff09",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "ChatReadingOrder ID"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "\u9001\u4fe1\u8005\u30e1\u30fc\u30eb"
+    },
+    "sender_role": {
+      "type": "string",
+      "enum": [
+        "buyer",
+        "creator",
+        "admin"
+      ],
+      "description": "\u9001\u4fe1\u8005\u30ed\u30fc\u30eb"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u672c\u6587",
+      "maxLength": 3000
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u524a\u9664\u30d5\u30e9\u30b0"
+    }
+  },
+  "required": [
+    "order_id",
+    "sender_email",
+    "sender_role",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

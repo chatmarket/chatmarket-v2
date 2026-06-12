@@ -20,6 +20,7 @@ import { captureRefFromUrl } from "@/lib/referral";
 import { isMusician } from "@/lib/roleTerminology";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import ChekiPurchaseModal from "@/components/cheki/ChekiPurchaseModal.jsx";
+import ChatReadingApplyModal from "@/components/fortune/ChatReadingApplyModal";
 
 export default function ChannelPage() {
   const { channelId } = useParams();
@@ -28,6 +29,7 @@ export default function ChannelPage() {
   const [showReport, setShowReport] = useState(false);
   const [activeTab, setActiveTab] = useState("videos"); // "videos" | "vault" | "sanctum" | "community"
   const [selectedCheki, setSelectedCheki] = useState(null);
+  const [selectedChatMenu, setSelectedChatMenu] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -49,6 +51,12 @@ export default function ChannelPage() {
       }
       return channels[0];
     },
+    enabled: !!channelId,
+  });
+
+  const { data: chatMenus = [] } = useQuery({
+    queryKey: ["channel-chat-menus", channelId],
+    queryFn: () => base44.entities.ChatReadingMenu.filter({ channel_id: channelId, is_active: true }, "sort_order"),
     enabled: !!channelId,
   });
 
@@ -440,7 +448,47 @@ export default function ChannelPage() {
         />
       )}
 
+      {/* チャット鑑定メニュー（占い師チャンネルのみ） */}
+      {channel.stream_category === "fortune" && chatMenus.length > 0 && !isOwner && (
+        <section className="mb-6">
+          <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
+            <span>🔮</span> チャット鑑定メニュー
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {chatMenus.map(menu => (
+              <div key={menu.id} className="bg-card border border-purple-500/25 rounded-2xl p-4 hover:border-purple-500/50 transition-all space-y-2">
+                <p className="font-black text-sm">{menu.title}</p>
+                {menu.description && <p className="text-xs text-muted-foreground line-clamp-3">{menu.description}</p>}
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="font-bold text-foreground text-base">¥{menu.price_yen?.toLocaleString()}</span>
+                  <span className="flex items-center gap-1">⏰ {menu.estimated_reply_hours || 24}時間以内返信</span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!currentUser) { base44.auth.redirectToLogin(); return; }
+                    setSelectedChatMenu(menu);
+                  }}
+                  className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold gap-2"
+                >
+                  <span>🔮</span> チャット鑑定を申し込む
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Digital Cheki feature is frozen / hidden for now. ChekiPurchaseModal suppressed. */}
+
+      {selectedChatMenu && (
+        <ChatReadingApplyModal
+          menu={selectedChatMenu}
+          channel={channel}
+          user={currentUser}
+          onClose={() => setSelectedChatMenu(null)}
+        />
+      )}
 
       {/* オーナー向け：SNS紹介シェアパネル */}
       {isOwner && (

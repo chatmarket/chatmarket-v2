@@ -815,13 +815,39 @@ export default function FortuneLP() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 flex items-start gap-2 text-xs text-white/50">
-                <span className="text-green-400 mt-0.5 shrink-0">✓</span>2往復（計4通）の往復鑑定が1チケットで完結
+                <span className="text-green-400 mt-0.5 shrink-0">✓</span>2往復（計4通）の往復鑑定が1チケットで完結（コイン）
               </div>
               <div className="flex-1 flex items-start gap-2 text-xs text-white/50">
-                <span className="text-green-400 mt-0.5 shrink-0">✓</span>冒頭60文字は無料プレビューで購入率アップ
+                <span className="text-green-400 mt-0.5 shrink-0">✓</span>Stripe直接決済プランで最低500円〜最大50,000円まで設定可能
               </div>
               <div className="flex-1 flex items-start gap-2 text-xs text-white/50">
-                <span className="text-green-400 mt-0.5 shrink-0">✓</span>最低価格500コイン（約500円）以上で自由設定
+                <span className="text-green-400 mt-0.5 shrink-0">✓</span>決済完了後すぐにスレッドが開始・相談内容が届く
+              </div>
+            </div>
+
+            {/* Stripe決済型チャット鑑定 追記 */}
+            <div className="rounded-2xl p-5 space-y-3"
+              style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(212,175,55,0.08))", border: "1px solid rgba(168,85,247,0.40)" }}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">💳</span>
+                <p className="font-black text-white text-sm">Stripe直接決済型チャット鑑定（新機能）</p>
+              </div>
+              <p className="text-xs text-white/60 leading-relaxed">
+                文章でじっくり相談内容を受け取り、落ち着いて鑑定結果を届けたい占い師さんに。恋愛相談、仕事相談、相性診断など、テキストで丁寧に伝えたい鑑定に向いています。
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs">
+                {["メニューを作成", "相談者が相談内容を入力", "オンライン決済（Stripe）", "占い師がチャットで鑑定", "鑑定結果をマイページで確認"].map((step, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-black shrink-0" style={{ background: "#D4AF37" }}>{i+1}</span>
+                    <span className="text-white/60">{step}</span>
+                    {i < 4 && <span className="text-white/30 hidden sm:block">→</span>}
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 text-[10px]">
+                {["価格：500円〜50,000円", "返信目安：設定可能", "収益還元：最大85%", "メニュー複数作成可"].map(tag => (
+                  <span key={tag} className="px-2 py-1 rounded-full" style={{ background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37" }}>{tag}</span>
+                ))}
               </div>
             </div>
           </motion.div>

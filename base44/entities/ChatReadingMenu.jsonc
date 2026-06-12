@@ -1,0 +1,53 @@
+{
+  "name": "ChatReadingMenu",
+  "type": "object",
+  "description": "\u5360\u3044\u5e2b\u304c\u4f5c\u6210\u3059\u308b\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u30e1\u30cb\u30e5\u30fc\uff08Stripe\u76f4\u63a5\u6c7a\u6e08\uff09",
+  "properties": {
+    "creator_email": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u30e1\u30fc\u30eb"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "title": {
+      "type": "string",
+      "description": "\u30e1\u30cb\u30e5\u30fc\u30bf\u30a4\u30c8\u30eb"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u30e1\u30cb\u30e5\u30fc\u8aac\u660e\uff08\u6700\u5927500\u6587\u5b57\uff09",
+      "maxLength": 500
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\u4fa1\u683c\uff08\u5186\uff09\u6700\u4f4e500\u301c\u6700\u592750000"
+    },
+    "estimated_reply_hours": {
+      "type": "number",
+      "default": 24,
+      "description": "\u8fd4\u4fe1\u76ee\u5b89\u6642\u9593\uff08\u6642\u9593\uff09"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u516c\u958b\u4e2d\u30d5\u30e9\u30b0"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "\u8868\u793a\u9806"
+    }
+  },
+  "required": [
+    "creator_email",
+    "channel_id",
+    "title",
+    "price_yen"
+  ]
+}

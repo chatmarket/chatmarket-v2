@@ -106,6 +106,7 @@ import ProfileLP from '@/pages/ProfileLP';
 import ClassRoomPage from '@/pages/ClassRoomPage';
 import ClassRoomCreate from '@/pages/ClassRoomCreate';
 import ClassRoomLP from '@/pages/ClassRoomLP';
+import ChatReadings from '@/pages/ChatReadings';
 
 
 export default function App() {
@@ -220,6 +221,7 @@ export default function App() {
             <Route path="/classroom-lp" element={<ClassRoomLP />} />
             <Route path="/classroom/create" element={<ClassRoomCreate />} />
             <Route path="/classroom/:roomId" element={<ClassRoomPage />} />
+            <Route path="/chat-readings" element={<ChatReadings />} />
             <Route path="/live-streams" element={<Navigate to="/" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>

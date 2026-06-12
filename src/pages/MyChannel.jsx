@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 import VideoEditPanel from "../components/channel/VideoEditPanel";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
+import ChatReadingMenuPanel from "@/components/fortune/ChatReadingMenuPanel";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
@@ -371,6 +372,11 @@ export default function MyChannel() {
           <TabsTrigger value="archives" className="flex items-center gap-1">
             <Archive className="w-3.5 h-3.5" /> アーカイブ販売
           </TabsTrigger>
+          {(channel?.service_category === "fortune_telling" || channel?.stream_category === "fortune") && (
+            <TabsTrigger value="chat-reading" className="flex items-center gap-1">
+              <span>🔮</span> チャット鑑定
+            </TabsTrigger>
+          )}
           {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
           <TabsTrigger value="plans" className="flex items-center gap-1">
             <CreditCard className="w-3.5 h-3.5" /> 契約プラン
@@ -527,6 +533,12 @@ export default function MyChannel() {
         </TabsContent>
 
         {/* Digital Cheki feature is frozen / hidden for now. ChekiSettingsPanel suppressed. */}
+
+        <TabsContent value="chat-reading">
+          {channel && user && (
+            <ChatReadingMenuPanel channel={channel} user={user} />
+          )}
+        </TabsContent>
 
         <TabsContent value="plans">
           <div className="space-y-4">

@@ -127,6 +127,56 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ── チャット鑑定 決済完了 ──────────────────────────────────
+      if (meta.type === 'chat_reading' && meta.order_id) {
+        const orders = await base44.asServiceRole.entities.ChatReadingOrder.filter({ id: meta.order_id });
+        const order = orders[0];
+        if (order && order.payment_status !== 'paid') {
+          // 冪等性: stripe_event_id チェック
+          if (order.stripe_event_id && order.stripe_event_id === event.id) {
+            console.log(`[ChatReading] duplicate event skipped: ${event.id}`);
+          } else {
+            const priceYen = parseInt(meta.price_yen || '0');
+            const creatorRate = parseFloat(meta.creator_rate || '0.85');
+            const creatorRevenueYen = parseInt(meta.creator_revenue_yen || String(Math.floor(priceYen * creatorRate)));
+
+            await base44.asServiceRole.entities.ChatReadingOrder.update(order.id, {
+              status: 'in_progress',
+              payment_status: 'paid',
+              stripe_payment_intent_id: session.payment_intent || '',
+              stripe_event_id: event.id,
+              paid_at: new Date().toISOString(),
+            });
+
+            // 収益記録（CreatorEarningは既存スキーマがコイン専用のため、ChatReadingOrderに収益情報を保持）
+            // 通知用Notification作成（占い師へ）
+            try {
+              await base44.asServiceRole.entities.Notification.create({
+                user_email: meta.creator_email,
+                type: 'chat_reading_new',
+                title: '新しいチャット鑑定依頼が届きました',
+                message: `${order.buyer_name || meta.buyer_email}さんから「${order.menu_title}」の依頼が届きました`,
+                link: '/chat-reading-dashboard',
+                is_read: false,
+              });
+            } catch (_) {}
+            // 相談者へも通知
+            try {
+              await base44.asServiceRole.entities.Notification.create({
+                user_email: meta.buyer_email,
+                type: 'chat_reading_accepted',
+                title: 'チャット鑑定の受付が完了しました',
+                message: `「${order.menu_title}」の鑑定依頼を受け付けました。鑑定結果をお待ちください。`,
+                link: '/chat-readings',
+                is_read: false,
+              });
+            } catch (_) {}
+
+            console.log(`[ChatReading] order ${order.id} paid. creator=${meta.creator_email} revenue=${creatorRevenueYen}yen`);
+          }
+        }
+      }
+
       // ── スクールチケット Stripe 決済完了 ──────────────────────
       // ❌ Red Line: 成功ページ遷移だけでactiveにしない → Webhookで確認した場合のみactive化
       if (meta.type === 'school_ticket' && meta.school_ticket_id) {

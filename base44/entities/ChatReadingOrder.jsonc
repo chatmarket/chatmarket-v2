@@ -1,0 +1,172 @@
+{
+  "name": "ChatReadingOrder",
+  "type": "object",
+  "description": "\u30c1\u30e3\u30c3\u30c8\u9451\u5b9a\u8cfc\u5165\u4f9d\u983c\uff08Stripe\u76f4\u63a5\u6c7a\u6e08\uff09",
+  "properties": {
+    "menu_id": {
+      "type": "string",
+      "description": "ChatReadingMenu ID"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u30e1\u30fc\u30eb"
+    },
+    "channel_id": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "channel_name": {
+      "type": "string",
+      "description": "\u30c1\u30e3\u30f3\u30cd\u30eb\u540d"
+    },
+    "buyer_email": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u30e1\u30fc\u30eb"
+    },
+    "buyer_name": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u8005\u8868\u793a\u540d"
+    },
+    "menu_title": {
+      "type": "string",
+      "description": "\u8cfc\u5165\u6642\u306e\u30e1\u30cb\u30e5\u30fc\u30bf\u30a4\u30c8\u30eb\uff08\u30b9\u30ca\u30c3\u30d7\u30b7\u30e7\u30c3\u30c8\uff09"
+    },
+    "consultation_genre": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u30b8\u30e3\u30f3\u30eb\uff08\u604b\u611b\u30fb\u4ed5\u4e8b\u30fb\u4eba\u9593\u95a2\u4fc2\u306a\u3069\uff09"
+    },
+    "consultation_text": {
+      "type": "string",
+      "description": "\u76f8\u8ac7\u5185\u5bb9\u672c\u6587"
+    },
+    "birth_info": {
+      "type": "string",
+      "description": "\u751f\u5e74\u6708\u65e5\u306a\u3069\uff08\u4efb\u610f\uff09"
+    },
+    "partner_info": {
+      "type": "string",
+      "description": "\u76f8\u624b\u306e\u60c5\u5831\uff08\u4efb\u610f\uff09"
+    },
+    "additional_info": {
+      "type": "string",
+      "description": "\u88dc\u8db3\u60c5\u5831\uff08\u4efb\u610f\uff09"
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\u8cfc\u5165\u91d1\u984d\uff08\u5186\uff09"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_payment",
+        "paid",
+        "in_progress",
+        "answered",
+        "completed",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending_payment",
+      "description": "\u4f9d\u983c\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "\u652f\u6255\u3044\u30b9\u30c6\u30fc\u30bf\u30b9"
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout Session ID"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "description": "Stripe Payment Intent ID"
+    },
+    "stripe_event_id": {
+      "type": "string",
+      "description": "\u51aa\u7b49\u6027\u7528Stripe Event ID"
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u6c7a\u6e08\u5b8c\u4e86\u65e5\u6642"
+    },
+    "answered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u56de\u7b54\u5b8c\u4e86\u65e5\u6642"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u9451\u5b9a\u5b8c\u4e86\u65e5\u6642"
+    },
+    "creator_reply": {
+      "type": "string",
+      "description": "\u5360\u3044\u5e2b\u306e\u6700\u521d\u306e\u56de\u7b54\uff08\u30b7\u30f3\u30d7\u30eb\u8a2d\u8a08\uff09",
+      "maxLength": 5000
+    },
+    "refund_reason": {
+      "type": "string",
+      "description": "\u8fd4\u91d1\u30fb\u30ad\u30e3\u30f3\u30bb\u30eb\u7406\u7531"
+    },
+    "creator_revenue_yen": {
+      "type": "number",
+      "default": 0,
+      "description": "\u5360\u3044\u5e2b\u53ce\u76ca\uff08\u5186\uff09"
+    },
+    "creator_rate": {
+      "type": "number",
+      "default": 0.85,
+      "description": "\u9069\u7528\u9084\u5143\u7387"
+    }
+  },
+  "required": [
+    "menu_id",
+    "creator_email",
+    "channel_id",
+    "buyer_email",
+    "consultation_text",
+    "price_yen"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.buyer_email": "{{user.email}}"
+        },
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
