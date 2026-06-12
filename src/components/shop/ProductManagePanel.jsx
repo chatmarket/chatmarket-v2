@@ -200,7 +200,8 @@ export default function ProductManagePanel({ channel, isMusician = false }) {
               <Label className="text-xs">販売価格（円）*</Label>
               <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} min={0}
                 placeholder="例：500" />
-              {form.price > 0 && (
+              {/* 音源販売対象チャンネル × 音源ファイルの組み合わせのみ手数料表示 */}
+              {form.price > 0 && isMusician && isMusicFile(form.file_type) && (
                 <div className="mt-2 bg-secondary/60 rounded-lg p-2.5 space-y-1 text-[11px]">
                   <div className="flex justify-between text-muted-foreground">
                     <span>運営手数料 10%</span>

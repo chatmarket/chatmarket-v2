@@ -59,50 +59,55 @@ Deno.serve(async (req) => {
           });
         }
 
-        // CreatorEarning を記録
-        // 音源販売対象カテゴリ：運営10% + 決済3.6% = クリエイター86.4%
-        // それ以外のデジタル商品：運営15% + 決済3.6% = クリエイター81.4%（将来拡張用に分岐）
+        // CreatorEarning を記録（音源販売対象のみ手数料計算・記録）
         const grossYen = Math.round((session.amount_total || 0) / 100);
         if (grossYen > 0 && product) {
           const AUDIO_SELLER_SERVICE_CATS = ["musician", "idol", "singer", "voice_actor", "voice_creator"];
+          const AUDIO_SELLER_CAT_IDS = ["music", "idol", "voice"];
 
-          // チャンネル情報を取得して音源販売対象か判定
+          // チャンネルが音源販売対象カテゴリか判定
           const channels = await base44.asServiceRole.entities.Channel.filter({ id: product.channel_id });
           const channel = channels[0];
-          const isAudioProduct = channel && (
+          const isAudioChannel = channel && (
             AUDIO_SELLER_SERVICE_CATS.includes(channel.service_category) ||
-            ["music", "idol", "voice"].includes(channel.category_id)
+            AUDIO_SELLER_CAT_IDS.includes(channel.category_id)
           );
 
-          // 音源販売：運営10% + 決済3.6%
-          // 通常デジタル：運営10% + 決済3.6%（同一レートで統一）
-          const platformFeeRate = 0.10;
-          const paymentFeeRate = 0.036;
-          const platformFeeYen = Math.floor(grossYen * platformFeeRate);
-          const paymentFeeYen = Math.floor(grossYen * paymentFeeRate);
-          const creatorAmountYen = grossYen - platformFeeYen - paymentFeeYen;
+          // 商品が音源商品か判定（file_type mp3/zip、または音源メタ情報があるもの）
+          const isAudioFile = ["mp3", "zip"].includes(product.file_type);
+          const hasAudioMeta = !!(product.music_release_type || product.audio_format_label);
+          const hasRightsConfirmation = product.rights_confirmation_type === "original_music_only";
+          const isAudioProduct = isAudioChannel && (isAudioFile || hasAudioMeta || hasRightsConfirmation);
 
-          const orders = await base44.asServiceRole.entities.ProductOrder.filter({ id: order_id });
-          const order = orders[0];
+          if (isAudioProduct) {
+            // 音源販売のみ：運営10% + 決済3.6%
+            const platformFeeRate = 0.10;
+            const paymentFeeRate = 0.036;
+            const platformFeeYen = Math.floor(grossYen * platformFeeRate);
+            const paymentFeeYen = Math.floor(grossYen * paymentFeeRate);
+            const creatorAmountYen = grossYen - platformFeeYen - paymentFeeYen;
 
-          await base44.asServiceRole.entities.CreatorEarning.create({
-            creator_email: product.owner_email,
-            channel_id: product.channel_id,
-            channel_name: product.channel_name || '',
-            sender_email: session.customer_details?.email || buyer_email || '',
-            service_type: 'product',
-            service_id: order_id,
-            payment_provider: 'stripe',
-            gross_amount_yen: grossYen,
-            creator_rate: 1 - platformFeeRate - paymentFeeRate,
-            creator_amount_yen: creatorAmountYen,
-            platform_amount_yen: platformFeeYen,
-            yen_equivalent: grossYen,
-            stripe_session_id: session.id,
-            stripe_payment_intent_id: session.payment_intent || '',
-            status: 'confirmed',
-            message: `${isAudioProduct ? '音源' : 'デジタル'}販売: ${product.title} (運営${Math.round(platformFeeRate * 100)}%+決済${paymentFeeRate * 100}%)`,
-          });
+            await base44.asServiceRole.entities.CreatorEarning.create({
+              creator_email: product.owner_email,
+              channel_id: product.channel_id,
+              channel_name: product.channel_name || '',
+              sender_email: session.customer_details?.email || buyer_email || '',
+              service_type: 'product',
+              service_id: order_id,
+              payment_provider: 'stripe',
+              gross_amount_yen: grossYen,
+              creator_rate: 1 - platformFeeRate - paymentFeeRate,
+              creator_amount_yen: creatorAmountYen,
+              platform_amount_yen: platformFeeYen,
+              yen_equivalent: grossYen,
+              stripe_session_id: session.id,
+              stripe_payment_intent_id: session.payment_intent || '',
+              status: 'confirmed',
+              message: `音源販売: ${product.title} (運営${Math.round(platformFeeRate * 100)}%+決済${paymentFeeRate * 100}%)`,
+            });
+          }
+          // 通常デジタル商品（占い師の鑑定書・教材PDFなど）は手数料未定義のためCreatorEarning非記録
+          // 必要に応じて別途ルール追加予定
         }
 
         // LINE Notify 通知
