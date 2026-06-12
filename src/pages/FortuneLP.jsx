@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Sparkles, Moon, Eye, Clock, Shield, TrendingUp, ChevronDown, Crown, Zap } from "lucide-react";
+import { Star, Sparkles, Moon, Eye, Clock, Shield, TrendingUp, ChevronDown, Crown, Zap, MessageSquare, Video, Users, Lock } from "lucide-react";
+import FortunePagePreview from "@/components/fortune/FortunePagePreview.jsx";
 import { Button } from "@/components/ui/button";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
@@ -446,6 +447,91 @@ export default function FortuneLP() {
         >
           <ChevronDown className="w-6 h-6 text-white/20" />
         </motion.div>
+      </section>
+
+      {/* ── 顔出し不要・チャット鑑定だけでもOK バナー ── */}
+      <section className="relative px-5 pb-4">
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl p-5 flex items-start gap-4"
+            style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(212,175,55,0.08))", border: "2px solid rgba(168,85,247,0.5)" }}
+          >
+            <span className="text-3xl shrink-0">💬</span>
+            <div className="space-y-1.5">
+              <p className="font-black text-white text-base leading-snug">
+                チャット鑑定だけでも始められます。顔出し不要で、文章でじっくり相談に向き合えます。
+              </p>
+              <p className="text-sm text-white/60 leading-relaxed">
+                ビデオ通話に抵抗がある方でも、チャット鑑定メニューを作成し、相談者からの依頼を受け付けることができます。チャット鑑定とビデオ鑑定は、どちらか一方だけでも、両方でも選べます。
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 3つの始め方 ── */}
+      <section className="relative px-5 py-16">
+        <div className="max-w-4xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <p className="text-xs font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>✨ あなたに合った形で</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">あなたに合った形で<br />始められます</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {[
+              {
+                icon: MessageSquare,
+                color: "#A855F7",
+                title: "チャット鑑定から始めたい方",
+                body: "顔出し不要で、文章でじっくり相談に向き合いたい占い師さんに。相談内容を受け取り、2往復制で鑑定結果と追加質問に対応できます。",
+                sub: "チャット鑑定だけでも利用できます",
+                badge: "顔出し不要",
+              },
+              {
+                icon: Users,
+                color: "#D4AF37",
+                title: "既存のお客様に案内したい方",
+                body: "SNS、LINE、既存のお客様へ自分専用の鑑定ページを案内できます。個別の振込案内や入金確認の負担を減らし、オンライン上で受付から決済まで進められます。",
+                sub: "自分専用ページを持てます",
+                badge: "既存客への案内に",
+              },
+              {
+                icon: Video,
+                color: "#34D399",
+                title: "ビデオ鑑定も使いたい方",
+                body: "相談者と1対1で直接話しながら鑑定したい方に。表情や声の雰囲気を見ながら、対面に近い距離感でオンライン鑑定を行えます。",
+                sub: "1対1ビデオ通話にも対応",
+                badge: "ビデオ対応",
+              },
+            ].map(({ icon: Icon, color, title, body, sub, badge }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12 }}
+                className="rounded-2xl p-6 space-y-4"
+                style={{ background: MYSTIC.cardBg, border: `1px solid ${color}44`, backdropFilter: "blur(20px)" }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: `${color}22`, border: `1px solid ${color}44` }}>
+                    <Icon className="w-5 h-5" style={{ color }} />
+                  </div>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
+                    style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>
+                    {badge}
+                  </span>
+                </div>
+                <p className="font-black text-sm text-white leading-snug">{title}</p>
+                <p className="text-xs text-white/60 leading-relaxed">{body}</p>
+                <p className="text-xs font-bold" style={{ color }}>✓ {sub}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── 一緒に育てる：メインセクション ── */}
@@ -982,6 +1068,63 @@ export default function FortuneLP() {
               }}
             >
               初期メンバーとして応募する →
+            </motion.button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 決済安心説明 ── */}
+      <section className="relative px-5 py-12">
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl p-6 space-y-3"
+            style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.3)" }}
+          >
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-green-400 shrink-0" />
+              <p className="font-black text-sm text-white">決済後に鑑定が始まる安心設計</p>
+            </div>
+            <p className="text-sm text-white/65 leading-relaxed">
+              相談者はオンライン決済後にチャット鑑定へ進みます。未決済の相談内容は占い師側に表示されません。売上は管理画面で確認でき、鑑定依頼ごとにステータスを管理できます。
+            </p>
+            <div className="flex flex-wrap gap-2 text-[10px]">
+              {["未決済の相談内容は非表示", "決済後すぐに鑑定スレッドが開始", "売上・ステータスを管理画面で確認"].map(t => (
+                <span key={t} className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                  ✓ {t}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── ページサンプル ── */}
+      <FortunePagePreview />
+
+      {/* ── 初期メンバー向けサポート ── */}
+      <section className="relative px-5 py-12">
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl p-6 space-y-3"
+            style={{ background: MYSTIC.cardBg, border: `1px solid ${MYSTIC.border}`, backdropFilter: "blur(16px)" }}
+          >
+            <p className="font-black text-sm" style={{ color: MYSTIC.gold }}>🤝 初期メンバー向けに設定をサポート</p>
+            <p className="text-sm text-white/65 leading-relaxed">
+              Chat Marketでは、初期メンバーの方がスムーズに始められるよう、プロフィール文や鑑定メニュー作成のサポートを行っています。はじめてオンライン鑑定ページを作る方でも、無理なく準備を進められるようにしています。
+            </p>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/recruit")}
+              className="w-full py-3 rounded-xl font-black text-sm"
+              style={{ background: "linear-gradient(135deg, #D4AF37, #A0760F)", color: "#0D0A1A" }}
+            >
+              占い師として参加する
             </motion.button>
           </motion.div>
         </div>

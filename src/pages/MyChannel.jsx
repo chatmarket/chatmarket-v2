@@ -19,6 +19,7 @@ import ArchivePriceModal from "../components/stream/ArchivePriceModal";
 import VideoEditPanel from "../components/channel/VideoEditPanel";
 import AcceptedCallsList from "../components/dashboard/AcceptedCallsList";
 import ChatReadingMenuPanel from "@/components/fortune/ChatReadingMenuPanel";
+import FortuneSetupChecklist from "@/components/fortune/FortuneSetupChecklist.jsx";
 
 export default function MyChannel() {
   const [user, setUser] = useState(null);
@@ -61,6 +62,14 @@ export default function MyChannel() {
     queryKey: ["my-streams", channel?.id],
     queryFn: () => base44.entities.LiveStream.filter({ channel_id: channel.id }, "-created_date"),
     enabled: !!channel,
+  });
+
+  const isFortuneTeller = channel && (channel.service_category === "fortune_telling" || channel.stream_category === "fortune");
+
+  const { data: chatMenus = [] } = useQuery({
+    queryKey: ["chat-reading-menus-checklist", channel?.id],
+    queryFn: () => base44.entities.ChatReadingMenu.filter({ channel_id: channel.id }),
+    enabled: !!channel?.id && isFortuneTeller,
   });
 
   const { data: subscriptions = [] } = useQuery({
@@ -536,7 +545,10 @@ export default function MyChannel() {
 
         <TabsContent value="chat-reading">
           {channel && user && (
-            <ChatReadingMenuPanel channel={channel} user={user} />
+            <div className="space-y-6">
+              <FortuneSetupChecklist channel={channel} menus={chatMenus} />
+              <ChatReadingMenuPanel channel={channel} user={user} />
+            </div>
           )}
         </TabsContent>
 
