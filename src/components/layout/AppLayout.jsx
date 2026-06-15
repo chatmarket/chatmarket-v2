@@ -418,28 +418,39 @@ export default function AppLayout() {
         }}
       >
         {(() => {
-          // チャンネル作成済みユーザーはクリエイター向け5番目タブ
+          // 未ログイン
+          if (!user) {
+            return [
+              { path: "/", icon: Home, label: "ホーム" },
+              { path: "/search", icon: Search, label: "さがす" },
+            ].map(({ path, icon: Icon, label }) => (
+              <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
+                <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
+                <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
+              </Link>
+            )).concat(
+              <button key="login" onClick={() => base44.auth.redirectToLogin()} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
+                <User className="w-5 h-5 text-primary" />
+                <span className="text-[10px] font-medium text-primary">ログイン</span>
+              </button>
+            );
+          }
+
+          // ログイン済み：チャンネルありは「配信」、なしは「始める」
           const creatorTab = myChannel
             ? { path: "/go-live", icon: Radio, label: "配信" }
-            : !myChannelLoading && user
-            ? { path: "/my-channel", icon: Zap, label: "始める" }
-            : null;
+            : { path: "/my-channel", icon: Zap, label: "始める" };
 
-          const baseTabs = [
+          return [
             { path: "/", icon: Home, label: "ホーム" },
             { path: "/search", icon: Search, label: "さがす" },
             { path: "/dashboard", icon: BarChart3, label: "マイページ" },
+            creatorTab,
             { path: "/settings", icon: Settings, label: "設定" },
-          ];
-
-          const tabs = creatorTab ? [baseTabs[0], baseTabs[1], baseTabs[2], creatorTab, baseTabs[3]] : baseTabs;
-
-          return tabs.map(({ path, icon: Icon, label }) => (
+          ].map(({ path, icon: Icon, label }) => (
             <Link key={path + label} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
               <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
-              <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>
-                {label}
-              </span>
+              <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
             </Link>
           ));
         })()}
