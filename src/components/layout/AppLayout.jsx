@@ -102,6 +102,10 @@ export default function AppLayout() {
     base44.auth.isAuthenticated().then((isAuth) => {
       if (isAuth) base44.auth.me().then((u) => {
         setUser(u);
+        // 初回登録ユーザーをプロフィール設定画面へ誘導（/settings は除外して無限ループ防止）
+        if (u.profile_completed !== true && !window.location.pathname.startsWith("/settings")) {
+          window.location.href = "/settings?onboarding=1";
+        }
       }).catch(() => {});
     });
   }, []);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import RequiredProfileModal from "@/components/onboarding/RequiredProfileModal";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,6 +219,22 @@ export default function Settings() {
   };
 
   if (!user) return null;
+
+  // ?onboarding=1 かつ未完了のユーザーのみ必須モーダルを表示
+  const urlParams = new URLSearchParams(window.location.search);
+  const isOnboarding = urlParams.get("onboarding") === "1";
+  if (isOnboarding && user.profile_completed !== true) {
+    return (
+      <RequiredProfileModal
+        user={user}
+        onComplete={() => {
+          base44.auth.me().then(setUser).catch(() => {});
+          // onboarding パラメータを除去して通常のSettings画面へ
+          window.history.replaceState({}, "", "/settings");
+        }}
+      />
+    );
+  }
 
   const handleIdentityDocumentUpload = async (file) => {
     if (!file) return;
