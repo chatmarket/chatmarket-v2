@@ -218,7 +218,10 @@ export default function AppLayout() {
                   : "text-primary/70 hover:bg-primary/10 hover:text-primary border border-primary/30"
               )}>
                 <Zap className="w-4 h-4 shrink-0" />
-                <span className="flex-1">チャンネルを作る</span>
+                <div className="flex flex-col">
+                  <span>クリエイターとして始める</span>
+                  <span className="text-[10px] font-normal opacity-70">配信・鑑定・販売を始める</span>
+                </div>
               </div>
             </Link>
           </div>
