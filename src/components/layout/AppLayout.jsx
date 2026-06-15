@@ -28,7 +28,7 @@ const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124a
 const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
   { path: "/search", icon: Search, label: "さがす" },
-  { path: "/live-streams", icon: Play, label: "ライブ" },
+  { path: "/", icon: Play, label: "ライブ" },
   { path: "/fortune-lp", icon: Star, label: "占い" },
   { path: "/community", icon: Users, label: "コミュニティ" },
   { path: "/my-purchases", icon: ShoppingBag, label: "購入履歴" },
@@ -362,11 +362,13 @@ export default function AppLayout() {
                     {user.full_name?.split(' ')[0] || user.email?.split('@')[0]}
                   </span>
                 </Link>
-                <Link to="/upload">
-                  <Button size="sm" variant="ghost" className="gap-2 text-sm">
-                    <Upload className="w-4 h-4" />アップロード
-                  </Button>
-                </Link>
+                {myChannel && (
+                  <Link to="/upload">
+                    <Button size="sm" variant="ghost" className="gap-2 text-sm">
+                      <Upload className="w-4 h-4" />アップロード
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/go-live">
                   <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
                     <Radio className="w-4 h-4" />ライブ配信
@@ -415,20 +417,32 @@ export default function AppLayout() {
           minHeight: 56,
         }}
       >
-        {[
-          { path: "/", icon: Home, label: "ホーム" },
-          { path: "/search", icon: Search, label: "さがす" },
-          { path: "/dashboard", icon: BarChart3, label: "マイページ" },
-          { path: "/go-live", icon: Radio, label: "配信" },
-          { path: "/settings", icon: Settings, label: "設定" },
-        ].map(({ path, icon: Icon, label }) => (
-          <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
-            <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
-            <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>
-              {label}
-            </span>
-          </Link>
-        ))}
+        {(() => {
+          // チャンネル作成済みユーザーはクリエイター向け5番目タブ
+          const creatorTab = myChannel
+            ? { path: "/go-live", icon: Radio, label: "配信" }
+            : !myChannelLoading && user
+            ? { path: "/my-channel", icon: Zap, label: "始める" }
+            : null;
+
+          const baseTabs = [
+            { path: "/", icon: Home, label: "ホーム" },
+            { path: "/search", icon: Search, label: "さがす" },
+            { path: "/dashboard", icon: BarChart3, label: "マイページ" },
+            { path: "/settings", icon: Settings, label: "設定" },
+          ];
+
+          const tabs = creatorTab ? [baseTabs[0], baseTabs[1], baseTabs[2], creatorTab, baseTabs[3]] : baseTabs;
+
+          return tabs.map(({ path, icon: Icon, label }) => (
+            <Link key={path + label} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
+              <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
+              <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>
+                {label}
+              </span>
+            </Link>
+          ));
+        })()}
       </nav>
     </div>
   );
