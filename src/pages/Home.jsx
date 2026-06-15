@@ -342,15 +342,15 @@ export default function Home() {
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight"
               style={{ fontFamily: 'var(--font-serif)', color: "#f0ece4", letterSpacing: "-0.01em" }}>
-              あなたの「声」を<br />
+              占い・ライブ・相談を<br />
               <span style={{
                 background: "linear-gradient(135deg, #34d399, #6ee7b7, #a7f3d0)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>誰かの宝物</span>にする場所
+              }}>もっと身近に</span>
             </h1>
-            <p className="text-sm sm:text-base text-white/60 font-sans leading-relaxed">
-              占い・雑談・相談——あなたの時間が、誰かを救う。
+            <p className="text-sm sm:text-base text-white/60 font-sans leading-relaxed max-w-sm mx-auto">
+              占い・ライブ・レッスン・音源販売など、個人のスキルや活動を楽しみ、相談し、応援できる場所
             </p>
             <p className="sr-only">チャットマーケット（Chat Market）- ライバー・占い師・クリエイター向けライブ配信・動画販売・1対1ビデオ通話プラットフォーム</p>
           </div>
@@ -401,12 +401,24 @@ export default function Home() {
             </Button>
           </div>
 
-          {/* 単一CTA（ライバー登録） */}
-          <Link to="/recruit">
-            <button className="px-8 py-4 rounded-2xl font-black text-base text-black transition-all hover:scale-105 active:scale-95"
-              style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", boxShadow: "0 0 25px rgba(0,255,157,0.4)" }}>
-              <Radio className="w-5 h-5 inline mr-2" /> 今すぐ登録
-            </button>
+          {/* メインCTA（視聴者向け2ボタン） */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link to="/fortune-lp">
+              <button className="px-7 py-3.5 rounded-2xl font-black text-base text-black transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                style={{ background: "linear-gradient(135deg, #a78bfa, #7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.45)" }}>
+                🔮 占い師を探す
+              </button>
+            </Link>
+            <Link to="/">
+              <button className="px-7 py-3.5 rounded-2xl font-black text-base transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", color: "#000", boxShadow: "0 0 20px rgba(0,255,157,0.35)" }}>
+                <Play className="w-4 h-4 inline" /> ライブを見る
+              </button>
+            </Link>
+          </div>
+          {/* サブリンク（クリエイター向け） */}
+          <Link to="/recruit" className="text-xs text-white/40 hover:text-white/70 transition-colors underline underline-offset-2">
+            クリエイターとして始める →
           </Link>
 
         </div>
