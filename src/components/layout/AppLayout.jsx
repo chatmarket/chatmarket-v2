@@ -19,6 +19,7 @@ import { captureRefFromUrl } from "@/lib/referral";
 import { capturePromoFromUrl } from "@/lib/promoCode";
 import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
 import { preloadTranslations } from "@/lib/dbTranslations";
+import RequiredProfileModal from "@/components/onboarding/RequiredProfileModal";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
@@ -74,6 +75,7 @@ const CREATOR_ITEMS = [
 
 export default function AppLayout() {
   const [user, setUser] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [creatorMode, setCreatorMode] = useState(false);
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
@@ -100,7 +102,11 @@ export default function AppLayout() {
     capturePromoFromUrl();
     preloadTranslations(); // DB翻訳プリロード
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then(setUser).catch(() => {});
+      if (isAuth) base44.auth.me().then((u) => {
+        setUser(u);
+        // ニックネームまたは地域が未設定なら必須入力モーダルを表示
+        if (!u.nickname || !u.region) setShowProfileModal(true);
+      }).catch(() => {});
     });
   }, []);
 
@@ -495,6 +501,17 @@ export default function AppLayout() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* 必須プロフィール入力モーダル（ニックネーム・地域未設定時） */}
+      {showProfileModal && user && (
+        <RequiredProfileModal
+          user={user}
+          onComplete={() => {
+            setShowProfileModal(false);
+            base44.auth.me().then(setUser).catch(() => {});
+          }}
+        />
+      )}
 
       {/* PWA Install Prompt */}
       <PwaInstallPrompt />
