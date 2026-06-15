@@ -5,7 +5,9 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
-  CreditCard, User, LogOut, Bell, Coins, Menu, X, BarChart3, Wallet, Phone, PhoneCall, CalendarDays, MessageSquare, Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart, ChevronDown, ChevronUp, School
+  CreditCard, User, LogOut, Coins, Menu, X, BarChart3, Wallet, Phone,
+  Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart,
+  ChevronDown, ChevronUp, ShoppingBag, Play, Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,54 +24,38 @@ import { preloadTranslations } from "@/lib/dbTranslations";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
+// 一般ユーザー向けメニュー
+const NAV_ITEMS = [
+  { path: "/", icon: Home, label: "ホーム" },
+  { path: "/search", icon: Search, label: "さがす" },
+  { path: "/live-streams", icon: Play, label: "ライブ" },
+  { path: "/fortune-lp", icon: Star, label: "占い" },
+  { path: "/community", icon: Users, label: "コミュニティ" },
+  { path: "/my-purchases", icon: ShoppingBag, label: "購入履歴" },
+  { path: "/coin-charge", icon: Coins, label: "コイン" },
+  { path: "/settings", icon: Settings, label: "設定" },
+];
+
+// クリエイタースタジオ メニュー
+const CREATOR_STUDIO_ITEMS = [
+  { path: "/dashboard", icon: BarChart3, label: "ダッシュボード" },
+  { path: "/my-channel", icon: User, label: "マイチャンネル" },
+  { path: "/go-live", icon: Radio, label: "配信する", highlight: true },
+  { path: "/obs-guide", icon: Play, label: "PPV生配信ガイド" },
+  { path: "/my-library", icon: Package, label: "商品・音源販売" },
+  { path: "/fanclub-manage", icon: Crown, label: "ファンクラブ" },
+  { path: "/revenue", icon: Wallet, label: "収益" },
+  { path: "/channel-profile-edit", icon: Pencil, label: "チャンネル編集" },
+];
+
+// 管理者専用メニュー
 const ADMIN_NAV_ITEMS = [
   { key: "admin-dashboard", path: "/admin/dashboard", icon: BarChart3, label: "運営管理ダッシュボード" },
   { key: "admin-recruit", path: "/admin/dashboard?tab=recruit", icon: Zap, label: "ライバー申込一覧" },
-  { key: "admin-analytics", path: "/admin/analytics", icon: Globe, label: "プラットフォーム分析" },
   { key: "admin-moderation", path: "/admin/video-moderation", icon: Settings, label: "コンテンツ審査" },
   { key: "admin-ngword", path: "/admin/ng-word-analytics", icon: Settings, label: "NGワード分析" },
-  { key: "influencer", path: "/influencer-campaign", icon: Zap, label: "爆撃テンプレート" },
   { key: "admin-affiliate", path: "/admin/affiliate", icon: TrendingUp, label: "アフィリエイト分析" },
-];
-
-const LP_NAV_ITEMS = [
-  { key: "lp-fortune", path: "/fortune-lp", icon: Star, label: "占い師LP" },
-  { key: "lp-idol", path: "/idol-lp", icon: Star, label: "アイドルLP" },
-  { key: "lp-musician", path: "/musician", icon: Music, label: "ミュージシャンLP" },
-  { key: "lp-tutor", path: "/lp/tutor", icon: BookOpen, label: "家庭教師LP" },
-  { key: "lp-expert", path: "/lp/expert", icon: Star, label: "有識者LP" },
-  { key: "lp-fitness", path: "/lp/fitness", icon: Zap, label: "フィットネスLP" },
-  { key: "lp-career", path: "/lp/career", icon: Zap, label: "キャリアLP" },
-  { key: "lp-english", path: "/lp/english", icon: Globe, label: "英会話講師LP" },
-  { key: "lp-coach", path: "/lp/coach", icon: Star, label: "コーチLP" },
-  { key: "lp-crowdfunding", path: "/crowdfunding/lp", icon: Heart, label: "クラウドファンディングLP" },
-];
-
-const NAV_ITEMS = [
-  { path: "/", icon: Home, label: "ホーム" },
-  { path: "/dashboard", icon: BarChart3, label: "マイページ" },
-  { path: "/search", icon: Search, label: "さがす" },
-  { path: "/classroom-lp", icon: School, label: "クラスルーム", highlight: "violet" },
-  { path: "/community", icon: Users, label: "コミュニティ" },
-  { path: "/fanclub", icon: Crown, label: "ファンクラブ" },
-  { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
-  { path: "/blog", icon: BookOpen, label: "運営ブログ", showNew: true },
-  { path: "/recruit", icon: Zap, label: "ライバー募集" },
-  { path: "/obs-guide", icon: Radio, label: "PPV生配信" },
-  { path: "/coin-charge", icon: Coins, label: "コインチャージ方法" },
-];
-
-const CREATOR_ITEMS = [
-  { path: "/go-live", icon: Radio, label: "ライブ配信（PPV）" },
-  { path: "/call-waiting", icon: Phone, label: "1対1ビデオ通話", highlight: true },
-  { path: "/upload", icon: Upload, label: "動画アップ" },
-  { path: "/dashboard", icon: BarChart3, label: "クリエイターダッシュボード" },
-  { path: "/vod-analytics", icon: TrendingUp, label: "VOD分析" },
-  { path: "/revenue", icon: Wallet, label: "収益管理" },
-  { path: "/withdrawal-request", icon: Wallet, label: "払い出し申請" },
-  { path: "/creator-schedule", icon: CalendarDays, label: "スケジュール管理" },
-
-  { path: "/forum", icon: MessageSquare, label: "掲示板" },
+  { key: "admin-analytics", path: "/admin/analytics", icon: Globe, label: "プラットフォーム分析" },
 ];
 
 export default function AppLayout() {
@@ -168,103 +154,51 @@ export default function AppLayout() {
 
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {/* 配信用モード時は配信者メニューを最上部に固定 */}
-        {user && creatorMode && (
-          <div className="mb-4 pb-3 border-b border-border/30">
-            <p className="text-[10px] font-bold tracking-widest text-primary uppercase mb-2">⚡ クイックアクセス</p>
-            <Link to="/dashboard" onClick={onCloseFn}>
-              <div className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-black transition-all",
-                isActive("/dashboard")
-                  ? "bg-primary/20 text-primary"
-                  : "text-foreground hover:bg-primary/10"
-              )}>
-                <BarChart3 className="w-4 h-4" />
-                <span>ダッシュボード</span>
-              </div>
-            </Link>
-            <Link to="/fanclub-manage" onClick={onCloseFn}>
-              <div className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-black transition-all mt-1",
-                isActive("/fanclub-manage")
-                  ? "bg-amber-500/20 text-amber-400"
-                  : "text-foreground hover:bg-amber-500/10"
-              )}>
-                <Crown className="w-4 h-4" />
-                <span>ファンクラブ</span>
-              </div>
-            </Link>
-          </div>
-        )}
 
-        {NAV_ITEMS.map(({ path, icon: Icon, label, showNew, highlight }) => (
+        {/* ── 一般ユーザーメニュー ── */}
+        {NAV_ITEMS.map(({ path, icon: Icon, label }) => (
           <Link key={path} to={path} onClick={onCloseFn}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-              highlight === "violet"
-                ? isActive(path)
-                  ? "bg-violet-500/20 text-violet-300"
-                  : "text-violet-400/80 hover:bg-violet-500/10 hover:text-violet-300"
-                : isActive(path)
-                  ? "bg-pink-500/20 text-pink-400"
-                  : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
+              isActive(path)
+                ? "bg-pink-500/20 text-pink-400"
+                : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
             )}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{label}</span>
-              {highlight === "violet" && !isActive(path) && (
-                <span className="text-[9px] font-black bg-violet-500 text-white px-1.5 py-0.5 rounded-full">NEW</span>
-              )}
-              {showNew && hasNewBlog && (
-                <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">NEW</span>
-              )}
             </div>
           </Link>
         ))}
 
-        {user && !creatorMode && (
+        {/* ── クリエイタースタジオ（ログイン済みユーザー全員に表示・アコーディオン） ── */}
+        {user && (
           <>
-            {/* 配信者メニュー — アコーディオン */}
             <div className="pt-3 pb-1">
               <button
                 onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-primary/80 hover:bg-primary/10 hover:text-primary transition-all"
               >
                 <Radio className="w-4 h-4 shrink-0" />
-                <span className="flex-1 text-left">配信者メニュー</span>
+                <span className="flex-1 text-left">クリエイタースタジオ</span>
                 {creatorMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
               </button>
             </div>
-            {creatorMenuOpen && CREATOR_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
-              if (path === "/fanclub" && myChannel) {
-                return (
-                  <Link key={path} to="/fanclub-manage" onClick={onCloseFn}>
-                    <div className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
-                      isActive("/fanclub-manage")
-                        ? "bg-amber-500/20 text-amber-400"
-                        : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-400"
-                    )}>
-                      <Icon className="w-4 h-4 shrink-0" />
-                      <span className="flex-1">ファンクラブ管理</span>
-                    </div>
-                  </Link>
-                );
-              }
+            {creatorMenuOpen && CREATOR_STUDIO_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
               const isWaiting = highlight && myChannel?.call_enabled && !isActive(path);
               return (
                 <Link key={path} to={path} onClick={onCloseFn}>
                   <div className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
                     isWaiting
-                      ? "bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse"
+                      ? "bg-primary/20 text-primary border border-primary/40 animate-pulse"
                       : isActive(path)
-                      ? "bg-red-500/20 text-red-400"
-                      : "text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
+                      ? "bg-primary/20 text-primary"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                   )}>
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="flex-1">{label}</span>
                     {isWaiting && (
-                      <span className="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">待機</span>
+                      <span className="text-[9px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">LIVE</span>
                     )}
                   </div>
                 </Link>
@@ -273,64 +207,25 @@ export default function AppLayout() {
           </>
         )}
 
-        {/* 配信者向けメニュー — 全ユーザーに公開 */}
-        <div className="pt-3 pb-1 px-3">
-          <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">配信者向け</p>
-        </div>
-        {[
-          { path: "/fortune-lp", icon: Star, label: "占い師" },
-          { path: "/idol-lp", icon: Heart, label: "アイドル" },
-          { path: "/musician", icon: Music, label: "ミュージシャン" },
-        ].map(({ path, icon: Icon, label }) => (
-          <Link key={path} to={path} onClick={onCloseFn}>
-            <div className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-              isActive(path)
-                ? "bg-amber-500/20 text-amber-300"
-                : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-300"
-            )}>
-              <Icon className="w-4 h-4 shrink-0" />
-              {label}
-            </div>
-          </Link>
-        ))}
-
-        {/* 管理者メニュー — creatorMode に関わらず常に表示 */}
+        {/* ── 管理者メニュー（admin のみ表示） ── */}
         {user && isAdmin(user) && (
           <>
-                <div className="pt-3 pb-1 px-3">
-                  <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ スーパー管理者</p>
+            <div className="pt-3 pb-1 px-3">
+              <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase">⚡ 管理者</p>
+            </div>
+            {ADMIN_NAV_ITEMS.map(({ key, path, icon: Icon, label }) => (
+              <Link key={key} to={path} onClick={onCloseFn}>
+                <div className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                  isActive(path)
+                    ? "bg-purple-500/20 text-purple-300"
+                    : "text-purple-400/70 hover:bg-purple-500/10 hover:text-purple-300"
+                )}>
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {label}
                 </div>
-                {ADMIN_NAV_ITEMS.map(({ key, path, icon: Icon, label }) => (
-                  <Link key={key} to={path} onClick={onCloseFn}>
-                    <div className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                      isActive(path)
-                        ? "bg-purple-500/20 text-purple-300"
-                        : "text-purple-400/70 hover:bg-purple-500/10 hover:text-purple-300"
-                    )}>
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {label}
-                    </div>
-                  </Link>
-                ))}
-
-                <div className="pt-2 pb-1 px-3">
-                  <p className="text-[10px] font-bold tracking-widest text-amber-400 uppercase">🎯 LP管理</p>
-                </div>
-                {LP_NAV_ITEMS.map(({ key, path, icon: Icon, label }) => (
-                  <Link key={key} to={path} onClick={onCloseFn}>
-                    <div className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                      isActive(path)
-                        ? "bg-amber-500/20 text-amber-300"
-                        : "text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-300"
-                    )}>
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {label}
-                    </div>
-                  </Link>
-                ))}
+              </Link>
+            ))}
           </>
         )}
       </nav>
@@ -345,33 +240,11 @@ export default function AppLayout() {
                 <span className="text-xs text-yellow-400 font-bold">{wallet.balance || 0} コイン</span>
               </div>
             )}
-            <Link to="/my-channel" onClick={onCloseFn}>
-              <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground")}>
-                <User className="w-4 h-4 shrink-0" />マイチャンネル
-              </div>
-            </Link>
-            <Link to="/channel-profile-edit" onClick={onCloseFn}>
-              <div className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                isActive("/channel-profile-edit")
-                  ? "bg-primary/20 text-primary"
-                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-              )}>
-                <Pencil className="w-4 h-4 shrink-0" />チャンネルLP編集
-              </div>
-            </Link>
             <Link to="/settings" onClick={onCloseFn}>
               <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground")}>
                 <Settings className="w-4 h-4 shrink-0" />設定
               </div>
             </Link>
-            {isAdmin(user) && (
-              <Link to="/admin/dashboard" onClick={onCloseFn}>
-                <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-400 hover:bg-purple-500/10 transition-all">
-                  <BarChart3 className="w-4 h-4 shrink-0" />管理者
-                </div>
-              </Link>
-            )}
             <button
               onClick={() => base44.auth.logout()}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
