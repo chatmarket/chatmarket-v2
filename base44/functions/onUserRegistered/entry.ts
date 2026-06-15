@@ -17,9 +17,22 @@ Deno.serve(async (req) => {
     console.log(`[onUserRegistered] Processing new user: ${userEmail}`);
 
     // 新規ユーザーに onboarding_required フラグを付与（プロフィール必須誘導用）
+    // data.id → data.user_id → emailで検索 の順で対象ユーザーを特定
     try {
-      await base44.asServiceRole.entities.User.update(data.id, { onboarding_required: true });
-      console.log(`✓ onboarding_required set for ${userEmail}`);
+      const userId = data.id || data.user_id;
+      if (userId) {
+        await base44.asServiceRole.entities.User.update(userId, { onboarding_required: true });
+        console.log(`✓ onboarding_required set for ${userEmail} (id: ${userId})`);
+      } else {
+        // IDが取れない場合はemailで検索して更新
+        const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+        if (users[0]) {
+          await base44.asServiceRole.entities.User.update(users[0].id, { onboarding_required: true });
+          console.log(`✓ onboarding_required set for ${userEmail} (found by email)`);
+        } else {
+          console.warn(`⚠️ User not found for onboarding_required: ${userEmail}`);
+        }
+      }
     } catch (flagErr) {
       console.warn(`⚠️ onboarding_required flag failed for ${userEmail}:`, flagErr.message);
     }
