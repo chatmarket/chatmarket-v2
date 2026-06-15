@@ -169,7 +169,7 @@ function StepSection({ step }) {
         <div className="flex items-start gap-4 flex-wrap">
           <div>
             <span className={`text-xs font-black px-3 py-1 rounded-full border ${step.badge}`}>{step.level}</span>
-            <h2 className="text-2xl font-black text-white mt-2">{step.title} <span className="text-muted-foreground font-medium text-lg">— 初めてのOBS配信（PC版）</span></h2>
+            <h2 className="text-2xl font-black text-white mt-2">{step.title} <span className="text-muted-foreground font-medium text-lg">— OBS / PRISM 配信ガイド（PC版）</span></h2>
             <p className="text-sm text-muted-foreground mt-1">👤 対象: {step.target}</p>
             <p className="text-xs font-bold text-primary mt-1">📊 {step.bitrate}</p>
           </div>
@@ -215,18 +215,22 @@ function StepSection({ step }) {
         </div>
 
         {/* OBS Download CTA */}
-        <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-card border border-primary/30 rounded-2xl px-6 py-4">
-          <div className="text-left">
-            <p className="font-bold text-sm text-white">まずはOBSをダウンロード（完全無料）</p>
-            <p className="text-xs text-muted-foreground">Windows / Mac / Linux 対応</p>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-3">
           <a
-            href="https://obsproject.com/ja/download"
+            href="https://prismlive.com/ja_jp/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm px-5 py-2.5 rounded-xl transition-all"
           >
-            <Download className="w-4 h-4" /> OBS公式サイトへ
+            <Download className="w-4 h-4" /> PRISM公式サイトへ（初心者おすすめ）
+          </a>
+          <a
+            href="https://obsproject.com/ja/download"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground font-bold text-sm px-5 py-2.5 rounded-xl transition-all border border-border/50"
+          >
+            <Download className="w-4 h-4" /> OBS公式サイトへ（上級者向け）
           </a>
         </div>
       </section>
@@ -322,9 +326,9 @@ export default function ObsGuide() {
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-12">
       {/* Hero */}
       <div className="text-center space-y-4">
-        <span className="text-xs font-black bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full">OBS配信ガイド</span>
-        <h1 className="text-3xl md:text-4xl font-black text-white">Chat Market で配信プロになろう</h1>
-        <p className="text-muted-foreground max-w-xl mx-auto">初心者から法人レベルまで、4ステップで機材・設定をすべて解説。あなたのレベルに合ったセクションを選んでください。</p>
+        <span className="text-xs font-black bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full">PPV生配信ガイド</span>
+        <h1 className="text-3xl md:text-4xl font-black text-white">PPV生配信の始め方</h1>
+        <p className="text-muted-foreground max-w-xl mx-auto">スマホ1台で今すぐ始められる。初心者はPRISM Live Studioを使った配信がおすすめです。上級者向けOBS設定も解説します。</p>
       </div>
 
       {/* ── 1対多数配信推奨バナー ── */}
@@ -337,13 +341,13 @@ export default function ObsGuide() {
             📡
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-black text-white mb-1.5">✅ 1対多数の生配信には OBS / PRISM で！！</h3>
+            <h3 className="text-lg font-black text-white mb-1.5">✅ 生配信には PRISM Live Studio がおすすめ！</h3>
             <p className="text-white/90 text-sm leading-relaxed">
-              複数の視聴者に配信する場合は、安定した接続ができる <strong>無料の OBS システム</strong>（PC版・スマホ版）のご利用をお願いします。高品質・低遅延・安定配信で、ファンとの最高の配信体験を実現します。
+              スマホ1台ですぐ始められる <strong>PRISM Live Studio（無料）</strong> が初心者に最適です。コメント・投げ銭がリアルタイムで画面に表示され、ファンとの一体感を楽しめます。PCで本格的に配信したい方は PRISM for PC または OBS もご利用いただけます。
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-3">
-              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">💻 OBS for PC</span>
-              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">📱 PRISM for スマホ</span>
+              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">📱 PRISM（初心者おすすめ）</span>
+              <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">💻 OBS（上級者向け）</span>
               <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">🆓 完全無料</span>
             </div>
           </div>
@@ -356,8 +360,8 @@ export default function ObsGuide() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { n: "①", t: "Chat Market にログイン", d: '「ライブ配信を開始」ボタンをタップ' },
-            { n: "②", t: "OBS情報を取得", d: "ページ内の「OBS配信情報」セクションからIngest Endpoint と Stream Key をコピー" },
-            { n: "③", t: "OBSに貼り付け", d: '設定 → 配信 → サービス「カスタム」→ サーバーURLとストリームキーを貼り付け → OK' },
+            { n: "②", t: "配信情報を取得", d: "ページ内の「配信情報」セクションから RTMP サーバーURL と Stream Key をコピー" },
+            { n: "③", t: "PRISMまたはOBSに貼り付け", d: 'PRISM: Custom RTMP に URL と Stream Key を貼り付け / OBS: 設定 → 配信 → カスタム → URL・キーを貼り付け' },
           ].map((item) => (
             <div key={item.n} className="bg-secondary/50 rounded-xl p-4 space-y-1.5">
               <span className="text-2xl font-black text-primary">{item.n}</span>
