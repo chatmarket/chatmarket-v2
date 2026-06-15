@@ -123,7 +123,7 @@ export default function AppLayout() {
     enabled: !!user?.email,
   });
 
-  const { data: myChannel } = useQuery({
+  const { data: myChannel, isLoading: myChannelLoading } = useQuery({
     queryKey: ["layout-my-channel", user?.email],
     queryFn: () => base44.entities.Channel.filter({ owner_email: user.email }).then(r => r[0] || null),
     enabled: !!user?.email,
@@ -207,8 +207,8 @@ export default function AppLayout() {
           </>
         )}
 
-        {/* ── チャンネル未作成ユーザー向け導線（ログイン済み・チャンネルなし） ── */}
-        {user && myChannel === null && (
+        {/* ── チャンネル未作成ユーザー向け導線（ログイン済み・チャンネルなし・読み込み完了後のみ） ── */}
+        {user && !myChannelLoading && myChannel === null && (
           <div className="pt-3">
             <Link to="/my-channel" onClick={onCloseFn}>
               <div className={cn(
