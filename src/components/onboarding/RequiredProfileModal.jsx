@@ -27,7 +27,7 @@ export default function RequiredProfileModal({ user, onComplete }) {
       return;
     }
     setSaving(true);
-    await base44.auth.updateMe({ nickname: nickname.trim(), region: region.trim() });
+    await base44.auth.updateMe({ nickname: nickname.trim(), region: region.trim(), profile_completed: true });
     toast.success("プロフィールを設定しました！");
     setSaving(false);
     onComplete();

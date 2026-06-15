@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import RequiredProfileModal from "@/components/onboarding/RequiredProfileModal";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -217,7 +218,20 @@ export default function Settings() {
     setSaving(false);
   };
 
+  const showOnboarding = user && user.profile_completed !== true;
+
   if (!user) return null;
+
+  if (showOnboarding) {
+    return (
+      <RequiredProfileModal
+        user={user}
+        onComplete={() => {
+          base44.auth.me().then(setUser).catch(() => {});
+        }}
+      />
+    );
+  }
 
   const handleIdentityDocumentUpload = async (file) => {
     if (!file) return;
