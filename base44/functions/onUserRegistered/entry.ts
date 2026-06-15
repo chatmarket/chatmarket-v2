@@ -16,6 +16,14 @@ Deno.serve(async (req) => {
 
     console.log(`[onUserRegistered] Processing new user: ${userEmail}`);
 
+    // 新規ユーザーに onboarding_required フラグを付与（プロフィール必須誘導用）
+    try {
+      await base44.asServiceRole.entities.User.update(data.id, { onboarding_required: true });
+      console.log(`✓ onboarding_required set for ${userEmail}`);
+    } catch (flagErr) {
+      console.warn(`⚠️ onboarding_required flag failed for ${userEmail}:`, flagErr.message);
+    }
+
     // 1. PlanSubscription (call-anser) 作成 — 重複チェック付き
     try {
       const existing = await base44.asServiceRole.entities.PlanSubscription.filter({
