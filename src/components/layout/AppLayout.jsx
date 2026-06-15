@@ -409,7 +409,7 @@ export default function AppLayout() {
 
       {/* Mobile Bottom Navigation — Safe Area対応フローティング */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center justify-around px-2"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 flex items-center"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
           paddingLeft: 'env(safe-area-inset-left)',
@@ -417,30 +417,30 @@ export default function AppLayout() {
           minHeight: 56,
         }}
       >
-        {(() => {
-          // 未ログイン
-          if (!user) {
-            return [
+        {/* 未ログイン：ホーム / さがす / ログイン（3タブ） */}
+        {!user && (
+          <>
+            {[
               { path: "/", icon: Home, label: "ホーム" },
               { path: "/search", icon: Search, label: "さがす" },
             ].map(({ path, icon: Icon, label }) => (
-              <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
-                <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
-                <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
+              <Link key={path} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-w-0 min-h-[48px] justify-center overflow-hidden">
+                <Icon className={cn("w-5 h-5 shrink-0 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
+                <span className={cn("text-[10px] font-medium truncate w-full text-center", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
               </Link>
-            )).concat(
-              <button key="login" onClick={() => base44.auth.redirectToLogin()} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
-                <User className="w-5 h-5 text-primary" />
-                <span className="text-[10px] font-medium text-primary">ログイン</span>
-              </button>
-            );
-          }
+            ))}
+            <button onClick={() => base44.auth.redirectToLogin()} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-w-0 min-h-[48px] justify-center overflow-hidden">
+              <User className="w-5 h-5 shrink-0 text-primary" />
+              <span className="text-[10px] font-medium text-primary truncate w-full text-center">ログイン</span>
+            </button>
+          </>
+        )}
 
-          // ログイン済み：チャンネルありは「配信」、なしは「始める」
+        {/* ログイン済み：ホーム / さがす / マイページ / 配信 or 始める / 設定（5タブ） */}
+        {user && (() => {
           const creatorTab = myChannel
             ? { path: "/go-live", icon: Radio, label: "配信" }
             : { path: "/my-channel", icon: Zap, label: "始める" };
-
           return [
             { path: "/", icon: Home, label: "ホーム" },
             { path: "/search", icon: Search, label: "さがす" },
@@ -448,9 +448,9 @@ export default function AppLayout() {
             creatorTab,
             { path: "/settings", icon: Settings, label: "設定" },
           ].map(({ path, icon: Icon, label }) => (
-            <Link key={path + label} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-h-[48px] justify-center">
-              <Icon className={cn("w-5 h-5 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
-              <span className={cn("text-[10px] font-medium transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
+            <Link key={path + label} to={path} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-w-0 min-h-[48px] justify-center overflow-hidden">
+              <Icon className={cn("w-5 h-5 shrink-0 transition-colors", isActive(path) ? "text-primary" : "text-muted-foreground")} />
+              <span className={cn("text-[10px] font-medium truncate w-full text-center", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
             </Link>
           ));
         })()}
