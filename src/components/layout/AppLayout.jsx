@@ -170,8 +170,8 @@ export default function AppLayout() {
           </Link>
         ))}
 
-        {/* ── クリエイタースタジオ（ログイン済みユーザー全員に表示・アコーディオン） ── */}
-        {user && (
+        {/* ── クリエイタースタジオ（チャンネル作成済みユーザーのみ表示） ── */}
+        {user && myChannel && (
           <>
             <div className="pt-3 pb-1">
               <button
@@ -205,6 +205,23 @@ export default function AppLayout() {
               );
             })}
           </>
+        )}
+
+        {/* ── チャンネル未作成ユーザー向け導線（ログイン済み・チャンネルなし） ── */}
+        {user && myChannel === null && (
+          <div className="pt-3">
+            <Link to="/my-channel" onClick={onCloseFn}>
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all",
+                isActive("/my-channel")
+                  ? "bg-primary/20 text-primary"
+                  : "text-primary/70 hover:bg-primary/10 hover:text-primary border border-primary/30"
+              )}>
+                <Zap className="w-4 h-4 shrink-0" />
+                <span className="flex-1">チャンネルを作る</span>
+              </div>
+            </Link>
+          </div>
         )}
 
         {/* ── 管理者メニュー（admin のみ表示） ── */}
