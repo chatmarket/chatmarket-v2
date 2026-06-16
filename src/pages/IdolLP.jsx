@@ -48,8 +48,8 @@ const STEPS = [
 ];
 
 const VOICES = [
-  { name: "Rena（21）", tag: "元地下アイドル", quote: "事務所なしで月20万超えました。自分のペースで活動できるのが最高です！", color: "#ec4899" },
-  { name: "Miu（19）", tag: "活動中アイドル", quote: "副業として始めたら本業より稼げるようになりました。ファンとの距離が近くて楽しい！", color: "#a855f7" },
+  { name: "Rena（21）", tag: "元地下アイドル", quote: "自分のペースで活動しながら、応援してくれるファンに直接届けられる場所ができました。月20万の収益につながっています。", color: "#ec4899" },
+  { name: "Miu（19）", tag: "活動中アイドル", quote: "ファンとの距離がとても近くて楽しいです。応援が形になっていくのを実感しながら活動できています。", color: "#a855f7" },
   { name: "Hana（23）", tag: "引退後に再開", quote: "引退してたけどここで復活。顔出しなしの音声配信から始めて今は月15万円！", color: "#f59e0b" },
 ];
 
@@ -110,7 +110,7 @@ export default function IdolLP() {
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}>
-              収益に変えよう
+              ファンに届けよう
             </span>
           </h1>
 
@@ -355,7 +355,7 @@ export default function IdolLP() {
        <div className="max-w-md mx-auto text-center space-y-8">
          <div className="space-y-2">
            <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>REVENUE</p>
-           <h2 className="text-3xl font-black">こんなに稼げる</h2>
+           <h2 className="text-3xl font-black">応援が少しずつ収益につながる</h2>
          </div>
           <div className="space-y-3">
             {[
@@ -479,11 +479,11 @@ export default function IdolLP() {
         <div className="max-w-md mx-auto space-y-6">
           <Sparkles className="w-10 h-10 mx-auto" style={{ color: "#f0abfc" }} />
           <h2 className="text-3xl sm:text-4xl font-black leading-tight">
-            今すぐ<br />
+            ファンとつながる、<br />
             <span style={{ background: "linear-gradient(135deg, #f0abfc, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              あなたの時代
+              あなただけの場所
             </span>
-            を始めよう
+            を始めよう。
           </h2>
           <p className="text-white/50 text-sm">初期費用ゼロ・審査なし・今日から配信できます</p>
           <Link to="/recruit">
