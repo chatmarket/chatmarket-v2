@@ -50,8 +50,8 @@ const STEPS = [
 ];
 
 const VOICES = [
-  { name: "Taiga（22）", tag: "シンガーソングライター", quote: "月30万超え。事務所より遥かに自由で稼げます。ファンとの距離が最高。", color: "#a855f7" },
-  { name: "Yuki（20）", tag: "ギタリスト", quote: "バンド活動しながら副業で月20万。レッスンだけで15万稼げる。", color: "#ec4899" },
+  { name: "Taiga（22）", tag: "シンガーソングライター", quote: "自分の曲を、応援してくれる人へ直接届けられるようになりました。ファンとの距離が近くて最高です。", color: "#a855f7" },
+  { name: "Yuki（20）", tag: "ギタリスト", quote: "バンド活動しながら自分のペースでレッスンを受け付けられる。月20万の収益につながりました。", color: "#ec4899" },
   { name: "Ren（25）", tag: "ビートメーカー", quote: "トラック販売とライブで月50万。制作活動の資金化が最高に効率的。", color: "#f59e0b" },
 ];
 
@@ -221,7 +221,7 @@ export default function MusicianLP() {
         <div className="max-w-3xl mx-auto space-y-10">
           <div className="text-center space-y-3">
             <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#c084fc" }}>FEATURES</p>
-            <h2 className="text-3xl sm:text-4xl font-black">4つの稼ぎ方</h2>
+            <h2 className="text-3xl sm:text-4xl font-black">あなたの音を届ける4つの方法</h2>
             <p className="text-white/50 text-sm">あなたのスタイルに合わせて選べる</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -325,7 +325,7 @@ export default function MusicianLP() {
         <div className="max-w-md mx-auto text-center space-y-8">
           <div className="space-y-2">
             <p className="text-xs font-black tracking-widest uppercase" style={{ color: "#ec4899" }}>REVENUE</p>
-            <h2 className="text-3xl font-black">こんなに稼げる</h2>
+            <h2 className="text-3xl font-black">あなたのペースで積み上がる収益</h2>
           </div>
           <div className="space-y-3">
             {[
