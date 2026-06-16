@@ -305,15 +305,15 @@ export default function Home() {
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight"
               style={{ fontFamily: 'var(--font-serif)', color: "#f0ece4", letterSpacing: "-0.01em" }}>
-              占い・ライブ・相談を<br />
+              あなたの得意が、<br />
               <span style={{
                 background: "linear-gradient(135deg, #34d399, #6ee7b7, #a7f3d0)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>もっと身近に</span>
+              }}>誰かの助けになる。</span>
             </h1>
             <p className="text-sm sm:text-base text-white/60 font-sans leading-relaxed max-w-sm mx-auto">
-              占い・ライブ・レッスン・音源販売など、個人のスキルや活動を楽しみ、相談し、応援できる場所
+              知識・経験・声・表現を、必要としている人へ届ける場所。<br className="hidden sm:block" />見る人、相談する人、応援する人が自然につながれます。
             </p>
             <p className="sr-only">チャットマーケット（Chat Market）- ライバー・占い師・クリエイター向けライブ配信・動画販売・1対1ビデオ通話プラットフォーム</p>
           </div>
