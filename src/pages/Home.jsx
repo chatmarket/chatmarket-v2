@@ -686,41 +686,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* クリエイター向け: 通話待機トグル（ページ下部・控えめ表示） */}
-      {user && myChannel && (
-        <div className={`rounded-xl px-4 py-3 border flex items-center justify-between gap-4 opacity-80 ${myChannel?.call_enabled ? "bg-green-500/8 border-green-500/25" : "bg-white/3 border-border/30"}`}>
-          <div>
-            <p className="font-semibold text-xs flex items-center gap-2 text-muted-foreground">
-              {myChannel?.call_enabled
-                ? <><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />通話待機中</>
-                : <><span className="w-1.5 h-1.5 rounded-full bg-zinc-600 inline-block" />通話待機 オフ</>}
-            </p>
-            <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-              {myChannel?.call_enabled ? "ファンに「今すぐ通話可能」と表示中" : "ONにするとファンから声がかかります"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={openCallSettings}
-              className="w-8 h-8 rounded-lg border border-border/40 bg-secondary/60 hover:bg-secondary flex items-center justify-center transition-colors"
-              title="通話設定"
-            >
-              <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-            <Button
-              onClick={handleToggleWaiting}
-              disabled={togglingWait}
-              size="sm"
-              className={`gap-1.5 text-xs ${myChannel?.call_enabled ? "bg-red-500/80 hover:bg-red-600" : "bg-primary/80 hover:bg-primary"}`}
-            >
-              {myChannel?.call_enabled
-                ? <><PhoneOff className="w-3.5 h-3.5" />停止</>
-                : <><PhoneCall className="w-3.5 h-3.5" />待機中にする</>}
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Temporarily disabled for performance */}
 
       {/* 空の状態 */}

@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import PushNotificationPrompt from "@/components/notifications/PushNotificationPrompt";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Home, Radio, Search, Crown, Settings, Upload, BookOpen,
   CreditCard, User, LogOut, Coins, Menu, X, BarChart3, Wallet, Phone,
   Users, Zap, Globe, TrendingUp, Pencil, Star, Music, Heart,
-  ChevronDown, ChevronUp, ShoppingBag, Play, Package
+  ChevronDown, ChevronUp, ShoppingBag, Play, Package, PhoneCall, PhoneOff
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import NotificationBell from "./NotificationBell";
@@ -60,10 +61,12 @@ const ADMIN_NAV_ITEMS = [
 
 export default function AppLayout() {
   const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [creatorMode, setCreatorMode] = useState(false);
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
   const [lpMenuOpen, setLpMenuOpen] = useState(false);
+  const [togglingWait, setTogglingWait] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -135,6 +138,17 @@ export default function AppLayout() {
 
   const isActive = (path) => path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
+  const handleToggleWaiting = async () => {
+    if (!myChannel) return;
+    setTogglingWait(true);
+    const newState = !myChannel.call_enabled;
+    await base44.entities.Channel.update(myChannel.id, { call_enabled: newState });
+    // React Query キャッシュを更新
+    queryClient.setQueryData(["layout-my-channel", user?.email], { ...myChannel, call_enabled: newState });
+    toast.success(newState ? "✅ 待機中にしました" : "待機を停止しました");
+    setTogglingWait(false);
+  };
+
   const renderSidebar = (onCloseFn) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -183,27 +197,63 @@ export default function AppLayout() {
                 {creatorMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
               </button>
             </div>
-            {creatorMenuOpen && CREATOR_STUDIO_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
-              const isWaiting = highlight && myChannel?.call_enabled && !isActive(path);
-              return (
-                <Link key={path} to={path} onClick={onCloseFn}>
-                  <div className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
-                    isWaiting
-                      ? "bg-primary/20 text-primary border border-primary/40 animate-pulse"
-                      : isActive(path)
-                      ? "bg-primary/20 text-primary"
-                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                  )}>
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="flex-1">{label}</span>
-                    {isWaiting && (
-                      <span className="text-[9px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">LIVE</span>
+            {creatorMenuOpen && (
+              <>
+                {CREATOR_STUDIO_ITEMS.map(({ path, icon: Icon, label, highlight }) => {
+                  const isWaiting = highlight && myChannel?.call_enabled && !isActive(path);
+                  return (
+                    <Link key={path} to={path} onClick={onCloseFn}>
+                      <div className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ml-2",
+                        isWaiting
+                          ? "bg-primary/20 text-primary border border-primary/40 animate-pulse"
+                          : isActive(path)
+                          ? "bg-primary/20 text-primary"
+                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      )}>
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="flex-1">{label}</span>
+                        {isWaiting && (
+                          <span className="text-[9px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">LIVE</span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+                {/* 1対1通話の受付設定 */}
+                <div className={cn(
+                  "ml-2 rounded-xl px-3 py-2.5 border transition-all",
+                  myChannel?.call_enabled
+                    ? "bg-green-500/10 border-green-500/30"
+                    : "bg-white/3 border-border/30"
+                )}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Phone className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <span className="text-xs font-bold text-foreground/80 flex-1">1対1通話の受付設定</span>
+                    {myChannel?.call_enabled && (
+                      <span className="text-[9px] font-black bg-green-500 text-white px-1.5 py-0.5 rounded-full">ON</span>
                     )}
                   </div>
-                </Link>
-              );
-            })}
+                  <p className="text-[10px] text-muted-foreground leading-relaxed mb-2 pl-6">
+                    ONにすると、ファンや相談者から通話リクエストを受け付けられます
+                  </p>
+                  <button
+                    onClick={handleToggleWaiting}
+                    disabled={togglingWait}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50",
+                      myChannel?.call_enabled
+                        ? "bg-red-500/80 hover:bg-red-600 text-white"
+                        : "bg-primary/80 hover:bg-primary text-primary-foreground"
+                    )}
+                  >
+                    {myChannel?.call_enabled
+                      ? <><PhoneOff className="w-3.5 h-3.5" />受付を停止する</>
+                      : <><PhoneCall className="w-3.5 h-3.5" />受付を開始する</>}
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
 
