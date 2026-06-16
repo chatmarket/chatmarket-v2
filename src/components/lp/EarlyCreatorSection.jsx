@@ -56,7 +56,7 @@ export default function EarlyCreatorSection({ mode = "link", onCtaClick }) {
                 color: "#fff",
                 boxShadow: "0 0 24px rgba(124,58,237,0.45)",
               }}>
-              初期クリエイターとして参加する →
+              初期メンバーに参加する →
             </button>
           </Link>
         )}
