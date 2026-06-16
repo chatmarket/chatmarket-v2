@@ -345,7 +345,7 @@ export default function PlanSelect() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-background">
       <MetaHelmet page="plan-select" />
       {planInfo?.isAdmin && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
@@ -370,8 +370,8 @@ export default function PlanSelect() {
          <p className="text-muted-foreground text-sm">複数のプランを組み合わせてお申し込みいただけます。</p>
 
          {/* 目立つ説明バナー */}
-         <div className="bg-gradient-to-r from-primary/15 to-blue-500/15 border-2 border-primary/50 rounded-xl p-4 space-y-2">
-           <p className="text-sm font-black text-primary flex items-center gap-2">
+         <div className="bg-secondary/40 border border-border/60 rounded-xl p-4 space-y-2">
+           <p className="text-sm font-bold text-foreground flex items-center gap-2">
              ✨ ChatMarketは複数プランの自由な組み合わせ対応！
            </p>
            <p className="text-sm text-foreground/80 leading-relaxed">
@@ -379,9 +379,9 @@ export default function PlanSelect() {
            </p>
          </div>
 
-         <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
-           <span className="text-yellow-400 text-lg shrink-0">🎁</span>
-           <p className="text-sm text-yellow-300 font-semibold">年払いで申し込むと <span className="text-white font-black">10ヶ月分のご請求</span>となり、<span className="text-white font-black">2ヶ月分がお得</span>になります。</p>
+         <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-4 py-3">
+          <span className="text-amber-400 text-lg shrink-0">🎁</span>
+          <p className="text-sm text-foreground/80 font-semibold">年払いで申し込むと <span className="text-foreground font-black">10ヶ月分のご請求</span>となり、<span className="text-foreground font-black">2ヶ月分がお得</span>になります。</p>
          </div>
        </div>
 
@@ -409,10 +409,10 @@ export default function PlanSelect() {
         return (
           <div
             onClick={() => !planInfo?.isAdmin && !planInfo?.isCampaign && togglePlan("free")}
-            className={`relative rounded-2xl border-2 p-6 cursor-pointer transition-all space-y-4 ${
+            className={`relative rounded-2xl border p-6 cursor-pointer transition-all space-y-4 ${
               isSelected
-                ? "border-emerald-400/70 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 shadow-lg shadow-emerald-500/10"
-                : "border-border/50 hover:border-emerald-400/40 bg-card"
+                ? "border-emerald-400/50 bg-emerald-500/5"
+                : "border-border/50 hover:border-emerald-400/30 bg-card"
             }`}
           >
             {/* 試食バナー */}
@@ -486,11 +486,11 @@ export default function PlanSelect() {
 
       {/* 試食→本注文 矢印ブリッジ */}
       <div className="flex items-center gap-3 py-1">
-        <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/40 to-amber-500/40" />
-        <div className="text-xs font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-1.5">
+        <div className="flex-1 h-px bg-border/40" />
+        <div className="text-xs font-semibold text-muted-foreground bg-secondary/50 border border-border/40 rounded-full px-4 py-1.5">
           ↓ 味に納得したら「本注文（有料プラン）」へ ↓
         </div>
-        <div className="flex-1 h-px bg-gradient-to-l from-emerald-500/40 to-amber-500/40" />
+        <div className="flex-1 h-px bg-border/40" />
       </div>
 
       {/* プラン一覧（FREEを除く） */}
@@ -500,7 +500,7 @@ export default function PlanSelect() {
             const Icon = plan.icon;
             const isSelected = selected.has(plan.id);
             return (
-              <AccordionItem key={plan.id} value={plan.id} className="border border-border/50 rounded-lg px-4">
+              <AccordionItem key={plan.id} value={plan.id} className="border border-border/40 rounded-xl px-4 bg-card/50">
                 <AccordionTrigger 
                   onClick={() => {
                     if (!plan.comingSoon) {
@@ -637,7 +637,7 @@ export default function PlanSelect() {
       {/* 合計・申し込みバー */}
       {selected.size > 0 && (
         <div className="sticky bottom-4 z-10">
-          <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl shadow-primary/10 p-5 space-y-3">
+          <div className="bg-card border border-border/60 rounded-2xl shadow-lg p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-primary" />
