@@ -5,8 +5,8 @@ import { ArrowLeft, ShoppingBag } from "lucide-react";
 
 const Section = ({ title, children }) => (
   <section className="space-y-3">
-    <h2 className="text-base font-bold text-foreground border-b border-border pb-2">{title}</h2>
-    <div className="text-sm text-muted-foreground leading-relaxed space-y-2">{children}</div>
+    <h2 className="text-base font-bold text-foreground border-b border-border/60 pb-2">{title}</h2>
+    <div className="text-sm text-foreground/75 leading-relaxed space-y-2">{children}</div>
   </section>
 );
 
@@ -15,7 +15,7 @@ const Row = ({ label, children }) => (
     <th className="text-left py-3 pr-4 w-36 text-xs font-bold text-foreground align-top whitespace-nowrap">
       {label}
     </th>
-    <td className="py-3 text-xs text-muted-foreground leading-relaxed">{children}</td>
+    <td className="py-3 text-xs text-foreground/75 leading-relaxed">{children}</td>
   </tr>
 );
 

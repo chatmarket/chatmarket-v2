@@ -42,9 +42,9 @@ function FaqItem({ q, a }) {
         {open ? <ChevronUp className="w-4 h-4 shrink-0 text-primary" /> : <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />}
       </button>
       {open && (
-        <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border/30">
-          <p className="pt-3">{a}</p>
-        </div>
+      <div className="px-5 pb-4 text-sm text-foreground/80 leading-relaxed border-t border-border/30">
+        <p className="pt-3">{a}</p>
+      </div>
       )}
     </div>
   );
@@ -163,13 +163,13 @@ export default function AboutChatMarket() {
         <h1 className="text-2xl sm:text-3xl font-black leading-tight">
           {t("about_hero_title")}
         </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {t("about_hero_p1")}
         </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {t("about_hero_p2")}
         </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {t("about_hero_p3")}
         </p>
       </section>
@@ -177,10 +177,10 @@ export default function AboutChatMarket() {
       {/* チャトゥチャックとの違い */}
       <section className="bg-secondary/50 border border-border/50 rounded-2xl p-6 space-y-3">
         <h2 className="text-base font-black">{t("about_chatuchak_title")}</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {t("about_chatuchak_p1")}
         </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {t("about_chatuchak_p2")}
         </p>
       </section>
@@ -190,11 +190,11 @@ export default function AboutChatMarket() {
         <h2 className="text-xl font-black">{t("about_roles_title")}</h2>
         <div className="space-y-4">
           {ROLES.map((role, i) => (
-            <div key={i} className="border border-border/50 rounded-2xl p-5 space-y-2 hover:border-primary/30 transition-colors">
+            <div key={i} className="border border-border/50 bg-card rounded-2xl p-5 space-y-2 hover:border-primary/30 transition-colors">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <span>{role.emoji}</span>{role.title}
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{role.body}</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{role.body}</p>
               <Link to={role.link} className="text-xs text-primary hover:underline underline-offset-2">
                 {role.linkLabel}
               </Link>
@@ -216,7 +216,7 @@ export default function AboutChatMarket() {
       {/* CTA */}
       <section className="bg-primary/5 border border-primary/20 rounded-2xl p-6 text-center space-y-4">
         <p className="font-black text-lg">{t("about_cta_title")}</p>
-        <p className="text-sm text-muted-foreground">{t("about_cta_sub")}</p>
+        <p className="text-sm text-foreground/75">{t("about_cta_sub")}</p>
         <Link
           to="/recruit"
           className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold rounded-xl px-6 py-3 text-sm hover:bg-primary/90 transition-colors"

@@ -4,8 +4,8 @@ import { ArrowLeft, Shield } from "lucide-react";
 
 const Section = ({ title, children }) => (
   <section className="space-y-3">
-    <h2 className="text-base font-bold text-foreground border-b border-border pb-2">{title}</h2>
-    <div className="text-sm text-muted-foreground leading-relaxed space-y-2">{children}</div>
+    <h2 className="text-base font-bold text-foreground border-b border-border/60 pb-2">{title}</h2>
+    <div className="text-sm text-foreground/75 leading-relaxed space-y-2">{children}</div>
   </section>
 );
 
