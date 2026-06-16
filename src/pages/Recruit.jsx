@@ -218,8 +218,7 @@ export default function Recruit() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-red-500/20 border border-red-500/50 rounded-full px-5 py-2 text-sm font-bold text-red-300"
-            style={{ boxShadow: "0 0 20px rgba(255,80,80,0.3)" }}
+            className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-5 py-2 text-sm font-bold text-red-300"
           >
             <Flame className="w-4 h-4" />
             キャンペーン実施中
@@ -232,11 +231,7 @@ export default function Recruit() {
             className="text-4xl sm:text-5xl md:text-7xl font-black leading-tight"
           >
             全有料プラン<br />
-            <span style={{
-              background: "linear-gradient(135deg, #fbbf24, #f59e0b, #ef4444)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}>完全無料</span>
+            <span className="text-foreground">完全無料</span>
             <br />
             <span className="text-2xl sm:text-3xl md:text-4xl text-muted-foreground font-bold">で精鋭ライバー300名募集</span>
           </motion.h1>
@@ -246,16 +241,10 @@ export default function Recruit() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="inline-block rounded-2xl px-8 py-5 mx-auto"
-            style={{
-              background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1))",
-              border: "2px solid rgba(245,158,11,0.6)",
-              boxShadow: "0 0 40px rgba(245,158,11,0.25)",
-            }}
+            className="inline-block rounded-2xl px-8 py-5 mx-auto bg-amber-500/10 border border-amber-500/30"
           >
             <p className="text-xs font-bold text-amber-400 mb-1 tracking-widest">月額総額</p>
-            <p className="text-5xl sm:text-6xl font-black"
-              style={{ color: "#fbbf24", textShadow: "0 0 20px rgba(251,191,36,0.5)" }}>
+            <p className="text-5xl sm:text-6xl font-black text-amber-400">
               {TOTAL_VALUE}
             </p>
             <p className="text-sm text-amber-300 font-bold mt-1">相当が全部タダ</p>
@@ -271,26 +260,11 @@ export default function Recruit() {
             プロフェッショナル機能を<strong className="text-foreground">全部無制限で使い倒せ。</strong>
           </motion.p>
 
-          <style>{`
-            @keyframes neonBlueFlicker {
-              0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff, 0 0 21px #00d4ff, 0 0 42px #0099ff, 0 0 82px #0099ff;
-                color: #00d4ff;
-              }
-              20%, 24%, 55% {
-                text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff;
-                color: #00b8d4;
-              }
-            }
-            .neon-blue-disclaimer {
-              animation: neonBlueFlicker 3s infinite;
-              font-family: 'Courier New', monospace;
-              letter-spacing: 0.05em;
-            }
-          `}</style>
-          <p className="neon-blue-disclaimer text-xs font-semibold text-center mt-3">
-            振り込み手数料、規定のプラットフォーム手数料は発生致しますので予めご了承ください
-          </p>
+          <div className="inline-block bg-secondary/80 border border-border/60 rounded-xl px-5 py-3 mt-1">
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              ※ 振り込み手数料、規定のプラットフォーム手数料は発生致しますので予めご了承ください
+            </p>
+          </div>
 
           {/* カウントダウン or 開始済み */}
           {!countdown.started ? (
@@ -310,8 +284,7 @@ export default function Recruit() {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="inline-block bg-red-500/20 border-2 border-red-400 rounded-2xl px-8 py-4"
-              style={{ boxShadow: "0 0 30px rgba(255,80,80,0.4)" }}
+              className="inline-block bg-red-500/10 border border-red-400/50 rounded-2xl px-8 py-4"
             >
               <p className="text-red-300 font-black text-xl">🔥 キャンペーン募集中！</p>
             </motion.div>
@@ -322,7 +295,6 @@ export default function Recruit() {
               onClick={scrollToForm}
               size="lg"
               className="bg-primary text-black font-black text-base px-8 h-14 rounded-2xl hover:bg-primary/90 gap-2"
-              style={{ boxShadow: "0 0 25px rgba(0,255,157,0.5)" }}
             >
               <Zap className="w-5 h-5" />
               全プラン無料で今すぐ申し込む
@@ -334,14 +306,10 @@ export default function Recruit() {
             </Link>
           </div>
 
-          <motion.div
-            animate={{ scale: [1, 1.02, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="inline-flex items-center gap-3 bg-red-500/10 border border-red-500/40 rounded-xl px-5 py-3 text-sm"
-          >
-            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse inline-block" />
+          <div className="inline-flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-3 text-sm">
+            <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
             <span className="text-red-300 font-bold">キャンペーン対象者限定</span>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -397,8 +365,7 @@ export default function Recruit() {
             {/* Pro */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="relative rounded-2xl border-2 border-yellow-500/60 bg-gradient-to-br from-yellow-500/15 to-yellow-600/5 p-7 space-y-4"
-              style={{ boxShadow: "0 0 30px rgba(234,179,8,0.2)" }}
+              className="relative rounded-2xl border border-yellow-500/40 bg-yellow-500/8 p-7 space-y-4"
             >
               <div className="absolute -top-4 left-6 bg-yellow-500 text-black px-4 py-1 rounded-full text-xs font-black flex items-center gap-1">
                 <Crown className="w-3 h-3" /> インフルエンサー特典
@@ -426,8 +393,7 @@ export default function Recruit() {
             {/* Standard */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="relative rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/15 to-primary/5 p-7 space-y-4"
-              style={{ boxShadow: "0 0 30px rgba(0,255,157,0.15)" }}
+              className="relative rounded-2xl border border-primary/30 bg-primary/5 p-7 space-y-4"
             >
               <div className="absolute -top-4 left-6 bg-primary text-black px-4 py-1 rounded-full text-xs font-black">
                 🎁 スタンダード特典
@@ -657,7 +623,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== 申し込みフォーム ===== */}
-      <section ref={formRef} className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-secondary/20 to-background">
+      <section ref={formRef} className="w-full py-16 px-4 sm:px-6 bg-secondary/30 border-t border-border/30">
         <div className="max-w-2xl lg:max-w-4xl mx-auto">
           <div className="text-center mb-8 space-y-2">
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full px-4 py-1 text-xs font-bold">
@@ -671,8 +637,7 @@ export default function Recruit() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-primary/10 border-2 border-primary/50 rounded-2xl p-10 text-center space-y-4"
-              style={{ boxShadow: "0 0 30px rgba(0,255,157,0.2)" }}
+              className="bg-primary/10 border border-primary/30 rounded-2xl p-10 text-center space-y-4"
             >
               <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
               <h3 className="text-xl font-black text-primary">登録完了！</h3>
@@ -694,7 +659,7 @@ export default function Recruit() {
               </div>
             </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="bg-card border border-border/50 rounded-2xl p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="bg-background border border-border rounded-2xl p-6 space-y-5 shadow-sm">
 
               <AnimatePresence mode="wait">
                 <motion.div
@@ -715,12 +680,12 @@ export default function Recruit() {
 
               <div className="space-y-1.5">
                 <Label>お名前（配信者名）<span className="text-destructive text-xs ml-1">*必須</span></Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder="例：山田花子" className="bg-secondary border-0" required />
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder="例：山田花子" className="bg-secondary border border-border/60" required />
               </div>
 
               <div className="space-y-1.5">
                 <Label>メールアドレス<span className="text-destructive text-xs ml-1">*必須</span></Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="example@email.com" className="bg-secondary border-0" required />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="example@email.com" className="bg-secondary border border-border/60" required />
               </div>
 
               <div className="space-y-1.5">
@@ -733,7 +698,7 @@ export default function Recruit() {
                   value={followers}
                   onChange={e => setFollowers(e.target.value)}
                   placeholder="例：12000"
-                  className="bg-secondary border-0"
+                  className="bg-secondary border border-border/60"
                   min="0"
                 />
                 {followerCount > 0 && (
@@ -747,7 +712,7 @@ export default function Recruit() {
 
               <div className="space-y-1.5">
                 <Label>SNS・ウェブリンク<span className="text-destructive text-xs ml-1">*必須</span></Label>
-                <Input value={snsUrl} onChange={e => setSnsUrl(e.target.value)} placeholder="https://twitter.com/yourhandle" className="bg-secondary border-0" required />
+                <Input value={snsUrl} onChange={e => setSnsUrl(e.target.value)} placeholder="https://twitter.com/yourhandle" className="bg-secondary border border-border/60" required />
                 <p className="text-xs text-muted-foreground">YouTube・X・Instagram・TikTok・ウェブサイト等のURLを入力してください</p>
               </div>
 
@@ -896,7 +861,7 @@ export default function Recruit() {
                   value={pr}
                   onChange={e => setPr(e.target.value.slice(0, 300))}
                   placeholder="どんな配信をしたいか、得意なジャンルなどをご記入ください"
-                  className="bg-secondary border-0 resize-none"
+                  className="bg-secondary border border-border/60 resize-none"
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground text-right">{pr.length}/300</p>
@@ -929,7 +894,6 @@ export default function Recruit() {
                 type="submit"
                 disabled={submitting || !name || !email || !snsUrl || !termsAgreed}
                 className="w-full h-14 font-black text-base bg-primary text-black hover:bg-primary/90 gap-2 rounded-2xl"
-                style={{ boxShadow: "0 0 20px rgba(0,255,157,0.3)" }}
               >
                 {submitting ? "送信中..." : (
                   <>
@@ -1011,7 +975,7 @@ export default function Recruit() {
       </section>
 
       {/* ===== Footer CTA ===== */}
-      <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-br from-amber-500/10 to-background border-t border-amber-500/20">
+      <section className="w-full py-16 px-4 sm:px-6 bg-secondary/20 border-t border-border/30">
         <div className="max-w-xl mx-auto text-center space-y-5">
           <p className="text-amber-400 font-bold text-sm">キャンペーン対象者は全プラン無料</p>
           <h2 className="text-3xl font-black">今すぐ全プラン無料でデビュー</h2>
@@ -1020,7 +984,6 @@ export default function Recruit() {
             onClick={scrollToForm}
             size="lg"
             className="bg-primary text-black font-black text-base px-10 h-14 rounded-2xl hover:bg-primary/90"
-            style={{ boxShadow: "0 0 25px rgba(0,255,157,0.4)" }}
           >
             無料で申し込む <ArrowRight className="w-5 h-5 ml-1" />
           </Button>
