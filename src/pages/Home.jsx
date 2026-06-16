@@ -267,52 +267,15 @@ export default function Home() {
       {/* ジャイアント・キリング速報バナー（グローバル固定） */}
       <GiantKillingBanner />
 
-      {/* 初期メンバー募集バナー */}
-      <Link to="/recruit" className="block">
-        <div
-          className="relative overflow-hidden rounded-2xl px-5 py-6 sm:py-8 text-center cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-          style={{
-            background: "linear-gradient(135deg, #1a0a2e 0%, #2d1060 50%, #1a0a2e 100%)",
-            border: "2px solid #a855f7",
-            boxShadow: "0 0 40px rgba(168,85,247,0.7), 0 0 80px rgba(168,85,247,0.25)",
-          }}
-        >
-          {/* 輝きエフェクト */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.25) 0%, transparent 70%)",
-          }} />
-          <p className="relative font-black text-base sm:text-lg" style={{ color: "#c084fc", letterSpacing: "0.05em" }}>
-            ✨ 初期メンバー募集中
-          </p>
-          <p className="relative font-black text-2xl sm:text-3xl md:text-4xl mt-2" style={{ color: "#f5e27a", textShadow: "0 0 30px rgba(245,226,122,0.7)" }}>
-            一緒に育ててくださる方へ
-          </p>
-          <p className="relative font-black text-3xl sm:text-4xl md:text-5xl mt-1" style={{ color: "#fff", textShadow: "0 0 40px rgba(168,85,247,0.9)" }}>
-            Basicプラン<span style={{ color: "#f5e27a" }}>12か月無料</span>
-          </p>
-          <p className="relative text-xs sm:text-sm mt-2" style={{ color: "#c084fc" }}>
-            1対1相談・個別指導・少人数レッスンを始めたい方へ。あなたの活動ページを一緒に作ります
-          </p>
-          <p className="relative text-sm sm:text-base mt-3" style={{ color: "#d8b4fe" }}>
-            条件を確認する → 今すぐ申し込み
-          </p>
-        </div>
-      </Link>
-
-      {/* ステータス＋メッセージ */}
-      <div className="text-center py-3 space-y-1">
-        <p className="text-sm sm:text-base font-bold">まだ未完成、皆様と作り上げたいと思っています</p>
-        <p className="text-[10px] sm:text-xs text-muted-foreground animate-pulse">⚡ ベータ版稼働中</p>
-      </div>
-
       {/* ヒーロースロット（1位ライバー常駐枠） */}
       <HeroSlot />
 
-      {/* 期間限定バナー（最小化） */}
+      {/* クリエイター募集バナー（1本に統合） */}
       {SHOW_RECRUIT_BANNER && (
         <Link to="/recruit" className="block">
-          <div className="rounded-2xl px-4 py-2 text-center font-black text-sm" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", color: "#fbbf24" }}>
-            🎯 定員直前：ライバー募集中
+          <div className="rounded-2xl px-4 py-2.5 text-center font-semibold text-sm flex items-center justify-center gap-2"
+            style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#c084fc" }}>
+            ✨ クリエイター募集中 — Basicプラン12か月無料で始める →
           </div>
         </Link>
       )}
@@ -409,12 +372,12 @@ export default function Home() {
                 🔮 占い師を探す
               </button>
             </Link>
-            <Link to="/">
-              <button className="px-7 py-3.5 rounded-2xl font-black text-base transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", color: "#000", boxShadow: "0 0 20px rgba(0,255,157,0.35)" }}>
-                <Play className="w-4 h-4 inline" /> ライブを見る
-              </button>
-            </Link>
+            <button
+              onClick={() => document.getElementById("live-section")?.scrollIntoView({ behavior: "smooth" })}
+              className="px-7 py-3.5 rounded-2xl font-black text-base transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+              style={{ background: "linear-gradient(135deg, #00ff9d, #00d4aa)", color: "#000", boxShadow: "0 0 20px rgba(0,255,157,0.35)" }}>
+              <Play className="w-4 h-4 inline" /> ライブを見る
+            </button>
           </div>
           {/* サブリンク（クリエイター向け） */}
           <Link to="/recruit" className="text-xs text-white/40 hover:text-white/70 transition-colors underline underline-offset-2">
@@ -571,7 +534,7 @@ export default function Home() {
       </div>
 
       {/* ライブ配信中 / 配信予定 */}
-      <div ref={liveRef}>
+      <div id="live-section" ref={liveRef}>
         {enabledSections.liveStreams && (liveStreams.length > 0 || scheduledStreams.length > 0) && (
           <section className="space-y-6">
             {/* ライブ配信中 */}
