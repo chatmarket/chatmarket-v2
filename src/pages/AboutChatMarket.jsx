@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 const FAQ_ITEMS = [
   {
@@ -157,36 +158,36 @@ export default function AboutChatMarket() {
       {/* ヒーロー */}
       <section className="space-y-4">
         <div className="inline-block bg-primary/10 border border-primary/30 rounded-full px-4 py-1 text-xs text-primary font-semibold">
-          Chat Market（チャットマーケット）とは
+          {t("about_badge")}
         </div>
         <h1 className="text-2xl sm:text-3xl font-black leading-tight">
-          個人スキルを収益化する<br />Webサービス
+          {t("about_hero_title")}
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Chat Market（チャットマーケット）は、<strong className="text-foreground">株式会社ONE STEP</strong>が運営する、個人のスキル・知識・経験・表現をオンラインで届けるための収益化Webサービスです。
+          {t("about_hero_p1")}
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          占い師、家庭教師、講師、ミュージシャン、アイドル、クリエイターなどが、自分専用のページを持ち、チャット鑑定、1対1ビデオ通話、少人数レッスン、チケット販売、デジタルコンテンツ販売などを通じて、自分のお客様やファンへ直接サービスを届けることができます。
+          {t("about_hero_p2")}
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Chat Marketは、拡散力だけに頼るサービスではなく、個人がすでに持っているお客様、ファン、相談者、生徒を受け止めるためのWeb上の受け皿を目指しています。
+          {t("about_hero_p3")}
         </p>
       </section>
 
       {/* チャトゥチャックとの違い */}
       <section className="bg-secondary/50 border border-border/50 rounded-2xl p-6 space-y-3">
-        <h2 className="text-base font-black">💡 チャトゥチャック・マーケットとの違い</h2>
+        <h2 className="text-base font-black">{t("about_chatuchak_title")}</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Chat Market（チャットマーケット）は、タイ・バンコクの観光地である<strong className="text-foreground">チャトゥチャック・マーケット</strong>とは異なります。
+          {t("about_chatuchak_p1")}
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Chat Marketは、<strong className="text-foreground">日本の株式会社ONE STEPが運営するオンラインサービス</strong>です。個人のスキルや表現をオンラインで届け、収益化するためのWebサービスです。タイの市場・物販・観光スポットとは一切関係がありません。
+          {t("about_chatuchak_p2")}
         </p>
       </section>
 
       {/* 職種別説明 */}
       <section className="space-y-5">
-        <h2 className="text-xl font-black">職種別の活用イメージ</h2>
+        <h2 className="text-xl font-black">{t("about_roles_title")}</h2>
         <div className="space-y-4">
           {ROLES.map((role, i) => (
             <div key={i} className="border border-border/50 rounded-2xl p-5 space-y-2 hover:border-primary/30 transition-colors">
@@ -204,7 +205,7 @@ export default function AboutChatMarket() {
 
       {/* FAQ */}
       <section className="space-y-4">
-        <h2 className="text-xl font-black">よくある質問</h2>
+        <h2 className="text-xl font-black">{t("about_faq_title")}</h2>
         <div className="space-y-2">
           {FAQ_ITEMS.map((item, i) => (
             <FaqItem key={i} q={item.q} a={item.a} />
@@ -214,16 +215,16 @@ export default function AboutChatMarket() {
 
       {/* CTA */}
       <section className="bg-primary/5 border border-primary/20 rounded-2xl p-6 text-center space-y-4">
-        <p className="font-black text-lg">Chat Marketで自分専用ページを持つ</p>
-        <p className="text-sm text-muted-foreground">占い師・家庭教師・講師・ミュージシャン・アイドルなど、職種ごとの活動に合わせた収益導線をご用意しています。</p>
+        <p className="font-black text-lg">{t("about_cta_title")}</p>
+        <p className="text-sm text-muted-foreground">{t("about_cta_sub")}</p>
         <Link
           to="/recruit"
           className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold rounded-xl px-6 py-3 text-sm hover:bg-primary/90 transition-colors"
         >
-          クリエイター登録について見る
+          {t("about_cta_btn")}
         </Link>
         <div className="text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors underline underline-offset-2">トップページに戻る</Link>
+          <Link to="/" className="hover:text-foreground transition-colors underline underline-offset-2">{t("about_cta_home")}</Link>
         </div>
       </section>
     </div>
