@@ -420,7 +420,7 @@ export default function MyChannel() {
           )}
           {/* Digital Cheki feature is frozen / hidden for now. Cheki tab suppressed. */}
           <TabsTrigger value="plans" className="flex items-center gap-1">
-            <CreditCard className="w-3.5 h-3.5" /> 契約プラン
+            <CreditCard className="w-3.5 h-3.5" /> プラン・契約
             {subscriptions.filter(s => s.status === "active").length > 0 && (
               <span className="ml-1 text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-black">
                 {subscriptions.filter(s => s.status === "active").length}件
@@ -620,10 +620,10 @@ export default function MyChannel() {
                 <div className="space-y-2">
                   {subscriptions.filter((s) => s.status === "active").map((sub) => {
                     const planDetails = {
-                      "basic": "Basic — 基本機能",
-                      "vod": "VOD — 動画販売",
-                      "ppv": "PPV — ライブ配信（1対多）",
-                      "call-anser": "CALL&ANSER — 1対1ビデオ通話"
+                      "basic": "BASICプラン — 基本機能",
+                      "vod": "動画販売プラン",
+                      "ppv": "有料ライブ配信プラン",
+                      "call-anser": "1対1通話プラン"
                     };
                     return (
                       <div key={sub.id} className="bg-gradient-to-r from-green-900/20 to-green-800/10 rounded-xl border border-green-500/40 p-4 flex items-center gap-3">

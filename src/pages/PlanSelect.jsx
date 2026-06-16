@@ -44,7 +44,7 @@ const PLANS = [
   {
     id: "call-anser",
     icon: Phone,
-    name: "CALL＆ANSERプラン",
+    name: "1対1通話プラン",
     price: 3300,
     period: "/月",
     color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30",
@@ -64,7 +64,7 @@ const PLANS = [
   {
     id: "vod",
     icon: Video,
-    name: "VODプラン",
+    name: "動画販売プラン",
     price: 3300,
     period: "/月",
     revenueShare: "85%",
@@ -86,7 +86,7 @@ const PLANS = [
   {
     id: "ppv",
     icon: Radio,
-    name: "PPVプラン",
+    name: "有料ライブ配信プラン",
     price: 3300,
     period: "/月",
     revenueShare: "85%",
@@ -366,7 +366,7 @@ export default function PlanSelect() {
       )}
 
       <div className="space-y-3">
-         <h1 className="text-2xl font-black">視聴はコインで　ライバーはサブスクで還元率UP!（無料期間あり）</h1>
+         <h1 className="text-2xl font-black">スキルを収益にするためのプラン一覧</h1>
          <p className="text-muted-foreground text-sm">複数のプランを組み合わせてお申し込みいただけます。</p>
 
          {/* 目立つ説明バナー */}

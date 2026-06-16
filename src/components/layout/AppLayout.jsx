@@ -179,7 +179,7 @@ export default function AppLayout() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-primary/80 hover:bg-primary/10 hover:text-primary transition-all"
               >
                 <Radio className="w-4 h-4 shrink-0" />
-                <span className="flex-1 text-left">クリエイタースタジオ</span>
+                <span className="flex-1 text-left">配信・販売メニュー</span>
                 {creatorMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
               </button>
             </div>

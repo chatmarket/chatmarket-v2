@@ -311,7 +311,7 @@ export default function GoLive() {
             <Radio className="w-8 h-8 text-red-400" />
           </div>
           <h1 className="text-2xl font-black text-white">ライブ配信を開始</h1>
-          <p className="text-muted-foreground text-sm">1対多のリアルタイム有料配信（PPV）</p>
+          <p className="text-muted-foreground text-sm">視聴者に向けて同時にライブ配信（有料）</p>
         </div>
 
         {planCheckError && (
@@ -424,7 +424,7 @@ export default function GoLive() {
                   <input type="checkbox" checked={!form.scheduled_at}
                     onChange={(e) => setForm({ ...form, scheduled_at: e.target.checked ? "" : new Date().toISOString().slice(0, 16) })}
                     className="w-3.5 h-3.5 accent-primary" />
-                  <span className="text-xs text-primary font-bold">即配信</span>
+                  <span className="text-xs text-primary font-bold">今すぐ配信</span>
                 </label>
               </div>
               {form.scheduled_at ? (
@@ -618,7 +618,7 @@ export default function GoLive() {
                 <button onClick={() => setAdvancedOpen(v => !v)}
                   className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                   {advancedOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  上級者向けオプション
+                  高度な設定（困ったとき用）
                 </button>
                 {advancedOpen && (
                   <div className="mt-3 p-3 bg-red-500/5 border border-red-500/20 rounded-lg space-y-2">
@@ -627,7 +627,7 @@ export default function GoLive() {
                     <button onClick={handleForceReprovision} disabled={refreshingKey}
                       className="flex items-center gap-1.5 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 rounded-lg text-xs font-black transition-colors disabled:opacity-50">
                       {refreshingKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                      IVSチャンネルを強制リセット
+                      配信を完全リセットする
                     </button>
                   </div>
                 )}
@@ -645,7 +645,7 @@ export default function GoLive() {
               {creating ? (
                 <><Loader2 className="w-5 h-5 animate-spin" />準備中...</>
               ) : (
-                <><Radio className="w-5 h-5" />ストリーミングキーを取得する</>
+                <><Radio className="w-5 h-5" />配信ソフト用の情報を取得する</>
               )}
             </Button>
           )}
