@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { applyTutorCategoryLogic, TUTOR_CATEGORY } from "@/lib/tutorCategoryLogic";
+import EarlyCreatorSection from "@/components/lp/EarlyCreatorSection";
 
 // ---- キャンペーン設定 ----
 const CAMPAIGN_START = new Date("2026-04-16T20:00:00+09:00");
@@ -939,6 +940,13 @@ export default function Recruit() {
               </Button>
             </form>
           )}
+        </div>
+      </section>
+
+      {/* ===== 初期クリエイター募集 ===== */}
+      <section className="w-full py-8 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          <EarlyCreatorSection />
         </div>
       </section>
 

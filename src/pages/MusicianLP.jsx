@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Music, Mic2, Radio, Phone, TrendingUp, Zap, Crown, Send, Star, CheckCircle2, DollarSign, Award, Sparkles, ChevronRight, Monitor, Settings, SlidersHorizontal } from "lucide-react";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
+import EarlyCreatorSection from "@/components/lp/EarlyCreatorSection";
 import { Button } from "@/components/ui/button";
 
 const STATS = [
@@ -567,6 +568,13 @@ export default function MusicianLP() {
             accentColor="#a855f7"
             theme="dark"
           />
+        </div>
+      </section>
+
+      {/* ── 初期クリエイター募集 ── */}
+      <section className="py-8 px-5" style={{ background: "linear-gradient(180deg, #0a0510 0%, #000 100%)" }}>
+        <div className="max-w-4xl mx-auto">
+          <EarlyCreatorSection />
         </div>
       </section>
 

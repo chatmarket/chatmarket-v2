@@ -15,6 +15,7 @@ import {
   Users, Video, Star, CheckCircle, ArrowRight, Zap, Shield, Clock,
   User, GraduationCap, MessageCircle, Dumbbell, Briefcase, Globe, Heart,
 } from "lucide-react";
+import EarlyCreatorSection from "@/components/lp/EarlyCreatorSection";
 
 // 固定の自社管理画像のみ使用
 const CLASSROOM_IMG_GROUP = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/2896090d7_generated_image.png";
@@ -388,6 +389,13 @@ export default function ClassRoomLP() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── 初期クリエイター募集 ── */}
+      <section className="py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <EarlyCreatorSection />
         </div>
       </section>
 

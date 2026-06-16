@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Shield, Clock, TrendingUp, BookOpen, Award, ArrowRight, ChevronDown } from "lucide-react";
 import MetaHelmet from "@/components/layout/MetaHelmet";
 import ActiveCreatorsSection from "@/components/lp/ActiveCreatorsSection";
+import EarlyCreatorSection from "@/components/lp/EarlyCreatorSection";
 
 const STATS = [
   { value: "85%", label: "講師収益還元率", sub: "業界最高水準" },
@@ -386,6 +387,13 @@ export default function TutorLP() {
             accentColor="#1F4A9D"
             theme="light"
           />
+        </div>
+      </section>
+
+      {/* 初期クリエイター募集 */}
+      <section className="py-8 px-5 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <EarlyCreatorSection />
         </div>
       </section>
 
