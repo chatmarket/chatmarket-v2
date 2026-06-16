@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 /**
  * EarlyCreatorSection
@@ -17,24 +18,24 @@ export default function EarlyCreatorSection({ mode = "link", onCtaClick }) {
       <div className="max-w-2xl mx-auto text-center space-y-5">
         <div className="flex items-center justify-center gap-2 text-purple-400 font-black text-sm tracking-widest uppercase">
           <Sparkles className="w-4 h-4 shrink-0" />
-          初期クリエイター募集
+          {t("early_creator_badge")}
           <Sparkles className="w-4 h-4 shrink-0" />
         </div>
 
         <h2 className="text-xl sm:text-3xl font-black text-foreground leading-snug">
-          Chat Marketを一緒に<br className="hidden sm:block" />育ててくれる仲間を募集しています
+          {t("early_creator_title")}
         </h2>
 
         <p className="text-sm text-muted-foreground leading-relaxed text-left sm:text-center">
-          私たちは、配信者・占い師・講師・アイドル・クリエイターが、もっと自分らしく活動できる場所を作りたいと考えています。実際に活動する方の声を聞きながら、機能や使いやすさを少しずつ改善していきます。
+          {t("early_creator_desc1")}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-left">
           {[
-            "ライブ配信を始めたい",
-            "1対1でファンや相談者とつながりたい",
-            "チャット鑑定をオンラインで受け付けたい",
-            "自分のスキルや作品を販売したい",
+            t("early_creator_item1"),
+            t("early_creator_item2"),
+            t("early_creator_item3"),
+            t("early_creator_item4"),
           ].map((item) => (
             <div key={item} className="flex items-start gap-2 rounded-xl px-4 py-3"
               style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)" }}>
@@ -45,7 +46,7 @@ export default function EarlyCreatorSection({ mode = "link", onCtaClick }) {
         </div>
 
         <p className="text-sm text-muted-foreground leading-relaxed">
-          初期メンバーの方には、サービス改善に関するご意見を伺いながら、ページ作成や使い方のサポートも行います。完成された場所に登録するだけではなく、一緒に新しい活動の場を作っていく仲間を募集しています。
+          {t("early_creator_desc2")}
         </p>
 
         {mode === "link" && (
@@ -56,7 +57,7 @@ export default function EarlyCreatorSection({ mode = "link", onCtaClick }) {
                 color: "#fff",
                 boxShadow: "0 0 24px rgba(124,58,237,0.45)",
               }}>
-              初期メンバーに参加する →
+              {t("early_creator_cta")}
             </button>
           </Link>
         )}
@@ -70,7 +71,7 @@ export default function EarlyCreatorSection({ mode = "link", onCtaClick }) {
               color: "#fff",
               boxShadow: "0 0 24px rgba(124,58,237,0.45)",
             }}>
-            申込フォームへ進む ↓
+            {t("early_creator_cta_scroll")}
           </button>
         )}
 
