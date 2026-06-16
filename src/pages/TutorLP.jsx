@@ -65,13 +65,13 @@ const REASONS = [
   },
   {
     icon: "🔒",
-    title: "安心の防犯体制",
-    desc: "ストーカーや嫌がらせからせめて、メディアがあなたを守ります。",
+    title: "安心のプライバシー設計",
+    desc: "本名・住所不要で活動できる安心の設計。個人情報を守りながら指導に集中できます。",
   },
   {
     icon: "⏰",
-    title: "自由な時間計計",
-    desc: "予約システムにより、隙間時間での収益化が可能です。",
+    title: "自分のペースで指導できる",
+    desc: "予約システムで、自分のスケジュールに合わせて生徒を受け付けられます。",
   },
   {
     icon: "🚀",
@@ -113,8 +113,8 @@ export default function TutorLP() {
             />
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-blue-900 leading-tight tracking-tight">
-            THE HOME TEACHER
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-blue-900 leading-tight tracking-tight">
+            あなたの教え方が、<br />生徒に届く場所。
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 leading-relaxed">
             1対1個別指導から、1対2〜最大9名の少人数レッスンまで。<br />
@@ -370,7 +370,7 @@ export default function TutorLP() {
           <p className="text-5xl sm:text-6xl font-black">85%</p>
           <p className="text-3xl font-bold">講師収益還元率</p>
           <p className="text-blue-100 leading-relaxed max-w-md mx-auto">
-            「せこくて買い」収益最大化。他のプラットフォームで1万円の授業をしても、あなたの手元に残るのは5,000円～7,000円。Chat Marketなら8,500円があなたのものです。
+            教えることに集中できる、透明な仕組みを目指しています。他のプラットフォームで1万円の授業をしても、あなたの手元に残るのは5,000円～7,000円。Chat Marketなら8,500円があなたのものです。
           </p>
           <p className="text-xs text-blue-200">
             さらに、12ヶ月間の無料期間を活かすことで、運営コストは限りなく「ゼロ」に近づきます。これが勝つための戦略です。
@@ -400,9 +400,9 @@ export default function TutorLP() {
       {/* CTA */}
       <section className="py-24 px-5 text-center bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-2xl mx-auto space-y-6">
-          <h2 className="text-4xl font-black text-blue-900">Ready to Start?</h2>
+          <h2 className="text-4xl font-black text-blue-900">あなたの授業を、届けよう。</h2>
           <p className="text-xl text-slate-600">
-            あなたの知識と情熱を、最高効率の収益へ。
+            生徒とつながりながら、自分のペースで活動できる場所です。
           </p>
           <button
             onClick={handleRegisterClick}

@@ -370,7 +370,7 @@ export default function FortuneLP() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight">
-            あなたの
+            あなたの鑑定を、
             <span
               className="block"
               style={{
@@ -379,14 +379,14 @@ export default function FortuneLP() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              鑑定力を
+              必要としている人へ
             </span>
-            収益に変えろ。
+            届けよう。
           </h1>
 
           <p className="text-base sm:text-lg text-white/60 leading-relaxed max-w-lg mx-auto">
-            新しいプラットフォームなので占い師さんの<br />
-            使いやすいように改善いたします。
+            相談したい人と、鑑定したい人をつなぐ場所。<br />
+            あなたのペースで、あなたらしく始められます。
           </p>
 
           <SlotsWidget />
@@ -624,7 +624,7 @@ export default function FortuneLP() {
             { num: "85%", label: "還元率", sub: "業界最高水準" },
             { num: "¥0", label: "初期費用", sub: "完全無料スタート" },
             { num: "24h", label: "サポート", sub: "専属チーム対応" },
-            { num: "15分", label: "から稼げる", sub: "ビデオ通話鑑定" },
+            { num: "15分", label: "から始められる", sub: "ビデオ通話鑑定" },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -695,7 +695,7 @@ export default function FortuneLP() {
             >
               <div className="space-y-2">
                 <p className="text-sm font-bold tracking-widest uppercase" style={{ color: MYSTIC.gold }}>
-                  ✨ あなたのスタイルで稼ぐ
+                  ✨ あなたのスタイルで
                 </p>
                 <h2 className="text-3xl sm:text-4xl font-black leading-tight text-white">
                   自宅でも、カフェでも。<br />
@@ -754,7 +754,7 @@ export default function FortuneLP() {
               { icon: Clock, title: "15分単位で稼ぐ", desc: "ビデオ通話鑑定は15分から。隙間時間を完全マネタイズ。" },
               { icon: Eye, title: "タロット・四柱推命など多彩な鑑定", desc: "あらゆる鑑定スタイルに対応。あなたの強みをそのまま活かせる。" },
               { icon: Star, title: "チャット鑑定で非同期収益", desc: "ビデオ通話が難しいお客様にも対応。テキストで鑑定し、空き時間に返信するだけ。" },
-              { icon: Zap, title: "開業3日で初収益", desc: "プロフィール設定後、最短3日でファンからの予約が入った実績あり。" },
+              { icon: Zap, title: "最短3日で最初の相談が届く", desc: "プロフィール設定後、最短3日で相談者からの依頼が入った実績あり。" },
             ].map(({ icon: Icon, title, desc }, i) => (
               <motion.div
                 key={i}
@@ -1155,9 +1155,8 @@ export default function FortuneLP() {
         >
           <Sparkles className="w-8 h-8 mx-auto" style={{ color: MYSTIC.gold }} />
           <h2 className="text-2xl sm:text-3xl font-black leading-tight">
-            あなたの鑑定力を、<br />
-            <span style={{ color: MYSTIC.gold }}>最大の価値に変える</span>
-            <br />時が来た。
+            あなたの言葉が、<br />
+            <span style={{ color: MYSTIC.gold }}>誰かにとっての答えになる。</span>
           </h2>
           <SlotsWidget />
 
