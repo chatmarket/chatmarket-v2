@@ -946,7 +946,7 @@ export default function Recruit() {
       {/* ===== 初期クリエイター募集 ===== */}
       <section className="w-full py-8 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <EarlyCreatorSection />
+          <EarlyCreatorSection mode="scroll" onCtaClick={scrollToForm} />
         </div>
       </section>
 
