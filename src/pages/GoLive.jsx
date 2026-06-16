@@ -328,7 +328,7 @@ export default function GoLive() {
         >
           {isChecking ? <><Loader2 className="w-5 h-5 animate-spin" />確認中...</> : <><Radio className="w-5 h-5" />配信を始める</>}
         </button>
-        <p className="text-xs text-muted-foreground text-center">PPVプランまたはキャンペーン対象者のみ利用可能</p>
+        <p className="text-xs text-muted-foreground text-center">有料ライブ配信プランまたはキャンペーン対象者のみ利用可能</p>
       </div>
     );
   }
