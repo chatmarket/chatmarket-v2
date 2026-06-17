@@ -173,7 +173,7 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-full overflow-x-hidden">
+    <div className="p-4 sm:p-6 space-y-6 max-w-full overflow-x-hidden pb-24">
       <MetaHelmet page="admin" noindex={true} />
       {/* ヘッダー */}
       <div>
