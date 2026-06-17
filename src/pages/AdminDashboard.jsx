@@ -395,7 +395,7 @@ export default function AdminDashboard() {
           <TabsList className="bg-secondary flex flex-wrap gap-0 rounded-none p-0 h-auto w-full">
             <div className="flex flex-wrap gap-0">
               {/* 📊 基本管理 */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="revenue" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <DollarSign className="w-4 h-4" /> 収益管理
                 </TabsTrigger>
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* ⚖️ 管理・審査 */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="reports" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <AlertCircle className="w-4 h-4" /> 通報
                 </TabsTrigger>
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* 💰 マネタイズ */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="crowdfunding" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <DollarSign className="w-4 h-4" /> CF
                 </TabsTrigger>
@@ -448,7 +448,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* 🎛️ インフラ・設定 */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="live-cost" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Radio className="w-4 h-4" /> ライブ
                 </TabsTrigger>
@@ -467,7 +467,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* 🎵 著作権 */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="copyright" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Music className="w-4 h-4" /> 著作権料
                 </TabsTrigger>
@@ -477,21 +477,21 @@ export default function AdminDashboard() {
               </div>
 
               {/* 🎯 特別料率・LP */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="special-rates" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Percent className="w-4 h-4" /> 特別料率
                 </TabsTrigger>
               </div>
 
               {/* 🔔 通知設定 */}
-              <div className="flex gap-0 border-r border-border/30">
+              <div className="flex flex-wrap gap-0 border-r border-border/30">
                 <TabsTrigger value="line-notify" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <MessageCircle className="w-4 h-4" /> LINE通知
                 </TabsTrigger>
               </div>
 
               {/* 📝 レポート・ライバー */}
-              <div className="flex gap-0">
+              <div className="flex flex-wrap gap-0">
                 <TabsTrigger value="ticket-buyers" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                   <Ticket className="w-4 h-4" /> チケット購入者
                 </TabsTrigger>
