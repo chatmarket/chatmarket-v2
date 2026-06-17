@@ -134,19 +134,19 @@ export default function AdminDashboardMetrics() {
   if (!user || user.role !== "admin") return null;
 
   return (
-    <div className="min-h-screen bg-background p-6 space-y-8">
+    <div className="min-h-screen bg-background pt-4 pb-24 sm:p-6 space-y-8">
       <MetaHelmet page="admin" noindex={true} />
       {/* ヘッダー */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black flex items-center gap-2">
-            <TrendingUp className="w-8 h-8 text-primary" />
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
             社長向けメトリクスダッシュボード
           </h1>
           <p className="text-sm text-muted-foreground mt-1">リアルタイムデータ（30秒ごと自動更新）</p>
         </div>
         <Link to="/admin/dashboard">
-          <Button variant="outline">運営管理に戻る</Button>
+          <Button variant="outline" size="sm" className="self-start sm:self-auto">運営管理に戻る</Button>
         </Link>
       </div>
 

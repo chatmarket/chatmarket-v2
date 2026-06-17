@@ -254,29 +254,29 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 pt-6 pb-24 sm:py-8 space-y-8">
       <MetaHelmet page="admin" noindex={true} />
-      <div className="flex items-center justify-between gap-3 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
             <Settings className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold">運営管理ダッシュボード</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">運営管理ダッシュボード</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link to="/admin/metrics">
-            <Button variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-primary/10">
-              <TrendingUp className="w-4 h-4" /> 社長向けメトリクス
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 border-primary/40 text-primary hover:bg-primary/10 text-xs sm:text-sm">
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> 社長向けメトリクス
             </Button>
           </Link>
           <Link to="/admin/ng-word-analytics">
-            <Button variant="outline" className="gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10">
-              <ShieldAlert className="w-4 h-4" /> NGワード分析
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs sm:text-sm">
+              <ShieldAlert className="w-3 h-3 sm:w-4 sm:h-4" /> NGワード分析
             </Button>
           </Link>
           <Link to="/">
-            <Button variant="outline" className="gap-2">
-              <Home className="w-4 h-4" /> TOPに戻る
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Home className="w-3 h-3 sm:w-4 sm:h-4" /> TOPに戻る
             </Button>
           </Link>
         </div>

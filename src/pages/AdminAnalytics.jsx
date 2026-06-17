@@ -184,7 +184,7 @@ export default function AdminAnalytics() {
       {/* アクセス・エンゲージメントKPI */}
       <div>
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3">📡 アクセス・エンゲージメント</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {[
             { label: "動画視聴アクセス数", value: totalPageViews.toLocaleString(), icon: Activity, color: "text-cyan-400", sub: "WatchHistory累計" },
             { label: "総ビデオ再生数", value: totalVideoViews.toLocaleString(), icon: Eye, color: "text-blue-400", sub: "view_count合計" },

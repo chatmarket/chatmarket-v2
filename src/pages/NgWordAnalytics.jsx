@@ -141,7 +141,7 @@ export default function NgWordAnalytics() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-5xl mx-auto px-4 pt-6 pb-24 sm:py-8 space-y-8">
       <MetaHelmet page="admin" noindex={true} />
       {/* ヘッダー */}
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -172,7 +172,7 @@ export default function NgWordAnalytics() {
       </div>
 
       {/* KPIカード */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-card border border-border/50 rounded-xl p-4 space-y-1">
           <p className="text-xs text-muted-foreground">総検知件数</p>
           <p className="text-3xl font-black text-red-400">{totalCount}</p>
