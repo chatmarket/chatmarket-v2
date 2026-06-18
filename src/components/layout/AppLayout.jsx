@@ -25,7 +25,15 @@ import { preloadTranslations } from "@/lib/dbTranslations";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
-// 一般ユーザー向けメニュー（ログイン・未ログイン共通）
+// 未ログインユーザー向けメニュー（シンプル）
+const GUEST_NAV_ITEMS = [
+  { path: "/", icon: Home, label: "ホーム" },
+  { path: "/search", icon: Search, label: "さがす" },
+  { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
+  { path: "/recruit", icon: Zap, label: "クリエイター募集" },
+];
+
+// ログイン済みユーザー向けメニュー
 const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
   { path: "/search", icon: Search, label: "さがす" },
@@ -170,8 +178,8 @@ export default function AppLayout() {
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
 
-        {/* ── 一般ユーザーメニュー ── */}
-        {NAV_ITEMS.map(({ path, icon: Icon, label }) => (
+        {/* ── ナビメニュー（ログイン状態で切り替え） ── */}
+        {(user ? NAV_ITEMS : GUEST_NAV_ITEMS).map(({ path, icon: Icon, label }) => (
           <Link key={path + label} to={path} onClick={onCloseFn}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
