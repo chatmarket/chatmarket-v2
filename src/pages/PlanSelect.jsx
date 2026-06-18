@@ -354,13 +354,28 @@ export default function PlanSelect() {
         </div>
       )}
       {planInfo?.isCampaign && !planInfo?.isAdmin && (
-        <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4">
-          <p className="text-sm font-bold text-blue-400 mb-1">🎉 キャンペーン適用中</p>
+        <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4 space-y-2">
+          <p className="text-sm font-bold text-blue-400">🎉 キャンペーン適用中</p>
           <p className="text-xs text-blue-300">
-            全プランが無料で利用できます。
+            対象プランを12ヶ月間無料でご利用いただけます。
             {planInfo.campaignExpiresAt && (
-              <span className="font-bold text-blue-200"> 有効期限: {planInfo.campaignExpiresAt.toLocaleDateString('ja-JP')}</span>
+              <span className="font-bold text-blue-200"> 無料期間終了日: {planInfo.campaignExpiresAt.toLocaleDateString('ja-JP')}</span>
             )}
+          </p>
+          <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-3 space-y-1.5 text-xs text-blue-300/90">
+            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">⚠️</span>無料期間終了後、<span className="font-bold text-blue-200">自動課金は行われません。</span></p>
+            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">📋</span>有料プランの機能を継続してご利用になるには、<span className="font-bold text-blue-200">ご自身で該当プランへお申し込みください。</span></p>
+            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">ℹ️</span>無料期間終了後に申し込みがない場合は、<span className="font-bold text-white">FREEプラン（収益還元率70%）</span>のみご利用可能となります。</p>
+          </div>
+        </div>
+      )}
+      {!planInfo?.isCampaign && !planInfo?.isAdmin && planInfo && (
+        <div className="bg-secondary/40 border border-border/50 rounded-xl p-4 space-y-1">
+          <p className="text-xs font-bold text-foreground/80">📋 現在のプラン状況</p>
+          <p className="text-xs text-muted-foreground">
+            {planInfo.plans.includes('free') || planInfo.plans.length === 0
+              ? 'FREEプラン（収益還元率70%）'
+              : `有料プラン加入中: ${planInfo.plans.join(' / ')}（収益還元率${Math.round(planInfo.revenueRate * 100)}%）`}
           </p>
         </div>
       )}

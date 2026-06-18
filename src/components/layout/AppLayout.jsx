@@ -46,6 +46,7 @@ const CREATOR_STUDIO_ITEMS = [
   { path: "/my-library", icon: Package, label: "商品・音源販売" },
   { path: "/fanclub-manage", icon: Crown, label: "ファンクラブ" },
   { path: "/revenue", icon: Wallet, label: "収益" },
+  { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
   { path: "/channel-profile-edit", icon: Pencil, label: "チャンネル編集" },
 ];
 
