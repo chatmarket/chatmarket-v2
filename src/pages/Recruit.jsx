@@ -419,6 +419,88 @@ export default function Recruit() {
         </div>
       </section>
 
+      {/* ===== カテゴリ別LP入口 ===== */}
+      <section className="w-full py-16 px-4 sm:px-6 bg-secondary/10">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-black">あなたの活動に近いページを見る</h2>
+            <p className="text-muted-foreground mt-2 text-sm max-w-xl mx-auto">
+              占い、講師、音楽、アイドル、オンライン教室など、活動スタイルに合わせた始め方を確認できます。
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                emoji: "🔮",
+                title: "占い師・鑑定士",
+                desc: "鑑定、相談、チャット占い、1対1通話で活動したい方向け",
+                path: "/fortune-lp",
+                color: "border-purple-500/30 hover:border-purple-400/60 bg-purple-500/5",
+                labelColor: "text-purple-400",
+              },
+              {
+                emoji: "📚",
+                title: "講師・家庭教師",
+                desc: "オンライン授業、個別指導、少人数レッスンを始めたい方向け",
+                path: "/lp/tutor",
+                color: "border-blue-500/30 hover:border-blue-400/60 bg-blue-500/5",
+                labelColor: "text-blue-400",
+              },
+              {
+                emoji: "🎵",
+                title: "音楽家・アーティスト",
+                desc: "音源販売、ライブ配信、ファンとのつながりを作りたい方向け",
+                path: "/musician",
+                color: "border-amber-500/30 hover:border-amber-400/60 bg-amber-500/5",
+                labelColor: "text-amber-400",
+              },
+              {
+                emoji: "✨",
+                title: "アイドル・ファン活動",
+                desc: "ファンコミュニティ、ライブ、1対1通話、応援を届けたい方向け",
+                path: "/idol-lp",
+                color: "border-pink-500/30 hover:border-pink-400/60 bg-pink-500/5",
+                labelColor: "text-pink-400",
+              },
+              {
+                emoji: "🏫",
+                title: "オンライン教室",
+                desc: "1対複数の教室、講座、グループレッスンを開きたい方向け",
+                path: "/classroom-lp",
+                color: "border-cyan-500/30 hover:border-cyan-400/60 bg-cyan-500/5",
+                labelColor: "text-cyan-400",
+              },
+              {
+                emoji: "🌱",
+                title: "その他のクリエイター",
+                desc: "自分の得意や経験を活かして活動したい方向け",
+                path: null,
+                color: "border-primary/30 hover:border-primary/60 bg-primary/5",
+                labelColor: "text-primary",
+              },
+            ].map((item) => {
+              const inner = (
+                <div className={`flex items-start gap-4 p-5 rounded-2xl border transition-all cursor-pointer h-full ${item.color}`}>
+                  <span className="text-3xl shrink-0">{item.emoji}</span>
+                  <div className="space-y-1">
+                    <p className={`font-black text-sm ${item.labelColor}`}>{item.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                    <p className={`text-xs font-semibold ${item.labelColor} flex items-center gap-1`}>
+                      {item.path ? "詳しく見る →" : "フォームへ進む →"}
+                    </p>
+                  </div>
+                </div>
+              );
+              return item.path ? (
+                <Link key={item.title} to={item.path}>{inner}</Link>
+              ) : (
+                <button key={item.title} onClick={scrollToForm} className="text-left h-full w-full">{inner}</button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ===== 試食コーナー → 本注文 ステップ図 ===== */}
       <section className="w-full py-16 px-4 sm:px-6 bg-gradient-to-b from-secondary/30 to-background">
         <div className="max-w-6xl mx-auto">
