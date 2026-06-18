@@ -25,21 +25,16 @@ import { preloadTranslations } from "@/lib/dbTranslations";
 
 const LOGO_URL = "https://media.base44.com/images/public/69c1b541d5db3555833124aa/d7bcd45d0_1xhdpi.png";
 
-// 一般ユーザー向けメニュー
+// 一般ユーザー向けメニュー（ログイン・未ログイン共通）
 const NAV_ITEMS = [
   { path: "/", icon: Home, label: "ホーム" },
   { path: "/search", icon: Search, label: "さがす" },
-  { path: "/", icon: Play, label: "ライブ" },
+  { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
   { path: "/fortune-lp", icon: Star, label: "占い" },
   { path: "/community", icon: Users, label: "コミュニティ" },
   { path: "/my-purchases", icon: ShoppingBag, label: "購入履歴" },
   { path: "/coin-charge", icon: Coins, label: "コイン" },
   { path: "/settings", icon: Settings, label: "設定" },
-];
-
-// 未ログインユーザー向け追加メニュー
-const GUEST_EXTRA_ITEMS = [
-  { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
 ];
 
 // クリエイタースタジオ メニュー
@@ -183,21 +178,6 @@ export default function AppLayout() {
               isActive(path)
                 ? "bg-pink-500/20 text-pink-400"
                 : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
-            )}>
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="flex-1">{label}</span>
-            </div>
-          </Link>
-        ))}
-
-        {/* 未ログイン時のみ：料金プランへの導線 */}
-        {!user && GUEST_EXTRA_ITEMS.map(({ path, icon: Icon, label }) => (
-          <Link key={path} to={path} onClick={onCloseFn}>
-            <div className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-              isActive(path)
-                ? "bg-primary/20 text-primary"
-                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
             )}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{label}</span>
