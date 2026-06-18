@@ -350,7 +350,8 @@ export default function PlanSelect() {
     
     // successUrlで戻ってくる時に自動認識させるためのフラグを付与
     const returnUrl = `${window.location.origin}/plan-confirm?plans=${ids.join(",")}&stripe_success=true`;
-    window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
+    const emailParam = user?.email ? encodeURIComponent(user.email) : '';
+    window.location.href = `${stripeLink}?locked_prefilled_email=${emailParam}&success_url=${encodeURIComponent(returnUrl)}`;
   };
 
   return (
@@ -681,7 +682,8 @@ export default function PlanSelect() {
                           return;
                         }
                         const returnUrl = `${window.location.origin}/plan-confirm?plans=${plan.id}&stripe_success=true`;
-                        window.location.href = `${stripeLink}?client_reference_id=${user?.email || 'guest'}&success_url=${encodeURIComponent(returnUrl)}`;
+                        const emailParam = user?.email ? encodeURIComponent(user.email) : '';
+                        window.location.href = `${stripeLink}?locked_prefilled_email=${emailParam}&success_url=${encodeURIComponent(returnUrl)}`;
                       }}
                       disabled={plan.comingSoon}
                       className="w-full gap-2 bg-primary hover:bg-primary/90"

@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         return Response.json({ ok: true, skipped: 'not_plan_subscription' });
       }
 
-      const userEmail = meta.user_email;
+      const userEmail = meta.user_email || session.customer_details?.email || session.customer_email;
       const planId = meta.plan_id;
 
       if (!userEmail || !VALID_PLAN_IDS.includes(planId)) {
