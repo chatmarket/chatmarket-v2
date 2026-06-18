@@ -28,7 +28,7 @@ export default function SchoolTickets() {
 
   useEffect(() => {
     if (searchParams.get("payment") === "success") {
-      toast.success("決済が完了しました！チケットが有効化されます。");
+      toast.success("お支払いを確認中です。少し時間をおいてチケット一覧をご確認ください。");
     }
   }, []);
 

@@ -112,7 +112,7 @@ export default function MiniSchool() {
   };
 
   const totalRevenue = tickets.filter((t) => t.status === "active" || t.status === "used").reduce((s, t) => s + (t.price || 0), 0);
-  const myRevenue = Math.floor(totalRevenue * 0.9);
+  const myRevenue = Math.floor(totalRevenue * 0.85);
 
   const upcomingSessions = sessions.filter((s) => s.status === "scheduled" || s.status === "live");
   const pastSessions = sessions.filter((s) => s.status === "ended" || s.status === "cancelled");
@@ -165,7 +165,7 @@ export default function MiniSchool() {
         {[
           { label: "チケット販売枚数", value: `${tickets.filter((t) => t.status !== "pending_payment" && t.status !== "cancelled").length}枚`, color: "text-primary" },
           { label: "総チケット収益", value: `¥${totalRevenue.toLocaleString()}`, color: "text-yellow-400" },
-          { label: "あなたの受取（90%）", value: `¥${myRevenue.toLocaleString()}`, color: "text-green-400" },
+          { label: "あなたの受取（85%）", value: `¥${myRevenue.toLocaleString()}`, color: "text-green-400" },
           { label: "開催済み授業", value: `${pastSessions.filter((s) => s.status === "ended").length}回`, color: "text-blue-400" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-card border border-border/50 rounded-xl p-3">
@@ -245,8 +245,8 @@ export default function MiniSchool() {
               </div>
             </div>
             <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-xs text-muted-foreground space-y-0.5">
-              <p>収益還元率 <span className="text-primary font-bold">90%</span>（プラットフォーム手数料10%）</p>
-              <p>チケット ¥{form.ticket_price.toLocaleString()} × {form.max_students}人満席 = 最大 <span className="text-green-400 font-bold">¥{Math.floor(form.ticket_price * form.max_students * 0.9).toLocaleString()}</span> 受取</p>
+              <p>収益還元率 <span className="text-primary font-bold">85%</span>（プラットフォーム手数料15%）</p>
+              <p>チケット ¥{form.ticket_price.toLocaleString()} × {form.max_students}人満席 = 最大 <span className="text-green-400 font-bold">¥{Math.floor(form.ticket_price * form.max_students * 0.85).toLocaleString()}</span> 受取</p>
             </div>
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1" onClick={() => setShowCreateModal(false)}>キャンセル</Button>
@@ -416,7 +416,7 @@ function LiveClassroom({ session, user, tickets, onEnd }) {
             <p className="flex justify-between text-white/60"><span>授業時間</span><span className="text-white font-bold">{session.duration_minutes}分</span></p>
             <p className="flex justify-between text-white/60"><span>チケット</span><span className="text-yellow-400 font-bold">¥{session.ticket_price?.toLocaleString()}</span></p>
             <p className="flex justify-between text-white/60"><span>参加人数</span><span className="text-primary font-bold">{sessionTickets.length}名</span></p>
-            <p className="flex justify-between text-white/60"><span>授業収益（90%）</span><span className="text-green-400 font-bold">¥{Math.floor((session.ticket_price || 0) * sessionTickets.length * 0.9).toLocaleString()}</span></p>
+            <p className="flex justify-between text-white/60"><span>授業収益（85%）</span><span className="text-green-400 font-bold">¥{Math.floor((session.ticket_price || 0) * sessionTickets.length * 0.85).toLocaleString()}</span></p>
           </div>
         </div>
       </div>
