@@ -288,6 +288,7 @@ export default function TutorLP() {
                 <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>兄弟・友人グループ・少人数補習に対応</li>
                 <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>生徒も質問しやすく、講師も管理しやすい</li>
                 <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>チケット制で確実に収益化できる</li>
+                <li className="flex items-start gap-2"><span className="text-indigo-600 mt-0.5">✓</span>生徒の映像タイルをドラッグ＆ドロップで並び替え可能。よく見る生徒・サポートが必要な生徒を見やすい位置に配置でき、落ち着いて授業を進められます</li>
               </ul>
             </div>
           </div>

@@ -56,6 +56,7 @@ const TEACHER_FEATURES = [
   { icon: Clock, title: "チケット制で確実収益", desc: "事前購入チケット制で、ドタキャンをなくせます。" },
   { icon: Star, title: "柔軟なプライシング", desc: "授業時間・内容に合わせて自由に価格設定。" },
   { icon: MessageCircle, title: "あらゆる分野に対応", desc: "語学・ヨガ・コーチング・専門講座まで。" },
+  { icon: Users, title: "生徒タイルを自由に並び替え", desc: "授業中、よく発言する生徒やサポートが必要な生徒をドラッグ＆ドロップで見やすい位置に。配置は保存され、次回入室時も復元されます。" },
 ];
 
 export default function ClassRoomLP() {
