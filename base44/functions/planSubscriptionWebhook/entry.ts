@@ -18,13 +18,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // plan_id マッピング（Stripe metadata.plan_id → DB plan_id）
-const VALID_PLAN_IDS = ['basic', 'call-anser', 'vod', 'ppv'];
+const VALID_PLAN_IDS = ['basic', 'call-anser', 'vod', 'ppv', 'mini-school'];
 
 const PLAN_NAMES = {
   basic: 'BASICプラン',
   'call-anser': 'CALL&ANSERプラン',
   vod: 'VODプラン',
   ppv: 'PPVプラン',
+  'mini-school': 'ミニスクールプラン',
 };
 
 Deno.serve(async (req) => {
