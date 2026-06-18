@@ -356,6 +356,17 @@ export default function PlanSelect() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-background">
       <MetaHelmet page="plan-select" />
+      {/* 全ユーザー共通：キャンペーン・課金条件の説明バナー */}
+      <div className="bg-secondary/50 border border-border/60 rounded-xl p-4 space-y-2">
+        <p className="text-sm font-bold text-foreground flex items-center gap-2">📋 ご利用前にご確認ください</p>
+        <ul className="space-y-1.5 text-xs text-muted-foreground">
+          <li className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">🎁</span><span><span className="font-bold text-emerald-300">キャンペーン対象者は12ヶ月間、対象プランを無料でご利用いただけます。</span></span></li>
+          <li className="flex items-start gap-2"><span className="text-blue-400 shrink-0">⚠️</span><span>無料期間終了後、<span className="font-bold text-foreground/90">自動課金は行われません。</span></span></li>
+          <li className="flex items-start gap-2"><span className="text-amber-400 shrink-0">📋</span><span>有料プランを継続するには、<span className="font-bold text-foreground/90">ご自身で手動でお申し込みが必要です。</span></span></li>
+          <li className="flex items-start gap-2"><span className="text-muted-foreground shrink-0">ℹ️</span><span>申し込みがない場合は、<span className="font-bold text-foreground/90">FREEプラン（収益還元率70%）</span>のみご利用可能となります。</span></li>
+        </ul>
+      </div>
+
       {/* 未ログインユーザー向けバナー */}
       {!user && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
