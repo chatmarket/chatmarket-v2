@@ -260,6 +260,7 @@ export default function PlanSelect() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [planInfo, setPlanInfo] = useState(null);
+  const [myChannel, setMyChannel] = useState(null);
   const [selected, setSelected] = useState(new Set());
 
   useEffect(() => {
@@ -273,6 +274,9 @@ export default function PlanSelect() {
           if (info.isAdmin || info.isCampaign) {
             setSelected(new Set(["basic", "vod", "ppv", "call-anser", "mini-school", "enterprise", "crowdfunding", "digital-ticket"]));
           }
+          // チャンネル作成状況を確認
+          const channels = await base44.entities.Channel.filter({ owner_email: u.email });
+          setMyChannel(channels[0] || null);
         });
       }
     });
@@ -316,6 +320,11 @@ export default function PlanSelect() {
       base44.auth.redirectToLogin(`/plan-confirm?plans=${ids.join(",")}`);
       return;
     }
+    if (!myChannel && !(planInfo?.isAdmin || planInfo?.isCampaign)) {
+      toast.error("先にチャンネルを作成してください");
+      navigate("/my-channel");
+      return;
+    }
     
     // FREEプランの場合はシステム内で即座に権限付与
     if (ids.length === 1 && ids[0] === "free") {
@@ -347,6 +356,32 @@ export default function PlanSelect() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-background">
       <MetaHelmet page="plan-select" />
+      {/* 未ログインユーザー向けバナー */}
+      {!user && (
+        <div className="bg-primary/10 border border-primary/40 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-bold text-primary">プランを閲覧中です</p>
+            <p className="text-xs text-primary/80 mt-0.5">申し込むにはログイン / 新規登録が必要です。まずは無料で始めることもできます。</p>
+          </div>
+          <Button size="sm" className="bg-primary hover:bg-primary/90 shrink-0" onClick={() => base44.auth.redirectToLogin("/plan-select")}>
+            ログイン / 新規登録
+          </Button>
+        </div>
+      )}
+
+      {/* チャンネル未作成ユーザー向けバナー */}
+      {user && myChannel === null && planInfo && !planInfo.isAdmin && !planInfo.isCampaign && (
+        <div className="bg-amber-500/10 border border-amber-500/40 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-400">先にクリエイター登録が必要です</p>
+            <p className="text-xs text-amber-300/80 mt-0.5">プランへの申し込みには、チャンネル（クリエイターページ）の作成が必要です。</p>
+          </div>
+          <Button size="sm" variant="outline" className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 shrink-0" onClick={() => navigate("/my-channel")}>
+            チャンネルを作成する
+          </Button>
+        </div>
+      )}
+
       {planInfo?.isAdmin && (
         <div className="bg-primary/10 border border-primary/40 rounded-xl p-4">
           <p className="text-sm font-bold text-primary mb-1">運営管理者アカウント</p>
@@ -607,6 +642,11 @@ export default function PlanSelect() {
                         const isAuth = await base44.auth.isAuthenticated();
                         if (!isAuth) {
                           base44.auth.redirectToLogin(`/plan-confirm?plans=${plan.id}`);
+                          return;
+                        }
+                        if (!myChannel && !(planInfo?.isAdmin || planInfo?.isCampaign)) {
+                          toast.error("先にチャンネルを作成してください");
+                          navigate("/my-channel");
                           return;
                         }
 
