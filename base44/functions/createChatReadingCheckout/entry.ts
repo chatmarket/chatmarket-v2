@@ -35,12 +35,20 @@ Deno.serve(async (req) => {
     // 占い師の還元率を確認（BasicまたはCampaign → 85%、それ以外 → 70%）
     let creatorRate = 0.70;
     try {
+      const now = new Date();
       const subs = await base44.asServiceRole.entities.PlanSubscription.filter({
         user_email: menu.creator_email, status: 'active'
       });
+      // lib/userPlan.js と同じ判定: end_date なし → 有効、未来 → 有効、過去/不正値 → 無効
+      const validSubs = subs.filter(s => {
+        if (!s.end_date) return true;
+        const d = new Date(s.end_date);
+        if (isNaN(d.getTime())) return false;
+        return d > now;
+      });
       const grants = await base44.asServiceRole.entities.CampaignLiveGrantee.filter({ email: menu.creator_email });
-      const activeGrant = grants.find(g => g.expires_at && new Date(g.expires_at) > new Date());
-      const hasBasic = subs.some(s => s.plan_id === 'basic' || s.plan_id === 'call-anser');
+      const activeGrant = grants.find(g => g.expires_at && new Date(g.expires_at) > now);
+      const hasBasic = validSubs.some(s => s.plan_id === 'basic' || s.plan_id === 'call-anser');
       if (hasBasic || activeGrant) creatorRate = 0.85;
     } catch (_) {}
 
