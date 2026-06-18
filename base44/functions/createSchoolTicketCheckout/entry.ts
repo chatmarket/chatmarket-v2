@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     } else {
       // 2. PlanSubscription — basic のみ（call-anser 除外）
       const subs = await base44.asServiceRole.entities.PlanSubscription.filter({ user_email: ticket.teacher_email, status: "active" });
-      if (subs.some(s => s.plan_id === "basic")) {
+      if (subs.some(s => s.plan_id === "basic" || s.plan_id === "mini-school")) {
         teacherPlan = "basic";
         revenueRate = 0.85;
       }

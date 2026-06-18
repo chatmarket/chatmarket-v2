@@ -48,7 +48,7 @@ async function resolveClassroomRevenueRate(base44, teacherEmail) {
       user_email: teacherEmail,
       status: "active",
     });
-    const hasBasic = subs.some(s => s.plan_id === "basic");
+    const hasBasic = subs.some(s => s.plan_id === "basic" || s.plan_id === "mini-school");
     if (hasBasic) {
       return { teacher_plan: "basic", revenue_rate: 0.85 };
     }
