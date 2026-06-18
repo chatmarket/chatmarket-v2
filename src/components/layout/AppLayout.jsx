@@ -37,6 +37,11 @@ const NAV_ITEMS = [
   { path: "/settings", icon: Settings, label: "設定" },
 ];
 
+// 未ログインユーザー向け追加メニュー
+const GUEST_EXTRA_ITEMS = [
+  { path: "/plan-select", icon: CreditCard, label: "料金プラン" },
+];
+
 // クリエイタースタジオ メニュー
 const CREATOR_STUDIO_ITEMS = [
   { path: "/dashboard", icon: BarChart3, label: "ダッシュボード" },
@@ -172,12 +177,27 @@ export default function AppLayout() {
 
         {/* ── 一般ユーザーメニュー ── */}
         {NAV_ITEMS.map(({ path, icon: Icon, label }) => (
-          <Link key={path} to={path} onClick={onCloseFn}>
+          <Link key={path + label} to={path} onClick={onCloseFn}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
               isActive(path)
                 ? "bg-pink-500/20 text-pink-400"
                 : "text-muted-foreground hover:bg-pink-500/10 hover:text-pink-400"
+            )}>
+              <Icon className="w-4 h-4 shrink-0" />
+              <span className="flex-1">{label}</span>
+            </div>
+          </Link>
+        ))}
+
+        {/* 未ログイン時のみ：料金プランへの導線 */}
+        {!user && GUEST_EXTRA_ITEMS.map(({ path, icon: Icon, label }) => (
+          <Link key={path} to={path} onClick={onCloseFn}>
+            <div className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+              isActive(path)
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
             )}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{label}</span>
@@ -480,6 +500,10 @@ export default function AppLayout() {
                 <span className={cn("text-[10px] font-medium truncate w-full text-center", isActive(path) ? "text-primary" : "text-muted-foreground")}>{label}</span>
               </Link>
             ))}
+            <Link to="/plan-select" className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-w-0 min-h-[48px] justify-center overflow-hidden">
+              <CreditCard className={cn("w-5 h-5 shrink-0 transition-colors", isActive("/plan-select") ? "text-primary" : "text-muted-foreground")} />
+              <span className={cn("text-[10px] font-medium truncate w-full text-center", isActive("/plan-select") ? "text-primary" : "text-muted-foreground")}>料金</span>
+            </Link>
             <button onClick={() => base44.auth.redirectToLogin()} className="flex-1 flex flex-col items-center gap-0.5 py-2.5 min-w-0 min-h-[48px] justify-center overflow-hidden">
               <User className="w-5 h-5 shrink-0 text-primary" />
               <span className="text-[10px] font-medium text-primary truncate w-full text-center">ログイン</span>
