@@ -4,7 +4,7 @@
  * ・生徒9人を3×3グリッドで右サイドに表示
  * ・コントロールバー（全員ミュート、画面共有、終了）
  */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Mic, MicOff, Camera, CameraOff, Monitor, Users,
   PhoneOff, Volume2, VolumeX
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import ParticipantTile from "./ParticipantTile";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 export default function HostMainView({
   localStream,
@@ -33,6 +34,42 @@ export default function HostMainView({
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [screenStream, setScreenStream] = useState(null);
   const [showParticipants, setShowParticipants] = useState(true);
+
+  // ── ドラッグ＆ドロップ用並び順管理 ──
+  const storageKey = room?.id ? `classroom_tile_order_${room.id}` : null;
+
+  const getOrderedParticipants = useCallback(() => {
+    if (!storageKey) return participants;
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      // 保存済み順序に合わせて並べ、新規参加者は末尾に追加
+      const emailSet = new Set(participants.map(p => p.email));
+      const ordered = saved
+        .filter(email => emailSet.has(email))
+        .map(email => participants.find(p => p.email === email));
+      const newOnes = participants.filter(p => !saved.includes(p.email));
+      return [...ordered, ...newOnes];
+    } catch {
+      return participants;
+    }
+  }, [participants, storageKey]);
+
+  const [orderedParticipants, setOrderedParticipants] = useState(() => getOrderedParticipants());
+
+  useEffect(() => {
+    setOrderedParticipants(getOrderedParticipants());
+  }, [getOrderedParticipants]);
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(orderedParticipants);
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
+    setOrderedParticipants(items);
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(items.map(p => p.email)));
+    }
+  };
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -122,36 +159,63 @@ export default function HostMainView({
           </div>
         </div>
 
-        {/* 右: 生徒グリッド（3×3）*/}
+        {/* 右: 生徒グリッド（3×3）— 講師はドラッグで並び替え可 */}
         {showParticipants && (
           <div className="w-64 flex flex-col gap-1.5 shrink-0 overflow-y-auto">
-            <p className="text-white/50 text-xs font-bold px-1">生徒 ({participants.length})</p>
-            <div className="grid grid-cols-3 gap-1 flex-1">
-              {Array.from({ length: 9 }).map((_, i) => {
-                const p = participants[i];
-                if (!p) {
-                  return (
-                    <div key={i} className="aspect-video bg-gray-800/50 rounded-lg border border-dashed border-white/10 flex items-center justify-center">
-                      <span className="text-white/20 text-xs">空き</span>
-                    </div>
-                  );
-                }
-                const isMuted = isMutedAll || mutedList.includes(p.email);
-                return (
-                  <ParticipantTile
-                    key={p.email}
-                    participant={p}
-                    stream={remoteStreams[p.email]}
-                    isMuted={isMuted}
-                    isHost={true}
-                    connectionState={connectionStates[p.email]}
-                    onMute={onMuteParticipant}
-                    onUnmute={onUnmuteParticipant}
-                    compact
-                  />
-                );
-              })}
-            </div>
+            <p className="text-white/50 text-xs font-bold px-1">
+              生徒 ({participants.length})
+              <span className="ml-1 text-white/30 font-normal text-[10px]">ドラッグで並替</span>
+            </p>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="participant-grid" direction="horizontal">
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="grid grid-cols-3 gap-1 flex-1"
+                  >
+                    {Array.from({ length: 9 }).map((_, i) => {
+                      const p = orderedParticipants[i];
+                      if (!p) {
+                        return (
+                          <div key={`empty-${i}`} className="aspect-video bg-gray-800/50 rounded-lg border border-dashed border-white/10 flex items-center justify-center">
+                            <span className="text-white/20 text-xs">空き</span>
+                          </div>
+                        );
+                      }
+                      const isMuted = isMutedAll || mutedList.includes(p.email);
+                      return (
+                        <Draggable key={p.email} draggableId={p.email} index={i}>
+                          {(drag, snapshot) => (
+                            <div
+                              ref={drag.innerRef}
+                              {...drag.draggableProps}
+                              {...drag.dragHandleProps}
+                              style={{
+                                ...drag.draggableProps.style,
+                                opacity: snapshot.isDragging ? 0.85 : 1,
+                              }}
+                            >
+                              <ParticipantTile
+                                participant={p}
+                                stream={remoteStreams[p.email]}
+                                isMuted={isMuted}
+                                isHost={true}
+                                connectionState={connectionStates[p.email]}
+                                onMute={onMuteParticipant}
+                                onUnmute={onUnmuteParticipant}
+                                compact
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         )}
       </div>
