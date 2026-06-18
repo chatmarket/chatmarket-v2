@@ -145,9 +145,14 @@ export default function AdminDashboardMetrics() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">リアルタイムデータ（30秒ごと自動更新）</p>
         </div>
-        <Link to="/admin/dashboard">
-          <Button variant="outline" size="sm" className="self-start sm:self-auto">運営管理に戻る</Button>
-        </Link>
+        <div className="flex gap-2 flex-wrap self-start sm:self-auto">
+          <Link to="/admin/lp-analytics">
+            <Button variant="outline" size="sm">LPレポート</Button>
+          </Link>
+          <Link to="/admin/dashboard">
+            <Button variant="outline" size="sm">運営管理に戻る</Button>
+          </Link>
+        </div>
       </div>
 
       {/* KPI カード */}

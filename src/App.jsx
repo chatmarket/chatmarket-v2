@@ -99,6 +99,7 @@ import ExpertLP from '@/pages/ExpertLP';
 import FitnessLP from '@/pages/FitnessLP';
 import CareerLP from '@/pages/CareerLP';
 import AdminDashboardMetrics from '@/pages/AdminDashboardMetrics';
+import LpAnalytics from '@/pages/LpAnalytics';
 import EnglishLP from '@/pages/EnglishLP';
 import CoachLP from '@/pages/CoachLP';
 import ChekiCaptureEditor from '@/pages/ChekiCaptureEditor';
@@ -215,6 +216,7 @@ export default function App() {
             <Route path="/lp/fitness" element={<FitnessLP />} />
             <Route path="/lp/career" element={<CareerLP />} />
             <Route path="/admin/metrics" element={<AdminDashboardMetrics />} />
+            <Route path="/admin/lp-analytics" element={<LpAnalytics />} />
             <Route path="/lp/english" element={<EnglishLP />} />
             <Route path="/lp/coach" element={<CoachLP />} />
             <Route path="/cheki-editor" element={<ChekiCaptureEditor />} />
