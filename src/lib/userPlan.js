@@ -132,7 +132,16 @@ export async function resolveUserPlan(user) {
   // 3. 購読プランチェック
   try {
     const subscriptions = await base44.entities.PlanSubscription.filter({ user_email: user.email, status: 'active' });
-    const activePlanIds = subscriptions.map(s => s.plan_id);
+    const now = new Date();
+    // end_date が存在して過去のレコードは除外（キャンペーン由来の期限切れPlanSubscriptionを除くため）
+    // end_date が null または未来のものは従来通り有効扱い
+    const validSubscriptions = subscriptions.filter(s => {
+      if (!s.end_date) return true; // Stripe通常サブスク（end_dateなし）は常に有効
+      const endDate = new Date(s.end_date);
+      if (isNaN(endDate.getTime())) return false; // 不正値は安全側（除外）
+      return endDate > now; // 未来のみ有効
+    });
+    const activePlanIds = validSubscriptions.map(s => s.plan_id);
 
     if (activePlanIds.length > 0) {
       // 全プランの機能を合算
