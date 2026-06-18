@@ -68,6 +68,17 @@ const PLAN_FEATURES = {
     'fan_community',
     'progressive_rate',
   ],
+  'mini-school': [
+    'classroom_create',       // クラスルーム開設
+    'classroom_host',         // クラスルーム講師
+    'classroom_ticket_sales', // チケット販売（収益率85%）
+    'yell_coin',
+    'channel',
+    'community',
+    'community_post',
+    'fan_community',
+    'progressive_rate',
+  ],
 };
 
 // 全機能（admin・キャンペーン用）
@@ -151,7 +162,7 @@ export async function resolveUserPlan(user) {
       });
 
       // 収益率：basic or call-anser があれば85%
-      const hasBasicOrCallAnser = activePlanIds.includes('basic') || activePlanIds.includes('call-anser');
+      const hasBasicOrCallAnser = activePlanIds.includes('basic') || activePlanIds.includes('call-anser') || activePlanIds.includes('mini-school');
       return {
         plans: activePlanIds,
         features: [...featureSet],
