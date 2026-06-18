@@ -70,6 +70,7 @@ const ADMIN_NAV_ITEMS = [
 
 export default function AppLayout() {
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [creatorMode, setCreatorMode] = useState(false);
@@ -98,14 +99,16 @@ export default function AppLayout() {
     capturePromoFromUrl();
     preloadTranslations(); // DB翻訳プリロード
     base44.auth.isAuthenticated().then((isAuth) => {
-      if (isAuth) base44.auth.me().then((u) => {
-        setUser(u);
-        // 初回登録ユーザーのみプロフィール設定画面へ誘導
-        // onboarding_required === true の場合のみリダイレクト（既存ユーザーは対象外）
-        if (u.onboarding_required === true && u.profile_completed !== true && !window.location.pathname.startsWith("/settings")) {
-          window.location.href = "/settings?onboarding=1";
-        }
-      }).catch(() => {});
+      if (isAuth) {
+        base44.auth.me().then((u) => {
+          setUser(u);
+          if (u.onboarding_required === true && u.profile_completed !== true && !window.location.pathname.startsWith("/settings")) {
+            window.location.href = "/settings?onboarding=1";
+          }
+        }).catch(() => {}).finally(() => setAuthChecked(true));
+      } else {
+        setAuthChecked(true);
+      }
     });
   }, []);
 
@@ -178,8 +181,8 @@ export default function AppLayout() {
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
 
-        {/* ── ナビメニュー（ログイン状態で切り替え） ── */}
-        {(user ? NAV_ITEMS : GUEST_NAV_ITEMS).map(({ path, icon: Icon, label }) => (
+        {/* ── ナビメニュー（ログイン状態で切り替え・認証確認完了後） ── */}
+        {(authChecked ? (user ? NAV_ITEMS : GUEST_NAV_ITEMS) : GUEST_NAV_ITEMS).map(({ path, icon: Icon, label }) => (
           <Link key={path + label} to={path} onClick={onCloseFn}>
             <div className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
