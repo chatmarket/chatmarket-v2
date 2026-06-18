@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/components/layout/AppLayout';
+import ScrollToTop from '@/components/ScrollToTop';
 import PageNotFound from '@/lib/PageNotFound';
 import ErrorHandler from '@/components/ErrorHandler';
 import LogViewerOverlay from '@/components/debug/LogViewerOverlay';
@@ -122,6 +123,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* PrismWebOverlay: AppLayout完全排除・認証不要 */}
           <Route path="/prism-overlay/:streamId" element={<PrismWebOverlay />} />
