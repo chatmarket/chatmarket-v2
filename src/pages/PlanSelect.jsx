@@ -124,7 +124,7 @@ const PLANS = [
     iconColor: "text-violet-400",
     badge: "1対2〜最大9名",
     badgeColor: "bg-violet-500/20 text-violet-300",
-    description: "1対2〜最大9名の少人数レッスンを開講できます。チケット制で1回単位の収益化ができ、生徒は無料プランでも参加できます。キャンペーン対象者は12か月間月額無料。",
+    description: "1対2〜最大9名の少人数レッスンを開講できます。チケット制で1回単位の収益化ができ、生徒は無料プランでも参加できます。",
     features: [
       "1対2〜最大9名の少人数授業（生徒氏名がリアルタイム表示）",
       "チケット制（1回単位・自由料金設定）",
@@ -596,6 +596,15 @@ export default function PlanSelect() {
                         <p className="text-xs text-primary font-semibold">収益還元率 {plan.revenueShare}</p>
                       )}
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{plan.description}</p>
+                      {plan.id === 'mini-school' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate('/classroom-lp'); }}
+                          className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          詳しく見る
+                        </button>
+                      )}
                     </div>
 
                     <div className="text-right shrink-0">
@@ -640,17 +649,6 @@ export default function PlanSelect() {
                         <p>📌 コスト：場所代30円/時間 ＋ 送料5円/視聴者/時間</p>
                       </div>
                     </div>
-                  )}
-                  {/* キャンペーン対象者：Stripe不可・利用中表示 */}
-                  {plan.id === 'mini-school' && (
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2 border-violet-500/40 text-violet-300 hover:bg-violet-500/10"
-                      onClick={(e) => { e.stopPropagation(); navigate('/classroom-lp'); }}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      詳しく見る（ミニスクールLP）
-                    </Button>
                   )}
                   {(planInfo?.isAdmin || planInfo?.isCampaign) && ['call-anser','basic','vod','ppv','mini-school'].includes(plan.id) ? (
                     <div className="w-full h-9 rounded-lg border border-blue-500/40 bg-blue-500/10 flex items-center justify-center gap-2 text-sm text-blue-300 font-bold">
