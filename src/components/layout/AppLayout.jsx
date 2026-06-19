@@ -289,6 +289,42 @@ export default function AppLayout() {
           </div>
         )}
 
+        {/* ── キャンペーンクリエイター枠（全ユーザー表示） ── */}
+        <div className="pt-3 pb-1">
+          <button
+            onClick={() => setLpMenuOpen(!lpMenuOpen)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-400 transition-all"
+          >
+            <Zap className="w-4 h-4 shrink-0" />
+            <span className="flex-1 text-left">キャンペーンクリエイター枠</span>
+            {lpMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+          </button>
+        </div>
+        {lpMenuOpen && (
+          <>
+            {[
+              { path: "/recruit", label: "🎁 クリエイター募集トップ" },
+              { path: "/fortune-lp", label: "🔮 占い師・鑑定士" },
+              { path: "/idol-lp", label: "✨ アイドル・ファン活動" },
+              { path: "/lp/tutor", label: "📚 講師・家庭教師" },
+              { path: "/musician", label: "🎵 音楽家・アーティスト" },
+              { path: "/classroom-lp", label: "🏫 オンライン教室・ミニスクール" },
+              { path: "/recruit", label: "🌱 その他のクリエイター" },
+            ].map(({ path, label }, i) => (
+              <Link key={i} to={path} onClick={onCloseFn}>
+                <div className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ml-2",
+                  isActive(path) && path !== "/recruit"
+                    ? "bg-amber-500/20 text-amber-300"
+                    : "text-muted-foreground hover:bg-amber-500/10 hover:text-amber-300"
+                )}>
+                  <span className="flex-1">{label}</span>
+                </div>
+              </Link>
+            ))}
+          </>
+        )}
+
         {/* ── 管理者メニュー（admin のみ表示） ── */}
         {user && isAdmin(user) && (
           <>
