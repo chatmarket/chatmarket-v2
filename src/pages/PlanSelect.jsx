@@ -642,7 +642,7 @@ export default function PlanSelect() {
                     </div>
                   )}
                   {/* キャンペーン対象者：Stripe不可・利用中表示 */}
-                  {(planInfo?.isAdmin || planInfo?.isCampaign) && ['call-anser','basic','vod','ppv'].includes(plan.id) ? (
+                  {(planInfo?.isAdmin || planInfo?.isCampaign) && ['call-anser','basic','vod','ppv','mini-school'].includes(plan.id) ? (
                     <div className="w-full h-9 rounded-lg border border-blue-500/40 bg-blue-500/10 flex items-center justify-center gap-2 text-sm text-blue-300 font-bold">
                       ✅ キャンペーン適用中 — 追加料金なし
                     </div>
