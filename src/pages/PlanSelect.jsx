@@ -125,6 +125,7 @@ const PLANS = [
     badge: "1対2〜最大9名",
     badgeColor: "bg-violet-500/20 text-violet-300",
     description: "1対2〜最大9名の少人数レッスンを開講できます。チケット制で1回単位の収益化ができ、生徒は無料プランでも参加できます。",
+
     features: [
       "1対2〜最大9名の少人数授業（生徒氏名がリアルタイム表示）",
       "チケット制（1回単位・自由料金設定）",
@@ -562,6 +563,17 @@ export default function PlanSelect() {
             const isSelected = selected.has(plan.id);
             return (
               <AccordionItem key={plan.id} value={plan.id} className="border border-border/40 rounded-xl px-4 bg-card/50">
+                {plan.id === 'mini-school' && (
+                  <div className="pt-3 -mb-1">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/classroom-lp'); }}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 rounded-full px-3 py-1 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      詳しく見る（ミニスクールLP）
+                    </button>
+                  </div>
+                )}
                 <AccordionTrigger 
                   onClick={() => {
                     if (!plan.comingSoon) {
@@ -596,15 +608,6 @@ export default function PlanSelect() {
                         <p className="text-xs text-primary font-semibold">収益還元率 {plan.revenueShare}</p>
                       )}
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{plan.description}</p>
-                      {plan.id === 'mini-school' && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate('/classroom-lp'); }}
-                          className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 bg-violet-500/10 border border-violet-500/30 rounded-full px-2.5 py-0.5 transition-colors"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          詳しく見る
-                        </button>
-                      )}
                     </div>
 
                     <div className="text-right shrink-0">
