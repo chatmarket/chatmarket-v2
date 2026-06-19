@@ -405,7 +405,7 @@ export default function Home() {
                   { label: "✨ アイドル・ファン", path: "/idol-lp" },
                   { label: "📚 講師・家庭教師", path: "/lp/tutor" },
                   { label: "🎵 音楽家・アーティスト", path: "/musician" },
-                  { label: "🏫 オンライン教室", path: "/classroom-lp" },
+                  { label: "🏫 オンライン教室・ミニスクール", path: "/classroom-lp" },
                   { label: "🌱 その他", path: "/recruit" },
                 ].map(({ label, path }) => (
                   <Link key={path + label} to={path}>
