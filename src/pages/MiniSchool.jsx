@@ -151,15 +151,6 @@ export default function MiniSchool() {
         </div>
       </div>
 
-      {/* 準備中バナー */}
-      <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl px-5 py-4 flex items-center gap-3">
-        <span className="text-2xl">🚧</span>
-        <div>
-          <p className="font-bold text-orange-400 text-sm">ミニスクールプラン（準備中）</p>
-          <p className="text-xs text-orange-300/70 mt-0.5">月額¥8,900 / 収益還元率90% — 現在準備中です。事前に授業・チケットの設定が可能です。</p>
-        </div>
-      </div>
-
       {/* 収益サマリー */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[

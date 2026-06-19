@@ -164,12 +164,6 @@ export default function SchoolTickets() {
         </div>
       </div>
 
-      {/* 準備中バナー */}
-      <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3 flex items-center gap-2 text-xs">
-        <span>🚧</span>
-        <span className="text-orange-300">ミニスクールプランは現在準備中です。事前にチケットの確認が可能です。</span>
-      </div>
-
       {/* タブ */}
       <div className="flex gap-1 bg-secondary rounded-xl p-1">
         {[

@@ -120,7 +120,6 @@ const PLANS = [
     price: 3300,
     period: "/月",
     revenueShare: "85%",
-    comingSoon: true,
     color: "from-violet-500/20 to-violet-600/10 border-violet-500/30",
     iconColor: "text-violet-400",
     badge: "1対2〜最大9名",
