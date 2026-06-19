@@ -17,6 +17,10 @@ const STRIPE_LINKS = {
   call_24m: "https://buy.stripe.com/14A00ke6O7Ab9wDdJu3ks02",
   ppv_24m: "https://buy.stripe.com/28E14o9Qy2fR24b48U3ks00",
   vod_24m: "https://buy.stripe.com/eVq3cw4we07JcIPaxi3ks01",
+
+  // 【mini-school】
+  "mini-school_12m": "https://buy.stripe.com/fZu3cw7Iq2fRgZ534Q3ks08",
+  "mini-school_24m": "https://buy.stripe.com/eVqcN60fYg6HeQX7l63ks09",
 };
 
 /**
