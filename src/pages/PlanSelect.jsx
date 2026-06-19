@@ -402,17 +402,17 @@ export default function PlanSelect() {
       )}
       {planInfo?.isCampaign && !planInfo?.isAdmin && (
         <div className="bg-blue-500/10 border border-blue-500/40 rounded-xl p-4 space-y-2">
-          <p className="text-sm font-bold text-blue-400">🎉 キャンペーン適用中</p>
-          <p className="text-xs text-blue-300">
-            対象プランを12ヶ月間無料でご利用いただけます。
-            {planInfo.campaignExpiresAt && (
-              <span className="font-bold text-blue-200"> 無料期間終了日: {planInfo.campaignExpiresAt.toLocaleDateString('ja-JP')}</span>
-            )}
+          <p className="text-sm font-bold text-blue-400">🎉 キャンペーン適用中 — すべての対象機能が12ヶ月間無料</p>
+          <p className="text-sm text-blue-200 leading-relaxed">
+            キャンペーン対象者は、BASIC・CALL&ANSER・VOD・PPV・ミニスクールを含む<span className="font-bold">すべての対象機能を12ヶ月間無料</span>でご利用いただけます。追加のお申し込みや課金は一切不要です。
           </p>
+          {planInfo.campaignExpiresAt && (
+            <p className="text-xs text-blue-300 font-bold">無料期間終了日: {planInfo.campaignExpiresAt.toLocaleDateString('ja-JP')}</p>
+          )}
           <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-3 space-y-1.5 text-xs text-blue-300/90">
             <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">⚠️</span>無料期間終了後、<span className="font-bold text-blue-200">自動課金は行われません。</span></p>
-            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">📋</span>有料プランの機能を継続してご利用になるには、<span className="font-bold text-blue-200">ご自身で該当プランへお申し込みください。</span></p>
-            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">ℹ️</span>無料期間終了後に申し込みがない場合は、<span className="font-bold text-white">FREEプラン（収益還元率70%）</span>のみご利用可能となります。</p>
+            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">📋</span>有料プランの機能を継続するには、<span className="font-bold text-blue-200">無料期間終了後にご自身でお申し込みください。</span></p>
+            <p className="flex items-start gap-1.5"><span className="text-blue-400 shrink-0">ℹ️</span>申し込みがない場合は、<span className="font-bold text-white">FREEプラン（収益還元率70%）</span>のみご利用可能となります。</p>
           </div>
         </div>
       )}
@@ -573,12 +573,16 @@ export default function PlanSelect() {
                 >
                   <div className="flex items-center gap-4 text-left flex-1">
                     {/* Checkbox */}
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                      plan.comingSoon
-                        ? "border-muted/30 bg-muted/10 opacity-30 cursor-not-allowed"
-                        : isSelected ? "bg-primary border-primary" : "border-muted-foreground"
-                    }`}>
-                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    <div
+                      title={planInfo?.isCampaign && isSelected ? "キャンペーン適用中 — 無料でご利用いただけます" : undefined}
+                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                        plan.comingSoon
+                          ? "border-muted/30 bg-muted/10 opacity-30 cursor-not-allowed"
+                          : isSelected
+                            ? planInfo?.isCampaign ? "bg-blue-500 border-blue-500" : "bg-primary border-primary"
+                            : "border-muted-foreground"
+                      }`}>
+                      {isSelected && <Check className="w-3 h-3 text-white" />}
                     </div>
 
                     <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center shrink-0">
