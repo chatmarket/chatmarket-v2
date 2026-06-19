@@ -124,7 +124,7 @@ const PLANS = [
     iconColor: "text-violet-400",
     badge: "1対2〜最大9名",
     badgeColor: "bg-violet-500/20 text-violet-300",
-    description: "1対2〜最大9名の少人数レッスンを開講できます。チケット制で1回単位の収益化。生徒は無料プランでもアクセス可能。キャンペーン対象者は12か月間月額無料。",
+    description: "1対2〜最大9名の少人数レッスンを開講できます。チケット制で1回単位の収益化ができ、生徒は無料プランでも参加できます。キャンペーン対象者は12か月間月額無料。",
     features: [
       "1対2〜最大9名の少人数授業（生徒氏名がリアルタイム表示）",
       "チケット制（1回単位・自由料金設定）",
@@ -354,7 +354,7 @@ export default function PlanSelect() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-background">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-32 space-y-8 bg-background">
       <MetaHelmet page="plan-select" />
       {/* 全ユーザー共通：キャンペーン・課金条件の説明バナー */}
       <div className="bg-secondary/50 border border-border/60 rounded-xl p-4 space-y-2">
@@ -642,6 +642,16 @@ export default function PlanSelect() {
                     </div>
                   )}
                   {/* キャンペーン対象者：Stripe不可・利用中表示 */}
+                  {plan.id === 'mini-school' && (
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 border-violet-500/40 text-violet-300 hover:bg-violet-500/10"
+                      onClick={(e) => { e.stopPropagation(); navigate('/classroom-lp'); }}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      詳しく見る（ミニスクールLP）
+                    </Button>
+                  )}
                   {(planInfo?.isAdmin || planInfo?.isCampaign) && ['call-anser','basic','vod','ppv','mini-school'].includes(plan.id) ? (
                     <div className="w-full h-9 rounded-lg border border-blue-500/40 bg-blue-500/10 flex items-center justify-center gap-2 text-sm text-blue-300 font-bold">
                       ✅ キャンペーン適用中 — 追加料金なし
