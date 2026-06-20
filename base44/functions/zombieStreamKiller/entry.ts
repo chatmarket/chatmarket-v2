@@ -14,6 +14,7 @@ Deno.serve(async (req) => {
     const liveStreams = await base44.asServiceRole.entities.LiveStream.filter({ status: "live" });
 
     if (!liveStreams || liveStreams.length === 0) {
+      console.log("[zombieStreamKiller] skipped: no target data");
       return Response.json({ message: "No live streams found", killed: 0 });
     }
 

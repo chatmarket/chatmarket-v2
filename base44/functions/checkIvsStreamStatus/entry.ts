@@ -8,6 +8,11 @@ Deno.serve(async (req) => {
 
     const { streamId, channelArn: directArn } = await req.json();
 
+    // channelArnが渡されていない場合は早期リターン
+    if (!directArn && !streamId) {
+      return Response.json({ skipped: true, reason: "no_channelArn" }, { status: 200 });
+    }
+
     const region = Deno.env.get('AWS_REGION') || 'ap-northeast-1';
     const accessKeyId = Deno.env.get('AWS_ACCESS_KEY_ID');
     const secretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
@@ -19,7 +24,17 @@ Deno.serve(async (req) => {
       channelArn = streams[0]?.ivs_channel_arn;
     }
     if (!channelArn) {
-      return Response.json({ error: 'channelArn not found', stream_state: 'NOT_STREAMING' }, { status: 400 });
+      return Response.json({ skipped: true, reason: "no_channelArn" }, { status: 200 });
+    }
+
+    // アクティブなストリームが存在するか確認（直近48h以内 or is_live=true or live/starting状態）
+    const now48hAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const liveStreams = await base44.asServiceRole.entities.LiveStream.filter({ status: "live" });
+    const startingStreams = await base44.asServiceRole.entities.LiveStream.filter({ status: "starting" });
+    const hasActiveStream = liveStreams.length > 0 || startingStreams.length > 0;
+
+    if (!hasActiveStream && !directArn) {
+      return Response.json({ skipped: true, reason: "no_active_streams", checked: 0 }, { status: 200 });
     }
 
     async function sha256Hex(message) {

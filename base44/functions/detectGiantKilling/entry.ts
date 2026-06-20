@@ -50,6 +50,10 @@ Deno.serve(async (req) => {
 
     // 全チャンネルをmonthly_revenue_coins順で取得
     const channels = await base44.entities.Channel.list('-monthly_revenue_coins', 20);
+    if (!channels || channels.length === 0) {
+      console.log("[detectGiantKilling] skipped: no target data");
+      return Response.json({ skipped: true, reason: "no target data" });
+    }
     if (channels.length < 4) return Response.json({ skipped: true, reason: 'not_enough_channels' });
 
     // 現在の売上ランキング（TOP5）

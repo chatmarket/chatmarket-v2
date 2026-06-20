@@ -94,6 +94,11 @@ Deno.serve(async (req) => {
       status: "accepted",
     });
 
+    if (!appointments || appointments.length === 0) {
+      console.log("[appointmentReminder] skipped: no target data");
+      return Response.json({ success: true, sent: 0, skipped: true, reason: "no target data" });
+    }
+
     let sent = 0;
     let skipped = 0;
     let errors = 0;

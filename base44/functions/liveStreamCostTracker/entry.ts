@@ -38,6 +38,11 @@ Deno.serve(async (req) => {
     // ライブ中の配信を全取得
     const liveStreams = await base44.asServiceRole.entities.LiveStream.filter({ status: 'live' });
 
+    if (!liveStreams || liveStreams.length === 0) {
+      console.log("[liveStreamCostTracker] skipped: no target data");
+      return Response.json({ success: true, processed: 0, skipped: true, reason: "no target data" });
+    }
+
     const results = [];
 
     for (const stream of liveStreams) {
