@@ -112,6 +112,7 @@ export default function Dashboard() {
   });
 
   // 最も遅いexpires_atを持つGrantを特定（複数Grant対応）
+  // checkCampaignExpiryと同じJST日付基準で判定する
   const campaignBannerInfo = useMemo(() => {
     if (!campaignGrants.length) return null;
     const now = new Date();
@@ -128,10 +129,6 @@ export default function Dashboard() {
     );
     const latestExpiry = new Date(latestGrant.expires_at);
 
-    // 90日以上前に終了している場合はバナー非表示
-    const daysSince = Math.floor((now - latestExpiry) / (1000 * 60 * 60 * 24));
-    if (daysSince > 90) return null;
-
     // 有効な85%対象PlanSubscriptionを保有しているか確認
     const HIGH_RATE_PLAN_IDS = ["basic", "call-anser", "mini-school"];
     const hasHighRatePlan = activeSubs.some((s) => {
@@ -143,14 +140,35 @@ export default function Dashboard() {
     });
     if (hasHighRatePlan) return null;
 
-    const daysUntil = Math.floor((latestExpiry - now) / (1000 * 60 * 60 * 24));
-    // 30日以内 or 終了後のみバナー表示
-    if (daysUntil > 30) return null;
+    // ── checkCampaignExpiryと同じJST日付差で判定 ──
+    // 実際にexpires_atを過ぎている場合のみ expired 扱い
+    const isExpired = now >= latestExpiry;
 
-    const isExpired = now > latestExpiry;
+    if (!isExpired) {
+      // JSTカレンダー日付差（+9h してから日付単位で比較）
+      const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+      const nowJstDay = Math.floor((now.getTime()          + JST_OFFSET_MS) / (24 * 60 * 60 * 1000));
+      const expJstDay = Math.floor((latestExpiry.getTime() + JST_OFFSET_MS) / (24 * 60 * 60 * 1000));
+      const jstDiff = expJstDay - nowJstDay;
+      // 31日以上先はバナー非表示
+      if (jstDiff > 30) return null;
+    } else {
+      // 終了後90日超はバナー非表示
+      const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+      const nowJstDay = Math.floor((now.getTime()          + JST_OFFSET_MS) / (24 * 60 * 60 * 1000));
+      const expJstDay = Math.floor((latestExpiry.getTime() + JST_OFFSET_MS) / (24 * 60 * 60 * 1000));
+      if (nowJstDay - expJstDay > 90) return null;
+    }
+
     const dateStr = latestExpiry.toLocaleDateString("ja-JP", {
-      year: "numeric", month: "long", day: "numeric",
+      year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Tokyo",
     });
+
+    // 残日数表示用（JST日付差）
+    const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+    const nowJstDay = Math.floor((now.getTime()          + JST_OFFSET_MS) / (24 * 60 * 60 * 1000));
+    const expJstDay = Math.floor((latestExpiry.getTime() + JST_OFFSET_MS) / (24 * 60 * 60 * 1000));
+    const daysUntil = expJstDay - nowJstDay; // 0=当日, 負=終了後
 
     return { isExpired, daysUntil, dateStr, latestExpiry };
   }, [campaignGrants, activeSubs]);

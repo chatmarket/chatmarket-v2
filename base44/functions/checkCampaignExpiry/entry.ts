@@ -26,14 +26,50 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.31";
 // 85%対象PlanSubscriptionのplan_id（Basic相当）
 const HIGH_RATE_PLAN_IDS = ["basic", "call-anser", "mini-school"];
 
-// 通知トリガーとなる残り日数の閾値（小さい順に並べる）
-const STAGES = [
-  { days: 1,  stage: "1",       label: "前日" },
-  { days: 7,  stage: "7",       label: "7日前" },
-  { days: 14, stage: "14",      label: "14日前" },
-  { days: 30, stage: "30",      label: "30日前" },
-  { days: -1, stage: "expired", label: "終了後" }, // 終了済み
-];
+/**
+ * JSTのカレンダー日付差を計算する
+ * JST = UTC+9 なので +9h してから日付を取り出す
+ * 例: expires_at が 2026-07-07T14:59:00Z → JST 2026-07-07 23:59 → JST日付 07/07
+ *      now が 2026-07-06T15:00:00Z        → JST 2026-07-07 00:00 → JST日付 07/07
+ *      → 差 = 0日 → stage "1"（当日＝前日扱い）
+ * expires_at の時刻が何時であっても JST の日付単位で比較するため取りこぼしにくい
+ */
+function jstDateDiffDays(now, expiresAt) {
+  const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+  const nowJstMs      = now.getTime()       + JST_OFFSET_MS;
+  const expJstMs      = expiresAt.getTime() + JST_OFFSET_MS;
+  // 時刻部分を切り捨てて日付のみで比較
+  const nowJstDay = Math.floor(nowJstMs  / (24 * 60 * 60 * 1000));
+  const expJstDay = Math.floor(expJstMs  / (24 * 60 * 60 * 1000));
+  return expJstDay - nowJstDay; // 正=未来, 0=当日, 負=過去
+}
+
+/**
+ * 残日数（JST日付差）から通知すべき stage を返す
+ * 残日数に応じて最も近い未送信段階を1つ選ぶ。
+ * Automation停止後に再開した場合でも現在の残日数に合う段階だけを返す。
+ *
+ * 判定仕様:
+ *   expires_at が現在時刻以前        → "expired"
+ *   JST日付差 0〜1日（当日〜前日）  → "1"
+ *   JST日付差 2〜7日                 → "7"
+ *   JST日付差 8〜14日                → "14"
+ *   JST日付差 15〜30日               → "30"
+ *   JST日付差 31日以上               → null（通知しない）
+ *
+ * ※ expires_at が未来であっても当日中であれば expired は送らない
+ */
+function resolveStage(now, expiresAt) {
+  // 実際にexpires_atを過ぎている場合のみ expired
+  if (now >= expiresAt) return "expired";
+
+  const diff = jstDateDiffDays(now, expiresAt);
+  if (diff <= 1)  return "1";
+  if (diff <= 7)  return "7";
+  if (diff <= 14) return "14";
+  if (diff <= 30) return "30";
+  return null; // 31日以上先は通知しない
+}
 
 /**
  * 有効な85%対象PlanSubscriptionを保有しているか確認
@@ -192,82 +228,60 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // ── 通知すべきstageを判定 ──
-      const daysUntilExpiry = Math.floor((latestExpiry - now) / (1000 * 60 * 60 * 24));
+      // ── 通知すべきstageを判定（JST日付基準）──
+      const stage = resolveStage(now, latestExpiry);
+
+      // stage が null（31日以上先）は通知不要
+      if (stage === null) continue;
 
       // latestGrantのexpiry_notified_stagesを参照
       const alreadyNotified = new Set(latestGrant.expiry_notified_stages || []);
 
-      for (const { days, stage } of STAGES) {
-        let shouldNotify = false;
+      if (alreadyNotified.has(stage)) {
+        stats.notifications_already_sent++;
+        continue;
+      }
 
-        if (stage === "expired") {
-          // 終了後: latestExpiryが過去
-          shouldNotify = now > latestExpiry;
-        } else {
-          // Ndays前: daysUntilExpiry <= days かつ daysUntilExpiry >= 0
-          const threshold = parseInt(stage);
-          shouldNotify = daysUntilExpiry >= 0 && daysUntilExpiry <= threshold;
-        }
-
-        if (!shouldNotify) continue;
-        if (alreadyNotified.has(stage)) {
-          stats.notifications_already_sent++;
-          continue;
-        }
-
-        // ref_idで重複チェック（Notification側）
-        const refId = buildRefId(latestGrant.id, stage, latestGrant.expires_at);
-        const existingNotif = await base44.asServiceRole.entities.Notification.filter({
-          ref_id: refId,
-        });
-        if (existingNotif.length > 0) {
-          stats.notifications_already_sent++;
-          // expiry_notified_stages側も同期
-          if (!dryRun && !alreadyNotified.has(stage)) {
-            const updatedStages = [...alreadyNotified, stage];
-            await base44.asServiceRole.entities.CampaignLiveGrantee.update(latestGrant.id, {
-              expiry_notified_stages: updatedStages,
-            }).catch(() => {});
-          }
-          continue;
-        }
-
-        stats.notifications_to_create++;
-        stats.stage_counts[stage] = (stats.stage_counts[stage] || 0) + 1;
-
+      // ref_idで重複チェック（Notification側）
+      const refId = buildRefId(latestGrant.id, stage, latestGrant.expires_at);
+      const existingNotif = await base44.asServiceRole.entities.Notification.filter({ ref_id: refId });
+      if (existingNotif.length > 0) {
+        stats.notifications_already_sent++;
+        // expiry_notified_stages側も同期
         if (!dryRun) {
-          // ── Notification作成（先に作成してから stages を更新）──
-          const content = buildNotificationContent(stage, latestGrant.expires_at);
-          try {
-            await base44.asServiceRole.entities.Notification.create({
-              user_email: email,
-              type: "campaign_expiry_warning",
-              title: content.title,
-              message: content.message,
-              link: content.link,
-              is_read: false,
-              ref_id: refId,
-            });
-
-            // Notification作成成功後にのみstagesを更新
-            const updatedStages = [...alreadyNotified, stage];
-            await base44.asServiceRole.entities.CampaignLiveGrantee.update(latestGrant.id, {
-              expiry_notified_stages: updatedStages,
-            });
-
-            // alreadyNotifiedも更新（同一ループ内の他stageに影響しないよう）
-            alreadyNotified.add(stage);
-
-          } catch (err) {
-            console.error(`[checkCampaignExpiry] notification failed for stage=${stage}: ${err.message}`);
-            // stagesは更新しない（次回再実行でref_idチェックにより重複防止）
-          }
+          await base44.asServiceRole.entities.CampaignLiveGrantee.update(latestGrant.id, {
+            expiry_notified_stages: [...alreadyNotified, stage],
+          }).catch(() => {});
         }
+        continue;
+      }
 
-        // 1ユーザーにつき最も重要な1stageのみ（最も近い期限）を今回送信
-        // 複数stageが同時に該当しても1通のみ送る
-        break;
+      stats.notifications_to_create++;
+      stats.stage_counts[stage] = (stats.stage_counts[stage] || 0) + 1;
+
+      if (!dryRun) {
+        // ── Notification作成（先に作成してから stages を更新）──
+        const content = buildNotificationContent(stage, latestGrant.expires_at);
+        try {
+          await base44.asServiceRole.entities.Notification.create({
+            user_email: email,
+            type: "campaign_expiry_warning",
+            title: content.title,
+            message: content.message,
+            link: content.link,
+            is_read: false,
+            ref_id: refId,
+          });
+
+          // Notification作成成功後にのみstagesを更新
+          await base44.asServiceRole.entities.CampaignLiveGrantee.update(latestGrant.id, {
+            expiry_notified_stages: [...alreadyNotified, stage],
+          });
+
+        } catch (err) {
+          console.error(`[checkCampaignExpiry] notification failed for stage=${stage}: ${err.message}`);
+          // stagesは更新しない（次回再実行でref_idチェックにより重複防止）
+        }
       }
     }
 
