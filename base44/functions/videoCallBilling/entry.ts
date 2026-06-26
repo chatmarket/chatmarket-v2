@@ -1,21 +1,23 @@
 /**
  * videoCallBilling
  *
- * 確定仕様（2026-04）プラン別マトリックス:
+ * 収益還元率・通話料金はすべて callee（占い師・クリエイター）側の有効プランで決定する。
+ * caller（相談者）はコイン残高・支払い可能額の確認にのみ使用する。
  *
- *   FREEプラン:
- *     最低価格: 200エールコイン / 15分
- *     ライバー還元: 70% (140コイン)
- *     Admin手数料: 30% (60コイン) ← AWS原価と相殺して収支トントン
+ * プラン別マトリックス（callee側で判定）:
  *
- *   BasicプランおよびCALLプラン:
+ *   85%プラン（basic / call-anser / mini-school / CampaignLiveGrantee有効期間内）:
  *     最低価格: 150エールコイン / 15分
  *     ライバー還元: 85% (127コイン)
- *     Admin手数料: 15% (23コイン) ← 不足分はBasicプランMRRから補填
+ *     Admin手数料: 15% (23コイン)
+ *
+ *   FREE（上記以外・期限切れPlanSubscription・期限切れCampaignLiveGrantee）:
+ *     最低価格: 200エールコイン / 15分
+ *     ライバー還元: 70% (140コイン)
+ *     Admin手数料: 30% (60コイン)
  *
  *   ※ +3.6%手数料はエールコイン「購入時」のみ発生（クレカ決済）
  *      コイン使用時（通話課金）には手数料は発生しない
- *   プランアップグレード: ライバーのプラン変更後、次回tickから自動的に新レートを適用
  *
  * POST body: { call_id: string, action: "tick" | "end" | "check_next" }
  */
@@ -27,38 +29,63 @@ const PLAN_CONFIG = {
   free: {
     min_coins:      200,   // 最低価格 200コイン/15分
     creator_rate:   0.70,  // ライバー70%
-    platform_rate:  0.30,  // Admin30%（¥60 → AWS原価と相殺）
+    platform_rate:  0.30,  // Admin30%
   },
   basic: {
     min_coins:      150,   // 最低価格 150コイン/15分
     creator_rate:   0.85,  // ライバー85%
-    platform_rate:  0.15,  // Admin15%（¥22.5 → 不足分はMRR補填）
+    platform_rate:  0.15,  // Admin15%
   },
 };
 
-// ライバーのプランを判定（サブスクリプションをチェック）
-async function getCallerPlanConfig(base44, callerEmail) {
-  const subs = await base44.asServiceRole.entities.PlanSubscription.filter({
-    user_email: callerEmail,
-    status: 'active',
-  });
-  const activeSub = subs[0];
-  if (activeSub && (activeSub.plan_id === 'basic' || activeSub.plan_id === 'call-anser')) {
-    return { plan: 'basic', ...PLAN_CONFIG.basic };
-  }
-  return { plan: 'free', ...PLAN_CONFIG.free };
-}
-
-// ライバー（着信側）のプランを判定
+/**
+ * callee（占い師・クリエイター側）の有効プランを判定する。
+ * 判定優先順位:
+ *   1. CampaignLiveGrantee — expires_at が未来 → 85%
+ *   2. PlanSubscription — status=active かつ end_date が null または未来
+ *      plan_id が basic / call-anser / mini-school → 85%
+ *   3. 上記以外 → 70%
+ */
 async function getCalleePlanConfig(base44, calleeEmail) {
-  const subs = await base44.asServiceRole.entities.PlanSubscription.filter({
-    user_email: calleeEmail,
-    status: 'active',
-  });
-  const activeSub = subs[0];
-  if (activeSub && (activeSub.plan_id === 'basic' || activeSub.plan_id === 'call-anser')) {
-    return { plan: 'basic', ...PLAN_CONFIG.basic };
+  const now = new Date();
+
+  // 1. CampaignLiveGrantee チェック
+  try {
+    const grants = await base44.asServiceRole.entities.CampaignLiveGrantee.filter({ email: calleeEmail });
+    const activeGrant = grants.find(g => {
+      if (!g.expires_at) return false;
+      const exp = new Date(g.expires_at);
+      return !isNaN(exp.getTime()) && exp > now;
+    });
+    if (activeGrant) {
+      return { plan: 'campaign', ...PLAN_CONFIG.basic };
+    }
+  } catch (e) {
+    console.warn('[getCalleePlanConfig] CampaignLiveGrantee check failed:', e.message);
   }
+
+  // 2. PlanSubscription チェック
+  try {
+    const subs = await base44.asServiceRole.entities.PlanSubscription.filter({
+      user_email: calleeEmail,
+      status: 'active',
+    });
+    const PAID_PLAN_IDS = ['basic', 'call-anser', 'mini-school'];
+    const validSub = subs.find(s => {
+      if (!PAID_PLAN_IDS.includes(s.plan_id)) return false;
+      if (!s.end_date) return true;                      // end_date=null → 常時有効
+      const end = new Date(s.end_date);
+      if (isNaN(end.getTime())) return false;            // 不正値 → 無効
+      return end > now;                                  // 未来のみ有効
+    });
+    if (validSub) {
+      return { plan: validSub.plan_id, ...PLAN_CONFIG.basic };
+    }
+  } catch (e) {
+    console.warn('[getCalleePlanConfig] PlanSubscription check failed:', e.message);
+  }
+
+  // 3. FREE フォールバック
   return { plan: 'free', ...PLAN_CONFIG.free };
 }
 
@@ -88,7 +115,7 @@ async function chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg) {
     message:             `1対1ビデオ通話（第${unitNumber}ユニット）ライバー${Math.round(planCfg.creator_rate*100)}% / Admin${Math.round(planCfg.platform_rate*100)}% [${planCfg.plan}プラン]`,
   });
 
-  console.log(`[chargeOneUnit] unit=${unitNumber} coins=${coinsToCharge} creator=${creatorCoins} platform=${platformCoins}`);
+  console.log(`[chargeOneUnit] unit=${unitNumber} coins=${coinsToCharge} creator=${creatorCoins} platform=${platformCoins} plan=${planCfg.plan}`);
 
   // ミリオネア・チャレンジ集計
   if (call.callee_channel_id) {
@@ -129,9 +156,9 @@ Deno.serve(async (req) => {
     const now = new Date();
 
     // ── action: check_next ── 次ユニット残高確認（課金なし）
+    // 必要コイン数は callee（占い師）側プランから取得、残高確認は caller（相談者）のウォレット
     if (action === 'check_next') {
-      // 発信者のプランを動的チェック（アップグレード直後に即反映）
-      const planCfg = await getCallerPlanConfig(base44, call.caller_email);
+      const planCfg = await getCalleePlanConfig(base44, call.callee_email);
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
       const wallet = wallets[0];
       const balance = wallet?.balance || 0;
@@ -150,11 +177,10 @@ Deno.serve(async (req) => {
       const actualMinutes = Math.ceil((now - billingStart) / 1000 / 60);
       let consumedCoins = call.coins_consumed || 0;
 
-      // 終了時点のプランで分配比率を確定（最後に適用されたプランを使用）
+      // 終了時点の callee（占い師）側プランで分配比率を確定
       const planCfg = await getCalleePlanConfig(base44, call.callee_email);
 
-      // ── 録画オプション追加課金 ──────────────────────────────────────
-      // recording_option が true の場合、録画コストを発信者ウォレットから追加徴収
+      // ── 録画オプション追加課金 ──
       let recordingOptionCost = 0;
       if (call.recording_option) {
         recordingOptionCost = RECORDING_COST_FLAT;
@@ -166,7 +192,6 @@ Deno.serve(async (req) => {
             total_sent: (callerWallet.total_sent || 0) + recordingOptionCost,
           });
           consumedCoins += recordingOptionCost;
-          // トランザクション記録
           await base44.entities.YellCoinTransaction.create({
             user_email:          call.caller_email,
             type:                'send',
@@ -183,14 +208,13 @@ Deno.serve(async (req) => {
         } else {
           console.warn(`[videoCallBilling/end] recording_option: 残高不足のためスキップ (balance: ${callerWallet?.balance})`);
         }
-        // 録画インフラコストを記録
         await base44.entities.VideoCall.update(call_id, {
           recording_infra_cost_yen: recordingOptionCost,
           recording_option_price:   recordingOptionCost,
         });
       }
 
-      // ライバーへの還元はプランの creator_rate に連動
+      // callee 側プランで最終分配を確定
       const creatorRevenueCoins  = Math.floor(consumedCoins * planCfg.creator_rate);
       const platformRevenueCoins = consumedCoins - creatorRevenueCoins;
 
@@ -198,7 +222,7 @@ Deno.serve(async (req) => {
       const platformRevYen = platformRevenueCoins;
       const profitYen      = platformRevYen - commCostYen;
 
-      console.log(`[videoCallBilling/end] call=${call_id} plan=${planCfg.plan} consumed=${consumedCoins} creator=${creatorRevenueCoins}(${Math.round(planCfg.creator_rate*100)}%) platform=${platformRevenueCoins} recording=${recordingOptionCost} profit_yen=${profitYen}`);
+      console.log(`[videoCallBilling/end] call=${call_id} callee_plan=${planCfg.plan} consumed=${consumedCoins} creator=${creatorRevenueCoins}(${Math.round(planCfg.creator_rate*100)}%) platform=${platformRevenueCoins} recording=${recordingOptionCost} profit_yen=${profitYen}`);
 
       await base44.entities.VideoCall.update(call_id, {
         status:                  'ended',
@@ -224,12 +248,13 @@ Deno.serve(async (req) => {
     }
 
     // ── action: tick ── 毎分フロントから呼ぶ課金タイマー
+    // 通話料金・分配率は callee（占い師）側プランで決定する
     if (action === 'tick') {
-      // tickごとにプランを動的チェック → アップグレード後は即座に新レート適用
-      const planCfg = await getCallerPlanConfig(base44, call.caller_email);
+      const planCfg = await getCalleePlanConfig(base44, call.callee_email);
 
       // ── 最初のユニット（課金開始）──
       if (!call.billing_started_at) {
+        // 残高確認は caller（相談者）のウォレット
         const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
         const wallet = wallets[0];
 
@@ -281,7 +306,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // ── 15分経過 → 次ユニット課金（プランは現時点で動的取得済み）──
+      // ── 15分経過 → 次ユニット課金（callee 側プランで料金・分配率を確定）──
       const wallets = await base44.entities.YellCoinWallet.filter({ user_email: call.caller_email });
       const wallet = wallets[0];
 
@@ -314,9 +339,9 @@ Deno.serve(async (req) => {
       const { coinsToCharge, creatorCoins, platformCoins, nextBillingAt: newNextBillingAt } =
         await chargeOneUnit(base44, call, wallet, unitNumber, now, planCfg);
 
-      const newConsumed        = (call.coins_consumed || 0) + coinsToCharge;
-      const newCreatorTotal    = (call.creator_revenue_coins || 0) + creatorCoins;
-      const newPlatformTotal   = (call.platform_revenue_coins || 0) + platformCoins;
+      const newConsumed      = (call.coins_consumed || 0) + coinsToCharge;
+      const newCreatorTotal  = (call.creator_revenue_coins || 0) + creatorCoins;
+      const newPlatformTotal = (call.platform_revenue_coins || 0) + platformCoins;
 
       await base44.entities.VideoCall.update(call_id, {
         next_billing_at:        newNextBillingAt.toISOString(),
