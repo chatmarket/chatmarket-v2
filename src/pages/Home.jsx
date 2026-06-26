@@ -301,6 +301,46 @@ export default function Home() {
             ChatMarket · Est. 2026
           </p>
 
+          {/* ── キャンペーン募集バナー（ヒーロー上部・大型） ── */}
+          <Link to="/recruit" className="block w-full max-w-2xl mx-auto">
+            <div className="rounded-2xl overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.99]"
+              style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.20), rgba(251,191,36,0.08))", border: "2px solid rgba(245,158,11,0.55)", boxShadow: "0 0 36px rgba(245,158,11,0.22)" }}>
+              <div className="px-6 py-5 space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="text-left space-y-1">
+                    <p className="text-sm font-black text-amber-400 tracking-widest uppercase flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse inline-block" />
+                      🎁 12ヶ月無料キャンペーン受付中
+                    </p>
+                    <p className="text-xl sm:text-2xl font-black text-white leading-snug">クリエイター募集<br className="sm:hidden" /> — 全有料プラン無料で始める</p>
+                    <p className="text-sm text-white/60">今すぐ登録してスキルを収益化しよう</p>
+                  </div>
+                  <button className="shrink-0 px-5 py-3 rounded-xl text-sm font-black text-black transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                    style={{ background: "linear-gradient(135deg, #f59e0b, #fbbf24)", boxShadow: "0 0 18px rgba(245,158,11,0.5)" }}>
+                    募集を見る →
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "🔮 占い師・鑑定士", path: "/fortune-lp" },
+                    { label: "✨ アイドル・ファン", path: "/idol-lp" },
+                    { label: "📚 講師・家庭教師", path: "/lp/tutor" },
+                    { label: "🎵 音楽家・アーティスト", path: "/musician" },
+                    { label: "🏫 オンライン教室・ミニスクール", path: "/classroom-lp" },
+                    { label: "🌱 その他", path: "/recruit" },
+                  ].map(({ label, path }) => (
+                    <Link key={path + label} to={path} onClick={e => e.stopPropagation()}>
+                      <span className="inline-block text-xs font-semibold px-3 py-1.5 rounded-full transition-all hover:scale-105"
+                        style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.22)", color: "rgba(255,255,255,0.85)" }}>
+                        {label}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Link>
+
           {/* メインキャッチコピー */}
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight"
@@ -379,45 +419,7 @@ export default function Home() {
               <Play className="w-4 h-4 inline" /> ライブを見る
             </button>
           </div>
-          {/* ── キャンペーン募集バナー ── */}
-          <div className="w-full max-w-xl mx-auto rounded-2xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.06))", border: "1px solid rgba(245,158,11,0.35)" }}>
-            <div className="px-5 py-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-left">
-                  <p className="text-xs font-black text-amber-400 tracking-widest uppercase flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
-                    12ヶ月無料キャンペーン受付中
-                  </p>
-                  <p className="text-sm font-bold text-white/80 mt-0.5">クリエイター募集 — 全有料プラン無料で始める</p>
-                </div>
-                <Link to="/recruit">
-                  <button className="shrink-0 px-4 py-2 rounded-xl text-xs font-black text-black transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-                    style={{ background: "linear-gradient(135deg, #f59e0b, #fbbf24)", boxShadow: "0 0 12px rgba(245,158,11,0.4)" }}>
-                    募集を見る →
-                  </button>
-                </Link>
-              </div>
-              {/* カテゴリチップ */}
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { label: "🔮 占い師・鑑定士", path: "/fortune-lp" },
-                  { label: "✨ アイドル・ファン", path: "/idol-lp" },
-                  { label: "📚 講師・家庭教師", path: "/lp/tutor" },
-                  { label: "🎵 音楽家・アーティスト", path: "/musician" },
-                  { label: "🏫 オンライン教室・ミニスクール", path: "/classroom-lp" },
-                  { label: "🌱 その他", path: "/recruit" },
-                ].map(({ label, path }) => (
-                  <Link key={path + label} to={path}>
-                    <span className="inline-block text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all hover:scale-105"
-                      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}>
-                      {label}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
+
 
         </div>
       </section>
