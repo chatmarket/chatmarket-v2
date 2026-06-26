@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Flame, Radio, Heart, Phone, Trash2, CheckCircle2, Sparkles } from "lucide-react";
+import { Bell, Flame, Radio, Heart, Phone, Trash2, CheckCircle2, Sparkles, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -51,6 +51,8 @@ export default function NotificationBell({ user }) {
         return <Flame className="w-4 h-4 text-yellow-500" />;
       case "fortune_live_reminder":
         return <Sparkles className="w-4 h-4 text-violet-400" />;
+      case "campaign_expiry_warning":
+        return <AlertTriangle className="w-4 h-4 text-amber-400" />;
       default:
         return <Bell className="w-4 h-4 text-primary" />;
     }

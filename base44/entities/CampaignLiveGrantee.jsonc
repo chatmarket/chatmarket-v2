@@ -52,6 +52,21 @@
       "type": "number",
       "default": 12,
       "description": "\u4ed8\u4e0e\u6708\u6570\uff0812\u304b\u6708 or 24\u304b\u6708\uff09"
+    },
+    "expiry_notified_stages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "30",
+          "14",
+          "7",
+          "1",
+          "expired"
+        ]
+      },
+      "default": [],
+      "description": "\u9001\u4fe1\u6e08\u307f\u901a\u77e5\u6bb5\u968e\u30ea\u30b9\u30c8\u300230=30\u65e5\u524d / 14=14\u65e5\u524d / 7=7\u65e5\u524d / 1=\u524d\u65e5 / expired=\u7d42\u4e86\u5f8c\u3002\u540c\u4e00stage\u306f\u4e00\u5ea6\u306e\u307f\u9001\u4fe1\u3002"
     }
   },
   "required": [

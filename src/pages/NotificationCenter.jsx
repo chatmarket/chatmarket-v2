@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Bell, Flame, Radio, Heart, Trash2, CheckCircle2, Filter, Clock } from "lucide-react";
+import { Bell, Flame, Radio, Heart, Trash2, CheckCircle2, Filter, Clock, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ const NOTIFICATION_TYPES = {
   giant_killing: { label: "ジャイアントキリング", icon: Flame, color: "text-red-500", bg: "bg-red-500/10" },
   millionaire_achieved: { label: "ミリオネア達成", icon: Heart, color: "text-pink-500", bg: "bg-pink-500/10" },
   top_supporter: { label: "トップサポーター", icon: Flame, color: "text-yellow-500", bg: "bg-yellow-500/10" },
+  campaign_expiry_warning: { label: "無料期間終了案内", icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-400/10" },
 };
 
 export default function NotificationCenter() {

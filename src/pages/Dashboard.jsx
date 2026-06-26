@@ -7,14 +7,14 @@
  * - 支払い導線: コイン購入→1タップ、出金申請→1タップ（最短3ステップ）
  * - Progressive disclosure: 重要情報を上、詳細は「もっと見る」で後退
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Eye, Mic, Radio, Coins, TrendingUp, Wallet, Phone,
   Play, Heart, Users, History, ChevronRight, Bell,
-  Upload, Video, ArrowUpRight, Zap, Clock, AlertCircle, Crown
+  Upload, Video, ArrowUpRight, Zap, Clock, AlertCircle, Crown, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EarningsSummaryCard from "../components/dashboard/EarningsSummaryCard";
@@ -97,6 +97,63 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Purchase.filter({ channel_id: channel.id, status: "completed" }, "-created_date", 50),
     enabled: !!channel && mode === MODE_CREATOR,
   });
+
+  // ── 無料期間終了前バナー用データ ──
+  const { data: campaignGrants = [] } = useQuery({
+    queryKey: ["dashboard-campaign-grants", user?.email],
+    queryFn: () => base44.entities.CampaignLiveGrantee.filter({ email: user.email }),
+    enabled: !!user && mode === MODE_CREATOR,
+  });
+
+  const { data: activeSubs = [] } = useQuery({
+    queryKey: ["dashboard-active-subs", user?.email],
+    queryFn: () => base44.entities.PlanSubscription.filter({ user_email: user.email, status: "active" }),
+    enabled: !!user && mode === MODE_CREATOR,
+  });
+
+  // 最も遅いexpires_atを持つGrantを特定（複数Grant対応）
+  const campaignBannerInfo = useMemo(() => {
+    if (!campaignGrants.length) return null;
+    const now = new Date();
+
+    // 有効期限が存在するGrantのみ対象
+    const validGrants = campaignGrants.filter(
+      (g) => g.expires_at && !isNaN(new Date(g.expires_at).getTime())
+    );
+    if (!validGrants.length) return null;
+
+    // 最も遅いexpires_atを実質的な終了日とする
+    const latestGrant = validGrants.reduce((best, g) =>
+      new Date(g.expires_at) > new Date(best.expires_at) ? g : best
+    );
+    const latestExpiry = new Date(latestGrant.expires_at);
+
+    // 90日以上前に終了している場合はバナー非表示
+    const daysSince = Math.floor((now - latestExpiry) / (1000 * 60 * 60 * 24));
+    if (daysSince > 90) return null;
+
+    // 有効な85%対象PlanSubscriptionを保有しているか確認
+    const HIGH_RATE_PLAN_IDS = ["basic", "call-anser", "mini-school"];
+    const hasHighRatePlan = activeSubs.some((s) => {
+      if (!HIGH_RATE_PLAN_IDS.includes(s.plan_id)) return false;
+      if (!s.end_date) return true;
+      const end = new Date(s.end_date);
+      if (isNaN(end.getTime())) return false;
+      return end > now;
+    });
+    if (hasHighRatePlan) return null;
+
+    const daysUntil = Math.floor((latestExpiry - now) / (1000 * 60 * 60 * 24));
+    // 30日以内 or 終了後のみバナー表示
+    if (daysUntil > 30) return null;
+
+    const isExpired = now > latestExpiry;
+    const dateStr = latestExpiry.toLocaleDateString("ja-JP", {
+      year: "numeric", month: "long", day: "numeric",
+    });
+
+    return { isExpired, daysUntil, dateStr, latestExpiry };
+  }, [campaignGrants, activeSubs]);
 
   const { data: upcomingAppointments = [] } = useQuery({
     queryKey: ["dashboard-appointments", channel?.id],
@@ -355,7 +412,51 @@ export default function Dashboard() {
       {mode === MODE_CREATOR && (
         <div className="space-y-4">
 
-          {/* ── ① ヒーロー収益カード（モチベ爆上がり） ── */}
+          {/* ── ① 無料期間終了前バナー（CampaignLiveGrantee対象者のみ） ── */}
+          {campaignBannerInfo && (
+            <div className={`rounded-xl border p-4 space-y-2 ${
+              campaignBannerInfo.isExpired
+                ? "bg-red-500/10 border-red-500/40"
+                : "bg-amber-500/10 border-amber-500/40"
+            }`}>
+              <div className="flex items-start gap-2">
+                <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${campaignBannerInfo.isExpired ? "text-red-400" : "text-amber-400"}`} />
+                <div className="flex-1 min-w-0 space-y-1">
+                  {campaignBannerInfo.isExpired ? (
+                    <>
+                      <p className="text-sm font-black text-red-300">無料期間が終了しました</p>
+                      <p className="text-xs text-red-300/80">
+                        現在の受取率は <span className="font-bold text-white">70%</span> です。Basicプランにご加入いただくと <span className="font-bold text-white">85%</span> を維持できます。
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-black text-amber-300">
+                        無料期間終了まであと {campaignBannerInfo.daysUntil === 0 ? "本日" : `${campaignBannerInfo.daysUntil}日`}
+                      </p>
+                      <p className="text-xs text-amber-300/80">
+                        終了日：<span className="font-bold text-white">{campaignBannerInfo.dateStr}</span>
+                        　現在の受取率：<span className="font-bold text-white">85%</span>
+                        　終了後：<span className="font-bold text-white">70%</span>
+                      </p>
+                      <p className="text-[11px] text-amber-300/60">自動課金はありません。継続を希望する場合はプランをご確認ください。</p>
+                    </>
+                  )}
+                  <Link to="/plan-select">
+                    <button className={`mt-2 text-xs font-black px-4 py-1.5 rounded-lg transition-all ${
+                      campaignBannerInfo.isExpired
+                        ? "bg-red-500 hover:bg-red-600 text-white"
+                        : "bg-amber-500 hover:bg-amber-600 text-black"
+                    }`}>
+                      {campaignBannerInfo.isExpired ? "Basicプランを選ぶ" : "プランを確認する"}
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ② ヒーロー収益カード（モチベ爆上がり） ── */}
           <div className="relative overflow-hidden rounded-2xl p-5"
             style={{ background: "linear-gradient(135deg, #0a1a0a 0%, #0d2a0d 50%, #061006 100%)", border: "1px solid rgba(0,255,157,0.25)", boxShadow: "0 0 40px rgba(0,255,157,0.08)" }}>
             {/* 装飾グロー */}
