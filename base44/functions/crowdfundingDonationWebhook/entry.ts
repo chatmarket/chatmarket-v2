@@ -66,6 +66,13 @@ Deno.serve(async (req) => {
     const payoutYen    = parseInt(meta.payout_yen || '0');
     const storedRate   = parseFloat(meta.progressive_rate || '0.85');
 
+    // ── 冪等性チェック: 同一 session.id で既に寄付レコードが存在する場合はスキップ ──
+    const existingDonations = await base44.asServiceRole.entities.CrowdfundingDonation.filter({ stripe_session_id: session.id });
+    if (existingDonations.length > 0) {
+      console.log(`[CrowdfundingDonationWebhook] duplicate session skipped: ${session.id}`);
+      return Response.json({ ok: true });
+    }
+
     // ── 1. 寄付レコード作成 ──
     await base44.asServiceRole.entities.CrowdfundingDonation.create({
       project_id:      projectId,
