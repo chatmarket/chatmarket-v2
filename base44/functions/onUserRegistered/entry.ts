@@ -37,30 +37,6 @@ Deno.serve(async (req) => {
       console.warn(`⚠️ onboarding_required flag failed for ${userEmail}:`, flagErr.message);
     }
 
-    // 1. PlanSubscription (call-anser) 作成 — 重複チェック付き
-    try {
-      const existing = await base44.asServiceRole.entities.PlanSubscription.filter({
-        user_email: userEmail,
-        plan_id: 'call-anser',
-      });
-      if (existing.length === 0) {
-        await base44.asServiceRole.entities.PlanSubscription.create({
-          user_email: userEmail,
-          plan_id: 'call-anser',
-          plan_name: 'CALL&ANSERプラン',
-          status: 'active',
-        });
-        console.log(`✓ PlanSubscription created for ${userEmail}`);
-        results.plan = 'created';
-      } else {
-        console.log(`[onUserRegistered] PlanSubscription already exists for ${userEmail}`);
-        results.plan = 'already_exists';
-      }
-    } catch (planErr) {
-      console.error(`❌ PlanSubscription failed for ${userEmail}:`, planErr.message);
-      results.plan = 'error: ' + planErr.message;
-    }
-
     // 2. YellCoinWallet 作成 — 重複チェック付き
     try {
       const existingWallet = await base44.asServiceRole.entities.YellCoinWallet.filter({
