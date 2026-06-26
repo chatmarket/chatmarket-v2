@@ -44,6 +44,14 @@ Deno.serve(async (req) => {
         return Response.json({ received: true });
       }
 
+      // 冪等性チェック: 同一 session.id で既に発券済みの場合はスキップ
+      const psId = purchase_session_id || `PS-${session.id}`;
+      const existingTickets = await base44.asServiceRole.entities.DigitalTicket.filter({ purchase_session_id: psId });
+      if (existingTickets.length > 0) {
+        console.log(`[EventTicketWebhook] duplicate session skipped: ${session.id} (${existingTickets.length}枚既存)`);
+        return Response.json({ received: true });
+      }
+
       const qty = parseInt(quantity) || 1;
       const startSerial = parseInt(start_serial) || 1;
       const prefix = (tier_name || '').replace(/[^a-zA-Z0-9\u3040-\u9FFF]/g, '').slice(0, 6).toUpperCase() || 'TKT';
