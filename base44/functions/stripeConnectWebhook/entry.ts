@@ -31,10 +31,14 @@ Deno.serve(async (req) => {
   try {
     const signature = req.headers.get('stripe-signature');
     const body = await req.text();
-    const webhookSecret = Deno.env.get('STRIPE_CONNECT_WEBHOOK_SECRET') || Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    const webhookSecret = Deno.env.get('STRIPE_CONNECT_WEBHOOK_SECRET');
 
-    if (!signature || !webhookSecret) {
-      return Response.json({ error: 'Missing signature or secret' }, { status: 400 });
+    if (!webhookSecret) {
+      console.error('[stripeConnectWebhook] STRIPE_CONNECT_WEBHOOK_SECRET is not set');
+      return Response.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
+    if (!signature) {
+      return Response.json({ error: 'Missing stripe-signature' }, { status: 400 });
     }
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
@@ -74,6 +78,13 @@ Deno.serve(async (req) => {
       const platformFee = parseInt(meta.platform_fee_yen || '0');
       const payoutYen   = parseInt(meta.payout_yen || '0');
       const storedRate  = parseFloat(meta.progressive_rate || '0.85');
+
+      // 冪等性チェック: 同一 session.id で既に寄付レコードが存在する場合はスキップ
+      const existingDonations = await base44.asServiceRole.entities.CrowdfundingDonation.filter({ stripe_session_id: session.id });
+      if (existingDonations.length > 0) {
+        console.log(`[stripeConnectWebhook] duplicate session skipped: ${session.id}`);
+        return Response.json({ ok: true });
+      }
 
       // 1. 寄付レコード作成
       await base44.asServiceRole.entities.CrowdfundingDonation.create({
