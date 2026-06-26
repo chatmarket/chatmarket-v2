@@ -117,14 +117,23 @@ Deno.serve(async (req) => {
 
       // ── 動画購入 ─────────────────────────────────────────────
       if (meta.videoId && meta.userEmail && meta.type !== 'yell_coin_purchase') {
-        await base44.asServiceRole.entities.Purchase.create({
+        // 冪等性チェック: 同一 session.id で既にPurchaseが存在する場合はスキップ
+        const existingPurchase = await base44.asServiceRole.entities.Purchase.filter({
           item_type: 'video',
-          item_id: meta.videoId,
-          amount: session.amount_total,
-          buyer_email: meta.userEmail,
-          status: 'completed',
           stripe_session_id: session.id,
         });
+        if (existingPurchase.length > 0) {
+          console.log(`[VideoPurchase] duplicate session skipped: ${session.id}`);
+        } else {
+          await base44.asServiceRole.entities.Purchase.create({
+            item_type: 'video',
+            item_id: meta.videoId,
+            amount: session.amount_total,
+            buyer_email: meta.userEmail,
+            status: 'completed',
+            stripe_session_id: session.id,
+          });
+        }
       }
 
       // ── チャット鑑定 決済完了 ──────────────────────────────────
