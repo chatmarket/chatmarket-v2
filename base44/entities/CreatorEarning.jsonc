@@ -41,7 +41,8 @@
         "chat_reading",
         "video_call",
         "school_ticket",
-        "product"
+        "product",
+        "video_purchase"
       ],
       "description": "\u5831\u916c\u767a\u751f\u30b5\u30fc\u30d3\u30b9\u7a2e\u5225"
     },
@@ -53,7 +54,7 @@
         "physical",
         "ticket"
       ],
-      "description": "\u3010product\u7cfb\u3011\u5546\u54c1\u533a\u5206: audio=\u97f3\u6e90\u8ca9\u58f2(\u624b\u6570\u659910%+3.6%), digital=\u901a\u5e38\u30c7\u30b8\u30bf\u30eb\u5546\u54c1(\u624b\u6570\u6599\u672a\u78ba\u5b9a), physical=\u7269\u7406\u30b0\u30c3\u30ba, ticket=\u30c1\u30b1\u30c3\u30c8"
+      "description": "\u3010product\u7cfb\u3011\u5546\u54c1\u533a\u5206"
     },
     "platform_fee_rate": {
       "type": "number",
@@ -70,7 +71,11 @@
     },
     "service_id": {
       "type": "string",
-      "description": "\u95a2\u9023\u3059\u308b\u30b5\u30fc\u30d3\u30b9ID\uff08order_id / thread_id \u306a\u3069\uff09"
+      "description": "\u95a2\u9023\u3059\u308b\u30b5\u30fc\u30d3\u30b9ID\uff08order_id / thread_id / video_id \u306a\u3069\uff09"
+    },
+    "purchase_id": {
+      "type": "string",
+      "description": "\u5bfe\u5fdc\u3059\u308bPurchase.id\uff08\u52d5\u753b\u8cfc\u5165\u6642\uff09"
     },
     "transaction_id": {
       "type": "string",
@@ -93,17 +98,17 @@
     "creator_rate": {
       "type": "number",
       "default": 0.85,
-      "description": "\u3010Stripe\u7cfb\u3011\u9069\u7528\u9084\u5143\u7387"
+      "description": "\u9069\u7528\u9084\u5143\u7387"
     },
     "creator_amount_yen": {
       "type": "number",
       "default": 0,
-      "description": "\u3010Stripe\u7cfb\u3011\u30af\u30ea\u30a8\u30a4\u30bf\u30fc\u624b\u53d6\u308a\u984d\uff08\u5186\uff09"
+      "description": "\u30af\u30ea\u30a8\u30a4\u30bf\u30fc\u624b\u53d6\u308a\u984d\uff08\u5186\uff09"
     },
     "platform_amount_yen": {
       "type": "number",
       "default": 0,
-      "description": "\u3010Stripe\u7cfb\u3011\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0\u624b\u6570\u6599\uff08\u5186\uff09"
+      "description": "\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0\u624b\u6570\u6599\uff08\u5186\uff09"
     },
     "payment_provider": {
       "type": "string",

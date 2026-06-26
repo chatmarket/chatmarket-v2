@@ -24,7 +24,7 @@ function VideoListItem({ video, onRemove }) {
         {video.is_free ? (
           <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">FREE</span>
         ) : video.price > 0 ? (
-          <span className="absolute top-1 left-1 bg-secondary text-foreground text-[10px] font-bold px-1.5 py-0.5 rounded border border-border">¥{video.price?.toLocaleString()}</span>
+          <span className="absolute top-1 left-1 bg-secondary text-foreground text-[10px] font-bold px-1.5 py-0.5 rounded border border-border">{video.price?.toLocaleString()}コイン</span>
         ) : null}
       </Link>
       <div className="flex-1 min-w-0">

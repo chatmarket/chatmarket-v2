@@ -16,7 +16,7 @@
     },
     "amount": {
       "type": "number",
-      "description": "\u8cfc\u5165\u91d1\u984d"
+      "description": "\u8cfc\u5165\u91d1\u984d\uff08\u30b3\u30a4\u30f3\u6570 or \u5186\uff09"
     },
     "buyer_email": {
       "type": "string",
@@ -32,6 +32,22 @@
       "default": "completed",
       "description": "\u8cfc\u5165\u30b9\u30c6\u30fc\u30bf\u30b9"
     },
+    "channel_id": {
+      "type": "string",
+      "description": "\u8ca9\u58f2\u30c1\u30e3\u30f3\u30cd\u30ebID"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "\u8ca9\u58f2\u8005\uff08\u30af\u30ea\u30a8\u30a4\u30bf\u30fc\uff09\u30e1\u30fc\u30eb"
+    },
+    "coin_amount": {
+      "type": "number",
+      "description": "\u6d88\u8cbb\u3057\u305f\u30a8\u30fc\u30eb\u30b3\u30a4\u30f3\u6570\uff08\u30b3\u30a4\u30f3\u6c7a\u6e08\u6642\uff09"
+    },
+    "payment_provider": {
+      "type": "string",
+      "description": "\u6c7a\u6e08\u624b\u6bb5\uff08coin / stripe\uff09"
+    },
     "description": {
       "type": "string",
       "description": "\u30e1\u30e2\u30fb\u5099\u8003\uff08\u6700\u59271000\u6587\u5b57\uff09",
@@ -43,5 +59,34 @@
     "item_id",
     "amount",
     "buyer_email"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.buyer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

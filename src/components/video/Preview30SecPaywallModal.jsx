@@ -2,16 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
-import { Lock, CreditCard, DollarSign, AlertTriangle, Zap, Coins, Flame, Check } from "lucide-react";
+import { Lock, CreditCard, AlertTriangle, Zap, Coins, Flame, Check } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 /**
- * 30秒プレビュー終了後の購入誘導モーダル
- * 
- * 機能：
- * - Stripe手数料を外出し表示（透明性ガード）
- * - 「購入ボタン」→ Stripe決済 → 購入完了時にシームレス再開
- * - モーダル表示中はスクロール・背景操作完全ロック
+ * 30秒プレビュー終了後の購入誘導モーダル（コイン決済専用）
+ *
+ * - ブラウザから Purchase.create / YellCoinWallet.update を直接呼び出さない
+ * - purchaseVideoWithCoin Function 経由でサーバー側で安全に処理する
  */
 export default function Preview30SecPaywallModal({
   open,
@@ -21,11 +20,9 @@ export default function Preview30SecPaywallModal({
   onPurchased,
 }) {
   const [processing, setProcessing] = useState(false);
-  const [coinProcessing, setCoinProcessing] = useState(false);
   const [wallet, setWallet] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState(null); // "coin" | "stripe"
 
-  // ウォレット情報取得
+  // ウォレット情報取得（残高確認表示用のみ）
   useEffect(() => {
     if (!user || !open || !video) return;
     base44.entities.YellCoinWallet.filter({ user_email: user.email }).then((w) => {
@@ -33,7 +30,7 @@ export default function Preview30SecPaywallModal({
     });
   }, [user?.email, open, video?.id]);
 
-  // モーダル開閉時に body overflow を制御（ロック強化）
+  // モーダル開閉時に body overflow を制御
   useEffect(() => {
     if (open) {
       const originalOverflow = document.body.style.overflow;
@@ -46,85 +43,34 @@ export default function Preview30SecPaywallModal({
 
   if (!video) return null;
 
-  // プラットホーム手数料計算（固定: 3.6% + ¥40）
-  const PLATFORM_FEE_RATE = 0.036;
-  const PLATFORM_FEE_FIXED = 40; // 40円
-  const platformFee = Math.round(video.price * PLATFORM_FEE_RATE + PLATFORM_FEE_FIXED);
-  const totalCharge = video.price + platformFee;
+  const coinPrice = video.price || 0; // Video.price = 必要コイン数（1:1）
+  const hasEnoughCoins = wallet && wallet.balance >= coinPrice;
 
-  // エールコイン決済（残高確認 → 購入 → ロック解除）
+  // コイン購入（Function経由）
   const handleCoinPurchase = async () => {
-    if (!user || !wallet) {
-      base44.auth.redirectToLogin();
-      return;
-    }
-
-    // コイン価格計算: 手数料込み（1円 = 10コイン）
-    // ベース: video.price + プラットホーム手数料 → コインに変換
-    const totalYen = video.price + platformFee;
-    const coinPrice = Math.ceil(totalYen * 10);
-    
-    if (wallet.balance < coinPrice) {
-      // 残高不足 → チャージ画面へ
-      toast.error(`残高不足です（需要: ${coinPrice.toLocaleString()}コイン、保有: ${wallet.balance.toLocaleString()}コイン）`);
-      // チャージ画面へナビゲート（フロントエンド側で実装）
-      window.location.href = "/yell-coin-charge";
-      return;
-    }
-
-    setCoinProcessing(true);
-    try {
-      // Purchase レコード作成（コイン決済）
-      // ベースコンテンツ価格（video.price）をベースに、5%利益確保
-      const purchase = await base44.entities.Purchase.create({
-        item_type: "video",
-        item_id: video.id,
-        amount: totalYen,
-        buyer_email: user.email,
-        status: "completed",
-        payment_method: "coin",
-      });
-
-      // ウォレット残高を減算
-      const newBalance = wallet.balance - coinPrice;
-      await base44.entities.YellCoinWallet.update(wallet.id, {
-        balance: newBalance,
-        total_sent: (wallet.total_sent || 0) + coinPrice,
-      });
-
-      toast.success(`✅ ${coinPrice.toLocaleString()}コインで購入完了！`);
-      onPurchased?.();
-    } catch (err) {
-      toast.error("コイン決済エラー: " + err.message);
-    } finally {
-      setCoinProcessing(false);
-    }
-  };
-
-  // Stripe決済（カード直接購入）
-  const handleStripePurchase = async () => {
     if (!user) {
       base44.auth.redirectToLogin();
       return;
     }
+    if (processing) return; // 二重クリック防止
 
     setProcessing(true);
     try {
-      const res = await base44.functions.invoke("createCheckoutSession", {
-        item_type: "video",
-        item_id: video.id,
-        amount: totalCharge, // 手数料を含めた総額
-        item_title: video.title,
-      });
+      const res = await base44.functions.invoke("purchaseVideoWithCoin", { videoId: video.id });
 
-      if (res.data?.sessionUrl) {
-        window.location.href = res.data.sessionUrl;
+      if (res.data?.ok || res.data?.alreadyPurchased) {
+        toast.success("✅ 視聴権が解除されました！");
+        onPurchased?.();
+      } else if (res.data?.processing) {
+        toast.info("処理中です。しばらくお待ちください。");
+      } else if (res.data?.error === "insufficient_balance") {
+        toast.error(`コイン残高が不足しています（必要: ${coinPrice.toLocaleString()}コイン）`);
       } else {
-        toast.error("決済セッションの作成に失敗しました");
-        setProcessing(false);
+        toast.error(res.data?.error || "購入に失敗しました");
       }
     } catch (err) {
-      toast.error("決済処理エラー: " + err.message);
+      toast.error("エラーが発生しました: " + (err.message || "不明なエラー"));
+    } finally {
       setProcessing(false);
     }
   };
@@ -159,40 +105,21 @@ export default function Preview30SecPaywallModal({
           <div className="text-center space-y-1">
             <p className="text-muted-foreground text-xs">ビデオ購入価格</p>
             <p className="text-4xl font-black text-primary">
-              ¥{video.price?.toLocaleString()}
+              {coinPrice.toLocaleString()}コイン
             </p>
-            <p className="text-xs text-muted-foreground">最低15円（15分単位）から設定可能</p>
           </div>
 
-          {/* プラットホーム手数料外出し表示（透明性） */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 space-y-2 text-xs">
-           <p className="font-semibold text-blue-400 flex items-center gap-1">
-             <DollarSign className="w-3.5 h-3.5" />
-             プラットホーム手数料
-           </p>
-           <div className="space-y-1 text-muted-foreground">
-             <div className="flex justify-between">
-               <span>動画購入価格</span>
-               <span className="font-semibold text-foreground">¥{video.price?.toLocaleString()}</span>
-             </div>
-             <div className="flex justify-between text-[10px]">
-               <span>決済手数料 (3.6% + ¥40) ※外出し</span>
-               <span className="text-blue-400 font-semibold">¥{platformFee.toLocaleString()}</span>
-             </div>
-             <div className="border-t border-blue-500/20 pt-1 flex justify-between font-bold">
-               <span>ご請求額</span>
-               <span className="text-blue-400">¥{totalCharge.toLocaleString()}</span>
-             </div>
-           </div>
-           <p className="text-[9px] text-muted-foreground/60 border-t border-blue-500/20 pt-1 leading-relaxed">
-             💡 決済手数料は決済サービス提供の対価としてお客様ご負担です。より多くの方に楽しんでいただくため、エールコイン決済をお勧めします。
-           </p>
-           <p className="text-[9px] text-muted-foreground/60 border-t border-blue-500/20 pt-1 leading-relaxed">
-             ※ 本日の視聴可能時間：最大60分まで（1日のご利用上限）
-           </p>
-          </div>
+          {/* 残高表示 */}
+          {wallet && (
+            <div className={`rounded-lg p-3 text-xs text-center ${hasEnoughCoins ? "bg-green-500/10 border border-green-500/30 text-green-300" : "bg-orange-500/10 border border-orange-500/30 text-orange-300"}`}>
+              🪙 現在の残高: {wallet.balance.toLocaleString()}コイン
+              {!hasEnoughCoins && (
+                <p className="mt-1 opacity-80">必要コイン: {coinPrice.toLocaleString()} コイン不足</p>
+              )}
+            </div>
+          )}
 
-          {/* 購入ボタン（2並列導線） */}
+          {/* 購入ボタン */}
           {!user ? (
             <Button
               onClick={() => base44.auth.redirectToLogin()}
@@ -201,72 +128,45 @@ export default function Preview30SecPaywallModal({
               <CreditCard className="w-4 h-4" />
               ログインして購入
             </Button>
+          ) : hasEnoughCoins ? (
+            <div className="relative">
+              <Button
+                onClick={handleCoinPurchase}
+                disabled={processing}
+                className="w-full h-14 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black font-black text-base gap-2 rounded-xl"
+              >
+                {processing ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+                    処理中...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-5 h-5" />
+                    {coinPrice.toLocaleString()}コインで購入
+                  </>
+                )}
+              </Button>
+              <span className="absolute -top-2.5 right-3 bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                推奨！最速
+              </span>
+            </div>
           ) : (
             <div className="space-y-2">
-              {/* エールコイン決済（推奨） */}
-              <div className="relative">
+              <Button disabled className="w-full h-14 font-black text-base gap-2 rounded-xl opacity-50 cursor-not-allowed">
+                <Coins className="w-5 h-5" />
+                残高不足（{coinPrice.toLocaleString()}コイン必要）
+              </Button>
+              <Link to="/coin-charge">
                 <Button
-                  onClick={handleCoinPurchase}
-                  disabled={coinProcessing || !wallet}
-                  className="w-full h-14 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black font-black text-base gap-2 rounded-xl"
-                >
-                  {coinProcessing ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                      処理中...
-                    </>
-                  ) : wallet && wallet.balance >= Math.ceil((video.price + platformFee) * 10) ? (
-                   <>
-                     <Check className="w-5 h-5" />
-                     {Math.ceil((video.price + platformFee) * 10).toLocaleString()}コインで購入（最速）
-                   </>
-                  ) : (
-                   <>
-                     <Coins className="w-5 h-5" />
-                     コインで購入
-                   </>
-                  )}
-                </Button>
-                {wallet && wallet.balance >= Math.ceil((video.price + platformFee) * 10) && (
-                  <span className="absolute -top-2.5 right-3 bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <Flame className="w-3 h-3" />
-                    推奨！最速
-                  </span>
-                )}
-              </div>
-
-              {/* Stripe直接購入 */}
-              <div className="relative">
-                <Button
-                  onClick={handleStripePurchase}
-                  disabled={processing}
                   variant="outline"
-                  className="w-full h-12 font-bold gap-2 border-primary/40 hover:border-primary/60 rounded-xl"
+                  className="w-full h-11 font-bold gap-2 border-yellow-500/40 hover:border-yellow-500/70 rounded-xl text-yellow-400"
                 >
-                  {processing ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
-                      処理中...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4" />
-                      カード支払い ¥{totalCharge.toLocaleString()}
-                    </>
-                  )}
+                  <Coins className="w-4 h-4" />
+                  コインをチャージする
                 </Button>
-                <span className="absolute -top-2.5 left-3 bg-blue-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                  クレジットカード
-                </span>
-              </div>
-
-              {/* 残高不足の場合のメッセージ */}
-              {wallet && wallet.balance < Math.ceil((video.price + platformFee) * 10) && (
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2.5 text-xs text-orange-300 text-center">
-                  🪙 コイン残高: {wallet.balance.toLocaleString()} / 必要: {Math.ceil((video.price + platformFee) * 10).toLocaleString()}
-                  <p className="text-[9px] mt-1 opacity-70">カード支払いをするか、コインをチャージしてください</p>
-                </div>
-              )}
+              </Link>
             </div>
           )}
 

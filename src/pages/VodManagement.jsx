@@ -272,7 +272,7 @@ export default function VodManagement() {
                     </span>
                   </div>
                   <div className="flex gap-4 text-sm text-muted-foreground flex-wrap">
-                    <span>{v.is_free ? "無料" : `¥${v.price?.toLocaleString() || 0}`}</span>
+                    <span>{v.is_free ? "無料" : `${(v.price || 0).toLocaleString()}コイン`}</span>
                     <span>視聴: {v.view_count || 0}</span>
                     <span className="text-blue-400 font-bold">売上: ¥{revenue.toLocaleString()}</span>
                   </div>
